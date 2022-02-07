@@ -34,7 +34,7 @@ fn test_sign_tx() {
   use diem_transaction_builder::stdlib;
 
   use crate::sign_tx::sign_tx;
-  use crate::submit_tx::TxParams;
+  use crate::tx_params::TxParams;
   use diem_types::{account_address::AccountAddress, chain_id::ChainId};
 
   let script = stdlib::encode_demo_e2e_script_function(42);
@@ -52,7 +52,7 @@ fn test_sign_tx() {
 fn test_save_tx() {
   use diem_transaction_builder::stdlib;
   use crate::sign_tx::sign_tx;
-  use crate::submit_tx::TxParams;
+  use crate::tx_params::TxParams;
   use diem_types::{chain_id::ChainId, account_address::AccountAddress};
 
   let script = stdlib::encode_demo_e2e_script_function(42);

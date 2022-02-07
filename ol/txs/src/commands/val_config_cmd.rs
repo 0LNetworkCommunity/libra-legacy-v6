@@ -8,7 +8,8 @@ use diem_json_rpc_types::views::TransactionView;
 use diem_transaction_builder::stdlib as transaction_builder;
 use ol_keys::{wallet, scheme::KeyScheme};
 use ol_types::{config::TxType, account::ValConfigs};
-use crate::submit_tx::{TxError, TxParams, maybe_submit, tx_params_wrapper};
+use crate::submit_tx::{TxError, maybe_submit, tx_params_wrapper};
+use crate::tx_params::TxParams;
 use std::{process::exit, net::Ipv4Addr};
 
 /// `IpAddrUpdate` subcommand

@@ -5,8 +5,8 @@ use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use ol_types::config::AppCfg;
 use ol_types::config::TxType;
+use txs::tx_params::TxParams;
 use std::process::exit;
-use txs::submit_tx::tx_params;
 use diem_logger::{Level, Logger};
 
 /// `start` subcommand
@@ -22,10 +22,6 @@ pub struct StartCmd {
     /// don't process backlog
     #[options(short = "s", help = "Skip backlog")]
     skip_backlog: bool,
-
-    /// don't perform remote check
-    #[options(short = "n", help = "No remote check")]
-    no_remote: bool,
 }
 
 impl Runnable for StartCmd {
@@ -37,7 +33,7 @@ impl Runnable for StartCmd {
             swarm_path,
             swarm_persona,
             is_operator,
-            use_upstream_url,
+            use_first_url,
             ..
         } = entrypoint::get_args();
 
@@ -66,7 +62,7 @@ impl Runnable for StartCmd {
             waypoint
         };
 
-        let tx_params = tx_params(
+        let tx_params = TxParams::new(
             cfg.clone(),
             url,
             waypoint,
@@ -74,7 +70,7 @@ impl Runnable for StartCmd {
             swarm_persona,
             TxType::Miner,
             is_operator,
-            use_upstream_url,
+            use_first_url,
             None,
         )
         .expect("could not get tx parameters");
@@ -82,10 +78,10 @@ impl Runnable for StartCmd {
         // Check for, and submit backlog proofs.
         if !self.skip_backlog {
             // TODO: remove is_operator from signature, since tx_params has it.
-            match backlog::process_backlog(&cfg, &tx_params, is_operator, self.no_remote) {
+            match backlog::process_backlog(&cfg, &tx_params, is_operator, false) {
                 Ok(()) => status_ok!("Backlog:", "backlog committed to chain"),
                 Err(e) => {
-                    println!("WARN: Failed fetching remote state: {}", e);
+                    println!("WARN: Failed processing backlog: {:?}", e);
                 }
             }
         }
