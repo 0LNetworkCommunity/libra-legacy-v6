@@ -1,6 +1,5 @@
 //! account: alice, 10000000GAS, 0, validator
 //! account: bob, 0GAS
-//! account: carol, 0GAS
 
 // Tests that Alice burns the cost-to-exist on every epoch, (is NOT sending to community index)
 
@@ -9,14 +8,15 @@
 script {    
     use 0x1::TowerState;
     use 0x1::Diem;
-    use 0x1::Debug::print;
     use 0x1::GAS::GAS;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
-        let new_cap = Diem::market_cap<GAS>();   
-        print(&new_cap);
+        let mk_cap_genesis = Diem::market_cap<GAS>();
+
+        // Validator and Operator payment 10m & 1M (for operator which is not explicit in tests)
+        assert(mk_cap_genesis == 10000000 + 1000000, 7357000);
 
         TowerState::test_helper_mock_mining(&sender, 5);
         
@@ -69,26 +69,6 @@ script {
 // check: EXECUTED
 
 //! new-transaction
-//! sender: carol
-script {
-    use 0x1::Wallet;
-    use 0x1::Vector;
-    use 0x1::GAS::GAS;
-    use 0x1::Signer;
-    use 0x1::DiemAccount;
-
-    fun main(sender: signer) {
-      Wallet::set_comm(&sender);
-      let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
-      DiemAccount::init_cumulative_deposits(&sender, bal);
-      let list = Wallet::get_comm_list();
-      assert(Vector::length(&list) == 2, 7357002);
-    }
-}
-
-// check: EXECUTED
-
-//! new-transaction
 //! sender: diemroot
 script {
   use 0x1::DiemAccount;
@@ -128,15 +108,16 @@ script {
 
   fun main(_vm: signer) {
     let new_cap = Diem::market_cap<GAS>();
-    let _alice_start = 10000000; //10M
-    let _burn = 1000000; //1M
+    let val_plus_oper_start = 11000000u128; //10M + 1M
+    let burn = 1000000u128; //1M
+    let subsidy = 296000000u128;
     print(&new_cap);
 
-    let bal_alice = DiemAccount::balance<GAS>(@{{alice}});
-    print(&bal_alice);
+    assert(new_cap == (val_plus_oper_start + subsidy - burn), 7357002);
+
     // should not change bob's balance, since Alice did not opt to seend to community index.
     let bal = DiemAccount::balance<GAS>(@{{bob}});
-    assert(bal == 1000000, 7357002);
+    assert(bal == 1000000, 7357003);
   }
 }
 
