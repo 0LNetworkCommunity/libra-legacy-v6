@@ -9,6 +9,7 @@ use ol_types::config::TxType;
 use std::{fs::File, path::PathBuf, process::exit, thread, time};
 use std::io::BufReader;
 use txs::submit_tx::{eval_tx_status, TxParams};
+use txs::submit_tx::tx_params;
 
 use crate::{backlog, entrypoint, proof::*};
 use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
@@ -85,13 +86,13 @@ impl Runnable for ZeroCmd {
         let path =
             PathBuf::from(format!("{}/{}_0.json", blocks_dir.display(), FILENAME));
         info!("submitting proof 0");
-        let file = File::open(&path).map_err(|e| Error::from(e))?;
+        let file = File::open(&path).map_err(|e| Error::from(e));
 
         let reader = BufReader::new(file);
         let block: VDFProof =
-            serde_json::from_reader(reader).map_err(|e| Error::from(e))?;
+            serde_json::from_reader(reader).map_err(|e| Error::from(e));
 
-        let view = commit_proof_tx(&tx_params, block, is_operator)?;
+        let view = commit_proof_tx(&tx_params, block, is_operator);
         match eval_tx_status(view) {
             Ok(_) => { info!("proof 0 submitted"); }
             Err(e) => {
@@ -99,7 +100,6 @@ impl Runnable for ZeroCmd {
                             "WARN: could not fetch TX status, aborting. Message: {:?} ",
                             e
                         );
-                return Err(e);
             }
         };
     }
