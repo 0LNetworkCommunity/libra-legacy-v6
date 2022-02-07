@@ -4,6 +4,7 @@ use abscissa_core::{Command, config, FrameworkError, Options, Runnable};
 use diem_logger::{Level, Logger};
 use ol_types::config::AppCfg;
 use ol_types::config::TxType;
+use ol_types::block::VDFProof;
 use std::{fs::File, path::PathBuf, process::exit, thread, time};
 use std::io::BufReader;
 use txs::submit_tx::{eval_tx_status, TxParams};
@@ -14,7 +15,6 @@ use crate::commit_proof::commit_proof_tx;
 use crate::proof::{parse_block_height, FILENAME};
 
 use anyhow::{bail, Result, Error};
-use diem_logger::prelude::*;
 
 
 #[derive(Command, Debug, Options)]
@@ -80,8 +80,8 @@ impl Runnable for ZeroCmd {
             }
         }
 
-        let mut blocks_dir = config.workspace.node_home.clone();
-        blocks_dir.push(&config.workspace.block_dir);
+        let mut blocks_dir = cfg.workspace.node_home.clone();
+        blocks_dir.push(&cfg.workspace.block_dir);
 
         let path =
             PathBuf::from(format!("{}/{}_0.json", blocks_dir.display(), FILENAME));
