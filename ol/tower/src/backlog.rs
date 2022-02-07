@@ -23,7 +23,7 @@ pub fn process_backlog(
     let mut remote_height = -1;
 
     if !ignore_remote {
-        get_remote_tower_height(tx_params).unwrap();
+        remote_height = get_remote_tower_height(tx_params).unwrap();
     }
 
     info!("Remote tower height: {}", remote_height);
