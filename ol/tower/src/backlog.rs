@@ -25,11 +25,14 @@ pub fn process_backlog(
     // Getting remote miner state
     //let remote_state = get_remote_state(tx_params)?;
     //let remote_height = remote_state.verified_tower_height;
-    let mut remote_height = -1;
-    let mut proofs_in_epoch = 0;
+    let mut remote_height = -1i64;
+    let mut proofs_in_epoch = 0u64;
 
     if !ignore_remote {
-        (remote_height, proofs_in_epoch) = get_remote_tower_height(tx_params).unwrap();
+        let (rem_remote_height, rem_proofs_in_epoch) = get_remote_tower_height(tx_params).unwrap();
+
+        remote_height = rem_remote_height;
+        proofs_in_epoch = rem_proofs_in_epoch;
     }
 
     info!("Remote tower height: {}", remote_height);
@@ -86,7 +89,7 @@ pub fn process_backlog(
 }
 
 /// returns remote tower height and current proofs in epoch
-pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<(u64, u64), Error> {
+pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<(i64, u64), Error> {
     let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
     info!(
         "Fetching remote tower height: {}, {}",
