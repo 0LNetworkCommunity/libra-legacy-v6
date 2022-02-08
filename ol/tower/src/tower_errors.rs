@@ -24,6 +24,8 @@ pub enum TowerError {
     AccountDNE,
     /// 1005 defined in DiemAccount.move 
     OutOfGas,
+    /// 130102 defined in TowerState.move
+    WrongDifficulty,
     /// 130108 defined in TowerState.move   
     TooManyProofs, 
     /// 130109 defined in TowerState.move
@@ -43,6 +45,7 @@ impl fmt::Display for TowerError {
             TowerError::NoClientCx => write!(f, "Cannot Connect to client: {}", TowerError::NoClientCx.value()),
             TowerError::AccountDNE => write!(f, "Account does not exist: {}", TowerError::AccountDNE.value()),
             TowerError::OutOfGas => write!(f, "Account out of gas, or price insufficient: {}", TowerError::OutOfGas.value()),
+            TowerError::WrongDifficulty => write!(f, "Wrong VDF difficulty being used: {}", TowerError::WrongDifficulty.value()),
             TowerError::TooManyProofs => write!(f, "Too many proofs submitted in epoch: {}", TowerError::TooManyProofs.value()),
             TowerError::Discontinuity => write!(f, "Proof submitted does not match previous: {}", TowerError::Discontinuity.value()),
             TowerError::Invalid => write!(f, "VDF Proof is invalid, cannot verify: {}", TowerError::Invalid.value()),
@@ -70,6 +73,8 @@ impl TowerError {
         TowerError::AccountDNE => 1004,
         // 1005 defined in DiemAccount.move 
         TowerError::OutOfGas => 1005,
+        // 130102 defined in TowerState.move
+        TowerError::WrongDifficulty => 130102,
         // 130108 defined in TowerState.move   
         TowerError::TooManyProofs => 130108,
         // 130109 defined in TowerState.move
@@ -88,6 +93,7 @@ pub fn parse_error(tx_err: TxError) -> TowerError {
     match tx_err.abort_code {
         Some(404) => TowerError::NoClientCx,
         Some(1004) => TowerError::AccountDNE,
+        Some(130102) => TowerError::WrongDifficulty,
         Some(130108) => TowerError::TooManyProofs,
         Some(130109) => TowerError::Discontinuity,
         Some(130110) => TowerError::Invalid,
