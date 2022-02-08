@@ -36,7 +36,7 @@ export
 test-wrapper: swarm check-swarm set-community send-tx check-tx check-autopay check-transfer stop
 
 test-percent-bal:
-	AUTOPAY_FILE=alice.autopay_batch.json make -f ${MAKE_FILE} test-wrapper
+	AUTOPAY_FILE=alice.percent_balance.autopay_batch.json make -f ${MAKE_FILE} test-wrapper
 
 test-fixed-once:
 	AUTOPAY_FILE=alice.fixed_once.autopay_batch.json make -f ${MAKE_FILE} test-wrapper
@@ -109,10 +109,10 @@ check-autopay:
 
 check-transfer:
 # swarm accounts start with a balance of 10, but go below that with gas tx costs.
-# all tests above push the balance back up to 10, 11 or 15
+# all tests above push the balance back up to 129*, 139*
 
 	@while [[ ${NOW} -le ${END} ]] ; do \
-			if PERSONA=alice make -f ${MAKE_FILE} balance-bob | grep -e '10' -e '11' -e '15'; then \
+			if PERSONA=alice make -f ${MAKE_FILE} balance-bob | tee | grep -e '12' -e '13'; then \
 				echo TX SUCCESS ; \
 				break ; \
 			else \

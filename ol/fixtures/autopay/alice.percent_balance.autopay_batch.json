@@ -1,12 +1,12 @@
 {
   "autopay_instructions": [
     {
-      "note": "once",
+      "note": "balance",
       "uid": 0,
       "destination": "88E74DFED34420F2AD8032148280A84B",
-      "type_of": "FixedOnce",
-      "value": 5,
-      "duration_epochs": 3
+      "type_of": "PercentOfBalance",
+      "value": 75.00,
+      "duration_epochs": 100
     }
   ]
 }
