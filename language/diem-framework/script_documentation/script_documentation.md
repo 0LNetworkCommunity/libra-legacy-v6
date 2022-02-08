@@ -5262,7 +5262,6 @@ a reconfiguration of the system.
 -  [`0x1::Cases`](../../../../../releases/artifacts/current/docs/modules/Cases.md#0x1_Cases)
 -  [`0x1::ChainId`](../../../../../releases/artifacts/current/docs/modules/ChainId.md#0x1_ChainId)
 -  [`0x1::CoreAddresses`](../../../../../releases/artifacts/current/docs/modules/CoreAddresses.md#0x1_CoreAddresses)
--  [`0x1::Debug`](../../../../../releases/artifacts/current/docs/modules/Debug.md#0x1_Debug)
 -  [`0x1::Decimal`](../../../../../releases/artifacts/current/docs/modules/Decimal.md#0x1_Decimal)
 -  [`0x1::DesignatedDealer`](../../../../../releases/artifacts/current/docs/modules/DesignatedDealer.md#0x1_DesignatedDealer)
 -  [`0x1::Diem`](../../../../../releases/artifacts/current/docs/modules/Diem.md#0x1_Diem)

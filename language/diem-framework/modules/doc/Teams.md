@@ -28,7 +28,6 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Decimal.md#0x1_Decimal">0x1::Decimal</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
@@ -302,7 +301,6 @@ move_to&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(
 
 <pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_join_team">join_team</a>(sender: &signer, captain_address: address) <b>acquires</b> <a href="Teams.md#0x1_Teams_Member">Member</a> {
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
-
   // needs <b>to</b> check <b>if</b> this is a slow wallet.
   // ask user <b>to</b> resubmit <b>if</b> not a slow wallet, so they are explicitly setting it, no surprises, no tears.
 
@@ -413,9 +411,6 @@ move_to&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(
 
   <b>let</b> trunc = <a href="Decimal.md#0x1_Decimal_trunc">Decimal::trunc</a>(&rms);
   <b>let</b> (_, int, frac) = <a href="Decimal.md#0x1_Decimal_unwrap">Decimal::unwrap</a>(&trunc);
-
-  print(&int);
-  print(&frac);
 
   // after truncation the fractional part should be 0
   <b>if</b> (frac &gt; 0) { <b>return</b> 0 };

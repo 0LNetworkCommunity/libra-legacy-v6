@@ -2235,8 +2235,6 @@ pub enum ScriptFunctionCall {
         captain: AccountAddress,
     },
 
-    Leave {},
-
     MinerstateCommit {
         challenge: Bytes,
         solution: Bytes,
@@ -3206,8 +3204,6 @@ pub enum ScriptFunctionCall {
         currency: TypeTag,
         allow_minting: bool,
     },
-
-    ValAddSelf {},
 }
 
 impl ScriptCall {
@@ -3670,7 +3666,6 @@ impl ScriptFunctionCall {
             }
             Join {} => encode_join_script_function(),
             JoinTeam { captain } => encode_join_team_script_function(captain),
-            Leave {} => encode_leave_script_function(),
             MinerstateCommit {
                 challenge,
                 solution,
@@ -3874,7 +3869,6 @@ impl ScriptFunctionCall {
                 currency,
                 allow_minting,
             } => encode_update_minting_ability_script_function(currency, allow_minting),
-            ValAddSelf {} => encode_val_add_self_script_function(),
         }
     }
 
@@ -5039,18 +5033,6 @@ pub fn encode_join_team_script_function(captain: AccountAddress) -> TransactionP
         ident_str!("join_team").to_owned(),
         vec![],
         vec![bcs::to_bytes(&captain).unwrap()],
-    ))
-}
-
-pub fn encode_leave_script_function() -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorScripts").to_owned(),
-        ),
-        ident_str!("leave").to_owned(),
-        vec![],
-        vec![],
     ))
 }
 
@@ -6422,18 +6404,6 @@ pub fn encode_update_minting_ability_script_function(
         ident_str!("update_minting_ability").to_owned(),
         vec![currency],
         vec![bcs::to_bytes(&allow_minting).unwrap()],
-    ))
-}
-
-pub fn encode_val_add_self_script_function() -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorScripts").to_owned(),
-        ),
-        ident_str!("val_add_self").to_owned(),
-        vec![],
-        vec![],
     ))
 }
 
@@ -8485,14 +8455,6 @@ fn decode_join_team_script_function(payload: &TransactionPayload) -> Option<Scri
     }
 }
 
-fn decode_leave_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::Leave {})
-    } else {
-        None
-    }
-}
-
 fn decode_minerstate_commit_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -8919,14 +8881,6 @@ fn decode_update_minting_ability_script_function(
             currency: script.ty_args().get(0)?.clone(),
             allow_minting: bcs::from_bytes(script.args().get(0)?).ok()?,
         })
-    } else {
-        None
-    }
-}
-
-fn decode_val_add_self_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::ValAddSelf {})
     } else {
         None
     }
@@ -9450,10 +9404,6 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_join_team_script_function),
         );
         map.insert(
-            "ValidatorScriptsleave".to_string(),
-            Box::new(decode_leave_script_function),
-        );
-        map.insert(
             "TowerStateScriptsminerstate_commit".to_string(),
             Box::new(decode_minerstate_commit_script_function),
         );
@@ -9581,10 +9531,6 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "TreasuryComplianceScriptsupdate_minting_ability".to_string(),
             Box::new(decode_update_minting_ability_script_function),
-        );
-        map.insert(
-            "ValidatorScriptsval_add_self".to_string(),
-            Box::new(decode_val_add_self_script_function),
         );
         map
     });
