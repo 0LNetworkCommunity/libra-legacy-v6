@@ -105,7 +105,6 @@ module Teams {
     // when they do enough mining in a period
     public fun join_team(sender: &signer, captain_address: address) acquires Member {
       let addr = Signer::address_of(sender);
-      print(&01);
       // needs to check if this is a slow wallet.
       // ask user to resubmit if not a slow wallet, so they are explicitly setting it, no surprises, no tears.
 
@@ -114,13 +113,11 @@ module Teams {
 
       // bob wants to switch to a different Team.
       if (exists<Member>(addr)) {
-        print(&02);
         let member_state = borrow_global_mut<Member>(addr);
         // update the membership list of the former captain
         member_state.captain_address = captain_address;
         // TODO: Do we need to reset mining_above_threshold if they are switching?
       } else { // first time joining a Team.
-        print(&03);
         move_to<Member>(sender, Member {
           captain_address,
           mining_above_threshold: false,
@@ -156,8 +153,6 @@ module Teams {
       }
     }
 
-    use 0x1::Debug::print;
-
     public fun find_rms_of_towers(vm: &signer): u64 acquires AllTeams {
       CoreAddresses::assert_vm(vm);
       let miner_list = TowerState::get_miner_list();
@@ -184,9 +179,6 @@ module Teams {
 
       let trunc = Decimal::trunc(&rms);
       let (_, int, frac) = Decimal::unwrap(&trunc);
-
-      print(&int);
-      print(&frac);
 
       // after truncation the fractional part should be 0
       if (frac > 0) { return 0 };

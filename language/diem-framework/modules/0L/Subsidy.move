@@ -54,56 +54,33 @@ address 0x1 {
       let i = 0;
       while (i < len) {
         let node_address = Vector::borrow<address>(outgoing_set, i);
-        let b = DiemAccount::balance<GAS>(*node_address);
-        print(&b);
         // Transfer gas from vm address to validator
         check_team_and_pay(vm, node_address, subsidy_granted);
-
-        let b = DiemAccount::balance<GAS>(*node_address);
-        print(&b);
         // refund operator tx fees for mining
         refund_operator_tx_fees(vm, *node_address);
-        let b = DiemAccount::balance<GAS>(*node_address);
-        print(&b);
         i = i + 1;
       };
     }
-    use 0x1::Debug::print;
 
     fun check_team_and_pay(vm: &signer, captain_address: &address, subsidy_granted: u64) {
       // this is a solo validator. Exists during transition to delegation mode. This is a fallback condition to keep the node from halting
-      print(&100000);
       let captain_value = subsidy_granted;
-      print(&subsidy_granted);
       if (Teams::team_is_init(*captain_address)) {
-        print(&100100);
         // split captain reward and send to captain.
         let captain_pct = Teams::get_operator_reward(*captain_address);
-        print(&captain_pct);
         // split off the captain value
         captain_value = FixedPoint32::multiply_u64(
           subsidy_granted,
           FixedPoint32::create_from_rational(captain_pct, 100) 
         );
-        print(&100200);
-        print(&captain_value);
-
         let value_to_members = subsidy_granted - captain_value;
-        print(&value_to_members);
-
         // get team members
         let members = Teams::get_team_members(*captain_address);
         // split the team subsidy
-        print(&100300);
         split_subsidy_to_team(vm, &members, value_to_members);
       };
-      print(&100400);
-      print(&captain_value);
       let captain_coins = Diem::mint<GAS>(vm, captain_value);
-      
-      let pre_balance = DiemAccount::balance<GAS>(*captain_address);
-      print(&pre_balance);
-      
+            
       // payment to captain
       DiemAccount::vm_deposit_with_metadata<GAS>(
         vm,
@@ -116,29 +93,17 @@ address 0x1 {
 
     public fun split_subsidy_to_team(vm: &signer, members: &vector<address>, value_to_members: u64) {
       let collective_height = TowerState::collective_tower_height(members);
-      print(&100310);
-      print(members);
-      print(&collective_height);
-      print(&value_to_members);
       let i = 0;
       while (i < Vector::length(members)) {
         let addr = Vector::borrow(members, i);
         let one_height = TowerState::tower_for_teams(*addr);
-        print(&100320);
-        print(&one_height);
         if (one_height > 0) {
           let payment_to_this_member = FixedPoint32::multiply_u64(
             value_to_members,
             FixedPoint32::create_from_rational(one_height, collective_height)
           );
-          print(&100330);
-          print(&payment_to_this_member);
-
           // let payment_to_this_member = value_to_members * pct;
-          // print(&payment_to_this_member);
           let minted_coins = Diem::mint<GAS>(vm, payment_to_this_member);
-          let pre_balance = DiemAccount::balance<GAS>(*addr);
-          print(&pre_balance);
           DiemAccount::vm_deposit_with_metadata<GAS>(
               vm,
               *addr,

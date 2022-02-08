@@ -113,8 +113,6 @@ module EpochBoundary {
         Subsidy::process_fees(vm, &outgoing_compliant_set);
     }
 
-    use 0x1::Debug::print;
-
     fun process_burn(vm: &signer) {
         Burn::reset_ratios(vm);
 
@@ -133,7 +131,6 @@ module EpochBoundary {
         let i = 0;
         while (i < Vector::length<address>(&vals)) {
           let addr = *Vector::borrow(&vals, i);
-          print(&addr);
           Burn::epoch_start_burn(vm, addr, burn_value);
           i = i + 1;
         };

@@ -973,7 +973,6 @@ module Diem {
             to handle if !info.is_synthetic;
     }
     
-    use 0x1::Debug::print;
     //////// 0L ////////
     // Only the VM should at times be able to burn a coin in its posession.
     // should burn immediately, and bypass the Diem preburn stuff.
@@ -991,7 +990,6 @@ module Diem {
         assert(info.total_value >= (value as u128), Errors::limit_exceeded(ECURRENCY_INFO));
         info.total_value = info.total_value - (value as u128);
 
-        print(&coin.value);
         // zero and destroy
         coin.value = 0;
         destroy_zero(coin);

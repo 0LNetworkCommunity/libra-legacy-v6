@@ -737,14 +737,12 @@ module TowerState {
 
     // Returns if the account is above threshold for Teams (delegation), and return the tower height or 0.
     // Permissions: PUBLIC, ANYONE
-    use 0x1::Debug::print;
     public fun tower_for_teams(node_addr: address): u64 acquires TowerProofHistory {
       // For a Member's tower height to be counted for a Team for delegation purposes
       // it must be an active tower (doing work above threshold in an epoch)
       // and it must not be a new tower, it needs to have a minimum of 7 days equivalent height.
       if (exists<TowerProofHistory>(node_addr)) { 
         let s = borrow_global<TowerProofHistory>(node_addr);
-        print(s);
         if (
           s.count_proofs_in_epoch > Globals::get_epoch_mining_thres_lower()
           && s.verified_tower_height > TEAM_MEMBER_TOWER_MIN
