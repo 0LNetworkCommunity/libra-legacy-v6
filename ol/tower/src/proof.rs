@@ -90,6 +90,7 @@ pub fn mine_and_submit(
     config: &AppCfg,
     tx_params: TxParams,
     is_operator: bool,
+    omit_remote_check: bool,
 ) -> Result<(), Error> {
     // get the location of this miner's blocks
     let mut blocks_dir = config.workspace.node_home.clone();
@@ -115,7 +116,7 @@ pub fn mine_and_submit(
             );
 
             // submits backlog to client
-            match backlog::process_backlog(&config, &tx_params, is_operator, false) {
+            match backlog::process_backlog(&config, &tx_params, is_operator, omit_remote_check) {
                 Ok(()) => println!("Success: Proof committed to chain"),
                 Err(e) => {
                     // don't stop on tx errors

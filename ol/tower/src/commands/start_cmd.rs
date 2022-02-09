@@ -24,8 +24,8 @@ pub struct StartCmd {
     skip_backlog: bool,
 
     /// don't process backlog
-    #[options(short = "n", help = "Skip fetching remote tower height")]
-    no_remote: bool,
+    #[options(short = "o", help = "Omit checking remote tower height before sending backlog")]
+    omit_remote_check: bool,
 }
 
 impl Runnable for StartCmd {
@@ -79,13 +79,10 @@ impl Runnable for StartCmd {
         )
         .expect("could not get tx parameters");
 
-        println!("no remote: {}", self.no_remote);
-
         // Check for, and submit backlog proofs.
         if !self.skip_backlog {
             // TODO: remove is_operator from signature, since tx_params has it.
-            println!("processing backlog");
-            match backlog::process_backlog(&cfg, &tx_params, is_operator, self.no_remote) {
+            match backlog::process_backlog(&cfg, &tx_params, is_operator, self.omit_remote_check) {
                 Ok(()) => status_ok!("Backlog:", "backlog committed to chain"),
                 Err(e) => {
                     println!("WARN: Failed processing backlog: {:?}", e);
@@ -97,9 +94,8 @@ impl Runnable for StartCmd {
 
         if !self.backlog_only {
             // Steady state.
-            println!("starting to mine");
-
-            let result = mine_and_submit(&cfg, tx_params, is_operator);
+            println!("starting miner...");
+            let result = mine_and_submit(&cfg, tx_params, is_operator, self.omit_remote_check);
             match result {
                 Ok(_val) => {}
                 Err(err) => {
