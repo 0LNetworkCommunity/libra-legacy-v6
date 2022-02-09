@@ -66,12 +66,12 @@ pub fn get_account_from_wallet(
 pub fn get_account_from_prompt() -> (AuthenticationKey, AccountAddress, WalletLibrary) {
     println!("Enter your 0L mnemonic:");
 
-    let test_env_mnem = env::var("MNEM");
-    // if we are in debugging or CI mode
-    let mnem = match *IS_TEST && test_env_mnem.is_ok() {
+    let env_mnem = env::var("MNEM");
+    // if we are in debugging, CI mode or in an automated environment (e.g.: k8s)
+    let mnem = match env_mnem.is_ok() {
         true => {
-            println!("Debugging mode, using mnemonic from env variable, $MNEM");
-            test_env_mnem.unwrap().trim().to_string()
+            println!("Using mnemonic from env variable, $MNEM");
+            env_mnem.unwrap().trim().to_string()
         }
         false => match rpassword::read_password_from_tty(Some("\u{1F511} ")) {
             Ok(read) => read,
