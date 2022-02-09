@@ -11,7 +11,7 @@ use ol_types::{autopay::AutoPayView, validator_config::ValidatorConfigView};
 
 use super::{node::Node, dictionary::AccountDictionary, autopay_view::PayeeStats};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, convert::TryFrom};
+use std::{convert::TryFrom};
 
 /// name of chain info key for db
 pub const CHAIN_INFO_DB_KEY: &str = "chain_info";
