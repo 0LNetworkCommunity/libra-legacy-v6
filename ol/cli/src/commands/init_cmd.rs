@@ -18,7 +18,7 @@ use diem_types::waypoint::Waypoint;
 use diem_wallet::WalletLibrary;
 use fs_extra::file::{copy, CopyOptions};
 use ol_keys::{scheme::KeyScheme, wallet};
-use ol_types::{config::fix_missing_fields, fixtures, rpc_playlist::FullnodePlaylist};
+use ol_types::{config::{fix_missing_fields, parse_toml}, fixtures, rpc_playlist};
 use std::process::exit;
 use std::{fs, path::PathBuf};
 use url::Url;
@@ -52,7 +52,7 @@ pub struct InitCmd {
 
     /// Set the upstream peers playlist from an http served playlist file
     #[options(help = "Use a playlist.json file hosted online to set the upstream_peers field in 0L.toml")]
-    rpc_playlist: Option<Url>,
+    rpc_playlist: Option<String>, // Using string so that the user can use a default upstream
 
     /// Search and get seed peers from chain
     #[options(help = "Get seed fullnode peers from chain")]
@@ -86,8 +86,6 @@ pub struct InitCmd {
 impl Runnable for InitCmd {
     /// Print version message
     fn run(&self) {
-        let cfg = app_config().clone();
-
         // TODO: This has no effect. This command will not load if the 0L.toml is malformed.
         // this is an Abscissa issue.
         // even with serde deny_unknown disabled the app will crash.
@@ -141,14 +139,35 @@ impl Runnable for InitCmd {
             }
         }
         
-        if let Some(url) = self.rpc_playlist {
-           match FullnodePlaylist::http_fetch_playlist(url){
+        if let Some(url) = self.rpc_playlist.as_ref() {
+          
+
+          // try to parse it, otherwise get_known_fullnodes will use a default playlist
+          let playlist_url: Option<Url> = url.parse().ok();
+
+           match rpc_playlist::get_known_fullnodes(playlist_url){
               Ok(f) => {
 
-                let cfg_path = self.app_cfg_path.unwrap_or(cfg.workspace.node_home.join("0L.toml"));
-                parse_toml(cfg_path);
-                // read AppCfg
-                // write AppCfg
+                let mut new_cfg = match parse_toml(self.app_cfg_path.clone()) { // if None path just use default
+                    Ok(c) => c,
+                    Err(e) => {
+                      println!("could not parse app config toml file, exiting. Message: {:?}", e );
+                      exit(1);
+                    },
+                };
+                new_cfg.profile.upstream_nodes = f.get_urls();
+
+                println!("peers found:");
+                new_cfg.profile.upstream_nodes.iter()
+                .for_each(|u| {
+                  println!("{}", u.as_str())
+                });
+
+                // println!("peers found: {:?}", new_cfg.profile.upstream_nodes);
+
+                new_cfg.save_file();
+                println!("Upstream RPC peers updated in 0L.toml");
+                return
               },
               Err(e) => {
                 println!("could not read playlists from {:?}, exiting. Message: {:?}", url, e);
