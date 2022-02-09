@@ -23,7 +23,7 @@ pub struct StartCmd {
     #[options(short = "s", help = "Skip backlog")]
     skip_backlog: bool,
 
-    /// don't process backlog
+    /// omit checking the remote tower height - allows initial genesis proof to be submitted
     #[options(short = "o", help = "Omit checking remote tower height before sending backlog")]
     omit_remote_check: bool,
 }
