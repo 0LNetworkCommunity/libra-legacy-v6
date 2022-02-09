@@ -22,6 +22,10 @@ pub struct StartCmd {
     /// don't process backlog
     #[options(short = "s", help = "Skip backlog")]
     skip_backlog: bool,
+
+    /// omit checking the remote tower height - allows initial genesis proof to be submitted
+    #[options(short = "o", help = "Omit checking remote tower height before sending backlog")]
+    omit_remote_check: bool,
 }
 
 impl Runnable for StartCmd {
@@ -78,7 +82,7 @@ impl Runnable for StartCmd {
         // Check for, and submit backlog proofs.
         if !self.skip_backlog {
             // TODO: remove is_operator from signature, since tx_params has it.
-            match backlog::process_backlog(&cfg, &tx_params, is_operator) {
+            match backlog::process_backlog(&cfg, &tx_params, is_operator, self.omit_remote_check) {
                 Ok(()) => status_ok!("Backlog:", "backlog committed to chain"),
                 Err(e) => {
                     println!("WARN: Failed processing backlog: {:?}", e);
@@ -90,7 +94,8 @@ impl Runnable for StartCmd {
 
         if !self.backlog_only {
             // Steady state.
-            let result = mine_and_submit(&cfg, tx_params, is_operator);
+            println!("starting miner...");
+            let result = mine_and_submit(&cfg, tx_params, is_operator, self.omit_remote_check);
             match result {
                 Ok(_val) => {}
                 Err(err) => {

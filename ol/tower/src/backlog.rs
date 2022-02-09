@@ -20,10 +20,22 @@ pub fn process_backlog(
     config: &AppCfg,
     tx_params: &TxParams,
     is_operator: bool,
+    omit_remote_check: bool,
 ) -> Result<(), TxError> {
     // Getting remote miner state
     // there may not be any onchain state.
-    let (remote_height, proofs_in_epoch) = get_remote_tower_height(tx_params)?;
+    let mut remote_height = 0u64;
+    let mut proofs_in_epoch = 0u64;
+
+    if !omit_remote_check {
+        let (rem_remote_height, rem_proofs_in_epoch) = get_remote_tower_height(tx_params).unwrap();
+
+        remote_height = rem_remote_height;
+        proofs_in_epoch = rem_proofs_in_epoch;
+    }
+    else {
+        info!("ommitting remote tower height check");
+    }
 
     info!("Remote tower height: {}", remote_height);
     // Getting local state height
@@ -32,8 +44,12 @@ pub fn process_backlog(
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
     if let Some(current_proof_number) = current_block_number {
         info!("Local tower height: {:?}", current_proof_number);
-        if current_proof_number > remote_height {
+        if current_proof_number > remote_height || omit_remote_check {
             let mut i = remote_height + 1;
+
+            if omit_remote_check {
+                i = 0
+            }
 
             // use i64 for safety
             if !(proofs_in_epoch < EPOCH_MINING_THRES_UPPER) {

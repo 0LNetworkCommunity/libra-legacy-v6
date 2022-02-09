@@ -42,6 +42,14 @@ ol init -u http://<ip-of-a-fullnode>:8080
 onboard user
 ```
 
+To submit the first proof (proof_0.json), you need to start the tower app using a special parameter:
+
+```
+tower start -o -b
+```
+
+After the successful first transfer, continue with starting the tower app (see below).
+
 
 ## Start the tower app
 The tower app will produce VDF proofs or submit proofs, which are created and not yet submitted. The first block to be created is proof_1.json (which takes as the preimage input the sha256 hash of proof_0.json)
