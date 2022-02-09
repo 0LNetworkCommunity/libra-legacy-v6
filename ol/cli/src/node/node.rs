@@ -48,7 +48,7 @@ pub struct Node {
 
 impl Node {
     /// Create a instance of Check
-    pub fn new(client: DiemClient, conf: &AppCfg, is_swarm: bool) -> Self {
+    pub fn new(client: DiemClient, app_cfg: &AppCfg, is_swarm: bool) -> Self {
         let node_yaml = if is_swarm {
             "node.yaml"
         } else {
@@ -56,8 +56,8 @@ impl Node {
         };
 
         let node_conf = match NodeConfig::load(
-            conf.workspace.node_home.join(node_yaml)
-        ) {
+            app_cfg.workspace.node_home.join(node_yaml)
+        ){
             Ok(c) => Some(c),
             Err(_) => {
               // println!("Warn: could not find a validator config file, trying fullnode");
@@ -73,11 +73,11 @@ impl Node {
 
         return Self {
             client,
-            app_conf: conf.clone(),
+            app_conf: app_cfg.clone(),
             node_conf: node_conf,
             vitals: Vitals {
                 host_state: HostState::new(),
-                account_view: OwnerAccountView::new(conf.profile.account),
+                account_view: OwnerAccountView::new(app_cfg.profile.account),
                 chain_view: None,
                 items: Items::new(false),
                 node_proc: None,
