@@ -121,10 +121,12 @@ impl Node {
         if let Some(account_blob) = blob {
             let account_state = AccountState::try_from(&account_blob)?;
             let meta = self.client.get_metadata()?;
-            cs.epoch = account_state
+
+            let conf_resource = account_state
                 .get_configuration_resource()?
-                .unwrap()
-                .epoch();
+                .unwrap();
+
+            cs.epoch = conf_resource.epoch();
 
             cs.validator_count = account_state
                 .get_validator_set()?
@@ -136,11 +138,8 @@ impl Node {
             let validators_stats = account_state.get_validators_stats()?.unwrap();
 
             // Calculate Epoch Progress
-            let ts = account_state
-                .get_configuration_resource()?
-                .unwrap()
-                .last_reconfiguration_time() as i64
-                / 1000000;
+            let ts = conf_resource.last_reconfiguration_time() as i64 / 1000000;
+
             let now = Utc::now().timestamp();
 
             match meta.chain_id {
@@ -248,7 +247,7 @@ impl Node {
 
             cs.validator_view = Some(validators.clone());
             cs.validators_stats = Some(validators_stats);
-            cs.vals_config_stats = Some(calc_config_stats(cs.validator_view.clone().unwrap()));
+            cs.vals_config_stats = calc_config_stats(validators.clone()).ok();
             cs.autopay_watch_list = self.get_autopay_watch_list(validators.clone());
 
             self.vitals.chain_view = Some(cs.clone());
@@ -320,33 +319,29 @@ impl Node {
     }
 }
 
-fn calc_config_stats(vals: Vec<ValidatorView>) -> ValsConfigStats {
+fn calc_config_stats(vals: Vec<ValidatorView>) -> Result<ValsConfigStats, Error> {
     let mut count_autopay = 0;
     let mut count_operators = 0;
     let mut count_positive_balance = 0;
 
     for val in vals.iter() {
-        let config = val.validator_config.clone().unwrap();
-        if val.autopay.is_some()
-            && val
-                .autopay
-                .as_ref()
-                .unwrap()
-                .payments
-                .iter()
-                .find(|each| each.is_percent_of_change())
-                .is_some()
-        {
-            count_autopay += 1;
-        }
-        if config.operator_account.is_some() {
-            count_operators += 1;
-        }
-        if config.operator_has_balance.is_some() && config.operator_has_balance.unwrap() {
-            count_positive_balance += 1;
+        if let Some(config) = val.validator_config.clone() {
+          if let Some(a) = &val.autopay{
+            if a.payments
+            .iter()
+            .any(|each| each.is_percent_of_change()) {
+              count_autopay += 1;
+            }
+          }
+          if config.operator_account.is_some() {
+              count_operators += 1;
+          }
+          if config.operator_has_balance.is_some() && config.operator_has_balance.unwrap_or(false) {
+              count_positive_balance += 1;
+          }
         }
     }
-    ValsConfigStats {
+    Ok(ValsConfigStats {
         total_vals: vals.len(),
         count_vals_with_autopay: count_autopay,
         count_vals_with_operator: count_operators,
@@ -354,7 +349,7 @@ fn calc_config_stats(vals: Vec<ValidatorView>) -> ValsConfigStats {
         percent_vals_with_autopay: count_autopay as f64 / vals.len() as f64,
         percent_vals_with_operator: count_operators as f64 / vals.len() as f64,
         percent_positive_balance_operators: count_positive_balance as f64 / vals.len() as f64,
-    }
+    })
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
