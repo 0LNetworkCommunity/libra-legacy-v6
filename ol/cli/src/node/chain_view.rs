@@ -103,7 +103,6 @@ pub struct ValsConfigStats {
 }
 
 impl Node {
-    // TODO: this should return a result and no functions below should use unwrap()
     /// fetch state from system address 0x0
     pub fn refresh_chain_info(&mut self) -> Result<(ChainView, Vec<ValidatorView>), Error> {
         // let mut client = client::pick_client();
@@ -122,20 +121,27 @@ impl Node {
             let account_state = AccountState::try_from(&account_blob)?;
             let meta = self.client.get_metadata()?;
 
-            let conf_resource = account_state
-                .get_configuration_resource()?
-                .unwrap();
+            let conf_resource = match account_state
+            .get_configuration_resource()? {
+                Some(cr) => cr,
+                None => bail!("cannot get configuration resource from chain"),
+            };
 
             cs.epoch = conf_resource.epoch();
 
-            cs.validator_count = account_state
-                .get_validator_set()?
-                .unwrap()
-                .payload()
-                .len() as u64;
+            let validator_set = match account_state
+            .get_validator_set()? {
+                Some(vs) => vs,
+                None => bail!("cannot get validator set resource from chain"),
+            };
+
+            cs.validator_count = validator_set.payload().len() as u64;
 
             // Get vals stats
-            let validators_stats = account_state.get_validators_stats()?.unwrap();
+            let validators_stats = match account_state.get_validators_stats()?{
+                Some(vsr) => vsr,
+                None => bail!("could not get validators stats"),
+            };
 
             // Calculate Epoch Progress
             let ts = conf_resource.last_reconfiguration_time() as i64 / 1000000;
@@ -166,9 +172,7 @@ impl Node {
                 .get_oracle_upgrade_state()?;
 
             let dict = self.load_account_dictionary();
-            let validators: Vec<ValidatorView> = account_state
-                .get_validator_set()?
-                .unwrap()
+            let validators: Vec<ValidatorView> = validator_set
                 .payload()
                 .iter()
                 .filter_map(|v| {
@@ -270,10 +274,10 @@ impl Node {
 
         // iterate over all validators
         for val in vals.iter() {
-            if val.autopay.is_some() {
+            if let Some(ap) = &val.autopay {
                 // iterate over all autopay instructions
                 let mut val_payees: HashMap<AccountAddress, u64> = HashMap::new();
-                for payment in val.autopay.as_ref().unwrap().payments.iter() {
+                for payment in ap.payments.iter() {
                     if payment.is_percent_of_change() {
                         total += payment.amt;
                         *val_payees.entry(payment.payee).or_insert(0) += payment.amt;
