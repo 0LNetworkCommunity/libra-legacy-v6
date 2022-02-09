@@ -61,10 +61,11 @@ pub struct AppCfg {
 }
 
 /// Get a AppCfg object from toml file
-pub fn parse_toml(path: PathBuf) -> Result<AppCfg, Error> {
-    // let mut config_toml = path.to_str().unwrap().to_owned()).expect("could not parse app config from file");
+pub fn parse_toml(path: Option<PathBuf>) -> Result<AppCfg, Error> {
+    let cfg_path = path.unwrap_or(dirs::home_dir().unwrap().join(".0L").join("0L.toml"));
+
     let mut toml_buf = "".to_string();
-    let mut file = File::open(&path)?;
+    let mut file = File::open(&cfg_path)?;
     file.read_to_string(&mut toml_buf)?;
 
 
@@ -74,7 +75,7 @@ pub fn parse_toml(path: PathBuf) -> Result<AppCfg, Error> {
 
 /// Get a AppCfg object from toml file
 pub fn fix_missing_fields(path: PathBuf) -> Result<(), Error> {
-    let cfg: AppCfg = parse_toml(path)?;
+    let cfg: AppCfg = parse_toml(Some(path))?;
     cfg.save_file();
     Ok(())
 }
