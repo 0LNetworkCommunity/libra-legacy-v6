@@ -474,16 +474,14 @@ pub fn eval_tx_status(result: TransactionView) -> Result<TransactionView, TxErro
             Ok(result)
         },
         VMStatusView::MoveAbort {location, abort_code, explanation: _ } => {
-            println!("Transaction failed");
+            let msg = format!("Transaction failed, rejected with status: {:?}", result.vm_status);
+            println!("{}", &msg);
             Err(TxError{
-                err: Some(Error::msg(format!("Rejected with code: {:?}", result.vm_status))),
+                err: Some(Error::msg(msg)),
                 tx_view: Some(result.clone()),
                 location: Some(location.to_string()),
                 abort_code: Some(*abort_code),
             })
-            // let msg = format!("Rejected with code: {:?}", result.vm_status);
-            // let e = Error::msg(msg);
-            // Err(e.context(result.vm_status.clone()))
         },
         _ => {
             let msg = format!("Rejected with code: {:?}", result.vm_status);
