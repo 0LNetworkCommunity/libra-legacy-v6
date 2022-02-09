@@ -45,7 +45,7 @@ onboard user
 To submit the first proof (proof_0.json), you need to start the tower app using a special parameter:
 
 ```
-tower -o -b start
+tower start -o -b
 ```
 
 After the successful first transfer, continue with starting the tower app (see below).
