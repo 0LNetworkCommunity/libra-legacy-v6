@@ -102,7 +102,7 @@ impl Node {
     }
 
     /// Get account auto pay resource
-    pub fn get_autopay_view(&mut self, account: AccountAddress) -> Result<AutoPayView, Error> {
+    pub fn get_autopay_view(&self, account: AccountAddress) -> Result<AutoPayView, Error> {
         let state = self.get_account_state(account)?;
          match state.get_resource_impl::<AutoPayResource>(
                 AutoPayResource::resource_path().as_slice()
@@ -114,7 +114,7 @@ impl Node {
     }
 
     /// Enrich with notes from dictionary file
-    fn enrich_note(&mut self, mut autopay: AutoPayView) -> AutoPayView {
+    fn enrich_note(&self, mut autopay: AutoPayView) -> AutoPayView {
         let dic = self.load_account_dictionary();
         for payment in autopay.payments.iter_mut()  {
             payment.note = Some(dic.get_note_for_address(payment.payee));
@@ -124,7 +124,7 @@ impl Node {
 
     /// Get validator config view
     pub fn get_validator_config(
-        &mut self, address: AccountAddress
+        &self, address: AccountAddress
     ) -> Result<ValidatorConfigView, Error> {
         let state = self.get_account_state(address)?;
         match state
@@ -132,7 +132,7 @@ impl Node {
           ValidatorConfigResource::resource_path().as_slice()
           )? {
             Some(res) => {
-              let mut view = res.get_view();
+              let mut view = res.get_view().clone();
 
                 let operator = view.operator_account;
                 if let Some(o) = operator {
@@ -146,7 +146,7 @@ impl Node {
     }
 
     /// Query if valid account has balance greater than zero
-    pub fn has_positive_balance(&mut self, address: AccountAddress) -> bool {
+    pub fn has_positive_balance(&self, address: AccountAddress) -> bool {
         match self.get_account_balance(address) {
             Some(v) => v > 0.0,
             None => false,
@@ -164,7 +164,7 @@ impl Node {
     }
 
     /// Get account balance
-    pub fn get_account_balance(&mut self, address: AccountAddress) -> Option<f64> {
+    pub fn get_account_balance(&self, address: AccountAddress) -> Option<f64> {
         match self.client.get_account(&address) {
             Ok(Some(account_view)) => Some(get_balance(account_view)),
             Ok(None) => None,
@@ -190,7 +190,7 @@ impl Node {
     }
 
     /// get any account state with client
-    pub fn get_account_state(&mut self, address: AccountAddress) -> Result<AccountState, Error> {
+    pub fn get_account_state(&self, address: AccountAddress) -> Result<AccountState, Error> {
         let (blob, _ver) = self.client.get_account_state_blob(&address)?;
         if let Some(account_blob) = blob {
             match AccountState::try_from(&account_blob) {
