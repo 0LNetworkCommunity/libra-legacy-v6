@@ -113,8 +113,8 @@ impl Node {
         };
         let mut cs = ChainView::default();
 
-        // TODO: This is duplicated with check.rs
-        self.client.update_and_verify_state_proof()?;
+        // TODO: Uncomment this if the tools are not fetch up to date info  
+        // self.client.update_and_verify_state_proof()?;
 
         cs.waypoint = self.client.waypoint().ok();
 
@@ -127,31 +127,19 @@ impl Node {
                 None => bail!("cannot get configuration resource from chain"),
             };
 
+            ////////////// CHAIN METADATA //////////////
             cs.epoch = conf_resource.epoch();
 
-            let validator_set = match account_state.get_validator_set()? {
-                Some(vs) => vs,
-                None => bail!("cannot get validator set resource from chain"),
-            };
-
-            cs.validator_count = validator_set.payload().len() as u64;
-
-            // Get vals stats
-            let validators_stats = match account_state.get_validators_stats()? {
-                Some(vsr) => vsr,
-                None => bail!("could not get validators stats"),
-            };
-
             // Calculate Epoch Progress
-            let ts = conf_resource.last_reconfiguration_time() as i64 / 1000000;
+            let time_start = conf_resource.last_reconfiguration_time() as i64 / 1000000;
 
             let now = Utc::now().timestamp();
 
             match meta.chain_id {
                 // testnet has faster epochs
-                4 => cs.epoch_progress = (now - ts) as f64 / 61f64, // 1 minute
+                4 => cs.epoch_progress = (now - time_start) as f64 / 61f64, // 1 minute
                 // for main net
-                _ => cs.epoch_progress = (now - ts) as f64 / 86401f64, // 24 hours
+                _ => cs.epoch_progress = (now - time_start) as f64 / 86401f64, // 24 hours
             }
             if cs.epoch_progress > 1f64 {
                 cs.epoch_progress = 0f64;
@@ -166,9 +154,23 @@ impl Node {
 
             cs.height = meta.version;
 
-            cs.upgrade = self.client.get_oracle_upgrade_state()?;
+            ////////////// GET VALIDATOR INFO //////////////
+            let validator_set = match account_state.get_validator_set()? {
+                Some(vs) => vs,
+                None => bail!("cannot get validator set resource from chain"),
+            };
+
+            cs.validator_count = validator_set.payload().len() as u64;
+
+            // Get vals stats
+            let validators_stats = match account_state.get_validators_stats()? {
+                Some(vsr) => vsr,
+                None => bail!("could not get validators stats"),
+            };
 
             let dict = self.load_account_dictionary();
+
+            // Fetch and format all data for each Validator
             let validators: Vec<ValidatorView> = validator_set
                 .payload()
                 .iter()
@@ -178,7 +180,8 @@ impl Node {
             cs.validator_view = Some(validators.clone());
             cs.validators_stats = Some(validators_stats);
             cs.vals_config_stats = calc_config_stats(validators.clone()).ok();
-            cs.autopay_watch_list = self.get_autopay_watch_list(validators.clone());
+            cs.autopay_watch_list =  self.get_autopay_watch_list(validators.clone());
+            cs.upgrade = self.client.get_oracle_upgrade_state()?;
 
             self.vitals.chain_view = Some(cs.clone());
 
@@ -188,7 +191,12 @@ impl Node {
         bail!("could not get chain info")
     }
 
-    fn format_validator_info(&self, v: &ValidatorInfo, dict: &AccountDictionary, stats: &ValidatorsStatsResource) -> Result<ValidatorView, Error> {
+    fn format_validator_info(
+      &self,
+      v: &ValidatorInfo,
+      dict: &AccountDictionary,
+      stats: &ValidatorsStatsResource
+    ) -> Result<ValidatorView, Error> {
     let full_node_ip = match v.config().fullnode_network_addresses() {
         Ok(ips) => {
             if ips.len() > 0 {
