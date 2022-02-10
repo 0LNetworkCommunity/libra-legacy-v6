@@ -7,12 +7,12 @@ Last but not least you need to export the path where your package manager instal
 
 * if you use zsh (the default shell on macOS starting with Catalina) the file to place this export is the `.zprofile` file in your home directory:
 ```
-$ echo "export LIBRARY_PATH=/opt/homebrew/lib" >> ~/.zprofile
+$ echo "export LIBRARY_PATH=$(brew --prefix)/lib" >> ~/.zprofile
 $ source ~/.zprofile
 ```
 * if you use bash, the `.bash_profile` file in your home directory is the relevant file:
 ```
-$ echo "export LIBRARY_PATH=/opt/homebrew/lib" >> ~/.bash_profile
+$ echo "export LIBRARY_PATH=$(brew --prefix)/lib" >> ~/.bash_profile
 $ source ~/.bash_profile
 ```
 
