@@ -5,7 +5,7 @@ use crate::{
     account_config::constants::CORE_CODE_ADDRESS,
 };
 
-use anyhow::Result;
+use anyhow::{Result, Error, bail};
 use move_core_types::{
     ident_str,
     identifier::IdentStr,
@@ -66,16 +66,19 @@ impl ValidatorsStatsResource {
         bcs::from_bytes(bytes).map_err(Into::into)
     }
 
-    pub fn get_validator_current_stats(&self, validator_address: AccountAddress) -> ValidatorStats {
-        let validator_index = self.get_validator_index(validator_address);
-        ValidatorStats {
-            vote_count: self.current.vote_count.get(validator_index).unwrap().to_owned(),
-            prop_count: self.current.prop_count.get(validator_index).unwrap().to_owned(),
-        }
+    pub fn get_validator_current_stats(&self, validator_address: AccountAddress) -> Result<ValidatorStats, Error> {
+        let validator_index = self.get_validator_index(validator_address)?;
+        Ok(ValidatorStats {
+            vote_count: self.current.vote_count.get(validator_index).unwrap_or(&0).to_owned(),
+            prop_count: self.current.prop_count.get(validator_index).unwrap_or(&0).to_owned(),
+        })
     }
     
-    pub fn get_validator_index(&self, validator_address: AccountAddress) -> usize {
-        self.current.addr.iter().position(|&each| each == validator_address).unwrap()
+    pub fn get_validator_index(&self, validator_address: AccountAddress) -> Result<usize, Error> {
+        if let Some(i) = self.current.addr.iter().position(|&each| each == validator_address){
+          return Ok(i)
+        }
+        bail!("cannot find validator in validator set")
     }
 }
 
