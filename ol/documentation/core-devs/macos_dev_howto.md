@@ -27,6 +27,7 @@ $ git clone git@github.com:OLSF/libra.git
 2. Install the Rust programming language and some tools.
 ```
 $ cd libra
+$ chmod +x ./ol/util/setup.sh
 $ ./ol/util/setup.sh | bash
 $ source ~/.profile
 ```
