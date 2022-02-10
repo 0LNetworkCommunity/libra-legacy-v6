@@ -61,7 +61,7 @@ impl Node {
             Ok(c) => Some(c),
             Err(_) => {
               // println!("Warn: could not find a validator config file, trying fullnode");
-              match NodeConfig::load(conf.workspace.node_home.join("fullnode.node.yaml")) {
+              match NodeConfig::load(app_cfg.workspace.node_home.join("fullnode.node.yaml")) {
                 Ok(c) => Some(c),
                 Err(_) => {
                   // println!("ERROR: could not find any *.node.yaml file. Will start without knowing the Node configs");
