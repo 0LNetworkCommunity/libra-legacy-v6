@@ -18,21 +18,20 @@ use diem_types::waypoint::Waypoint;
 use diem_wallet::WalletLibrary;
 use fs_extra::file::{copy, CopyOptions};
 use ol_keys::{scheme::KeyScheme, wallet};
-use ol_types::{config::{fix_missing_fields, parse_toml}, fixtures, rpc_playlist};
+use ol_types::{config::fix_missing_fields, fixtures, rpc_playlist};
 use std::process::exit;
 use std::{fs, path::PathBuf};
 use url::Url;
 /// `init` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct InitCmd {
-      /// Create the 0L.toml file for 0L apps
+    /// Create the 0L.toml file for 0L apps
     #[options(help = "Create the 0L.toml file for 0L apps")]
     app: bool,
 
     /// For "app" option an upstream peer to use in 0L.toml
     #[options(help = "An upstream peer to use in 0L.toml")]
     rpc_peer: Option<Url>,
-
 
     /// For "app" option home path for app config
     #[options(help = "home path for app config")]
@@ -51,7 +50,9 @@ pub struct InitCmd {
     fullnode: bool,
 
     /// Set the upstream peers playlist from an http served playlist file
-    #[options(help = "Use a playlist.json file hosted online to set the upstream_peers field in 0L.toml")]
+    #[options(
+        help = "Use a playlist.json file hosted online to set the upstream_peers field in 0L.toml"
+    )]
     rpc_playlist: Option<String>, // Using string so that the user can use a default upstream
 
     /// Search and get seed peers from chain
@@ -102,12 +103,17 @@ impl Runnable for InitCmd {
         let entry_args = entrypoint::get_args();
         let is_swarm = *&entry_args.swarm_path.is_some();
 
-
         if self.update_waypoint {
             // TODO: will need to update the key_store.json file with waypoint info.
             if let Some(w) = self.waypoint {
                 app_cfg.chain_info.base_waypoint = Some(w);
-                app_cfg.save_file();
+                match app_cfg.save_file() {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("could not save config file, exiting. Message: {:?}", e);
+                        exit(1)
+                    }
+                }
                 return;
             };
             let client = match client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg) {
@@ -125,11 +131,25 @@ impl Runnable for InitCmd {
 
             match node.waypoint() {
                 Ok(w) => {
-                    key::set_waypoint(&app_cfg.workspace.node_home, &app_cfg.profile.account.to_string(), w);
-                    key::set_genesis_waypoint(&app_cfg.workspace.node_home, &app_cfg.profile.account.to_string(), w);
+                    key::set_waypoint(
+                        &app_cfg.workspace.node_home,
+                        &app_cfg.profile.account.to_string(),
+                        w,
+                    );
+                    key::set_genesis_waypoint(
+                        &app_cfg.workspace.node_home,
+                        &app_cfg.profile.account.to_string(),
+                        w,
+                    );
 
                     app_cfg.chain_info.base_waypoint = Some(w);
-                    app_cfg.save_file();
+                    match app_cfg.save_file() {
+                        Ok(_) => {}
+                        Err(e) => {
+                            println!("could not save config file, exiting. Message: {:?}", e);
+                            exit(1)
+                        }
+                    }
                     return;
                 }
                 Err(e) => {
@@ -138,45 +158,39 @@ impl Runnable for InitCmd {
                 }
             }
         }
-        
+
         if let Some(url) = self.rpc_playlist.as_ref() {
-          
+            // try to parse it, otherwise get_known_fullnodes will use a default playlist
+            let playlist_url: Option<Url> = url.parse().ok();
 
-          // try to parse it, otherwise get_known_fullnodes will use a default playlist
-          let playlist_url: Option<Url> = url.parse().ok();
+            match rpc_playlist::get_known_fullnodes(playlist_url) {
+                Ok(f) => {
+                    println!("peers found:");
+                    f.get_urls()
+                        .into_iter()
+                        .for_each(|u| println!("{}", u.as_str()));
 
-           match rpc_playlist::get_known_fullnodes(playlist_url){
-              Ok(f) => {
-
-                let mut new_cfg = match parse_toml(self.app_cfg_path.clone()) { // if None path just use default
-                    Ok(c) => c,
-                    Err(e) => {
-                      println!("could not parse app config toml file, exiting. Message: {:?}", e );
-                      exit(1);
-                    },
-                };
-                new_cfg.profile.upstream_nodes = f.get_urls();
-
-                println!("peers found:");
-                new_cfg.profile.upstream_nodes.iter()
-                .for_each(|u| {
-                  println!("{}", u.as_str())
-                });
-
-                // println!("peers found: {:?}", new_cfg.profile.upstream_nodes);
-
-                new_cfg.save_file();
-                println!("Upstream RPC peers updated in 0L.toml");
-                return
-              },
-              Err(e) => {
-                println!("could not read playlists from {:?}, exiting. Message: {:?}", url, e);
-                exit(1);
-              },
-          };
+                    match f.update_config_file(self.app_cfg_path.clone()) {
+                        Ok(_) => println!("Upstream RPC peers updated in 0L.toml"),
+                        Err(e) => {
+                            println!(
+                                "could not update rpc peers in config file, exiting. Message: {:?}",
+                                e
+                            );
+                            exit(1);
+                        }
+                    }
+                    return;
+                }
+                Err(e) => {
+                    println!(
+                        "could not read playlists from {:?}, exiting. Message: {:?}",
+                        url, e
+                    );
+                    exit(1);
+                }
+            };
         }
-        
-
 
         // fetch a list of seed peers from the current on chain discovery
         // doesn't need mnemonic
@@ -393,7 +407,7 @@ pub fn initialize_host_swarm(
     persona: Option<String>,
     source_path: &Option<PathBuf>,
 ) -> Result<(), Error> {
-    let cfg = AppCfg::init_app_configs_swarm(swarm_path, node_home, source_path.clone());
+    let cfg = AppCfg::init_app_configs_swarm(swarm_path, node_home, source_path.clone())?;
     let p = persona.unwrap_or("alice".to_string());
     let source = fixtures::get_persona_block_zero_path(&p, "test");
     let blocks_dir = PathBuf::new()
@@ -433,7 +447,11 @@ pub fn initialize_val_key_store(
     let home_dir = &app_cfg.workspace.node_home;
     let keys = KeyScheme::new(wallet);
     let namespace = app_cfg.format_oper_namespace();
-    let way = way_opt.unwrap_or("0:c12c01d2ac6deb028567c9a9c816ca3fe53fab9c461e4eab2f89125f975b63c3".parse().unwrap());
+    let way = way_opt.unwrap_or(
+        "0:c12c01d2ac6deb028567c9a9c816ca3fe53fab9c461e4eab2f89125f975b63c3"
+            .parse()
+            .unwrap(),
+    );
 
     init::key_store_init(home_dir, &namespace, keys, is_genesis);
     key::set_operator_key(home_dir, &namespace);
