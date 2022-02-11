@@ -18,10 +18,7 @@ use diem_types::waypoint::Waypoint;
 use diem_wallet::WalletLibrary;
 use fs_extra::file::{copy, CopyOptions};
 use ol_keys::{scheme::KeyScheme, wallet};
-use ol_types::{
-    config::{fix_missing_fields, parse_toml},
-    fixtures, rpc_playlist,
-};
+use ol_types::{config::fix_missing_fields, fixtures, rpc_playlist};
 use std::process::exit;
 use std::{fs, path::PathBuf};
 use url::Url;
@@ -110,7 +107,13 @@ impl Runnable for InitCmd {
             // TODO: will need to update the key_store.json file with waypoint info.
             if let Some(w) = self.waypoint {
                 app_cfg.chain_info.base_waypoint = Some(w);
-                app_cfg.save_file();
+                match app_cfg.save_file() {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("could not save config file, exiting. Message: {:?}", e);
+                        exit(1)
+                    }
+                }
                 return;
             };
             let client = match client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg) {
@@ -163,7 +166,9 @@ impl Runnable for InitCmd {
             match rpc_playlist::get_known_fullnodes(playlist_url) {
                 Ok(f) => {
                     println!("peers found:");
-                    f.get_urls().into_iter().for_each(|u| println!("{}", u.as_str()));
+                    f.get_urls()
+                        .into_iter()
+                        .for_each(|u| println!("{}", u.as_str()));
 
                     match f.update_config_file(self.app_cfg_path.clone()) {
                         Ok(_) => println!("Upstream RPC peers updated in 0L.toml"),
