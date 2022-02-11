@@ -1,7 +1,11 @@
 //! seed peers for connecting to various networks.
+use std::path::PathBuf;
+
 use anyhow::Error;
 use serde::{Deserialize};
 use url::Url;
+
+use crate::config;
 
 #[derive(Deserialize)]
 /// A list of host information for upstream fullnodes serving RPC servers
@@ -34,12 +38,20 @@ impl FullnodePlaylist {
     Ok(play)
   }
 
-    /// extract the urls from the playlist struct
+  /// extract the urls from the playlist struct
   pub fn get_urls(&self) -> Vec<Url>{
     self.nodes.iter()
     .filter_map(|a| {
       Some(a.url.to_owned())
     })
     .collect()
+  }
+
+  /// update the app configs 0L.toml file
+  pub fn update_config_file(&self, path: Option<PathBuf>) -> Result<(), Error> {
+    let mut new_cfg = config::parse_toml(path)?;
+    new_cfg.profile.upstream_nodes = self.get_urls();
+
+    new_cfg.save_file()
   }
 }
