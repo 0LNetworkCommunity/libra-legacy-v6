@@ -1,6 +1,6 @@
-# Miner
+# Tower
 
-Miner is an application.
+Tower is an application.
 
 ## Getting Started
 

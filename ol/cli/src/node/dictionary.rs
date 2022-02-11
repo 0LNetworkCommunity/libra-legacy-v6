@@ -23,7 +23,7 @@ pub struct AccountDictionaryEntry {
 
 impl Node {
     /// load account dictionary from json file
-    pub fn load_account_dictionary(&mut self) -> AccountDictionary {
+    pub fn load_account_dictionary(&self) -> AccountDictionary {
         let node_home = &self.app_conf.workspace.node_home;
         let dic_path = node_home.join("accounts-dictionary.json");
         match Path::new(&dic_path).exists() {
