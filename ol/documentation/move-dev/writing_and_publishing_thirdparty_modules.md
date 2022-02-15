@@ -5,7 +5,7 @@ This guide will walk through the process of publishing, testing and verifying a 
 ## Functional Tests
 ---
 ### Testing
->The Move test runner leverages the Rust test infrastructure (cargo test) where we can run all tests, or filenames which match a keyword: e.g cargo test persist will run persistence_demo.move.
+>The Move test runner leverages the Rust test infrastructure (cargo test) where we can run all tests, or filenames which match a keyword: e.g cargo test persist will run persistence.move.
 
 Functional tests can be found in  ```<path/to/ol>/language/move-lang/functional_tests/test/move ```
 
