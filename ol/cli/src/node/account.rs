@@ -1,7 +1,7 @@
 //! `account`
 
 use crate::node::node::Node;
-use anyhow::{Error, Result};
+use anyhow::{Error, Result, bail};
 use diem_json_rpc_client::{views::{AccountView, EventView}, AccountAddress};
 use diem_types::{account_state::AccountState, event::{EventHandle, EventKey}, transaction::Version};
 use ol_types::{
@@ -66,55 +66,55 @@ impl OwnerAccountView {
 
 impl Node {
     /// fetch new account info
-    pub fn refresh_account_info(&mut self) -> Option<&OwnerAccountView>{
-        match self.get_account_view() {
-            Some(av) => {
-                self.vitals.account_view.balance = get_balance(av);
-                self.vitals.account_view.is_in_validator_set = 
-                    self.is_in_validator_set();
-                self.vitals.account_view.autopay = 
-                    self.get_autopay_view(self.vitals.account_view.address);
-                let operator = 
-                    self.get_validator_operator_account(
-                        self.vitals.account_view.address
-                    );
-                self.vitals.account_view.operator_account = operator;
-                if let Some(a) = operator {
-                    self.vitals.account_view.operator_balance = 
-                        self.get_account_balance(a);
-                }
-                Some(&self.vitals.account_view)
-            }
-            None => None
+    pub fn refresh_account_info(&mut self) -> Result<OwnerAccountView, Error>{
+        let av = self.get_account_view()?;
+
+        self.vitals.account_view.balance = get_balance(av);
+        
+        self.vitals.account_view.is_in_validator_set = 
+            self.is_in_validator_set();
+        
+            self.vitals.account_view.autopay = 
+            self.get_autopay_view(self.vitals.account_view.address).ok();
+        
+        let operator = 
+            self.get_validator_operator_account(
+                self.vitals.account_view.address
+            ).ok();
+        
+        self.vitals.account_view.operator_account = operator;
+        
+        if let Some(a) = operator {
+            self.vitals.account_view.operator_balance = 
+                self.get_account_balance(a);
         }
+        
+        Ok(self.vitals.account_view.clone())
     }
 
     /// Get the account view struct
-    pub fn get_account_view(&mut self) -> Option<AccountView> {
+    pub fn get_account_view(&mut self) -> Result<AccountView, Error> {
         let account = self.app_conf.profile.account;
         match self.client.get_account(&account) {
-            Ok(account_view) => account_view,
-            Err(_) => None
+            Ok(Some(account_view)) => Ok(account_view),
+            _ => bail!("could not get account view")
         }
     }
 
     /// Get account auto pay resource
-    pub fn get_autopay_view(&mut self, account: AccountAddress) -> Option<AutoPayView> {
-        let state = self.get_account_state(account);
-        match state {
-            Ok(state) => match state.get_resource_impl::<AutoPayResource>(
+    pub fn get_autopay_view(&self, account: AccountAddress) -> Result<AutoPayView, Error> {
+        let state = self.get_account_state(account)?;
+         match state.get_resource_impl::<AutoPayResource>(
                 AutoPayResource::resource_path().as_slice()
             ) {
-                Ok(Some(res)) => Some(self.enrich_note(res.get_view())),
-                Ok(None) => None,
-                Err(_) => None
+                Ok(Some(res)) => Ok(self.enrich_note(res.get_view())),
+                _ => bail!("cannot get autopay view")
             }
-            Err(_) => None
-        }
+      
     }
 
     /// Enrich with notes from dictionary file
-    fn enrich_note(&mut self, mut autopay: AutoPayView) -> AutoPayView {
+    fn enrich_note(&self, mut autopay: AutoPayView) -> AutoPayView {
         let dic = self.load_account_dictionary();
         for payment in autopay.payments.iter_mut()  {
             payment.note = Some(dic.get_note_for_address(payment.payee));
@@ -124,32 +124,29 @@ impl Node {
 
     /// Get validator config view
     pub fn get_validator_config(
-        &mut self, address: AccountAddress
-    ) -> Option<ValidatorConfigView> {
-        let state = self.get_account_state(address);
-        match state {
-            Ok(state) => match state.get_resource_impl::<ValidatorConfigResource>(
-                ValidatorConfigResource::resource_path().as_slice()
-            ) {
-                Ok(Some(res)) => {
-                    let mut view = res.get_view();
-                    
-                    let operator = view.operator_account;
-                    if operator.is_some() {
-                        view.operator_has_balance = 
-                            Some(self.has_positive_balance(operator.unwrap()))
-                    }
-                    Some(view)
-                },
-                Ok(None) => None,
-                Err(_) => None
-            }
-            Err(_) => None
+        &self, address: AccountAddress
+    ) -> Result<ValidatorConfigView, Error> {
+        let state = self.get_account_state(address)?;
+        match state
+          .get_resource_impl::<ValidatorConfigResource>(
+          ValidatorConfigResource::resource_path().as_slice()
+          )? {
+            Some(res) => {
+              let mut view = res.get_view().clone();
+
+                let operator = view.operator_account;
+                if let Some(o) = operator {
+                  view.operator_has_balance = 
+                    Some(self.has_positive_balance(o))
+                }
+                Ok(view)
+            },
+            None => bail!("cannot get account resource"),
         }
     }
 
     /// Query if valid account has balance greater than zero
-    pub fn has_positive_balance(&mut self, address: AccountAddress) -> bool {
+    pub fn has_positive_balance(&self, address: AccountAddress) -> bool {
         match self.get_account_balance(address) {
             Some(v) => v > 0.0,
             None => false,
@@ -159,15 +156,15 @@ impl Node {
     /// Get operator account addres from validator
     pub fn get_validator_operator_account(
         &mut self, address: AccountAddress
-    ) -> Option<AccountAddress> {
-        match self.get_validator_config(address) {
-            Some(config) => config.operator_account,
-            None => None
-        }
+    ) -> Result<AccountAddress, Error> {
+      match self.get_validator_config(address)?.operator_account {
+        Some(a) => Ok(a),
+        None => bail!("no operator address found")
+      }
     }
 
     /// Get account balance
-    pub fn get_account_balance(&mut self, address: AccountAddress) -> Option<f64> {
+    pub fn get_account_balance(&self, address: AccountAddress) -> Option<f64> {
         match self.client.get_account(&address) {
             Ok(Some(account_view)) => Some(get_balance(account_view)),
             Ok(None) => None,
@@ -193,7 +190,7 @@ impl Node {
     }
 
     /// get any account state with client
-    pub fn get_account_state(&mut self, address: AccountAddress) -> Result<AccountState, Error> {
+    pub fn get_account_state(&self, address: AccountAddress) -> Result<AccountState, Error> {
         let (blob, _ver) = self.client.get_account_state_blob(&address)?;
         if let Some(account_blob) = blob {
             match AccountState::try_from(&account_blob) {

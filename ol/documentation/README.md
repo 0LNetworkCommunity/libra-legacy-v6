@@ -1,6 +1,6 @@
 # 0L Documentation
 ## CLI
-[CLI Cheatsheet](cli_cheatsheet.md)
+[CLI Cheatsheet](../../ol/cli/README.md)
 
 ## Running Tower, i.e Mining.
 
