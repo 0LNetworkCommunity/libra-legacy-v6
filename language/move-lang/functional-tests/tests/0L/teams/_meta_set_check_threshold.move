@@ -83,9 +83,9 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    // use 0x1::Mock;
     use 0x1::TowerState;
     use 0x1::Debug::print;
+
 
     fun main(vm: signer) {
       TowerState::test_epoch_reset_counter(&vm);
@@ -105,6 +105,8 @@ script {
       print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
       print(&TowerState::get_count_in_epoch(@{{bob}}));
       print(&TowerState::get_count_above_thresh_in_epoch(@{{bob}}));
+
+
     }
 }
 //check: EXECUTED
@@ -116,10 +118,13 @@ script {
     use 0x1::Teams;
 
     fun main(vm: signer) {
+      assert(!Teams::is_member_above_thresh(@{{alice}}), 735701);
+      assert(Teams::is_member_above_thresh(@{{bob}}), 735701);
+
       let rms = Teams::find_rms_of_towers(&vm);
-      assert(rms == 8, 735701);
+      assert(rms == 8, 735702);
 
       let thresh = Teams::set_threshold_as_pct_rms(&vm);
-      assert(thresh == 2, 735702);
+      assert(thresh == 2, 735703);
     }
 }

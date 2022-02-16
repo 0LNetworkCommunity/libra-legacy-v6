@@ -55,6 +55,7 @@ script {
       Teams::maybe_activate_member_to_team(&sender);
       let members = Teams::get_team_members(@{{alice}});
 
+
       assert(Vector::contains<address>(&members, &@{{bob}}), 735703);
     }
 }

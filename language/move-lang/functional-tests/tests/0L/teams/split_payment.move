@@ -88,7 +88,6 @@ script {
     use 0x1::Cases;
     use 0x1::TowerState;
     use 0x1::DiemAccount;
-    // use 0x1::EpochBoundary;
     use 0x1::Debug::print;
     use 0x1::GAS::GAS;
     use 0x1::TransactionFee;
