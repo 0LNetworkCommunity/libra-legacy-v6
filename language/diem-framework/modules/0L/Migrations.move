@@ -112,10 +112,11 @@ module MigrateTowerCounter {
 
 module MigrateInitDelegation {
   use 0x1::Teams;
-  // use 0x1::TowerState;
+  use 0x1::CoreAddresses;
   use 0x1::Migrations;
   const UID: u64 = 2;
   public fun do_it(vm: &signer) {
+    CoreAddresses::assert_vm(vm);
     if (!Migrations::has_run(UID)) {
       Teams::vm_init(vm);
       // also initialize relevant state in TowerState
