@@ -2,7 +2,7 @@
 
 As you can see in our write ups elsewhere, we do things a little differently around here: we had no venture investors, there is no premine, no foundation with tokens, and anyone with a laptop can participate and earn coins.
 
-Here's a quick reference to the policies implemented at genesis, with further discussion below.
+Here's a quick reference to the policies implemented in system smart contracts, with further discussion below.
 
 ## Rewards
 
@@ -28,9 +28,12 @@ Here's a quick reference to the policies implemented at genesis, with further di
 
 - Securing the network is done by a maximum of 100 delegations of "Validator Nodes". This is very valuable work to the network.
 
-- At the start of the network each Validator Node has typically 1 entity or person behind it (a delegation of 1).
+- At Genesis of the network each Validator Node has typically 1 entity or person behind it (a delegation of 1).
+
+- Since the Teams upgrade, validators have the option to create "Teams" where the validator is the "team captain". Anyone with a Delay Tower can create join a team, and if the thresholds of proofs are correct, they can participate in the rewards of the Team.
 
 - To become a candidate for a Validator Node, all that is required is to run the configuration tool, and to have any existing Validator in a current validator set send an onboarding transaction. (it's not a vote by the validator set to include a new validator.)
+
 While it doesn't take group permission to onboard a new validator, existing validators are rate-limited from creating endless accounts. They can only onboard a new prospective validator every 14 days/epochs.
 
 - The budget for Validator subsidies is "thermostatic", it goes up or down depending on the total number of Validator Nodes doing work successfully. 
@@ -41,6 +44,7 @@ While it doesn't take group permission to onboard a new validator, existing vali
 
 - The validator subsidy only exists in the absence of sufficient transaction fees. It is a Guaranteed Minimum, which is net of transaction fees. So hypothetically if the network has 4 nodes, and hence the security budget is 8,400,000, however the total transaction fees are already above this number (e.g. 10,000,000), there is no need to subsidize the guaranteed minimum, there are no new Coins minted. This prevents unnecessary inflation.
 
+- To be on the validator candidate list (Validator Universe), every account pays 1GAS at every epoch.
 ## End Users Mining
 - Anyone with a laptop and with an ordinary account (End Users) can receive coins for creating a Delay Tower (proofs of elapsed time), as a basis for durable identity.  We also call this mining. 
 
@@ -61,7 +65,7 @@ The reward pool for all miners is exactly the equivalent of one Validator Node's
 
 - Early participants of a network may receive generous subsidies, but they are prevented from dumping on less sophisticated users, these are Slow Wallets. All validator node accounts, where a majority of rewards flow to must be Slow Wallets.
 
-- At genesis Slow Wallets currently cannot transfer Coins between accounts. At epoch 100, they get 10,000 coins unlocked per epoch (day).
+- At genesis Slow Wallets currently cannot transfer Coins between accounts. At epoch 1000, they get 1,000 coins unlocked per epoch (day).
 
 ### Community Wallets
 
@@ -114,7 +118,7 @@ To balance the needs of validators, and exploits possible, miners thus share the
 
 
 # Transferring Credits
-Transfers of credits are unlimited for End User accounts (plain accounts). If an End User is running  a "miner" and creating a tower, those credits are freely transferable.
+Transfers of credits are unlimited for End User accounts (plain accounts). If an End User is running  a "miner" and creating a Tower, those credits are freely transferable.
 
 There two categories of accounts that have opt-in rules for transfers:
 

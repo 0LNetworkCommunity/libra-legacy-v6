@@ -22,7 +22,7 @@ Teams are opt-in, self-assembled groups. People can move freely between teams. W
 The network will not enforce a percentage share between Captains and Members. This is a market, and we'll let the market decide what is appropriate.
 
 - Bias to decentralization
-The network will however bias toward decentralization, and ratchet-up the threshold for a collective tower hight that a validator node is required to have to enter consensus.
+The network will however bias toward decentralization, and ratchet-up the threshold for a collective tower height that a validator node is required to have to enter consensus.
 
 - Don't penalize individuals
 Proof of Work sybil resistance schemes, have known sybil attack scenarios. There is always a race between the individual miners (Human teams) and organizations with access to cheap computation (Synthetic teams). Usually well resourced organizations win. A design goal of Teams is to allow individual miners to join without penalty, but also slow down the rate a synthetic team can gain rewards. This is a problem that is not solvable, but workable within constraints. VDF proofs and delay have some favorable qualities, but does not solve all issues. The Teams design makes the race between Human and Sythetic teams explicit. With that algorithm will evolve as the game plays out.
