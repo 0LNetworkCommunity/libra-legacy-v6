@@ -91,7 +91,7 @@ address 0x1 {
       );
     }
 
-    public fun split_subsidy_to_team(vm: &signer, members: &vector<address>, value_to_members: u64) {
+    fun split_subsidy_to_team(vm: &signer, members: &vector<address>, value_to_members: u64) {
       let collective_height = TowerState::collective_tower_height(members);
       let i = 0;
       while (i < Vector::length(members)) {
