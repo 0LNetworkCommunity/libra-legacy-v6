@@ -22,7 +22,7 @@ module TowerState {
     // use 0x1::Decimal;
 
     const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 13;
-    const TEAM_MEMBER_TOWER_MIN: u64 = 336; // 7 days * 30mins proofs
+    const TEAM_MEMBER_TOWER_MIN_THRESH: u64 = 336; // 7 days * 30mins proofs
     /// A list of all miners' addresses 
     // reset at epoch boundary
     struct TowerList has key {
@@ -745,7 +745,7 @@ module TowerState {
         let s = borrow_global<TowerProofHistory>(node_addr);
         if (
           s.count_proofs_in_epoch > Globals::get_epoch_mining_thres_lower()
-          && s.verified_tower_height > TEAM_MEMBER_TOWER_MIN
+          && s.verified_tower_height > TEAM_MEMBER_TOWER_MIN_THRESH
         ) {
           return s.verified_tower_height
         };
