@@ -68,6 +68,7 @@ address 0x1 {
       if (Teams::team_is_init(*captain_address)) {
         // split captain reward and send to captain.
         let captain_pct = Teams::get_operator_reward(*captain_address);
+        if (captain_pct == 0 || captain_pct > 100) return;
         // split off the captain value
         captain_value = FixedPoint32::multiply_u64(
           subsidy_granted,
