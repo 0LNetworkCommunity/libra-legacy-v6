@@ -106,25 +106,46 @@ module Teams {
     // a member states his team's preference.
     // the member only actually joins a team for the purposes of calculating rewards
     // when they do enough mining in a period
-    public fun join_team(sender: &signer, captain_address: address) acquires Member {
+    public fun join_team(sender: &signer, new_captain: address) acquires Member, Team {
       let addr = Signer::address_of(sender);
       // needs to check if this is a slow wallet.
       // ask user to resubmit if not a slow wallet, so they are explicitly setting it, no surprises, no tears.
 
       assert(DiemAccount::is_slow(addr), ENOT_SLOW_WALLET);
-        
 
       // bob wants to switch to a different Team.
       if (exists<Member>(addr)) {
         let member_state = borrow_global_mut<Member>(addr);
+        let old_captain = member_state.captain_address;
+        maybe_switch_team(&addr, &new_captain, &old_captain);
+
         // update the membership list of the former captain
-        member_state.captain_address = captain_address;
-        // TODO: Do we need to reset mining_above_threshold if they are switching?
+        member_state.captain_address = new_captain;
+
+        
+    // TODO: Do we need to reset mining_above_threshold if they are switching?
       } else { // first time joining a Team.
         move_to<Member>(sender, Member {
-          captain_address,
+          captain_address: new_captain,
           mining_above_threshold: false,
         });
+      };
+    }
+
+    fun maybe_switch_team(miner_addr: &address, new_captain: &address, old_captain: &address) acquires Team {
+      
+      // search for member, and drop
+      let old_team = borrow_global_mut<Team>(*old_captain);
+      let (found, i) = Vector::index_of<address>(&old_team.members, miner_addr);
+      if (found) {
+        Vector::remove(&mut old_team.members, i);
+      };
+
+      // join new team
+      let new_team = borrow_global_mut<Team>(*new_captain);
+      let (found, _) = Vector::index_of<address>(&new_team.members, miner_addr);
+      if (!found) {
+        Vector::push_back<address>(&mut new_team.members, *miner_addr);
       };
     }
 
