@@ -177,7 +177,6 @@ pub fn get_wallet_type(account: AccountAddress, mut node: Node) -> WalletType {
                 slow_struct_name.to_string(),
                 "transferred".to_string());
             if let (Some(U64(0)), Some(U64(0))) = (unlocked, transferred) {
-                dbg!(WalletType::Slow);
                 return WalletType::Slow;
             }
 
@@ -200,16 +199,11 @@ pub fn get_wallet_type(account: AccountAddress, mut node: Node) -> WalletType {
                 "unfreeze_votes".to_string());
             if let (Some(Bool(false)), Some(U64(0)), Some(Vector(TypeTag::Address, vec))) = (is_frozen, consecutive_rejections, unfreeze_votes) {
                 if vec.len() == 0 {
-                    dbg!(WalletType::Community);
                     return WalletType::Community;
                 }
             }
-            dbg!(WalletType::None);
             WalletType::None
         },
-        _ => {
-            dbg!(WalletType::None);
-            WalletType::None
-        },
+        _ => WalletType::None,
     }
 }
