@@ -43,7 +43,7 @@ impl Runnable for CreateTeamCmd {
     }
 }
 
-/// set the account type as slow, or community.
+/// submit a transaction to create a team. 
 pub fn create_team(
     team_name: &str,
     percent: &u64,
