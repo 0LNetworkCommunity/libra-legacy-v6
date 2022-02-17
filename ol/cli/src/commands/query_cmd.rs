@@ -4,11 +4,16 @@ use abscissa_core::{Command, Options, Runnable, status_info};
 use crate::{
     entrypoint,
     prelude::app_config,
-    node::query::QueryType,
+    node::query::{QueryType, WalletType, find_value_from_state, find_value_in_struct},
     node::client,
     node::node::Node
 };
 use std::process::exit;
+use move_core_types::{
+    account_address::AccountAddress,
+    language_storage::TypeTag
+};
+use resource_viewer::AnnotatedMoveValue::{Bool, U64, Vector};
 
 /// `bal` subcommand
 ///
@@ -76,7 +81,6 @@ impl Runnable for QueryCmd {
         let account = 
             if args.account.is_some() { args.account.unwrap() }
             else { cfg.profile.account };
-            
         let client = client::pick_client(
             args.swarm_path.clone(), &mut cfg
         ).unwrap_or_else(|e| {
@@ -154,5 +158,58 @@ impl Runnable for QueryCmd {
               exit(1);
             },
         };
+    }
+}
+
+pub fn get_wallet_type(account: AccountAddress, mut node: Node) -> WalletType {
+    match node.get_annotate_account_blob(account) {
+        Ok((Some(r), _)) => {
+            let slow_module_name = "DiemAccount";
+            let slow_struct_name = "SlowWallet";
+            let unlocked = find_value_from_state(
+                &r,
+                slow_module_name.to_string(),
+                slow_struct_name.to_string(),
+                "unlocked".to_string());
+            let transferred = find_value_from_state(
+                &r,
+                slow_module_name.to_string(),
+                slow_struct_name.to_string(),
+                "transferred".to_string());
+            if let (Some(U64(0)), Some(U64(0))) = (unlocked, transferred) {
+                dbg!(WalletType::Slow);
+                return WalletType::Slow;
+            }
+
+            let community_module_name = "Wallet";
+            let community_struct_name = "CommunityFreeze";
+            let is_frozen = find_value_from_state(
+                &r,
+                community_module_name.to_string(),
+                community_struct_name.to_string(),
+                "is_frozen".to_string());
+            let consecutive_rejections = find_value_from_state(
+                &r,
+                community_module_name.to_string(),
+                community_struct_name.to_string(),
+                "consecutive_rejections".to_string());
+            let unfreeze_votes = find_value_from_state(
+                &r,
+                community_module_name.to_string(),
+                community_struct_name.to_string(),
+                "unfreeze_votes".to_string());
+            if let (Some(Bool(false)), Some(U64(0)), Some(Vector(TypeTag::Address, vec))) = (is_frozen, consecutive_rejections, unfreeze_votes) {
+                if vec.len() == 0 {
+                    dbg!(WalletType::Community);
+                    return WalletType::Community;
+                }
+            }
+            dbg!(WalletType::None);
+            WalletType::None
+        },
+        _ => {
+            dbg!(WalletType::None);
+            WalletType::None
+        },
     }
 }

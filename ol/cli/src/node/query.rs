@@ -15,6 +15,7 @@ use move_core_types::{
 };
 use num_format::{Locale, ToFormattedString};
 use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
+use serde::{Deserialize, Serialize};
 
 const SCALING_FACTOR: u64 = 1_000_000;
 
@@ -73,6 +74,16 @@ pub enum QueryType {
       /// the account of the validator
       account: AccountAddress 
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum WalletType {
+    ///
+    None,
+    ///
+    Slow,
+    ///
+    Community,
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
