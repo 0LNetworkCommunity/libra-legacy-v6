@@ -72,6 +72,9 @@ module Teams {
 
 
     public fun team_init(sender: &signer, team_name: vector<u8>, operator_pct_reward: u64) {
+      if (operator_pct_reward < 10 || operator_pct_reward > 100 ) {
+        return
+      };
 
       assert(ValidatorUniverse::is_in_universe(Signer::address_of(sender)), 201301001);
       // An "captain", who is already a validator account, stores the Team struct on their account.
