@@ -18,7 +18,7 @@ use diem_types::waypoint::Waypoint;
 use diem_wallet::WalletLibrary;
 use fs_extra::file::{copy, CopyOptions};
 use ol_keys::{scheme::KeyScheme, wallet};
-use ol_types::{config::fix_missing_fields, fixtures, rpc_playlist};
+use ol_types::{config::{fix_missing_fields, parse_toml}, fixtures, rpc_playlist};
 use std::process::exit;
 use std::{fs, path::PathBuf};
 use url::Url;
