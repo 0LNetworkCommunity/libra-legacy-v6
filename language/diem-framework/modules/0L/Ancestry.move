@@ -21,18 +21,21 @@ address 0x1 {
     public fun init(onboarder: &signer, new_account: &signer ) acquires Ancestry {
       let parent = Signer::address_of(onboarder);
       let child = Signer::address_of(new_account);
+      print(&1);
+
+      if (!exists<Ancestry>(parent)) return;
 
       let parent_state = borrow_global_mut<Ancestry>(parent);
       let parent_tree = *&parent_state.tree;
-
+      print(&2);
       if (Vector::length<address>(&parent_tree) == 0) return;
       
       let earliest = *Vector::borrow(&parent_tree, 0);
-
+      print(&3);
       // push the onboarder onto the inherited tree.
       // for compression, we don't need the tree to include yourself.
       // but it needs to be extended.
-      
+
       Vector::push_back(&mut parent_tree, parent);
 
       if (!exists<Ancestry>(child)) {
@@ -42,6 +45,10 @@ address 0x1 {
         })
       }
 
+    }
+
+    public fun get_tree(addr: address): vector<address> acquires Ancestry {
+      *&borrow_global<Ancestry>(addr).tree
     }
 
     public fun migrate(sender: &signer) {
