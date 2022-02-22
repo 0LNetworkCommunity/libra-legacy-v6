@@ -122,11 +122,13 @@ script {
 script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
+  use 0x1::Debug::print;
 
   fun main(_vm: signer) {
-    // bob's community wallet increased after epoch change.
+    // bob's community wallet increased by 25% of subsidy after epoch change.
     let bal = DiemAccount::balance<GAS>(@{{bob}});
-    assert(bal == 2100399, 7357004);
+    print(&bal);
+    assert(bal == 45929570, 7357004);
   }
 }
 
