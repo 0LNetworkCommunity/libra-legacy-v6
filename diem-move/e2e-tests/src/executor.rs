@@ -43,7 +43,7 @@ use diem_types::{
 };
 use diem_vm::{
     convert_changeset_and_events, data_cache::RemoteStorage, parallel_executor::ParallelDiemVM,
-    read_write_set_analysis::add_on_functions_list, DiemVM, VMExecutor, VMValidator,
+    DiemVM, VMExecutor, VMValidator,
 };
 use diem_writeset_generator::{
     encode_disable_parallel_execution, encode_enable_parallel_execution_with_config,
@@ -56,7 +56,6 @@ use move_core_types::{
 };
 use move_vm_runtime::move_vm::MoveVM;
 use move_vm_types::gas_schedule::GasStatus;
-use read_write_set::analyze;
 
 static RNG_SEED: [u8; 32] = [9u8; 32];
 
@@ -382,12 +381,7 @@ impl FakeExecutor {
         &self,
         txn_block: Vec<Transaction>,
     ) -> Result<Vec<TransactionOutput>, VMStatus> {
-        let analyze_result = analyze(current_modules().iter())
-            .unwrap()
-            .normalize_all_scripts(add_on_functions_list());
-
-        let (result, _) =
-            ParallelDiemVM::execute_block(&analyze_result, txn_block, &self.data_store)?;
+        let (result, _) = ParallelDiemVM::execute_block(txn_block, &self.data_store)?;
 
         Ok(result)
     }

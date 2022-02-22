@@ -811,7 +811,7 @@ fn verify_genesis_write_set(events: &[ContractEvent]) {
     // (2) second event is account creation event for TreasuryCompliance
     ////////// 0L ////////
     // 0L: this now uses the diem-root account
-    let create_treasury_compliance_event = &events[1];
+    let _create_treasury_compliance_event = &events[1];
     assert_eq!(
         *create_diem_root_event.key(),
         CreateAccountEvent::event_key(),

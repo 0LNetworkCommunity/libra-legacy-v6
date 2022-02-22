@@ -52,7 +52,6 @@ use move_core_types::{
 };
 use move_vm_runtime::session::Session;
 use move_vm_types::gas_schedule::GasStatus;
-use read_write_set_dynamic::NormalizedReadWriteSetAnalysis;
 use std::{
     collections::HashSet,
     convert::{AsMut, AsRef},
@@ -464,7 +463,7 @@ impl DiemVM {
                         ChangeSet::new(cs, events)
                     }
                     Err(e) => {
-                        return Err(Ok((e, discard_error_output(StatusCode::INVALID_WRITE_SET))))
+                        return Err(Ok((e, discard_error_output(StatusCode::INVALID_WRITE_SET))));
                     }
                 }
             }
@@ -796,20 +795,15 @@ impl VMExecutor for DiemVM {
         });
 
         // Execute transactions in parallel if on chain config is set and loaded.
-        if let Some(read_write_set_analysis) =
+        if let Some(_read_write_set_analysis) =
             ParallelExecutionConfig::fetch_config(&RemoteStorage::new(state_view))
                 .and_then(|config| config.read_write_analysis_result)
                 .map(|config| config.into_inner())
         {
-            let analysis_reuslt = NormalizedReadWriteSetAnalysis::new(read_write_set_analysis);
-
             // Note that writeset transactions will be executed sequentially as it won't be inferred
             // by the read write set analysis and thus fall into the sequential path.
-            let (result, _) = crate::parallel_executor::ParallelDiemVM::execute_block(
-                &analysis_reuslt,
-                transactions,
-                state_view,
-            )?;
+            let (result, _) =
+                crate::parallel_executor::ParallelDiemVM::execute_block(transactions, state_view)?;
             Ok(result)
         } else {
             let output = Self::execute_block_and_keep_vm_status(transactions, state_view)?;

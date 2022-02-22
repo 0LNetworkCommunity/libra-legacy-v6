@@ -1420,6 +1420,16 @@ dependencies = [
 
 [[package]]
 name = "dashmap"
+version = "4.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e77a43b28d0668df09411cb0bc9a8c2adc40f9a048afe863e05fd43251e8e39c"
+dependencies = [
+ "cfg-if 1.0.0",
+ "num_cpus",
+]
+
+[[package]]
+name = "dashmap"
 version = "5.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c8858831f7781322e539ea39e72449c46b059638250c14344fec8d0aa6e539c"
@@ -2504,8 +2514,11 @@ name = "diem-parallel-executor"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "arc-swap",
  "criterion",
+ "crossbeam",
  "crossbeam-queue",
+ "diem-infallible 0.1.0",
  "diem-workspace-hack 0.1.0",
  "mvhashmap",
  "num_cpus",
@@ -4765,7 +4778,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ab388864246d58a276e60e7569a833d9cc4cd75c66e5ca77c177dad38e59996"
 dependencies = [
  "ahash",
- "dashmap",
+ "dashmap 5.2.0",
  "hashbrown 0.12.1",
  "once_cell",
  "parking_lot 0.12.1",
@@ -6032,6 +6045,9 @@ dependencies = [
 name = "mvhashmap"
 version = "0.1.0"
 dependencies = [
+ "arc-swap",
+ "crossbeam",
+ "dashmap 4.0.2",
  "diem-workspace-hack 0.1.0",
  "num_cpus",
  "once_cell",
@@ -6269,6 +6285,7 @@ dependencies = [
  "bitflags",
  "cfg-if 1.0.0",
  "libc",
+ "memoffset",
 ]
 
 [[package]]
@@ -6513,7 +6530,7 @@ dependencies = [
  "move-core-types",
  "move-resource-viewer",
  "move-vm-types",
- "nix 0.18.0",
+ "nix 0.24.1",
  "num-format",
  "ol-keys",
  "ol-types",
@@ -6635,7 +6652,7 @@ dependencies = [
  "diem-wallet",
  "dirs",
  "gumdrop 0.7.0",
- "hex 0.3.2",
+ "hex 0.4.3",
  "ol",
  "ol-keys",
  "ol-types",
