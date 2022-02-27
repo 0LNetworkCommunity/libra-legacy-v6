@@ -19,9 +19,9 @@ There are a few file paths you will be working from:
 
 This will use a `make` recipe to start the node daemon and install the daemon configs.
 
-First. Copy a template for systemd from `<project root>/util/diem-node.system` into your 0L home path, usually `~/.0L`. This is non-root template file needs to be edited: replace occurrences of `<<YOUR USERNAME!>>` with the username under which the service will run.
+A template `ol/util/diem-node.service` will be copied into your `~/.config/systemd/user/` path to setup the service. This is non-root template file which uses the home directory of the managing user of the service.
 
-BEFORE PROCEEDING: Check you have `~/.0L/diem-node.system` in place and edited with your usename.
+BEFORE PROCEEDING: Check that you have `ol/util/diem-node.service` in place.
 
 Now the Makefile can do a number of things including coping that file to the usual place, and then (re)starting the service.
 
@@ -29,7 +29,7 @@ From the project root:
 
 `make daemon`
 
-# Slow Start
+# Configure manually
 
 ## Build binaries and copy to appropriate path
 Use `make bins install` or alternatively:
@@ -39,7 +39,7 @@ Use `make bins install` or alternatively:
 In `~/.config/systemd/user/` you should create a file like this. (Note: again, `make daemon` does this for you)
 
 ```
-# edit this document and replace <<YOUR USERNAME!>> with your linux user
+# this assumes that the managing user of the service is `node`, hence the `/home/node` home path prefix
 [Unit]
 Description=0L Node Service
 

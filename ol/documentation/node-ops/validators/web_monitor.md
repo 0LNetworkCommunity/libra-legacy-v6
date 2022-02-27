@@ -28,6 +28,10 @@ Start the web monitor in this tmux session by the following command:
 ol serve -c
 ```
 
+## Troubleshooting
+
+You may get an issue with `Connection Failed: Connection refused (os error 111)`, when trying to start the monitor. If you do, check out troubleshooting steps here
+
 ## How to access it
 
 Once the web monitor is running, you can access it in your browser at the following URL:
