@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf};
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(default, deny_unknown_fields)]
+#[serde(default)]
 pub struct ConsensusConfig {
     pub contiguous_rounds: u32,
     pub max_block_size: u64,
@@ -24,13 +24,19 @@ pub struct ConsensusConfig {
     pub sync_only: bool,
     // how many times to wait for txns from mempool when propose
     pub mempool_poll_count: u64,
+    pub channel_size: usize,
+    // TODO: delete unused field
+    #[serde(default)]
+    pub decoupled_execution: bool,
+    #[serde(default)]
+    pub back_pressure_limit: u64,
 }
 
 impl Default for ConsensusConfig {
     fn default() -> ConsensusConfig {
         ConsensusConfig {
             contiguous_rounds: 2,
-            max_block_size: 1000,
+            max_block_size: 3000,
             max_pruned_blocks_in_mem: 100,
             mempool_txn_pull_timeout_ms: 1000,
             mempool_executed_txn_timeout_ms: 1000,
@@ -42,6 +48,9 @@ impl Default for ConsensusConfig {
             safety_rules: SafetyRulesConfig::default(),
             sync_only: false,
             mempool_poll_count: 1,
+            channel_size: 30, // hard-coded
+            decoupled_execution: false,
+            back_pressure_limit: 10,
         }
     }
 }
@@ -68,7 +77,6 @@ pub enum ConsensusProposerType {
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(deny_unknown_fields)]
 pub struct LeaderReputationConfig {
     pub active_weights: u64,
     pub inactive_weights: u64,

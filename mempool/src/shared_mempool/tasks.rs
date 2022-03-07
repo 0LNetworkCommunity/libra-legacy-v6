@@ -2,21 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Tasks that are executed by coordinators (short-lived compared to coordinators)
-
 use crate::{
     core_mempool::{CoreMempool, TimelineState, TxnPointer},
     counters,
     logging::{LogEntry, LogEvent, LogSchema},
-    network::MempoolSyncMsg,
+    network::{BroadcastError, MempoolSyncMsg},
     shared_mempool::types::{
         notify_subscribers, ScheduledBroadcast, SharedMempool, SharedMempoolNotification,
-        SubmissionStatusBundle,
+        SubmissionStatusBundle, TransactionSummary,
     },
-    CommitNotification, CommitResponse, CommittedTransaction, ConsensusRequest, ConsensusResponse,
-    SubmissionStatus,
+    ConsensusRequest, ConsensusResponse, SubmissionStatus,
 };
 use anyhow::Result;
-use diem_config::config::PeerNetworkId;
+use diem_config::network_id::PeerNetworkId;
+use diem_crypto::HashValue;
 use diem_infallible::{Mutex, RwLock};
 use diem_logger::prelude::*;
 use diem_metrics::HistogramTimer;
@@ -27,8 +26,8 @@ use diem_types::{
     vm_status::DiscardedVMStatus,
 };
 use futures::{channel::oneshot, stream::FuturesUnordered};
+use network::application::interface::NetworkInterface;
 use rayon::prelude::*;
-use short_hex_str::AsShortHexStr;
 use std::{
     cmp,
     collections::HashSet,
@@ -43,7 +42,7 @@ use vm_validator::vm_validator::{get_account_sequence_number, TransactionValidat
 // ============================== //
 
 /// Attempts broadcast to `peer` and schedules the next broadcast.
-pub(crate) fn execute_broadcast<V>(
+pub(crate) async fn execute_broadcast<V>(
     peer: PeerNetworkId,
     backoff: bool,
     smp: &mut SharedMempool<V>,
@@ -52,9 +51,30 @@ pub(crate) fn execute_broadcast<V>(
 ) where
     V: TransactionValidation,
 {
-    let peer_manager = &smp.peer_manager.clone();
-    peer_manager.execute_broadcast(peer.clone(), backoff, smp);
-    let schedule_backoff = peer_manager.is_backoff_mode(&peer);
+    let network_interface = &smp.network_interface.clone();
+    // If there's no connection, don't bother to broadcast
+    if network_interface.app_data().read(&peer).is_some() {
+        if let Err(err) = network_interface
+            .execute_broadcast(peer, backoff, smp)
+            .await
+        {
+            match err {
+                BroadcastError::NetworkError(peer, error) => error!(LogSchema::event_log(
+                    LogEntry::BroadcastTransaction,
+                    LogEvent::NetworkSendFail
+                )
+                .peer(&peer)
+                .error(&error)),
+                _ => {
+                    trace!("{:?}", err)
+                }
+            }
+        }
+    } else {
+        // Drop the scheduled broadcast, we're not connected anymore
+        return;
+    }
+    let schedule_backoff = network_interface.is_backoff_mode(&peer);
 
     let interval_ms = if schedule_backoff {
         smp.config.shared_mempool_backoff_interval_ms
@@ -84,10 +104,8 @@ pub(crate) async fn process_client_transaction_submission<V>(
     V: TransactionValidation,
 {
     timer.stop_and_record();
-    let _timer =
-        counters::process_txn_submit_latency_timer(counters::CLIENT_LABEL, counters::CLIENT_LABEL);
-    let statuses =
-        process_incoming_transactions(&smp, vec![transaction], TimelineState::NotReady).await;
+    let _timer = counters::process_txn_submit_latency_timer_client();
+    let statuses = process_incoming_transactions(&smp, vec![transaction], TimelineState::NotReady);
     log_txn_process_results(&statuses, None);
 
     if let Some(status) = statuses.get(0) {
@@ -101,9 +119,31 @@ pub(crate) async fn process_client_transaction_submission<V>(
     }
 }
 
+/// Processes get transaction by hash request by client.
+pub(crate) async fn process_client_get_transaction<V>(
+    smp: SharedMempool<V>,
+    hash: HashValue,
+    callback: oneshot::Sender<Option<SignedTransaction>>,
+    timer: HistogramTimer,
+) where
+    V: TransactionValidation,
+{
+    timer.stop_and_record();
+    let _timer = counters::process_get_txn_latency_timer_client();
+    let txn = smp.mempool.lock().get_by_hash(hash);
+
+    if callback.send(txn).is_err() {
+        error!(LogSchema::event_log(
+            LogEntry::GetTransaction,
+            LogEvent::CallbackFail
+        ));
+        counters::CLIENT_CALLBACK_FAIL.inc();
+    }
+}
+
 /// Processes transactions from other nodes.
 pub(crate) async fn process_transaction_broadcast<V>(
-    mut smp: SharedMempool<V>,
+    smp: SharedMempool<V>,
     transactions: Vec<SignedTransaction>,
     request_id: Vec<u8>,
     timeline_state: TimelineState,
@@ -113,19 +153,13 @@ pub(crate) async fn process_transaction_broadcast<V>(
     V: TransactionValidation,
 {
     timer.stop_and_record();
-    let _timer = counters::process_txn_submit_latency_timer(
-        peer.raw_network_id().as_str(),
-        peer.peer_id().short_str().as_str(),
-    );
-    let results = process_incoming_transactions(&smp, transactions.clone(), timeline_state).await;
-    log_txn_process_results(&results, Some(peer.clone()));
+    let _timer = counters::process_txn_submit_latency_timer(peer.network_id());
+    let results = process_incoming_transactions(&smp, transactions, timeline_state);
+    log_txn_process_results(&results, Some(peer));
 
     let ack_response = gen_ack_response(request_id, results, &peer);
-    let network_sender = smp
-        .network_senders
-        .get_mut(&peer.network_id())
-        .expect("[shared mempool] missing network sender");
-    if let Err(e) = network_sender.send_to(peer.peer_id(), ack_response) {
+    let network_sender = smp.network_interface.sender();
+    if let Err(e) = network_sender.send_to(peer, ack_response) {
         counters::network_send_fail_inc(counters::ACK_TXNS);
         error!(
             LogSchema::event_log(LogEntry::BroadcastACK, LogEvent::NetworkSendFail)
@@ -137,32 +171,30 @@ pub(crate) async fn process_transaction_broadcast<V>(
     notify_subscribers(SharedMempoolNotification::ACK, &smp.subscribers);
 }
 
+/// If `MempoolIsFull` on any of the transactions, provide backpressure to the downstream peer.
 fn gen_ack_response(
     request_id: Vec<u8>,
     results: Vec<SubmissionStatusBundle>,
     peer: &PeerNetworkId,
 ) -> MempoolSyncMsg {
-    let mut backoff = false;
-    let mut retry = false;
-    for r in results.into_iter() {
-        let submission_status = r.1;
-        if submission_status.0.code == MempoolStatusCode::MempoolIsFull {
-            backoff = true;
-        }
-        if is_txn_retryable(submission_status) {
-            retry = true;
-        }
-
-        if backoff && retry {
+    let mut backoff_and_retry = false;
+    for (_, (mempool_status, _)) in results.into_iter() {
+        if mempool_status.code == MempoolStatusCode::MempoolIsFull {
+            backoff_and_retry = true;
             break;
         }
     }
 
-    update_ack_counter(&peer, counters::SENT_LABEL, retry, backoff);
+    update_ack_counter(
+        peer,
+        counters::SENT_LABEL,
+        backoff_and_retry,
+        backoff_and_retry,
+    );
     MempoolSyncMsg::BroadcastTransactionsResponse {
         request_id,
-        retry,
-        backoff,
+        retry: backoff_and_retry,
+        backoff: backoff_and_retry,
     }
 }
 
@@ -173,24 +205,24 @@ pub(crate) fn update_ack_counter(
     backoff: bool,
 ) {
     if retry {
-        counters::shared_mempool_ack_inc(peer, direction_label, counters::RETRY_BROADCAST_LABEL);
+        counters::shared_mempool_ack_inc(
+            peer.network_id(),
+            direction_label,
+            counters::RETRY_BROADCAST_LABEL,
+        );
     }
     if backoff {
         counters::shared_mempool_ack_inc(
-            peer,
+            peer.network_id(),
             direction_label,
             counters::BACKPRESSURE_BROADCAST_LABEL,
         );
     }
 }
 
-fn is_txn_retryable(result: SubmissionStatus) -> bool {
-    result.0.code == MempoolStatusCode::MempoolIsFull
-}
-
 /// Submits a list of SignedTransaction to the local mempool
 /// and returns a vector containing AdmissionControlStatus.
-pub(crate) async fn process_incoming_transactions<V>(
+pub(crate) fn process_incoming_transactions<V>(
     smp: &SharedMempool<V>,
     transactions: Vec<SignedTransaction>,
     timeline_state: TimelineState,
@@ -217,26 +249,15 @@ where
     counters::PROCESS_TXN_BREAKDOWN_LATENCY
         .with_label_values(&[counters::FETCH_SEQ_NUM_LABEL])
         .observe(storage_read_latency.as_secs_f64() / transactions.len() as f64);
-      
-    //////// 0L ////////
+
     let transactions: Vec<_> = transactions
         .into_iter()
         .enumerate()
         .filter_map(|(idx, t)| {
-            if let Ok(sequence_number) = seq_numbers[idx] {
-                if t.sequence_number() == sequence_number {
-                    return Some((t, sequence_number));
-                } else if t.sequence_number() > sequence_number{
-                    statuses.push((
-        
-                        t,
-                        (
-                            MempoolStatus::new(MempoolStatusCode::VmError),
-                            Some(DiscardedVMStatus::SEQUENCE_NUMBER_TOO_NEW),
-                        ),
-                    ));
+            if let Ok(crsn_or_seqno) = seq_numbers[idx] {
+                if t.sequence_number() >= crsn_or_seqno.min_seq() {
+                    return Some((t, crsn_or_seqno));
                 } else {
-                      //////// end 0L ////////
                     statuses.push((
                         t,
                         (
@@ -259,20 +280,19 @@ where
         })
         .collect();
 
-
     // Track latency: VM validation
     let vm_validation_timer = counters::PROCESS_TXN_BREAKDOWN_LATENCY
         .with_label_values(&[counters::VM_VALIDATION_LABEL])
         .start_timer();
     let validation_results = transactions
-        .par_iter()
+        .iter()
         .map(|t| smp.validator.read().validate_transaction(t.0.clone()))
         .collect::<Vec<_>>();
     vm_validation_timer.stop_and_record();
 
     {
         let mut mempool = smp.mempool.lock();
-        for (idx, (transaction, sequence_number)) in transactions.into_iter().enumerate() {
+        for (idx, (transaction, crsn_or_seqno)) in transactions.into_iter().enumerate() {
             if let Ok(validation_result) = &validation_results[idx] {
                 match validation_result.status() {
                     None => {
@@ -283,7 +303,7 @@ where
                             transaction.clone(),
                             gas_amount,
                             ranking_score,
-                            sequence_number,
+                            crsn_or_seqno,
                             timeline_state,
                             governance_role,
                         );
@@ -307,15 +327,9 @@ where
 }
 
 fn log_txn_process_results(results: &[SubmissionStatusBundle], sender: Option<PeerNetworkId>) {
-    let (network, sender) = match sender {
-        Some(peer) => (
-            peer.raw_network_id().to_string(),
-            peer.peer_id().to_string(),
-        ),
-        None => (
-            counters::CLIENT_LABEL.to_string(),
-            counters::CLIENT_LABEL.to_string(),
-        ),
+    let network = match sender {
+        Some(peer) => peer.network_id().to_string(),
+        None => counters::CLIENT_LABEL.to_string(),
     };
     for (txn, (mempool_status, maybe_vm_status)) in results.iter() {
         if let Some(vm_status) = maybe_vm_status {
@@ -328,7 +342,6 @@ fn log_txn_process_results(results: &[SubmissionStatusBundle], sender: Option<Pe
             counters::shared_mempool_transactions_processed_inc(
                 counters::VM_VALIDATION_LABEL,
                 &network,
-                &sender,
             );
             continue;
         }
@@ -336,12 +349,10 @@ fn log_txn_process_results(results: &[SubmissionStatusBundle], sender: Option<Pe
             MempoolStatusCode::Accepted => counters::shared_mempool_transactions_processed_inc(
                 counters::SUCCESS_LABEL,
                 &network,
-                &sender,
             ),
             _ => counters::shared_mempool_transactions_processed_inc(
                 &mempool_status.code.to_string(),
                 &network,
-                &sender,
             ),
         }
     }
@@ -351,33 +362,12 @@ fn log_txn_process_results(results: &[SubmissionStatusBundle], sender: Option<Pe
 // intra-node communication handlers //
 // ================================= //
 
-pub(crate) async fn process_state_sync_request(
-    mempool: Arc<Mutex<CoreMempool>>,
-    req: CommitNotification,
+/// Only applies to Validators. Either provides transactions to consensus [`GetBlockRequest`] or
+/// handles rejecting transactions [`RejectNotification`]
+pub(crate) fn process_consensus_request<V: TransactionValidation>(
+    smp: &SharedMempool<V>,
+    req: ConsensusRequest,
 ) {
-    let start_time = Instant::now();
-    debug!(
-        LogSchema::event_log(LogEntry::StateSyncCommit, LogEvent::Received).state_sync_msg(&req)
-    );
-    counters::mempool_service_transactions(
-        counters::COMMIT_STATE_SYNC_LABEL,
-        req.transactions.len(),
-    );
-    commit_txns(&mempool, req.transactions, req.block_timestamp_usecs).await;
-    let result = if req.callback.send(Ok(CommitResponse::success())).is_err() {
-        error!(LogSchema::event_log(
-            LogEntry::StateSyncCommit,
-            LogEvent::CallbackFail
-        ));
-        counters::REQUEST_FAIL_LABEL
-    } else {
-        counters::REQUEST_SUCCESS_LABEL
-    };
-    let latency = start_time.elapsed();
-    counters::mempool_service_latency(counters::COMMIT_STATE_SYNC_LABEL, result, latency);
-}
-
-pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req: ConsensusRequest) {
     // Start latency timer
     let start_time = Instant::now();
     debug!(LogSchema::event_log(LogEntry::Consensus, LogEvent::Received).consensus_msg(&req));
@@ -390,7 +380,7 @@ pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req:
                 .collect();
             let mut txns;
             {
-                let mut mempool = mempool.lock();
+                let mut mempool = smp.mempool.lock();
                 // gc before pulling block as extra protection against txns that may expire in consensus
                 // Note: this gc operation relies on the fact that consensus uses the system time to determine block timestamp
                 let curr_time = diem_infallible::duration_since_epoch();
@@ -413,7 +403,7 @@ pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req:
                 counters::COMMIT_CONSENSUS_LABEL,
                 transactions.len(),
             );
-            reject_txns(mempool, transactions).await;
+            process_committed_transactions(&smp.mempool, transactions, 0, true);
             (
                 ConsensusResponse::CommitResponse(),
                 callback,
@@ -435,30 +425,11 @@ pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req:
     counters::mempool_service_latency(counter_label, result, latency);
 }
 
-/// Commits txns and GCs mempool
-async fn commit_txns(
+/// Remove transactions that are committed (or rejected) so that we can stop broadcasting them.
+pub(crate) fn process_committed_transactions(
     mempool: &Mutex<CoreMempool>,
-    transactions: Vec<CommittedTransaction>,
+    transactions: Vec<TransactionSummary>,
     block_timestamp_usecs: u64,
-) {
-    remove_txns(mempool, transactions, false).await;
-    if block_timestamp_usecs > 0 {
-        mempool.lock().gc_by_expiration_time(Duration::from_micros(block_timestamp_usecs));
-    }
-}
-
-/// Reject all txns for the associated account
-async fn reject_txns(
-    mempool: &Mutex<CoreMempool>,
-    transactions: Vec<CommittedTransaction>,
-) {
-    remove_txns(mempool, transactions, true).await;
-}
-
-/// Removes txns from the local mempool
-async fn remove_txns(
-    mempool: &Mutex<CoreMempool>,
-    transactions: Vec<CommittedTransaction>,
     is_rejected: bool,
 ) {
     let mut pool = mempool.lock();
@@ -470,9 +441,14 @@ async fn remove_txns(
             is_rejected,
         );
     }
+
+    /////// 0L /////////
+    // if block_timestamp_usecs > 0 {
+    //     pool.gc_by_expiration_time(Duration::from_micros(block_timestamp_usecs));
+    // }
 }
 
-/// Processes on-chain reconfiguration notification.
+/// Processes on-chain reconfiguration notifications.  Restarts validator with the new info.
 pub(crate) async fn process_config_update<V>(
     config_update: OnChainConfigPayload,
     validator: Arc<RwLock<V>>,

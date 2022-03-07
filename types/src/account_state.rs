@@ -5,44 +5,63 @@ use crate::{
     access_path::Path,
     account_address::AccountAddress,
     account_config::{
-        currency_code_from_type_tag, AccountResource, AccountRole, BalanceResource,
+        currency_code_from_type_tag, AccountResource, AccountRole, BalanceResource, CRSNResource,
         ChainIdResource, ChildVASP, Credential, CurrencyInfoResource, DesignatedDealer,
-        DesignatedDealerPreburns, DiemIdDomainManager, DiemIdDomains, FreezingBit, ParentVASP,
-        PreburnQueueResource, PreburnResource,
+        DesignatedDealerPreburns, DiemAccountResource, FreezingBit, ParentVASP,
+        PreburnQueueResource, PreburnResource, VASPDomainManager, VASPDomains,
     },
     block_metadata::DiemBlockResource,
     diem_timestamp::DiemTimestampResource,
     ol_miner_state::TowerStateResource,
     ol_oracle_upgrade_state::OracleResource,
     ol_upgrade_payload::UpgradePayloadResource,
-    ol_validators_stats::ValidatorsStatsResource,
+    ol_validators_stats::ValidatorsStatsResource,    
     on_chain_config::{
-        ConfigurationResource, DiemVersion, OnChainConfig, RegisteredCurrencies,
-        VMPublishingOption, ValidatorSet,
+        default_access_path_for_config, experimental_access_path_for_config, ConfigurationResource,
+        DiemVersion, OnChainConfig, RegisteredCurrencies, VMPublishingOption, ValidatorSet,
     },
     validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
 };
 use anyhow::{format_err, Error, Result};
 use move_core_types::{
-    identifier::Identifier,
-    language_storage::{StructTag, CORE_CODE_ADDRESS},
-    move_resource::MoveResource,
+    identifier::Identifier, language_storage::StructTag, move_resource::MoveResource,
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{collections::btree_map::BTreeMap, convert::TryFrom, fmt};
 
-#[derive(Default, Deserialize, PartialEq, Serialize)]
+#[derive(Clone, Default, Deserialize, PartialEq, Serialize)]
 pub struct AccountState(BTreeMap<Vec<u8>, Vec<u8>>);
 
 impl AccountState {
     // By design and do not remove
     pub fn get_account_address(&self) -> Result<Option<AccountAddress>> {
         self.get_account_resource()
-            .map(|opt_ar| opt_ar.map(|ar| ar.sent_events().key().get_creator_address()))
+            .map(|opt_ar| opt_ar.map(|ar| ar.address()))
     }
 
+    pub fn get_diem_account_resource(&self) -> Result<Option<DiemAccountResource>> {
+        self.get_resource::<DiemAccountResource>()
+    }
+
+    // Return the `AccountResource` for this blob. If the blob doesn't have an `AccountResource`
+    // then it must have a `DiemAccountResource` in which case we convert that to an
+    // `AccountResource`.
     pub fn get_account_resource(&self) -> Result<Option<AccountResource>> {
-        self.get_resource::<AccountResource>()
+        match self.get_resource::<AccountResource>()? {
+            x @ Some(_) => Ok(x),
+            None => match self.get_resource::<DiemAccountResource>()? {
+                Some(diem_ar) => Ok(Some(AccountResource::new(
+                    diem_ar.sequence_number(),
+                    diem_ar.authentication_key().to_vec(),
+                    diem_ar.address(),
+                ))),
+                None => Ok(None),
+            },
+        }
+    }
+
+    pub fn get_crsn_resource(&self) -> Result<Option<CRSNResource>> {
+        self.get_resource::<CRSNResource>()
     }
 
     pub fn get_balance_resources(&self) -> Result<BTreeMap<Identifier, BalanceResource>> {
@@ -112,13 +131,13 @@ impl AccountState {
             match (
                 self.get_resource::<ParentVASP>(),
                 self.get_resource::<Credential>(),
-                self.get_resource::<DiemIdDomains>(),
+                self.get_resource::<VASPDomains>(),
             ) {
-                (Ok(Some(vasp)), Ok(Some(credential)), Ok(diem_id_domains)) => {
+                (Ok(Some(vasp)), Ok(Some(credential)), Ok(vasp_domains)) => {
                     Ok(Some(AccountRole::ParentVASP {
                         vasp,
                         credential,
-                        diem_id_domains,
+                        vasp_domains,
                     }))
                 }
                 _ => Ok(None),
@@ -155,10 +174,10 @@ impl AccountState {
                 }
                 _ => Ok(None),
             }
-        } else if self.0.contains_key(&DiemIdDomainManager::resource_path()) {
-            match self.get_resource::<DiemIdDomainManager>() {
-                Ok(Some(diem_id_domain_manager)) => Ok(Some(AccountRole::TreasuryCompliance {
-                    diem_id_domain_manager,
+        } else if self.0.contains_key(&VASPDomainManager::resource_path()) {
+            match self.get_resource::<VASPDomainManager>() {
+                Ok(Some(vasp_domain_manager)) => Ok(Some(AccountRole::TreasuryCompliance {
+                    vasp_domain_manager,
                 })),
                 _ => Ok(None),
             }
@@ -178,7 +197,7 @@ impl AccountState {
 
     pub fn get_vm_publishing_option(&self) -> Result<Option<VMPublishingOption>> {
         self.0
-            .get(&VMPublishingOption::CONFIG_ID.access_path().path)
+            .get(&default_access_path_for_config(VMPublishingOption::CONFIG_ID).path)
             .map(|bytes| VMPublishingOption::deserialize_into_config(bytes))
             .transpose()
             .map_err(Into::into)
@@ -256,7 +275,10 @@ impl AccountState {
     }
 
     pub fn get_config<T: OnChainConfig>(&self) -> Result<Option<T>> {
-        self.get_resource_impl(&T::CONFIG_ID.access_path().path)
+        match self.get_resource_impl(&experimental_access_path_for_config(T::CONFIG_ID).path)? {
+            Some(config) => Ok(Some(config)),
+            _ => self.get_resource_impl(&default_access_path_for_config(T::CONFIG_ID).path),
+        }
     }
 
     pub fn get_resource<T: MoveResource>(&self) -> Result<Option<T>> {
@@ -271,6 +293,16 @@ impl AccountState {
                 Path::Resource(_) => None,
             },
         )
+    }
+
+    /// Into an iterator over the module values stored under this account
+    pub fn into_modules(self) -> impl Iterator<Item = Vec<u8>> {
+        self.0.into_iter().filter_map(|(k, v)| {
+            match Path::try_from(&k).expect("Invalid access path") {
+                Path::Code(_) => Some(v),
+                Path::Resource(_) => None,
+            }
+        })
     }
 
     /// Return an iterator over all resources stored under this account.
@@ -290,7 +322,7 @@ impl AccountState {
         &self,
     ) -> impl Iterator<Item = Result<(StructTag, T)>> + '_ {
         self.get_resources().filter_map(|(struct_tag, bytes)| {
-            let matches_resource = struct_tag.address == CORE_CODE_ADDRESS
+            let matches_resource = struct_tag.address == T::ADDRESS
                 && struct_tag.module.as_ref() == T::MODULE_NAME
                 && struct_tag.name.as_ref() == T::STRUCT_NAME;
             if matches_resource {
@@ -335,7 +367,7 @@ impl fmt::Debug for AccountState {
         write!(
             f,
             "{{ \n \
-             AccountResource {{ {} }} \n \
+             DiemAccountResource {{ {} }} \n \
              DiemTimestamp {{ {} }} \n \
              ValidatorConfig {{ {} }} \n \
              ValidatorSet {{ {} }} \n \
@@ -345,16 +377,24 @@ impl fmt::Debug for AccountState {
     }
 }
 
-impl TryFrom<(&AccountResource, &BalanceResource)> for AccountState {
+impl TryFrom<(&AccountResource, &DiemAccountResource, &BalanceResource)> for AccountState {
     type Error = Error;
 
     fn try_from(
-        (account_resource, balance_resource): (&AccountResource, &BalanceResource),
+        (account_resource, diem_account_resource, balance_resource): (
+            &AccountResource,
+            &DiemAccountResource,
+            &BalanceResource,
+        ),
     ) -> Result<Self> {
         let mut btree_map: BTreeMap<Vec<u8>, Vec<u8>> = BTreeMap::new();
         btree_map.insert(
             AccountResource::resource_path(),
             bcs::to_bytes(account_resource)?,
+        );
+        btree_map.insert(
+            DiemAccountResource::resource_path(),
+            bcs::to_bytes(diem_account_resource)?,
         );
         btree_map.insert(
             BalanceResource::resource_path(),

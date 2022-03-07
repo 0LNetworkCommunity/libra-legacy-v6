@@ -10,7 +10,7 @@ publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.38"
+anyhow = "1.0.52"
 async-trait = "0.1.42"
 byteorder = { version = "1.4.3", default-features = false }
 bytes = "1.0.1"
@@ -27,35 +27,36 @@ serde = { version = "1.0.124", default-features = false }
 serde_json = "1.0.64"
 termion = { version = "1.5.6", default-features = false }
 thiserror = "1.0.24"
-tokio = { version = "1.3.0", features = ["full"] }
+tokio = { version = "1.8.1", features = ["full"] }
 
-channel = { path = "../common/channel" }
+channel = { path = "../crates/channel" }
+consensus-notifications = { path = "../state-sync/inter-component/consensus-notifications" }
 consensus-types = { path = "consensus-types", default-features = false }
+event-notifications = { path = "../state-sync/inter-component/event-notifications" }
 execution-correctness = { path = "../execution/execution-correctness" }
 executor = { path = "../execution/executor" }
 executor-types = { path = "../execution/executor-types" }
-fallible = { path = "../common/fallible" }
+fallible = { path = "../crates/fallible" }
 bcs = "0.1.2"
 diem-config = { path = "../config" }
-diem-crypto = { path = "../crypto/crypto" }
-diem-logger = { path = "../common/logger" }
+diem-crypto = { path = "../crates/diem-crypto" }
+diem-logger = { path = "../crates/diem-logger" }
 diem-mempool = { path = "../mempool" }
-diem-metrics = { path = "../common/metrics" }
-diem-infallible = { path = "../common/infallible" }
+diem-metrics = { path = "../crates/diem-metrics" }
+diem-infallible = { path = "../crates/diem-infallible" }
 diem-secure-storage = { path = "../secure/storage" }
-diem-temppath = { path = "../common/temppath" }
+diem-temppath = { path = "../crates/diem-temppath" }
 diem-types = { path = "../types" }
-diem-vm = { path = "../language/diem-vm" }
-diem-workspace-hack = { path = "../common/workspace-hack" }
+diem-vm = { path = "../diem-move/diem-vm" }
+diem-workspace-hack = { version = "0.1", path = "../crates/diem-workspace-hack" }
 network = { path = "../network" }
 safety-rules = { path = "safety-rules" }
-short-hex-str = { path = "../common/short-hex-str" }
-state-sync = { path = "../state-sync" }
+short-hex-str = { path = "../crates/short-hex-str" }
 schemadb = { path = "../storage/schemadb" }
 storage-interface = { path = "../storage/storage-interface" }
-subscription-service = { path = "../common/subscription-service" }
 
 [dev-dependencies]
+claim = "0.5.0"
 proptest = "1.0.0"
 tempfile = "3.2.0"
 
@@ -63,8 +64,9 @@ consensus-types = { path = "consensus-types", default-features = false, features
 executor-test-helpers = { path = "../execution/executor-test-helpers" }
 diem-config = { path = "../config", features = ["fuzzing"] }
 diem-mempool = { path = "../mempool", features = ["fuzzing"] }
+network = { path = "../network", features = ["fuzzing"] }
 safety-rules = { path = "safety-rules", features = ["testing"] }
-vm-genesis = { path = "../language/tools/vm-genesis" }
+vm-genesis = { path = "../diem-move/vm-genesis" }
 vm-validator = { path = "../vm-validator" }
 
 [features]

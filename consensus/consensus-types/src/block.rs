@@ -10,9 +10,14 @@ use anyhow::{bail, ensure, format_err};
 use diem_crypto::{ed25519::Ed25519Signature, hash::CryptoHash, HashValue};
 use diem_infallible::duration_since_epoch;
 use diem_types::{
-    account_address::AccountAddress, block_info::BlockInfo, block_metadata::BlockMetadata,
-    epoch_state::EpochState, ledger_info::LedgerInfo, transaction::Version,
-    validator_signer::ValidatorSigner, validator_verifier::ValidatorVerifier,
+    account_address::AccountAddress,
+    block_info::BlockInfo,
+    block_metadata::BlockMetadata,
+    epoch_state::EpochState,
+    ledger_info::LedgerInfo,
+    transaction::{Transaction, Version},
+    validator_signer::ValidatorSigner,
+    validator_verifier::ValidatorVerifier,
 };
 use mirai_annotations::debug_checked_verify_eq;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -51,12 +56,13 @@ impl Display for Block {
         let nil_marker = if self.is_nil_block() { " (NIL)" } else { "" };
         write!(
             f,
-            "[id: {}{}, epoch: {}, round: {:02}, parent_id: {}]",
+            "[id: {}{}, epoch: {}, round: {:02}, parent_id: {}, timestamp: {}]",
             self.id,
             nil_marker,
             self.epoch(),
             self.round(),
             self.quorum_cert().certified_block().id(),
+            self.timestamp_usecs(),
         )
     }
 }
@@ -281,6 +287,18 @@ impl Block {
             "Block id mismatch the hash"
         );
         Ok(())
+    }
+
+    pub fn transactions_to_execute(&self) -> Vec<Transaction> {
+        std::iter::once(Transaction::BlockMetadata(self.into()))
+            .chain(
+                self.payload()
+                    .unwrap_or(&Vec::new())
+                    .iter()
+                    .cloned()
+                    .map(Transaction::UserTransaction),
+            )
+            .collect()
     }
 }
 

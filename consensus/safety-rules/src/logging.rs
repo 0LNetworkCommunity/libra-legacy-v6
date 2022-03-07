@@ -42,15 +42,19 @@ impl<'a> SafetyLogSchema<'a> {
 pub enum LogEntry {
     ConsensusState,
     ConstructAndSignVote,
+    ConstructAndSignVoteTwoChain,
     Epoch,
     Initialize,
     KeyReconciliation,
     LastVotedRound,
+    OneChainRound,
     PreferredRound,
     SignProposal,
     SignTimeout,
+    SignTimeoutWithQC,
     State,
     Waypoint,
+    SignCommitVote,
 }
 
 impl LogEntry {
@@ -58,15 +62,19 @@ impl LogEntry {
         match self {
             LogEntry::ConsensusState => "consensus_state",
             LogEntry::ConstructAndSignVote => "construct_and_sign_vote",
+            LogEntry::ConstructAndSignVoteTwoChain => "construct_and_sign_vote_2chain",
             LogEntry::Epoch => "epoch",
             LogEntry::Initialize => "initialize",
             LogEntry::LastVotedRound => "last_voted_round",
             LogEntry::KeyReconciliation => "key_reconciliation",
+            LogEntry::OneChainRound => "one_chain_round",
             LogEntry::PreferredRound => "preferred_round",
             LogEntry::SignProposal => "sign_proposal",
             LogEntry::SignTimeout => "sign_timeout",
+            LogEntry::SignTimeoutWithQC => "sign_timeout_with_qc",
             LogEntry::State => "state",
             LogEntry::Waypoint => "waypoint",
+            LogEntry::SignCommitVote => "sign_commit_vote",
         }
     }
 }

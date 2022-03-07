@@ -3,18 +3,19 @@
 
 use crate::{
     core_mempool::{CoreMempool, TimelineState},
-    shared_mempool::{peer_manager::PeerManager, tasks, types::SharedMempool},
+    shared_mempool::{tasks, types::SharedMempool},
 };
-use diem_config::config::NodeConfig;
+use diem_config::{config::NodeConfig, network_id::NetworkId};
 use diem_infallible::{Mutex, RwLock};
 use diem_types::transaction::SignedTransaction;
+use network::application::storage::PeerMetadataStorage;
 use proptest::{
     arbitrary::any,
     prelude::*,
     strategy::{Just, Strategy},
 };
 use std::{collections::HashMap, sync::Arc};
-use storage_interface::mock::MockDbReader;
+use storage_interface::mock::MockDbReaderWriter;
 use vm_validator::mocks::mock_vm_validator::MockVMValidator;
 
 pub fn mempool_incoming_transactions_strategy(
@@ -33,17 +34,18 @@ pub fn test_mempool_process_incoming_transactions_impl(
     timeline_state: TimelineState,
 ) {
     let config = NodeConfig::default();
-    let mock_db = MockDbReader;
+    let mock_db = MockDbReaderWriter;
     let vm_validator = Arc::new(RwLock::new(MockVMValidator));
-    let smp = SharedMempool {
-        mempool: Arc::new(Mutex::new(CoreMempool::new(&config))),
-        config: config.mempool.clone(),
-        network_senders: HashMap::new(),
-        db: Arc::new(mock_db),
-        validator: vm_validator,
-        peer_manager: Arc::new(PeerManager::new(config.base.role, config.mempool)),
-        subscribers: vec![],
-    };
+    let smp = SharedMempool::new(
+        Arc::new(Mutex::new(CoreMempool::new(&config))),
+        config.mempool.clone(),
+        HashMap::new(),
+        Arc::new(mock_db),
+        vm_validator,
+        vec![],
+        config.base.role,
+        PeerMetadataStorage::new(&[NetworkId::Validator]),
+    );
 
     let _ = tasks::process_incoming_transactions(&smp, txns, timeline_state);
 }

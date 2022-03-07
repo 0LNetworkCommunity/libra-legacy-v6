@@ -3,8 +3,11 @@
 
 use criterion::{criterion_group, criterion_main, measurement::Measurement, BatchSize, Criterion};
 use executor_benchmark::{
-    create_storage_service_and_executor, TransactionExecutor, TransactionGenerator,
+    init_db_and_executor, transaction_executor::TransactionExecutor,
+    transaction_generator::TransactionGenerator,
 };
+use executor_types::BlockExecutorTrait;
+use std::sync::Arc;
 
 pub const NUM_ACCOUNTS: usize = 1000;
 pub const SMALL_BLOCK_SIZE: usize = 500;
@@ -19,12 +22,14 @@ pub const INITIAL_BALANCE: u64 = 1000000;
 fn executor_benchmark<M: Measurement + 'static>(c: &mut Criterion<M>) {
     let (config, genesis_key) = diem_genesis_tool::test_config();
 
-    let (_db, executor) = create_storage_service_and_executor(&config);
+    let (_db, executor) = init_db_and_executor(&config);
     let parent_block_id = executor.committed_block_id();
+    let executor = Arc::new(executor);
 
     let mut generator = TransactionGenerator::new(genesis_key, NUM_ACCOUNTS);
+    let (commit_tx, _commit_rx) = std::sync::mpsc::sync_channel(50 /* bound */);
 
-    let mut executor = TransactionExecutor::new(executor, parent_block_id);
+    let mut executor = TransactionExecutor::new(executor, parent_block_id, 0, Some(commit_tx));
     let txns = generator.gen_account_creations(SMALL_BLOCK_SIZE);
     for txn_block in txns {
         executor.execute_block(txn_block);

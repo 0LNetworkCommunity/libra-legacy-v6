@@ -4,28 +4,36 @@
 //! Interface between Consensus and Network layers.
 
 use crate::counters;
-use channel::message_queues::QueueStyle;
+use anyhow::anyhow;
+use async_trait::async_trait;
+use channel::{diem_channel, message_queues::QueueStyle};
 use consensus_types::{
     block_retrieval::{BlockRetrievalRequest, BlockRetrievalResponse},
     epoch_retrieval::EpochRetrievalRequest,
+    experimental::{commit_decision::CommitDecision, commit_vote::CommitVote},
     proposal_msg::ProposalMsg,
     sync_info::SyncInfo,
     vote_msg::VoteMsg,
 };
-use diem_metrics::IntCounterVec;
+use diem_config::network_id::{NetworkId, PeerNetworkId};
+use diem_logger::prelude::*;
 use diem_types::{epoch_change::EpochChangeProof, PeerId};
 use network::{
+    application::storage::PeerMetadataStorage,
     constants::NETWORK_CHANNEL_SIZE,
     error::NetworkError,
     peer_manager::{ConnectionRequestSender, PeerManagerRequestSender},
     protocols::{
-        network::{NetworkEvents, NetworkSender, NewNetworkSender},
+        network::{
+            AppConfig, ApplicationNetworkSender, NetworkEvents, NetworkSender, NewNetworkSender,
+        },
         rpc::error::RpcError,
+        wire::handshake::v1::ProtocolIdSet,
     },
     ProtocolId,
 };
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 /// Network type for consensus
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -47,6 +55,13 @@ pub enum ConsensusMsg {
     /// VoteMsg is the struct that is ultimately sent by the voter in response for receiving a
     /// proposal.
     VoteMsg(Box<VoteMsg>),
+    /// CommitProposal is the struct that is sent by the validator after execution to propose
+    /// on the committed state hash root.
+    CommitVoteMsg(Box<CommitVote>),
+    /// CommitDecision is the struct that is sent by the validator after collecting no fewer
+    /// than 2f + 1 signatures on the commit proposal. This part is not on the critical path, but
+    /// it can save slow machines to quickly confirm the execution result.
+    CommitDecisionMsg(Box<CommitDecision>),
 }
 
 /// The interface from Network to Consensus layer.
@@ -68,22 +83,26 @@ pub type ConsensusNetworkEvents = NetworkEvents<ConsensusMsg>;
 #[derive(Clone)]
 pub struct ConsensusNetworkSender {
     network_sender: NetworkSender<ConsensusMsg>,
+    peer_metadata_storage: Option<Arc<PeerMetadataStorage>>,
 }
 
+/// Supported protocols in preferred order (from highest priority to lowest).
+pub const RPC: &[ProtocolId] = &[ProtocolId::ConsensusRpcJson, ProtocolId::ConsensusRpcBcs];
+/// Supported protocols in preferred order (from highest priority to lowest).
+pub const DIRECT_SEND: &[ProtocolId] = &[
+    ProtocolId::ConsensusDirectSendJson,
+    ProtocolId::ConsensusDirectSendBcs,
+];
+
 /// Configuration for the network endpoints to support consensus.
-pub fn network_endpoint_config() -> (
-    Vec<ProtocolId>,
-    Vec<ProtocolId>,
-    QueueStyle,
-    usize,
-    Option<&'static IntCounterVec>,
-) {
-    (
-        vec![ProtocolId::ConsensusRpc],
-        vec![ProtocolId::ConsensusDirectSend],
-        QueueStyle::LIFO,
-        NETWORK_CHANNEL_SIZE,
-        Some(&counters::PENDING_CONSENSUS_NETWORK_EVENTS),
+/// TODO: make this configurable
+pub fn network_endpoint_config() -> AppConfig {
+    let protos = RPC.iter().chain(DIRECT_SEND.iter()).copied();
+    AppConfig::p2p(
+        protos,
+        diem_channel::Config::new(NETWORK_CHANNEL_SIZE)
+            .queue_style(QueueStyle::LIFO)
+            .counters(&counters::PENDING_CONSENSUS_NETWORK_EVENTS),
     )
 }
 
@@ -96,42 +115,85 @@ impl NewNetworkSender for ConsensusNetworkSender {
     ) -> Self {
         Self {
             network_sender: NetworkSender::new(peer_mgr_reqs_tx, connection_reqs_tx),
+            peer_metadata_storage: None,
         }
     }
 }
 
 impl ConsensusNetworkSender {
-    /// Send a single message to the destination peer using the `CONSENSUS_DIRECT_SEND_PROTOCOL`
-    /// ProtocolId.
-    pub fn send_to(
-        &mut self,
-        recipient: PeerId,
-        message: ConsensusMsg,
-    ) -> Result<(), NetworkError> {
-        let protocol = ProtocolId::ConsensusDirectSend;
+    /// Initialize a shared hashmap about connections metadata that is updated by the receiver.
+    pub fn initialize(&mut self, peer_metadata_storage: Arc<PeerMetadataStorage>) {
+        self.peer_metadata_storage = Some(peer_metadata_storage);
+    }
+
+    /// Query the supported protocols from this peer's connection.
+    fn supported_protocols(&self, peer: PeerId) -> anyhow::Result<ProtocolIdSet> {
+        if let Some(peer_metadata_storage) = &self.peer_metadata_storage {
+            let peer_network_id = PeerNetworkId::new(NetworkId::Validator, peer);
+            peer_metadata_storage
+                .read(peer_network_id)
+                .map(|peer_info| peer_info.active_connection.application_protocols)
+                .ok_or_else(|| anyhow!("Peer not connected"))
+        } else {
+            Err(anyhow!("ConsensusNetworkSender not initialized"))
+        }
+    }
+
+    /// Choose the overlapping protocol for peer. The local protocols are sorted from most to least preferred.
+    fn preferred_protocol_for_peer(
+        &self,
+        peer: PeerId,
+        local_protocols: &[ProtocolId],
+    ) -> anyhow::Result<ProtocolId> {
+        let remote_protocols = self.supported_protocols(peer)?;
+        for protocol in local_protocols {
+            if remote_protocols.contains(*protocol) {
+                return Ok(*protocol);
+            }
+        }
+        Err(anyhow!("No available protocols for peer {}", peer))
+    }
+}
+
+#[async_trait]
+impl ApplicationNetworkSender<ConsensusMsg> for ConsensusNetworkSender {
+    /// Send a single message to the destination peer using available ProtocolId.
+    fn send_to(&self, recipient: PeerId, message: ConsensusMsg) -> Result<(), NetworkError> {
+        let protocol = self.preferred_protocol_for_peer(recipient, DIRECT_SEND)?;
         self.network_sender.send_to(recipient, protocol, message)
     }
 
-    /// Send a single message to the destination peers using the `CONSENSUS_DIRECT_SEND_PROTOCOL`
-    /// ProtocolId.
-    pub fn send_to_many(
-        &mut self,
+    /// Send a single message to the destination peers using available ProtocolId.
+    fn send_to_many(
+        &self,
         recipients: impl Iterator<Item = PeerId>,
         message: ConsensusMsg,
     ) -> Result<(), NetworkError> {
-        let protocol = ProtocolId::ConsensusDirectSend;
-        self.network_sender
-            .send_to_many(recipients, protocol, message)
+        let mut peers_per_protocol = HashMap::new();
+        for peer in recipients {
+            match self.preferred_protocol_for_peer(peer, DIRECT_SEND) {
+                Ok(protocol) => peers_per_protocol
+                    .entry(protocol)
+                    .or_insert_with(Vec::new)
+                    .push(peer),
+                Err(e) => error!("{}", e),
+            }
+        }
+        for (protocol, peers) in peers_per_protocol {
+            self.network_sender
+                .send_to_many(peers.into_iter(), protocol, message.clone())?;
+        }
+        Ok(())
     }
 
     /// Send a RPC to the destination peer using the `CONSENSUS_RPC_PROTOCOL` ProtocolId.
-    pub async fn send_rpc(
-        &mut self,
+    async fn send_rpc(
+        &self,
         recipient: PeerId,
         message: ConsensusMsg,
         timeout: Duration,
     ) -> Result<ConsensusMsg, RpcError> {
-        let protocol = ProtocolId::ConsensusRpc;
+        let protocol = self.preferred_protocol_for_peer(recipient, RPC)?;
         self.network_sender
             .send_rpc(recipient, protocol, message, timeout)
             .await

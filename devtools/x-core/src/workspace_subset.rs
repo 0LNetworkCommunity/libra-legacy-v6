@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{core_config::SubsetConfig, Result, SystemError};
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use guppy::{
     graph::{
         cargo::{CargoOptions, CargoResolverVersion, CargoSet},
@@ -12,7 +12,7 @@ use guppy::{
     PackageId,
 };
 use serde::Deserialize;
-use std::{collections::BTreeMap, fs, path::Path};
+use std::{collections::BTreeMap, fs};
 use toml::de;
 
 /// Contains information about all the subsets specified in this workspace.
@@ -32,13 +32,15 @@ impl<'g> WorkspaceSubsets<'g> {
     /// * no dev dependencies
     pub fn new(
         graph: &'g PackageGraph,
-        project_root: &Path,
+        project_root: &Utf8Path,
         config: &BTreeMap<String, SubsetConfig>,
+        hakari_package: &PackageMetadata<'g>,
     ) -> Result<Self> {
         let mut cargo_opts = CargoOptions::new();
         cargo_opts
-            .set_version(CargoResolverVersion::V2)
-            .set_include_dev(false);
+            .set_resolver(CargoResolverVersion::V2)
+            .set_include_dev(false)
+            .add_omitted_packages(std::iter::once(hakari_package.id()));
 
         let default_members = Self::read_default_members(project_root)?;
 
@@ -91,7 +93,7 @@ impl<'g> WorkspaceSubsets<'g> {
     // Helper methods
     // ---
 
-    fn read_default_members(project_root: &Path) -> Result<Vec<Utf8PathBuf>> {
+    fn read_default_members(project_root: &Utf8Path) -> Result<Vec<Utf8PathBuf>> {
         #[derive(Deserialize)]
         struct RootToml {
             workspace: Workspace,

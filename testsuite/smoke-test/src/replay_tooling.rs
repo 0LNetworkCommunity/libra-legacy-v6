@@ -1,61 +1,90 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    test_utils::{diem_swarm_utils::get_diem_debugger, setup_swarm_and_client_proxy},
-    workspace_builder,
-};
+use anyhow::bail;
+use diem_rest_client::Transaction;
+use diem_sdk::{transaction_builder::Currency, types::account_address::AccountAddress};
+use diem_transaction_replay::DiemDebugger;
+use forge::{PublicUsageContext, PublicUsageTest, Result, Test};
+use tokio::runtime::Runtime;
 
-#[test]
-fn test_replay_tooling() {
-    let (env, mut client) = setup_swarm_and_client_proxy(1, 0);
-    let json_debugger = get_diem_debugger(&env.validator_swarm, 0);
+pub struct ReplayTooling;
 
-    client.create_next_account(false).unwrap();
-    client.create_next_account(false).unwrap();
-    client
-        .mint_coins(&["mintb", "0", "100", "XUS"], true)
-        .unwrap();
+impl Test for ReplayTooling {
+    fn name(&self) -> &'static str {
+        "smoke-test::replay-tooling"
+    }
+}
 
-    client
-        .mint_coins(&["mintb", "1", "100", "XUS"], true)
-        .unwrap();
+impl PublicUsageTest for ReplayTooling {
+    fn run<'t>(&self, ctx: &mut PublicUsageContext<'t>) -> Result<()> {
+        let client = ctx.rest_client();
+        // we need turn this into async for making this test fully async
+        let json_debugger = DiemDebugger::json_rpc(ctx.url())?;
 
-    client
-        .transfer_coins(&["tb", "0", "1", "3", "XUS"], true)
-        .unwrap();
+        let treasury_account_address =
+            AccountAddress::from_hex("0000000000000000000000000b1e55ed")?;
 
-    let txn = client
-        .get_committed_txn_by_acc_seq(&["txn_acc_seq", "0", "0", "false"])
-        .unwrap()
-        .unwrap();
+        let runtime = Runtime::new().unwrap();
+        let treasury_account = runtime
+            .block_on(client.get_account(treasury_account_address))?
+            .into_inner();
+        let mut account1 = ctx.random_account();
+        let account2 = ctx.random_account();
+        runtime.block_on(ctx.create_parent_vasp_account(account1.authentication_key()))?;
+        runtime.block_on(ctx.create_parent_vasp_account(account2.authentication_key()))?;
+        runtime.block_on(ctx.fund(account1.address(), 100))?;
+        runtime.block_on(ctx.fund(account2.address(), 100))?;
+        let txn = account1.sign_with_transaction_builder(ctx.transaction_factory().peer_to_peer(
+            Currency::XUS,
+            account2.address(),
+            3,
+        ));
+        let txn = runtime.block_on(client.submit_and_wait(&txn))?.into_inner();
+        let (txn_version, txn_gas_used) = match txn {
+            Transaction::UserTransaction(user_txn) => {
+                (user_txn.info.version.0, user_txn.info.gas_used.0)
+            }
+            _ => bail!("unexpected transaction type: {:?}", txn),
+        };
+        let replay_result = json_debugger
+            .execute_past_transactions(txn_version, 1, false)?
+            .pop()
+            .unwrap();
+        assert_eq!(replay_result.gas_used(), txn_gas_used);
 
-    let replay_result = json_debugger
-        .execute_past_transactions(txn.version, 1, false)
-        .unwrap()
-        .pop()
-        .unwrap();
+        let script_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../diem-move/transaction-replay/examples/account_exists.move")
+            .canonicalize()?;
 
-    let (account, _) = client.get_account_address_from_parameter("0").unwrap();
-    let script_path = workspace_builder::workspace_root()
-        .join("language/diem-tools/transaction-replay/examples/account_exists.move");
+        let bisect_result = json_debugger
+            .bisect_transactions_by_script(
+                script_path.to_str().unwrap(),
+                account1.address(),
+                0,
+                txn_version,
+                None,
+            )?
+            .unwrap();
 
-    let bisect_result = json_debugger
-        .bisect_transactions_by_script(script_path.to_str().unwrap(), account, 0, txn.version, None)
-        .unwrap()
-        .unwrap();
+        let account_creation_txn = runtime
+            .block_on(client.get_account_transactions(
+                treasury_account_address,
+                Some(treasury_account.sequence_number),
+                Some(1),
+            ))?
+            .into_inner()
+            .into_iter()
+            .next()
+            .unwrap();
 
-    let account_creation_txn = client
-        .get_committed_txn_by_acc_seq(&[
-            "txn_acc_seq",
-            "0000000000000000000000000b1e55ed",
-            "0",
-            "false",
-        ])
-        .unwrap()
-        .unwrap();
+        match account_creation_txn {
+            Transaction::UserTransaction(user_txn) => {
+                assert_eq!(user_txn.info.version.0 + 1, bisect_result);
+            }
+            _ => bail!("unexpected transaction type: {:?}", account_creation_txn),
+        }
 
-    assert_eq!(account_creation_txn.version + 1, bisect_result);
-    assert_eq!(replay_result.gas_used(), txn.gas_used);
-    assert_eq!(diem_client::views::VMStatusView::Executed, txn.vm_status);
+        Ok(())
+    }
 }

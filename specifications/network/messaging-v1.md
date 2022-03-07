@@ -1,6 +1,6 @@
 # Messaging Protocol (v1)
 
-This document defines the messages and protocols for [DiemNet](spec.md) v1.
+This document defines the messages and protocols for [DiemNet](README.md) v1.
 
 ## Versioning
 
@@ -141,5 +141,3 @@ let message_bytes = noise_socket.read(length_prefix);
 // deserialize the message
 let message = bcs::from_bytes(message_bytes);
 ```
-
-(TODO(philiphayes): add streaming RPC protocol when supported)

@@ -1,48 +1,43 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::Executor;
+use crate::{block_executor::BlockExecutor, chunk_executor::ChunkExecutor};
 use anyhow::Result;
 use diem_crypto::{hash::SPARSE_MERKLE_PLACEHOLDER_HASH, HashValue};
 use diem_state_view::StateView;
 use diem_types::{
-    account_address::AccountAddress,
-    account_state_blob::{AccountStateBlob, AccountStateWithProof},
-    contract_event::{ContractEvent, EventWithProof},
-    epoch_change::EpochChangeProof,
-    event::EventKey,
     ledger_info::LedgerInfoWithSignatures,
-    proof::{AccumulatorConsistencyProof, SparseMerkleProof},
     transaction::{
-        Transaction, TransactionListWithProof, TransactionOutput, TransactionToCommit,
-        TransactionWithProof, Version,
+        Transaction, TransactionListWithProof, TransactionOutput, TransactionToCommit, Version,
     },
     vm_status::VMStatus,
 };
 use diem_vm::VMExecutor;
-use executor_types::{BlockExecutor, ChunkExecutor};
-use storage_interface::{DbReader, DbReaderWriter, DbWriter, Order, StartupInfo, TreeState};
+use executor_types::{BlockExecutorTrait, ChunkExecutorTrait};
+use storage_interface::{DbReader, DbReaderWriter, DbWriter, StartupInfo};
 
-fn create_test_executor() -> Executor<FakeVM> {
+fn create_test_executor() -> BlockExecutor<FakeVM> {
     // setup fake db
     let fake_db = FakeDb {};
     let db_reader_writer = DbReaderWriter::new(fake_db);
-    Executor::<FakeVM>::new(db_reader_writer)
+    BlockExecutor::<FakeVM>::new(db_reader_writer)
 }
 
 pub fn fuzz_execute_and_commit_chunk(
     txn_list_with_proof: TransactionListWithProof,
     verified_target_li: LedgerInfoWithSignatures,
 ) {
-    let mut executor = create_test_executor();
-    let _events = executor.execute_and_commit_chunk(txn_list_with_proof, verified_target_li, None);
+    let db = DbReaderWriter::new(FakeDb {});
+    let executor = ChunkExecutor::<FakeVM>::new(db).unwrap();
+
+    let _events = executor.execute_and_commit_chunk(txn_list_with_proof, &verified_target_li, None);
 }
 
 pub fn fuzz_execute_and_commit_blocks(
     blocks: Vec<(HashValue, Vec<Transaction>)>,
     ledger_info_with_sigs: LedgerInfoWithSignatures,
 ) {
-    let mut executor = create_test_executor();
+    let executor = create_test_executor();
 
     let mut parent_block_id = *SPARSE_MERKLE_PLACEHOLDER_HASH;
     let mut block_ids = vec![];
@@ -61,7 +56,7 @@ pub struct FakeVM;
 impl VMExecutor for FakeVM {
     fn execute_block(
         _transactions: Vec<Transaction>,
-        _state_view: &dyn StateView,
+        _state_view: &impl StateView,
     ) -> Result<Vec<TransactionOutput>, VMStatus> {
         Ok(Vec::new())
     }
@@ -71,60 +66,6 @@ impl VMExecutor for FakeVM {
 pub struct FakeDb;
 
 impl DbReader for FakeDb {
-    fn get_block_timestamp(&self, _version: u64) -> Result<u64> {
-        unimplemented!();
-    }
-
-    fn get_epoch_ending_ledger_infos(
-        &self,
-        _start_epoch: u64,
-        _end_epoch: u64,
-    ) -> Result<EpochChangeProof> {
-        unimplemented!();
-    }
-
-    fn get_transactions(
-        &self,
-        _start_version: Version,
-        _batch_size: u64,
-        _ledger_version: Version,
-        _fetch_events: bool,
-    ) -> Result<TransactionListWithProof> {
-        unimplemented!();
-    }
-
-    fn get_events(
-        &self,
-        _event_key: &EventKey,
-        _start: u64,
-        _order: Order,
-        _limit: u64,
-    ) -> Result<Vec<(u64, ContractEvent)>> {
-        unimplemented!();
-    }
-
-    fn get_events_with_proofs(
-        &self,
-        _event_key: &EventKey,
-        _start: u64,
-        _order: Order,
-        _limit: u64,
-        _known_version: Option<u64>,
-    ) -> Result<Vec<EventWithProof>> {
-        unimplemented!();
-    }
-
-    fn get_latest_account_state(
-        &self,
-        _address: AccountAddress,
-    ) -> Result<Option<AccountStateBlob>> {
-        unimplemented!();
-    }
-
-    fn get_latest_ledger_info(&self) -> Result<LedgerInfoWithSignatures> {
-        unimplemented!();
-    }
-
     fn get_latest_version(&self) -> Result<Version> {
         Ok(self.get_latest_ledger_info()?.ledger_info().version())
     }
@@ -137,70 +78,6 @@ impl DbReader for FakeDb {
 
     fn get_startup_info(&self) -> Result<Option<StartupInfo>> {
         Ok(Some(StartupInfo::new_for_testing()))
-    }
-
-    fn get_txn_by_account(
-        &self,
-        _address: AccountAddress,
-        _seq_num: u64,
-        _ledger_version: Version,
-        _fetch_events: bool,
-    ) -> Result<Option<TransactionWithProof>> {
-        unimplemented!();
-    }
-
-    fn get_state_proof_with_ledger_info(
-        &self,
-        _known_version: u64,
-        _ledger_info: LedgerInfoWithSignatures,
-    ) -> Result<(EpochChangeProof, AccumulatorConsistencyProof)> {
-        unimplemented!();
-    }
-
-    fn get_state_proof(
-        &self,
-        _known_version: u64,
-    ) -> Result<(
-        LedgerInfoWithSignatures,
-        EpochChangeProof,
-        AccumulatorConsistencyProof,
-    )> {
-        unimplemented!();
-    }
-
-    fn get_account_state_with_proof(
-        &self,
-        _address: AccountAddress,
-        _version: Version,
-        _ledger_version: Version,
-    ) -> Result<AccountStateWithProof> {
-        unimplemented!();
-    }
-
-    fn get_account_state_with_proof_by_version(
-        &self,
-        _address: AccountAddress,
-        _version: Version,
-    ) -> Result<(
-        Option<AccountStateBlob>,
-        SparseMerkleProof<AccountStateBlob>,
-    )> {
-        unimplemented!();
-    }
-
-    fn get_latest_state_root(&self) -> Result<(Version, HashValue)> {
-        unimplemented!();
-    }
-
-    fn get_latest_tree_state(&self) -> Result<TreeState> {
-        unimplemented!();
-    }
-
-    fn get_epoch_ending_ledger_info(
-        &self,
-        _known_version: u64,
-    ) -> Result<LedgerInfoWithSignatures> {
-        unimplemented!();
     }
 }
 

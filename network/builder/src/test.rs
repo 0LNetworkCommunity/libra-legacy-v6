@@ -4,7 +4,7 @@
 //! Integration tests for validator_network.
 use crate::dummy::{setup_network, DummyMsg};
 use futures::{future::join, StreamExt};
-use network::protocols::network::Event;
+use network::protocols::network::{ApplicationNetworkSender, Event};
 use std::time::Duration;
 
 #[test]
@@ -18,10 +18,10 @@ fn test_direct_send() {
     let tn = setup_network();
     let dialer_peer_id = tn.dialer_peer_id;
     let mut dialer_events = tn.dialer_events;
-    let mut dialer_sender = tn.dialer_sender;
+    let dialer_sender = tn.dialer_sender;
     let listener_peer_id = tn.listener_peer_id;
     let mut listener_events = tn.listener_events;
-    let mut listener_sender = tn.listener_sender;
+    let listener_sender = tn.listener_sender;
 
     let msg = DummyMsg(vec![]);
 
@@ -63,10 +63,10 @@ fn test_rpc() {
     let tn = setup_network();
     let dialer_peer_id = tn.dialer_peer_id;
     let mut dialer_events = tn.dialer_events;
-    let mut dialer_sender = tn.dialer_sender;
+    let dialer_sender = tn.dialer_sender;
     let listener_peer_id = tn.listener_peer_id;
     let mut listener_events = tn.listener_events;
-    let mut listener_sender = tn.listener_sender;
+    let listener_sender = tn.listener_sender;
 
     let msg = DummyMsg(vec![]);
 
@@ -76,7 +76,7 @@ fn test_rpc() {
         dialer_sender.send_rpc(listener_peer_id, msg_clone.clone(), Duration::from_secs(10));
     let f_respond = async move {
         match listener_events.next().await.unwrap() {
-            Event::RpcRequest(peer_id, msg, rs) => {
+            Event::RpcRequest(peer_id, msg, _, rs) => {
                 assert_eq!(peer_id, dialer_peer_id);
                 assert_eq!(msg, msg_clone);
                 rs.send(Ok(bcs::to_bytes(&msg).unwrap().into())).unwrap();
@@ -94,7 +94,7 @@ fn test_rpc() {
         listener_sender.send_rpc(dialer_peer_id, msg_clone.clone(), Duration::from_secs(10));
     let f_respond = async move {
         match dialer_events.next().await.unwrap() {
-            Event::RpcRequest(peer_id, msg, rs) => {
+            Event::RpcRequest(peer_id, msg, _, rs) => {
                 assert_eq!(peer_id, listener_peer_id);
                 assert_eq!(msg, msg_clone);
                 rs.send(Ok(bcs::to_bytes(&msg).unwrap().into())).unwrap();

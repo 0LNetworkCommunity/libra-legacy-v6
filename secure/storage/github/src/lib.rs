@@ -242,7 +242,7 @@ impl Client {
             )))
         }
     }
-    
+
     ///////// 0L ////////
     pub fn fork_genesis_repo(&self, genesis_repo_owner: &str, genesis_repo_name: &str) -> Result<(), Error> {
         let json = json!({});
@@ -299,7 +299,7 @@ impl Client {
         }
     }
 
-        ///////// 0L ////////
+    ///////// 0L ////////
     pub fn get_authenticated_user(&self) -> Result<String, Error> {
 
         // let head = format!("{}:master", pull_username);
@@ -327,8 +327,7 @@ impl Client {
       // Ok(())
     }
 
-
-    // https://api.github.com/user
+    // https://api.github.com/user    
 
     fn post_url(&self, path: &str) -> String {
         format!(

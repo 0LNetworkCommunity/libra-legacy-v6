@@ -12,12 +12,13 @@ use crate::{
 use diem_config::config::{ExecutionCorrectnessService, NodeConfig};
 use diem_crypto::ed25519::Ed25519PrivateKey;
 use diem_global_constants::EXECUTION_KEY;
-use diem_infallible::Mutex;
 use diem_secure_storage::{CryptoStorage, Storage};
+
 use diem_vm::DiemVM;
-use executor::Executor;
+use executor::block_executor::BlockExecutor;
 use std::{convert::TryInto, net::SocketAddr, sync::Arc};
 use storage_client::StorageClient;
+use storage_interface::DbReaderWriter;
 
 pub fn extract_execution_prikey(config: &NodeConfig) -> Option<Ed25519PrivateKey> {
     let backend = &config.execution.backend;
@@ -45,9 +46,9 @@ pub fn extract_execution_prikey(config: &NodeConfig) -> Option<Ed25519PrivateKey
 }
 
 enum ExecutionCorrectnessWrapper {
-    Local(Arc<Mutex<LocalService>>),
+    Local(Arc<LocalService>),
     Process(ProcessService),
-    Serializer(Arc<Mutex<SerializerService>>),
+    Serializer(Arc<SerializerService>),
     Thread(ThreadService),
 }
 
@@ -56,7 +57,7 @@ pub struct ExecutionCorrectnessManager {
 }
 
 impl ExecutionCorrectnessManager {
-    pub fn new(config: &NodeConfig) -> Self {
+    pub fn new(config: &NodeConfig, local_db: DbReaderWriter) -> Self {
         if let ExecutionCorrectnessService::Process(remote_service) = &config.execution.service {
             return Self::new_process(
                 remote_service.server_address,
@@ -68,9 +69,7 @@ impl ExecutionCorrectnessManager {
         let storage_address = config.storage.address;
         let timeout_ms = config.storage.timeout_ms;
         match &config.execution.service {
-            ExecutionCorrectnessService::Local => {
-                Self::new_local(storage_address, execution_prikey, timeout_ms)
-            }
+            ExecutionCorrectnessService::Local => Self::new_local(local_db, execution_prikey),
             ExecutionCorrectnessService::Serializer => {
                 Self::new_serializer(storage_address, execution_prikey, timeout_ms)
             }
@@ -84,17 +83,11 @@ impl ExecutionCorrectnessManager {
         }
     }
 
-    pub fn new_local(
-        storage_address: SocketAddr,
-        execution_prikey: Option<Ed25519PrivateKey>,
-        timeout: u64,
-    ) -> Self {
-        let block_executor = Box::new(Executor::<DiemVM>::new(
-            StorageClient::new(&storage_address, timeout).into(),
-        ));
+    pub fn new_local(db: DbReaderWriter, execution_prikey: Option<Ed25519PrivateKey>) -> Self {
+        let block_executor = Box::new(BlockExecutor::<DiemVM>::new(db));
         Self {
             internal_execution_correctness: ExecutionCorrectnessWrapper::Local(Arc::new(
-                Mutex::new(LocalService::new(block_executor, execution_prikey)),
+                LocalService::new(block_executor, execution_prikey),
             )),
         }
     }
@@ -111,13 +104,13 @@ impl ExecutionCorrectnessManager {
         execution_prikey: Option<Ed25519PrivateKey>,
         timeout: u64,
     ) -> Self {
-        let block_executor = Box::new(Executor::<DiemVM>::new(
-            StorageClient::new(&storage_address, timeout).into(),
-        ));
+        let block_executor = Box::new(BlockExecutor::<DiemVM>::new(DbReaderWriter::new(
+            StorageClient::new(&storage_address, timeout),
+        )));
         let serializer_service = SerializerService::new(block_executor, execution_prikey);
         Self {
             internal_execution_correctness: ExecutionCorrectnessWrapper::Serializer(Arc::new(
-                Mutex::new(serializer_service),
+                serializer_service,
             )),
         }
     }

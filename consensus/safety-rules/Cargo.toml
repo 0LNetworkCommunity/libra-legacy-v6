@@ -12,23 +12,23 @@ rand = { version = "0.8.3", default-features = false }
 proptest = { version = "1.0.0", optional = true }
 rand_core = "0.6.2"
 
-crash-handler = { path = "../../common/crash-handler" }
+crash-handler = { path = "../../crates/crash-handler" }
 consensus-types = { path = "../consensus-types" }
-bcs = "0.1.2"
 diem-config = { path = "../../config" }
-diem-crypto = { path = "../../crypto/crypto" }
+diem-crypto = { path = "../../crates/diem-crypto" }
 diem-global-constants = { path = "../../config/global-constants"}
-diem-infallible = { path = "../../common/infallible" }
-diem-logger = { path = "../../common/logger" }
-diem-proptest-helpers = { path = "../../common/proptest-helpers", optional = true }
+diem-infallible = { path = "../../crates/diem-infallible" }
+diem-logger = { path = "../../crates/diem-logger" }
+diem-proptest-helpers = { path = "../../crates/diem-proptest-helpers", optional = true }
 diem-secure-net = { path = "../../secure/net" }
 diem-secure-push-metrics = { path = "../../secure/push-metrics" }
 diem-secure-storage = { path = "../../secure/storage" }
-diem-temppath = { path = "../../common/temppath" }
+diem-temppath = { path = "../../crates/diem-temppath" }
 diem-types = { path = "../../types" }
 diem-vault-client = { path = "../../secure/storage/vault" }
-diem-workspace-hack = { path = "../../common/workspace-hack" }
+diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 serde = { version = "1.0.124", default-features = false }
+serde_json = "1.0.64"
 thiserror = "1.0.24"
 
 [dev-dependencies]
@@ -38,7 +38,7 @@ proptest = "1.0.0"
 
 consensus-types = { path = "../consensus-types", features = ["fuzzing"] }
 diem-config = { path = "../../config", features = ["fuzzing"] }
-diem-proptest-helpers = { path = "../../common/proptest-helpers" }
+diem-proptest-helpers = { path = "../../crates/diem-proptest-helpers" }
 diem-secure-storage = { path = "../../secure/storage", features = ["testing"] }
 
 [[bench]]

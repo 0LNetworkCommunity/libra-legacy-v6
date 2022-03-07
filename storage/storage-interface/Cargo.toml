@@ -10,20 +10,20 @@ publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.38"
+anyhow = "1.0.52"
 itertools = "0.10.0"
 serde = { version = "1.0.124", default-features = false }
 thiserror = "1.0.24"
 parking_lot = "0.11.1"
 
 bcs = "0.1.2"
-diem-crypto = { path = "../../crypto/crypto" }
+diem-crypto = { path = "../../crates/diem-crypto" }
 diem-secure-net = { path = "../../secure/net" }
 diem-state-view = { path = "../state-view" }
 diem-types = { path = "../../types" }
-diem-workspace-hack = { path = "../../common/workspace-hack" }
+diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 scratchpad = { path = "../scratchpad" }
-move-core-types = { path = "../../language/move-core/types" }
+move-core-types = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
 
 [features]
 default = []

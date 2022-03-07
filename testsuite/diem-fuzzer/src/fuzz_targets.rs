@@ -52,7 +52,7 @@ static ALL_TARGETS: Lazy<BTreeMap<&'static str, Box<dyn FuzzTargetImpl>>> = Lazy
         Box::new(proof::TransactionInfoWithProofFuzzer::default()),
         Box::new(proof::AccountStateProofFuzzer::default()),
         Box::new(proof::EventProofFuzzer::default()),
-        Box::new(proof::TransactionListProofFuzzer::default()),
+        Box::new(proof::TransactionInfoListWithProofFuzzer::default()),
         // Network
         Box::new(network::NetworkNoiseInitiator::default()),
         Box::new(network::NetworkNoiseResponder::default()),
@@ -89,6 +89,7 @@ static ALL_TARGETS: Lazy<BTreeMap<&'static str, Box<dyn FuzzTargetImpl>>> = Lazy
         //Box::new(storage::JellyfishGetWithProof::default()),
         Box::new(storage::JellyfishGetWithProofWithDistinctLastNibble::default()),
         Box::new(storage::JellyfishGetRangeProof::default()),
+        Box::new(storage::JellyfishGetLeafCount::default()),
         Box::new(storage::AccumulatorFrozenSubtreeHashes::default()),
         Box::new(storage::AccumulatorProof::default()),
         Box::new(storage::AccumulatorConsistencyProof::default()),

@@ -77,7 +77,7 @@ const MAX_CONNECTION_DELAY_JITTER: Duration = Duration::from_millis(100);
 
 /// The ConnectivityManager actor.
 pub struct ConnectivityManager<TBackoff> {
-    network_context: Arc<NetworkContext>,
+    network_context: NetworkContext,
     /// A handle to a time service for easily mocking time-related operations.
     time_service: TimeService,
     /// Nodes which are eligible to join the network.
@@ -118,9 +118,10 @@ pub struct ConnectivityManager<TBackoff> {
 /// Different sources for peer addresses, ordered by priority (Onchain=highest,
 /// Config=lowest).
 #[repr(u8)]
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, NumVariants, Serialize)]
+#[derive(Copy, Clone, Eq, Hash, PartialEq, Ord, PartialOrd, NumVariants, Serialize)]
 pub enum DiscoverySource {
     OnChainValidatorSet,
+    File,
     Config,
 }
 
@@ -137,6 +138,7 @@ impl fmt::Display for DiscoverySource {
             "{}",
             match self {
                 DiscoverySource::OnChainValidatorSet => "OnChainValidatorSet",
+                DiscoverySource::File => "File",
                 DiscoverySource::Config => "Config",
             }
         )
@@ -249,7 +251,7 @@ where
 {
     /// Creates a new instance of the [`ConnectivityManager`] actor.
     pub fn new(
-        network_context: Arc<NetworkContext>,
+        network_context: NetworkContext,
         time_service: TimeService,
         eligible: Arc<RwLock<PeerSet>>,
         seeds: PeerSet,
@@ -493,7 +495,7 @@ where
         // newly eligible, but not connected to peers, have their counter initialized properly.
         counters::peer_connected(&self.network_context, &peer_id, 0);
 
-        let mut connection_reqs_tx = self.connection_reqs_tx.clone();
+        let connection_reqs_tx = self.connection_reqs_tx.clone();
         // The initial dial state; it has zero dial delay and uses the first
         // address.
         let init_dial_state = DialState::new(self.backoff_strategy.clone());
@@ -526,7 +528,7 @@ where
             dial_delay
         );
 
-        let network_context = self.network_context.clone();
+        let network_context = self.network_context;
         // Create future which completes by either dialing after calculated
         // delay or on cancellation.
         let f = async move {
@@ -782,7 +784,7 @@ where
 }
 
 fn log_dial_result(
-    network_context: Arc<NetworkContext>,
+    network_context: NetworkContext,
     peer_id: PeerId,
     addr: NetworkAddress,
     dial_result: DialResult,

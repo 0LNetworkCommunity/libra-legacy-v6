@@ -8,8 +8,8 @@ pub mod views;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-enum JsonRpcVersion {
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Serialize)]
+pub enum JsonRpcVersion {
     #[serde(rename = "2.0")]
     V2,
 }
@@ -22,6 +22,15 @@ pub enum Id {
     Number(u64),
     /// String id
     String(Box<str>),
+}
+
+impl std::fmt::Display for Id {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Id::Number(ref v) => std::fmt::Debug::fmt(v, f),
+            Id::String(ref v) => std::fmt::Debug::fmt(v, f),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Deserialize, Serialize)]
@@ -40,10 +49,14 @@ pub enum Method {
     //
     // Experimental APIs
     //
+    GetResources,
     GetStateProof,
+    GetAccumulatorConsistencyProof,
     GetAccountStateWithProof,
     GetTransactionsWithProofs,
+    GetAccountTransactionsWithProofs,
     GetEventsWithProofs,
+    GetEventByVersionWithProof,
 
     //////// 0L ////////
     GetTowerStateView,
@@ -63,16 +76,18 @@ impl Method {
             Method::GetEvents => "get_events",
             Method::GetCurrencies => "get_currencies",
             Method::GetNetworkStatus => "get_network_status",
+            Method::GetResources => "get_resources",
             Method::GetStateProof => "get_state_proof",
+            Method::GetAccumulatorConsistencyProof => "get_accumulator_consistency_proof",
             Method::GetAccountStateWithProof => "get_account_state_with_proof",
             Method::GetTransactionsWithProofs => "get_transactions_with_proofs",
+            Method::GetAccountTransactionsWithProofs => "get_account_transactions_with_proofs",
             Method::GetEventsWithProofs => "get_events_with_proofs",
-
+            Method::GetEventByVersionWithProof => "get_event_by_version_with_proof",
             //////// 0L ////////
             Method::GetTowerStateView => "get_miner_state_view", // Name is not used in json RPC, only for errors, what matters is the type name, which serde formats as snakecase.
-            
             Method::GetOracleUpgradeStateView => "get_oracle_upgrade_state_view",
-            Method::GetWaypointView => "get_waypoint_view", 
+            Method::GetWaypointView => "get_waypoint_view",
         }
     }
 }

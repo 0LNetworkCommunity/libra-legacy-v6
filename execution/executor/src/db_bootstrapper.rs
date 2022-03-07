@@ -3,9 +3,9 @@
 
 #![forbid(unsafe_code)]
 
-use crate::Executor;
-use anyhow::{ensure, format_err, Result};
-use diem_crypto::{hash::PRE_GENESIS_BLOCK_ID, HashValue};
+use crate::components::chunk_output::ChunkOutput;
+use anyhow::{anyhow, ensure, format_err, Result};
+use diem_crypto::HashValue;
 use diem_logger::prelude::*;
 use diem_state_view::{StateView, StateViewId};
 use diem_types::{
@@ -19,10 +19,10 @@ use diem_types::{
     waypoint::Waypoint,
 };
 use diem_vm::VMExecutor;
-use executor_types::BlockExecutor;
+use executor_types::{ExecutedChunk, ExecutedTrees};
 use move_core_types::move_resource::MoveResource;
-use std::collections::btree_map::BTreeMap;
-use storage_interface::{state_view::VerifiedStateView, DbReaderWriter, TreeState};
+use std::{collections::btree_map::BTreeMap, sync::Arc};
+use storage_interface::{state_view::VerifiedStateView, DbReaderWriter, DbWriter, TreeState};
 
 pub fn generate_waypoint<V: VMExecutor>(
     db: &DbReaderWriter,
@@ -61,22 +61,24 @@ pub fn maybe_bootstrap<V: VMExecutor>(
     Ok(true)
 }
 
-pub struct GenesisCommitter<V: VMExecutor> {
-    executor: Executor<V>,
-    ledger_info_with_sigs: LedgerInfoWithSignatures,
+pub struct GenesisCommitter {
+    db: Arc<dyn DbWriter>,
+    output: ExecutedChunk,
     waypoint: Waypoint,
 }
 
-impl<V: VMExecutor> GenesisCommitter<V> {
-    pub fn new(
-        executor: Executor<V>,
-        ledger_info_with_sigs: LedgerInfoWithSignatures,
-    ) -> Result<Self> {
-        let waypoint = Waypoint::new_epoch_boundary(ledger_info_with_sigs.ledger_info())?;
+impl GenesisCommitter {
+    pub fn new(db: Arc<dyn DbWriter>, output: ExecutedChunk) -> Result<Self> {
+        let ledger_info = output
+            .ledger_info
+            .as_ref()
+            .ok_or_else(|| anyhow!("LedgerInfo missing."))?
+            .ledger_info();
+        let waypoint = Waypoint::new_epoch_boundary(ledger_info)?;
 
         Ok(Self {
-            executor,
-            ledger_info_with_sigs,
+            db,
+            output,
             waypoint,
         })
     }
@@ -85,9 +87,12 @@ impl<V: VMExecutor> GenesisCommitter<V> {
         self.waypoint
     }
 
-    pub fn commit(mut self) -> Result<()> {
-        self.executor
-            .commit_blocks(vec![genesis_block_id()], self.ledger_info_with_sigs)?;
+    pub fn commit(self) -> Result<()> {
+        self.db.save_transactions(
+            &self.output.transactions_to_commit()?,
+            self.output.result_view.txn_accumulator().version(),
+            self.output.ledger_info.as_ref(),
+        )?;
         info!("Genesis committed.");
         // DB bootstrapped, avoid anything that could fail after this.
 
@@ -99,69 +104,73 @@ pub fn calculate_genesis<V: VMExecutor>(
     db: &DbReaderWriter,
     tree_state: TreeState,
     genesis_txn: &Transaction,
-) -> Result<GenesisCommitter<V>> {
+) -> Result<GenesisCommitter> {
     // DB bootstrapper works on either an empty transaction accumulator or an existing block chain.
     // In the very extreme and sad situation of losing quorum among validators, we refer to the
     // second use case said above.
     let genesis_version = tree_state.num_transactions;
-    let mut executor = Executor::<V>::new_on_unbootstrapped_db(db.clone(), tree_state);
+    let base_view: ExecutedTrees = tree_state.into();
+    let base_state_view =
+        base_view.state_view(&base_view, StateViewId::Miscellaneous, db.reader.clone());
 
-    let block_id = HashValue::zero();
     let epoch = if genesis_version == 0 {
         GENESIS_EPOCH
     } else {
-        let executor_trees = executor.get_executed_trees(*PRE_GENESIS_BLOCK_ID)?;
-        let state_view =
-            executor.get_executed_state_view(StateViewId::Miscellaneous, &executor_trees);
-        get_state_epoch(&state_view)?
+        get_state_epoch(&base_state_view)?
     };
 
-    // Create a block with genesis_txn being the only txn. Execute it then commit it immediately.
-    let result =
-        executor.execute_block((block_id, vec![genesis_txn.clone()]), *PRE_GENESIS_BLOCK_ID)?;
+    let (mut output, _, _) =
+        ChunkOutput::by_transaction_execution::<V>(vec![genesis_txn.clone()], base_state_view)?
+            .apply_to_ledger(base_view.txn_accumulator())?;
+    ensure!(
+        !output.to_commit.is_empty(),
+        "Genesis txn execution failed."
+    );
 
-    let root_hash = result.root_hash();
-    let next_epoch_state = result
-        .epoch_state()
-        .as_ref()
-        .ok_or_else(|| format_err!("Genesis transaction must emit a epoch change."))?;
-    let executed_trees = executor.get_executed_trees(block_id)?;
-    let state_view = executor.get_executed_state_view(StateViewId::Miscellaneous, &executed_trees);
     let timestamp_usecs = if genesis_version == 0 {
         // TODO(aldenhu): fix existing tests before using real timestamp and check on-chain epoch.
         GENESIS_TIMESTAMP_USECS
     } else {
+        let state_view = output.result_view.state_view(
+            &base_view,
+            StateViewId::Miscellaneous,
+            db.reader.clone(),
+        );
         let next_epoch = epoch
             .checked_add(1)
             .ok_or_else(|| format_err!("integer overflow occurred"))?;
-
         ensure!(
             next_epoch == get_state_epoch(&state_view)?,
             "Genesis txn didn't bump epoch."
         );
         get_state_timestamp(&state_view)?
     };
+    ensure!(
+        output.next_epoch_state.is_some(),
+        "Genesis txn didn't output reconfig event."
+    );
 
     let ledger_info_with_sigs = LedgerInfoWithSignatures::new(
         LedgerInfo::new(
             BlockInfo::new(
                 epoch,
                 GENESIS_ROUND,
-                block_id,
-                root_hash,
+                genesis_block_id(),
+                output.result_view.txn_accumulator().root_hash(),
                 genesis_version,
                 timestamp_usecs,
-                Some(next_epoch_state.clone()),
+                output.next_epoch_state.clone(),
             ),
-            HashValue::zero(), /* consensus_data_hash */
+            genesis_block_id(), /* consensus_data_hash */
         ),
         BTreeMap::default(), /* signatures */
     );
+    output.ledger_info = Some(ledger_info_with_sigs);
 
-    let committer = GenesisCommitter::new(executor, ledger_info_with_sigs)?;
+    let committer = GenesisCommitter::new(db.writer.clone(), output)?;
     info!(
         "Genesis calculated: ledger_info_with_sigs {:?}, waypoint {:?}",
-        committer.ledger_info_with_sigs, committer.waypoint,
+        &committer.output.ledger_info, committer.waypoint,
     );
     Ok(committer)
 }
@@ -173,7 +182,7 @@ fn get_state_timestamp(state_view: &VerifiedStateView) -> Result<u64> {
             DiemTimestampResource::resource_path(),
         ))?
         .ok_or_else(|| format_err!("DiemTimestampResource missing."))?;
-    let rsrc = bcs::from_bytes::<DiemTimestampResource>(&rsrc_bytes)?;
+    let rsrc = bcs::from_bytes::<DiemTimestampResource>(rsrc_bytes)?;
     Ok(rsrc.diem_timestamp.microseconds)
 }
 
@@ -184,7 +193,7 @@ fn get_state_epoch(state_view: &VerifiedStateView) -> Result<u64> {
             ConfigurationResource::resource_path(),
         ))?
         .ok_or_else(|| format_err!("ConfigurationResource missing."))?;
-    let rsrc = bcs::from_bytes::<ConfigurationResource>(&rsrc_bytes)?;
+    let rsrc = bcs::from_bytes::<ConfigurationResource>(rsrc_bytes)?;
     Ok(rsrc.epoch())
 }
 

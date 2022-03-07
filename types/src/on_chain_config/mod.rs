@@ -17,14 +17,20 @@ use move_core_types::{
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{collections::HashMap, fmt, sync::Arc};
 
+mod consensus_config;
 mod diem_version;
+mod parallel_execution_config;
 mod registered_currencies;
 mod validator_set;
 mod vm_config;
 mod vm_publishing_option;
 
 pub use self::{
-    diem_version::{DiemVersion, DIEM_MAX_KNOWN_VERSION, DIEM_VERSION_2, DIEM_VERSION_3},
+    consensus_config::{ConsensusConfigV1, ConsensusConfigV2, OnChainConsensusConfig},
+    diem_version::{
+        DiemVersion, DIEM_MAX_KNOWN_VERSION, DIEM_VERSION_2, DIEM_VERSION_3, DIEM_VERSION_4,
+    },
+    parallel_execution_config::{ParallelExecutionConfig, ReadWriteSetAnalysis},
     registered_currencies::RegisteredCurrencies,
     validator_set::ValidatorSet,
     vm_config::VMConfig,
@@ -45,11 +51,8 @@ pub fn config_address() -> AccountAddress {
 }
 
 impl ConfigID {
-    pub fn access_path(self) -> AccessPath {
-        access_path_for_config(
-            AccountAddress::from_hex_literal(self.0).expect("failed to get address"),
-            Identifier::new(self.1).expect("failed to get Identifier"),
-        )
+    pub fn name(&self) -> String {
+        self.1.to_string()
     }
 }
 
@@ -70,6 +73,8 @@ pub const ON_CHAIN_CONFIG_REGISTRY: &[ConfigID] = &[
     DiemVersion::CONFIG_ID,
     ValidatorSet::CONFIG_ID,
     RegisteredCurrencies::CONFIG_ID,
+    OnChainConsensusConfig::CONFIG_ID,
+    ParallelExecutionConfig::CONFIG_ID,
 ];
 
 #[derive(Clone, Debug, PartialEq)]
@@ -128,14 +133,14 @@ pub trait OnChainConfig: Send + Sync + DeserializeOwned {
     const CONFIG_ID: ConfigID = ConfigID(Self::ADDRESS, Self::IDENTIFIER);
 
     // Single-round BCS deserialization from bytes to `Self`
-    // This is the expected deserialization pattern for most Rust representations,
+    // This is the expected deserialization pattern if the Rust representation lives natively in Move.
     // but sometimes `deserialize_into_config` may need an extra customized round of deserialization
-    // (e.g. enums like `VMPublishingOption`)
+    // when the data is represented as opaque vec<u8> in Move.
     // In the override, we can reuse this default logic via this function
     // Note: we cannot directly call the default `deserialize_into_config` implementation
     // in its override - this will just refer to the override implementation itself
     fn deserialize_default_impl(bytes: &[u8]) -> Result<Self> {
-        bcs::from_bytes::<Self>(&bytes)
+        bcs::from_bytes::<Self>(bytes)
             .map_err(|e| format_err!("[on-chain config] Failed to deserialize into config: {}", e))
     }
 
@@ -151,9 +156,13 @@ pub trait OnChainConfig: Send + Sync + DeserializeOwned {
     where
         T: ConfigStorage,
     {
-        storage
-            .fetch_config(Self::CONFIG_ID.access_path())
-            .and_then(|bytes| Self::deserialize_into_config(&bytes).ok())
+        let experimental_path = experimental_access_path_for_config(Self::CONFIG_ID);
+        match storage.fetch_config(experimental_path) {
+            Some(bytes) => Self::deserialize_into_config(&bytes).ok(),
+            None => storage
+                .fetch_config(default_access_path_for_config(Self::CONFIG_ID))
+                .and_then(|bytes| Self::deserialize_into_config(&bytes).ok()),
+        }
     }
 }
 
@@ -161,20 +170,39 @@ pub fn new_epoch_event_key() -> EventKey {
     EventKey::new_from_address(&config_address(), 4)
 }
 
-pub fn access_path_for_config(address: AccountAddress, config_name: Identifier) -> AccessPath {
+pub fn default_access_path_for_config(config_id: ConfigID) -> AccessPath {
     AccessPath::new(
-        address,
-        AccessPath::resource_access_vec(StructTag {
+        config_address(),
+        AccessPath::resource_access_vec(config_struct_tag(
+            Identifier::new(config_id.1).expect("fail to make identifier"),
+        )),
+    )
+}
+
+pub fn config_struct_tag(config_name: Identifier) -> StructTag {
+    StructTag {
+        address: CORE_CODE_ADDRESS,
+        module: ConfigurationResource::MODULE_NAME.to_owned(),
+        name: ConfigurationResource::MODULE_NAME.to_owned(),
+        type_params: vec![TypeTag::Struct(StructTag {
             address: CORE_CODE_ADDRESS,
-            module: ConfigurationResource::MODULE_NAME.to_owned(),
-            name: ConfigurationResource::MODULE_NAME.to_owned(),
-            type_params: vec![TypeTag::Struct(StructTag {
-                address: CORE_CODE_ADDRESS,
-                module: config_name.clone(),
-                name: config_name,
-                type_params: vec![],
-            })],
-        }),
+            module: config_name.clone(),
+            name: config_name,
+            type_params: vec![],
+        })],
+    }
+}
+
+pub fn experimental_access_path_for_config(config_id: ConfigID) -> AccessPath {
+    let struct_tag = StructTag {
+        address: CORE_CODE_ADDRESS,
+        module: Identifier::new(config_id.1).expect("fail to make identifier"),
+        name: Identifier::new(config_id.1).expect("fail to make identifier"),
+        type_params: vec![],
+    };
+    AccessPath::new(
+        config_address(),
+        AccessPath::resource_access_vec(struct_tag),
     )
 }
 

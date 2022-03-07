@@ -10,10 +10,10 @@ publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.38"
-diem-crypto = { path = "../../crypto/crypto" }
+anyhow = "1.0.52"
+diem-crypto = { path = "../../crates/diem-crypto" }
 diem-types = { path = "../../types" }
-diem-workspace-hack = { path = "../../common/workspace-hack" }
+diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 
 [features]
 default = []

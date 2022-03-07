@@ -9,7 +9,7 @@ use crate::{
     util::{sdk_info_from_user_agent, SdkInfo},
 };
 use anyhow::{ensure, Result};
-use diem_config::config::{NodeConfig, RoleType};
+use diem_config::config::{JsonRpcConfig, NodeConfig, RoleType};
 use diem_json_rpc_types::Method;
 use diem_logger::{debug, Schema};
 use diem_mempool::MempoolClientSender;
@@ -18,14 +18,14 @@ use futures::future::{join_all, Either};
 use rand::{rngs::OsRng, RngCore};
 use serde_json::Value;
 use std::{
-    net::SocketAddr,
     ops::Sub,
     sync::Arc,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
-use storage_interface::DbReader;
+use storage_interface::MoveDbReader;
 use tokio::runtime::{Builder, Runtime};
 use warp::{
+    filters::BoxedFilter,
     http::header,
     reject::{self, Reject},
     Filter, Reply,
@@ -70,7 +70,7 @@ struct RpcResponseLog<'a> {
 #[derive(serde::Deserialize)]
 struct HealthCheckParams {
     // Health check returns 200 when this param is provided and meet the following condition:
-    //   server latest ledger info timestamp >= server current time timestamp + duration_secs
+    //   server latest ledger info timestamp >= server current time timestamp - duration_secs
     pub duration_secs: Option<u64>,
 }
 
@@ -95,13 +95,8 @@ macro_rules! log_response {
 /// Creates HTTP server (warp-based) that serves JSON RPC requests
 /// Returns handle to corresponding Tokio runtime
 pub fn bootstrap(
-    address: SocketAddr,
-    batch_size_limit: u16,
-    page_size_limit: u16,
-    content_len_limit: usize,
-    tls_cert_path: &Option<String>,
-    tls_key_path: &Option<String>,
-    diem_db: Arc<dyn DbReader>,
+    config: &JsonRpcConfig,
+    diem_db: Arc<dyn MoveDbReader>,
     mp_sender: MempoolClientSender,
     role: RoleType,
     chain_id: ChainId,
@@ -112,19 +107,74 @@ pub fn bootstrap(
         .build()
         .expect("[json-rpc] failed to create runtime");
 
+    // Ensure that we actually bind to the socket first before spawning the
+    // server tasks. This helps in tests to prevent races where a client attempts
+    // to make a request before the server task is actually listening on the
+    // socket.
+    //
+    // Note: we need to enter the runtime context first to actually bind, since
+    //       tokio TcpListener can only be bound inside a tokio context.
+
+    let _guard = runtime.enter();
+    let full_route = health_check_route(diem_db.clone())
+        .or(jsonrpc_routes(diem_db, mp_sender, role, chain_id, config));
+
+    let address = config.address;
+    let tls_cert_path = &config.tls_cert_path;
+    let tls_key_path = &config.tls_key_path;
+
+    let server = match tls_cert_path {
+        None => Either::Left(warp::serve(full_route).bind(address)),
+        Some(cert_path) => Either::Right(
+            warp::serve(full_route)
+                .tls()
+                .cert_path(cert_path)
+                .key_path(tls_key_path.as_ref().unwrap())
+                .bind(address),
+        ),
+    };
+    runtime.handle().spawn(server);
+    runtime
+}
+
+/// Creates JSON RPC endpoint by given node config
+pub fn bootstrap_from_config(
+    config: &NodeConfig,
+    chain_id: ChainId,
+    diem_db: Arc<dyn MoveDbReader>,
+    mp_sender: MempoolClientSender,
+) -> Runtime {
+    bootstrap(
+        &config.json_rpc,
+        diem_db,
+        mp_sender,
+        config.base.role,
+        chain_id,
+    )
+}
+
+pub fn jsonrpc_routes(
+    diem_db: Arc<dyn MoveDbReader>,
+    mp_sender: MempoolClientSender,
+    role: RoleType,
+    chain_id: ChainId,
+    config: &JsonRpcConfig,
+) -> BoxedFilter<(impl Reply,)> {
     let service = JsonRpcService::new(
-        diem_db.clone(),
+        diem_db,
         mp_sender,
         role,
         chain_id,
-        batch_size_limit,
-        page_size_limit,
+        config.batch_size_limit,
+        config.page_size_limit,
     );
 
     let base_route = warp::any()
         .and(warp::post())
         .and(warp::header::exact("content-type", "application/json"))
-        .and(warp::body::content_length_limit(content_len_limit as u64))
+        .and(warp::body::content_length_limit(
+            config.content_length_limit as u64,
+        ))
         .and(warp::body::json())
         .and(warp::any().map(move || service.clone()))
         .and(warp::filters::header::optional::<String>("user-agent"))
@@ -156,67 +206,29 @@ pub fn bootstrap(
         );
 
     // For now we still allow user to use "/", but user should start to move to "/v1" soon
-    let route_root = warp::path::end().and(base_route.clone());
+    let route_root = warp::path::end().and(base_route.clone()).boxed();
 
     let route_v1 = warp::path::path("v1")
         .and(warp::path::end())
-        .and(base_route);
+        .and(base_route)
+        .boxed();
 
-    let health_route = warp::path!("-" / "healthy")
-        .and(warp::path::end())
-        .and(warp::query().map(move |params: HealthCheckParams| params))
-        .and(warp::any().map(move || diem_db.clone()))
-        .and(warp::any().map(SystemTime::now))
-        .and_then(health_check);
-
-    let full_route = health_route.or(route_v1.or(route_root));
-
-    // Ensure that we actually bind to the socket first before spawning the
-    // server tasks. This helps in tests to prevent races where a client attempts
-    // to make a request before the server task is actually listening on the
-    // socket.
-    //
-    // Note: we need to enter the runtime context first to actually bind, since
-    //       tokio TcpListener can only be bound inside a tokio context.
-    let _guard = runtime.enter();
-    let server = match tls_cert_path {
-        None => Either::Left(warp::serve(full_route).bind(address)),
-        Some(cert_path) => Either::Right(
-            warp::serve(full_route)
-                .tls()
-                .cert_path(cert_path)
-                .key_path(tls_key_path.as_ref().unwrap())
-                .bind(address),
-        ),
-    };
-    runtime.handle().spawn(server);
-    runtime
+    route_root.or(route_v1).boxed()
 }
 
-/// Creates JSON RPC endpoint by given node config
-pub fn bootstrap_from_config(
-    config: &NodeConfig,
-    chain_id: ChainId,
-    diem_db: Arc<dyn DbReader>,
-    mp_sender: MempoolClientSender,
-) -> Runtime {
-    bootstrap(
-        config.json_rpc.address,
-        config.json_rpc.batch_size_limit,
-        config.json_rpc.page_size_limit,
-        config.json_rpc.content_length_limit,
-        &config.json_rpc.tls_cert_path,
-        &config.json_rpc.tls_key_path,
-        diem_db,
-        mp_sender,
-        config.base.role,
-        chain_id,
-    )
+pub fn health_check_route(health_diem_db: Arc<dyn MoveDbReader>) -> BoxedFilter<(impl Reply,)> {
+    warp::path!("-" / "healthy")
+        .and(warp::path::end())
+        .and(warp::query().map(move |params: HealthCheckParams| params))
+        .and(warp::any().map(move || health_diem_db.clone()))
+        .and(warp::any().map(SystemTime::now))
+        .and_then(health_check)
+        .boxed()
 }
 
 async fn health_check(
     params: HealthCheckParams,
-    db: Arc<dyn DbReader>,
+    db: Arc<dyn MoveDbReader>,
     now: SystemTime,
 ) -> Result<Box<dyn warp::Reply>, warp::Rejection> {
     if let Some(duration) = params.duration_secs {
@@ -294,7 +306,7 @@ async fn rpc_endpoint_without_metrics(
                 });
                 let responses = join_all(futures).await;
                 for resp in &responses {
-                    log_response!(&trace_id, &resp, true);
+                    log_response!(&trace_id, resp, true);
                 }
                 warp::reply::json(&responses)
             }
@@ -345,7 +357,7 @@ async fn rpc_request_handler(
     request_type_label: &str,
     sdk_info: SdkInfo,
 ) -> JsonRpcResponse {
-    let handler = Handler::new(&service, &ledger_info);
+    let handler = Handler::new(service, ledger_info);
 
     let mut response = JsonRpcResponse::new(
         service.chain_id(),

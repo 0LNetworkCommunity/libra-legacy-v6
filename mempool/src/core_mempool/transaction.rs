@@ -1,14 +1,16 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use diem_crypto::HashValue;
 use diem_types::{
     account_address::AccountAddress,
+    account_config::AccountSequenceInfo,
     transaction::{GovernanceRole, SignedTransaction},
 };
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MempoolTransaction {
     pub txn: SignedTransaction,
     // System expiration time of the transaction. It should be removed from mempool by that time.
@@ -17,6 +19,7 @@ pub struct MempoolTransaction {
     pub ranking_score: u64,
     pub timeline_state: TimelineState,
     pub governance_role: GovernanceRole,
+    pub sequence_info: SequenceInfo,
 }
 
 impl MempoolTransaction {
@@ -27,8 +30,13 @@ impl MempoolTransaction {
         ranking_score: u64,
         timeline_state: TimelineState,
         governance_role: GovernanceRole,
+        seqno_type: AccountSequenceInfo,
     ) -> Self {
         Self {
+            sequence_info: SequenceInfo {
+                transaction_sequence_number: txn.sequence_number(),
+                account_sequence_number_type: seqno_type,
+            },
             txn,
             expiration_time,
             gas_amount,
@@ -37,14 +45,14 @@ impl MempoolTransaction {
             governance_role,
         }
     }
-    pub(crate) fn get_sequence_number(&self) -> u64 {
-        self.txn.sequence_number()
-    }
     pub(crate) fn get_sender(&self) -> AccountAddress {
         self.txn.sender()
     }
     pub(crate) fn get_gas_price(&self) -> u64 {
         self.txn.gas_unit_price()
+    }
+    pub(crate) fn get_committed_hash(&self) -> HashValue {
+        self.txn.clone().committed_hash()
     }
 }
 
@@ -58,4 +66,10 @@ pub enum TimelineState {
     // Transaction will never be qualified for broadcasting.
     // Currently we don't broadcast transactions originated on other peers.
     NonQualified,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub struct SequenceInfo {
+    pub transaction_sequence_number: u64,
+    pub account_sequence_number_type: AccountSequenceInfo,
 }

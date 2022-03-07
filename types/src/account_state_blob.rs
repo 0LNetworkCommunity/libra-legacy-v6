@@ -1,7 +1,14 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{account_address::{AccountAddress, HashAccountAddress}, account_config::{AccountResource, BalanceResource}, account_state::AccountState, ledger_info::LedgerInfo, proof::AccountStateProof, transaction::Version};
+use crate::{
+    account_address::{AccountAddress, HashAccountAddress},
+    account_config::{AccountResource, BalanceResource, DiemAccountResource},
+    account_state::AccountState,
+    ledger_info::LedgerInfo,
+    proof::{AccountStateProof, SparseMerkleRangeProof},
+    transaction::Version,
+};
 use anyhow::{anyhow, ensure, Error, Result};
 use diem_crypto::{
     hash::{CryptoHash, CryptoHasher},
@@ -12,12 +19,39 @@ use diem_crypto_derive::CryptoHasher;
 use proptest::{arbitrary::Arbitrary, prelude::*};
 #[cfg(any(test, feature = "fuzzing"))]
 use proptest_derive::Arbitrary;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::{convert::TryFrom, fmt};
 
-#[derive(Clone, Eq, PartialEq, Serialize, Deserialize, CryptoHasher)]
+#[derive(Clone, Eq, PartialEq, Serialize, CryptoHasher)]
 pub struct AccountStateBlob {
     blob: Vec<u8>,
+    #[serde(skip)]
+    hash: HashValue,
+}
+
+impl<'de> Deserialize<'de> for AccountStateBlob {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(rename = "AccountStateBlob")]
+        struct RawBlob {
+            blob: Vec<u8>,
+        }
+        let blob = RawBlob::deserialize(deserializer)?;
+
+        Ok(Self::new(blob.blob))
+    }
+}
+
+impl AccountStateBlob {
+    fn new(blob: Vec<u8>) -> Self {
+        let mut hasher = AccountStateBlobHasher::default();
+        hasher.update(&blob);
+        let hash = hasher.finish();
+        Self { blob, hash }
+    }
 }
 
 impl fmt::Debug for AccountStateBlob {
@@ -58,7 +92,7 @@ impl From<AccountStateBlob> for Vec<u8> {
 
 impl From<Vec<u8>> for AccountStateBlob {
     fn from(blob: Vec<u8>) -> AccountStateBlob {
-        AccountStateBlob { blob }
+        AccountStateBlob::new(blob)
     }
 }
 
@@ -66,9 +100,7 @@ impl TryFrom<&AccountState> for AccountStateBlob {
     type Error = Error;
 
     fn try_from(account_state: &AccountState) -> Result<Self> {
-        Ok(Self {
-            blob: bcs::to_bytes(account_state)?,
-        })
+        Ok(Self::new(bcs::to_bytes(account_state)?))
     }
 }
 
@@ -80,17 +112,31 @@ impl TryFrom<&AccountStateBlob> for AccountState {
     }
 }
 
-
-impl TryFrom<(&AccountResource, &BalanceResource)> for AccountStateBlob {
+impl TryFrom<(&AccountResource, &DiemAccountResource, &BalanceResource)> for AccountStateBlob {
     type Error = Error;
 
     fn try_from(
-        (account_resource, balance_resource): (&AccountResource, &BalanceResource),
+        (account_resource, diem_account_resource, balance_resource): (
+            &AccountResource,
+            &DiemAccountResource,
+            &BalanceResource,
+        ),
     ) -> Result<Self> {
         Self::try_from(&AccountState::try_from((
             account_resource,
+            diem_account_resource,
             balance_resource,
         ))?)
+    }
+}
+
+impl TryFrom<&AccountStateBlob> for DiemAccountResource {
+    type Error = Error;
+
+    fn try_from(account_state_blob: &AccountStateBlob) -> Result<Self> {
+        AccountState::try_from(account_state_blob)?
+            .get_diem_account_resource()?
+            .ok_or_else(|| anyhow!("DiemAccountResource not found."))
     }
 }
 
@@ -108,16 +154,14 @@ impl CryptoHash for AccountStateBlob {
     type Hasher = AccountStateBlobHasher;
 
     fn hash(&self) -> HashValue {
-        let mut hasher = Self::Hasher::default();
-        hasher.update(&self.blob);
-        hasher.finish()
+        self.hash
     }
 }
 
 #[cfg(any(test, feature = "fuzzing"))]
 prop_compose! {
-    fn account_state_blob_strategy()(account_resource in any::<AccountResource>(), balance_resource in any::<BalanceResource>()) -> AccountStateBlob {
-        AccountStateBlob::try_from((&account_resource, &balance_resource)).unwrap()
+    fn account_state_blob_strategy()(account_resource in any::<AccountResource>(), diem_account_resource in any::<DiemAccountResource>(), balance_resource in any::<BalanceResource>()) -> AccountStateBlob {
+        AccountStateBlob::try_from((&account_resource, &diem_account_resource, &balance_resource)).unwrap()
     }
 }
 
@@ -178,9 +222,30 @@ impl AccountStateWithProof {
     }
 }
 
+/// TODO(joshlind): add a proof implementation (e.g., verify()) and unit tests
+/// for these once we start supporting them.
+///
+/// A single chunk of all account states at a specific version.
+/// Note: this is similar to `StateSnapshotChunk` but all data is included
+/// in the struct itself and not behind pointers/handles to file locations.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct AccountStatesChunkWithProof {
+    pub first_index: u64,
+    // The first account index in chunk
+    pub last_index: u64,
+    // The last account index in chunk
+    pub first_key: HashValue,
+    // The first account key in chunk
+    pub last_key: HashValue,
+    // The last account key in chunk
+    pub account_blobs: Vec<(HashValue, AccountStateBlob)>,
+    // The account blobs in the chunk
+    pub proof: SparseMerkleRangeProof, // The proof to ensure the chunk is in the account states
+}
+
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{AccountStateWithProof, *};
     use bcs::test_helpers::assert_canonical_encode_decode;
     use proptest::collection::vec;
 

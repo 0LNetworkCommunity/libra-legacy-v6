@@ -6,27 +6,31 @@ use diem_crypto::{hash::SPARSE_MERKLE_PLACEHOLDER_HASH, HashValue};
 use diem_types::{
     access_path::AccessPath,
     account_address::AccountAddress,
+    account_config::diem_root_address,
     account_state::AccountState,
-    account_state_blob::{AccountStateBlob, AccountStateWithProof},
-    contract_event::{ContractEvent, EventWithProof},
+    account_state_blob::{AccountStateBlob, AccountStateWithProof, AccountStatesChunkWithProof},
+    contract_event::{ContractEvent, EventByVersionWithProof, EventWithProof},
     epoch_change::EpochChangeProof,
     epoch_state::EpochState,
     event::EventKey,
     ledger_info::LedgerInfoWithSignatures,
     move_resource::MoveStorage,
-    proof::{definition::LeafCount, AccumulatorConsistencyProof, SparseMerkleProof},
+    on_chain_config::{
+        default_access_path_for_config, experimental_access_path_for_config, ConfigID,
+    },
+    proof::{
+        definition::LeafCount, AccumulatorConsistencyProof, SparseMerkleProof,
+        SparseMerkleRangeProof, TransactionAccumulatorSummary,
+    },
+    state_proof::StateProof,
     transaction::{
-        TransactionInfo, TransactionListWithProof, TransactionToCommit, TransactionWithProof,
-        Version,
+        AccountTransactionsWithProof, TransactionInfo, TransactionListWithProof,
+        TransactionOutputListWithProof, TransactionToCommit, TransactionWithProof, Version,
     },
 };
-use itertools::Itertools;
+use move_core_types::resolver::{ModuleResolver, ResourceResolver};
 use serde::{Deserialize, Serialize};
-use std::{
-    collections::{HashMap, HashSet},
-    convert::TryFrom,
-    sync::Arc,
-};
+use std::{convert::TryFrom, sync::Arc};
 use thiserror::Error;
 
 #[cfg(any(feature = "testing", feature = "fuzzing"))]
@@ -91,6 +95,10 @@ impl StartupInfo {
                     .expect("EpochState must exist")
             })
     }
+
+    pub fn into_latest_tree_state(self) -> TreeState {
+        self.synced_tree_state.unwrap_or(self.committed_tree_state)
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -122,6 +130,18 @@ impl TreeState {
             "DB is empty, has no transaction or state."
         }
     }
+}
+
+pub trait StateSnapshotReceiver<V> {
+    fn add_chunk(
+        &mut self,
+        chunk: Vec<(HashValue, V)>,
+        proof: SparseMerkleRangeProof,
+    ) -> Result<()>;
+
+    fn finish(self) -> Result<()>;
+
+    fn finish_box(self: Box<Self>) -> Result<()>;
 }
 
 #[derive(Debug, Deserialize, Error, PartialEq, Serialize)]
@@ -163,6 +183,7 @@ pub enum Order {
 
 /// Trait that is implemented by a DB that supports certain public (to client) read APIs
 /// expected of a Diem DB
+#[allow(unused_variables)]
 pub trait DbReader: Send + Sync {
     /// See [`DiemDB::get_epoch_ending_ledger_infos`].
     ///
@@ -172,7 +193,9 @@ pub trait DbReader: Send + Sync {
         &self,
         start_epoch: u64,
         end_epoch: u64,
-    ) -> Result<EpochChangeProof>;
+    ) -> Result<EpochChangeProof> {
+        unimplemented!()
+    }
 
     /// See [`DiemDB::get_transactions`].
     ///
@@ -183,7 +206,59 @@ pub trait DbReader: Send + Sync {
         batch_size: u64,
         ledger_version: Version,
         fetch_events: bool,
-    ) -> Result<TransactionListWithProof>;
+    ) -> Result<TransactionListWithProof> {
+        unimplemented!()
+    }
+
+    /// See [`DiemDB::get_transaction_by_hash`].
+    ///
+    /// [`DiemDB::get_transaction_by_hash`]: ../diemdb/struct.DiemDB.html#method.get_transaction_by_hash
+    fn get_transaction_by_hash(
+        &self,
+        hash: HashValue,
+        ledger_version: Version,
+        fetch_events: bool,
+    ) -> Result<Option<TransactionWithProof>> {
+        unimplemented!()
+    }
+
+    /// See [`DiemDB::get_transaction_by_version`].
+    ///
+    /// [`DiemDB::get_transaction_by_version`]: ../diemdb/struct.DiemDB.html#method.get_transaction_by_version
+    fn get_transaction_by_version(
+        &self,
+        version: Version,
+        ledger_version: Version,
+        fetch_events: bool,
+    ) -> Result<TransactionWithProof> {
+        unimplemented!()
+    }
+
+    /// See [`DiemDB::get_txn_set_version`].
+    ///
+    /// [`DiemDB::get_first_txn_version`]: ../diemdb/struct.DiemDB.html#method.get_first_txn_version
+    fn get_first_txn_version(&self) -> Result<Option<Version>> {
+        unimplemented!()
+    }
+
+    /// See [`DiemDB::get_first_write_set_version`].
+    ///
+    /// [`DiemDB::get_first_write_set_version`]: ../diemdb/struct.DiemDB.html#method.get_first_write_set_version
+    fn get_first_write_set_version(&self) -> Result<Option<Version>> {
+        unimplemented!()
+    }
+
+    /// See [`DiemDB::get_transaction_outputs`].
+    ///
+    /// [`DiemDB::get_transaction_outputs`]: ../diemdb/struct.DiemDB.html#method.get_transaction_outputs
+    fn get_transaction_outputs(
+        &self,
+        start_version: Version,
+        limit: u64,
+        ledger_version: Version,
+    ) -> Result<TransactionOutputListWithProof> {
+        unimplemented!()
+    }
 
     /// Returns events by given event key
     fn get_events(
@@ -192,7 +267,9 @@ pub trait DbReader: Send + Sync {
         start: u64,
         order: Order,
         limit: u64,
-    ) -> Result<Vec<(u64, ContractEvent)>>;
+    ) -> Result<Vec<(u64, ContractEvent)>> {
+        unimplemented!()
+    }
 
     /// Returns events by given event key
     fn get_events_with_proofs(
@@ -202,13 +279,28 @@ pub trait DbReader: Send + Sync {
         order: Order,
         limit: u64,
         known_version: Option<u64>,
-    ) -> Result<Vec<EventWithProof>>;
+    ) -> Result<Vec<EventWithProof>> {
+        unimplemented!()
+    }
 
     /// See [`DiemDB::get_block_timestamp`].
     ///
     /// [`DiemDB::get_block_timestamp`]:
     /// ../diemdb/struct.DiemDB.html#method.get_block_timestamp
-    fn get_block_timestamp(&self, version: u64) -> Result<u64>;
+    fn get_block_timestamp(&self, version: u64) -> Result<u64> {
+        unimplemented!()
+    }
+
+    /// Returns the [`NewBlockEvent`] for the block containing the requested
+    /// `version` and proof that the block actually contains the `version`.
+    fn get_event_by_version_with_proof(
+        &self,
+        event_key: &EventKey,
+        event_version: u64,
+        proof_version: u64,
+    ) -> Result<EventByVersionWithProof> {
+        unimplemented!()
+    }
 
     /// Gets the version of the last transaction committed before timestamp,
     /// a commited block at or after the required timestamp must exist (otherwise it's possible
@@ -225,11 +317,17 @@ pub trait DbReader: Send + Sync {
     ///
     /// [`DiemDB::get_latest_account_state`]:
     /// ../diemdb/struct.DiemDB.html#method.get_latest_account_state
-    fn get_latest_account_state(&self, address: AccountAddress)
-        -> Result<Option<AccountStateBlob>>;
+    fn get_latest_account_state(
+        &self,
+        address: AccountAddress,
+    ) -> Result<Option<AccountStateBlob>> {
+        unimplemented!()
+    }
 
     /// Returns the latest ledger info.
-    fn get_latest_ledger_info(&self) -> Result<LedgerInfoWithSignatures>;
+    fn get_latest_ledger_info(&self) -> Result<LedgerInfoWithSignatures> {
+        unimplemented!()
+    }
 
     /// Returns the latest ledger info.
     fn get_latest_version(&self) -> Result<Version> {
@@ -248,15 +346,36 @@ pub trait DbReader: Send + Sync {
     ///
     /// [`DiemDB::get_startup_info`]:
     /// ../diemdb/struct.DiemDB.html#method.get_startup_info
-    fn get_startup_info(&self) -> Result<Option<StartupInfo>>;
+    fn get_startup_info(&self) -> Result<Option<StartupInfo>> {
+        unimplemented!()
+    }
 
-    fn get_txn_by_account(
+    /// Returns a transaction that is the `seq_num`-th one associated with the given account. If
+    /// the transaction with given `seq_num` doesn't exist, returns `None`.
+    fn get_account_transaction(
         &self,
         address: AccountAddress,
         seq_num: u64,
+        include_events: bool,
         ledger_version: Version,
-        fetch_events: bool,
-    ) -> Result<Option<TransactionWithProof>>;
+    ) -> Result<Option<TransactionWithProof>> {
+        unimplemented!()
+    }
+
+    /// Returns the list of transactions sent by an account with `address` starting
+    /// at sequence number `seq_num`. Will return no more than `limit` transactions.
+    /// Will ignore transactions with `txn.version > ledger_version`. Optionally
+    /// fetch events for each transaction when `fetch_events` is `true`.
+    fn get_account_transactions(
+        &self,
+        address: AccountAddress,
+        seq_num: u64,
+        limit: u64,
+        include_events: bool,
+        ledger_version: Version,
+    ) -> Result<AccountTransactionsWithProof> {
+        unimplemented!()
+    }
 
     /// Returns proof of new state for a given ledger info with signatures relative to version known
     /// to client
@@ -264,17 +383,14 @@ pub trait DbReader: Send + Sync {
         &self,
         known_version: u64,
         ledger_info: LedgerInfoWithSignatures,
-    ) -> Result<(EpochChangeProof, AccumulatorConsistencyProof)>;
+    ) -> Result<StateProof> {
+        unimplemented!()
+    }
 
     /// Returns proof of new state relative to version known to client
-    fn get_state_proof(
-        &self,
-        known_version: u64,
-    ) -> Result<(
-        LedgerInfoWithSignatures,
-        EpochChangeProof,
-        AccumulatorConsistencyProof,
-    )>;
+    fn get_state_proof(&self, known_version: u64) -> Result<StateProof> {
+        unimplemented!()
+    }
 
     /// Returns the account state corresponding to the given version and account address with proof
     /// based on `ledger_version`
@@ -283,7 +399,9 @@ pub trait DbReader: Send + Sync {
         address: AccountAddress,
         version: Version,
         ledger_version: Version,
-    ) -> Result<AccountStateWithProof>;
+    ) -> Result<AccountStateWithProof> {
+        unimplemented!()
+    }
 
     // Gets an account state by account address, out of the ledger state indicated by the state
     // Merkle tree root with a sparse merkle proof proving state tree root.
@@ -300,20 +418,28 @@ pub trait DbReader: Send + Sync {
     ) -> Result<(
         Option<AccountStateBlob>,
         SparseMerkleProof<AccountStateBlob>,
-    )>;
+    )> {
+        unimplemented!()
+    }
 
     /// See [`DiemDB::get_latest_state_root`].
     ///
     /// [`DiemDB::get_latest_state_root`]:
     /// ../diemdb/struct.DiemDB.html#method.get_latest_state_root
-    fn get_latest_state_root(&self) -> Result<(Version, HashValue)>;
+    fn get_latest_state_root(&self) -> Result<(Version, HashValue)> {
+        unimplemented!()
+    }
 
     /// Gets the latest TreeState no matter if db has been bootstrapped.
     /// Used by the Db-bootstrapper.
-    fn get_latest_tree_state(&self) -> Result<TreeState>;
+    fn get_latest_tree_state(&self) -> Result<TreeState> {
+        unimplemented!()
+    }
 
     /// Get the ledger info of the epoch that `known_version` belongs to.
-    fn get_epoch_ending_ledger_info(&self, known_version: u64) -> Result<LedgerInfoWithSignatures>;
+    fn get_epoch_ending_ledger_info(&self, known_version: u64) -> Result<LedgerInfoWithSignatures> {
+        unimplemented!()
+    }
 
     /// Gets the latest transaction info.
     /// N.B. Unlike get_startup_info(), even if the db is not bootstrapped, this can return `Some`
@@ -327,53 +453,113 @@ pub trait DbReader: Send + Sync {
     fn get_accumulator_root_hash(&self, _version: Version) -> Result<HashValue> {
         unimplemented!()
     }
+
+    /// Gets an [`AccumulatorConsistencyProof`] starting from `client_known_version`
+    /// (or pre-genesis if `None`) until `ledger_version`.
+    ///
+    /// In other words, if the client has an accumulator summary for
+    /// `client_known_version`, they can use the result from this API to efficiently
+    /// extend their accumulator to `ledger_version` and prove that the new accumulator
+    /// is consistent with their old accumulator. By consistent, we mean that by
+    /// appending the actual `ledger_version - client_known_version` transactions
+    /// to the old accumulator summary you get the new accumulator summary.
+    ///
+    /// If the client is starting up for the first time and has no accumulator
+    /// summary yet, they can call this with `client_known_version=None`, i.e.,
+    /// pre-genesis, to get the complete accumulator summary up to `ledger_version`.
+    fn get_accumulator_consistency_proof(
+        &self,
+        _client_known_version: Option<Version>,
+        _ledger_version: Version,
+    ) -> Result<AccumulatorConsistencyProof> {
+        unimplemented!()
+    }
+
+    /// A convenience function for building a [`TransactionAccumulatorSummary`]
+    /// at the given `ledger_version`.
+    ///
+    /// Note: this is roughly equivalent to calling
+    /// `DbReader::get_accumulator_consistency_proof(None, ledger_version)`.
+    fn get_accumulator_summary(
+        &self,
+        ledger_version: Version,
+    ) -> Result<TransactionAccumulatorSummary> {
+        let genesis_consistency_proof =
+            self.get_accumulator_consistency_proof(None, ledger_version)?;
+        TransactionAccumulatorSummary::try_from_genesis_proof(
+            genesis_consistency_proof,
+            ledger_version,
+        )
+    }
+
+    /// Returns total number of accounts at given version.
+    fn get_account_count(&self, version: Version) -> Result<usize> {
+        unimplemented!()
+    }
+
+    /// Get a chunk of account data, addressed by the index of the account.
+    fn get_account_chunk_with_proof(
+        &self,
+        version: Version,
+        start_idx: usize,
+        chunk_size: usize,
+    ) -> Result<AccountStatesChunkWithProof> {
+        unimplemented!()
+    }
+
+    /// Get the state prune window config value.
+    fn get_state_prune_window(&self) -> Option<usize> {
+        unimplemented!()
+    }
 }
 
 impl MoveStorage for &dyn DbReader {
-    fn batch_fetch_resources(&self, access_paths: Vec<AccessPath>) -> Result<Vec<Vec<u8>>> {
-        self.batch_fetch_resources_by_version(access_paths, self.fetch_synced_version()?)
+    fn fetch_resource(&self, access_path: AccessPath) -> Result<Vec<u8>> {
+        self.fetch_resource_by_version(access_path, self.fetch_synced_version()?)
     }
 
-    fn batch_fetch_resources_by_version(
+    fn fetch_resource_by_version(
         &self,
-        access_paths: Vec<AccessPath>,
+        access_path: AccessPath,
         version: Version,
-    ) -> Result<Vec<Vec<u8>>> {
-        let addresses: Vec<AccountAddress> = access_paths
-            .iter()
-            .collect::<HashSet<_>>()
-            .iter()
-            .map(|path| path.address)
-            .collect();
+    ) -> Result<Vec<u8>> {
+        let (account_state_blob, _) =
+            self.get_account_state_with_proof_by_version(access_path.address, version)?;
+        let account_state =
+            AccountState::try_from(&account_state_blob.ok_or_else(|| {
+                format_err!("missing blob in account state/account does not exist")
+            })?)?;
 
-        let results = addresses
-            .iter()
-            .map(|addr| self.get_account_state_with_proof_by_version(*addr, version))
-            .collect::<Result<Vec<_>>>()?;
+        Ok(account_state
+            .get(&access_path.path)
+            .ok_or_else(|| format_err!("no value found in account state"))?
+            .clone())
+    }
 
-        // Account address --> AccountState
-        let account_states = addresses
-            .iter()
-            .zip_eq(results)
-            .map(|(addr, (blob, _proof))| {
-                let account_state = AccountState::try_from(&blob.ok_or_else(|| {
+    fn fetch_config_by_version(&self, config_id: ConfigID, version: Version) -> Result<Vec<u8>> {
+        let diem_root_state = AccountState::try_from(
+            &self
+                .get_account_state_with_proof_by_version(diem_root_address(), version)?
+                .0
+                .ok_or_else(|| {
                     format_err!("missing blob in account state/account does not exist")
-                })?)?;
-                Ok((addr, account_state))
-            })
-            .collect::<Result<HashMap<_, AccountState>>>()?;
+                })?,
+        )?;
 
-        access_paths
-            .iter()
-            .map(|path| {
-                Ok(account_states
-                    .get(&path.address)
-                    .ok_or_else(|| format_err!("missing account state for queried access path"))?
-                    .get(&path.path)
-                    .ok_or_else(|| format_err!("no value found in account state"))?
-                    .clone())
-            })
-            .collect()
+        match diem_root_state.get(&experimental_access_path_for_config(config_id).path) {
+            Some(config) => Ok(config.to_vec()),
+            _ => diem_root_state
+                .get(&default_access_path_for_config(config_id).path)
+                .map_or_else(
+                    || {
+                        Err(format_err!(
+                            "no config {} found in diem root account state",
+                            config_id
+                        ))
+                    },
+                    |bytes| Ok(bytes.to_vec()),
+                ),
+        }
     }
 
     fn fetch_synced_version(&self) -> Result<u64> {
@@ -392,6 +578,7 @@ impl MoveStorage for &dyn DbReader {
 
 /// Trait that is implemented by a DB that supports certain public (to client) write APIs
 /// expected of a Diem DB. This adds write APIs to DbReader.
+#[allow(unused_variables)]
 pub trait DbWriter: Send + Sync {
     /// Persist transactions. Called by the executor module when either syncing nodes or committing
     /// blocks during normal operation.
@@ -403,7 +590,25 @@ pub trait DbWriter: Send + Sync {
         txns_to_commit: &[TransactionToCommit],
         first_version: Version,
         ledger_info_with_sigs: Option<&LedgerInfoWithSignatures>,
-    ) -> Result<()>;
+    ) -> Result<()> {
+        unimplemented!()
+    }
+
+    /// Get a (stateful) state snapshot receiver.
+    ///
+    /// Chunk of accounts need to be added via `add_chunk()` before finishing up with `finish_box()`
+    fn get_state_snapshot_receiver(
+        &self,
+        version: Version,
+        expected_root_hash: HashValue,
+    ) -> Result<Box<dyn StateSnapshotReceiver<AccountStateBlob>>> {
+        unimplemented!()
+    }
+}
+
+pub trait MoveDbReader:
+    DbReader + ResourceResolver<Error = anyhow::Error> + ModuleResolver<Error = anyhow::Error>
+{
 }
 
 #[derive(Clone)]
@@ -430,15 +635,6 @@ impl DbReaderWriter {
     pub fn wrap<D: 'static + DbReader + DbWriter>(db: D) -> (Arc<D>, Self) {
         let arc_db = Arc::new(db);
         (Arc::clone(&arc_db), Self::from_arc(arc_db))
-    }
-}
-
-impl<D> From<D> for DbReaderWriter
-where
-    D: 'static + DbReader + DbWriter,
-{
-    fn from(db: D) -> Self {
-        Self::new(db)
     }
 }
 

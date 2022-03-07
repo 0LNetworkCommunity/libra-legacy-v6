@@ -22,12 +22,11 @@ pub struct Args {
 }
 
 pub fn run(args: Args, xctx: XContext) -> crate::Result<()> {
-    let core_config = xctx.core().config();
     let workspace_config = xctx.config().workspace_config();
 
     let project_linters: &[&dyn ProjectLinter] = &[
         &guppy::BannedDeps::new(&workspace_config.banned_deps),
-        &guppy::DirectDepDups::new(&core_config.hakari)?,
+        &guppy::DirectDepDups::new(&workspace_config.direct_dep_dups)?,
         &workspace_hack::GenerateWorkspaceHack,
     ];
 
@@ -36,9 +35,10 @@ pub fn run(args: Args, xctx: XContext) -> crate::Result<()> {
         &guppy::CrateNamesPaths,
         &guppy::IrrelevantBuildDeps,
         &guppy::OverlayFeatures::new(&workspace_config.overlay),
-        &guppy::UnpublishedPackagesOnlyUsePathDependencies::new(),
-        &guppy::PublishedPackagesDontDependOnUnpublishedPackages,
+        &guppy::UnpublishedPackagesOnlyUsePathDependencies::new(xctx.core()),
+        &guppy::PublishedPackagesDontDependOnUnpublishedPackages::new(xctx.core()),
         &guppy::OnlyPublishToCratesIo,
+        &guppy::CratesInCratesDirectory,
         &guppy::MoveCratesDontDependOnDiemCrates::new(&workspace_config.move_to_diem_deps),
         &workspace_classify::DefaultOrTestOnly::new(
             xctx.core().package_graph()?,
@@ -51,7 +51,7 @@ pub fn run(args: Args, xctx: XContext) -> crate::Result<()> {
         &allowed_paths::AllowedPaths::new(&workspace_config.allowed_paths)?,
         &determinator::DeterminatorMatch::new(
             xctx.core().package_graph()?,
-            &xctx.config().determinator_rules(),
+            xctx.config().determinator_rules(),
         )?,
     ];
 

@@ -1,8 +1,6 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-#![allow(clippy::clippy::upper_case_acronyms)]
-
 use crate::subaddress::{Subaddress, SubaddressParseError};
 use bech32::{self, u5, FromBase32, ToBase32};
 use diem_sdk::{
@@ -10,7 +8,7 @@ use diem_sdk::{
     transaction_builder::Currency,
     types::{
         account_address::AccountAddress,
-        account_config::{allowed_currency_code_string, XUS_NAME},
+        account_config::{allowed_currency_code_string, XDX_NAME, XUS_NAME},
     },
 };
 use std::{collections::HashMap, str::FromStr};
@@ -265,7 +263,7 @@ fn normalize_currency(input: Option<&String>) -> Result<Option<Currency>, Intent
 fn currency_from_str(currency: &str) -> Result<Currency, IntentIdentifierError> {
     match currency {
         XUS_NAME => Ok(Currency::XUS),
-        // XDX_NAME => Ok(Currency::XDX), /////// 0L /////////
+        XDX_NAME => Ok(Currency::XDX),
         _ => Err(IntentIdentifierError::Parse(format!(
             "Unable to parse currency {}",
             currency,

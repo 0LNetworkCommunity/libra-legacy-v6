@@ -8,7 +8,7 @@
 //! (and better allow these constants to be updated in a single location), we define them here.
 #![forbid(unsafe_code)]
 
-use std::env;
+use std::env; //////// 0L ////////
 
 /// Definitions of global cryptographic keys (e.g., as held in secure storage)
 pub const CONSENSUS_KEY: &str = "consensus";
@@ -27,6 +27,7 @@ pub const VALIDATOR_NETWORK_KEY: &str = "validator_network";
 pub const SAFETY_DATA: &str = "safety_data";
 pub const WAYPOINT: &str = "waypoint";
 pub const GENESIS_WAYPOINT: &str = "genesis-waypoint";
+pub const MOVE_MODULES: &str = "move-modules";
 
 //////// 0L ////////
 pub const NODE_HOME: &str = ".0L/";
@@ -36,14 +37,13 @@ pub const ACCOUNT_PROFILE: &str = "account_profile";
 pub const SALT_0L: &str = "0L";
 pub const SOURCE_DIR: &str = "libra/";
 pub const VDF_SECURITY_PARAM: u16 = 512;
-
 /// Filename for 0L configs
 pub const CONFIG_FILE: &str = "0L.toml";
 pub const DEFAULT_VAL_PORT: u64 = 6180;
 pub const DEFAULT_VFN_PORT: u64 = 6179;
 pub const DEFAULT_PUB_PORT: u64 = 6178;
 
-
+//////// 0L ////////
 // TODO: make this lazy static.
 /// Switch settings between production and testing
 pub fn delay_difficulty() -> u64 {

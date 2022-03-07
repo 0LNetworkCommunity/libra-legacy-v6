@@ -14,7 +14,7 @@ use diem_types::{
     transaction::{Version, PRE_GENESIS_VERSION},
 };
 use parking_lot::RwLock;
-use scratchpad::{AccountStatus, SparseMerkleTree};
+use scratchpad::{AccountStatus, FrozenSparseMerkleTree, SparseMerkleTree};
 use std::{
     collections::{hash_map::Entry, HashMap},
     convert::TryInto,
@@ -23,7 +23,7 @@ use std::{
 
 /// `VerifiedStateView` is like a snapshot of the global state comprised of state view at two
 /// levels, persistent storage and memory.
-pub struct VerifiedStateView<'a> {
+pub struct VerifiedStateView {
     /// For logging and debugging purpose, identifies what this view is for.
     id: StateViewId,
 
@@ -38,7 +38,7 @@ pub struct VerifiedStateView<'a> {
     latest_persistent_state_root: HashValue,
 
     /// The in-momery version of sparse Merkle tree of which the states haven't been committed.
-    speculative_state: &'a SparseMerkleTree<AccountStateBlob>,
+    speculative_state: FrozenSparseMerkleTree<AccountStateBlob>,
 
     /// The cache of verified account states from `reader` and `speculative_state_view`,
     /// represented by a hashmap with an account address as key and a pair of an ordered
@@ -80,7 +80,7 @@ pub struct VerifiedStateView<'a> {
     account_to_proof_cache: RwLock<HashMap<HashValue, SparseMerkleProof<AccountStateBlob>>>,
 }
 
-impl<'a> VerifiedStateView<'a> {
+impl VerifiedStateView {
     /// Constructs a [`VerifiedStateView`] with persistent state view represented by
     /// `latest_persistent_state_root` plus a storage reader, and the in-memory speculative state
     /// on top of it represented by `speculative_state`.
@@ -89,7 +89,7 @@ impl<'a> VerifiedStateView<'a> {
         reader: Arc<dyn DbReader>,
         latest_persistent_version: Option<Version>,
         latest_persistent_state_root: HashValue,
-        speculative_state: &'a SparseMerkleTree<AccountStateBlob>,
+        speculative_state: SparseMerkleTree<AccountStateBlob>,
     ) -> Self {
         // Hack: When there's no transaction in the db but state tree root hash is not the
         // placeholder hash, it implies that there's pre-genesis state present.
@@ -105,28 +105,58 @@ impl<'a> VerifiedStateView<'a> {
             reader,
             latest_persistent_version,
             latest_persistent_state_root,
-            speculative_state,
+            speculative_state: speculative_state.freeze(),
             account_to_state_cache: RwLock::new(HashMap::new()),
             account_to_proof_cache: RwLock::new(HashMap::new()),
         }
     }
-}
 
-impl<'a> From<VerifiedStateView<'a>>
-    for (
+    pub fn unpack_after_execution(
+        self,
+    ) -> (
         HashMap<AccountAddress, AccountState>,
         HashMap<HashValue, SparseMerkleProof<AccountStateBlob>>,
-    )
-{
-    fn from(view: VerifiedStateView<'a>) -> Self {
+        FrozenSparseMerkleTree<AccountStateBlob>,
+    ) {
         (
-            view.account_to_state_cache.into_inner(),
-            view.account_to_proof_cache.into_inner(),
+            self.account_to_state_cache.into_inner(),
+            self.account_to_proof_cache.into_inner(),
+            self.speculative_state,
         )
     }
 }
 
-impl<'a> StateView for VerifiedStateView<'a> {
+impl From<VerifiedStateView>
+    for (
+        HashMap<AccountAddress, AccountState>,
+        HashMap<HashValue, SparseMerkleProof<AccountStateBlob>>,
+        FrozenSparseMerkleTree<AccountStateBlob>,
+    )
+{
+    fn from(view: VerifiedStateView) -> Self {
+        view.unpack_after_execution()
+    }
+}
+
+pub struct StateCache {
+    pub frozen_base: FrozenSparseMerkleTree<AccountStateBlob>,
+    pub accounts: HashMap<AccountAddress, AccountState>,
+    pub proofs: HashMap<HashValue, SparseMerkleProof<AccountStateBlob>>,
+}
+
+impl From<VerifiedStateView> for StateCache {
+    fn from(view: VerifiedStateView) -> Self {
+        let (accounts, proofs, frozen_base) = view.unpack_after_execution();
+
+        Self {
+            frozen_base,
+            accounts,
+            proofs,
+        }
+    }
+}
+
+impl StateView for VerifiedStateView {
     fn id(&self) -> StateViewId {
         self.id
     }

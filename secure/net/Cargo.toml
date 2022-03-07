@@ -14,9 +14,9 @@ once_cell = "1.7.2"
 serde = { version = "1.0.124", features = ["rc"], default-features = false }
 thiserror = "1.0.24"
 
-diem-logger = { path = "../../common/logger" }
+diem-logger = { path = "../../crates/diem-logger" }
 diem-secure-push-metrics = { path = "../push-metrics" }
-diem-workspace-hack = { path = "../../common/workspace-hack" }
+diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 
 [dev-dependencies]
 diem-config = { path = "../../config" }

@@ -18,11 +18,12 @@ use crate::{
 };
 use channel::{self, diem_channel, message_queues::QueueStyle};
 use consensus_types::proposal_msg::ProposalMsg;
+use diem_infallible::Mutex;
 use diem_types::{
     epoch_change::EpochChangeProof,
     epoch_state::EpochState,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
-    on_chain_config::ValidatorSet,
+    on_chain_config::{OnChainConsensusConfig, ValidatorSet},
     validator_info::ValidatorInfo,
     validator_signer::ValidatorSigner,
     validator_verifier::ValidatorVerifier,
@@ -49,7 +50,7 @@ pub fn generate_corpus_proposal() -> Vec<u8> {
             })
             .await;
         // serialize and return proposal
-        bcs::to_bytes(&proposal.unwrap()).unwrap()
+        serde_json::to_vec(&proposal.unwrap()).unwrap()
     })
 }
 
@@ -70,6 +71,7 @@ fn build_empty_store(
         Arc::new(EmptyStateComputer),
         10, // max pruned blocks in mem
         Arc::new(SimulatedTimeService::new()),
+        10,
     ))
 }
 
@@ -158,11 +160,14 @@ fn create_node_for_fuzzing() -> RoundManager {
         round_state,
         proposer_election,
         proposal_generator,
-        MetricsSafetyRules::new(Box::new(safety_rules), storage.clone()),
+        Arc::new(Mutex::new(MetricsSafetyRules::new(
+            Box::new(safety_rules),
+            storage.clone(),
+        ))),
         network,
-        Arc::new(MockTransactionManager::new(None)),
         storage,
         false,
+        OnChainConsensusConfig::default(),
     )
 }
 
@@ -171,7 +176,7 @@ pub fn fuzz_proposal(data: &[u8]) {
     // create node
     let mut round_manager = create_node_for_fuzzing();
 
-    let proposal: ProposalMsg = match bcs::from_bytes(data) {
+    let proposal: ProposalMsg = match serde_json::from_slice(data) {
         Ok(xx) => xx,
         Err(_) => {
             if cfg!(test) {

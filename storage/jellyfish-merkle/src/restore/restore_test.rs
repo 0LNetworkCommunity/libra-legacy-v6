@@ -11,6 +11,7 @@ use diem_crypto::HashValue;
 use diem_types::transaction::Version;
 use proptest::{collection::btree_map, prelude::*};
 use std::{collections::BTreeMap, sync::Arc};
+use storage_interface::StateSnapshotReceiver;
 
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(10))]
@@ -41,7 +42,7 @@ proptest! {
         let restore_db = Arc::new(MockTreeStore::default());
         {
             let mut restore =
-                JellyfishMerkleRestore::new(Arc::clone(&restore_db), version, expected_root_hash).unwrap();
+                JellyfishMerkleRestore::new(Arc::clone(&restore_db), version, expected_root_hash, true /* leaf_count_migraion */).unwrap();
             let proof = tree
                 .get_range_proof(batch1.last().map(|(key, _value)| *key).unwrap(), version)
                 .unwrap();
@@ -64,7 +65,7 @@ proptest! {
                 .collect();
 
             let mut restore =
-                JellyfishMerkleRestore::new(Arc::clone(&restore_db), version, expected_root_hash).unwrap();
+                JellyfishMerkleRestore::new(Arc::clone(&restore_db), version, expected_root_hash, true /* leaf_count_migration */).unwrap();
             let proof = tree
                 .get_range_proof(
                     remaining_accounts.last().map(|(key, _value)| *key).unwrap(),
@@ -121,13 +122,19 @@ fn restore_without_interruption<V>(
     let expected_root_hash = tree.get_root_hash(source_version).unwrap();
 
     let mut restore = if try_resume {
-        JellyfishMerkleRestore::new(Arc::clone(target_db), target_version, expected_root_hash)
-            .unwrap()
+        JellyfishMerkleRestore::new(
+            Arc::clone(target_db),
+            target_version,
+            expected_root_hash,
+            true, /* account_count_migration */
+        )
+        .unwrap()
     } else {
         JellyfishMerkleRestore::new_overwrite(
             Arc::clone(target_db),
             target_version,
             expected_root_hash,
+            true, /* account_count_migration */
         )
         .unwrap()
     };
@@ -137,7 +144,7 @@ fn restore_without_interruption<V>(
             .add_chunk(vec![(*key, value.clone())], proof)
             .unwrap();
     }
-    restore.finish().unwrap();
+    Box::new(restore).finish().unwrap();
 
-    assert_success(&target_db, expected_root_hash, &btree, target_version);
+    assert_success(target_db, expected_root_hash, btree, target_version);
 }

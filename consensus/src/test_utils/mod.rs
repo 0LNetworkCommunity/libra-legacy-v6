@@ -23,16 +23,18 @@ mod mock_txn_manager;
 use crate::util::mock_time_service::SimulatedTimeService;
 use consensus_types::{block::block_test_utils::gen_test_certificate, common::Payload};
 use diem_types::block_info::BlockInfo;
-pub use mock_state_computer::{EmptyStateComputer, MockStateComputer};
+pub use mock_state_computer::{
+    EmptyStateComputer, MockStateComputer, RandomComputeResultStateComputer,
+};
 pub use mock_storage::{EmptyStorage, MockSharedStorage, MockStorage};
 pub use mock_txn_manager::MockTransactionManager;
 
 pub const TEST_TIMEOUT: Duration = Duration::from_secs(60);
 
-pub fn build_simple_tree() -> (Vec<Arc<ExecutedBlock>>, Arc<BlockStore>) {
+pub async fn build_simple_tree() -> (Vec<Arc<ExecutedBlock>>, Arc<BlockStore>) {
     let mut inserter = TreeInserter::default();
     let block_store = inserter.block_store();
-    let genesis = block_store.root();
+    let genesis = block_store.ordered_root();
     let genesis_block_id = genesis.id();
     let genesis_block = block_store
         .get_block(genesis_block_id)
@@ -44,12 +46,18 @@ pub fn build_simple_tree() -> (Vec<Arc<ExecutedBlock>>, Arc<BlockStore>) {
     //       ╭--> A1--> A2--> A3
     // Genesis--> B1--> B2
     //             ╰--> C1
-    let a1 = inserter.insert_block_with_qc(certificate_for_genesis(), &genesis_block, 1);
-    let a2 = inserter.insert_block(&a1, 2, None);
-    let a3 = inserter.insert_block(&a2, 3, Some(genesis.block_info()));
-    let b1 = inserter.insert_block_with_qc(certificate_for_genesis(), &genesis_block, 4);
-    let b2 = inserter.insert_block(&b1, 5, None);
-    let c1 = inserter.insert_block(&b1, 6, None);
+    let a1 = inserter
+        .insert_block_with_qc(certificate_for_genesis(), &genesis_block, 1)
+        .await;
+    let a2 = inserter.insert_block(&a1, 2, None).await;
+    let a3 = inserter
+        .insert_block(&a2, 3, Some(genesis.block_info()))
+        .await;
+    let b1 = inserter
+        .insert_block_with_qc(certificate_for_genesis(), &genesis_block, 4)
+        .await;
+    let b2 = inserter.insert_block(&b1, 5, None).await;
+    let c1 = inserter.insert_block(&b1, 6, None).await;
 
     assert_eq!(block_store.len(), 7);
     assert_eq!(block_store.child_links(), block_store.len() - 1);
@@ -65,6 +73,7 @@ pub fn build_empty_tree() -> Arc<BlockStore> {
         Arc::new(EmptyStateComputer),
         10, // max pruned blocks in mem
         Arc::new(SimulatedTimeService::new()),
+        10,
     ))
 }
 
@@ -104,7 +113,7 @@ impl TreeInserter {
     /// This function is generating a placeholder QC for a block's parent that is signed by a single
     /// signer kept by the block store. If more sophisticated QC required, please use
     /// `insert_block_with_qc`.
-    pub fn insert_block(
+    pub async fn insert_block(
         &mut self,
         parent: &ExecutedBlock,
         round: Round,
@@ -112,10 +121,10 @@ impl TreeInserter {
     ) -> Arc<ExecutedBlock> {
         // Node must carry a QC to its parent
         let parent_qc = self.create_qc_for_block(parent, committed_block);
-        self.insert_block_with_qc(parent_qc, parent, round)
+        self.insert_block_with_qc(parent_qc, parent, round).await
     }
 
-    pub fn insert_block_with_qc(
+    pub async fn insert_block_with_qc(
         &mut self,
         parent_qc: QuorumCert,
         parent: &ExecutedBlock,
@@ -128,6 +137,7 @@ impl TreeInserter {
                 round,
                 vec![],
             ))
+            .await
             .unwrap()
     }
 
@@ -166,7 +176,12 @@ pub fn placeholder_ledger_info() -> LedgerInfo {
 }
 
 pub fn placeholder_sync_info() -> SyncInfo {
-    SyncInfo::new(certificate_for_genesis(), certificate_for_genesis(), None)
+    SyncInfo::new(
+        certificate_for_genesis(),
+        certificate_for_genesis(),
+        None,
+        None,
+    )
 }
 
 fn nocapture() -> bool {

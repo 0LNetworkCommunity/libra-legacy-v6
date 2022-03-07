@@ -121,6 +121,8 @@ pub struct WorkspaceConfig {
     pub enforced_attributes: EnforcedAttributesConfig,
     /// Banned dependencies
     pub banned_deps: BannedDepsConfig,
+    /// Direct dep duplicate lint config
+    pub direct_dep_dups: DirectDepDupsConfig,
     /// Overlay config in this workspace
     pub overlay: OverlayConfig,
     /// Test-only config in this workspace
@@ -150,9 +152,14 @@ pub struct BannedDepsConfig {
 }
 
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub struct DirectDepDupsConfig {
+    pub allow: Vec<String>,
+}
+
+#[derive(Clone, Serialize, Deserialize, Debug, PartialEq, Eq)]
 pub struct MoveToDiemDepsConfig {
     pub diem_crates_in_language: HashSet<String>,
-    pub existing_deps: HashSet<(String, String)>,
     pub exclude: HashSet<String>,
 }
 

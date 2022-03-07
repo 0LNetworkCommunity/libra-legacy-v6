@@ -12,7 +12,7 @@ edition = "2018"
 [dependencies]
 rand = "0.8.3"
 serde = { version = "1.0.124", features = ["derive"] }
-serde-reflection = "0.3.2"
+serde-reflection = "0.3.5"
 serde_yaml = "0.8.17"
 structopt = "0.3.21"
 
@@ -20,12 +20,12 @@ consensus = { path = "../../consensus", features=["fuzzing"] }
 consensus-types = { path = "../../consensus/consensus-types", features=["fuzzing"] }
 bcs = "0.1.2"
 diem-config = { path = "../../config" }
-diem-crypto = { path = "../../crypto/crypto", features=["fuzzing"] }
-diem-crypto-derive = { path = "../../crypto/crypto-derive"}
+diem-crypto = { path = "../../crates/diem-crypto", features=["fuzzing"] }
+diem-crypto-derive = { path = "../../crates/diem-crypto-derive"}
 diem-types = { path = "../../types", features=["fuzzing"] }
-diem-workspace-hack = { path = "../../common/workspace-hack" }
+diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 network = { path = "../../network" }
-move-core-types = { path = "../../language/move-core/types", features=["fuzzing"] }
+move-core-types = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860", features=["fuzzing"] }
 
 [[bin]]
 name = "compute"

@@ -2,32 +2,53 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use backup_service::start_backup_service;
-use consensus::{consensus_provider::start_consensus, gen_consensus_reconfig_subscription};
+use consensus::consensus_provider::start_consensus;
+use consensus_notifications::ConsensusNotificationListener;
+use data_streaming_service::{
+    streaming_client::{new_streaming_service_client_listener_pair, StreamingServiceClient},
+    streaming_service::DataStreamingService,
+};
 use debug_interface::node_debug_service::NodeDebugService;
+use diem_api::runtime::bootstrap as bootstrap_api;
 use diem_config::{
-    config::{NetworkConfig, NodeConfig, PersistableConfig},
-    network_id::NodeNetworkId,
+    config::{
+        DataStreamingServiceConfig, DiemDataClientConfig, NetworkConfig, NodeConfig,
+        PersistableConfig, StorageServiceConfig,
+    },
+    network_id::NetworkId,
     utils::get_genesis_txn,
 };
+use diem_data_client::diemnet::DiemNetDataClient;
+use diem_infallible::RwLock;
 use diem_json_rpc::bootstrap_from_config as bootstrap_rpc;
 use diem_logger::{prelude::*, Logger};
-use diem_mempool::gen_mempool_reconfig_subscription;
 use diem_metrics::metric_server;
 use diem_time_service::TimeService;
 use diem_types::{
-    account_config::diem_root_address, account_state::AccountState, chain_id::ChainId,
-    move_resource::MoveStorage, PeerId,
+    account_config::diem_root_address,
+    account_state::AccountState,
+    chain_id::ChainId,
+    move_resource::MoveStorage,
+    on_chain_config::{VMPublishingOption, ON_CHAIN_CONFIG_REGISTRY},
+    waypoint::Waypoint,
 };
 use diem_vm::DiemVM;
 use diemdb::DiemDB;
-use executor::{db_bootstrapper::maybe_bootstrap, Executor};
-use executor_types::ChunkExecutor;
-use futures::{channel::mpsc::channel, executor::block_on};
+use event_notifications::EventSubscriptionService;
+use executor::{chunk_executor::ChunkExecutor, db_bootstrapper::maybe_bootstrap};
+use futures::channel::mpsc::channel;
+use mempool_notifications::MempoolNotificationSender;
+use network::application::storage::PeerMetadataStorage;
 use network_builder::builder::NetworkBuilder;
-use state_sync::bootstrapper::StateSyncBootstrapper;
+use state_sync_multiplexer::{
+    state_sync_v1_network_config, StateSyncMultiplexer, StateSyncRuntimes,
+};
+use state_sync_v1::network::{StateSyncEvents, StateSyncSender};
 use std::{
     boxed::Box,
+    collections::{HashMap, HashSet},
     convert::TryFrom,
+    io::Write,
     net::ToSocketAddrs,
     path::PathBuf,
     sync::{
@@ -39,6 +60,10 @@ use std::{
 };
 use storage_interface::DbReaderWriter;
 use storage_service::start_storage_service_with_db;
+use storage_service_client::{StorageServiceClient, StorageServiceMultiSender};
+use storage_service_server::{
+    network::StorageServiceNetworkEvents, StorageReader, StorageServiceServer,
+};
 use tokio::runtime::{Builder, Runtime};
 use tokio_stream::wrappers::IntervalStream;
 
@@ -47,13 +72,13 @@ const INTRA_NODE_CHANNEL_BUFFER_SIZE: usize = 1;
 const MEMPOOL_NETWORK_CHANNEL_BUFFER_SIZE: usize = 1_024;
 
 pub struct DiemHandle {
-    _rpc: Runtime,
-    _mempool: Runtime,
-    _state_sync_bootstrapper: StateSyncBootstrapper,
-    _network_runtimes: Vec<Runtime>,
+    _api: Runtime,
+    _backup: Runtime,
     _consensus_runtime: Option<Runtime>,
     _debug: NodeDebugService,
-    _backup: Runtime,
+    _mempool: Runtime,
+    _network_runtimes: Vec<Runtime>,
+    _state_sync_runtimes: StateSyncRuntimes,
 }
 
 pub fn start(config: &NodeConfig, log_file: Option<PathBuf>) {
@@ -73,17 +98,6 @@ pub fn start(config: &NodeConfig, log_file: Option<PathBuf>) {
     // Let's now log some important information, since the logger is set up
     info!(config = config, "Loaded DiemNode config");
 
-    if config.metrics.enabled {
-        for network in &config.full_node_networks {
-            let peer_id = network.peer_id();
-            setup_metrics(peer_id, &config);
-        }
-
-        if let Some(network) = config.validator_network.as_ref() {
-            let peer_id = network.peer_id();
-            setup_metrics(peer_id, &config);
-        }
-    }
     if fail::has_failpoints() {
         warn!("Failpoints is enabled");
         if let Some(failpoints) = &config.failpoints {
@@ -95,7 +109,7 @@ pub fn start(config: &NodeConfig, log_file: Option<PathBuf>) {
         warn!("failpoints is set in config, but the binary doesn't compile with this feature");
     }
 
-    let _node_handle = setup_environment(&config, logger);
+    let _node_handle = setup_environment(config, logger);
     let term = Arc::new(AtomicBool::new(false));
 
     while !term.load(Ordering::Acquire) {
@@ -103,15 +117,16 @@ pub fn start(config: &NodeConfig, log_file: Option<PathBuf>) {
     }
 }
 
-fn setup_metrics(peer_id: PeerId, config: &NodeConfig) {
-    diem_metrics::dump_all_metrics_to_file_periodically(
-        &config.metrics.dir(),
-        &format!("{}.metrics", peer_id),
-        config.metrics.collection_interval_ms,
-    );
-}
-
-pub fn load_test_environment(config_path: Option<PathBuf>, random_ports: bool) {
+pub fn load_test_environment<R>(
+    config_path: Option<PathBuf>,
+    random_ports: bool,
+    lazy: bool,
+    publishing_option: Option<VMPublishingOption>,
+    genesis_modules: Vec<Vec<u8>>,
+    rng: R,
+) where
+    R: ::rand::RngCore + ::rand::CryptoRng,
+{
     // Either allocate a temppath or reuse the passed in path and make sure the directory exists
     let config_temp_path = diem_temppath::TempPath::new();
     let config_path = config_path.unwrap_or_else(|| config_temp_path.as_ref().to_path_buf());
@@ -124,48 +139,74 @@ pub fn load_test_environment(config_path: Option<PathBuf>, random_ports: bool) {
     // Build a single validator network
     let mut maybe_config = PathBuf::from(&config_path);
     maybe_config.push("validator_node_template.yaml");
-    let template = NodeConfig::load_config(maybe_config)
+    let mut template = NodeConfig::load_config(maybe_config)
         .unwrap_or_else(|_| NodeConfig::default_for_validator());
-    let builder =
-        diem_genesis_tool::config_builder::ValidatorBuilder::new(1, template, &config_path)
+
+    // enable REST and JSON-RPC API
+    template.json_rpc.address = format!("0.0.0.0:{}", template.json_rpc.address.port())
+        .parse()
+        .unwrap();
+    template.api.address = template.json_rpc.address;
+    if lazy {
+        template.consensus.mempool_poll_count = u64::MAX;
+    }
+
+    let mut builder =
+        diem_genesis_tool::validator_builder::ValidatorBuilder::new(&config_path, genesis_modules)
+            .template(template)
             .randomize_first_validator_ports(random_ports);
-    let test_config =
-        diem_genesis_tool::swarm_config::SwarmConfig::build(&builder, &config_path).unwrap();
+    if let Some(publishing_option) = publishing_option {
+        builder = builder.publishing_option(publishing_option);
+    }
+    let (root_keys, _genesis, genesis_waypoint, validators) = builder.build(rng).unwrap();
+
+    let diem_root_key_path = config_path.join("mint.key");
+    let serialized_keys = bcs::to_bytes(&root_keys.root_key).unwrap();
+    let mut key_file = std::fs::File::create(&diem_root_key_path).unwrap();
+    key_file.write_all(&serialized_keys).unwrap();
 
     // Prepare log file since we cannot automatically route logs to stderr
     let mut log_file = config_path.clone();
     log_file.push("validator.log");
 
     // Build a waypoint file so that clients / docker can grab it easily
-    let mut waypoint_file_path = config_path.clone();
-    waypoint_file_path.push("waypoint.txt");
+    let waypoint_file_path = config_path.join("waypoint.txt");
     std::io::Write::write_all(
         &mut std::fs::File::create(&waypoint_file_path).unwrap(),
-        test_config.waypoint.to_string().as_bytes(),
+        genesis_waypoint.to_string().as_bytes(),
     )
     .unwrap();
 
     // Intentionally leave out instructions on how to connect with different applications
     println!("Completed generating configuration:");
     println!("\tLog file: {:?}", log_file);
-    println!("\tConfig path: {:?}", test_config.config_files[0]);
-    println!("\tDiem root key path: {:?}", test_config.diem_root_key_path);
-    println!("\tWaypoint: {}", test_config.waypoint);
-    let mut config = NodeConfig::load(&test_config.config_files[0]).unwrap();
-    config.json_rpc.address = format!("0.0.0.0:{}", config.json_rpc.address.port())
-        .parse()
-        .unwrap();
+    println!("\tConfig path: {:?}", validators[0].config_path());
+    println!("\tDiem root key path: {:?}", diem_root_key_path);
+    println!("\tWaypoint: {}", genesis_waypoint);
+    println!("\tChainId: {}", ChainId::test());
+
+    print_api_config(&validators[0].config, lazy);
+
+    println!("Diem is running, press ctrl-c to exit");
+    println!();
+
+    start(&validators[0].config, Some(log_file))
+}
+
+pub fn print_api_config(config: &NodeConfig, lazy: bool) {
     println!("\tJSON-RPC endpoint: {}", config.json_rpc.address);
+    println!("\tREST API endpoint: {}", config.api.address);
+    println!("\tStream-RPC enabled!");
+
     println!(
         "\tFullNode network: {}",
         config.full_node_networks[0].listen_address
     );
-    println!("\tChainId: {}", ChainId::test());
     println!();
-    println!("Diem is running, press ctrl-c to exit");
-    println!();
-
-    start(&config, Some(log_file))
+    if lazy {
+        println!("\tLazy mode is enabled");
+        println!();
+    }
 }
 
 // Fetch chain ID from on-chain resource
@@ -189,10 +230,6 @@ fn fetch_chain_id(db: &DbReaderWriter) -> ChainId {
         .chain_id()
 }
 
-fn setup_chunk_executor(db: DbReaderWriter) -> Box<dyn ChunkExecutor> {
-    Box::new(Executor::<DiemVM>::new(db))
-}
-
 fn setup_debug_interface(config: &NodeConfig, logger: Option<Arc<Logger>>) -> NodeDebugService {
     let addr = format!(
         "{}:{}",
@@ -203,7 +240,150 @@ fn setup_debug_interface(config: &NodeConfig, logger: Option<Arc<Logger>>) -> No
     .next()
     .unwrap();
 
-    NodeDebugService::new(addr, logger)
+    NodeDebugService::new(addr, logger, config)
+}
+
+fn create_state_sync_runtimes<M: MempoolNotificationSender + 'static>(
+    node_config: &NodeConfig,
+    storage_service_server_network_handles: Vec<StorageServiceNetworkEvents>,
+    storage_service_client_network_handles: HashMap<
+        NetworkId,
+        storage_service_client::StorageServiceNetworkSender,
+    >,
+    state_sync_network_handles: Vec<(NetworkId, StateSyncSender, StateSyncEvents)>,
+    peer_metadata_storage: Arc<PeerMetadataStorage>,
+    mempool_notifier: M,
+    consensus_listener: ConsensusNotificationListener,
+    waypoint: Waypoint,
+    event_subscription_service: EventSubscriptionService,
+    db_rw: DbReaderWriter,
+) -> StateSyncRuntimes {
+    // Start the state sync storage service
+    let storage_service_runtime = setup_state_sync_storage_service(
+        node_config.state_sync.storage_service,
+        storage_service_server_network_handles,
+        &db_rw,
+    );
+
+    // Start the diem data client
+    let (diem_data_client, diem_data_client_runtime) = setup_diem_data_client(
+        node_config.state_sync.storage_service,
+        node_config.state_sync.diem_data_client,
+        storage_service_client_network_handles,
+        peer_metadata_storage,
+    );
+
+    // Start the data streaming service
+    let (streaming_service_client, streaming_service_runtime) = setup_data_streaming_service(
+        node_config.state_sync.data_streaming_service,
+        diem_data_client.clone(),
+    );
+
+    // Create the chunk executor
+    let chunk_executor = Arc::new(
+        ChunkExecutor::<DiemVM>::new(db_rw.clone()).expect("Unable to create the chunk executor!"),
+    );
+
+    // Create the state sync multiplexer
+    let state_sync_multiplexer = StateSyncMultiplexer::new(
+        state_sync_network_handles,
+        mempool_notifier,
+        consensus_listener,
+        db_rw.reader,
+        chunk_executor,
+        node_config,
+        waypoint,
+        event_subscription_service,
+        diem_data_client,
+        streaming_service_client,
+    );
+
+    // Create and return the new state sync handle
+    StateSyncRuntimes::new(
+        diem_data_client_runtime,
+        state_sync_multiplexer,
+        storage_service_runtime,
+        streaming_service_runtime,
+    )
+}
+
+fn setup_data_streaming_service(
+    config: DataStreamingServiceConfig,
+    diem_data_client: DiemNetDataClient,
+) -> (StreamingServiceClient, Runtime) {
+    // Create the data streaming service
+    let (streaming_service_client, streaming_service_listener) =
+        new_streaming_service_client_listener_pair();
+    let data_streaming_service =
+        DataStreamingService::new(config, diem_data_client, streaming_service_listener);
+
+    // Start the data streaming service
+    let streaming_service_runtime = Builder::new_multi_thread()
+        .thread_name("data-streaming-service")
+        .enable_all()
+        .build()
+        .expect("Failed to create data streaming service!");
+    streaming_service_runtime.spawn(data_streaming_service.start_service());
+
+    (streaming_service_client, streaming_service_runtime)
+}
+
+fn setup_diem_data_client(
+    storage_service_config: StorageServiceConfig,
+    diem_data_client_config: DiemDataClientConfig,
+    network_handles: HashMap<NetworkId, storage_service_client::StorageServiceNetworkSender>,
+    peer_metadata_storage: Arc<PeerMetadataStorage>,
+) -> (DiemNetDataClient, Runtime) {
+    // Combine all storage service client handles
+    let network_client = StorageServiceClient::new(
+        StorageServiceMultiSender::new(network_handles),
+        peer_metadata_storage,
+    );
+
+    // Create the diem data client
+    let (diem_data_client, data_summary_poller) = DiemNetDataClient::new(
+        diem_data_client_config,
+        storage_service_config,
+        TimeService::real(),
+        network_client,
+    );
+
+    // Create a new runtime for the diem data client and spawn the data poller
+    let diem_data_client_runtime = Builder::new_multi_thread()
+        .thread_name("diem-data-client")
+        .enable_all()
+        .build()
+        .expect("Failed to create diem data client!");
+    diem_data_client_runtime.spawn(data_summary_poller.start());
+
+    (diem_data_client, diem_data_client_runtime)
+}
+
+fn setup_state_sync_storage_service(
+    config: StorageServiceConfig,
+    network_handles: Vec<StorageServiceNetworkEvents>,
+    db_rw: &DbReaderWriter,
+) -> Runtime {
+    // Create a new state sync storage service runtime
+    let storage_service_runtime = Builder::new_multi_thread()
+        .thread_name("storage-service-server")
+        .enable_all()
+        .build()
+        .expect("Failed to start the DiemNet storage-service runtime.");
+
+    // Spawn all state sync storage service servers on the same runtime
+    let storage_reader = StorageReader::new(Arc::clone(&db_rw.reader));
+    for events in network_handles {
+        let service = StorageServiceServer::new(
+            config,
+            storage_service_runtime.handle().clone(),
+            storage_reader.clone(),
+            events,
+        );
+        storage_service_runtime.spawn(service.start());
+    }
+
+    storage_service_runtime
 }
 
 async fn periodic_state_dump(node_config: NodeConfig, db: DbReaderWriter) {
@@ -251,7 +431,7 @@ async fn periodic_state_dump(node_config: NodeConfig, db: DbReaderWriter) {
 }
 
 pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) -> DiemHandle {
-    let debug_if = setup_debug_interface(&node_config, logger);
+    let debug_if = setup_debug_interface(node_config, logger);
 
     let metrics_port = node_config.debug_interface.metrics_server_port;
     let metric_host = node_config.debug_interface.address.clone();
@@ -269,10 +449,11 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
             false, /* readonly */
             node_config.storage.prune_window,
             node_config.storage.rocksdb_config,
+            node_config.storage.account_count_migration,
         )
         .expect("DB should open."),
     );
-    let _simple_storage_service = start_storage_service_with_db(&node_config, Arc::clone(&diem_db));
+    let _simple_storage_service = start_storage_service_with_db(node_config, Arc::clone(&diem_db));
     let backup_service = start_backup_service(
         node_config.storage.backup_service_address,
         Arc::clone(&diem_db),
@@ -280,7 +461,7 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
 
     let genesis_waypoint = node_config.base.waypoint.genesis_waypoint();
     // if there's genesis txn and waypoint, commit it if the result matches.
-    if let Some(genesis) = get_genesis_txn(&node_config) {
+    if let Some(genesis) = get_genesis_txn(node_config) {
         maybe_bootstrap::<DiemVM>(&db_rw, genesis, genesis_waypoint)
             .expect("Db-bootstrapper should not fail.");
     } else {
@@ -292,28 +473,33 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
         instant.elapsed().as_millis()
     );
 
-    instant = Instant::now();
-    let chunk_executor = setup_chunk_executor(db_rw.clone());
-    debug!(
-        "ChunkExecutor setup in {} ms",
-        instant.elapsed().as_millis()
-    );
     let chain_id = fetch_chain_id(&db_rw);
     let mut network_runtimes = vec![];
     let mut state_sync_network_handles = vec![];
     let mut mempool_network_handles = vec![];
     let mut consensus_network_handles = None;
-    let mut reconfig_subscriptions = vec![];
+    let mut storage_service_server_network_handles = vec![];
+    let mut storage_service_client_network_handles = HashMap::new();
 
-    let (mempool_reconfig_subscription, mempool_reconfig_events) =
-        gen_mempool_reconfig_subscription();
-    reconfig_subscriptions.push(mempool_reconfig_subscription);
-    // consensus has to subscribe to ALL on-chain configs
-    let (consensus_reconfig_subscription, consensus_reconfig_events) =
-        gen_consensus_reconfig_subscription();
-    if node_config.base.role.is_validator() {
-        reconfig_subscriptions.push(consensus_reconfig_subscription);
-    }
+    // Create an event subscription service so that components can be notified of events and reconfigs
+    let mut event_subscription_service = EventSubscriptionService::new(
+        ON_CHAIN_CONFIG_REGISTRY,
+        Arc::new(RwLock::new(db_rw.clone())),
+    );
+    let mempool_reconfig_subscription = event_subscription_service
+        .subscribe_to_reconfigurations()
+        .unwrap();
+
+    // Create a consensus subscription for reconfiguration events (if this node is a validator).
+    let consensus_reconfig_subscription = if node_config.base.role.is_validator() {
+        Some(
+            event_subscription_service
+                .subscribe_to_reconfigurations()
+                .unwrap(),
+        )
+    } else {
+        None
+    };
 
     // Gather all network configs into a single vector.
     let mut network_configs: Vec<&NetworkConfig> = node_config.full_node_networks.iter().collect();
@@ -321,37 +507,68 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
         network_configs.push(network_config);
     }
 
-    let mut network_builders = Vec::new();
-
     // Instantiate every network and collect the requisite endpoints for state_sync, mempool, and consensus.
-    for (idx, network_config) in network_configs.into_iter().enumerate() {
+    let mut network_ids = HashSet::new();
+    network_configs.iter().for_each(|config| {
+        let network_id = config.network_id;
+        // Guarantee there is only one of this network
+        if network_ids.contains(&network_id) {
+            panic!(
+                "Duplicate NetworkId: '{}'.  Can't start node with duplicate networks",
+                network_id
+            );
+        }
+        network_ids.insert(network_id);
+    });
+    let network_ids: Vec<_> = network_ids.into_iter().collect();
+
+    let peer_metadata_storage = PeerMetadataStorage::new(&network_ids);
+    for network_config in network_configs.into_iter() {
+        debug!("Creating runtime for {}", network_config.network_id);
+        let runtime = Builder::new_multi_thread()
+            .thread_name(format!("network-{}", network_config.network_id))
+            .enable_all()
+            .build()
+            .expect("Failed to start runtime. Won't be able to start networking.");
+
+        // Entering here gives us a runtime to instantiate all the pieces of the builder
+        let _enter = runtime.enter();
+
         // Perform common instantiation steps
         let mut network_builder = NetworkBuilder::create(
             chain_id,
             node_config.base.role,
             network_config,
             TimeService::real(),
+            Some(&mut event_subscription_service),
+            peer_metadata_storage.clone(),
         );
-        let network_id = network_config.network_id.clone();
+        let network_id = network_config.network_id;
 
         // Create the endpoints to connect the Network to State Sync.
         let (state_sync_sender, state_sync_events) =
-            network_builder.add_protocol_handler(state_sync::network::network_endpoint_config());
-        state_sync_network_handles.push((
-            NodeNetworkId::new(network_id.clone(), idx),
-            state_sync_sender,
-            state_sync_events,
-        ));
+            network_builder.add_p2p_service(&state_sync_v1_network_config());
+        state_sync_network_handles.push((network_id, state_sync_sender, state_sync_events));
+
+        // TODO(philiphayes): configure which networks we serve the storage service
+        // on? for example, if we're a light node we wouldn't want to provide the
+        // storage service at all.
+
+        // Register the network-facing storage service with Network.
+        let storage_service_events = network_builder
+            .add_service(&storage_service_server::network::network_endpoint_config());
+        storage_service_server_network_handles.push(storage_service_events);
+
+        // Register the storage-service clients with Network
+        let storage_service_sender =
+            network_builder.add_client(&storage_service_client::network_endpoint_config());
+        storage_service_client_network_handles.insert(network_id, storage_service_sender);
 
         // Create the endpoints to connect the Network to mempool.
-        let (mempool_sender, mempool_events) = network_builder.add_protocol_handler(
-            diem_mempool::network::network_endpoint_config(MEMPOOL_NETWORK_CHANNEL_BUFFER_SIZE),
+        let (mempool_sender, mempool_events) = network_builder.add_p2p_service(
+            &diem_mempool::network::network_endpoint_config(MEMPOOL_NETWORK_CHANNEL_BUFFER_SIZE),
         );
-        mempool_network_handles.push((
-            NodeNetworkId::new(network_id.clone(), idx),
-            mempool_sender,
-            mempool_events,
-        ));
+        mempool_network_handles.push((network_id, mempool_sender, mempool_events));
 
         // Perform steps relevant specifically to Validator networks.
         if network_id.is_validator_network() {
@@ -363,56 +580,50 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
 
             consensus_network_handles = Some(
                 network_builder
-                    .add_protocol_handler(consensus::network_interface::network_endpoint_config()),
+                    .add_p2p_service(&consensus::network_interface::network_endpoint_config()),
             );
         }
 
-        reconfig_subscriptions.append(network_builder.reconfig_subscriptions());
-
-        network_builders.push(network_builder);
-    }
-
-    // Build the configured networks.
-    for network_builder in &mut network_builders {
         let network_context = network_builder.network_context();
-        debug!("Creating runtime for {}", network_context);
-        let runtime = Builder::new_multi_thread()
-            .thread_name(format!("network-{}", network_context.network_id()))
-            .enable_all()
-            .build()
-            .expect("Failed to start runtime. Won't be able to start networking.");
         network_builder.build(runtime.handle().clone());
-        network_runtimes.push(runtime);
-        debug!(
-            "Network built for network context: {}",
-            network_builder.network_context()
-        );
-    }
-
-    // Start the configured networks.
-    // TODO:  Collect all component starts at the end of this function
-    for network_builder in &mut network_builders {
         network_builder.start();
+        debug!("Network built for network context: {}", network_context);
+        network_runtimes.push(runtime);
     }
 
     // TODO set up on-chain discovery network based on UpstreamConfig.fallback_network
     // and pass network handles to mempool/state sync
 
-    // for state sync to send requests to mempool
-    let (state_sync_to_mempool_sender, state_sync_requests) =
-        channel(INTRA_NODE_CHANNEL_BUFFER_SIZE);
-    let state_sync_bootstrapper = StateSyncBootstrapper::bootstrap(
-        state_sync_network_handles,
-        state_sync_to_mempool_sender,
-        Arc::clone(&db_rw.reader),
-        chunk_executor,
+    // For state sync to send notifications to mempool and receive notifications from consensus.
+    let (mempool_notifier, mempool_listener) =
+        mempool_notifications::new_mempool_notifier_listener_pair();
+    let (consensus_notifier, consensus_listener) =
+        consensus_notifications::new_consensus_notifier_listener_pair(
+            node_config.state_sync.client_commit_timeout_ms,
+        );
+
+    // Create the state sync runtimes
+    let state_sync_runtimes = create_state_sync_runtimes(
         node_config,
+        storage_service_server_network_handles,
+        storage_service_client_network_handles,
+        state_sync_network_handles,
+        peer_metadata_storage.clone(),
+        mempool_notifier,
+        consensus_listener,
         genesis_waypoint,
-        reconfig_subscriptions,
+        event_subscription_service,
+        db_rw.clone(),
     );
+
     let (mp_client_sender, mp_client_events) = channel(AC_SMP_CHANNEL_BUFFER_SIZE);
 
-    let rpc_runtime = bootstrap_rpc(&node_config, chain_id, diem_db.clone(), mp_client_sender);
+    let api_runtime = if node_config.api.enabled {
+        // bootstrap_api bootstraps a web-server serves for both REST and JSON-RPC API
+        bootstrap_api(node_config, chain_id, diem_db, mp_client_sender).unwrap()
+    } else {
+        bootstrap_rpc(node_config, chain_id, diem_db, mp_client_sender)
+    };
 
     let mut consensus_runtime = None;
     let (consensus_to_mempool_sender, consensus_requests) = channel(INTRA_NODE_CHANNEL_BUFFER_SIZE);
@@ -424,8 +635,9 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
         mempool_network_handles,
         mp_client_events,
         consensus_requests,
-        state_sync_requests,
-        mempool_reconfig_events,
+        mempool_listener,
+        mempool_reconfig_subscription,
+        peer_metadata_storage.clone(),
     );
     debug!("Mempool started in {} ms", instant.elapsed().as_millis());
 
@@ -433,16 +645,12 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
     // network provider -> consensus -> state synchronizer -> network provider.  This has resulted
     // in a deadlock as observed in GitHub issue #749.
     if let Some((consensus_network_sender, consensus_network_events)) = consensus_network_handles {
-        let state_sync_client =
-            state_sync_bootstrapper.create_client(node_config.state_sync.client_commit_timeout_ms);
-
         // Make sure that state synchronizer is caught up at least to its waypoint
         // (in case it's present). There is no sense to start consensus prior to that.
         // TODO: Note that we need the networking layer to be able to discover & connect to the
         // peers with potentially outdated network identity public keys.
         debug!("Wait until state sync is initialized");
-        block_on(state_sync_client.wait_until_initialized())
-            .expect("State sync initialization failure");
+        state_sync_runtimes.block_until_initialized();
         debug!("State sync initialization complete.");
 
         // Initialize and start consensus.
@@ -451,10 +659,12 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
             node_config,
             consensus_network_sender,
             consensus_network_events,
-            state_sync_client,
+            Arc::new(consensus_notifier),
             consensus_to_mempool_sender,
-            diem_db,
-            consensus_reconfig_events,
+            db_rw.clone(),
+            consensus_reconfig_subscription
+                .expect("Consensus requires a reconfiguration subscription!"),
+            peer_metadata_storage,
         ));
         debug!("Consensus started in {} ms", instant.elapsed().as_millis());
     }
@@ -466,12 +676,12 @@ pub fn setup_environment(node_config: &NodeConfig, logger: Option<Arc<Logger>>) 
         .spawn(periodic_state_dump(node_config.to_owned(), db_rw));
 
     DiemHandle {
-        _network_runtimes: network_runtimes,
-        _rpc: rpc_runtime,
-        _mempool: mempool,
-        _state_sync_bootstrapper: state_sync_bootstrapper,
+        _api: api_runtime,
+        _backup: backup_service,
         _consensus_runtime: consensus_runtime,
         _debug: debug_if,
-        _backup: backup_service,
+        _mempool: mempool,
+        _network_runtimes: network_runtimes,
+        _state_sync_runtimes: state_sync_runtimes,
     }
 }

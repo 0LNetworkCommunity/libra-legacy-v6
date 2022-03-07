@@ -1,12 +1,12 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{config::CargoConfig, installer::install_if_needed, Result};
+use crate::{config::CargoConfig, installer::install_cargo_component_if_needed, Result};
 use anyhow::anyhow;
+use camino::Utf8Path;
 use log::{info, warn};
 use std::{
     env::var_os,
-    path::Path,
     process::{Command, Stdio},
 };
 
@@ -14,8 +14,8 @@ use std::{
 pub const X_DEPTH: usize = 2;
 
 /// Returns the project root. TODO: switch uses to XCoreContext::project_root instead)
-pub fn project_root() -> &'static Path {
-    Path::new(&env!("CARGO_MANIFEST_DIR"))
+pub fn project_root() -> &'static Utf8Path {
+    Utf8Path::new(&env!("CARGO_MANIFEST_DIR"))
         .ancestors()
         .nth(X_DEPTH)
         .unwrap()
@@ -29,12 +29,9 @@ pub fn sccache_should_run(cargo_config: &CargoConfig, warn_if_not_correct_locati
         if let Some(sccache_config) = &cargo_config.sccache {
             // Are we work on items in the right location:
             // See: https://github.com/mozilla/sccache#known-caveats
-            let correct_location = var_os("CARGO_HOME")
-                .unwrap_or_default()
-                .to_str()
-                .unwrap_or_default()
-                == sccache_config.required_cargo_home
-                && sccache_config.required_git_home == project_root().to_str().unwrap_or_default();
+            let correct_location = var_os("CARGO_HOME").unwrap_or_default()
+                == sccache_config.required_cargo_home.as_str()
+                && sccache_config.required_git_home == project_root();
             if !correct_location && warn_if_not_correct_location {
                 warn!("You will not benefit from sccache in this build!!!");
                 warn!(
@@ -43,7 +40,7 @@ pub fn sccache_should_run(cargo_config: &CargoConfig, warn_if_not_correct_locati
                 );
                 warn!(
                     "Current diem root is '{}',  and current CARGO_HOME is '{}'",
-                    project_root().to_str().unwrap_or_default(),
+                    project_root(),
                     var_os("CARGO_HOME").unwrap_or_default().to_string_lossy()
                 );
             }
@@ -76,10 +73,14 @@ pub fn stop_sccache_server() {
             if output.status.success() {
                 info!("Stopped already running sccache.");
             } else {
-                info!("Failed to stopped already running sccache.");
-                warn!("status: {}", output.status);
-                warn!("stdout: {}", String::from_utf8_lossy(&output.stdout));
-                warn!("stderr: {}", String::from_utf8_lossy(&output.stderr));
+                let std_err = String::from_utf8_lossy(&output.stderr);
+                //sccache will fail
+                if !std_err.contains("couldn't connect to server") {
+                    warn!("Failed to stopped already running sccache.");
+                    warn!("status: {}", output.status);
+                    warn!("stdout: {}", String::from_utf8_lossy(&output.stdout));
+                    warn!("stderr: {}", std_err);
+                }
             }
         }
         Err(error) => {
@@ -95,7 +96,11 @@ pub fn apply_sccache_if_possible(
 
     if sccache_should_run(cargo_config, true) {
         if let Some(sccache_config) = &cargo_config.sccache {
-            if !install_if_needed(cargo_config, "sccache", &sccache_config.installer) {
+            if !install_cargo_component_if_needed(
+                cargo_config,
+                "sccache",
+                &sccache_config.installer,
+            ) {
                 return Err(anyhow!("Failed to install sccache, bailing"));
             }
             stop_sccache_server();

@@ -2,23 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! Objects used by/related to shared mempool
-
 use crate::{
-    core_mempool::CoreMempool,
-    shared_mempool::{network::MempoolNetworkSender, peer_manager::PeerManager},
+    core_mempool::CoreMempool, network::MempoolNetworkInterface,
+    shared_mempool::network::MempoolNetworkSender,
 };
 use anyhow::Result;
-use channel::diem_channel::Receiver;
 use diem_config::{
-    config::{MempoolConfig, PeerNetworkId},
-    network_id::NodeNetworkId,
+    config::{MempoolConfig, RoleType},
+    network_id::{NetworkId, PeerNetworkId},
 };
+use diem_crypto::HashValue;
 use diem_infallible::{Mutex, RwLock};
 use diem_types::{
-    account_address::AccountAddress,
-    mempool_status::MempoolStatus,
-    on_chain_config::{ConfigID, DiemVersion, OnChainConfig, OnChainConfigPayload, VMConfig},
-    transaction::SignedTransaction,
+    account_address::AccountAddress, mempool_status::MempoolStatus, transaction::SignedTransaction,
     vm_status::DiscardedVMStatus,
 };
 use futures::{
@@ -26,9 +22,17 @@ use futures::{
     future::Future,
     task::{Context, Poll},
 };
-use std::{collections::HashMap, fmt, pin::Pin, sync::Arc, task::Waker, time::Instant};
+use network::{application::storage::PeerMetadataStorage, transport::ConnectionMetadata};
+use serde::{Deserialize, Serialize};
+use std::{
+    collections::{BTreeMap, BTreeSet, HashMap},
+    fmt,
+    pin::Pin,
+    sync::Arc,
+    task::Waker,
+    time::{Instant, SystemTime},
+};
 use storage_interface::DbReader;
-use subscription_service::ReconfigSubscription;
 use tokio::runtime::Handle;
 use vm_validator::vm_validator::TransactionValidation;
 
@@ -40,11 +44,38 @@ where
 {
     pub mempool: Arc<Mutex<CoreMempool>>,
     pub config: MempoolConfig,
-    pub network_senders: HashMap<NodeNetworkId, MempoolNetworkSender>,
+    pub(crate) network_interface: MempoolNetworkInterface,
     pub db: Arc<dyn DbReader>,
     pub validator: Arc<RwLock<V>>,
-    pub peer_manager: Arc<PeerManager>,
     pub subscribers: Vec<UnboundedSender<SharedMempoolNotification>>,
+}
+
+impl<V: TransactionValidation + 'static> SharedMempool<V> {
+    pub fn new(
+        mempool: Arc<Mutex<CoreMempool>>,
+        config: MempoolConfig,
+        network_senders: HashMap<NetworkId, MempoolNetworkSender>,
+        db: Arc<dyn DbReader>,
+        validator: Arc<RwLock<V>>,
+        subscribers: Vec<UnboundedSender<SharedMempoolNotification>>,
+        role: RoleType,
+        peer_metadata_storage: Arc<PeerMetadataStorage>,
+    ) -> Self {
+        let network_interface = MempoolNetworkInterface::new(
+            peer_metadata_storage,
+            network_senders,
+            role,
+            config.clone(),
+        );
+        SharedMempool {
+            mempool,
+            config,
+            network_interface,
+            db,
+            validator,
+            subscribers,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -109,7 +140,7 @@ impl Future for ScheduledBroadcast {
 
             Poll::Pending
         } else {
-            Poll::Ready((self.peer.clone(), self.backoff))
+            Poll::Ready((self.peer, self.backoff))
         }
     }
 }
@@ -120,13 +151,16 @@ pub enum ConsensusRequest {
     GetBlockRequest(
         // max block size
         u64,
-        // transactions to exclude from requested block
-        Vec<TransactionExclusion>,
+        // transactions to exclude from the requested block
+        Vec<TransactionSummary>,
+        // callback to respond to
         oneshot::Sender<Result<ConsensusResponse>>,
     ),
     /// Notifications about *rejected* committed txns.
     RejectNotification(
-        Vec<CommittedTransaction>,
+        // rejected transactions from consensus
+        Vec<TransactionSummary>,
+        // callback to respond to
         oneshot::Sender<Result<ConsensusResponse>>,
     ),
 }
@@ -163,73 +197,13 @@ pub enum ConsensusResponse {
     CommitResponse(),
 }
 
-/// Notification from state sync to mempool of commit event.
-/// This notifies mempool to remove committed txns.
-pub struct CommitNotification {
-    pub transactions: Vec<CommittedTransaction>,
-    /// Timestamp of committed block.
-    pub block_timestamp_usecs: u64,
-    pub callback: oneshot::Sender<Result<CommitResponse>>,
-}
-
-impl fmt::Display for CommitNotification {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut txns = "".to_string();
-        for txn in self.transactions.iter() {
-            txns += &format!("{} ", txn);
-        }
-        write!(
-            f,
-            "CommitNotification [block_timestamp_usecs: {}, txns: {}]",
-            self.block_timestamp_usecs, txns
-        )
-    }
-}
-
-#[derive(Debug)]
-pub struct CommitResponse {
-    pub success: bool,
-    /// The error message if `success` is false.
-    pub error_message: Option<String>,
-}
-
-impl CommitResponse {
-    // Returns a new CommitResponse without an error.
-    pub fn success() -> Self {
-        CommitResponse {
-            success: true,
-            error_message: None,
-        }
-    }
-
-    // Returns a new CommitResponse holding the given error message.
-    pub fn error(error_message: String) -> Self {
-        CommitResponse {
-            success: false,
-            error_message: Some(error_message),
-        }
-    }
-}
-
-/// Successfully executed and committed txn
-pub struct CommittedTransaction {
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct TransactionSummary {
     pub sender: AccountAddress,
     pub sequence_number: u64,
 }
 
-impl fmt::Display for CommittedTransaction {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}:{}", self.sender, self.sequence_number,)
-    }
-}
-
-#[derive(Clone)]
-pub struct TransactionExclusion {
-    pub sender: AccountAddress,
-    pub sequence_number: u64,
-}
-
-impl fmt::Display for TransactionExclusion {
+impl fmt::Display for TransactionSummary {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}:{}", self.sender, self.sequence_number,)
     }
@@ -239,12 +213,69 @@ pub type SubmissionStatus = (MempoolStatus, Option<DiscardedVMStatus>);
 
 pub type SubmissionStatusBundle = (SignedTransaction, SubmissionStatus);
 
-pub type MempoolClientSender =
-    mpsc::Sender<(SignedTransaction, oneshot::Sender<Result<SubmissionStatus>>)>;
+pub enum MempoolClientRequest {
+    SubmitTransaction(SignedTransaction, oneshot::Sender<Result<SubmissionStatus>>),
+    GetTransactionByHash(HashValue, oneshot::Sender<Option<SignedTransaction>>),
+}
 
-const MEMPOOL_SUBSCRIBED_CONFIGS: &[ConfigID] = &[DiemVersion::CONFIG_ID, VMConfig::CONFIG_ID];
+pub type MempoolClientSender = mpsc::Sender<MempoolClientRequest>;
+pub type MempoolEventsReceiver = mpsc::Receiver<MempoolClientRequest>;
 
-pub fn gen_mempool_reconfig_subscription(
-) -> (ReconfigSubscription, Receiver<(), OnChainConfigPayload>) {
-    ReconfigSubscription::subscribe_all("mempool", MEMPOOL_SUBSCRIBED_CONFIGS.to_vec(), vec![])
+/// State of last sync with peer:
+/// `timeline_id` is position in log of ready transactions
+/// `is_alive` - is connection healthy
+#[derive(Clone, Debug)]
+pub(crate) struct PeerSyncState {
+    pub timeline_id: u64,
+    pub broadcast_info: BroadcastInfo,
+    pub metadata: ConnectionMetadata,
+}
+
+impl PeerSyncState {
+    pub fn new(metadata: ConnectionMetadata) -> Self {
+        PeerSyncState {
+            timeline_id: 0,
+            broadcast_info: BroadcastInfo::new(),
+            metadata,
+        }
+    }
+}
+
+/// Identifier for a broadcasted batch of txns.
+/// For BatchId(`start_id`, `end_id`), (`start_id`, `end_id`) is the range of timeline IDs read from
+/// the core mempool timeline index that produced the txns in this batch.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+pub struct BatchId(pub u64, pub u64);
+
+impl PartialOrd for BatchId {
+    fn partial_cmp(&self, other: &BatchId) -> Option<std::cmp::Ordering> {
+        Some((other.0, other.1).cmp(&(self.0, self.1)))
+    }
+}
+
+impl Ord for BatchId {
+    fn cmp(&self, other: &BatchId) -> std::cmp::Ordering {
+        (other.0, other.1).cmp(&(self.0, self.1))
+    }
+}
+
+/// Txn broadcast-related info for a given remote peer.
+#[derive(Clone, Debug)]
+pub struct BroadcastInfo {
+    // Sent broadcasts that have not yet received an ack.
+    pub sent_batches: BTreeMap<BatchId, SystemTime>,
+    // Broadcasts that have received a retry ack and are pending a resend.
+    pub retry_batches: BTreeSet<BatchId>,
+    // Whether broadcasting to this peer is in backoff mode, e.g. broadcasting at longer intervals.
+    pub backoff_mode: bool,
+}
+
+impl BroadcastInfo {
+    fn new() -> Self {
+        Self {
+            sent_batches: BTreeMap::new(),
+            retry_batches: BTreeSet::new(),
+            backoff_mode: false,
+        }
+    }
 }

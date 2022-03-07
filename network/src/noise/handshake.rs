@@ -116,7 +116,7 @@ impl HandshakeAuthMode {
             HandshakeAuthMode::Mutual {
                 anti_replay_timestamps,
                 ..
-            } => Some(&anti_replay_timestamps),
+            } => Some(anti_replay_timestamps),
             HandshakeAuthMode::MaybeMutual(_) => None,
         }
     }
@@ -135,7 +135,7 @@ impl HandshakeAuthMode {
 /// The Noise configuration to be used to perform a protocol upgrade on an underlying socket.
 pub struct NoiseUpgrader {
     /// The validator's network context
-    pub network_context: Arc<NetworkContext>,
+    pub network_context: NetworkContext,
     /// Config for executing Noise handshakes. Includes our static private key.
     noise_config: noise::NoiseConfig,
     /// Handshake authentication can be either mutual or server-only authentication.
@@ -145,7 +145,7 @@ pub struct NoiseUpgrader {
 impl NoiseUpgrader {
     /// Create a new NoiseConfig with the provided keypair and authentication mode.
     pub fn new(
-        network_context: Arc<NetworkContext>,
+        network_context: NetworkContext,
         key: x25519::PrivateKey,
         auth_mode: HandshakeAuthMode,
     ) -> Self {
@@ -238,7 +238,7 @@ impl NoiseUpgrader {
             .noise_config
             .initiate_connection(
                 &mut rng,
-                &prologue_msg,
+                prologue_msg,
                 remote_public_key,
                 Some(&payload),
                 &mut client_noise_msg,
@@ -343,7 +343,7 @@ impl NoiseUpgrader {
         let (prologue, client_init_message) = client_message.split_at(Self::PROLOGUE_SIZE);
         let (remote_public_key, handshake_state, payload) = self
             .noise_config
-            .parse_client_init_message(&prologue, &client_init_message)
+            .parse_client_init_message(prologue, client_init_message)
             .map_err(|err| NoiseHandshakeError::ServerParseClient(remote_peer_short, err))?;
 
         // if mutual auth mode, verify the remote pubkey is in our set of trusted peers
@@ -447,7 +447,7 @@ impl NoiseUpgrader {
         peer: &Peer,
         remote_public_key: &x25519::PublicKey,
     ) -> Result<PeerRole, NoiseHandshakeError> {
-        if !peer.keys.contains(&remote_public_key) {
+        if !peer.keys.contains(remote_public_key) {
             return Err(NoiseHandshakeError::UnauthenticatedClientPubkey(
                 remote_peer_short,
                 hex::encode(remote_public_key.as_slice()),

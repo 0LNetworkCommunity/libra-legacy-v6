@@ -10,6 +10,7 @@ use diem_management::{
     config::ConfigPath, error::Error, secure_backend::ValidatorBackend,
     storage::StorageWrapper as Storage,
 };
+use diem_network_address_encryption::Error as NetworkAddressError;
 use diem_temppath::TempPath;
 use diem_types::{
     account_address::AccountAddress, account_config, account_state::AccountState,
@@ -52,37 +53,44 @@ impl Verify {
             .load()?
             .override_validator_backend(&self.backend.validator_backend)?;
         let validator_storage = config.validator_backend();
-        let mut buffer = String::new();
 
-        writeln!(buffer, "Data stored in SecureStorage:").unwrap();
-        write_break(&mut buffer);
-        writeln!(buffer, "Keys").unwrap();
-        write_break(&mut buffer);
-
-        write_ed25519_key(&validator_storage, &mut buffer, CONSENSUS_KEY);
-        write_x25519_key(&validator_storage, &mut buffer, FULLNODE_NETWORK_KEY);
-        write_ed25519_key(&validator_storage, &mut buffer, OWNER_KEY);
-        write_ed25519_key(&validator_storage, &mut buffer, OPERATOR_KEY);
-        write_ed25519_key(&validator_storage, &mut buffer, VALIDATOR_NETWORK_KEY);
-
-        write_break(&mut buffer);
-        writeln!(buffer, "Data").unwrap();
-        write_break(&mut buffer);
-
-        write_string(&validator_storage, &mut buffer, OPERATOR_ACCOUNT);
-        write_string(&validator_storage, &mut buffer, OWNER_ACCOUNT);
-
-        write_safety_data(&validator_storage, &mut buffer, SAFETY_DATA);
-        write_waypoint(&validator_storage, &mut buffer, WAYPOINT);
-
-        write_break(&mut buffer);
-
-        if let Some(genesis_path) = self.genesis_path.as_ref() {
-            compare_genesis(validator_storage, &mut buffer, genesis_path)?;
-        }
-
-        Ok(buffer)
+        verify_genesis(validator_storage, self.genesis_path.as_deref())
     }
+}
+
+pub fn verify_genesis(
+    validator_storage: Storage,
+    genesis_path: Option<&Path>,
+) -> Result<String, Error> {
+    let mut buffer = String::new();
+
+    writeln!(buffer, "Data stored in SecureStorage:").unwrap();
+    write_break(&mut buffer);
+    writeln!(buffer, "Keys").unwrap();
+    write_break(&mut buffer);
+
+    write_ed25519_key(&validator_storage, &mut buffer, CONSENSUS_KEY);
+    write_x25519_key(&validator_storage, &mut buffer, FULLNODE_NETWORK_KEY);
+    write_ed25519_key(&validator_storage, &mut buffer, OWNER_KEY);
+    write_ed25519_key(&validator_storage, &mut buffer, OPERATOR_KEY);
+    write_ed25519_key(&validator_storage, &mut buffer, VALIDATOR_NETWORK_KEY);
+
+    write_break(&mut buffer);
+    writeln!(buffer, "Data").unwrap();
+    write_break(&mut buffer);
+
+    write_string(&validator_storage, &mut buffer, OPERATOR_ACCOUNT);
+    write_string(&validator_storage, &mut buffer, OWNER_ACCOUNT);
+    write_safety_data(&validator_storage, &mut buffer, SAFETY_DATA);
+    write_waypoint(&validator_storage, &mut buffer, WAYPOINT);
+
+    write_break(&mut buffer);
+
+    if let Some(genesis_path) = genesis_path {
+        compare_genesis(validator_storage, &mut buffer, genesis_path)?;
+    }
+
+    Ok(buffer)
 }
 
 fn write_assert(buffer: &mut String, name: &str, value: bool) {
@@ -103,7 +111,8 @@ fn write_ed25519_key(storage: &Storage, buffer: &mut String, key: &'static str) 
         .ed25519_public_from_private(key)
         .map(|v| v.to_string())
         .unwrap_or_else(|e| e.to_string());
-    writeln!(buffer, "{} - {}", key, value).unwrap();
+    //////// 0L ////////
+    writeln!(buffer, "{} x25519 - {}", key, value).unwrap();
 }
 
 fn write_x25519_key(storage: &Storage, buffer: &mut String, key: &'static str) {
@@ -111,8 +120,7 @@ fn write_x25519_key(storage: &Storage, buffer: &mut String, key: &'static str) {
         .x25519_public_from_private(key)
         .map(|v| v.to_string())
         .unwrap_or_else(|e| e.to_string());
-    //////// 0L ////////          
-    writeln!(buffer, "{} x25519 - {}", key, value).unwrap();
+    writeln!(buffer, "{} - {}", key, value).unwrap();
 }
 
 fn write_string(storage: &Storage, buffer: &mut String, key: &'static str) {
@@ -171,19 +179,17 @@ fn compare_genesis(
 
     let actual_validator_key = storage.x25519_public_from_private(VALIDATOR_NETWORK_KEY)?;
     let actual_fullnode_key = storage.x25519_public_from_private(FULLNODE_NETWORK_KEY)?;
-    let encryptor = storage.encryptor();
 
-    let expected_validator_key = encryptor
-        .decrypt(
-            &validator_config.validator_network_addresses,
-            validator_account,
-        )
-        .ok()
-        .and_then(|addrs| {
-            addrs
-                .get(0)
-                .and_then(|addr: &NetworkAddress| addr.find_noise_proto())
-        });
+    let network_addrs: Vec<NetworkAddress> =
+        bcs::from_bytes(&validator_config.validator_network_addresses)
+            .map_err(|e| {
+                NetworkAddressError::AddressDeserialization(validator_account, e.to_string())
+            })
+            .unwrap_or_default();
+
+    let expected_validator_key = network_addrs
+        .get(0)
+        .and_then(|addr: &NetworkAddress| addr.find_noise_proto());
     write_assert(
         buffer,
         VALIDATOR_NETWORK_KEY,
@@ -208,8 +214,14 @@ pub fn compute_genesis( //////// 0L ////////
     genesis_path: &Path,
     db_path: &Path,
 ) -> Result<(DbReaderWriter, Waypoint), Error> {
-    let diemdb = DiemDB::open(db_path, false, None, RocksdbConfig::default())
-        .map_err(|e| Error::UnexpectedError(e.to_string()))?;
+    let diemdb = DiemDB::open(
+        db_path,
+        false,
+        None,
+        RocksdbConfig::default(),
+        true, /* account_count_migration */
+    )
+    .map_err(|e| Error::UnexpectedError(e.to_string()))?;
     let db_rw = DbReaderWriter::new(diemdb);
 
     let mut file = File::open(genesis_path)

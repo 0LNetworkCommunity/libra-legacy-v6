@@ -1,13 +1,12 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use diem_config::{config::PeerNetworkId, network_id::NetworkId};
+use diem_config::network_id::{NetworkId, PeerNetworkId};
 use diem_metrics::{
     register_histogram, register_histogram_vec, register_int_counter, register_int_counter_vec,
-    register_int_gauge, register_int_gauge_vec, DurationHistogram, HistogramTimer, HistogramVec,
-    IntCounter, IntCounterVec, IntGauge, IntGaugeVec,
+    register_int_gauge_vec, DurationHistogram, HistogramTimer, HistogramVec, IntCounter,
+    IntCounterVec, IntGauge, IntGaugeVec,
 };
-use diem_types::PeerId;
 use once_cell::sync::Lazy;
 use short_hex_str::AsShortHexStr;
 use std::time::Duration;
@@ -18,6 +17,7 @@ pub const EXPIRATION_TIME_INDEX_LABEL: &str = "expiration";
 pub const SYSTEM_TTL_INDEX_LABEL: &str = "system_ttl";
 pub const TIMELINE_INDEX_LABEL: &str = "timeline";
 pub const PARKING_LOT_INDEX_LABEL: &str = "parking_lot";
+pub const TRANSACTION_HASH_INDEX_LABEL: &str = "transaction_hash";
 
 // Core mempool commit stages labels
 pub const GET_BLOCK_STAGE_LABEL: &str = "get_block";
@@ -51,7 +51,7 @@ pub const SUCCESS_LABEL: &str = "success";
 
 // Bounded executor task labels
 pub const CLIENT_EVENT_LABEL: &str = "client_event";
-pub const STATE_SYNC_EVENT_LABEL: &str = "state_sync";
+pub const CLIENT_EVENT_GET_TXN_LABEL: &str = "client_event_get_txn";
 pub const RECONFIG_EVENT_LABEL: &str = "reconfig";
 pub const PEER_BROADCAST_EVENT_LABEL: &str = "peer_broadcast";
 
@@ -195,14 +195,36 @@ static PROCESS_TXN_SUBMISSION_LATENCY: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
         "diem_shared_mempool_request_latency",
         "Latency of mempool processing txn submission requests",
-        &["network", "sender"] // sender of txn(s)
+        &["network"]
     )
     .unwrap()
 });
 
-pub fn process_txn_submit_latency_timer(network: &str, sender: &str) -> HistogramTimer {
+pub fn process_txn_submit_latency_timer(network_id: NetworkId) -> HistogramTimer {
     PROCESS_TXN_SUBMISSION_LATENCY
-        .with_label_values(&[network, sender])
+        .with_label_values(&[network_id.as_str()])
+        .start_timer()
+}
+
+pub fn process_txn_submit_latency_timer_client() -> HistogramTimer {
+    PROCESS_TXN_SUBMISSION_LATENCY
+        .with_label_values(&[CLIENT_LABEL])
+        .start_timer()
+}
+
+/// Counter for tracking e2e latency for mempool to process get txn by hash requests from clients and peers
+static PROCESS_GET_TXN_LATENCY: Lazy<HistogramVec> = Lazy::new(|| {
+    register_histogram_vec!(
+        "diem_shared_mempool_get_txn_request_latency",
+        "Latency of mempool processing get txn by hash requests",
+        &["network"]
+    )
+    .unwrap()
+});
+
+pub fn process_get_txn_latency_timer_client() -> HistogramTimer {
+    PROCESS_GET_TXN_LATENCY
+        .with_label_values(&[CLIENT_LABEL])
         .start_timer()
 }
 
@@ -217,21 +239,27 @@ pub static PROCESS_TXN_BREAKDOWN_LATENCY: Lazy<HistogramVec> = Lazy::new(|| {
 });
 
 /// Counter for tracking latency for mempool to broadcast to a peer
-pub static SHARED_MEMPOOL_BROADCAST_LATENCY: Lazy<HistogramVec> = Lazy::new(|| {
+static SHARED_MEMPOOL_BROADCAST_LATENCY: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
         "diem_broadcast_latency",
         "Latency of mempool executing broadcast to another peer",
-        &["network", "recipient"]
+        &["network"]
     )
     .unwrap()
 });
+
+pub fn shared_mempool_broadcast_latency(network_id: NetworkId, latency: Duration) {
+    SHARED_MEMPOOL_BROADCAST_LATENCY
+        .with_label_values(&[network_id.as_str()])
+        .observe(latency.as_secs_f64());
+}
 
 /// Counter for tracking roundtrip-time from sending a broadcast to receiving ACK for that broadcast
 pub static SHARED_MEMPOOL_BROADCAST_RTT: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
         "diem_shared_mempool_broadcast_roundtrip_latency",
         "Time elapsed between sending a broadcast and receiving an ACK for that broadcast",
-        &["network", "recipient"]
+        &["network"]
     )
     .unwrap()
 });
@@ -248,7 +276,7 @@ static SHARED_MEMPOOL_PENDING_BROADCASTS_COUNT: Lazy<IntGaugeVec> = Lazy::new(||
 
 pub fn shared_mempool_pending_broadcasts(peer: &PeerNetworkId) -> IntGauge {
     SHARED_MEMPOOL_PENDING_BROADCASTS_COUNT.with_label_values(&[
-        peer.raw_network_id().as_str(),
+        peer.network_id().as_str(),
         peer.peer_id().short_str().as_str(),
     ])
 }
@@ -260,54 +288,60 @@ static SHARED_MEMPOOL_TRANSACTIONS_PROCESSED: Lazy<IntCounterVec> = Lazy::new(||
         &[
             "status", // state of transaction processing: "received", "success", status code from failed txn processing
             "network", // state of transaction processing: "received", "success", status code from failed txn processing
-            "sender"   // sender of the txns
         ]
     )
     .unwrap()
 });
 
-pub fn shared_mempool_transactions_processed_inc(status: &str, network: &str, sender: &str) {
+pub fn shared_mempool_transactions_processed_inc(status: &str, network: &str) {
     SHARED_MEMPOOL_TRANSACTIONS_PROCESSED
-        .with_label_values(&[status, network, sender])
+        .with_label_values(&[status, network])
         .inc();
 }
 
 /// Counter for number of transactions in each mempool broadcast sent
-pub static SHARED_MEMPOOL_TRANSACTION_BROADCAST_SIZE: Lazy<HistogramVec> = Lazy::new(|| {
+static SHARED_MEMPOOL_TRANSACTION_BROADCAST_SIZE: Lazy<HistogramVec> = Lazy::new(|| {
     register_histogram_vec!(
         "diem_shared_mempool_transaction_broadcast",
         "Number of transactions in each mempool broadcast sent",
-        &["network", "recipient"]
+        &["network"]
     )
     .unwrap()
 });
 
-pub static SHARED_MEMPOOL_BROADCAST_TYPE_COUNT: Lazy<IntCounterVec> = Lazy::new(|| {
+pub fn shared_mempool_broadcast_size(network_id: NetworkId, num_txns: usize) {
+    SHARED_MEMPOOL_TRANSACTION_BROADCAST_SIZE
+        .with_label_values(&[network_id.as_str()])
+        .observe(num_txns as f64);
+}
+
+static SHARED_MEMPOOL_BROADCAST_TYPE_COUNT: Lazy<IntCounterVec> = Lazy::new(|| {
     register_int_counter_vec!(
         "diem_shared_mempool_rebroadcast_count",
         "Number of various types of broadcasts executed by shared mempool",
-        &["network", "recipient", "type"]
+        &["network", "type"]
     )
     .unwrap()
 });
+
+pub fn shared_mempool_broadcast_type_inc(network_id: NetworkId, label: &str) {
+    SHARED_MEMPOOL_BROADCAST_TYPE_COUNT
+        .with_label_values(&[network_id.as_str(), label])
+        .inc();
+}
 
 static SHARED_MEMPOOL_ACK_TYPE_COUNT: Lazy<IntCounterVec> = Lazy::new(|| {
     register_int_counter_vec!(
         "diem_shared_mempool_ack_count",
         "Number of various types of ACKs sent/received by shared mempool",
-        &["network", "recipient", "direction", "type"]
+        &["network", "direction", "type"]
     )
     .unwrap()
 });
 
-pub fn shared_mempool_ack_inc(peer: &PeerNetworkId, direction: &str, label: &'static str) {
+pub fn shared_mempool_ack_inc(network_id: NetworkId, direction: &str, label: &'static str) {
     SHARED_MEMPOOL_ACK_TYPE_COUNT
-        .with_label_values(&[
-            peer.raw_network_id().as_str(),
-            peer.peer_id().short_str().as_str(),
-            direction,
-            label,
-        ])
+        .with_label_values(&[network_id.as_str(), direction, label])
         .inc();
 }
 
@@ -360,14 +394,14 @@ static UNEXPECTED_NETWORK_MSG_COUNT: Lazy<IntCounterVec> = Lazy::new(|| {
     register_int_counter_vec!(
         "diem_mempool_unexpected_network_count",
         "Number of unexpected network msgs received",
-        &["network", "peer"]
+        &["network"]
     )
     .unwrap()
 });
 
-pub fn unexpected_msg_count_inc(network_id: &NetworkId, peer_id: &PeerId) {
+pub fn unexpected_msg_count_inc(network_id: &NetworkId) {
     UNEXPECTED_NETWORK_MSG_COUNT
-        .with_label_values(&[network_id.as_str(), peer_id.short_str().as_str()])
+        .with_label_values(&[network_id.as_str()])
         .inc();
 }
 
@@ -386,18 +420,14 @@ static INVALID_ACK_RECEIVED_COUNT: Lazy<IntCounterVec> = Lazy::new(|| {
     register_int_counter_vec!(
         "diem_mempool_unrecognized_ack_received_count",
         "Number of ACK messages received with an invalid request_id that this node's mempool did not send",
-        &["network", "sender", "type"]
+        &["network", "type"]
     )
         .unwrap()
 });
 
-pub fn invalid_ack_inc(peer: &PeerNetworkId, label: &'static str) {
+pub fn invalid_ack_inc(network_id: NetworkId, label: &'static str) {
     INVALID_ACK_RECEIVED_COUNT
-        .with_label_values(&[
-            peer.raw_network_id().as_str(),
-            peer.peer_id().short_str().as_str(),
-            label,
-        ])
+        .with_label_values(&[network_id.as_str(), label])
         .inc();
 }
 
@@ -409,20 +439,6 @@ pub static DB_ERROR: Lazy<IntCounter> = Lazy::new(|| {
     )
     .unwrap()
 });
-
-/// Gauge for the preference ranking of the current chosen upstream network
-/// to broadcast to
-static UPSTREAM_NETWORK: Lazy<IntGauge> = Lazy::new(|| {
-    register_int_gauge!(
-        "diem_mempool_upstream_network",
-        "The preference of the network mempool is broadcasting to"
-    )
-    .unwrap()
-});
-
-pub fn upstream_network(network: usize) {
-    UPSTREAM_NETWORK.set(network as i64)
-}
 
 /// Counter for the current number of active upstream peers mempool can
 /// broadcast to, summed across each of its networks

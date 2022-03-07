@@ -4,9 +4,11 @@
 use crate::{
     account_state_blob::AccountStateBlob,
     proof::{
-        AccountStateProof, AccumulatorConsistencyProof, EventProof, SparseMerkleRangeProof,
-        TestAccumulatorProof, TestAccumulatorRangeProof, TransactionInfoWithProof,
-        TransactionListProof,
+        definition::{
+            AccountStateProof, EventProof, TransactionInfoListWithProof, TransactionInfoWithProof,
+        },
+        AccumulatorConsistencyProof, SparseMerkleRangeProof, TestAccumulatorProof,
+        TestAccumulatorRangeProof,
     },
 };
 use bcs::test_helpers::assert_canonical_encode_decode;
@@ -72,7 +74,7 @@ proptest! {
 
 
     #[test]
-    fn test_transaction_list_proof_bcs_roundtrip(proof in any::<TransactionListProof>()) {
+    fn test_transaction_list_proof_bcs_roundtrip(proof in any::<TransactionInfoListWithProof>()) {
         assert_canonical_encode_decode(proof);
     }
 }

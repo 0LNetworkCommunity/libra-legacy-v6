@@ -18,6 +18,7 @@ use diem_config::{
         NodeConfig, WaypointConfig,
     },
     generator::{self, ValidatorSwarm},
+    network_id::NetworkId,
 };
 use diem_mempool::mocks::MockSharedMempool;
 use diem_types::{
@@ -26,12 +27,18 @@ use diem_types::{
     validator_info::ValidatorInfo,
     waypoint::Waypoint,
 };
+use event_notifications::{ReconfigNotification, ReconfigNotificationListener};
 use futures::channel::mpsc;
 use network::{
     peer_manager::{conn_notifs_channel, ConnectionRequestSender, PeerManagerRequestSender},
-    protocols::network::{NewNetworkEvents, NewNetworkSender},
+    protocols::{
+        network::{NewNetworkEvents, NewNetworkSender},
+        wire::handshake::v1::ProtocolIdSet,
+    },
+    transport::ConnectionMetadata,
+    ProtocolId,
 };
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, iter::FromIterator, sync::Arc};
 use tokio::runtime::{Builder, Runtime};
 
 /// Auxiliary struct that is preparing SMR for the test
@@ -60,17 +67,18 @@ impl SMRNode {
         let (consensus_tx, consensus_rx) = diem_channel::new(QueueStyle::FIFO, 8, None);
         let (_conn_mgr_reqs_tx, conn_mgr_reqs_rx) = channel::new_test(8);
         let (_, conn_notifs_channel) = conn_notifs_channel::new();
-        let network_sender = ConsensusNetworkSender::new(
+        let mut network_sender = ConsensusNetworkSender::new(
             PeerManagerRequestSender::new(network_reqs_tx),
             ConnectionRequestSender::new(connection_reqs_tx),
         );
+        network_sender.initialize(playground.peer_protocols());
         let network_events = ConsensusNetworkEvents::new(consensus_rx, conn_notifs_channel);
 
         playground.add_node(twin_id, consensus_tx, network_reqs_rx, conn_mgr_reqs_rx);
 
         let (state_sync_client, state_sync) = mpsc::unbounded();
         let (commit_cb_sender, commit_cb_receiver) = mpsc::unbounded::<LedgerInfoWithSignatures>();
-        let shared_mempool = MockSharedMempool::new(None);
+        let shared_mempool = MockSharedMempool::new();
         let consensus_to_mempool_sender = shared_mempool.consensus_sender.clone();
         let state_computer = Arc::new(MockStateComputer::new(
             state_sync_client,
@@ -80,14 +88,25 @@ impl SMRNode {
         let txn_manager = Arc::new(MockTransactionManager::new(Some(
             consensus_to_mempool_sender,
         )));
-        let (mut reconfig_sender, reconfig_events) = diem_channel::new(QueueStyle::LIFO, 1, None);
+        let (reconfig_sender, reconfig_events) = diem_channel::new(QueueStyle::LIFO, 1, None);
+        let reconfig_listener = ReconfigNotificationListener {
+            notification_receiver: reconfig_events,
+        };
         let mut configs = HashMap::new();
         configs.insert(
             ValidatorSet::CONFIG_ID,
             bcs::to_bytes(storage.get_validator_set()).unwrap(),
         );
         let payload = OnChainConfigPayload::new(1, Arc::new(configs));
-        reconfig_sender.push((), payload).unwrap();
+        reconfig_sender
+            .push(
+                (),
+                ReconfigNotification {
+                    version: 1,
+                    on_chain_configs: payload,
+                },
+            )
+            .unwrap();
 
         let runtime = Builder::new_multi_thread()
             .thread_name(format!(
@@ -114,7 +133,7 @@ impl SMRNode {
             txn_manager,
             state_computer,
             storage.clone(),
-            reconfig_events,
+            reconfig_listener,
         );
         let (network_task, network_receiver) = NetworkTask::new(network_events, self_receiver);
 
@@ -142,6 +161,16 @@ impl SMRNode {
         let ValidatorSwarm {
             nodes: mut node_configs,
         } = generator::validator_swarm_for_testing(num_nodes);
+        let peer_metadata_storage = playground.peer_protocols();
+        node_configs.iter().for_each(|config| {
+            let mut conn_meta = ConnectionMetadata::mock(author_from_config(config));
+            conn_meta.application_protocols = ProtocolIdSet::from_iter([
+                ProtocolId::ConsensusDirectSendJson,
+                ProtocolId::ConsensusDirectSendBcs,
+                ProtocolId::ConsensusRpcBcs,
+            ]);
+            peer_metadata_storage.insert_connection(NetworkId::Validator, conn_meta);
+        });
 
         let validator_set = ValidatorSet::new(
             node_configs
@@ -157,7 +186,7 @@ impl SMRNode {
                 .collect(),
         );
         // sort by the peer id
-        node_configs.sort_by_key(|n1| author_from_config(&n1));
+        node_configs.sort_by_key(|n1| author_from_config(n1));
 
         let proposer_type = match proposer_type {
             RoundProposer(_) => {

@@ -1,76 +1,101 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::smoke_test_environment::SmokeTestEnvironment;
-use cli::client_proxy::ClientProxy;
 use diem_config::config::{Identity, NodeConfig, SecureBackend};
 use diem_crypto::ed25519::Ed25519PublicKey;
-use diem_types::account_address::AccountAddress;
-use rust_decimal::{prelude::FromPrimitive, Decimal};
-use std::{collections::BTreeMap, fs::File, io::Write, path::PathBuf, str::FromStr};
+use diem_rest_client::Client as RestClient;
+use diem_sdk::{
+    transaction_builder::{Currency, TransactionFactory},
+    types::{transaction::SignedTransaction, LocalAccount},
+};
+use forge::{LocalSwarm, NodeExt, Swarm};
+use rand::random;
+use std::{fs::File, io::Write, path::PathBuf};
 
-// TODO(joshlind): Refactor all of these so that they can be contained within the calling
-// test files and not shared across all tests.
-pub fn compare_balances(
-    expected_balances: Vec<(f64, String)>,
-    extracted_balances: Vec<String>,
-) -> bool {
-    if extracted_balances.len() != extracted_balances.len() {
-        return false;
-    }
-
-    let extracted_balances_dec: BTreeMap<_, _> = extracted_balances
-        .into_iter()
-        .map(|balance_str| {
-            let (currency_code, stripped_str) = if balance_str.ends_with("XUS") {
-                ("XUS", balance_str.trim_end_matches("XUS"))
-            } else if balance_str.ends_with("XDX") {
-                ("XDX", balance_str.trim_end_matches("XDX"))
-            } else {
-                panic!("Unexpected currency type returned for balance")
-            };
-            (currency_code, Decimal::from_str(stripped_str).ok())
-        })
-        .collect();
-
-    expected_balances
-        .into_iter()
-        .all(|(balance, currency_code)| {
-            if let Some(extracted_balance) = extracted_balances_dec.get(currency_code.as_str()) {
-                Decimal::from_f64(balance) == *extracted_balance
-            } else {
-                false
-            }
-        })
+pub async fn create_and_fund_account(swarm: &mut LocalSwarm, amount: u64) -> LocalAccount {
+    let account = LocalAccount::generate(&mut rand::rngs::OsRng);
+    swarm
+        .chain_info()
+        .create_parent_vasp_account(Currency::XUS, account.authentication_key())
+        .await
+        .unwrap();
+    swarm
+        .chain_info()
+        .fund(Currency::XUS, account.address(), amount)
+        .await
+        .unwrap();
+    account
 }
 
-/// Sets up a SmokeTestEnvironment with specified size and connects a client
-/// proxy to the node_index.
-pub fn setup_swarm_and_client_proxy(
-    num_nodes: usize,
-    node_index: usize,
-) -> (SmokeTestEnvironment, ClientProxy) {
-    let mut env = SmokeTestEnvironment::new(num_nodes);
-    env.validator_swarm.launch();
+pub async fn transfer_coins_non_blocking(
+    client: &RestClient,
+    transaction_factory: &TransactionFactory,
+    sender: &mut LocalAccount,
+    receiver: &LocalAccount,
+    amount: u64,
+) -> SignedTransaction {
+    let txn = sender.sign_with_transaction_builder(transaction_factory.peer_to_peer(
+        Currency::XUS,
+        receiver.address(),
+        amount,
+    ));
 
-    let client = env.get_validator_client(node_index, None);
-    (env, client)
+    client.submit(&txn).await.unwrap();
+    txn
 }
 
-/// Waits for a transaction to be processed by all validator nodes in the smoke
-/// test environment.
-pub fn wait_for_transaction_on_all_nodes(
-    env: &SmokeTestEnvironment,
-    num_nodes: usize,
-    account: AccountAddress,
-    sequence_number: u64,
+pub async fn transfer_coins(
+    client: &RestClient,
+    transaction_factory: &TransactionFactory,
+    sender: &mut LocalAccount,
+    receiver: &LocalAccount,
+    amount: u64,
+) -> SignedTransaction {
+    let txn =
+        transfer_coins_non_blocking(client, transaction_factory, sender, receiver, amount).await;
+
+    client.wait_for_signed_transaction(&txn).await.unwrap();
+
+    txn
+}
+
+pub async fn transfer_and_reconfig(
+    client: &RestClient,
+    transaction_factory: &TransactionFactory,
+    root_account: &mut LocalAccount,
+    sender: &mut LocalAccount,
+    receiver: &LocalAccount,
+    num_transfers: usize,
 ) {
-    for i in 0..num_nodes {
-        let client = env.get_validator_client(i, None);
-        client
-            .wait_for_transaction(account, sequence_number)
-            .unwrap();
+    for _ in 0..num_transfers {
+        // Reconfigurations have a 20% chance of being executed
+        if random::<u16>() % 5 == 0 {
+            let diem_version = client.get_diem_version().await.unwrap();
+            let current_version = *diem_version.into_inner().payload.major.inner();
+            let txn = root_account.sign_with_transaction_builder(
+                transaction_factory.update_diem_version(0, current_version + 1),
+            );
+            client.submit_and_wait(&txn).await.unwrap();
+
+            println!("Changing diem version to {}", current_version + 1,);
+        }
+
+        transfer_coins(client, transaction_factory, sender, receiver, 1).await;
     }
+}
+
+pub async fn assert_balance(client: &RestClient, account: &LocalAccount, balance: u64) {
+    let balances = client
+        .get_account_balances(account.address())
+        .await
+        .unwrap()
+        .into_inner();
+
+    let onchain_balance = balances
+        .into_iter()
+        .find(|amount_view| amount_view.currency_code() == Currency::XUS)
+        .unwrap();
+    assert_eq!(onchain_balance.amount, balance);
 }
 
 /// This module provides useful functions for operating, handling and managing
@@ -80,115 +105,38 @@ pub fn wait_for_transaction_on_all_nodes(
 /// node swarm, or a public full node swarm.
 pub mod diem_swarm_utils {
     use crate::test_utils::fetch_backend_storage;
-    use cli::client_proxy::ClientProxy;
-    use diem_config::config::{NodeConfig, SecureBackend, WaypointConfig};
-    use diem_events_fetcher::DiemEventsFetcher;
-    use diem_key_manager::diem_interface::JsonRpcDiemInterface;
-    use diem_operational_tool::test_helper::OperationalTool;
-    use diem_secure_storage::{KVStorage, Storage};
-    use diem_swarm::swarm::DiemSwarm;
-    use diem_transaction_replay::DiemDebugger;
-    use diem_types::{chain_id::ChainId, waypoint::Waypoint};
-    use std::path::PathBuf;
-
-    /// Returns a new client proxy connected to the given swarm at the specified
-    /// node index.
-    pub fn get_client_proxy(
-        swarm: &DiemSwarm,
-        node_index: usize,
-        diem_root_key_path: &str,
-        mnemonic_file_path: PathBuf,
-        waypoint: Option<Waypoint>,
-    ) -> ClientProxy {
-        let port = swarm.get_client_port(node_index);
-
-        let mnemonic_file_path = mnemonic_file_path
-            .canonicalize()
-            .expect("Unable to get canonical path of mnemonic_file_path")
-            .to_str()
-            .unwrap()
-            .to_string();
-
-        ClientProxy::new(
-            ChainId::test(),
-            &format!("http://localhost:{}/v1", port),
-            &diem_root_key_path,
-            &diem_root_key_path,
-            &diem_root_key_path,
-            false,
-            /* faucet server */ None,
-            Some(mnemonic_file_path),
-            None, //////// 0L ////////            
-            waypoint.unwrap_or(swarm.config.waypoint),
-            true,
-        )
-        .unwrap()
-    }
-
-    /// Returns the JSON RPC url pointing to a node at the given
-    /// node index.
-    pub fn get_json_rpc_url(swarm: &DiemSwarm, node_index: usize) -> String {
-        format!("http://127.0.0.1:{}", swarm.get_client_port(node_index))
-    }
-
-    /// Returns a JSON RPC based Diem Interface pointing to a node at the given
-    /// node index.
-    pub fn get_json_rpc_diem_interface(
-        swarm: &DiemSwarm,
-        node_index: usize,
-    ) -> JsonRpcDiemInterface {
-        let json_rpc_endpoint = format!("http://127.0.0.1:{}", swarm.get_client_port(node_index));
-        JsonRpcDiemInterface::new(json_rpc_endpoint)
-    }
-
-    /// Returns a Diem Debugger pointing to a node at the given node index.
-    pub fn get_diem_debugger(swarm: &DiemSwarm, node_index: usize) -> DiemDebugger {
-        let (node_config, _) = load_node_config(swarm, node_index);
-        let swarm_rpc_endpoint =
-            format!("http://localhost:{}", node_config.json_rpc.address.port());
-        DiemDebugger::json_rpc(swarm_rpc_endpoint.as_str()).unwrap()
-    }
-
-    /// Returns a Diem Event Fetcher pointing to a node at the given node index.
-    pub fn get_diem_event_fetcher(swarm: &DiemSwarm, node_index: usize) -> DiemEventsFetcher {
-        let (node_config, _) = load_node_config(swarm, node_index);
-        let swarm_rpc_endpoint =
-            format!("http://localhost:{}", node_config.json_rpc.address.port());
-        DiemEventsFetcher::new(swarm_rpc_endpoint.as_str()).unwrap()
-    }
-
-    /// Returns an operational tool pointing to a validator node at the given node index.
-    pub fn get_op_tool(swarm: &DiemSwarm, node_index: usize) -> OperationalTool {
-        OperationalTool::new(
-            format!("http://127.0.0.1:{}", swarm.get_client_port(node_index)),
-            ChainId::test(),
-        )
-    }
+    use diem_config::config::{NodeConfig, OnDiskStorageConfig, SecureBackend, WaypointConfig};
+    use diem_global_constants::{DIEM_ROOT_KEY, TREASURY_COMPLIANCE_KEY};
+    use diem_secure_storage::{CryptoStorage, KVStorage, OnDiskStorage, Storage};
+    use diem_types::waypoint::Waypoint;
+    use forge::{LocalNode, LocalSwarm, Swarm};
 
     /// Loads the nodes's storage backend identified by the node index in the given swarm.
-    pub fn load_backend_storage(swarm: &DiemSwarm, node_index: usize) -> SecureBackend {
-        let (node_config, _) = load_node_config(swarm, node_index);
-        fetch_backend_storage(&node_config, None)
+    pub fn load_validators_backend_storage(validator: &LocalNode) -> SecureBackend {
+        fetch_backend_storage(validator.config(), None)
     }
 
-    /// Loads the diem root's storage backend identified by the node index in the given swarm.
-    pub fn load_diem_root_storage(swarm: &DiemSwarm, node_index: usize) -> SecureBackend {
-        let (node_config, _) = load_node_config(swarm, node_index);
-        fetch_backend_storage(&node_config, Some("diem_root".to_string()))
-    }
+    pub fn create_root_storage(swarm: &mut LocalSwarm) -> SecureBackend {
+        let chain_info = swarm.chain_info();
+        let root_key =
+            bcs::from_bytes(&bcs::to_bytes(chain_info.root_account.private_key()).unwrap())
+                .unwrap();
+        let treasury_compliance_key = bcs::from_bytes(
+            &bcs::to_bytes(chain_info.treasury_compliance_account.private_key()).unwrap(),
+        )
+        .unwrap();
 
-    /// Loads the node config for the validator at the specified index. Also returns the node
-    /// config path.
-    pub fn load_node_config(swarm: &DiemSwarm, node_index: usize) -> (NodeConfig, PathBuf) {
-        let node_config_path = swarm.config.config_files.get(node_index).unwrap();
-        let node_config = NodeConfig::load(&node_config_path).unwrap();
-        (node_config, node_config_path.clone())
-    }
+        let mut root_storage_config = OnDiskStorageConfig::default();
+        root_storage_config.path = swarm.dir().join("root-storage.json");
+        let mut root_storage = OnDiskStorage::new(root_storage_config.path());
+        root_storage
+            .import_private_key(DIEM_ROOT_KEY, root_key)
+            .unwrap();
+        root_storage
+            .import_private_key(TREASURY_COMPLIANCE_KEY, treasury_compliance_key)
+            .unwrap();
 
-    /// Saves the node config for the node at the specified index in the given swarm.
-    pub fn save_node_config(node_config: &mut NodeConfig, swarm: &DiemSwarm, node_index: usize) {
-        let node_config_path = swarm.config.config_files.get(node_index).unwrap();
-        node_config.save(node_config_path).unwrap();
+        SecureBackend::OnDiskStorage(root_storage_config)
     }
 
     pub fn insert_waypoint(node_config: &mut NodeConfig, waypoint: Waypoint) {
@@ -242,7 +190,7 @@ pub fn write_key_to_file_hex_format(key: &Ed25519PublicKey, key_file_path: PathB
     let hex_encoded_key = hex::encode(key.to_bytes());
     let key_and_newline = hex_encoded_key + "\n";
     let mut file = File::create(key_file_path).unwrap();
-    file.write_all(&key_and_newline.as_bytes()).unwrap();
+    file.write_all(key_and_newline.as_bytes()).unwrap();
 }
 
 /// Writes a given public key to a file specified by the given path using bcs encoding.
@@ -250,4 +198,26 @@ pub fn write_key_to_file_bcs_format(key: &Ed25519PublicKey, key_file_path: PathB
     let bcs_encoded_key = bcs::to_bytes(&key).unwrap();
     let mut file = File::create(key_file_path).unwrap();
     file.write_all(&bcs_encoded_key).unwrap();
+}
+
+/// This helper function creates 3 new accounts, mints funds, transfers funds
+/// between the accounts and verifies that these operations succeed.
+pub async fn check_create_mint_transfer(swarm: &mut LocalSwarm) {
+    let client = swarm.validators().next().unwrap().rest_client();
+    let transaction_factory = swarm.chain_info().transaction_factory();
+
+    // Create account 0, mint 10 coins and check balance
+    let mut account_0 = create_and_fund_account(swarm, 10).await;
+    assert_balance(&client, &account_0, 10).await;
+
+    // Create account 1, mint 1 coin, transfer 3 coins from account 0 to 1, check balances
+    let account_1 = create_and_fund_account(swarm, 1).await;
+    transfer_coins(&client, &transaction_factory, &mut account_0, &account_1, 3).await;
+
+    assert_balance(&client, &account_0, 7).await;
+    assert_balance(&client, &account_1, 4).await;
+
+    // Create account 2, mint 15 coins and check balance
+    let account_2 = create_and_fund_account(swarm, 15).await;
+    assert_balance(&client, &account_2, 15).await;
 }

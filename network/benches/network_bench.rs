@@ -22,7 +22,10 @@ use futures::{
     sink::SinkExt,
     stream::{FuturesUnordered, StreamExt},
 };
-use network::protocols::{network::Event, rpc::error::RpcError};
+use network::protocols::{
+    network::{ApplicationNetworkSender, Event},
+    rpc::error::RpcError,
+};
 use network_builder::dummy::{setup_network, DummyMsg, DummyNetworkSender};
 use std::time::Duration;
 
@@ -34,7 +37,7 @@ const TOLERANCE: u32 = 20;
 fn direct_send_bench(b: &mut Bencher, msg_len: &usize) {
     let tn = setup_network();
     let runtime = tn.runtime;
-    let mut dialer_sender = tn.dialer_sender;
+    let dialer_sender = tn.dialer_sender;
     let listener_peer_id = tn.listener_peer_id;
     let mut listener_events = tn.listener_events;
 
@@ -88,7 +91,7 @@ fn rpc_bench(b: &mut Bencher, msg_len: &usize) {
     let f_listener = async move {
         while let Some(event) = listener_events.next().await {
             match event {
-                Event::RpcRequest(_, _, res_tx) => res_tx
+                Event::RpcRequest(_, _, _, res_tx) => res_tx
                     .send(Ok(res.clone()))
                     .expect("fail to send rpc response to network"),
                 event => panic!("Unexpected event: {:?}", event),
@@ -115,7 +118,7 @@ fn rpc_bench(b: &mut Bencher, msg_len: &usize) {
 }
 
 async fn send_rpc(
-    mut sender: DummyNetworkSender,
+    sender: DummyNetworkSender,
     recipient: PeerId,
     req_msg: DummyMsg,
 ) -> Result<DummyMsg, RpcError> {

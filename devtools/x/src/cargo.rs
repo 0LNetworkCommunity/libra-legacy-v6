@@ -10,13 +10,11 @@ use crate::{
     },
     Result,
 };
-use anyhow::{anyhow, Context};
-use cargo_metadata::Message;
+use anyhow::anyhow;
 use indexmap::map::IndexMap;
 use log::{info, warn};
 use std::{
     ffi::{OsStr, OsString},
-    io::Cursor,
     path::Path,
     process::{Command, Output, Stdio},
     time::Instant,
@@ -43,11 +41,11 @@ impl Cargo {
     pub fn new<S: AsRef<OsStr>>(
         cargo_config: &CargoConfig,
         command: S,
-        attempt_sccache: bool,
+        skip_sccache: bool,
     ) -> Self {
         let mut inner = Command::new("cargo");
         //sccache apply
-        let envs: IndexMap<OsString, Option<OsString>> = if attempt_sccache {
+        let envs: IndexMap<OsString, Option<OsString>> = if !skip_sccache {
             let result = apply_sccache_if_possible(cargo_config);
             match result {
                 Ok(env) => env
@@ -72,7 +70,7 @@ impl Cargo {
             IndexMap::new()
         };
 
-        let on_drop = if sccache_should_run(cargo_config, false) {
+        let on_drop = if !skip_sccache && sccache_should_run(cargo_config, false) {
             || {
                 log_sccache_stats();
                 stop_sccache_server();
@@ -277,12 +275,14 @@ pub enum CargoCommand<'a> {
         direct_args: &'a [OsString],
         args: &'a [OsString],
         env: &'a [(&'a str, Option<&'a str>)],
+        skip_sccache: bool,
     },
     Build {
         cargo_config: &'a CargoConfig,
         direct_args: &'a [OsString],
         args: &'a [OsString],
         env: &'a [(&'a str, Option<&'a str>)],
+        skip_sccache: bool,
     },
 }
 
@@ -298,6 +298,14 @@ impl<'a> CargoCommand<'a> {
         }
     }
 
+    pub fn skip_sccache(&self) -> bool {
+        match self {
+            CargoCommand::Build { skip_sccache, .. } => *skip_sccache,
+            CargoCommand::Test { skip_sccache, .. } => *skip_sccache,
+            _ => false,
+        }
+    }
+
     pub fn run_on_packages(&self, packages: &SelectedPackages<'_>) -> Result<()> {
         // Early return if we have no packages to run.
         if !packages.should_invoke() {
@@ -310,26 +318,20 @@ impl<'a> CargoCommand<'a> {
     }
 
     /// Runs this command on the selected packages, returning the standard output as a bytestring.
-    pub fn run_capture_messages(
-        &self,
-        packages: &SelectedPackages<'_>,
-    ) -> Result<impl Iterator<Item = Result<Message>>> {
+    pub fn run_capture_stdout(&self, packages: &SelectedPackages<'_>) -> Result<Vec<u8>> {
         // Early return if we have no packages to run.
-        let output = if !packages.should_invoke() {
+        if !packages.should_invoke() {
             info!("no packages to {}: exiting early", self.as_str());
-            vec![]
+            Ok(vec![])
         } else {
             let mut cargo = self.prepare_cargo(packages);
             cargo.args(&["--message-format", "json-render-diagnostics"]);
-            cargo.run_with_output()?
-        };
-
-        Ok(Message::parse_stream(Cursor::new(output))
-            .map(|message| message.context("error while parsing message from Cargo")))
+            Ok(cargo.run_with_output()?)
+        }
     }
 
     fn prepare_cargo(&self, packages: &SelectedPackages<'_>) -> Cargo {
-        let mut cargo = Cargo::new(self.cargo_config(), self.as_str(), true);
+        let mut cargo = Cargo::new(self.cargo_config(), self.as_str(), self.skip_sccache());
         cargo
             .current_dir(project_root())
             .args(self.direct_args())

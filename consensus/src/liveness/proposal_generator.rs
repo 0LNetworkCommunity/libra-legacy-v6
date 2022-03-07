@@ -13,6 +13,7 @@ use consensus_types::{
 };
 
 use diem_infallible::Mutex;
+use futures::future::BoxFuture;
 use std::sync::Arc;
 
 #[cfg(test)]
@@ -82,7 +83,11 @@ impl ProposalGenerator {
     /// 2. The round is provided by the caller.
     /// 3. In case a given round is not greater than the calculated parent, return an OldRound
     /// error.
-    pub async fn generate_proposal(&mut self, round: Round) -> anyhow::Result<BlockData> {
+    pub async fn generate_proposal(
+        &mut self,
+        round: Round,
+        wait_callback: BoxFuture<'static, ()>,
+    ) -> anyhow::Result<BlockData> {
         {
             let mut last_round_generated = self.last_round_generated.lock();
             if *last_round_generated < round {
@@ -103,11 +108,11 @@ impl ProposalGenerator {
             // being executed: pending blocks vector keeps all the pending ancestors of the extended branch.
             let mut pending_blocks = self
                 .block_store
-                .path_from_root(hqc.certified_block().id())
+                .path_from_commit_root(hqc.certified_block().id())
                 .ok_or_else(|| format_err!("HQC {} already pruned", hqc.certified_block().id()))?;
-            // Avoid txn manager long poll it the root block has txns, so that the leader can
+            // Avoid txn manager long poll if the root block has txns, so that the leader can
             // deliver the commit proof to others without delay.
-            pending_blocks.push(self.block_store.root());
+            pending_blocks.push(self.block_store.commit_root());
 
             // Exclude all the pending transactions: these are all the ancestors of
             // parent (including) up to the root (including).
@@ -116,6 +121,13 @@ impl ProposalGenerator {
                 .flat_map(|block| block.payload())
                 .collect();
 
+            let pending_ordering = self
+                .block_store
+                .path_from_ordered_root(hqc.certified_block().id())
+                .ok_or_else(|| format_err!("HQC {} already pruned", hqc.certified_block().id()))?
+                .iter()
+                .any(|block| !block.payload().map_or(true, |txns| txns.is_empty()));
+
             // All proposed blocks in a branch are guaranteed to have increasing timestamps
             // since their predecessor block will not be added to the BlockStore until
             // the local time exceeds it.
@@ -123,7 +135,12 @@ impl ProposalGenerator {
 
             let payload = self
                 .txn_manager
-                .pull_txns(self.max_block_size, exclude_payload)
+                .pull_txns(
+                    self.max_block_size,
+                    exclude_payload,
+                    wait_callback,
+                    pending_ordering,
+                )
                 .await
                 .context("Fail to retrieve txn")?;
 

@@ -10,16 +10,16 @@ publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.38"
+anyhow = "1.0.52"
 serde = "1.0.124"
 
 bcs = "0.1.2"
-diem-crypto = { path = "../../crypto/crypto" }
-diem-logger = { path = "../../common/logger" }
-diem-infallible = { path = "../../common/infallible" }
+diem-crypto = { path = "../../crates/diem-crypto" }
+diem-logger = { path = "../../crates/diem-logger" }
+diem-infallible = { path = "../../crates/diem-infallible" }
 diem-secure-net = { path = "../../secure/net" }
 diem-types = { path = "../../types" }
-diem-workspace-hack = { path = "../../common/workspace-hack" }
+diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 storage-interface = { path = "../storage-interface" }
 
 [features]

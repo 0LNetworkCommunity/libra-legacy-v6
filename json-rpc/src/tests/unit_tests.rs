@@ -14,6 +14,7 @@ use crate::{
 use diem_client::{views::TransactionDataView, BlockingClient, MethodRequest};
 use diem_config::{config::DEFAULT_CONTENT_LENGTH_LIMIT, utils};
 use diem_crypto::{ed25519::Ed25519PrivateKey, hash::CryptoHash, HashValue, PrivateKey, Uniform};
+use diem_mempool::MempoolClientRequest;
 use diem_metrics::get_all_metrics;
 use diem_types::{
     account_address::AccountAddress,
@@ -579,6 +580,38 @@ fn test_json_rpc_protocol_invalid_requests() {
             }),
         ),
         (
+            "get_event_by_version_with_proof: version is too large",
+            json!({"jsonrpc": "2.0", "method": "get_event_by_version_with_proof", "params": ["13000000000000000000000000000000000000000a550c18", version+1], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32602,
+                    "message": format!("Invalid param version should be <= known latest version {}", version),
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_resources: malformed_addr",
+            json!({"jsonrpc": "2.0", "method": "get_resources", "params": ["0", version+1], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32602,
+                    "message": "Invalid params for method 'get_resources'",
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version,
+            }),
+        ),
+        (
             "get_account_transaction: invalid account",
             json!({"jsonrpc": "2.0", "method": "get_account_transaction", "params": ["invalid", 1, false], "id": 1}),
             json!({
@@ -655,22 +688,6 @@ fn test_json_rpc_protocol_invalid_requests() {
             }),
         ),
         (
-            "get_account_transactions: account not found",
-            json!({"jsonrpc": "2.0", "method": "get_account_transactions", "params": ["00000000000000000000000000000033", 1, 2, false], "id": 1}),
-            json!({
-                "error": {
-                    "code": -32600,
-                    "message": "Invalid Request: could not find account by address 00000000000000000000000000000033",
-                    "data": null
-                },
-                "id": 1,
-                "jsonrpc": "2.0",
-                "diem_chain_id": ChainId::test().id(),
-                "diem_ledger_timestampusec": timestamp,
-                "diem_ledger_version": version
-            }),
-        ),
-        (
             "get_account_transactions: invalid start param",
             json!({"jsonrpc": "2.0", "method": "get_account_transactions", "params": ["e1b3d22871989e9fd9dc6814b2f4fc41", false, 2, false], "id": 1}),
             json!({
@@ -731,6 +748,52 @@ fn test_json_rpc_protocol_invalid_requests() {
             }),
         ),
         (
+            "get_account_transactions_with_proofs: start param is too big",
+            json!({"jsonrpc": "2.0", "method": "get_account_transactions_with_proofs", "params": ["0000000000000000000000000A550C18", version+1, 2, false], "id": 1}),
+            json!({
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version,
+                "result": {
+                    "serialized_txns_with_proofs": []
+                }
+            }),
+        ),
+        (
+            "get_account_transactions_with_proofs: limit is too large",
+            json!({"jsonrpc": "2.0", "method": "get_account_transactions_with_proofs", "params": ["e1b3d22871989e9fd9dc6814b2f4fc41", 1, 1001, false], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32600,
+                    "message": "Invalid Request: page size = 1001, exceed limit 1000",
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_account_transactions_with_proofs: ledger_version is too large",
+            json!({"jsonrpc": "2.0", "method": "get_account_transactions_with_proofs", "params": ["e1b3d22871989e9fd9dc6814b2f4fc41", 1, 5, false, version+1], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32602,
+                    "message": format!("Invalid param ledger_version should be <= known latest version {}", version),
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
             "get_state_proof: invalid known_version",
             json!({"jsonrpc": "2.0", "method": "get_state_proof", "params": ["invalid"], "id": 1}),
             json!({
@@ -753,6 +816,38 @@ fn test_json_rpc_protocol_invalid_requests() {
                 "error": {
                     "code": -32602,
                     "message": format!("Invalid param version should be <= known latest version {}", version),
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_accumulator_consistency_proof: ledger_version is too large",
+            json!({"jsonrpc": "2.0", "method": "get_accumulator_consistency_proof", "params": [5, version+1], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32602,
+                    "message": format!("Invalid param ledger_version should be <= known latest version {}", version),
+                    "data": null
+                },
+                "id": 1,
+                "jsonrpc": "2.0",
+                "diem_chain_id": ChainId::test().id(),
+                "diem_ledger_timestampusec": timestamp,
+                "diem_ledger_version": version
+            }),
+        ),
+        (
+            "get_accumulator_consistency_proof: client_known_version is greater than ledger_version",
+            json!({"jsonrpc": "2.0", "method": "get_accumulator_consistency_proof", "params": [version+1, version], "id": 1}),
+            json!({
+                "error": {
+                    "code": -32600,
+                    "message": format!("Invalid Request: client_known_version({}) should be <= ledger_version({})", version+1, version),
                     "data": null
                 },
                 "id": 1,
@@ -984,7 +1079,7 @@ fn test_transaction_submission() {
     // future that mocks shared mempool execution
     runtime.spawn(async move {
         let validator = MockVMValidator;
-        while let Some((txn, cb)) = mp_events.next().await {
+        while let Some(MempoolClientRequest::SubmitTransaction(txn, cb)) = mp_events.next().await {
             let vm_status = validator.validate_transaction(txn).unwrap().status();
             let result = if vm_status.is_some() {
                 (MempoolStatus::new(MempoolStatusCode::VmError), vm_status)
@@ -1115,7 +1210,6 @@ fn test_limit_batch_size() {
     }
 
     let ret = client.batch(batch).unwrap_err();
-
     let error = ret.json_rpc_error().unwrap();
     let expected = "JsonRpcError { code: -32600, message: \"Invalid Request: batch size = 21, exceed limit 20\", data: None }";
     assert_eq!(format!("{:?}", error), expected)

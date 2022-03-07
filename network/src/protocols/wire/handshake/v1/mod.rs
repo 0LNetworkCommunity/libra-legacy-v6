@@ -12,10 +12,16 @@
 //!
 //! [DiemNet Handshake v1 Specification]: https://github.com/diem/diem/blob/main/specifications/network/handshake-v1.md
 
+use anyhow::anyhow;
 use diem_config::network_id::NetworkId;
 use diem_types::chain_id::ChainId;
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeMap, convert::TryInto, fmt, iter::Iterator};
+use std::{
+    collections::BTreeMap,
+    fmt,
+    iter::{FromIterator, Iterator},
+    ops::{BitAnd, BitOr},
+};
 use thiserror::Error;
 
 #[cfg(any(test, feature = "fuzzing"))]
@@ -33,36 +39,83 @@ mod test;
 #[derive(Clone, Copy, Hash, Eq, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 pub enum ProtocolId {
-    ConsensusRpc = 0,
-    ConsensusDirectSend = 1,
+    ConsensusRpcBcs = 0,
+    ConsensusDirectSendBcs = 1,
     MempoolDirectSend = 2,
     StateSyncDirectSend = 3,
+    // UNUSED
     DiscoveryDirectSend = 4,
     HealthCheckerRpc = 5,
+    // json provides flexibility for backwards compatible upgrade
+    ConsensusDirectSendJson = 6,
+    ConsensusRpcJson = 7,
+    StorageServiceRpc = 8,
+    MempoolRpc = 9,
+}
+
+/// The encoding types for Protocols
+enum Encoding {
+    Bcs,
+    Json,
 }
 
 impl ProtocolId {
     pub fn as_str(self) -> &'static str {
         use ProtocolId::*;
         match self {
-            ConsensusRpc => "ConsensusRpc",
-            ConsensusDirectSend => "ConsensusDirectSend",
+            ConsensusRpcBcs => "ConsensusRpcBcs",
+            ConsensusDirectSendBcs => "ConsensusDirectSendBcs",
             MempoolDirectSend => "MempoolDirectSend",
             StateSyncDirectSend => "StateSyncDirectSend",
             DiscoveryDirectSend => "DiscoveryDirectSend",
             HealthCheckerRpc => "HealthCheckerRpc",
+            ConsensusDirectSendJson => "ConsensusDirectSendJson",
+            ConsensusRpcJson => "ConsensusRpcJson",
+            StorageServiceRpc => "StorageServiceRpc",
+            MempoolRpc => "MempoolRpc",
         }
     }
 
     pub fn all() -> &'static [ProtocolId] {
         &[
-            ProtocolId::ConsensusRpc,
-            ProtocolId::ConsensusDirectSend,
+            ProtocolId::ConsensusRpcBcs,
+            ProtocolId::ConsensusDirectSendBcs,
             ProtocolId::MempoolDirectSend,
             ProtocolId::StateSyncDirectSend,
             ProtocolId::DiscoveryDirectSend,
             ProtocolId::HealthCheckerRpc,
+            ProtocolId::ConsensusDirectSendJson,
+            ProtocolId::ConsensusRpcJson,
+            ProtocolId::StorageServiceRpc,
+            ProtocolId::MempoolRpc,
         ]
+    }
+
+    /// How to encode messages for a given `ProtocolId`
+    fn encoding(self) -> Encoding {
+        match self {
+            ProtocolId::ConsensusDirectSendJson | ProtocolId::ConsensusRpcJson => Encoding::Json,
+            _ => Encoding::Bcs,
+        }
+    }
+
+    #[cfg(test)]
+    pub fn mock() -> Self {
+        ProtocolId::DiscoveryDirectSend
+    }
+
+    pub fn to_bytes<T: Serialize>(&self, value: &T) -> anyhow::Result<Vec<u8>> {
+        match self.encoding() {
+            Encoding::Json => serde_json::to_vec(value).map_err(|e| anyhow!("{:?}", e)),
+            Encoding::Bcs => bcs::to_bytes(value).map_err(|e| anyhow! {"{:?}", e}),
+        }
+    }
+
+    pub fn from_bytes<'a, T: Deserialize<'a>>(&self, bytes: &'a [u8]) -> anyhow::Result<T> {
+        match self.encoding() {
+            Encoding::Json => serde_json::from_slice(bytes).map_err(|e| anyhow!("{:?}", e)),
+            Encoding::Bcs => bcs::from_bytes(bytes).map_err(|e| anyhow! {"{:?}", e}),
+        }
     }
 }
 
@@ -79,43 +132,75 @@ impl fmt::Display for ProtocolId {
 }
 
 //
-// SupportedProtocols
+// ProtocolIdSet
 //
 
-/// A bit vector of supported [`ProtocolId`]s.
+/// A compact representation for a set of [`ProtocolId`]s. Internally, this is a
+/// bitvec which supports at most 256 bits.
+///
+/// These sets are sent over-the-wire in the initial [`HandshakeMsg`] to other
+/// DiemNet peers in order to negotiate the set of common supported protocols for
+/// use on a new DiemNet connection.
 #[derive(Clone, Debug, Default, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
-pub struct SupportedProtocols(bitvec::BitVec);
+pub struct ProtocolIdSet(bitvec::BitVec);
 
-impl TryInto<Vec<ProtocolId>> for SupportedProtocols {
-    type Error = bcs::Error;
+impl ProtocolIdSet {
+    pub fn empty() -> Self {
+        Self::default()
+    }
 
-    fn try_into(self) -> bcs::Result<Vec<ProtocolId>> {
-        let mut protocols = Vec::with_capacity(self.0.count_ones() as usize);
-        if let Some(last_bit) = self.0.last_set_bit() {
-            for i in 0..=last_bit {
-                if self.0.is_set(i) {
-                    let protocol: ProtocolId = bcs::from_bytes(&[i])?;
-                    protocols.push(protocol);
-                }
-            }
-        }
-        Ok(protocols)
+    pub fn all_known() -> Self {
+        Self::from_iter(ProtocolId::all())
+    }
+
+    #[cfg(test)]
+    pub fn mock() -> Self {
+        Self::from_iter([ProtocolId::mock()])
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.all_zeros()
+    }
+
+    /// Iterate over all `ProtocolId`s, ignoring any that our node version
+    /// doesn't understand or doesn't yet support.
+    pub fn iter(&self) -> impl Iterator<Item = ProtocolId> + '_ {
+        self.0
+            .iter_ones()
+            .filter_map(|idx| bcs::from_bytes(&[idx]).ok())
+    }
+
+    /// Find the intersection between two sets of protocols.
+    pub fn intersect(&self, other: &ProtocolIdSet) -> ProtocolIdSet {
+        ProtocolIdSet(self.0.bitand(&other.0))
+    }
+
+    /// Return the union of two sets of protocols.
+    pub fn union(&self, other: &ProtocolIdSet) -> ProtocolIdSet {
+        ProtocolIdSet(self.0.bitor(&other.0))
+    }
+
+    /// Returns if the protocol is set.
+    pub fn contains(&self, protocol: ProtocolId) -> bool {
+        self.0.is_set(protocol as u8)
+    }
+
+    /// Insert a new protocol into the set.
+    pub fn insert(&mut self, protocol: ProtocolId) {
+        self.0.set(protocol as u8)
     }
 }
 
-impl<'a, T: Iterator<Item = &'a ProtocolId>> From<T> for SupportedProtocols {
-    fn from(protocols: T) -> Self {
-        let mut bv = bitvec::BitVec::default();
-        protocols.for_each(|p| bv.set(*p as u8));
-        Self(bv)
+impl FromIterator<ProtocolId> for ProtocolIdSet {
+    fn from_iter<T: IntoIterator<Item = ProtocolId>>(iter: T) -> Self {
+        Self(iter.into_iter().map(|protocol| protocol as u8).collect())
     }
 }
 
-impl SupportedProtocols {
-    /// Returns a new SupportedProtocols struct that is an intersection.
-    fn intersection(self, other: SupportedProtocols) -> SupportedProtocols {
-        SupportedProtocols(self.0 & other.0)
+impl<'a> FromIterator<&'a ProtocolId> for ProtocolIdSet {
+    fn from_iter<T: IntoIterator<Item = &'a ProtocolId>>(iter: T) -> Self {
+        iter.into_iter().copied().collect()
     }
 }
 
@@ -148,7 +233,7 @@ impl fmt::Debug for MessagingProtocolVersion {
 
 impl fmt::Display for MessagingProtocolVersion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.as_str(),)
+        write!(f, "{}", self.as_str())
     }
 }
 
@@ -157,7 +242,7 @@ impl fmt::Display for MessagingProtocolVersion {
 //
 
 /// An enum to list the possible errors during the diem handshake negotiation
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Eq, PartialEq)]
 pub enum HandshakeError {
     #[error("diem-handshake: the received message has a different chain id: {0}, expected: {1}")]
     InvalidChainId(ChainId, ChainId),
@@ -174,7 +259,7 @@ pub enum HandshakeError {
 /// supported over that version.
 #[derive(Clone, Deserialize, Serialize, Default)]
 pub struct HandshakeMsg {
-    pub supported_protocols: BTreeMap<MessagingProtocolVersion, SupportedProtocols>,
+    pub supported_protocols: BTreeMap<MessagingProtocolVersion, ProtocolIdSet>,
     pub chain_id: ChainId,
     pub network_id: NetworkId,
 }
@@ -183,11 +268,13 @@ impl HandshakeMsg {
     /// Useful function for tests
     #[cfg(test)]
     pub fn new_for_testing() -> Self {
+        Self::from_supported([ProtocolId::HealthCheckerRpc].iter().collect())
+    }
+
+    #[cfg(test)]
+    pub fn from_supported(protos: ProtocolIdSet) -> Self {
         let mut supported_protocols = BTreeMap::new();
-        supported_protocols.insert(
-            MessagingProtocolVersion::V1,
-            [ProtocolId::StateSyncDirectSend].iter().into(),
-        );
+        supported_protocols.insert(MessagingProtocolVersion::V1, protos);
         Self {
             chain_id: ChainId::test(),
             network_id: NetworkId::Validator,
@@ -201,7 +288,7 @@ impl HandshakeMsg {
     pub fn perform_handshake(
         &self,
         other: &HandshakeMsg,
-    ) -> Result<(MessagingProtocolVersion, SupportedProtocols), HandshakeError> {
+    ) -> Result<(MessagingProtocolVersion, ProtocolIdSet), HandshakeError> {
         // verify that both peers are on the same chain
         if self.chain_id != other.chain_id {
             return Err(HandshakeError::InvalidChainId(
@@ -210,36 +297,23 @@ impl HandshakeMsg {
             ));
         }
 
-        // verify that both peers are on the same type of network
+        // verify that both peers are on the same network
         if self.network_id != other.network_id {
             return Err(HandshakeError::InvalidNetworkId(
-                other.network_id.clone(),
-                self.network_id.clone(),
+                other.network_id,
+                self.network_id,
             ));
         }
 
-        // first, find the highest MessagingProtocolVersion supported by both nodes.
-        let mut inner = other.supported_protocols.iter().rev().peekable();
+        // find the greatest common MessagingProtocolVersion where we both support
+        // at least one common ProtocolId.
+        for (our_handshake_version, our_protocols) in self.supported_protocols.iter().rev() {
+            if let Some(their_protocols) = other.supported_protocols.get(our_handshake_version) {
+                let common_protocols = our_protocols.intersect(their_protocols);
 
-        // iterate over all supported protocol versions in decreasing order.
-        for (k_outer, _) in self.supported_protocols.iter().rev() {
-            // Remove all elements from inner iterator that are larger than the current head of the
-            // outer iterator.
-            match inner.by_ref().find(|(k_inner, _)| *k_inner <= k_outer) {
-                None => {
-                    break;
+                if !common_protocols.is_empty() {
+                    return Ok((*our_handshake_version, common_protocols));
                 }
-                Some((k_inner, _)) if k_inner == k_outer => {
-                    // Find all protocols supported by both nodes for the above protocol version.
-                    // Both `self` and `other` shold have entry in map for `key`.
-                    let protocols_self = self.supported_protocols.get(k_inner).unwrap();
-                    let protocols_other = other.supported_protocols.get(k_inner).unwrap();
-                    return Ok((
-                        *k_inner,
-                        protocols_self.clone().intersection(protocols_other.clone()),
-                    ));
-                }
-                _ => {}
             }
         }
 

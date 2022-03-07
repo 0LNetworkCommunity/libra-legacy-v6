@@ -12,7 +12,7 @@ use std::{
 /// see https://github.com/facebook/rocksdb/blob/master/include/rocksdb/options.h
 /// for detailed explanations.
 #[derive(Copy, Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(default, deny_unknown_fields)]
+#[serde(default)]
 pub struct RocksdbConfig {
     pub max_open_files: i32,
     pub max_total_wal_size: u64,
@@ -33,7 +33,7 @@ impl Default for RocksdbConfig {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(default, deny_unknown_fields)]
+#[serde(default)]
 pub struct StorageConfig {
     pub address: SocketAddr,
     pub backup_service_address: SocketAddr,
@@ -48,6 +48,13 @@ pub struct StorageConfig {
     pub timeout_ms: u64,
     /// Rocksdb-specific configurations
     pub rocksdb_config: RocksdbConfig,
+    /// If enabled, leaf counts of the children of a JellyfishMerkelTree internal node are written
+    /// down.
+    /// This is supposed to be enabled after other aspects of the new release has been confirmed
+    /// safe. And once enabled, an older node won't be able to read the state DB, unless the DB is
+    /// wiped and re-synced.
+    #[serde(default)]
+    pub account_count_migration: bool,
 }
 
 impl Default for StorageConfig {
@@ -63,13 +70,12 @@ impl Default for StorageConfig {
             // of the DB might require, 10k (TPS)  * 100 (seconds)  =  1 Million might be a
             // conservatively safe minimal prune window. It'll take a few Gigabytes of disk space
             // depending on the size of an average account blob.
-            //////// 0L ////////
-            // ~50GB state tree history (about 1 day at 100 tps)
-            prune_window: Some(10_000_000), 
+            prune_window: Some(1_000_000),
             data_dir: PathBuf::from("/opt/diem/data"),
             // Default read/write/connection timeout, in milliseconds
             timeout_ms: 30_000,
             rocksdb_config: RocksdbConfig::default(),
+            account_count_migration: false,
         }
     }
 }

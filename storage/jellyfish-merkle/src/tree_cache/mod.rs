@@ -72,7 +72,7 @@ mod tree_cache_test;
 use crate::{
     metrics::DIEM_JELLYFISH_STORAGE_READS,
     node_type::{Node, NodeKey},
-    NodeStats, StaleNodeIndex, TreeReader, TreeUpdateBatch,
+    NodeBatch, NodeStats, StaleNodeIndex, StaleNodeIndexBatch, TreeReader, TreeUpdateBatch,
 };
 use anyhow::{bail, Result};
 use diem_crypto::HashValue;
@@ -85,10 +85,10 @@ use std::collections::{hash_map::Entry, BTreeMap, BTreeSet, HashMap, HashSet};
 /// help commit more than one transaction in a row atomically.
 struct FrozenTreeCache<V> {
     /// Immutable node_cache.
-    node_cache: BTreeMap<NodeKey, Node<V>>,
+    node_cache: NodeBatch<V>,
 
     /// Immutable stale_node_index_cache.
-    stale_node_index_cache: BTreeSet<StaleNodeIndex>,
+    stale_node_index_cache: StaleNodeIndexBatch,
 
     /// the stats vector including the number of new nodes, new leaves, stale nodes and stale leaves.
     node_stats: Vec<NodeStats>,
@@ -217,7 +217,7 @@ where
     pub fn delete_node(&mut self, old_node_key: &NodeKey, is_leaf: bool) {
         // If node cache doesn't have this node, it means the node is in the previous version of
         // the tree on the disk.
-        if self.node_cache.remove(&old_node_key).is_none() {
+        if self.node_cache.remove(old_node_key).is_none() {
             let is_new_entry = self.stale_node_index_cache.insert(old_node_key.clone());
             assert!(is_new_entry, "Node gets stale twice unexpectedly.");
             if is_leaf {

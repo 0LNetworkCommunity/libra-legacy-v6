@@ -1,2 +1,0 @@
-publish src -v
-view storage/0x00000000000000000000000000000042/modules/Module.mv

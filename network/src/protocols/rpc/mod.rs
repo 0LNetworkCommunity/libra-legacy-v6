@@ -51,8 +51,9 @@ use crate::{
     logging::NetworkSchema,
     peer::PeerNotification,
     peer_manager::PeerManagerError,
-    protocols::wire::messaging::v1::{
-        NetworkMessage, Priority, RequestId, RpcRequest, RpcResponse,
+    protocols::{
+        network::SerializedRequest,
+        wire::messaging::v1::{NetworkMessage, Priority, RequestId, RpcRequest, RpcResponse},
     },
     ProtocolId,
 };
@@ -60,6 +61,7 @@ use anyhow::anyhow;
 use bytes::Bytes;
 use channel::diem_channel;
 use diem_config::network_id::NetworkContext;
+use diem_id_generator::{IdGenerator, U32IdGenerator};
 use diem_logger::prelude::*;
 use diem_time_service::{timeout, TimeService, TimeServiceTrait};
 use diem_types::PeerId;
@@ -72,7 +74,7 @@ use futures::{
 };
 use serde::Serialize;
 use short_hex_str::AsShortHexStr;
-use std::{cmp::PartialEq, collections::HashMap, fmt::Debug, sync::Arc, time::Duration};
+use std::{cmp::PartialEq, collections::HashMap, fmt::Debug, time::Duration};
 
 pub mod error;
 
@@ -82,7 +84,7 @@ pub struct InboundRpcRequest {
     /// The [`ProtocolId`] for which of our upstream application modules should
     /// handle (i.e., deserialize and then respond to) this inbound rpc request.
     ///
-    /// For example, if `protocol_id == ProtocolId::ConsensusRpc`, then this
+    /// For example, if `protocol_id == ProtocolId::ConsensusRpcBcs`, then this
     /// inbound rpc request will be dispatched to consensus for handling.
     pub protocol_id: ProtocolId,
     /// The serialized request data received from the sender. At this layer in
@@ -104,13 +106,23 @@ pub struct InboundRpcRequest {
     pub res_tx: oneshot::Sender<Result<Bytes, RpcError>>,
 }
 
+impl SerializedRequest for InboundRpcRequest {
+    fn protocol_id(&self) -> ProtocolId {
+        self.protocol_id
+    }
+
+    fn data(&self) -> &Bytes {
+        &self.data
+    }
+}
+
 /// A wrapper struct for an outbound rpc request and its associated context.
 #[derive(Debug, Serialize)]
 pub struct OutboundRpcRequest {
     /// The remote peer's application module that should handle our outbound rpc
     /// request.
     ///
-    /// For example, if `protocol_id == ProtocolId::ConsensusRpc`, then this
+    /// For example, if `protocol_id == ProtocolId::ConsensusRpcBcs`, then this
     /// outbound rpc request should be handled by the remote peer's consensus
     /// application module.
     pub protocol_id: ProtocolId,
@@ -131,21 +143,13 @@ pub struct OutboundRpcRequest {
     pub timeout: Duration,
 }
 
-// Wraps the task of request id generation. Request ids start at 0 and increment till they hit
-// RequestId::MAX. After that, they wrap around to 0.
-struct RequestIdGenerator {
-    next_id: RequestId,
-}
-
-impl RequestIdGenerator {
-    pub fn new() -> Self {
-        Self { next_id: 0 }
+impl SerializedRequest for OutboundRpcRequest {
+    fn protocol_id(&self) -> ProtocolId {
+        self.protocol_id
     }
 
-    pub fn next(&mut self) -> RequestId {
-        let request_id = self.next_id;
-        self.next_id = self.next_id.wrapping_add(1);
-        request_id
+    fn data(&self) -> &Bytes {
+        &self.data
     }
 }
 
@@ -163,7 +167,7 @@ impl PartialEq for InboundRpcRequest {
 /// There is one `InboundRpcs` handler per [`Peer`](crate::peer::Peer).
 pub struct InboundRpcs {
     /// The network instance this Peer actor is running under.
-    network_context: Arc<NetworkContext>,
+    network_context: NetworkContext,
     /// A handle to a time service for easily mocking time-related operations.
     time_service: TimeService,
     /// The PeerId of this connection's remote peer. Used for logging.
@@ -182,7 +186,7 @@ pub struct InboundRpcs {
 
 impl InboundRpcs {
     pub fn new(
-        network_context: Arc<NetworkContext>,
+        network_context: NetworkContext,
         time_service: TimeService,
         remote_peer_id: PeerId,
         inbound_rpc_timeout: Duration,
@@ -331,14 +335,14 @@ impl InboundRpcs {
 /// There is one `OutboundRpcs` handler per [`Peer`](crate::peer::Peer).
 pub struct OutboundRpcs {
     /// The network instance this Peer actor is running under.
-    network_context: Arc<NetworkContext>,
+    network_context: NetworkContext,
     /// A handle to a time service for easily mocking time-related operations.
     time_service: TimeService,
     /// The PeerId of this connection's remote peer. Used for logging.
     remote_peer_id: PeerId,
     /// Generates the next RequestId to use for the next outbound RPC. Note that
     /// request ids are local to each connection.
-    request_id_gen: RequestIdGenerator,
+    request_id_gen: U32IdGenerator,
     /// A completion queue of pending outbound rpc tasks. Each task waits for
     /// either a successful `RpcResponse` message, handed to it via the channel
     /// in `pending_outbound_rpcs`, or waits for a timeout or cancellation
@@ -358,7 +362,7 @@ pub struct OutboundRpcs {
 
 impl OutboundRpcs {
     pub fn new(
-        network_context: Arc<NetworkContext>,
+        network_context: NetworkContext,
         time_service: TimeService,
         remote_peer_id: PeerId,
         max_concurrent_outbound_rpcs: u32,
@@ -367,7 +371,7 @@ impl OutboundRpcs {
             network_context,
             time_service,
             remote_peer_id,
-            request_id_gen: RequestIdGenerator::new(),
+            request_id_gen: U32IdGenerator::new(),
             outbound_rpc_tasks: FuturesUnordered::new(),
             pending_outbound_rpcs: HashMap::new(),
             max_concurrent_outbound_rpcs,
@@ -397,13 +401,13 @@ impl OutboundRpcs {
 
         // Drop the outbound request if the application layer has already canceled.
         if application_response_tx.is_canceled() {
-            counters::rpc_messages(&network_context, REQUEST_LABEL, CANCELED_LABEL).inc();
+            counters::rpc_messages(network_context, REQUEST_LABEL, CANCELED_LABEL).inc();
             return Err(RpcError::UnexpectedResponseChannelCancel);
         }
 
         // Drop new outbound requests if our completion queue is at capacity.
         if self.outbound_rpc_tasks.len() == self.max_concurrent_outbound_rpcs as usize {
-            counters::rpc_messages(&network_context, REQUEST_LABEL, DECLINED_LABEL).inc();
+            counters::rpc_messages(network_context, REQUEST_LABEL, DECLINED_LABEL).inc();
             // Notify application that their request was dropped due to capacity.
             let err = Err(RpcError::TooManyPending(self.max_concurrent_outbound_rpcs));
             let _ = application_response_tx.send(err);
@@ -540,7 +544,7 @@ impl OutboundRpcs {
                     .inc_by(request_len);
 
                 trace!(
-                    NetworkSchema::new(&network_context).remote_peer(&peer_id),
+                    NetworkSchema::new(network_context).remote_peer(peer_id),
                     "{} Received response for request_id {} from peer {} \
                      with {:.6} seconds of latency",
                     network_context,
@@ -557,7 +561,7 @@ impl OutboundRpcs {
                 }
 
                 warn!(
-                    NetworkSchema::new(&network_context).remote_peer(&peer_id),
+                    NetworkSchema::new(network_context).remote_peer(peer_id),
                     "{} Error making outbound rpc request with request_id {} to {}: {}",
                     network_context,
                     request_id,

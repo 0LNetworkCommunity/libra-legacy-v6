@@ -170,8 +170,7 @@ where
                     decrypted_len,
                     ref mut offset,
                 } => {
-                    let bytes_to_copy =
-                        ::std::cmp::min(decrypted_len as usize - *offset, buf.len());
+                    let bytes_to_copy = ::std::cmp::min(decrypted_len - *offset, buf.len());
                     buf[..bytes_to_copy].copy_from_slice(
                         &self.buffers.read_buffer[*offset..(*offset + bytes_to_copy)],
                     );
@@ -181,7 +180,7 @@ where
                         decrypted_len
                     );
                     *offset += bytes_to_copy;
-                    if *offset == decrypted_len as usize {
+                    if *offset == decrypted_len {
                         self.read_state = ReadState::Init;
                     }
                     return Poll::Ready(Ok(bytes_to_copy));
@@ -470,14 +469,15 @@ fn poll_write_all<TSocket>(
 where
     TSocket: AsyncWrite,
 {
+    assert!(*offset <= buf.len());
     loop {
         let n = ready!(socket.as_mut().poll_write(&mut context, &buf[*offset..]))?;
         trace!("poll_write_all: wrote {}/{} bytes", *offset + n, buf.len());
         if n == 0 {
             return Poll::Ready(Err(io::ErrorKind::WriteZero.into()));
         }
+        assert!(n <= buf.len() - *offset);
         *offset += n;
-        assert!(*offset <= buf.len());
 
         if *offset == buf.len() {
             return Poll::Ready(Ok(()));
@@ -524,14 +524,15 @@ fn poll_read_exact<TSocket>(
 where
     TSocket: AsyncRead,
 {
+    assert!(*offset <= buf.len());
     loop {
         let n = ready!(socket.as_mut().poll_read(&mut context, &mut buf[*offset..]))?;
         trace!("poll_read_exact: read {}/{} bytes", *offset + n, buf.len());
         if n == 0 {
             return Poll::Ready(Err(io::ErrorKind::UnexpectedEof.into()));
         }
+        assert!(n <= buf.len() - *offset);
         *offset += n;
-        assert!(*offset <= buf.len());
         if *offset == buf.len() {
             return Poll::Ready(Ok(()));
         }

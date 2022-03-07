@@ -27,9 +27,8 @@ use futures::{AsyncReadExt, AsyncWriteExt};
 use netcore::transport::tcp::{resolve_and_connect, TcpSocket};
 use network::{
     noise::{HandshakeAuthMode, NoiseUpgrader},
-    protocols::wire::handshake::v1::SupportedProtocols,
+    protocols::wire::handshake::v1::ProtocolIdSet,
     transport::{upgrade_outbound, UpgradeContext, SUPPORTED_MESSAGING_PROTOCOL},
-    ProtocolId,
 };
 use std::{collections::BTreeMap, sync::Arc};
 use structopt::StructOpt;
@@ -169,7 +168,7 @@ impl CheckValidatorSetEndpoints {
             encryptor.add_key(version, address_encryption_key).unwrap();
             encryptor.set_current_version(version).unwrap();
 
-            validator_set_validator_addresses(client, &encryptor, None)?
+            validator_set_validator_addresses(client, None)?
         } else {
             validator_set_full_node_addresses(client, None)?
         };
@@ -213,18 +212,11 @@ fn build_upgrade_context(
     private_key: x25519::PrivateKey,
 ) -> Arc<UpgradeContext> {
     // RoleType doesn't matter, but the `NetworkId` and `PeerId` are used in handshakes
-    let network_context = Arc::new(NetworkContext::new(
-        RoleType::FullNode,
-        network_id.clone(),
-        peer_id,
-    ));
+    let network_context = NetworkContext::new(RoleType::FullNode, network_id, peer_id);
 
     // Let's make sure some protocol can be connected.  In the future we may want to allow for specifics
     let mut supported_protocols = BTreeMap::new();
-    supported_protocols.insert(
-        SUPPORTED_MESSAGING_PROTOCOL,
-        SupportedProtocols::from(ProtocolId::all().iter()),
-    );
+    supported_protocols.insert(SUPPORTED_MESSAGING_PROTOCOL, ProtocolIdSet::all_known());
 
     // Build the noise and network handshake, without running a full Noise server with listener
     Arc::new(UpgradeContext::new(

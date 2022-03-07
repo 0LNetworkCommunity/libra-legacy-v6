@@ -73,14 +73,14 @@ impl RemoteClient {
     }
 
     fn process_one_message(&mut self, input: &[u8]) -> Result<Vec<u8>, Error> {
-        self.network_client.write(&input)?;
+        self.network_client.write(input)?;
         self.network_client.read().map_err(|e| e.into())
     }
 }
 
 impl TSerializerClient for RemoteClient {
     fn request(&mut self, input: SafetyRulesInput) -> Result<Vec<u8>, Error> {
-        let input_message = bcs::to_bytes(&input)?;
+        let input_message = serde_json::to_vec(&input)?;
         loop {
             match self.process_one_message(&input_message) {
                 Err(err) => warn!("Failed to communicate with SafetyRules service: {}", err),

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The [DiemNet](spec.md) On-chain Discovery Protocol is an authenticated discovery protocol for nodes to learn validator and VFN network addresses and network identity public keys. On-chain discovery leverages the Move language and Diem blockchain to serve as a central authenticated data-store for distributing advertised validator and VFN discovery information in the form of [`RawEncNetworkAddress`](network-address.md)es for validators and [`RawNetworkAddress`](network-address.md)es for VFNs.
+The [DiemNet](README.md) On-chain Discovery Protocol is an authenticated discovery protocol for nodes to learn validator and VFN network addresses and network identity public keys. On-chain discovery leverages the Move language and Diem blockchain to serve as a central authenticated data-store for distributing advertised validator and VFN discovery information in the form of [`NetworkAddress`](network-address.md)es for validators and [`NetworkAddress`](network-address.md)es for VFNs.
 
 ## Design Principles
 
@@ -25,7 +25,7 @@ On-chain discovery serves use cases (1) and (2) but not (3) or (4).
 
 ## On-chain Config
 
-Validator and VFN discovery information are stored in the `ValidatorSet` in the [`OnChainConfig`](../consensus/spec.md#onchainconfig).
+Validator and VFN discovery information are stored in the `ValidatorSet` in the [`OnChainConfig`](../consensus/README.md#onchainconfig).
 
 ```rust
 struct ValidatorSet {
@@ -46,8 +46,8 @@ struct ValidatorInfo {
 
 struct ValidatorConfig {
     consensus_public_key: Ed25519PublicKey,
-    validator_network_addresses: Vec<RawEncNetworkAddress>,
-    full_node_network_addresses: Vec<RawNetworkAddress>,
+    validator_network_addresses: Vec<NetworkAddress>,
+    full_node_network_addresses: Vec<NetworkAddress>,
 }
 
 #[repr(u8)]
@@ -57,8 +57,8 @@ enum ConsensusScheme {
 ```
 
 * [`AccountAddress`](../common/data_structures.md#accountaddress)
-* [`RawNetworkAddress`](network-address.md)
-* [`RawEncNetworkAddress`](network-address.md)
+* [`NetworkAddress`](network-address.md)
+* [`NetworkAddress`](network-address.md)
 
 ## Bootstrapping
 
@@ -88,13 +88,13 @@ Imagine a validator starts with a single advertised network address containing i
 addrs = ["/ip4/1.2.3.4/tcp/6180/ln-noise-ik/<pubkey1>/ln-handshake/0"]
 ```
 
-The validator inititates a key rotation to a new network identity public key `<pubkey2>` by sending a transaction to set its addresses to a new list:
+The validator initiates a key rotation to a new network identity public key `<pubkey2>` by sending a transaction to set its addresses to a new list:
 
 ```
 tx: set_validator_network_addresses(["/ip4/1.2.3.4/tcp/6180/ln-noise-ik/<pubkey2>/ln-handshake/0"])
 ```
 
-(TODO(philiphayes): link to actual tx?)
+<!-- TODO(philiphayes): link to actual tx? -->
 
 When the transaction commits, the validator observes a reconfiguration with its new advertised network address. It will then begin responding to noise handshakes with the new keypair. Likewise, the node will use the new keypair when dialing out to other peers.
 

@@ -15,7 +15,7 @@ use std::{
 };
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(default, deny_unknown_fields)]
+#[serde(default)]
 pub struct SafetyRulesConfig {
     pub backend: SecureBackend,
     pub logger: LoggerConfig,
@@ -35,7 +35,7 @@ impl Default for SafetyRulesConfig {
             logger: LoggerConfig::default(),
             service: SafetyRulesService::Thread,
             test: None,
-            verify_vote_proposal_signature: true,
+            verify_vote_proposal_signature: false,
             export_consensus_key: false,
             // Default value of 30 seconds for a timeout
             network_timeout_ms: 30_000,
@@ -68,7 +68,6 @@ pub enum SafetyRulesService {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(deny_unknown_fields)]
 pub struct RemoteService {
     pub server_address: NetworkAddress,
 }

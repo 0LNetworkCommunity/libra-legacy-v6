@@ -9,6 +9,7 @@ use crate::{
 use consensus_types::{common::Round, sync_info::SyncInfo, vote::Vote};
 use diem_logger::{prelude::*, Schema};
 use diem_types::validator_verifier::ValidatorVerifier;
+use futures::future::AbortHandle;
 use serde::Serialize;
 use std::{fmt, sync::Arc, time::Duration};
 
@@ -149,6 +150,8 @@ pub struct RoundState {
     pending_votes: PendingVotes,
     // Vote sent locally for the current round.
     vote_sent: Option<Vote>,
+    // The handle to cancel previous timeout task when moving to next round.
+    abort_handle: Option<AbortHandle>,
 }
 
 #[derive(Default, Schema)]
@@ -162,15 +165,12 @@ pub struct RoundStateLogSchema<'a> {
 }
 
 impl<'a> RoundStateLogSchema<'a> {
-    pub fn new(round_state: Option<&'a RoundState>) -> Self {
-        match round_state {
-            Some(state) => Self {
-                round: Some(state.current_round),
-                committed_round: Some(state.highest_committed_round),
-                pending_votes: Some(&state.pending_votes),
-                self_vote: state.vote_sent.as_ref(),
-            },
-            None => Self::default(),
+    pub fn new(state: &'a RoundState) -> Self {
+        Self {
+            round: Some(state.current_round),
+            committed_round: Some(state.highest_committed_round),
+            pending_votes: Some(&state.pending_votes),
+            self_vote: state.vote_sent.as_ref(),
         }
     }
 }
@@ -196,6 +196,7 @@ impl RoundState {
             timeout_sender,
             pending_votes: PendingVotes::new(),
             vote_sent: None,
+            abort_handle: None,
         }
     }
 
@@ -224,8 +225,8 @@ impl RoundState {
     /// Notify the RoundState about the potentially new QC, TC, and highest committed round.
     /// Note that some of these values might not be available by the caller.
     pub fn process_certificates(&mut self, sync_info: SyncInfo) -> Option<NewRoundEvent> {
-        if sync_info.highest_commit_round() > self.highest_committed_round {
-            self.highest_committed_round = sync_info.highest_commit_round();
+        if sync_info.highest_ordered_round() > self.highest_committed_round {
+            self.highest_committed_round = sync_info.highest_ordered_round();
         }
         let new_round = sync_info.highest_round() + 1;
         if new_round > self.current_round {
@@ -234,8 +235,9 @@ impl RoundState {
             self.pending_votes = PendingVotes::new();
             self.vote_sent = None;
             let timeout = self.setup_timeout();
-            // The new round reason is QCReady in case both QC and TC are equal
-            let new_round_reason = if sync_info.highest_timeout_certificate().is_none() {
+            // The new round reason is QCReady in case both QC.round + 1 == new_round, otherwise
+            // it's Timeout and TC.round + 1 == new_round.
+            let new_round_reason = if sync_info.highest_certified_round() + 1 == new_round {
                 NewRoundReason::QCReady
             } else {
                 NewRoundReason::Timeout
@@ -285,8 +287,12 @@ impl RoundState {
             timeout.as_millis(),
             self.current_round
         );
-        self.time_service
+        let abort_handle = self
+            .time_service
             .run_after(timeout, SendTask::make(timeout_sender, self.current_round));
+        if let Some(handle) = self.abort_handle.replace(abort_handle) {
+            handle.abort();
+        }
         timeout
     }
 

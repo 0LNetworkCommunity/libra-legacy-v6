@@ -74,14 +74,17 @@ impl BlockMetadata {
         self.proposer
     }
 
-    //////// 0L ////////
+    pub fn previous_block_votes(&self) -> &Vec<AccountAddress> {
+        &self.previous_block_votes
+    }
+
     pub fn round(&self) -> u64 {
         self.round
     }
 }
 
 pub fn new_block_event_key() -> EventKey {
-    EventKey::new_from_address(&diem_root_address(), 12) //////// 0L ////////
+    EventKey::new_from_address(&diem_root_address(), 12) /////// 0L /////////
 }
 
 /// The path to the new block event handle under a DiemBlock::BlockMetadata resource.
@@ -101,6 +104,10 @@ pub struct DiemBlockResource {
 impl DiemBlockResource {
     pub fn new_block_events(&self) -> &EventHandle {
         &self.new_block_events
+    }
+
+    pub fn height(&self) -> u64 {
+        self.height
     }
 }
 

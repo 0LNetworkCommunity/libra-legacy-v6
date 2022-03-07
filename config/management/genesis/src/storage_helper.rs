@@ -181,10 +181,6 @@ impl StorageHelper {
         Storage::from(Namespaced::new(namespace, Box::new(Storage::from(storage))))
     }
 
-    pub fn path(&self) -> &Path {
-        self.temppath.path()
-    }
-
     pub fn path_string(&self) -> &str {
         self.temppath.path().to_str().unwrap()
     }
@@ -202,7 +198,6 @@ impl StorageHelper {
     // 0L: change, initialize the 0-4th accounts with a fixture mnemonics.
     // So we can reliably test miner and other transactions.
     pub fn initialize_by_idx(&self, namespace: String, idx: usize) {
-
         let partial_seed = bcs::to_bytes(&idx).unwrap();
         let mut seed = [0u8; 32];
         let data_to_copy = 32 - std::cmp::min(32, partial_seed.len());
@@ -281,7 +276,7 @@ impl StorageHelper {
 
         // Initialize all other data in storage
         storage
-            .set(SAFETY_DATA, SafetyData::new(0, 0, 0, None))
+            .set(SAFETY_DATA, SafetyData::new(0, 0, 0, 0, None))
             .unwrap();
         storage.set(WAYPOINT, Waypoint::default()).unwrap();
         let mut encryptor = diem_network_address_encryption::Encryptor::new(storage);
@@ -541,6 +536,26 @@ impl StorageHelper {
 
         let command = Command::from_iter(args.split_whitespace());
         command.set_layout()
+    }
+
+    #[cfg(test)]
+    pub fn set_move_modules(&self, dir: &str) -> Result<Vec<Vec<u8>>, Error> {
+        println!("setting move modules with dir {}", dir);
+        let args = format!(
+            "
+                diem-genesis-tool
+                set-move-modules
+                --dir {dir}
+                --shared-backend backend={backend};\
+                    path={storage_path}
+            ",
+            dir = dir,
+            backend = DISK,
+            storage_path = self.path_string(),
+        );
+
+        let command = Command::from_iter(args.split_whitespace());
+        command.set_move_modules()
     }
 
     pub fn set_operator(&self, operator_name: &str, shared_ns: &str) -> Result<String, Error> {

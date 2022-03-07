@@ -4,11 +4,8 @@
 protocols, inspired by libp2p's [multiaddr](https://multiformats.io/multiaddr/) format. The primary differences include
 using [BCS] to describe the binary format and reducing the set of supported protocols.
 
-(TODO(philiphayes): we should rename this to make it less generic sounding...)
-(TODO(philiphayes): include `EncNetworkAddress` spec)
-
 In particular, a `NetworkAddress` is intended to be a fully self-contained description of _how_ to dial a
-[DiemNet](spec.md) peer, describing both the base transport protocol and all subsequent connection upgrade protocols.
+[DiemNet](README.md) peer, describing both the base transport protocol and all subsequent connection upgrade protocols.
 
 ## Data Structures
 
@@ -54,8 +51,8 @@ pub enum Protocol {
 pub struct DnsName(String);
 ```
 
-(TODO(philiphayes): link to x25519 ser/de spec)
-(TODO(philiphayes): hardening to limit NetworkAddress max size)
+<!-- TODO(philiphayes): link to x25519 ser/de spec -->
+<!-- TODO(philiphayes): hardening to limit NetworkAddress max size -->
 
 ## Human-readable Format
 

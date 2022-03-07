@@ -10,7 +10,7 @@ publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.38"
+anyhow = "1.0.52"
 hex = "0.4.3"
 rand = "0.8.3"
 serde_yaml = "0.8.17"
@@ -19,12 +19,12 @@ thiserror = "1.0.24"
 
 bcs = "0.1.2"
 diem-config = { path = ".." }
-diem-crypto = { path = "../../crypto/crypto" }
-diem-client = { path = "../../sdk/client", features = ["blocking"], default-features = false }
-diem-logger = { path = "../../common/logger" }
-diem-temppath = { path = "../../common/temppath" }
+diem-crypto = { path = "../../crates/diem-crypto" }
+diem-client = { path = "../../crates/diem-client", features = ["blocking"], default-features = false }
+diem-logger = { path = "../../crates/diem-logger" }
+diem-temppath = { path = "../../crates/diem-temppath" }
 diem-types = { path = "../../types" }
-diem-workspace-hack = { path = "../../common/workspace-hack" }
+diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 
 [dev-dependencies]
 diem-types = {path = "../../types", features = ["fuzzing"]}

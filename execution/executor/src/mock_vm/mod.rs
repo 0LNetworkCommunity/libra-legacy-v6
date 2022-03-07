@@ -14,7 +14,8 @@ use diem_types::{
     contract_event::ContractEvent,
     event::EventKey,
     on_chain_config::{
-        config_address, new_epoch_event_key, ConfigurationResource, OnChainConfig, ValidatorSet,
+        config_address, default_access_path_for_config, new_epoch_event_key, ConfigurationResource,
+        OnChainConfig, ValidatorSet,
     },
     transaction::{
         RawTransaction, Script, SignedTransaction, Transaction, TransactionArgument,
@@ -54,7 +55,7 @@ pub struct MockVM;
 impl VMExecutor for MockVM {
     fn execute_block(
         transactions: Vec<Transaction>,
-        state_view: &dyn StateView,
+        state_view: &impl StateView,
     ) -> Result<Vec<TransactionOutput>, VMStatus> {
         if state_view.is_genesis() {
             assert_eq!(
@@ -83,7 +84,7 @@ impl VMExecutor for MockVM {
         let mut outputs = vec![];
 
         for txn in transactions {
-            match decode_transaction(&txn.as_signed_user_txn().unwrap()) {
+            match decode_transaction(txn.as_signed_user_txn().unwrap()) {
                 MockVMTransaction::Mint { sender, amount } => {
                     let old_balance = read_balance(&output_cache, state_view, sender);
                     let new_balance = old_balance + amount;
@@ -169,7 +170,7 @@ impl VMExecutor for MockVM {
 
 fn read_balance(
     output_cache: &HashMap<AccessPath, u64>,
-    state_view: &dyn StateView,
+    state_view: &impl StateView,
     account: AccountAddress,
 ) -> u64 {
     let balance_access_path = balance_ap(account);
@@ -181,7 +182,7 @@ fn read_balance(
 
 fn read_seqnum(
     output_cache: &HashMap<AccessPath, u64>,
-    state_view: &dyn StateView,
+    state_view: &impl StateView,
     account: AccountAddress,
 ) -> u64 {
     let seqnum_access_path = seqnum_ap(account);
@@ -191,17 +192,17 @@ fn read_seqnum(
     }
 }
 
-fn read_balance_from_storage(state_view: &dyn StateView, balance_access_path: &AccessPath) -> u64 {
-    read_u64_from_storage(state_view, &balance_access_path)
+fn read_balance_from_storage(state_view: &impl StateView, balance_access_path: &AccessPath) -> u64 {
+    read_u64_from_storage(state_view, balance_access_path)
 }
 
-fn read_seqnum_from_storage(state_view: &dyn StateView, seqnum_access_path: &AccessPath) -> u64 {
-    read_u64_from_storage(state_view, &seqnum_access_path)
+fn read_seqnum_from_storage(state_view: &impl StateView, seqnum_access_path: &AccessPath) -> u64 {
+    read_u64_from_storage(state_view, seqnum_access_path)
 }
 
-fn read_u64_from_storage(state_view: &dyn StateView, access_path: &AccessPath) -> u64 {
+fn read_u64_from_storage(state_view: &impl StateView, access_path: &AccessPath) -> u64 {
     state_view
-        .get(&access_path)
+        .get(access_path)
         .expect("Failed to query storage.")
         .map_or(0, |bytes| decode_bytes(&bytes))
 }
@@ -222,7 +223,7 @@ fn seqnum_ap(account: AccountAddress) -> AccessPath {
 
 fn gen_genesis_writeset() -> WriteSet {
     let mut write_set = WriteSetMut::default();
-    let validator_set_ap = ValidatorSet::CONFIG_ID.access_path();
+    let validator_set_ap = default_access_path_for_config(ValidatorSet::CONFIG_ID);
     write_set.push((
         validator_set_ap,
         WriteOp::Value(bcs::to_bytes(&ValidatorSet::new(vec![])).unwrap()),
@@ -376,7 +377,7 @@ fn decode_transaction(txn: &SignedTransaction) -> MockVMTransaction {
             // Use WriteSet for reconfig only for testing.
             MockVMTransaction::Reconfiguration
         }
-        TransactionPayload::Module(_) => {
+        TransactionPayload::ModuleBundle(_) => {
             unimplemented!("MockVM does not support Module transaction payload.")
         }
     }

@@ -13,13 +13,34 @@ Please add the API change in the following format:
 
 ```
 
+## 2021-07-07 Add `get_event_by_version_with_proof` API
+
+This new API allows light clients to request an event at or below a version.
+Concretely, light clients can now fully support `get_metadata` by using this API.
+
+## 2021-06-08 Add `get_account_transactions_with_proofs` API
+
+This new API allows verifying client users to get transactions under an account
+along with the corresponding proofs needed to verify the response.
+
+## 2021-06-07 `get_account_transactions` on a non-existent account returns empty list istead of error
+
+This change makes `get_account_transactions` consistent with `get_account_transaction`,
+which returns nothing on a non-existent account and removes an extra internal DB
+call that is no longer needed.
+
+## 2021-06-01 Add `get_accumulator_consistency_proof` API
+
+This API allows light clients to build their initial transaction accumulator summary
+and verifiably extend their accumulator summary to newer ledger states.
+
 ## 2021-05-25 Add `TreasuryComplianceRole`
 
-TreasuryComplianceRole has been created and has a field `diem_id_domain_events_key` that stores the event key of diem id domain events.
+TreasuryComplianceRole has been created and has a field `vasp_domain_events_key` that stores the event key of vasp domain events.
 
-## 2021-05-24 Add `diem_id_domains` field to `ParentVASPRole`
+## 2021-05-24 Add `vasp_domains` field to `ParentVASPRole`
 
-ParentVASPRole has a new field `diem_id_domains` that stores the domain names for diem ID that belong to the parent VASP.
+ParentVASPRole has a new field `vasp_domains` that stores the domain names of the parent VASP.
 
 ## 2021-05-07 Add support for secondary signers in `TransactionDataView`
 

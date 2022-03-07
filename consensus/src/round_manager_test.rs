@@ -35,11 +35,14 @@ use consensus_types::{
     timeout_certificate::TimeoutCertificate,
     vote_msg::VoteMsg,
 };
+use diem_config::network_id::NetworkId;
 use diem_crypto::{ed25519::Ed25519PrivateKey, HashValue, Uniform};
+use diem_infallible::Mutex;
 use diem_secure_storage::Storage;
 use diem_types::{
     epoch_state::EpochState,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
+    on_chain_config::OnChainConsensusConfig,
     validator_signer::ValidatorSigner,
     validator_verifier::random_validator_verifier,
     waypoint::Waypoint,
@@ -52,10 +55,15 @@ use futures::{
 };
 use network::{
     peer_manager::{conn_notifs_channel, ConnectionRequestSender, PeerManagerRequestSender},
-    protocols::network::{Event, NewNetworkEvents, NewNetworkSender},
+    protocols::{
+        network::{Event, NewNetworkEvents, NewNetworkSender},
+        wire::handshake::v1::ProtocolIdSet,
+    },
+    transport::ConnectionMetadata,
+    ProtocolId,
 };
 use safety_rules::{PersistentSafetyStorage, SafetyRulesManager};
-use std::{sync::Arc, time::Duration};
+use std::{iter::FromIterator, sync::Arc, time::Duration};
 use tokio::runtime::Handle;
 
 /// Auxiliary struct that is setting up node environment for the test.
@@ -96,6 +104,17 @@ impl NodeSetup {
             Waypoint::new_epoch_boundary(&LedgerInfo::mock_genesis(Some(validator_set))).unwrap();
 
         let mut nodes = vec![];
+        // pre-initialize the mapping to avoid race conditions (peer try to broadcast to someone not added yet)
+        let peer_metadata_storage = playground.peer_protocols();
+        for signer in signers.iter().take(num_nodes) {
+            let mut conn_meta = ConnectionMetadata::mock(signer.author());
+            conn_meta.application_protocols = ProtocolIdSet::from_iter([
+                ProtocolId::ConsensusDirectSendJson,
+                ProtocolId::ConsensusDirectSendBcs,
+                ProtocolId::ConsensusRpcBcs,
+            ]);
+            peer_metadata_storage.insert_connection(NetworkId::Validator, conn_meta);
+        }
         for (id, signer) in signers.iter().take(num_nodes).enumerate() {
             let (initial_data, storage) = MockStorage::start_for_testing((&validators).into());
 
@@ -143,10 +162,11 @@ impl NodeSetup {
         let (consensus_tx, consensus_rx) = diem_channel::new(QueueStyle::FIFO, 8, None);
         let (_conn_mgr_reqs_tx, conn_mgr_reqs_rx) = channel::new_test(8);
         let (_, conn_status_rx) = conn_notifs_channel::new();
-        let network_sender = ConsensusNetworkSender::new(
+        let mut network_sender = ConsensusNetworkSender::new(
             PeerManagerRequestSender::new(network_reqs_tx),
             ConnectionRequestSender::new(connection_reqs_tx),
         );
+        network_sender.initialize(playground.peer_protocols());
         let network_events = ConsensusNetworkEvents::new(consensus_rx, conn_status_rx);
         let author = signer.author();
 
@@ -175,6 +195,7 @@ impl NodeSetup {
             state_computer,
             10, // max pruned blocks in mem
             time_service.clone(),
+            10,
         ));
 
         let proposal_generator = ProposalGenerator::new(
@@ -197,13 +218,13 @@ impl NodeSetup {
             round_state,
             proposer_election,
             proposal_generator,
-            safety_rules,
+            Arc::new(Mutex::new(safety_rules)),
             network,
-            Arc::new(MockTransactionManager::new(None)),
             storage.clone(),
             false,
+            OnChainConsensusConfig::default(),
         );
-        block_on(round_manager.start(last_vote_sent));
+        block_on(round_manager.init(last_vote_sent));
         Self {
             block_store,
             round_manager,
@@ -279,7 +300,7 @@ fn new_round_on_quorum_cert() {
     let mut playground = NetworkPlayground::new(runtime.handle().clone());
     let mut nodes = NodeSetup::create_nodes(&mut playground, runtime.handle().clone(), 1);
     let node = &mut nodes[0];
-    let genesis = node.block_store.root();
+    let genesis = node.block_store.ordered_root();
     timed_block_on(&mut runtime, async {
         // round 1 should start
         let proposal_msg = node.next_proposal().await;
@@ -388,7 +409,7 @@ fn no_vote_on_mismatch_round() {
     timed_block_on(&mut runtime, async {
         let bad_proposal = ProposalMsg::new(
             block_skip_round,
-            SyncInfo::new(genesis_qc.clone(), genesis_qc.clone(), None),
+            SyncInfo::new(genesis_qc.clone(), genesis_qc.clone(), None, None),
         );
         assert!(node
             .round_manager
@@ -397,7 +418,7 @@ fn no_vote_on_mismatch_round() {
             .is_err());
         let good_proposal = ProposalMsg::new(
             correct_block.clone(),
-            SyncInfo::new(genesis_qc.clone(), genesis_qc.clone(), None),
+            SyncInfo::new(genesis_qc.clone(), genesis_qc.clone(), None, None),
         );
         node.round_manager
             .process_proposal_msg(good_proposal)
@@ -470,7 +491,7 @@ fn no_vote_on_invalid_proposer() {
     timed_block_on(&mut runtime, async {
         let bad_proposal = ProposalMsg::new(
             block_incorrect_proposer,
-            SyncInfo::new(genesis_qc.clone(), genesis_qc.clone(), None),
+            SyncInfo::new(genesis_qc.clone(), genesis_qc.clone(), None, None),
         );
         assert!(node
             .round_manager
@@ -479,7 +500,7 @@ fn no_vote_on_invalid_proposer() {
             .is_err());
         let good_proposal = ProposalMsg::new(
             correct_block.clone(),
-            SyncInfo::new(genesis_qc.clone(), genesis_qc.clone(), None),
+            SyncInfo::new(genesis_qc.clone(), genesis_qc.clone(), None, None),
         );
 
         node.round_manager
@@ -511,7 +532,7 @@ fn new_round_on_timeout_certificate() {
     timed_block_on(&mut runtime, async {
         let skip_round_proposal = ProposalMsg::new(
             block_skip_round,
-            SyncInfo::new(genesis_qc.clone(), genesis_qc.clone(), Some(tc)),
+            SyncInfo::new(genesis_qc.clone(), genesis_qc.clone(), Some(tc), None),
         );
         node.round_manager
             .process_proposal_msg(skip_round_proposal)
@@ -519,7 +540,7 @@ fn new_round_on_timeout_certificate() {
             .unwrap();
         let old_good_proposal = ProposalMsg::new(
             correct_block.clone(),
-            SyncInfo::new(genesis_qc.clone(), genesis_qc.clone(), None),
+            SyncInfo::new(genesis_qc.clone(), genesis_qc.clone(), None, None),
         );
         assert!(node
             .round_manager
@@ -540,7 +561,10 @@ fn response_on_block_retrieval() {
     let genesis_qc = certificate_for_genesis();
     let block = Block::new_proposal(vec![], 1, 1, genesis_qc.clone(), &node.signer);
     let block_id = block.id();
-    let proposal = ProposalMsg::new(block, SyncInfo::new(genesis_qc.clone(), genesis_qc, None));
+    let proposal = ProposalMsg::new(
+        block,
+        SyncInfo::new(genesis_qc.clone(), genesis_qc, None, None),
+    );
 
     timed_block_on(&mut runtime, async {
         node.round_manager
@@ -552,6 +576,7 @@ fn response_on_block_retrieval() {
         let (tx1, rx1) = oneshot::channel();
         let single_block_request = IncomingBlockRetrievalRequest {
             req: BlockRetrievalRequest::new(block_id, 1),
+            protocol: ProtocolId::ConsensusRpcBcs,
             response_sender: tx1,
         };
         node.round_manager
@@ -574,6 +599,7 @@ fn response_on_block_retrieval() {
         let (tx2, rx2) = oneshot::channel();
         let missing_block_request = IncomingBlockRetrievalRequest {
             req: BlockRetrievalRequest::new(HashValue::random(), 1),
+            protocol: ProtocolId::ConsensusRpcBcs,
             response_sender: tx2,
         };
 
@@ -597,6 +623,7 @@ fn response_on_block_retrieval() {
         let (tx3, rx3) = oneshot::channel();
         let many_block_request = IncomingBlockRetrievalRequest {
             req: BlockRetrievalRequest::new(block_id, 3),
+            protocol: ProtocolId::ConsensusRpcBcs,
             response_sender: tx3,
         };
         node.round_manager
@@ -612,7 +639,7 @@ fn response_on_block_retrieval() {
                 assert_eq!(response.status(), BlockRetrievalStatus::NotEnoughBlocks);
                 assert_eq!(block_id, response.blocks().get(0).unwrap().id());
                 assert_eq!(
-                    node.block_store.root().id(),
+                    node.block_store.ordered_root().id(),
                     response.blocks().get(1).unwrap().id()
                 );
             }
@@ -651,6 +678,7 @@ fn recover_on_restart() {
                     proposal.quorum_cert().clone(),
                     genesis_qc.clone(),
                     Some(tc.clone()),
+                    None,
                 ),
             );
             node.round_manager
@@ -679,7 +707,7 @@ fn nil_vote_on_timeout() {
     let mut playground = NetworkPlayground::new(runtime.handle().clone());
     let mut nodes = NodeSetup::create_nodes(&mut playground, runtime.handle().clone(), 1);
     let node = &mut nodes[0];
-    let genesis = node.block_store.root();
+    let genesis = node.block_store.ordered_root();
     timed_block_on(&mut runtime, async {
         node.next_proposal().await;
         // Process the outgoing vote message and verify that it contains a round signature
@@ -699,7 +727,10 @@ fn nil_vote_on_timeout() {
             genesis.timestamp_usecs()
         );
         assert_eq!(vote.vote_data().proposed().round(), 1);
-        assert_eq!(vote.vote_data().parent().id(), node.block_store.root().id());
+        assert_eq!(
+            vote.vote_data().parent().id(),
+            node.block_store.ordered_root().id()
+        );
     });
 }
 
@@ -758,9 +789,8 @@ fn sync_info_sent_on_stale_sync_info() {
     let mut behind_node = nodes.pop().unwrap();
     let mut ahead_node = nodes.pop().unwrap();
     // ahead node has one more block
-    ahead_node
-        .block_store
-        .execute_and_insert_block(block_0)
+    runtime
+        .block_on(ahead_node.block_store.execute_and_insert_block(block_0))
         .unwrap();
     ahead_node
         .block_store
@@ -829,7 +859,7 @@ fn sync_on_partial_newer_sync_info() {
             None,
         );
         // Create a sync info with newer quorum cert but older commit cert
-        let sync_info = SyncInfo::new(block_4_qc.clone(), certificate_for_genesis(), None);
+        let sync_info = SyncInfo::new(block_4_qc.clone(), certificate_for_genesis(), None, None);
         node.round_manager
             .ensure_round_and_sync_up(
                 sync_info.highest_round() + 1,
@@ -871,7 +901,8 @@ fn safety_rules_crash() {
         node.safety_rules_manager = SafetyRulesManager::new_local(safety_storage, false, false);
         let safety_rules =
             MetricsSafetyRules::new(node.safety_rules_manager.client(), node.storage.clone());
-        node.round_manager.set_safety_rules(safety_rules);
+        let safety_rules_container = Arc::new(Mutex::new(safety_rules));
+        node.round_manager.set_safety_rules(safety_rules_container);
     }
 
     timed_block_on(&mut runtime, async {

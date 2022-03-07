@@ -12,7 +12,7 @@ use crate::{
         direct_send::Message,
         rpc::{error::RpcError, InboundRpcRequest, OutboundRpcRequest},
         wire::{
-            handshake::v1::MessagingProtocolVersion,
+            handshake::v1::{MessagingProtocolVersion, ProtocolIdSet},
             messaging::v1::{
                 DirectSendMsg, NetworkMessage, NetworkMessageSink, NetworkMessageStream,
                 RpcRequest, RpcResponse,
@@ -64,7 +64,7 @@ fn build_test_peer(
             NetworkAddress::from_str("/ip4/127.0.0.1/tcp/8081").unwrap(),
             origin,
             MessagingProtocolVersion::V1,
-            [].iter().into(),
+            ProtocolIdSet::empty(),
             PeerRole::Unknown,
         ),
         socket: a,
@@ -706,7 +706,7 @@ fn peer_send_rpc_concurrent() {
 fn peer_send_rpc_cancel() {
     ::diem_logger::Logger::init_for_testing();
     let rt = Runtime::new().unwrap();
-    let (peer, mut peer_handle, mut connection, _connection_notifs_rx, _peer_notifs_rx) =
+    let (peer, peer_handle, mut connection, _connection_notifs_rx, _peer_notifs_rx) =
         build_test_peer(
             rt.handle().clone(),
             TimeService::mock(),
@@ -767,7 +767,7 @@ fn peer_send_rpc_timeout() {
     ::diem_logger::Logger::init_for_testing();
     let rt = Runtime::new().unwrap();
     let mock_time = MockTimeService::new();
-    let (peer, mut peer_handle, mut connection, _connection_notifs_rx, _peer_notifs_rx) =
+    let (peer, peer_handle, mut connection, _connection_notifs_rx, _peer_notifs_rx) =
         build_test_peer(
             rt.handle().clone(),
             mock_time.clone().into(),

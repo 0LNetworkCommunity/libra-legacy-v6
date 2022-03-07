@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
+    application::storage::PeerMetadataStorage,
     constants,
     peer::DisconnectReason,
     peer_manager::{
@@ -9,7 +10,7 @@ use crate::{
         PeerManager, PeerManagerNotification, PeerManagerRequest, TransportNotification,
     },
     protocols::wire::{
-        handshake::v1::MessagingProtocolVersion,
+        handshake::v1::{MessagingProtocolVersion, ProtocolIdSet},
         messaging::v1::{ErrorCode, NetworkMessage, NetworkMessageSink, NetworkMessageStream},
     },
     transport,
@@ -38,8 +39,6 @@ use tokio_util::compat::{
     FuturesAsyncReadCompatExt, TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt,
 };
 
-const TEST_PROTOCOL: ProtocolId = ProtocolId::ConsensusRpc;
-
 // Builds a concrete typed transport (instead of using impl Trait) for testing PeerManager.
 // Specifically this transport is compatible with the `build_test_connection` test helper making
 // it easy to build connections without going through the whole transport pipeline.
@@ -57,7 +56,7 @@ pub fn build_test_transport(
                     addr,
                     origin,
                     MessagingProtocolVersion::V1,
-                    [TEST_PROTOCOL].iter().into(),
+                    ProtocolIdSet::mock(),
                     PeerRole::Unknown,
                 ),
             })
@@ -103,10 +102,11 @@ fn build_test_peer_manager(
         build_test_transport(),
         NetworkContext::mock_with_peer_id(peer_id),
         "/memory/0".parse().unwrap(),
+        PeerMetadataStorage::test(),
         Arc::new(RwLock::new(HashMap::new())),
         peer_manager_request_rx,
         connection_reqs_rx,
-        [(TEST_PROTOCOL, hello_tx)].iter().cloned().collect(),
+        [(ProtocolId::mock(), hello_tx)].iter().cloned().collect(),
         vec![conn_status_tx],
         constants::NETWORK_CHANNEL_SIZE,
         constants::MAX_CONCURRENT_NETWORK_REQS,
@@ -238,7 +238,7 @@ fn create_connection<TSocket: transport::TSocket>(
             addr,
             origin,
             MessagingProtocolVersion::V1,
-            [TEST_PROTOCOL].iter().into(),
+            ProtocolIdSet::mock(),
             PeerRole::Unknown,
         ),
     }
@@ -563,7 +563,7 @@ fn peer_manager_simultaneous_dial_disconnect_event() {
                 NetworkAddress::mock(),
                 ConnectionOrigin::Inbound,
                 MessagingProtocolVersion::V1,
-                [TEST_PROTOCOL].iter().into(),
+                ProtocolIdSet::mock(),
                 PeerRole::Unknown,
             ),
             DisconnectReason::ConnectionLost,
@@ -604,7 +604,7 @@ fn test_dial_disconnect() {
         // Send DisconnectPeer request to PeerManager.
         let (disconnect_resp_tx, disconnect_resp_rx) = oneshot::channel();
         peer_manager
-            .handle_connection_request(ConnectionRequest::DisconnectPeer(
+            .handle_outbound_connection_request(ConnectionRequest::DisconnectPeer(
                 ids[0],
                 disconnect_resp_tx,
             ))
@@ -618,7 +618,7 @@ fn test_dial_disconnect() {
                 NetworkAddress::mock(),
                 ConnectionOrigin::Outbound,
                 MessagingProtocolVersion::V1,
-                [TEST_PROTOCOL].iter().into(),
+                ProtocolIdSet::mock(),
                 PeerRole::Unknown,
             ),
             DisconnectReason::Requested,

@@ -11,49 +11,55 @@ use crate::{
     txn_manager::MempoolProxy,
     util::time_service::ClockTimeService,
 };
-use channel::diem_channel;
+use consensus_notifications::ConsensusNotificationSender;
 use diem_config::config::NodeConfig;
 use diem_logger::prelude::*;
 use diem_mempool::ConsensusRequest;
-use diem_types::on_chain_config::OnChainConfigPayload;
+use event_notifications::ReconfigNotificationListener;
 use execution_correctness::ExecutionCorrectnessManager;
 use futures::channel::mpsc;
-use state_sync::client::StateSyncClient;
+use network::application::storage::PeerMetadataStorage;
 use std::sync::Arc;
-use storage_interface::DbReader;
+use storage_interface::DbReaderWriter;
 use tokio::runtime::{self, Runtime};
 
 /// Helper function to start consensus based on configuration and return the runtime
 pub fn start_consensus(
     node_config: &NodeConfig,
-    network_sender: ConsensusNetworkSender,
+    mut network_sender: ConsensusNetworkSender,
     network_events: ConsensusNetworkEvents,
-    state_sync_client: StateSyncClient,
+    state_sync_notifier: Arc<dyn ConsensusNotificationSender>,
     consensus_to_mempool_sender: mpsc::Sender<ConsensusRequest>,
-    diem_db: Arc<dyn DbReader>,
-    reconfig_events: diem_channel::Receiver<(), OnChainConfigPayload>,
+    diem_db: DbReaderWriter,
+    reconfig_events: ReconfigNotificationListener,
+    peer_metadata_storage: Arc<PeerMetadataStorage>,
 ) -> Runtime {
     let runtime = runtime::Builder::new_multi_thread()
         .thread_name("consensus")
         .enable_all()
         .build()
         .expect("Failed to create Tokio runtime!");
-    let storage = Arc::new(StorageWriteProxy::new(node_config, diem_db));
+    let storage = Arc::new(StorageWriteProxy::new(node_config, diem_db.reader.clone()));
     let txn_manager = Arc::new(MempoolProxy::new(
         consensus_to_mempool_sender,
         node_config.consensus.mempool_poll_count,
         node_config.consensus.mempool_txn_pull_timeout_ms,
         node_config.consensus.mempool_executed_txn_timeout_ms,
     ));
-    let execution_correctness_manager = ExecutionCorrectnessManager::new(node_config);
+    let execution_correctness_manager = ExecutionCorrectnessManager::new(node_config, diem_db);
+
     let state_computer = Arc::new(ExecutionProxy::new(
         execution_correctness_manager.client(),
-        state_sync_client,
+        txn_manager.clone(),
+        state_sync_notifier,
+        runtime.handle(),
     ));
+
     let time_service = Arc::new(ClockTimeService::new(runtime.handle().clone()));
 
     let (timeout_sender, timeout_receiver) = channel::new(1_024, &counters::PENDING_ROUND_TIMEOUTS);
     let (self_sender, self_receiver) = channel::new(1_024, &counters::PENDING_SELF_MESSAGES);
+    network_sender.initialize(peer_metadata_storage);
 
     let epoch_mgr = EpochManager::new(
         node_config,

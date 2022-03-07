@@ -7,10 +7,11 @@ use crate::{
     keys::{load_key, EncodingType, KeyType},
     validator_config::DecryptedValidatorConfig,
     validator_set::DecryptedValidatorInfo,
+    validator_state::VerifyValidatorStateResult,
     TransactionContext,
 };
-use diem_config::{config, config::Peer};
-use diem_crypto::{ed25519::Ed25519PublicKey, x25519};
+use diem_config::{config, config::Peer, network_id::NetworkId};
+use diem_crypto::{ed25519::Ed25519PublicKey, traits::ValidCryptoMaterialStringExt, x25519};
 use diem_management::{error::Error, secure_backend::DISK};
 use diem_types::{
     account_address::AccountAddress, chain_id::ChainId, network_address::NetworkAddress,
@@ -62,17 +63,48 @@ impl OperationalTool {
         command.account_resource()
     }
 
-    pub fn check_endpoint(&self, network_address: NetworkAddress) -> Result<String, Error> {
+    pub fn check_endpoint(
+        &self,
+        network_id: &NetworkId,
+        network_address: NetworkAddress,
+    ) -> Result<String, Error> {
         let args = format!(
             "
                 {command}
                 --address {network_address}
+                --chain-id {chain_id}
+                --network-id {network_id}
             ",
             command = command(TOOL_NAME, CommandName::CheckEndpoint),
+            chain_id = self.chain_id.id(),
             network_address = network_address,
+            network_id = network_id
         );
         let command = Command::from_iter(args.split_whitespace());
         command.check_endpoint()
+    }
+
+    pub fn check_endpoint_with_key(
+        &self,
+        network_id: &NetworkId,
+        network_address: NetworkAddress,
+        private_key: &x25519::PrivateKey,
+    ) -> Result<String, Error> {
+        let args = format!(
+            "
+                {command}
+                --address {network_address}
+                --chain-id {chain_id}
+                --network-id {network_id}
+                --private-key {private_key}
+            ",
+            command = command(TOOL_NAME, CommandName::CheckEndpoint),
+            chain_id = self.chain_id.id(),
+            network_address = network_address,
+            network_id = network_id,
+            private_key = private_key.to_encoded_string().unwrap(),
+        );
+        Command::from_iter(args.split_whitespace()).check_endpoint()
     }
 
     pub fn create_account(
@@ -677,6 +709,24 @@ impl OperationalTool {
             |cmd| cmd.remove_validator(),
         )
     }
+
+    pub fn verify_validator_state(
+        &self,
+        backend: &config::SecureBackend,
+    ) -> Result<VerifyValidatorStateResult, Error> {
+        let args = format!(
+            "
+                {command}
+                --json-server {host}
+                --validator-backend {backend_args}
+            ",
+            command = command(TOOL_NAME, CommandName::VerifyValidatorState),
+            host = self.host,
+            backend_args = backend_args(backend)?,
+        );
+        let command = Command::from_iter(args.split_whitespace());
+        command.verify_validator_state()
+    }
 }
 
 fn command(tool_name: &'static str, command: CommandName) -> String {
@@ -705,14 +755,19 @@ fn optional_flag(flag: &'static str, enable_flag: bool) -> String {
 /// TODO: Support other types of storage
 fn backend_args(backend: &config::SecureBackend) -> Result<String, Error> {
     match backend {
-        config::SecureBackend::OnDiskStorage(config) => Ok(format!(
-            "backend={backend};\
-            path={path};\
-            namespace={namespace}",
-            backend = DISK,
-            namespace = config.namespace.clone().unwrap(),
-            path = config.path.to_str().unwrap(),
-        )),
+        config::SecureBackend::OnDiskStorage(config) => {
+            let mut s = format!(
+                "backend={backend};\
+                 path={path}",
+                backend = DISK,
+                path = config.path.to_str().unwrap(),
+            );
+            if let Some(namespace) = config.namespace.as_ref() {
+                s.push_str(&format!(";namespace={}", namespace));
+            }
+
+            Ok(s)
+        }
         _ => Err(Error::UnexpectedError("Storage isn't on disk".to_string())),
     }
 }

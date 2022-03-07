@@ -6,20 +6,17 @@ use crate::{
     network::{MempoolNetworkEvents, MempoolNetworkSender},
     shared_mempool::{
         coordinator::{coordinator, gc_coordinator, snapshot_job},
-        peer_manager::PeerManager,
-        types::{SharedMempool, SharedMempoolNotification},
+        types::{MempoolEventsReceiver, SharedMempool, SharedMempoolNotification},
     },
-    CommitNotification, ConsensusRequest, SubmissionStatus,
+    ConsensusRequest,
 };
-use anyhow::Result;
-use channel::diem_channel;
-use diem_config::{config::NodeConfig, network_id::NodeNetworkId};
+use diem_config::{config::NodeConfig, network_id::NetworkId};
 use diem_infallible::{Mutex, RwLock};
-use diem_types::{on_chain_config::OnChainConfigPayload, transaction::SignedTransaction};
-use futures::channel::{
-    mpsc::{self, Receiver, UnboundedSender},
-    oneshot,
-};
+
+use event_notifications::ReconfigNotificationListener;
+use futures::channel::mpsc::{self, Receiver, UnboundedSender};
+use mempool_notifications::MempoolNotificationListener;
+use network::application::storage::PeerMetadataStorage;
 use std::{collections::HashMap, sync::Arc};
 use storage_interface::DbReader;
 use tokio::runtime::{Builder, Handle, Runtime};
@@ -36,35 +33,35 @@ pub(crate) fn start_shared_mempool<V>(
     mempool: Arc<Mutex<CoreMempool>>,
     // First element in tuple is the network ID.
     // See `NodeConfig::is_upstream_peer` for the definition of network ID.
-    mempool_network_handles: Vec<(NodeNetworkId, MempoolNetworkSender, MempoolNetworkEvents)>,
-    client_events: mpsc::Receiver<(SignedTransaction, oneshot::Sender<Result<SubmissionStatus>>)>,
+    mempool_network_handles: Vec<(NetworkId, MempoolNetworkSender, MempoolNetworkEvents)>,
+    client_events: MempoolEventsReceiver,
     consensus_requests: mpsc::Receiver<ConsensusRequest>,
-    state_sync_requests: mpsc::Receiver<CommitNotification>,
-    mempool_reconfig_events: diem_channel::Receiver<(), OnChainConfigPayload>,
+    mempool_listener: MempoolNotificationListener,
+    mempool_reconfig_events: ReconfigNotificationListener,
     db: Arc<dyn DbReader>,
     validator: Arc<RwLock<V>>,
     subscribers: Vec<UnboundedSender<SharedMempoolNotification>>,
+    peer_metadata_storage: Arc<PeerMetadataStorage>,
 ) where
     V: TransactionValidation + 'static,
 {
-    let peer_manager = Arc::new(PeerManager::new(config.base.role, config.mempool.clone()));
-
     let mut all_network_events = vec![];
     let mut network_senders = HashMap::new();
     for (network_id, network_sender, network_events) in mempool_network_handles.into_iter() {
-        all_network_events.push((network_id.clone(), network_events));
+        all_network_events.push((network_id, network_events));
         network_senders.insert(network_id, network_sender);
     }
 
-    let smp = SharedMempool {
-        mempool: mempool.clone(),
-        config: config.mempool.clone(),
+    let smp = SharedMempool::new(
+        mempool.clone(),
+        config.mempool.clone(),
         network_senders,
         db,
         validator,
-        peer_manager,
         subscribers,
-    };
+        config.base.role,
+        peer_metadata_storage,
+    );
 
     executor.spawn(coordinator(
         smp,
@@ -72,7 +69,7 @@ pub(crate) fn start_shared_mempool<V>(
         all_network_events,
         client_events,
         consensus_requests,
-        state_sync_requests,
+        mempool_listener,
         mempool_reconfig_events,
     ));
 
@@ -92,18 +89,19 @@ pub fn bootstrap(
     db: Arc<dyn DbReader>,
     // The first element in the tuple is the ID of the network that this network is a handle to.
     // See `NodeConfig::is_upstream_peer` for the definition of network ID.
-    mempool_network_handles: Vec<(NodeNetworkId, MempoolNetworkSender, MempoolNetworkEvents)>,
-    client_events: Receiver<(SignedTransaction, oneshot::Sender<Result<SubmissionStatus>>)>,
+    mempool_network_handles: Vec<(NetworkId, MempoolNetworkSender, MempoolNetworkEvents)>,
+    client_events: MempoolEventsReceiver,
     consensus_requests: Receiver<ConsensusRequest>,
-    state_sync_requests: Receiver<CommitNotification>,
-    mempool_reconfig_events: diem_channel::Receiver<(), OnChainConfigPayload>,
+    mempool_listener: MempoolNotificationListener,
+    mempool_reconfig_events: ReconfigNotificationListener,
+    peer_metadata_storage: Arc<PeerMetadataStorage>,
 ) -> Runtime {
     let runtime = Builder::new_multi_thread()
         .thread_name("shared-mem")
         .enable_all()
         .build()
         .expect("[shared mempool] failed to create runtime");
-    let mempool = Arc::new(Mutex::new(CoreMempool::new(&config)));
+    let mempool = Arc::new(Mutex::new(CoreMempool::new(config)));
     let vm_validator = Arc::new(RwLock::new(VMValidator::new(Arc::clone(&db))));
     start_shared_mempool(
         runtime.handle(),
@@ -112,11 +110,12 @@ pub fn bootstrap(
         mempool_network_handles,
         client_events,
         consensus_requests,
-        state_sync_requests,
+        mempool_listener,
         mempool_reconfig_events,
         db,
         vm_validator,
         vec![],
+        peer_metadata_storage,
     );
     runtime
 }

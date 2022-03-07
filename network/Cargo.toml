@@ -10,11 +10,13 @@ publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.38"
+anyhow = "1.0.52"
+async-trait = "0.1.42"
 bytes = { version = "1.0.1", features = ["serde"] }
 futures = "0.3.12"
 futures-util = "0.3.12"
 hex = "0.4.3"
+itertools = "0.10.1"
 once_cell = "1.7.2"
 pin-project = "1.0.5"
 proptest = { version = "1.0.0", default-features = true, optional = true }
@@ -23,34 +25,36 @@ rand = { version = "0.8.3", features = ["small_rng"] }
 rand_core = { version = "0.6.2", optional = true }
 serde = { version = "1.0.124", default-features = false }
 serde_bytes = "0.11.5"
+serde_json = "1.0.64"
 thiserror = "1.0.24"
-tokio = { version = "1.3.0", features = ["full"] }
+tokio = { version = "1.8.1", features = ["full"] }
 tokio-retry = "0.3.0"
 tokio-stream = "0.1.4"
 tokio-util = { version = "0.6.4", features = ["compat", "codec"] }
 
-bitvec = { path = "../common/bitvec", package = "diem-bitvec" }
-channel = { path = "../common/channel" }
+bitvec = { path = "../crates/diem-bitvec", package = "diem-bitvec" }
+channel = { path = "../crates/channel" }
 bcs = "0.1.2"
 diem-config = { path = "../config" }
-diem-crypto = { path = "../crypto/crypto" }
-diem-crypto-derive = { path = "../crypto/crypto-derive" }
-diem-infallible = { path = "../common/infallible" }
-diem-logger = { path = "../common/logger" }
-diem-metrics = { path = "../common/metrics" }
-diem-proptest-helpers = { path = "../common/proptest-helpers", optional = true }
-diem-rate-limiter = { path = "../common/rate-limiter"}
-diem-time-service = { path = "../common/time-service", features = ["async"] }
+diem-crypto = { path = "../crates/diem-crypto" }
+diem-crypto-derive = { path = "../crates/diem-crypto-derive" }
+diem-id-generator = { path = "../crates/diem-id-generator" }
+diem-infallible = { path = "../crates/diem-infallible" }
+diem-logger = { path = "../crates/diem-logger" }
+diem-metrics = { path = "../crates/diem-metrics" }
+diem-proptest-helpers = { path = "../crates/diem-proptest-helpers", optional = true }
+diem-rate-limiter = { path = "../crates/diem-rate-limiter"}
+diem-time-service = { path = "../crates/diem-time-service", features = ["async"] }
 diem-types = { path = "../types" }
-diem-workspace-hack = { path = "../common/workspace-hack" }
+diem-workspace-hack = { version = "0.1", path = "../crates/diem-workspace-hack" }
 memsocket = { path = "./memsocket", optional = true }
 netcore = { path = "./netcore" }
-num-variants = { path = "../common/num-variants" }
-short-hex-str = { path = "../common/short-hex-str" }
+num-variants = { path = "../crates/num-variants" }
+short-hex-str = { path = "../crates/short-hex-str" }
 
 [dev-dependencies]
 criterion = "0.3.4"
-diem-proptest-helpers = { path = "../common/proptest-helpers" }
+diem-proptest-helpers = { path = "../crates/diem-proptest-helpers" }
 diem-types = { path = "../types", features = ["fuzzing"] }
 maplit = "1.0.2"
 memsocket = { path = "./memsocket" }
@@ -63,7 +67,7 @@ socket-bench-server = { path = "./socket-bench-server" }
 
 [features]
 default = []
-fuzzing = ["bitvec/fuzzing", "diem-crypto/fuzzing", "diem-types/fuzzing", "diem-proptest-helpers", "diem-time-service/testing", "diem-types/fuzzing", "memsocket/testing", "netcore/fuzzing", "proptest", "proptest-derive", "rand_core"]
+fuzzing = ["bitvec/fuzzing", "diem-config/fuzzing", "diem-crypto/fuzzing", "diem-types/fuzzing", "diem-proptest-helpers", "diem-time-service/testing", "diem-types/fuzzing", "memsocket/testing", "netcore/fuzzing", "proptest", "proptest-derive", "rand_core"]
 testing = ["diem-config/testing", "diem-time-service/testing", "memsocket/testing", "netcore/testing"]
 
 [[bench]]

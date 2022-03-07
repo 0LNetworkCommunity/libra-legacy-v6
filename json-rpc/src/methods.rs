@@ -6,35 +6,38 @@ use crate::{
     data,
     errors::JsonRpcError,
     views::{
-        AccountStateWithProofView, AccountView, CurrencyInfoView, EventView, EventWithProofView,
-        MetadataView, TowerStateResourceView, OracleUpgradeStateView, StateProofView,
-        TransactionListView, TransactionView, TransactionsWithProofsView, WaypointView
+        AccountStateWithProofView, AccountTransactionsWithProofView, AccountView,
+        AccumulatorConsistencyProofView, CurrencyInfoView, EventByVersionWithProofView, EventView,
+        EventWithProofView, MetadataView, StateProofView, OracleUpgradeStateView, 
+        TransactionListView, TransactionView, TowerStateResourceView, 
+        TransactionsWithProofsView, WaypointView
     },
 };
 use anyhow::Result;
 use diem_config::config::RoleType;
 use diem_json_rpc_types::request::{
     GetAccountParams, GetAccountStateWithProofParams, GetAccountTransactionParams,
-    GetAccountTransactionsParams, GetCurrenciesParams, GetEventsParams, GetEventsWithProofsParams,
-    GetMetadataParams, GetTowerStateParams, GetNetworkStatusParams, GetStateProofParams,
-    GetTransactionsParams, GetTransactionsWithProofsParams, MethodRequest,
-    SubmitParams,
+    GetAccountTransactionsParams, GetAccountTransactionsWithProofsParams,
+    GetAccumulatorConsistencyProofParams, GetCurrenciesParams, GetEventByVersionWithProof,
+    GetEventsParams, GetEventsWithProofsParams, GetMetadataParams, GetNetworkStatusParams,
+    GetResourcesParams, GetStateProofParams, GetTowerStateParams, GetTransactionsParams,
+    GetTransactionsWithProofsParams, MethodRequest, SubmitParams,
 };
-use diem_mempool::{MempoolClientSender, SubmissionStatus};
+use diem_mempool::{MempoolClientRequest, MempoolClientSender, SubmissionStatus};
 use diem_types::{
-    chain_id::ChainId,
-    ledger_info::LedgerInfoWithSignatures, mempool_status::MempoolStatusCode,
+    chain_id::ChainId, ledger_info::LedgerInfoWithSignatures, mempool_status::MempoolStatusCode,
     transaction::SignedTransaction,
 };
 use fail::fail_point;
 use futures::{channel::oneshot, SinkExt};
+use move_resource_viewer::AnnotatedMoveStruct;
 use serde_json::Value;
-use std::{borrow::Borrow, sync::Arc};
-use storage_interface::DbReader;
+use std::{borrow::Borrow, collections::BTreeMap, sync::Arc};
+use storage_interface::MoveDbReader;
 
 #[derive(Clone)]
 pub(crate) struct JsonRpcService {
-    db: Arc<dyn DbReader>,
+    db: Arc<dyn MoveDbReader>,
     mempool_sender: MempoolClientSender,
     role: RoleType,
     chain_id: ChainId,
@@ -44,7 +47,7 @@ pub(crate) struct JsonRpcService {
 
 impl JsonRpcService {
     pub fn new(
-        db: Arc<dyn DbReader>,
+        db: Arc<dyn MoveDbReader>,
         mempool_sender: MempoolClientSender,
         role: RoleType,
         chain_id: ChainId,
@@ -69,7 +72,10 @@ impl JsonRpcService {
 
         self.mempool_sender
             .clone()
-            .send((transaction, req_sender))
+            .send(MempoolClientRequest::SubmitTransaction(
+                transaction,
+                req_sender,
+            ))
             .await?;
 
         callback.await?
@@ -84,7 +90,6 @@ impl JsonRpcService {
 
         self.db.get_latest_ledger_info()
     }
-
 
     pub fn chain_id(&self) -> ChainId {
         self.chain_id
@@ -128,18 +133,16 @@ impl<'a> Handler<'a> {
     }
 
     fn version_param(&self, version: Option<u64>, name: &str) -> Result<u64, JsonRpcError> {
-        let version = if let Some(version) = version {
-            if version > self.version() {
-                return Err(JsonRpcError::invalid_param(&format!(
-                    "{} should be <= known latest version {}",
-                    name,
-                    self.version()
-                )));
-            }
-            version
-        } else {
-            self.version()
-        };
+        let latest_ledger_version = self.version();
+        let version = version.unwrap_or(latest_ledger_version);
+
+        if version > latest_ledger_version {
+            return Err(JsonRpcError::invalid_param(&format!(
+                "{} should be <= known latest version {}",
+                name, latest_ledger_version,
+            )));
+        }
+
         Ok(version)
     }
 
@@ -170,8 +173,14 @@ impl<'a> Handler<'a> {
             MethodRequest::GetNetworkStatus(params) => {
                 serde_json::to_value(self.get_network_status(params).await?)?
             }
+            MethodRequest::GetResources(params) => {
+                serde_json::to_value(self.get_resources(params).await?)?
+            }
             MethodRequest::GetStateProof(params) => {
                 serde_json::to_value(self.get_state_proof(params).await?)?
+            }
+            MethodRequest::GetAccumulatorConsistencyProof(params) => {
+                serde_json::to_value(self.get_accumulator_consistency_proof(params).await?)?
             }
             MethodRequest::GetAccountStateWithProof(params) => {
                 serde_json::to_value(self.get_account_state_with_proof(params).await?)?
@@ -179,10 +188,15 @@ impl<'a> Handler<'a> {
             MethodRequest::GetTransactionsWithProofs(params) => {
                 serde_json::to_value(self.get_transactions_with_proofs(params).await?)?
             }
+            MethodRequest::GetAccountTransactionsWithProofs(params) => {
+                serde_json::to_value(self.get_account_transactions_with_proofs(params).await?)?
+            }
             MethodRequest::GetEventsWithProofs(params) => {
                 serde_json::to_value(self.get_events_with_proofs(params).await?)?
             }
-
+            MethodRequest::GetEventByVersionWithProof(params) => {
+                serde_json::to_value(self.get_event_by_version_with_proof(params).await?)?
+            }
             //////// 0L ////////
             MethodRequest::GetTowerStateView(params) => {
                 serde_json::to_value(self.get_miner_state(params).await?)?
@@ -192,7 +206,7 @@ impl<'a> Handler<'a> {
             }
             MethodRequest::GetWaypointView() => {
                 serde_json::to_value(self.get_waypoint().await?)?
-            }
+            }            
         };
         Ok(response)
     }
@@ -283,10 +297,10 @@ impl<'a> Handler<'a> {
         } = params;
         data::get_account_transaction(
             self.service.db.borrow(),
-            self.version(),
             account,
             sequence_number,
             include_events,
+            self.version(),
         )
     }
 
@@ -305,11 +319,37 @@ impl<'a> Handler<'a> {
         self.service.validate_page_size_limit(limit as usize)?;
         data::get_account_transactions(
             self.service.db.borrow(),
-            self.version(),
             account,
             start,
             limit,
             include_events,
+            self.version(),
+        )
+    }
+
+    /// Return a serialized list of an account's transactions along with a proof for
+    /// each transaction.
+    async fn get_account_transactions_with_proofs(
+        &self,
+        params: GetAccountTransactionsWithProofsParams,
+    ) -> Result<AccountTransactionsWithProofView, JsonRpcError> {
+        let GetAccountTransactionsWithProofsParams {
+            account,
+            start,
+            limit,
+            include_events,
+            ledger_version,
+        } = params;
+        let ledger_version = self.version_param(ledger_version, "ledger_version")?;
+
+        self.service.validate_page_size_limit(limit as usize)?;
+        data::get_account_transactions_with_proofs(
+            self.service.db.borrow(),
+            account,
+            start,
+            limit,
+            include_events,
+            ledger_version,
         )
     }
 
@@ -332,6 +372,24 @@ impl<'a> Handler<'a> {
         data::get_events_with_proofs(self.service.db.borrow(), self.version(), key, start, limit)
     }
 
+    /// Returns the latest event at or below the requested version along with proof.
+    async fn get_event_by_version_with_proof(
+        &self,
+        params: GetEventByVersionWithProof,
+    ) -> Result<EventByVersionWithProofView, JsonRpcError> {
+        let GetEventByVersionWithProof { key, version } = params;
+
+        let version = self.version_param(version, "version")?;
+        let ledger_version = self.version();
+
+        data::get_event_by_version_with_proof(
+            self.service.db.borrow(),
+            ledger_version,
+            key,
+            version,
+        )
+    }
+
     /// Returns meta information about supported currencies
     async fn get_currencies(
         &self,
@@ -348,13 +406,39 @@ impl<'a> Handler<'a> {
         data::get_network_status(self.service.role.as_str())
     }
 
+    /// Returns all resources in the account specified by `params`
+    async fn get_resources(
+        &self,
+        params: GetResourcesParams,
+    ) -> Result<BTreeMap<String, AnnotatedMoveStruct>, JsonRpcError> {
+        let version = self.version_param(params.version, "version")?;
+        data::get_resources(
+            self.service.db.borrow(),
+            self.version(),
+            params.account,
+            version,
+        )
+    }
+
     /// Returns proof of new state relative to version known to client
     async fn get_state_proof(
         &self,
         params: GetStateProofParams,
     ) -> Result<StateProofView, JsonRpcError> {
         let version = self.version_param(Some(params.version), "version")?;
-        data::get_state_proof(self.service.db.borrow(), version, &self.ledger_info)
+        data::get_state_proof(self.service.db.borrow(), version, self.ledger_info.clone())
+    }
+
+    async fn get_accumulator_consistency_proof(
+        &self,
+        params: GetAccumulatorConsistencyProofParams,
+    ) -> Result<AccumulatorConsistencyProofView, JsonRpcError> {
+        let ledger_version = self.version_param(params.ledger_version, "ledger_version")?;
+        data::get_accumulator_consistency_proof(
+            self.service.db.borrow(),
+            params.client_known_version,
+            ledger_version,
+        )
     }
 
     /// Returns the account state to the client, alongside a proof relative to the version and
@@ -394,5 +478,6 @@ impl<'a> Handler<'a> {
         &self,
     ) -> Result<WaypointView, JsonRpcError> {
         data::get_waypoint(self.ledger_info)
-    }
+    }    
 }
+

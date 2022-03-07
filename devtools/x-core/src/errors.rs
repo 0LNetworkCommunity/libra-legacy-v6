@@ -1,17 +1,10 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use guppy::TargetSpecError;
+use camino::{Utf8Path, Utf8PathBuf};
 use hex::FromHexError;
 use serde::{de, ser};
-use std::{
-    borrow::Cow,
-    error, fmt, io,
-    path::{Path, PathBuf},
-    process::ExitStatus,
-    result,
-    str::Utf8Error,
-};
+use std::{borrow::Cow, error, fmt, io, process::ExitStatus, result, str::Utf8Error};
 
 /// Type alias for the return type for `run` methods.
 pub type Result<T, E = SystemError> = result::Result<T, E>;
@@ -21,8 +14,8 @@ pub type Result<T, E = SystemError> = result::Result<T, E>;
 #[non_exhaustive]
 pub enum SystemError {
     CwdNotInProjectRoot {
-        current_dir: PathBuf,
-        project_root: &'static Path,
+        current_dir: Utf8PathBuf,
+        project_root: &'static Utf8Path,
     },
     Exec {
         cmd: &'static str,
@@ -56,10 +49,6 @@ pub enum SystemError {
     Serde {
         context: Cow<'static, str>,
         err: Box<dyn error::Error + Send + Sync>,
-    },
-    TargetSpec {
-        context: Cow<'static, str>,
-        err: TargetSpecError,
     },
 }
 
@@ -128,13 +117,6 @@ impl SystemError {
             err: Box::new(err),
         }
     }
-
-    pub fn target_spec(context: impl Into<Cow<'static, str>>, err: TargetSpecError) -> Self {
-        SystemError::TargetSpec {
-            context: context.into(),
-            err,
-        }
-    }
 }
 
 impl fmt::Display for SystemError {
@@ -146,8 +128,7 @@ impl fmt::Display for SystemError {
             } => write!(
                 f,
                 "current dir {} not in project root {}",
-                current_dir.display(),
-                project_root.display(),
+                current_dir, project_root,
             ),
             SystemError::Exec { cmd, status } => match status.code() {
                 Some(code) => write!(f, "'{}' failed with exit code {}", cmd, code),
@@ -162,8 +143,7 @@ impl fmt::Display for SystemError {
             | SystemError::Serde { context, .. }
             | SystemError::Guppy { context, .. }
             | SystemError::HakariCargoToml { context, .. }
-            | SystemError::HakariTomlOut { context, .. }
-            | SystemError::TargetSpec { context, .. } => write!(f, "while {}", context),
+            | SystemError::HakariTomlOut { context, .. } => write!(f, "while {}", context),
         }
     }
 }
@@ -180,7 +160,6 @@ impl error::Error for SystemError {
             SystemError::HakariCargoToml { err, .. } => Some(err),
             SystemError::HakariTomlOut { err, .. } => Some(err),
             SystemError::NonUtf8Path { err, .. } => Some(err),
-            SystemError::TargetSpec { err, .. } => Some(err),
             SystemError::Serde { err, .. } => Some(err.as_ref()),
         }
     }

@@ -20,8 +20,9 @@ pub mod schema;
 use crate::{
     metrics::{
         DIEM_SCHEMADB_BATCH_COMMIT_BYTES, DIEM_SCHEMADB_BATCH_COMMIT_LATENCY_SECONDS,
-        DIEM_SCHEMADB_DELETES, DIEM_SCHEMADB_GET_BYTES, DIEM_SCHEMADB_GET_LATENCY_SECONDS,
-        DIEM_SCHEMADB_ITER_BYTES, DIEM_SCHEMADB_ITER_LATENCY_SECONDS, DIEM_SCHEMADB_PUT_BYTES,
+        DIEM_SCHEMADB_BATCH_PUT_LATENCY_SECONDS, DIEM_SCHEMADB_DELETES, DIEM_SCHEMADB_GET_BYTES,
+        DIEM_SCHEMADB_GET_LATENCY_SECONDS, DIEM_SCHEMADB_ITER_BYTES,
+        DIEM_SCHEMADB_ITER_LATENCY_SECONDS, DIEM_SCHEMADB_PUT_BYTES,
     },
     schema::{KeyCodec, Schema, SeekKeyCodec, ValueCodec},
 };
@@ -68,6 +69,9 @@ impl SchemaBatch {
 
     /// Adds an insert/update operation to the batch.
     pub fn put<S: Schema>(&mut self, key: &S::Key, value: &S::Value) -> Result<()> {
+        let _timer = DIEM_SCHEMADB_BATCH_PUT_LATENCY_SECONDS
+            .with_label_values(&["unknown"])
+            .start_timer();
         let key = <S::Key as KeyCodec<S>>::encode_key(key)?;
         let value = <S::Value as ValueCodec<S>>::encode_value(value)?;
         self.rows
@@ -319,7 +323,7 @@ impl DB {
             .with_label_values(&[S::COLUMN_FAMILY_NAME])
             .start_timer();
 
-        let k = <S::Key as KeyCodec<S>>::encode_key(&schema_key)?;
+        let k = <S::Key as KeyCodec<S>>::encode_key(schema_key)?;
         let cf_handle = self.get_cf_handle(S::COLUMN_FAMILY_NAME)?;
 
         let result = self.inner.get_cf(cf_handle, &k)?;
@@ -444,7 +448,7 @@ impl DB {
 
     pub fn get_property(&self, cf_name: &str, property_name: &str) -> Result<u64> {
         self.inner
-            .property_int_value_cf(self.get_cf_handle(&cf_name)?, property_name)?
+            .property_int_value_cf(self.get_cf_handle(cf_name)?, property_name)?
             .ok_or_else(|| {
                 format_err!(
                     "Unable to get property \"{}\" of  column family \"{}\".",
@@ -452,6 +456,12 @@ impl DB {
                     cf_name,
                 )
             })
+    }
+
+    /// Creates new physical DB checkpoint in directory specified by `path`.
+    pub fn create_checkpoint<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        rocksdb::checkpoint::Checkpoint::new(&self.inner)?.create_checkpoint(path)?;
+        Ok(())
     }
 }
 

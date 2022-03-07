@@ -17,6 +17,7 @@ mod consensusdb;
 mod counters;
 mod epoch_manager;
 mod error;
+mod experimental;
 mod liveness;
 mod logging;
 mod metrics_safety_rules;
@@ -42,4 +43,3 @@ pub mod network_interface;
 
 #[cfg(feature = "fuzzing")]
 pub use round_manager::round_manager_fuzzing;
-pub use util::config_subscription::gen_consensus_reconfig_subscription;

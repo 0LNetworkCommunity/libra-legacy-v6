@@ -165,7 +165,7 @@ impl LedgerStore {
         Ok(TreeState::new(
             num_transactions,
             self.get_frozen_subtree_hashes(num_transactions)?,
-            transaction_info.state_root_hash(),
+            transaction_info.state_change_hash(),
         ))
     }
 
@@ -310,10 +310,14 @@ impl LedgerStore {
     /// `client_known_version`.
     pub fn get_consistency_proof(
         &self,
-        client_known_version: Version,
+        client_known_version: Option<Version>,
         ledger_version: Version,
     ) -> Result<AccumulatorConsistencyProof> {
-        Accumulator::get_consistency_proof(self, ledger_version + 1, client_known_version + 1)
+        let client_known_num_leaves = client_known_version
+            .map(|v| v.saturating_add(1))
+            .unwrap_or(0);
+        let ledger_num_leaves = ledger_version.saturating_add(1);
+        Accumulator::get_consistency_proof(self, ledger_num_leaves, client_known_num_leaves)
     }
 
     /// Write `txn_infos` to `batch`. Assigned `first_version` to the the version number of the

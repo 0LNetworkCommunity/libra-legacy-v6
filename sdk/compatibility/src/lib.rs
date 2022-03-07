@@ -7,13 +7,26 @@
 
 use anyhow::Result;
 use diem_sdk::{
+    client::MethodRequest,
     crypto::HashValue,
     transaction_builder::{
         stdlib::{self, ScriptCall},
         Currency, DualAttestationMessage,
     },
-    types::{account_address::AccountAddress, transaction::Script, AccountKey},
+    types::{
+        account_address::AccountAddress,
+        account_config::{diem_root_address, events::new_block::NewBlockEvent},
+        account_state::AccountState,
+        account_state_blob::AccountStateWithProof,
+        block_metadata::new_block_event_key,
+        contract_event::EventByVersionWithProof,
+        ledger_info::LedgerInfoWithSignatures,
+        proof::{AccumulatorConsistencyProof, TransactionAccumulatorSummary},
+        transaction::{AccountTransactionsWithProof, Script},
+        AccountKey,
+    },
 };
+use std::convert::TryFrom;
 
 mod env;
 pub use env::{Coffer, Environment};
@@ -53,6 +66,28 @@ fn metadata_by_version() -> Result<()> {
     assert!(metadata.diem_version.is_none());
     assert!(metadata.module_publishing_allowed.is_none());
     assert!(metadata.dual_attestation_limit.is_none());
+
+    Ok(())
+}
+
+#[test]
+#[ignore]
+fn get_accumulator_consistency_proof() -> Result<()> {
+    let env = Environment::from_env();
+    let client = env.client();
+
+    let metadata = client.get_metadata()?.into_inner();
+
+    // build a complete accumulator up to the version in the previous response.
+    let proof_view = client
+        .get_accumulator_consistency_proof(None, Some(metadata.version))?
+        .into_inner();
+    let proof = AccumulatorConsistencyProof::try_from(&proof_view)?;
+    let accumulator =
+        TransactionAccumulatorSummary::try_from_genesis_proof(proof, metadata.version)?;
+
+    // the root hashes should match up
+    assert_eq!(metadata.accumulator_root_hash, accumulator.root_hash());
 
     Ok(())
 }
@@ -283,6 +318,119 @@ fn get_account_by_version() -> Result<()> {
 
 #[test]
 #[ignore]
+fn get_account_transactions_with_proofs() -> Result<()> {
+    let env = Environment::from_env();
+    let client = env.client();
+
+    // create and fund some accounts
+    let mut account_1 = env.random_account();
+    let account_2 = env.random_account();
+
+    env.coffer()
+        .fund(Currency::XUS, account_1.authentication_key(), 1000)?;
+    env.coffer()
+        .fund(Currency::XUS, account_2.authentication_key(), 1000)?;
+
+    // generate some transaction activity
+    let num_txns = 3;
+    for _ in 0..num_txns {
+        let txn = account_1.sign_with_transaction_builder(env.transaction_factory().peer_to_peer(
+            Currency::XUS,
+            account_2.address(),
+            100,
+        ));
+
+        client.submit(&txn)?;
+        client.wait_for_signed_transaction(&txn, None, None)?;
+    }
+
+    // get a ledger info so we can verify proofs
+    let li_view = client
+        .get_state_proof(0)?
+        .into_inner()
+        .ledger_info_with_signatures;
+    let latest_li = bcs::from_bytes::<LedgerInfoWithSignatures>(li_view.as_ref())?;
+    let ledger_version = latest_li.ledger_info().version();
+
+    // request the sending account's transactions and verify the proofs
+    let txns_view = client
+        .get_account_transactions_with_proofs(
+            account_1.address(),
+            0,
+            100,
+            true,
+            Some(ledger_version),
+        )?
+        .into_inner();
+    let txns = AccountTransactionsWithProof::try_from(&txns_view)?;
+
+    assert_eq!(num_txns, txns.len());
+    txns.verify(
+        latest_li.ledger_info(),
+        account_1.address(),
+        0,
+        100,
+        true,
+        ledger_version,
+    )?;
+
+    Ok(())
+}
+
+#[test]
+#[ignore]
+fn get_event_by_version_with_proof() -> Result<()> {
+    let env = Environment::from_env();
+    let client = env.client();
+
+    // Grab the latest block event using get_event_by_version_with_proof and
+    // verify that everything checks out.
+
+    let batch = vec![
+        MethodRequest::get_state_proof(0),
+        MethodRequest::get_account_state_with_proof(diem_root_address(), None, None),
+        MethodRequest::get_event_by_version_with_proof(new_block_event_key(), None),
+    ];
+
+    let resps = client.batch(batch)?;
+    let mut resps_iter = resps.into_iter();
+    let resp0 = resps_iter.next().unwrap()?.into_inner();
+    let resp1 = resps_iter.next().unwrap()?.into_inner();
+    let resp2 = resps_iter.next().unwrap()?.into_inner();
+    assert!(resps_iter.next().is_none());
+
+    let state_view = resp0.try_into_get_state_proof()?;
+    let account_view = resp1.try_into_get_account_state_with_proof()?;
+    let event_view = resp2.try_into_get_event_by_version_with_proof()?;
+
+    let latest_li_w_sigs = bcs::from_bytes::<LedgerInfoWithSignatures>(
+        state_view.ledger_info_with_signatures.as_ref(),
+    )?;
+    let latest_li = latest_li_w_sigs.ledger_info();
+    let account_proof = AccountStateWithProof::try_from(&account_view)?;
+    let account_state = AccountState::try_from(account_proof.blob.as_ref().unwrap())?;
+    let block_height = account_state.get_diem_block_resource()?.unwrap().height();
+
+    let event_proof = EventByVersionWithProof::try_from(&event_view)?;
+    event_proof.verify(
+        latest_li,
+        &new_block_event_key(),
+        Some(block_height),
+        latest_li.version(),
+    )?;
+    // should be the latest block event, so no upper bound event.
+    assert_eq!(None, event_proof.upper_bound_excl);
+
+    let event = event_proof.lower_bound_incl.unwrap().event;
+    let new_block_event = NewBlockEvent::try_from(&event)?;
+    assert_eq!(latest_li.timestamp_usecs(), new_block_event.proposed_time());
+    assert_eq!(latest_li.round(), new_block_event.round());
+
+    Ok(())
+}
+
+#[test]
+#[ignore]
 fn create_child_account() -> Result<()> {
     let env = Environment::from_env();
     let client = env.client();
@@ -336,11 +484,10 @@ fn add_currency_to_account() -> Result<()> {
 
     // Ensure that the account doesn't carry a balance of XDX
     let account_view = client.get_account(account.address())?.into_inner().unwrap();
-    assert!(account_view
+    assert!(!account_view
         .balances
         .iter()
-        .find(|b| b.currency == Currency::XDX)
-        .is_none());
+        .any(|b| b.currency == Currency::XDX));
 
     // Submit txn to add XDX to the account
     let txn = account.sign_with_transaction_builder(

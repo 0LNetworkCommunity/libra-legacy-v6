@@ -6,7 +6,7 @@ use crate::{
     noise::{stream::NoiseStream, AntiReplayTimestamps, HandshakeAuthMode, NoiseUpgrader},
     protocols::{
         identity::exchange_handshake,
-        wire::handshake::v1::{HandshakeMsg, MessagingProtocolVersion, SupportedProtocols},
+        wire::handshake::v1::{HandshakeMsg, MessagingProtocolVersion, ProtocolIdSet},
     },
 };
 use diem_config::{
@@ -14,6 +14,7 @@ use diem_config::{
     network_id::{NetworkContext, NetworkId},
 };
 use diem_crypto::x25519;
+use diem_id_generator::{IdGenerator, U32IdGenerator};
 use diem_logger::prelude::*;
 use diem_time_service::{timeout, TimeService, TimeServiceTrait};
 use diem_types::{
@@ -29,17 +30,7 @@ use futures::{
 use netcore::transport::{proxy_protocol, tcp, ConnectionOrigin, Transport};
 use serde::Serialize;
 use short_hex_str::AsShortHexStr;
-use std::{
-    collections::BTreeMap,
-    convert::TryFrom,
-    fmt, io,
-    pin::Pin,
-    sync::{
-        atomic::{AtomicU32, Ordering},
-        Arc,
-    },
-    time::Duration,
-};
+use std::{collections::BTreeMap, convert::TryFrom, fmt, io, pin::Pin, sync::Arc, time::Duration};
 
 #[cfg(test)]
 mod test;
@@ -79,19 +70,18 @@ impl From<u32> for ConnectionId {
 
 /// Generator of unique ConnectionId's.
 struct ConnectionIdGenerator {
-    ctr: AtomicU32,
+    id_generator: U32IdGenerator,
 }
 
 impl ConnectionIdGenerator {
     const fn new() -> ConnectionIdGenerator {
         Self {
-            ctr: AtomicU32::new(0),
+            id_generator: U32IdGenerator::new(),
         }
     }
 
     fn next(&self) -> ConnectionId {
-        let next = self.ctr.fetch_add(1, Ordering::Relaxed);
-        ConnectionId::from(next)
+        ConnectionId::from(self.id_generator.next())
     }
 }
 
@@ -103,7 +93,7 @@ pub struct ConnectionMetadata {
     pub addr: NetworkAddress,
     pub origin: ConnectionOrigin,
     pub messaging_protocol: MessagingProtocolVersion,
-    pub application_protocols: SupportedProtocols,
+    pub application_protocols: ProtocolIdSet,
     pub role: PeerRole,
 }
 
@@ -114,7 +104,7 @@ impl ConnectionMetadata {
         addr: NetworkAddress,
         origin: ConnectionOrigin,
         messaging_protocol: MessagingProtocolVersion,
-        application_protocols: SupportedProtocols,
+        application_protocols: ProtocolIdSet,
         role: PeerRole,
     ) -> ConnectionMetadata {
         ConnectionMetadata {
@@ -147,10 +137,10 @@ impl ConnectionMetadata {
             remote_peer_id,
             role,
             origin,
-            connection_id: ConnectionId::default(),
+            connection_id: CONNECTION_ID_GENERATOR.next(),
             addr: NetworkAddress::mock(),
             messaging_protocol: MessagingProtocolVersion::V1,
-            application_protocols: [].iter().into(),
+            application_protocols: ProtocolIdSet::empty(),
         }
     }
 }
@@ -200,7 +190,7 @@ where
 pub struct UpgradeContext {
     noise: NoiseUpgrader,
     handshake_version: u8,
-    supported_protocols: BTreeMap<MessagingProtocolVersion, SupportedProtocols>,
+    supported_protocols: BTreeMap<MessagingProtocolVersion, ProtocolIdSet>,
     chain_id: ChainId,
     network_id: NetworkId,
 }
@@ -209,7 +199,7 @@ impl UpgradeContext {
     pub fn new(
         noise: NoiseUpgrader,
         handshake_version: u8,
-        supported_protocols: BTreeMap<MessagingProtocolVersion, SupportedProtocols>,
+        supported_protocols: BTreeMap<MessagingProtocolVersion, ProtocolIdSet>,
         chain_id: ChainId,
         network_id: NetworkId,
     ) -> Self {
@@ -292,7 +282,7 @@ async fn upgrade_inbound<T: TSocket>(
     let handshake_msg = HandshakeMsg {
         supported_protocols: ctxt.supported_protocols.clone(),
         chain_id: ctxt.chain_id,
-        network_id: ctxt.network_id.clone(),
+        network_id: ctxt.network_id,
     };
     let remote_handshake = exchange_handshake(&handshake_msg, &mut socket)
         .await
@@ -369,7 +359,7 @@ pub async fn upgrade_outbound<T: TSocket>(
     let handshake_msg = HandshakeMsg {
         supported_protocols: ctxt.supported_protocols.clone(),
         chain_id: ctxt.chain_id,
-        network_id: ctxt.network_id.clone(),
+        network_id: ctxt.network_id,
     };
     let remote_handshake = exchange_handshake(&handshake_msg, &mut socket).await?;
 
@@ -429,13 +419,13 @@ where
 {
     pub fn new(
         base_transport: TTransport,
-        network_context: Arc<NetworkContext>,
+        network_context: NetworkContext,
         time_service: TimeService,
         identity_key: x25519::PrivateKey,
         auth_mode: HandshakeAuthMode,
         handshake_version: u8,
         chain_id: ChainId,
-        application_protocols: SupportedProtocols,
+        application_protocols: ProtocolIdSet,
         enable_proxy_protocol: bool,
     ) -> Self {
         // build supported protocols
@@ -443,14 +433,13 @@ where
         supported_protocols.insert(SUPPORTED_MESSAGING_PROTOCOL, application_protocols);
 
         let identity_pubkey = identity_key.public_key();
-        let network_id = network_context.network_id().clone();
 
         let upgrade_context = UpgradeContext::new(
             NoiseUpgrader::new(network_context, identity_key, auth_mode),
             handshake_version,
             supported_protocols,
             chain_id,
-            network_id,
+            network_context.network_id(),
         );
 
         Self {

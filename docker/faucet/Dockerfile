@@ -1,4 +1,4 @@
-FROM debian:buster-20210511@sha256:acf7795dc91df17e10effee064bd229580a9c34213b4dba578d64768af5d8c51 AS debian-base
+FROM debian:buster-20211011@sha256:f9182ead292f45165f4a851e5ff98ea0800e172ccedce7d17764ffaae5ed4d6e AS debian-base
 
 FROM debian-base AS toolchain
 
@@ -24,13 +24,11 @@ RUN IMAGE_TARGETS="test" ./docker/build-common.sh
 ### Production Image ###
 FROM debian-base AS pre-test
 
-# TODO: Unsure which of these are needed exactly for client
 RUN apt-get update && apt-get install -y libssl1.1 nano net-tools tcpdump iproute2 netcat \
     && apt-get clean && rm -r /var/lib/apt/lists/*
 
 RUN mkdir -p /opt/diem/bin  /diem/client/data/wallet/
 
-COPY --from=builder /diem/target/release/cli /opt/diem/bin
 COPY --from=builder /diem/target/release/diem-faucet /opt/diem/bin
 
 # Test the docker container before shipping.

@@ -16,11 +16,11 @@ thiserror = "1.0.24"
 
 bcs = "0.1.2"
 diem-global-constants = { path = "../../global-constants"}
-diem-infallible = { path = "../../../common/infallible" }
-diem-logger = { path = "../../../common/logger" }
+diem-infallible = { path = "../../../crates/diem-infallible" }
+diem-logger = { path = "../../../crates/diem-logger" }
 diem-secure-storage = { path = "../../../secure/storage" }
 diem-types = { path = "../../../types" }
-diem-workspace-hack = { path = "../../../common/workspace-hack" }
+diem-workspace-hack = { version = "0.1", path = "../../../crates/diem-workspace-hack" }
 
 [dev-dependencies]
 rand = "0.8.3"

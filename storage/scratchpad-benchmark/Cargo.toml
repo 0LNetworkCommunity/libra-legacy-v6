@@ -10,21 +10,21 @@ publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.38"
+anyhow = "1.0.52"
+byteorder = "1.4.3"
 itertools = { version = "0.10.0", default-features = false }
 rand = "0.8.3"
 rayon = "1.5.0"
 structopt = "0.3.21"
 
 diemdb = { path = "../diemdb" }
-diemdb-benchmark = { path = "../diemdb-benchmark" }
 diem-config = { path = "../../config" }
-diem-crypto = { path = "../../crypto/crypto" }
+diem-crypto = { path = "../../crates/diem-crypto" }
 diem-genesis-tool = {path = "../../config/management/genesis", features = ["testing"] }
-diem-infallible = { path = "../../common/infallible" }
-diem-logger = { path = "../../common/logger" }
+diem-infallible = { path = "../../crates/diem-infallible" }
+diem-logger = { path = "../../crates/diem-logger" }
 diem-types = { path = "../../types" }
-diem-workspace-hack = { path = "../../common/workspace-hack" }
+diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 executor-types = { path = "../../execution/executor-types" }
-scratchpad = { path = "..//scratchpad" }
+scratchpad = { path = "../scratchpad" }
 storage-interface = { path = "../storage-interface" }

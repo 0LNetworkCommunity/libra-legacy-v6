@@ -30,7 +30,7 @@ pub fn xus_tag() -> TypeTag {
 //////// 0L ////////
 pub static GAS_MODULE: Lazy<ModuleId> =
     Lazy::new(|| ModuleId::new(CORE_CODE_ADDRESS, GAS_IDENTIFIER.to_owned()));
-    
+
 pub fn gas_type_tag() -> TypeTag {
     TypeTag::Struct(StructTag {
         address: CORE_CODE_ADDRESS,
@@ -51,7 +51,7 @@ pub fn coin_name(t: &TypeTag) -> Option<String> {
             ..
         }) if *address == CORE_CODE_ADDRESS && module == name => {
             let name_str = name.to_string();
-            if name_str == GAS_NAME || name_str == XUS_NAME { //////// 0L ////////
+            if name_str == GAS_NAME || name_str == XUS_NAME { /////// 0L /////////
                 Some(name_str)
             } else {
                 None
@@ -65,7 +65,6 @@ pub fn coin_name(t: &TypeTag) -> Option<String> {
 fn coin_names() {
     assert!(coin_name(&xus_tag()).unwrap() == XUS_NAME);
     assert!(coin_name(&gas_type_tag()).unwrap() == GAS_NAME); //////// 0L ////////
-
     assert!(coin_name(&TypeTag::U64) == None);
 
     let bad_name = ident_str!("NotACoin").to_owned();

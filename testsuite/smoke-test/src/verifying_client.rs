@@ -1,73 +1,84 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::{
-    smoke_test_environment::SmokeTestEnvironment,
-    test_utils::{diem_swarm_utils::get_json_rpc_url, setup_swarm_and_client_proxy},
-};
-use cli::client_proxy::ClientProxy;
-use diem_client::{
-    Client, InMemoryStorage, MethodRequest, MethodResponse, Response, Result, VerifyingClient,
-};
-use diem_types::{
-    account_address::AccountAddress,
-    account_config::constants::addresses::{
-        diem_root_address, testnet_dd_account_address, treasury_compliance_account_address,
-        validator_set_address,
+use diem_sdk::{
+    client::{
+        verifying_client::{InMemoryStateStore, VerifyingClient},
+        BlockingClient, Client, MethodRequest, MethodResponse, Response, Result,
     },
-    event::{EventHandle, EventKey},
-    transaction::Version,
-    trusted_state::TrustedState,
+    transaction_builder::Currency,
+    types::{
+        account_address::AccountAddress,
+        account_config::constants::addresses::{
+            diem_root_address, testnet_dd_account_address, treasury_compliance_account_address,
+            validator_set_address,
+        },
+        epoch_change::EpochChangeProof,
+        event::{EventHandle, EventKey},
+        transaction::Version,
+        trusted_state::TrustedState,
+        waypoint::Waypoint,
+        LocalAccount,
+    },
 };
+use forge::{PublicUsageContext, PublicUsageTest, Result as ForgeResult, Test};
 use proptest::{collection::vec, prelude::*, sample::select};
 use std::cmp::max;
-use tokio::runtime::Builder;
+use tokio::runtime::{Builder, Runtime};
+
+//TODO expose genesis transaction and genesis waypoint from Forge
+fn verifying_client(json_rpc_endpoint: &str) -> ForgeResult<VerifyingClient<InMemoryStateStore>> {
+    let client = BlockingClient::new(json_rpc_endpoint);
+    let epoch_change_proof: EpochChangeProof = bcs::from_bytes(
+        client
+            .get_state_proof(0)?
+            .into_inner()
+            .epoch_change_proof
+            .inner(),
+    )?;
+    let waypoint = Waypoint::new_epoch_boundary(
+        epoch_change_proof
+            .ledger_info_with_sigs
+            .last()
+            .unwrap()
+            .ledger_info(),
+    )?;
+
+    let trusted_state = TrustedState::from_epoch_waypoint(waypoint);
+    let state_store = InMemoryStateStore::new();
+    let verifying_client = VerifyingClient::new_with_state(
+        Client::new(json_rpc_endpoint),
+        state_store,
+        &trusted_state,
+    )?;
+    Ok(verifying_client)
+}
+
+fn fund_new_account(ctx: &mut PublicUsageContext<'_>, amount: u64) -> ForgeResult<LocalAccount> {
+    let account = ctx.random_account();
+    let runtime = Runtime::new().unwrap();
+    runtime.block_on(ctx.create_parent_vasp_account(account.authentication_key()))?;
+    runtime.block_on(ctx.fund(account.address(), amount))?;
+
+    Ok(account)
+}
 
 struct Environment {
-    _env: SmokeTestEnvironment,
     pub max_batch_size: usize,
-    pub client_proxy: ClientProxy,
     pub client: Client,
-    pub verifying_client: VerifyingClient<InMemoryStorage>,
+    pub verifying_client: VerifyingClient<InMemoryStateStore>,
 }
 
 impl Environment {
-    fn new() -> Self {
-        let (env, client_proxy) = setup_swarm_and_client_proxy(1, 0);
-
-        let max_batch_size = env
-            .validator_swarm
-            .get_node(0)
-            .unwrap()
-            .config()
-            .json_rpc
-            .batch_size_limit as usize;
-
-        let url = get_json_rpc_url(&env.validator_swarm, 0);
+    fn new(url: &str) -> Self {
         let client = Client::new(url);
-
-        let genesis_waypoint = env.validator_swarm.config.waypoint;
-        let trusted_state = TrustedState::from(genesis_waypoint);
-        let storage = InMemoryStorage::new();
-        let verifying_client =
-            VerifyingClient::new_with_state(client.clone(), trusted_state, storage);
+        let verifying_client = verifying_client(url).unwrap();
 
         Self {
-            _env: env,
-            max_batch_size,
-            client_proxy,
+            max_batch_size: 20,
             client,
             verifying_client,
         }
-    }
-
-    fn fund_new_account(&mut self) -> AccountAddress {
-        let account = self.client_proxy.create_next_account(false).unwrap();
-        let idx = format!("{}", account.index);
-        self.client_proxy
-            .mint_coins(&["mintb", &idx, "1000", "XUS"], true)
-            .unwrap();
-        account.address
     }
 
     fn latest_observed_version(&self) -> Version {
@@ -76,7 +87,7 @@ impl Environment {
             .last_known_state()
             .map(|state| state.version)
             .unwrap_or(0);
-        let version_v = self.verifying_client.version();
+        let version_v = self.verifying_client.version().unwrap();
         max(version_nv, version_v)
     }
 
@@ -254,10 +265,42 @@ fn arb_request(
         })
     });
 
+    // we are not producing any transactions, so we don't need to worry about races
+    // between verifying and non-verifying queries
+    let arb_seq_num = prop_oneof! [
+        10 => Just(0u64),
+        10 => 1u64..50,
+        1 => Just(u64::MAX / 2),
+    ];
+    let arb_limit = prop_oneof! [
+        20 => 1u64..100,
+        1 => Just(0u64),
+        1 => Just(u64::MAX / 2),
+    ];
+    let arb_acct_txns = (
+        arb_account.clone(),
+        arb_seq_num.clone(),
+        arb_limit,
+        arb_include_events,
+    );
+    let arb_acct_txn = (arb_account.clone(), arb_seq_num, arb_include_events);
+
+    let arb_metadata_version = prop_oneof! [
+        // note: the exclusive upper bound is intentional so we don't get super
+        // unlucky and call get_metadata(current_state_version) on a ledger state
+        // with the same version.
+        20 => 0u64..current_state_version,
+        1 => Just(u64::MAX / 2),
+        1 => Just(u64::MAX),
+    ];
+
     prop_oneof![
+        arb_metadata_version.prop_map(MethodRequest::get_metadata_by_version),
         (arb_account, arb_version).prop_map(|(a, v)| MethodRequest::GetAccount(a, Some(v))),
         (arb_version_and_limit, arb_include_events)
             .prop_map(|((v, l), i)| MethodRequest::GetTransactions(v, l, i)),
+        arb_acct_txns.prop_map(|(a, s, l, i)| MethodRequest::GetAccountTransactions(a, s, l, i)),
+        arb_acct_txn.prop_map(|(a, s, i)| MethodRequest::GetAccountTransaction(a, s, i)),
         arb_events.prop_map(|(k, s, l)| MethodRequest::GetEvents(k, s, l)),
         Just(MethodRequest::get_currencies()),
     ]
@@ -271,6 +314,7 @@ fn arb_batch(
     accounts: &[AccountAddress],
     event_handles: &[EventHandle],
     current_state_version: u64,
+    verifying_client: VerifyingClient<InMemoryStateStore>,
 ) -> impl Strategy<Value = Vec<MethodRequest>> {
     vec(
         arb_request(accounts, event_handles, current_state_version),
@@ -279,51 +323,190 @@ fn arb_batch(
     .prop_filter(
         "batch rejected: actual size too large; won't be accepted by the JSON-RPC server",
         move |batch| {
-            let actual_batch_size =
-                VerifyingClient::<InMemoryStorage>::actual_batch_size(batch.as_slice());
+            let actual_batch_size = verifying_client
+                .actual_batch_size(batch.as_slice())
+                .unwrap();
             actual_batch_size <= max_batch_size
         },
     )
 }
 
-#[test]
-fn test_client_equivalence() {
-    let rt = Builder::new_current_thread().enable_all().build().unwrap();
-    let mut env = Environment::new();
+pub struct VerifyingClientEquivalence;
 
-    // Accounts we can query from
-    let accounts = vec![
-        // Some standard diem accounts
-        diem_root_address(),
-        validator_set_address(),
-        treasury_compliance_account_address(),
-        testnet_dd_account_address(),
-        // Fund some new accounts
-        env.fund_new_account(),
-        env.fund_new_account(),
-        env.fund_new_account(),
-        // Some random, likely non-existent accounts
-        AccountAddress::ZERO,
-        AccountAddress::random(),
-        AccountAddress::random(),
-    ];
+impl Test for VerifyingClientEquivalence {
+    fn name(&self) -> &'static str {
+        "smoke-test::verifying-client-equivalence"
+    }
+}
 
-    // Scan the accounts for some event handles we can query from
-    let event_handles = rt.block_on(env.scan_event_handles(&accounts));
+impl PublicUsageTest for VerifyingClientEquivalence {
+    fn run<'t>(&self, ctx: &mut PublicUsageContext<'t>) -> ForgeResult<()> {
+        let rt = Builder::new_current_thread().enable_all().build().unwrap();
+        let env = Environment::new(ctx.url());
 
-    // Sync the verifying client
-    rt.block_on(env.verifying_client.sync()).unwrap();
+        // Accounts we can query from
+        let accounts = vec![
+            // Some standard diem accounts
+            diem_root_address(),
+            validator_set_address(),
+            treasury_compliance_account_address(),
+            testnet_dd_account_address(),
+            // Fund some new accounts
+            fund_new_account(ctx, 1000)?.address(),
+            fund_new_account(ctx, 2000)?.address(),
+            fund_new_account(ctx, 3000)?.address(),
+            // Some random, likely non-existent accounts
+            AccountAddress::ZERO,
+            AccountAddress::random(),
+            AccountAddress::random(),
+        ];
 
-    // Generate random requests and ensure that both verifying and non-verifying
-    // clients handle each request identically.
-    proptest!(|(request in arb_request(&accounts, &event_handles, env.latest_observed_version()))| {
-        let (recv_nv, recv_v) = rt.block_on(env.request(request));
-        assert_responses_equal(recv_nv, recv_v);
-    });
+        // Scan the accounts for some event handles we can query from
+        let event_handles = rt.block_on(env.scan_event_handles(&accounts));
 
-    // Do the same but with random request batches instead of single requests.
-    proptest!(|(batch in arb_batch(env.max_batch_size, &accounts, &event_handles, env.latest_observed_version()))| {
-        let (recv_nv, recv_v) = rt.block_on(env.batch(batch));
-        assert_batches_equal(recv_nv, recv_v);
-    });
+        // Sync the verifying client
+        rt.block_on(env.verifying_client.sync()).unwrap();
+
+        // Generate random requests and ensure that both verifying and non-verifying
+        // clients handle each request identically.
+        let request_strategy =
+            arb_request(&accounts, &event_handles, env.latest_observed_version());
+        proptest!(|(request in request_strategy)| {
+            let (recv_nv, recv_v) = rt.block_on(env.request(request));
+            assert_responses_equal(recv_nv, recv_v);
+        });
+
+        // Do the same but with random request batches instead of single requests.
+        let batch_strategy = arb_batch(
+            env.max_batch_size,
+            &accounts,
+            &event_handles,
+            env.latest_observed_version(),
+            env.verifying_client.clone(),
+        );
+        proptest!(|(batch in batch_strategy)| {
+            let (recv_nv, recv_v) = rt.block_on(env.batch(batch));
+            assert_batches_equal(recv_nv, recv_v);
+        });
+
+        Ok(())
+    }
+}
+
+pub struct VerifyingSubmit;
+
+impl Test for VerifyingSubmit {
+    fn name(&self) -> &'static str {
+        "smoke-test::verifying-submit"
+    }
+}
+
+impl PublicUsageTest for VerifyingSubmit {
+    fn run<'t>(&self, ctx: &mut PublicUsageContext<'t>) -> ForgeResult<()> {
+        let rt = Builder::new_current_thread().enable_all().build()?;
+
+        let verifying_client = verifying_client(ctx.url())?;
+        let factory = ctx.transaction_factory();
+
+        let start_amount = 1_000_000;
+        let transfer_amount = 100;
+        let currency = Currency::XUS;
+
+        let runtime = Runtime::new().unwrap();
+        let mut account_1 = ctx.random_account();
+        runtime.block_on(ctx.create_parent_vasp_account(account_1.authentication_key()))?;
+        runtime.block_on(ctx.fund(account_1.address(), start_amount))?;
+
+        let account_2 = ctx.random_account();
+        runtime.block_on(ctx.create_parent_vasp_account(account_2.authentication_key()))?;
+        runtime.block_on(ctx.fund(account_2.address(), start_amount))?;
+
+        rt.block_on(verifying_client.sync()).unwrap();
+
+        let txn = account_1.sign_with_transaction_builder(factory.peer_to_peer(
+            currency,
+            account_2.address(),
+            transfer_amount,
+        ));
+
+        rt.block_on(verifying_client.submit(&txn)).unwrap();
+        rt.block_on(verifying_client.wait_for_signed_transaction(&txn, None, None))
+            .unwrap();
+
+        let account_view_1 = rt
+            .block_on(verifying_client.get_account(account_1.address()))
+            .unwrap()
+            .into_inner()
+            .unwrap();
+        let balance_1 = account_view_1
+            .balances
+            .iter()
+            .find(|b| b.currency == currency)
+            .unwrap();
+
+        let account_view_2 = rt
+            .block_on(verifying_client.get_account(account_2.address()))
+            .unwrap()
+            .into_inner()
+            .unwrap();
+        let balance_2 = account_view_2
+            .balances
+            .iter()
+            .find(|b| b.currency == currency)
+            .unwrap();
+
+        assert_eq!(balance_1.amount, start_amount - transfer_amount);
+        assert_eq!(balance_2.amount, start_amount + transfer_amount);
+        Ok(())
+    }
+}
+
+pub struct VerifyingGetLatestMetadata;
+
+impl Test for VerifyingGetLatestMetadata {
+    fn name(&self) -> &'static str {
+        "smoke-test::verifying-get-latest-metadata"
+    }
+}
+
+impl PublicUsageTest for VerifyingGetLatestMetadata {
+    fn run<'t>(&self, ctx: &mut PublicUsageContext<'t>) -> ForgeResult<()> {
+        let rt = Builder::new_current_thread().enable_all().build().unwrap();
+        let env = Environment::new(ctx.url());
+
+        rt.block_on(env.verifying_client.sync()).unwrap();
+
+        let (resp_nv, resp_v) = rt.block_on(env.request(MethodRequest::get_metadata()));
+
+        let meta_nv = resp_nv
+            .unwrap()
+            .into_inner()
+            .try_into_get_metadata()
+            .unwrap();
+        let meta_v = resp_v
+            .unwrap()
+            .into_inner()
+            .try_into_get_metadata()
+            .unwrap();
+
+        // only check that the "non-volatile" fields match up, since we're not 100%
+        // guaranteed that these requests are fulfilled at the same exact version.
+
+        assert_eq!(meta_nv.chain_id, meta_v.chain_id);
+        assert_eq!(
+            meta_nv.script_hash_allow_list,
+            meta_v.script_hash_allow_list
+        );
+        assert_eq!(
+            meta_nv.module_publishing_allowed,
+            meta_v.module_publishing_allowed
+        );
+        assert_eq!(meta_nv.diem_version, meta_v.diem_version);
+        assert_eq!(
+            meta_nv.dual_attestation_limit,
+            meta_v.dual_attestation_limit
+        );
+
+        Ok(())
+    }
 }

@@ -10,38 +10,39 @@ license = "Apache-2.0"
 publish = false
 
 [dependencies]
-anyhow = "1.0.38"
+anyhow = "1.0.52"
 bcs = "0.1.2"
 once_cell = "1.7.2"
 serde = { version = "1.0.124", features = ["rc"], default-features = false }
 thiserror = "1.0.24"
 
-crash-handler = { path = "../../common/crash-handler" }
+crash-handler = { path = "../../crates/crash-handler" }
 diem-config = { path = "../../config"}
-diem-crypto = { path = "../../crypto/crypto" }
+diem-crypto = { path = "../../crates/diem-crypto" }
 diem-global-constants = { path = "../../config/global-constants"}
-diem-logger = { path = "../../common/logger" }
-diem-client = { path = "../../sdk/client", features = ["blocking"], default-features = false }
+diem-logger = { path = "../../crates/diem-logger" }
+diem-client = { path = "../../crates/diem-client", features = ["blocking"], default-features = false }
 diem-secure-push-metrics = { path = "../push-metrics" }
 diem-secure-storage = { path = "../storage" }
-diem-time-service = { path = "../../common/time-service" }
+diem-time-service = { path = "../../crates/diem-time-service" }
 diem-types = { path = "../../types" }
-diem-workspace-hack = { path = "../../common/workspace-hack" }
+diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 diem-transaction-builder = { path = "../../sdk/transaction-builder" }
 
 [dev-dependencies]
 futures = "0.3.12"
 rand = "0.8.3"
-tokio = { version = "1.3.0", features = ["full"] }
+tokio = { version = "1.8.1", features = ["full"] }
 
 executor = { path = "../../execution/executor" }
 executor-test-helpers = { path = "../../execution/executor-test-helpers" }
 executor-types = { path = "../../execution/executor-types" }
 diem-genesis-tool = {path = "../../config/management/genesis", features = ["testing"] }
 diem-json-rpc = { path = "../../json-rpc", features = ["fuzzing"] }
+diem-mempool = { path = "../../mempool"}
 diem-secure-storage = { path = "../storage", features = ["testing"] }
-diem-time-service = { path = "../../common/time-service", features = ["testing"] }
-diem-vm = { path = "../../language/diem-vm" }
+diem-time-service = { path = "../../crates/diem-time-service", features = ["testing"] }
+diem-vm = { path = "../../diem-move/diem-vm" }
 diemdb = { path = "../../storage/diemdb" }
 storage-interface= { path = "../../storage/storage-interface" }
 vm-validator = { path = "../../vm-validator" }

@@ -19,8 +19,15 @@ impl Display for VoteData {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         write!(
             f,
-            "VoteData: [block id: {}, epoch: {}, round: {:02}, parent_block_id: {}, parent_block_round: {:02}]",
-            self.proposed().id(), self.proposed().epoch(), self.proposed().round(), self.parent().id(), self.parent().round(),
+            "VoteData: [block id: {}, epoch: {}, round: {:02}, timestamp: {},\
+             parent_block_id: {}, parent_block_round: {:02}, parent_timestamp: {}]",
+            self.proposed().id(),
+            self.proposed().epoch(),
+            self.proposed().round(),
+            self.proposed().timestamp_usecs(),
+            self.parent().id(),
+            self.parent().round(),
+            self.parent.timestamp_usecs()
         )
     }
 }
@@ -56,7 +63,10 @@ impl VoteData {
             "Proposed happened before parent",
         );
         anyhow::ensure!(
-            self.parent.version() <= self.proposed.version(),
+            // if decoupled execution is turned on, the versions are dummy values (0),
+            // but the genesis block per epoch uses the ground truth version number,
+            // so we bypass the version check here.
+            self.proposed.version() == 0 || self.parent.version() <= self.proposed.version(),
             "Proposed version is less than parent version",
         );
         Ok(())

@@ -41,10 +41,24 @@ pub enum Error {
     ValidatorNotInSet(String),
     #[error("Vote proposal missing expected signature")]
     VoteProposalSignatureNotFound,
+    #[error("Does not satisfy 2-chain voting rule. Round {0}, Quorum round {1}, TC round {2},  HQC round in TC {3}")]
+    NotSafeToVote(u64, u64, u64, u64),
+    #[error("Does not satisfy 2-chain timeout rule. Round {0}, Quorum round {1}, TC round {2}, one-chain round {3}")]
+    NotSafeToTimeout(u64, u64, u64, u64),
+    #[error("Invalid TC: {0}")]
+    InvalidTimeoutCertificate(String),
+    #[error("Inconsistent Execution Result: Ordered BlockInfo doesn't match executed BlockInfo. Ordered: {0}, Executed: {1}")]
+    InconsistentExecutionResult(String, String),
+    #[error("Invalid Ordered LedgerInfoWithSignatures: Empty or at least one of executed_state_id, version, or epoch_state are not dummy value: {0}")]
+    InvalidOrderedLedgerInfo(String),
+    #[error("Waypoint out of date: Previous waypoint version {0}, updated version {1}, current epoch {2}, provided epoch {3}")]
+    WaypointOutOfDate(u64, u64, u64, u64),
+    #[error("Invalid Timeout: {0}")]
+    InvalidTimeout(String),
 }
 
-impl From<bcs::Error> for Error {
-    fn from(error: bcs::Error) -> Self {
+impl From<serde_json::Error> for Error {
+    fn from(error: serde_json::Error) -> Self {
         Self::SerializationError(format!("{}", error))
     }
 }

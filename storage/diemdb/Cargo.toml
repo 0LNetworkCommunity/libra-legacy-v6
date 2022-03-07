@@ -10,7 +10,7 @@ publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.38"
+anyhow = "1.0.52"
 arc-swap = "1.2.0"
 byteorder = "1.4.3"
 itertools = "0.10.0"
@@ -25,16 +25,18 @@ thiserror = "1.0.24"
 accumulator = { path = "../accumulator" }
 bcs = "0.1.2"
 diem-config = { path = "../../config" }
-diem-crypto = { path = "../../crypto/crypto" }
+diem-crypto = { path = "../../crates/diem-crypto" }
 diem-jellyfish-merkle = { path = "../jellyfish-merkle" }
-diem-logger = { path = "../../common/logger" }
-diem-metrics = { path = "../../common/metrics" }
-diem-infallible = { path = "../../common/infallible" }
-diem-proptest-helpers = { path = "../../common/proptest-helpers", optional = true }
-diem-temppath = { path = "../../common/temppath", optional = true }
+diem-logger = { path = "../../crates/diem-logger" }
+diem-metrics = { path = "../../crates/diem-metrics" }
+diem-infallible = { path = "../../crates/diem-infallible" }
+diem-proptest-helpers = { path = "../../crates/diem-proptest-helpers", optional = true }
+diem-temppath = { path = "../../crates/diem-temppath", optional = true }
 diem-types = { path = "../../types" }
-diem-workspace-hack = { path = "../../common/workspace-hack" }
-num-variants = { path = "../../common/num-variants" }
+diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
+move-core-types = {git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860"}
+
+num-variants = { path = "../../crates/num-variants" }
 schemadb = { path = "../schemadb" }
 storage-interface = { path = "../storage-interface" }
 
@@ -44,12 +46,12 @@ proptest-derive = "0.3.0"
 rand = "0.8.3"
 
 diem-jellyfish-merkle = { path = "../jellyfish-merkle", features = ["fuzzing"] }
-diem-proptest-helpers = { path = "../../common/proptest-helpers" }
-diem-temppath = { path = "../../common/temppath" }
+diem-proptest-helpers = { path = "../../crates/diem-proptest-helpers" }
+diem-temppath = { path = "../../crates/diem-temppath" }
 diem-types = { path = "../../types", features = ["fuzzing"] }
-move-core-types = {path = "../../language/move-core/types"}
+schemadb = { path = "../schemadb", features = ["fuzzing"] }
 
 [features]
 default = []
 diemsum = []
-fuzzing = ["proptest", "proptest-derive", "diem-proptest-helpers", "diem-temppath", "diem-crypto/fuzzing", "diem-jellyfish-merkle/fuzzing", "diem-types/fuzzing"]
+fuzzing = ["proptest", "proptest-derive", "diem-proptest-helpers", "diem-temppath", "diem-crypto/fuzzing", "diem-jellyfish-merkle/fuzzing", "diem-types/fuzzing", "schemadb/fuzzing"]

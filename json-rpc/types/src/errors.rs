@@ -6,10 +6,10 @@ use diem_types::{
     mempool_status::{MempoolStatus, MempoolStatusCode},
     vm_status::{StatusCode, StatusType},
 };
+use num_derive::FromPrimitive;
+use num_traits::FromPrimitive;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-
-use crate::Method;
 
 /// list of server internal errors
 pub static INTERNAL_ERRORS: &[i16; 7] = &[
@@ -54,12 +54,27 @@ pub enum ServerCode {
 }
 
 /// JSON RPC server error codes for invalid request
+#[repr(i16)]
+#[derive(FromPrimitive)]
 pub enum InvalidRequestCode {
+    ParseError = -32700,
     InvalidRequest = -32600,
     MethodNotFound = -32601,
     InvalidParams = -32602,
     // -32603 is internal error
     InvalidFormat = -32604,
+}
+
+impl InvalidRequestCode {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            InvalidRequestCode::ParseError => "parse_error",
+            InvalidRequestCode::InvalidRequest => "invalid_request",
+            InvalidRequestCode::MethodNotFound => "method_not_found",
+            InvalidRequestCode::InvalidParams => "invalid_params",
+            InvalidRequestCode::InvalidFormat => "invalid_format",
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -133,10 +148,10 @@ impl JsonRpcError {
         }
     }
 
-    pub fn invalid_params(method: Method) -> Self {
+    pub fn invalid_params(method_name: &str) -> Self {
         Self {
             code: InvalidRequestCode::InvalidParams as i16,
-            message: format!("Invalid params for method '{}'", method.as_str()),
+            message: format!("Invalid params for method '{}'", method_name),
             data: None,
         }
     }
@@ -157,14 +172,6 @@ impl JsonRpcError {
         }
     }
 
-    pub fn invalid_params_from_method(method: Method) -> Self {
-        Self {
-            code: InvalidRequestCode::InvalidParams as i16,
-            message: format!("Invalid params for method '{}'", method.as_str()),
-            data: None,
-        }
-    }
-
     pub fn method_not_found() -> Self {
         Self {
             code: InvalidRequestCode::MethodNotFound as i16,
@@ -178,6 +185,13 @@ impl JsonRpcError {
             code: ServerCode::DefaultServerError as i16,
             message: format!("Server error: {}", message),
             data: None,
+        }
+    }
+
+    pub fn code_as_str(&self) -> &'static str {
+        match InvalidRequestCode::from_i16(self.code) {
+            Some(code) => code.as_str(),
+            None => "unexpected_code",
         }
     }
 
@@ -302,6 +316,12 @@ mod tests {
             MempoolStatusCode::UnknownStatus,
             ServerCode::MempoolUnknownError,
         );
+    }
+
+    #[test]
+    fn test_code_as_str() {
+        let result = JsonRpcError::method_not_found().code_as_str();
+        assert_eq!(result, "method_not_found")
     }
 
     #[test]

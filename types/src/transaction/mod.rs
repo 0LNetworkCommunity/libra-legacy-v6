@@ -9,7 +9,10 @@ use crate::{
     chain_id::ChainId,
     contract_event::ContractEvent,
     ledger_info::LedgerInfo,
-    proof::{accumulator::InMemoryAccumulator, TransactionInfoWithProof, TransactionListProof},
+    nibble::nibble_path::NibblePath,
+    proof::{
+        accumulator::InMemoryAccumulator, TransactionInfoListWithProof, TransactionInfoWithProof,
+    },
     transaction::authenticator::{AccountAuthenticator, TransactionAuthenticator},
     vm_status::{DiscardedVMStatus, KeptVMStatus, StatusCode, StatusType, VMStatus},
     write_set::WriteSet,
@@ -19,7 +22,7 @@ use diem_crypto::{
     ed25519::*,
     hash::{CryptoHash, EventAccumulatorHasher},
     multi_ed25519::{MultiEd25519PublicKey, MultiEd25519Signature},
-    traits::SigningKey,
+    traits::{signing_message, SigningKey},
     HashValue,
 };
 use diem_crypto_derive::{BCSCryptoHash, CryptoHasher};
@@ -31,7 +34,7 @@ use std::{
     collections::HashMap,
     convert::TryFrom,
     fmt,
-    fmt::{Display, Formatter},
+    fmt::{Debug, Display, Formatter},
 };
 
 pub mod authenticator;
@@ -43,14 +46,14 @@ mod script;
 mod transaction_argument;
 
 pub use change_set::ChangeSet;
-pub use module::Module;
+pub use module::{Module, ModuleBundle};
 pub use script::{
     ArgumentABI, Script, ScriptABI, ScriptFunction, ScriptFunctionABI, TransactionScriptABI,
     TypeArgumentABI,
 };
 
-use std::{collections::BTreeSet, ops::Deref};
-pub use transaction_argument::{parse_transaction_argument, TransactionArgument};
+use std::{collections::BTreeSet, hash::Hash, ops::Deref};
+pub use transaction_argument::{parse_transaction_argument, TransactionArgument, VecBytes};
 
 pub type Version = u64; // Height - also used for MVCC in StateDB
 
@@ -187,7 +190,33 @@ impl RawTransaction {
         RawTransaction {
             sender,
             sequence_number,
-            payload: TransactionPayload::Module(module),
+            payload: TransactionPayload::ModuleBundle(ModuleBundle::from(module)),
+            max_gas_amount,
+            gas_unit_price,
+            gas_currency_code,
+            expiration_timestamp_secs,
+            chain_id,
+        }
+    }
+
+    /// Create a new `RawTransaction` with a list of modules to publish.
+    ///
+    /// A module transaction is the only way to publish code. Multiple modules per transaction
+    /// can be published.
+    pub fn new_module_bundle(
+        sender: AccountAddress,
+        sequence_number: u64,
+        modules: ModuleBundle,
+        max_gas_amount: u64,
+        gas_unit_price: u64,
+        gas_currency_code: String,
+        expiration_timestamp_secs: u64,
+        chain_id: ChainId,
+    ) -> Self {
+        RawTransaction {
+            sender,
+            sequence_number,
+            payload: TransactionPayload::ModuleBundle(modules),
             max_gas_amount,
             gas_unit_price,
             gas_currency_code,
@@ -340,7 +369,7 @@ impl RawTransaction {
                 format!("{}::{}", script_fn.module(), script_fn.function()),
                 script_fn.args().to_vec(),
             ),
-            TransactionPayload::Module(_) => ("module publishing".to_string(), vec![]),
+            TransactionPayload::ModuleBundle(_) => ("module publishing".to_string(), vec![]),
         };
         let mut f_args: String = "".to_string();
         for arg in args {
@@ -376,6 +405,11 @@ impl RawTransaction {
     pub fn sender(&self) -> AccountAddress {
         self.sender
     }
+
+    /// Return the signing message for creating transaction signature.
+    pub fn signing_message(&self) -> Vec<u8> {
+        signing_message(self)
+    }
 }
 
 #[derive(
@@ -407,8 +441,8 @@ pub enum TransactionPayload {
     WriteSet(WriteSetPayload),
     /// A transaction that executes code.
     Script(Script),
-    /// A transaction that publishes code.
-    Module(Module),
+    /// A transaction that publishes multiple modules at the same time.
+    ModuleBundle(ModuleBundle),
     /// A transaction that executes an existing script function published on-chain.
     ScriptFunction(ScriptFunction),
 }
@@ -417,7 +451,7 @@ impl TransactionPayload {
     pub fn should_trigger_reconfiguration_by_default(&self) -> bool {
         match self {
             Self::WriteSet(ws) => ws.should_trigger_reconfiguration_by_default(),
-            Self::Script(_) | Self::ScriptFunction(_) | Self::Module(_) => false,
+            Self::Script(_) | Self::ScriptFunction(_) | Self::ModuleBundle(_) => false,
         }
     }
 
@@ -549,6 +583,16 @@ impl SignedTransaction {
         }
     }
 
+    pub fn new_with_authenticator(
+        raw_txn: RawTransaction,
+        authenticator: TransactionAuthenticator,
+    ) -> Self {
+        Self {
+            raw_txn,
+            authenticator,
+        }
+    }
+
     pub fn authenticator(&self) -> TransactionAuthenticator {
         self.authenticator.clone()
     }
@@ -626,6 +670,11 @@ impl SignedTransaction {
             TransactionAuthenticator::MultiAgent { .. }
         )
     }
+
+    /// Returns the hash when the transaction is commited onchain.
+    pub fn committed_hash(self) -> HashValue {
+        Transaction::UserTransaction(self).hash()
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -690,22 +739,22 @@ impl TransactionWithProof {
 
         let txn_hash = self.transaction.hash();
         ensure!(
-            txn_hash == self.proof.transaction_info().transaction_hash,
+            txn_hash == self.proof.transaction_info().transaction_hash(),
             "Transaction hash ({}) not expected ({}).",
             txn_hash,
-            self.proof.transaction_info().transaction_hash,
+            self.proof.transaction_info().transaction_hash(),
         );
 
         if let Some(events) = &self.events {
-            let event_hashes: Vec<_> = events.iter().map(ContractEvent::hash).collect();
+            let event_hashes: Vec<_> = events.iter().map(CryptoHash::hash).collect();
             let event_root_hash =
                 InMemoryAccumulator::<EventAccumulatorHasher>::from_leaves(&event_hashes[..])
                     .root_hash();
             ensure!(
-                event_root_hash == self.proof.transaction_info().event_root_hash,
+                event_root_hash == self.proof.transaction_info().event_root_hash(),
                 "Event root hash ({}) not expected ({}).",
                 event_root_hash,
-                self.proof.transaction_info().event_root_hash,
+                self.proof.transaction_info().event_root_hash(),
             );
         }
 
@@ -744,6 +793,13 @@ impl TransactionStatus {
             TransactionStatus::Retry => true,
         }
     }
+
+    pub fn as_kept_status(&self) -> Result<KeptVMStatus> {
+        match self {
+            TransactionStatus::Keep(s) => Ok(s.clone()),
+            _ => Err(format_err!("Not Keep.")),
+        }
+    }
 }
 
 impl From<VMStatus> for TransactionStatus {
@@ -752,6 +808,12 @@ impl From<VMStatus> for TransactionStatus {
             Ok(recorded) => TransactionStatus::Keep(recorded),
             Err(code) => TransactionStatus::Discard(code),
         }
+    }
+}
+
+impl From<KeptVMStatus> for TransactionStatus {
+    fn from(kept_vm_status: KeptVMStatus) -> Self {
+        TransactionStatus::Keep(kept_vm_status)
     }
 }
 
@@ -911,63 +973,96 @@ impl TransactionOutput {
 /// transaction as well as the execution result of this transaction.
 #[derive(Clone, CryptoHasher, BCSCryptoHash, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
-pub struct TransactionInfo {
-    /// The hash of this transaction.
-    transaction_hash: HashValue,
+pub enum TransactionInfo {
+    V0(TransactionInfoV0),
+}
 
-    /// The root hash of Sparse Merkle Tree describing the world state at the end of this
-    /// transaction.
-    state_root_hash: HashValue,
+impl TransactionInfo {
+    pub fn new(
+        transaction_hash: HashValue,
+        state_change_hash: HashValue,
+        event_root_hash: HashValue,
+        gas_used: u64,
+        status: KeptVMStatus,
+    ) -> Self {
+        Self::V0(TransactionInfoV0::new(
+            transaction_hash,
+            state_change_hash,
+            event_root_hash,
+            gas_used,
+            status,
+        ))
+    }
+}
 
-    /// The root hash of Merkle Accumulator storing all events emitted during this transaction.
-    event_root_hash: HashValue,
+impl Deref for TransactionInfo {
+    type Target = TransactionInfoV0;
 
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::V0(txn_info) => txn_info,
+        }
+    }
+}
+
+#[derive(Clone, CryptoHasher, BCSCryptoHash, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
+pub struct TransactionInfoV0 {
     /// The amount of gas used.
     gas_used: u64,
 
     /// The vm status. If it is not `Executed`, this will provide the general error class. Execution
-    /// failures and Move abort's recieve more detailed information. But other errors are generally
+    /// failures and Move abort's receive more detailed information. But other errors are generally
     /// categorized with no status code or other information
     status: KeptVMStatus,
+
+    /// The hash of this transaction.
+    transaction_hash: HashValue,
+
+    /// The root hash of Merkle Accumulator storing all events emitted during this transaction.
+    event_root_hash: HashValue,
+
+    /// The hash value summarizing all changes caused to the world state by this transaction.
+    /// Depending on the protocol configuration, it can be the root hash of an accumulator of
+    /// the write set or all updated accounts, or the global Sparse Merkle Tree root hash.
+    state_change_hash: HashValue,
+
+    /// The root hash of the Sparse Merkle Tree describing the world state at the end of this
+    /// transaction. Depending on the protocol configuration, this can be generated periodical
+    /// only, like per block.
+    state_checkpoint_hash: Option<HashValue>,
 }
 
-impl TransactionInfo {
-    /// Constructs a new `TransactionInfo` object using transaction hash, state root hash and event
-    /// root hash.
+impl TransactionInfoV0 {
     pub fn new(
         transaction_hash: HashValue,
-        state_root_hash: HashValue,
+        state_change_hash: HashValue,
         event_root_hash: HashValue,
         gas_used: u64,
         status: KeptVMStatus,
-    ) -> TransactionInfo {
-        TransactionInfo {
-            transaction_hash,
-            state_root_hash,
-            event_root_hash,
+    ) -> Self {
+        Self {
             gas_used,
             status,
+            transaction_hash,
+            event_root_hash,
+            state_change_hash,
+            state_checkpoint_hash: None,
         }
     }
 
-    /// Returns the hash of this transaction.
     pub fn transaction_hash(&self) -> HashValue {
         self.transaction_hash
     }
 
-    /// Returns root hash of Sparse Merkle Tree describing the world state at the end of this
-    /// transaction.
-    pub fn state_root_hash(&self) -> HashValue {
-        self.state_root_hash
+    pub fn state_change_hash(&self) -> HashValue {
+        self.state_change_hash
     }
 
-    /// Returns the root hash of Merkle Accumulator storing all events emitted during this
-    /// transaction.
     pub fn event_root_hash(&self) -> HashValue {
         self.event_root_hash
     }
 
-    /// Returns the amount of gas used by this transaction.
     pub fn gas_used(&self) -> u64 {
         self.gas_used
     }
@@ -982,7 +1077,7 @@ impl Display for TransactionInfo {
         write!(
             f,
             "TransactionInfo: [txn_hash: {}, state_root_hash: {}, event_root_hash: {}, gas_used: {}, recorded_status: {:?}]",
-            self.transaction_hash(), self.state_root_hash(), self.event_root_hash(), self.gas_used(), self.status(),
+            self.transaction_hash(), self.state_change_hash(), self.event_root_hash(), self.gas_used(), self.status(),
         )
     }
 }
@@ -991,6 +1086,8 @@ impl Display for TransactionInfo {
 pub struct TransactionToCommit {
     transaction: Transaction,
     account_states: HashMap<AccountAddress, AccountStateBlob>,
+    jf_node_hashes: Option<HashMap<NibblePath, HashValue>>,
+    write_set: WriteSet,
     events: Vec<ContractEvent>,
     gas_used: u64,
     status: KeptVMStatus,
@@ -1000,6 +1097,8 @@ impl TransactionToCommit {
     pub fn new(
         transaction: Transaction,
         account_states: HashMap<AccountAddress, AccountStateBlob>,
+        jf_node_hashes: Option<HashMap<NibblePath, HashValue>>,
+        write_set: WriteSet,
         events: Vec<ContractEvent>,
         gas_used: u64,
         status: KeptVMStatus,
@@ -1007,6 +1106,8 @@ impl TransactionToCommit {
         TransactionToCommit {
             transaction,
             account_states,
+            jf_node_hashes,
+            write_set,
             events,
             gas_used,
             status,
@@ -1019,6 +1120,14 @@ impl TransactionToCommit {
 
     pub fn account_states(&self) -> &HashMap<AccountAddress, AccountStateBlob> {
         &self.account_states
+    }
+
+    pub fn jf_node_hashes(&self) -> Option<&HashMap<NibblePath, HashValue>> {
+        self.jf_node_hashes.as_ref()
+    }
+
+    pub fn write_set(&self) -> &WriteSet {
+        &self.write_set
     }
 
     pub fn events(&self) -> &[ContractEvent] {
@@ -1034,17 +1143,12 @@ impl TransactionToCommit {
     }
 }
 
-/// The list may have three states:
-/// 1. The list is empty. Both proofs must be `None`.
-/// 2. The list has only 1 transaction/transaction_info. Then `proof_of_first_transaction`
-/// must exist and `proof_of_last_transaction` must be `None`.
-/// 3. The list has 2+ transactions/transaction_infos. The both proofs must exist.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct TransactionListWithProof {
     pub transactions: Vec<Transaction>,
     pub events: Option<Vec<Vec<ContractEvent>>>,
     pub first_transaction_version: Option<Version>,
-    pub proof: TransactionListProof,
+    pub proof: TransactionInfoListWithProof,
 }
 
 impl TransactionListWithProof {
@@ -1053,7 +1157,7 @@ impl TransactionListWithProof {
         transactions: Vec<Transaction>,
         events: Option<Vec<Vec<ContractEvent>>>,
         first_transaction_version: Option<Version>,
-        proof: TransactionListProof,
+        proof: TransactionInfoListWithProof,
     ) -> Self {
         Self {
             transactions,
@@ -1063,33 +1167,63 @@ impl TransactionListWithProof {
         }
     }
 
-    /// Creates an empty transaction list.
+    /// A convenience function to create an empty proof. Mostly used for tests.
     pub fn new_empty() -> Self {
-        Self::new(vec![], None, None, TransactionListProof::new_empty())
+        Self::new(
+            vec![],
+            None,
+            None,
+            TransactionInfoListWithProof::new_empty(),
+        )
     }
 
-    /// Verifies the transaction list with the proofs, both carried on `self`.
-    ///
-    /// Two things are ensured if no error is raised:
-    ///   1. All the transactions exist on the ledger represented by `ledger_info`.
-    ///   2. And the transactions in the list has consecutive versions starting from
-    /// `first_transaction_version`. When `first_transaction_version` is None, ensures the list is
-    /// empty.
+    /// Verifies the transaction list with proof using the given `ledger_info`.
+    /// This method will ensure:
+    /// 1. All transactions exist on the given `ledger_info`.
+    /// 2. All transactions in the list have consecutive versions.
+    /// 3. If `first_transaction_version` is None, the transaction list is empty.
+    ///    Otherwise, the transaction list starts at `first_transaction_version`.
+    /// 4. If events exist, they match the expected event root hashes in the proof.
     pub fn verify(
         &self,
         ledger_info: &LedgerInfo,
         first_transaction_version: Option<Version>,
     ) -> Result<()> {
+        // Verify the first transaction versions match
         ensure!(
             self.first_transaction_version == first_transaction_version,
-            "First transaction version ({}) not expected ({}).",
-            Self::display_option_version(self.first_transaction_version),
-            Self::display_option_version(first_transaction_version),
+            "First transaction version ({:?}) doesn't match given version ({:?}).",
+            self.first_transaction_version,
+            first_transaction_version,
         );
 
-        let txn_hashes: Vec<_> = self.transactions.iter().map(CryptoHash::hash).collect();
+        // Verify the lengths of the transactions and transaction infos match
+        ensure!(
+            self.proof.transaction_infos.len() == self.transactions.len(),
+            "The number of TransactionInfo objects ({}) does not match the number of \
+             transactions ({}).",
+            self.proof.transaction_infos.len(),
+            self.transactions.len(),
+        );
+
+        // Verify the transaction hashes match those of the transaction infos
+        let transaction_hashes: Vec<_> = self.transactions.iter().map(CryptoHash::hash).collect();
+        itertools::zip_eq(transaction_hashes, &self.proof.transaction_infos)
+            .map(|(txn_hash, txn_info)| {
+                ensure!(
+                    txn_hash == txn_info.transaction_hash(),
+                    "The hash of transaction does not match the transaction info in proof. \
+                     Transaction hash: {:x}. Transaction hash in txn_info: {:x}.",
+                    txn_hash,
+                    txn_info.transaction_hash(),
+                );
+                Ok(())
+            })
+            .collect::<Result<Vec<_>>>()?;
+
+        // Verify the transaction infos are proven by the ledger info.
         self.proof
-            .verify(ledger_info, self.first_transaction_version, &txn_hashes)?;
+            .verify(ledger_info, self.first_transaction_version)?;
 
         // Verify the events if they exist.
         if let Some(event_lists) = &self.events {
@@ -1099,38 +1233,227 @@ impl TransactionListWithProof {
                 event_lists.len(),
                 self.transactions.len(),
             );
-            itertools::zip_eq(event_lists, self.proof.transaction_infos())
-                .map(|(events, txn_info)| {
-                    let event_hashes: Vec<_> = events.iter().map(ContractEvent::hash).collect();
-                    let event_root_hash =
-                        InMemoryAccumulator::<EventAccumulatorHasher>::from_leaves(&event_hashes)
-                            .root_hash();
-                    ensure!(
-                        event_root_hash == txn_info.event_root_hash(),
-                        "Some event root hash calculated doesn't match that carried on the \
-                         transaction info.",
-                    );
-                    Ok(())
-                })
+            itertools::zip_eq(event_lists, &self.proof.transaction_infos)
+                .map(|(events, txn_info)| verify_events_against_root_hash(events, txn_info))
                 .collect::<Result<Vec<_>>>()?;
         }
 
         Ok(())
     }
+}
+
+/// This differs from TransactionListWithProof in that TransactionOutputs are
+/// stored (no transactions). Events are stored inside each TransactionOutput.
+///
+/// Note: the proof cannot verify the TransactionOutputs themselves. This
+/// requires speculative execution of each TransactionOutput to verify that the
+/// resulting state matches the expected state in the proof (for each version).
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+pub struct TransactionOutputListWithProof {
+    pub transactions_and_outputs: Vec<(Transaction, TransactionOutput)>,
+    pub first_transaction_output_version: Option<Version>,
+    pub proof: TransactionInfoListWithProof,
+}
+
+impl TransactionOutputListWithProof {
+    pub fn new(
+        transactions_and_outputs: Vec<(Transaction, TransactionOutput)>,
+        first_transaction_output_version: Option<Version>,
+        proof: TransactionInfoListWithProof,
+    ) -> Self {
+        Self {
+            transactions_and_outputs,
+            first_transaction_output_version,
+            proof,
+        }
+    }
+
+    /// A convenience function to create an empty proof. Mostly used for tests.
+    pub fn new_empty() -> Self {
+        Self::new(vec![], None, TransactionInfoListWithProof::new_empty())
+    }
+
+    /// Verifies the transaction output list with proof using the given `ledger_info`.
+    /// This method will ensure:
+    /// 1. All transaction infos exist on the given `ledger_info`.
+    /// 2. If `first_transaction_output_version` is None, the transaction output list is empty.
+    ///    Otherwise, the list starts at `first_transaction_output_version`.
+    /// 3. Events, gas, status in each transaction output match the expected event root hashes,
+    ///    the gas used and the transaction execution status in the proof, respectively.
+    /// 4. The transaction hashes match those of the transaction infos.
+    ///
+    /// Note: the proof cannot verify the TransactionOutputs themselves. This
+    /// requires speculative execution of each TransactionOutput to verify that the
+    /// resulting state matches the expected state in the proof (for each version).
+    pub fn verify(
+        &self,
+        ledger_info: &LedgerInfo,
+        first_transaction_output_version: Option<Version>,
+    ) -> Result<()> {
+        // Verify the first transaction/output versions match
+        ensure!(
+            self.first_transaction_output_version == first_transaction_output_version,
+            "First transaction and output version ({:?}) doesn't match given version ({:?}).",
+            self.first_transaction_output_version,
+            first_transaction_output_version,
+        );
+
+        // Verify the lengths of the transaction(output)s and transaction infos match
+        ensure!(
+            self.proof.transaction_infos.len() == self.transactions_and_outputs.len(),
+            "The number of TransactionInfo objects ({}) does not match the number of \
+             transactions and outputs ({}).",
+            self.proof.transaction_infos.len(),
+            self.transactions_and_outputs.len(),
+        );
+
+        // Verify the events, status, gas used and transaction hashes.
+        itertools::zip_eq(
+            &self.transactions_and_outputs,
+            &self.proof.transaction_infos,
+        )
+        .map(|((txn, txn_output), txn_info)| {
+            // Check the events against the expected events root hash
+            verify_events_against_root_hash(&txn_output.events, txn_info)?;
+
+            // Verify the gas matches for both the transaction info and output
+            ensure!(
+                txn_output.gas_used() == txn_info.gas_used(),
+                "The gas used in transaction output does not match the transaction info \
+                     in proof. Gas used in transaction output: {}. Gas used in txn_info: {}.",
+                txn_output.gas_used(),
+                txn_info.gas_used(),
+            );
+
+            // Verify the execution status matches for both the transaction info and output.
+            ensure!(
+                *txn_output.status() == TransactionStatus::Keep(txn_info.status().clone()),
+                "The execution status of transaction output does not match the transaction \
+                     info in proof. Status in transaction output: {:?}. Status in txn_info: {:?}.",
+                txn_output.status(),
+                txn_info.status(),
+            );
+
+            // Verify the transaction hashes match those of the transaction infos
+            let txn_hash = txn.hash();
+            ensure!(
+                txn_hash == txn_info.transaction_hash(),
+                "The transaction hash does not match the hash in transaction info. \
+                     Transaction hash: {:x}. Transaction hash in txn_info: {:x}.",
+                txn_hash,
+                txn_info.transaction_hash(),
+            );
+            Ok(())
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+        // Verify the transaction infos are proven by the ledger info.
+        self.proof
+            .verify(ledger_info, self.first_transaction_output_version)?;
+
+        Ok(())
+    }
+}
+
+/// Verifies a list of events against an expected event root hash. This is done
+/// by calculating the hash of the events using an event accumulator hasher.
+fn verify_events_against_root_hash(
+    events: &[ContractEvent],
+    transaction_info: &TransactionInfo,
+) -> Result<()> {
+    let event_hashes: Vec<_> = events.iter().map(CryptoHash::hash).collect();
+    let event_root_hash =
+        InMemoryAccumulator::<EventAccumulatorHasher>::from_leaves(&event_hashes).root_hash();
+    ensure!(
+        event_root_hash == transaction_info.event_root_hash(),
+        "The event root hash calculated doesn't match that carried on the \
+                         transaction info! Calculated hash {:?}, transaction info hash {:?}",
+        event_root_hash,
+        transaction_info.event_root_hash()
+    );
+    Ok(())
+}
+
+/// A list of transactions under an account that are contiguous by sequence number
+/// and include proofs.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
+pub struct AccountTransactionsWithProof(pub Vec<TransactionWithProof>);
+
+impl AccountTransactionsWithProof {
+    pub fn new(txns_with_proofs: Vec<TransactionWithProof>) -> Self {
+        Self(txns_with_proofs)
+    }
+
+    pub fn new_empty() -> Self {
+        Self::new(Vec::new())
+    }
 
     pub fn is_empty(&self) -> bool {
-        self.transactions.is_empty()
+        self.0.is_empty()
     }
 
     pub fn len(&self) -> usize {
-        self.transactions.len()
+        self.0.len()
     }
 
-    fn display_option_version(version: Option<Version>) -> String {
-        match version {
-            Some(v) => format!("{}", v),
-            None => String::from("absent"),
-        }
+    pub fn inner(&self) -> &[TransactionWithProof] {
+        &self.0
+    }
+
+    pub fn into_inner(self) -> Vec<TransactionWithProof> {
+        self.0
+    }
+
+    // TODO(philiphayes): this will need to change to support CRSNs
+    // (Conflict-Resistant Sequence Numbers)[https://github.com/diem/dip/blob/main/dips/dip-168.md].
+    //
+    // If we use a separate event stream under each account for sequence numbers,
+    // we'll probably need to always `include_events: true`, find the sequence
+    // number event, and use that to guarantee the response is sequential and
+    // complete.
+    /// 1. Verify all transactions are consistent with the given ledger info.
+    /// 2. All transactions were sent by `account`.
+    /// 3. The transactions are contiguous by sequence number, starting at `start_seq_num`.
+    /// 4. No more transactions than limit.
+    /// 5. Events are present when requested (and not present when not requested).
+    /// 6. Transactions are not newer than requested ledger version.
+    pub fn verify(
+        &self,
+        ledger_info: &LedgerInfo,
+        account: AccountAddress,
+        start_seq_num: u64,
+        limit: u64,
+        include_events: bool,
+        ledger_version: Version,
+    ) -> Result<()> {
+        ensure!(
+            self.len() as u64 <= limit,
+            "number of account transactions ({}) exceeded limit ({})",
+            self.len(),
+            limit,
+        );
+
+        self.0
+            .iter()
+            .enumerate()
+            .try_for_each(|(seq_num_offset, txn_with_proof)| {
+                let expected_seq_num = start_seq_num.saturating_add(seq_num_offset as u64);
+                let txn_version = txn_with_proof.version;
+
+                ensure!(
+                    include_events == txn_with_proof.events.is_some(),
+                    "unexpected events or missing events"
+                );
+                ensure!(
+                    txn_version <= ledger_version,
+                    "transaction with version ({}) greater than requested ledger version ({})",
+                    txn_version,
+                    ledger_version,
+                );
+
+                txn_with_proof.verify_user_txn(ledger_info, txn_version, account, expected_seq_num)
+            })
     }
 }
 

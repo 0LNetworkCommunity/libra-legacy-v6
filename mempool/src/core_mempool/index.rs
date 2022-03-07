@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /// This module provides various indexes used by Mempool.
-use crate::core_mempool::transaction::{MempoolTransaction, TimelineState};
+use crate::core_mempool::transaction::{MempoolTransaction, SequenceInfo, TimelineState};
 use crate::{
     counters,
     logging::{LogEntry, LogSchema},
@@ -40,11 +40,11 @@ impl PriorityIndex {
     }
 
     pub(crate) fn insert(&mut self, txn: &MempoolTransaction) {
-        self.data.insert(self.make_key(&txn));
+        self.data.insert(self.make_key(txn));
     }
 
     pub(crate) fn remove(&mut self, txn: &MempoolTransaction) {
-        self.data.remove(&self.make_key(&txn));
+        self.data.remove(&self.make_key(txn));
     }
 
     pub(crate) fn contains(&self, txn: &MempoolTransaction) -> bool {
@@ -56,7 +56,7 @@ impl PriorityIndex {
             gas_ranking_score: txn.ranking_score,
             expiration_time: txn.expiration_time,
             address: txn.get_sender(),
-            sequence_number: txn.get_sequence_number(),
+            sequence_number: txn.sequence_info,
             governance_role: txn.governance_role,
         }
     }
@@ -75,7 +75,7 @@ pub struct OrderedQueueKey {
     pub gas_ranking_score: u64,
     pub expiration_time: Duration,
     pub address: AccountAddress,
-    pub sequence_number: u64,
+    pub sequence_number: SequenceInfo,
     pub governance_role: GovernanceRole,
 }
 
@@ -107,7 +107,10 @@ impl Ord for OrderedQueueKey {
             Ordering::Equal => {}
             ordering => return ordering,
         }
-        self.sequence_number.cmp(&other.sequence_number).reverse()
+        self.sequence_number
+            .transaction_sequence_number
+            .cmp(&other.sequence_number.transaction_sequence_number)
+            .reverse()
     }
 }
 
@@ -133,11 +136,11 @@ impl TTLIndex {
     }
 
     pub(crate) fn insert(&mut self, txn: &MempoolTransaction) {
-        self.data.insert(self.make_key(&txn));
+        self.data.insert(self.make_key(txn));
     }
 
     pub(crate) fn remove(&mut self, txn: &MempoolTransaction) {
-        self.data.remove(&self.make_key(&txn));
+        self.data.remove(&self.make_key(txn));
     }
 
     /// Garbage collect all old transactions.
@@ -159,7 +162,7 @@ impl TTLIndex {
         TTLOrderingKey {
             expiration_time: (self.get_expiration_time)(txn),
             address: txn.get_sender(),
-            sequence_number: txn.get_sequence_number(),
+            sequence_number: txn.sequence_info.transaction_sequence_number,
         }
     }
 
@@ -212,7 +215,7 @@ impl TimelineIndex {
 
     /// Read all transactions from the timeline since <timeline_id>.
     pub(crate) fn read_timeline(
-        &mut self,
+        &self,
         timeline_id: u64,
         count: usize,
     ) -> Vec<(AccountAddress, u64)> {
@@ -230,11 +233,7 @@ impl TimelineIndex {
     }
 
     /// Read transactions from the timeline from `start_id` (exclusive) to `end_id` (inclusive).
-    pub(crate) fn timeline_range(
-        &mut self,
-        start_id: u64,
-        end_id: u64,
-    ) -> Vec<(AccountAddress, u64)> {
+    pub(crate) fn timeline_range(&self, start_id: u64, end_id: u64) -> Vec<(AccountAddress, u64)> {
         self.timeline
             .range((Bound::Excluded(start_id), Bound::Included(end_id)))
             .map(|(_idx, txn)| txn)
@@ -245,7 +244,10 @@ impl TimelineIndex {
     pub(crate) fn insert(&mut self, txn: &mut MempoolTransaction) {
         self.timeline.insert(
             self.timeline_id,
-            (txn.get_sender(), txn.get_sequence_number()),
+            (
+                txn.get_sender(),
+                txn.sequence_info.transaction_sequence_number,
+            ),
         );
         txn.timeline_state = TimelineState::Ready(self.timeline_id);
         self.timeline_id += 1;
@@ -337,13 +339,13 @@ impl ParkingLotIndex {
 
     pub(crate) fn contains(&self, account: &AccountAddress, seq_num: &u64) -> bool {
         self.account_indices
-            .get(&account)
+            .get(account)
             .and_then(|idx| self.data.get(*idx))
             .map_or(false, |(_account, txns)| txns.contains(seq_num))
     }
 
     /// Returns a random "non-ready" transaction (with highest sequence number for that account).
-    pub(crate) fn get_poppable(&mut self) -> Option<TxnPointer> {
+    pub(crate) fn get_poppable(&self) -> Option<TxnPointer> {
         let mut rng = rand::thread_rng();
         self.data
             .choose(&mut rng)
@@ -361,12 +363,15 @@ pub type TxnPointer = (AccountAddress, u64);
 
 impl From<&MempoolTransaction> for TxnPointer {
     fn from(transaction: &MempoolTransaction) -> Self {
-        (transaction.get_sender(), transaction.get_sequence_number())
+        (
+            transaction.get_sender(),
+            transaction.sequence_info.transaction_sequence_number,
+        )
     }
 }
 
 impl From<&OrderedQueueKey> for TxnPointer {
     fn from(key: &OrderedQueueKey) -> Self {
-        (key.address, key.sequence_number)
+        (key.address, key.sequence_number.transaction_sequence_number)
     }
 }

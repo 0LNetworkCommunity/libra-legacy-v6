@@ -11,10 +11,8 @@ use diem_types::{
     network_address::{
         self,
         encrypted::{
-            EncNetworkAddress, Key, KeyVersion, TEST_SHARED_VAL_NETADDR_KEY,
-            TEST_SHARED_VAL_NETADDR_KEY_VERSION,
+            Key, KeyVersion, TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION,
         },
-        NetworkAddress,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -37,34 +35,24 @@ pub enum Error {
     VersionNotFound(KeyVersion),
 }
 
-pub struct Encryptor {
-    storage: Storage,
+pub struct Encryptor<S> {
+    storage: S,
     cached_keys: RwLock<Option<ValidatorKeys>>,
 }
 
-impl Encryptor {
-    pub fn new(storage: Storage) -> Self {
+impl<S> Encryptor<S> {
+    pub fn new(storage: S) -> Self {
         Self {
             storage,
             cached_keys: RwLock::new(None),
         }
     }
+}
 
-    /// This generates an empty encryptor for use in scenarios where encryption is not necessary.
-    /// Any encryption operations (e.g., encrypt / decrypt) will return errors.
-    pub fn empty() -> Self {
-        let storage = Storage::InMemoryStorage(diem_secure_storage::InMemoryStorage::new());
-        Encryptor::new(storage)
-    }
-
-    /// This generates an encryptor for use in testing scenarios. The encryptor is
-    /// initialized with a test network encryption key.
-    pub fn for_testing() -> Self {
-        let mut encryptor = Self::empty();
-        encryptor.initialize_for_testing().unwrap();
-        encryptor
-    }
-
+impl<S> Encryptor<S>
+where
+    S: KVStorage,
+{
     pub fn add_key(&mut self, version: KeyVersion, key: Key) -> Result<(), Error> {
         let mut keys = self.read()?;
         keys.keys.insert(version, StorageKey(key));
@@ -83,60 +71,6 @@ impl Encryptor {
 
     pub fn current_version(&self) -> Result<KeyVersion, Error> {
         self.read().map(|keys| keys.current)
-    }
-
-    pub fn encrypt(
-        &self,
-        network_addresses: &[NetworkAddress],
-        account: AccountAddress,
-        seq_num: u64,
-    ) -> Result<Vec<u8>, Error> {
-        let keys = self.read()?;
-        let key = keys
-            .keys
-            .get(&keys.current)
-            .ok_or(Error::VersionNotFound(keys.current))?;
-        let mut enc_addrs = Vec::new();
-        for (idx, addr) in network_addresses.iter().cloned().enumerate() {
-            enc_addrs.push(addr.encrypt(&key.0, keys.current, &account, seq_num, idx as u32)?);
-        }
-        bcs::to_bytes(&enc_addrs).map_err(|e| e.into())
-    }
-
-    pub fn decrypt(
-        &self,
-        encrypted_network_addresses: &[u8],
-        account: AccountAddress,
-    ) -> Result<Vec<NetworkAddress>, Error> {
-        let keys = self.read()?;
-        let enc_addrs: Vec<EncNetworkAddress> = bcs::from_bytes(&encrypted_network_addresses)
-            .map_err(|e| Error::AddressDeserialization(account, e.to_string()))?;
-        let mut addrs = Vec::new();
-        for (idx, enc_addr) in enc_addrs.iter().enumerate() {
-            let key = keys
-                .keys
-                .get(&enc_addr.key_version())
-                .ok_or_else(|| Error::VersionNotFound(enc_addr.key_version()))?;
-            let addr = enc_addr
-                .clone()
-                .decrypt(&key.0, &account, idx as u32)
-                .map_err(|e| Error::DecryptionError(account, e.to_string()))?;
-            addrs.push(addr);
-        }
-        Ok(addrs)
-    }
-
-    pub fn initialize(&mut self) -> Result<(), Error> {
-        self.write(&ValidatorKeys::default())
-    }
-
-    pub fn initialize_for_testing(&mut self) -> Result<(), Error> {
-        self.initialize()?;
-        self.add_key(
-            TEST_SHARED_VAL_NETADDR_KEY_VERSION,
-            TEST_SHARED_VAL_NETADDR_KEY,
-        )?;
-        self.set_current_version(TEST_SHARED_VAL_NETADDR_KEY_VERSION)
     }
 
     fn read(&self) -> Result<ValidatorKeys, Error> {
@@ -165,6 +99,36 @@ impl Encryptor {
         self.storage
             .set(VALIDATOR_NETWORK_ADDRESS_KEYS, keys)
             .map_err(|e| e.into())
+    }
+
+    pub fn initialize(&mut self) -> Result<(), Error> {
+        self.write(&ValidatorKeys::default())
+    }
+}
+
+impl Encryptor<Storage> {
+    /// This generates an empty encryptor for use in scenarios where encryption is not necessary.
+    /// Any encryption operations (e.g., encrypt / decrypt) will return errors.
+    pub fn empty() -> Self {
+        let storage = Storage::InMemoryStorage(diem_secure_storage::InMemoryStorage::new());
+        Encryptor::new(storage)
+    }
+
+    /// This generates an encryptor for use in testing scenarios. The encryptor is
+    /// initialized with a test network encryption key.
+    pub fn for_testing() -> Self {
+        let mut encryptor = Self::empty();
+        encryptor.initialize_for_testing().unwrap();
+        encryptor
+    }
+
+    pub fn initialize_for_testing(&mut self) -> Result<(), Error> {
+        self.initialize()?;
+        self.add_key(
+            TEST_SHARED_VAL_NETADDR_KEY_VERSION,
+            TEST_SHARED_VAL_NETADDR_KEY,
+        )?;
+        self.set_current_version(TEST_SHARED_VAL_NETADDR_KEY_VERSION)
     }
 }
 
@@ -236,41 +200,6 @@ mod tests {
         encryptor.set_current_version(4).unwrap();
 
         encryptor.set_current_version(5).unwrap_err();
-
-        let addr = std::str::FromStr::from_str("/ip4/10.0.0.16/tcp/80").unwrap();
-        let addrs = vec![addr];
-        let account = AccountAddress::random();
-
-        let enc_addrs = encryptor.encrypt(&addrs, account, 5).unwrap();
-        let dec_addrs = encryptor.decrypt(&enc_addrs, account).unwrap();
-        assert_eq!(addrs, dec_addrs);
-
-        let another_account = AccountAddress::random();
-        encryptor.decrypt(&enc_addrs, another_account).unwrap_err();
-    }
-
-    #[test]
-    fn cache_test() {
-        // Prepare some initial data and verify e2e
-        let mut encryptor = Encryptor::for_testing();
-        let addr = std::str::FromStr::from_str("/ip4/10.0.0.16/tcp/80").unwrap();
-        let addrs = vec![addr];
-        let account = AccountAddress::random();
-
-        let enc_addrs = encryptor.encrypt(&addrs, account, 0).unwrap();
-        let dec_addrs = encryptor.decrypt(&enc_addrs, account).unwrap();
-        assert_eq!(addrs, dec_addrs);
-
-        // Reset storage and we should use cache
-        encryptor.storage = Storage::from(InMemoryStorage::new());
-        let enc_addrs = encryptor.encrypt(&addrs, account, 1).unwrap();
-        let dec_addrs = encryptor.decrypt(&enc_addrs, account).unwrap();
-        assert_eq!(addrs, dec_addrs);
-
-        // Reset cache and we should get an err
-        *encryptor.cached_keys.write() = None;
-        encryptor.encrypt(&addrs, account, 1).unwrap_err();
-        encryptor.decrypt(&enc_addrs, account).unwrap_err();
     }
 
     // The only purpose of this test is to generate a baseline for vault

@@ -12,24 +12,24 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-trait = "0.1.42"
 futures = "0.3.12"
 rand = "0.8.3"
 serde = { version = "1.0.124", default-features = false }
-tokio = { version = "1.3.0", features = ["full"] }
+tokio = { version = "1.8.1", features = ["full"] }
 
-channel = { path = "../../common/channel" }
+channel = { path = "../../crates/channel" }
 bcs = "0.1.2"
 diem-config = { path = "../../config" }
-diem-crypto = { path = "../../crypto/crypto" }
-diem-infallible = { path = "../../common/infallible" }
-diem-logger = { path = "../../common/logger" }
-diem-metrics = {path = "../../common/metrics"}
+diem-crypto = { path = "../../crates/diem-crypto" }
+diem-infallible = { path = "../../crates/diem-infallible" }
+diem-logger = { path = "../../crates/diem-logger" }
 diem-network-address-encryption = {path = "../../config/management/network-address-encryption"}
 diem-secure-storage = { path = "../../secure/storage" }
-diem-time-service = { path = "../../common/time-service", features = ["async"] }
+diem-time-service = { path = "../../crates/diem-time-service", features = ["async"] }
 diem-types = { path = "../../types" }
-diem-workspace-hack = { path = "../../common/workspace-hack" }
+diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
+event-notifications = { path = "../../state-sync/inter-component/event-notifications" }
 netcore = { path = "../netcore" }
 network = { path = "../." }
-network-simple-onchain-discovery = { path = "../simple-onchain-discovery"}
-subscription-service = { path = "../../common/subscription-service" }
+network-discovery = { path = "../discovery" }

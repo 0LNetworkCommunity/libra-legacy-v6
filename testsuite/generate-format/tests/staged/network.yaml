@@ -9,11 +9,6 @@ DirectSendMsg:
     - raw_msg: BYTES
 DnsName:
   NEWTYPESTRUCT: STR
-EncNetworkAddress:
-  STRUCT:
-    - key_version: U32
-    - seq_num: U64
-    - enc_addr: BYTES
 ErrorCode:
   ENUM:
     0:
@@ -31,7 +26,7 @@ HandshakeMsg:
           KEY:
             TYPENAME: MessagingProtocolVersion
           VALUE:
-            TYPENAME: SupportedProtocols
+            TYPENAME: ProtocolIdSet
     - chain_id:
         TYPENAME: ChainId
     - network_id:
@@ -51,6 +46,10 @@ NetworkId:
     2:
       private:
         NEWTYPE: STR
+    3:
+      vfn: UNIT
+    4:
+      new_public: UNIT
 NetworkMessage:
   ENUM:
     0:
@@ -125,9 +124,9 @@ Protocol:
 ProtocolId:
   ENUM:
     0:
-      ConsensusRpc: UNIT
+      ConsensusRpcBcs: UNIT
     1:
-      ConsensusDirectSend: UNIT
+      ConsensusDirectSendBcs: UNIT
     2:
       MempoolDirectSend: UNIT
     3:
@@ -136,6 +135,16 @@ ProtocolId:
       DiscoveryDirectSend: UNIT
     5:
       HealthCheckerRpc: UNIT
+    6:
+      ConsensusDirectSendJson: UNIT
+    7:
+      ConsensusRpcJson: UNIT
+    8:
+      StorageServiceRpc: UNIT
+    9:
+      MempoolRpc: UNIT
+ProtocolIdSet:
+  NEWTYPESTRUCT: BYTES
 PublicKey:
   NEWTYPESTRUCT: BYTES
 RpcRequest:
@@ -150,5 +159,3 @@ RpcResponse:
     - request_id: U32
     - priority: U8
     - raw_response: BYTES
-SupportedProtocols:
-  NEWTYPESTRUCT: BYTES

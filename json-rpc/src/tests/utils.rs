@@ -3,30 +3,28 @@
 
 use anyhow::{format_err, Error, Result};
 use diem_config::{
-    config::{
-        RoleType, DEFAULT_BATCH_SIZE_LIMIT, DEFAULT_CONTENT_LENGTH_LIMIT, DEFAULT_PAGE_SIZE_LIMIT,
-    },
+    config::{JsonRpcConfig, RoleType},
     utils,
 };
 use diem_crypto::HashValue;
-use diem_mempool::{MempoolClientSender, SubmissionStatus};
-
+use diem_mempool::{MempoolClientSender, MempoolEventsReceiver};
 use diem_types::{
     account_address::AccountAddress,
     account_state::AccountState,
     account_state_blob::{AccountStateBlob, AccountStateWithProof},
     block_info::BlockInfo,
     chain_id::ChainId,
-    contract_event::{ContractEvent, EventWithProof},
+    contract_event::{ContractEvent, EventByVersionWithProof, EventWithProof},
     epoch_change::EpochChangeProof,
     event::EventKey,
     ledger_info::{LedgerInfo, LedgerInfoWithSignatures},
     proof::{
         AccumulatorConsistencyProof, AccumulatorRangeProof, SparseMerkleProof,
-        TransactionAccumulatorProof, TransactionInfoWithProof, TransactionListProof,
+        TransactionAccumulatorProof, TransactionInfoListWithProof, TransactionInfoWithProof,
     },
+    state_proof::StateProof,
     transaction::{
-        SignedTransaction, Transaction, TransactionInfo, TransactionListWithProof,
+        AccountTransactionsWithProof, Transaction, TransactionInfo, TransactionListWithProof,
         TransactionWithProof, Version,
     },
     vm_status::KeptVMStatus,
@@ -37,13 +35,11 @@ use crate::tests::genesis::generate_genesis_state;
 use diem_client::BlockingClient;
 use diem_proptest_helpers::ValueGenerator;
 use diem_types::account_config::FreezingBit;
-use futures::channel::{
-    mpsc::{channel, Receiver},
-    oneshot,
-};
+use futures::channel::mpsc::channel;
 use move_core_types::{
-    language_storage::TypeTag,
+    language_storage::{ModuleId, StructTag, TypeTag},
     move_resource::MoveResource,
+    resolver::{ModuleResolver, ResourceResolver},
     value::{MoveStructLayout, MoveTypeLayout},
 };
 use move_vm_types::values::{Struct, Value};
@@ -54,7 +50,7 @@ use std::{
     net::SocketAddr,
     sync::Arc,
 };
-use storage_interface::{DbReader, Order, StartupInfo, TreeState};
+use storage_interface::{DbReader, MoveDbReader, Order};
 use tokio::runtime::Runtime;
 
 /// Creates JSON RPC server for a Validator node
@@ -62,16 +58,15 @@ use tokio::runtime::Runtime;
 #[allow(unused)]
 pub fn test_bootstrap(
     address: SocketAddr,
-    diem_db: Arc<dyn DbReader>,
+    diem_db: Arc<dyn MoveDbReader>,
     mp_sender: MempoolClientSender,
 ) -> Runtime {
-    crate::bootstrap(
+    let cfg = JsonRpcConfig {
         address,
-        DEFAULT_BATCH_SIZE_LIMIT,
-        DEFAULT_PAGE_SIZE_LIMIT,
-        DEFAULT_CONTENT_LENGTH_LIMIT,
-        &None,
-        &None,
+        ..Default::default()
+    };
+    crate::bootstrap(
+        &cfg,
         diem_db,
         mp_sender,
         RoleType::Validator,
@@ -124,50 +119,73 @@ impl DbReader for MockDiemDB {
         ))
     }
 
-    fn get_txn_by_account(
+    fn get_account_transaction(
         &self,
         address: AccountAddress,
         seq_num: u64,
-        _ledger_version: u64,
-        fetch_events: bool,
+        include_events: bool,
+        ledger_version: u64,
     ) -> Result<Option<TransactionWithProof>, Error> {
-        Ok(self
+        let txs =
+            self.get_account_transactions(address, seq_num, 1, include_events, ledger_version)?;
+        assert!(txs.len() <= 1);
+        Ok(txs.into_inner().into_iter().next())
+    }
+
+    fn get_account_transactions(
+        &self,
+        address: AccountAddress,
+        start_seq_num: u64,
+        limit: u64,
+        include_events: bool,
+        ledger_version: u64,
+    ) -> Result<AccountTransactionsWithProof> {
+        let end_seq_num = start_seq_num + limit;
+        let seq_num_range = start_seq_num..end_seq_num;
+
+        let txns_with_proofs = self
             .all_txns
             .iter()
             .enumerate()
-            .find(|(_, (x, _))| {
-                if let Ok(t) = x.as_signed_user_txn() {
-                    t.sender() == address && t.sequence_number() == seq_num
+            .filter(|(v, (tx, _))| {
+                if *v as u64 > ledger_version {
+                    false
+                } else if let Ok(tx) = tx.as_signed_user_txn() {
+                    tx.sender() == address && seq_num_range.contains(&tx.sequence_number())
                 } else {
                     false
                 }
             })
-            .map(|(v, (x, status))| TransactionWithProof {
-                version: v as u64,
-                transaction: x.clone(),
-                events: if fetch_events {
-                    Some(
-                        self.events
+            .map(|(v, (tx, status))| {
+                let txn_with_proof = TransactionWithProof {
+                    version: v as u64,
+                    transaction: tx.clone(),
+                    events: if include_events {
+                        let events = self
+                            .events
                             .iter()
                             .filter(|(ev, _)| *ev == v as u64)
-                            .map(|(_, e)| e)
-                            .cloned()
-                            .collect(),
-                    )
-                } else {
-                    None
-                },
-                proof: TransactionInfoWithProof::new(
-                    TransactionAccumulatorProof::new(vec![]),
-                    TransactionInfo::new(
-                        Default::default(),
-                        Default::default(),
-                        Default::default(),
-                        0,
-                        status.clone(),
+                            .map(|(_, e)| e.clone())
+                            .collect();
+                        Some(events)
+                    } else {
+                        None
+                    },
+                    proof: TransactionInfoWithProof::new(
+                        TransactionAccumulatorProof::new(vec![]),
+                        TransactionInfo::new(
+                            Default::default(),
+                            Default::default(),
+                            Default::default(),
+                            0,
+                            status.clone(),
+                        ),
                     ),
-                ),
-            }))
+                };
+                Ok(txn_with_proof)
+            })
+            .collect::<Result<Vec<_>>>()?;
+        Ok(AccountTransactionsWithProof::new(txns_with_proofs))
     }
 
     fn get_transactions(
@@ -203,7 +221,8 @@ impl DbReader for MockDiemDB {
                 ));
             });
         let first_transaction_version = transactions.first().map(|_| start_version);
-        let proof = TransactionListProof::new(AccumulatorRangeProof::new_empty(), txn_infos);
+        let proof =
+            TransactionInfoListWithProof::new(AccumulatorRangeProof::new_empty(), txn_infos);
 
         let events = if fetch_events {
             let events = (start_version..start_version + transactions.len() as u64)
@@ -257,32 +276,38 @@ impl DbReader for MockDiemDB {
         _limit: u64,
         _known_version: Option<u64>,
     ) -> Result<Vec<EventWithProof>> {
-        unimplemented!()
+        Ok(Vec::new())
     }
 
-    fn get_state_proof(
+    fn get_event_by_version_with_proof(
         &self,
-        known_version: u64,
-    ) -> Result<(
-        LedgerInfoWithSignatures,
-        EpochChangeProof,
-        AccumulatorConsistencyProof,
-    )> {
+        _event_key: &EventKey,
+        _version: u64,
+        _proof_version: u64,
+    ) -> Result<EventByVersionWithProof> {
+        Ok(EventByVersionWithProof::new(None, None))
+    }
+
+    fn get_accumulator_consistency_proof(
+        &self,
+        _client_known_version: Option<Version>,
+        _ledger_version: Version,
+    ) -> Result<AccumulatorConsistencyProof> {
+        Ok(AccumulatorConsistencyProof::new(Vec::new()))
+    }
+
+    fn get_state_proof(&self, known_version: u64) -> Result<StateProof> {
         let li = self.get_latest_ledger_info()?;
-        let proofs = self.get_state_proof_with_ledger_info(known_version, li.clone())?;
-        Ok((
-            LedgerInfoWithSignatures::new(li.ledger_info().clone(), BTreeMap::new()),
-            proofs.0,
-            proofs.1,
-        ))
+        self.get_state_proof_with_ledger_info(known_version, li)
     }
 
     fn get_state_proof_with_ledger_info(
         &self,
         _known_version: u64,
-        _ledger_info: LedgerInfoWithSignatures,
-    ) -> Result<(EpochChangeProof, AccumulatorConsistencyProof)> {
-        Ok((
+        li: LedgerInfoWithSignatures,
+    ) -> Result<StateProof> {
+        Ok(StateProof::new(
+            LedgerInfoWithSignatures::new(li.ledger_info().clone(), BTreeMap::new()),
             EpochChangeProof::new(vec![], false),
             AccumulatorConsistencyProof::new(vec![]),
         ))
@@ -301,10 +326,6 @@ impl DbReader for MockDiemDB {
             .clone())
     }
 
-    fn get_startup_info(&self) -> Result<Option<StartupInfo>> {
-        unimplemented!()
-    }
-
     fn get_account_state_with_proof_by_version(
         &self,
         address: AccountAddress,
@@ -319,26 +340,6 @@ impl DbReader for MockDiemDB {
         ))
     }
 
-    fn get_latest_state_root(&self) -> Result<(u64, HashValue)> {
-        unimplemented!()
-    }
-
-    fn get_latest_tree_state(&self) -> Result<TreeState> {
-        unimplemented!()
-    }
-
-    fn get_epoch_ending_ledger_infos(
-        &self,
-        _start_epoch: u64,
-        _end_epoch: u64,
-    ) -> Result<EpochChangeProof> {
-        unimplemented!()
-    }
-
-    fn get_epoch_ending_ledger_info(&self, _: u64) -> Result<LedgerInfoWithSignatures> {
-        unimplemented!()
-    }
-
     fn get_block_timestamp(&self, version: u64) -> Result<u64> {
         Ok(match self.timestamps.get(version as usize) {
             Some(t) => *t,
@@ -350,6 +351,44 @@ impl DbReader for MockDiemDB {
         Ok(HashValue::zero())
     }
 }
+
+impl ModuleResolver for MockDiemDB {
+    type Error = anyhow::Error;
+
+    fn get_module(&self, module_id: &ModuleId) -> Result<Option<Vec<u8>>, Self::Error> {
+        let (account_state_with_proof, _) = self.get_account_state_with_proof_by_version(
+            *module_id.address(),
+            self.get_latest_version()?,
+        )?;
+        if let Some(account_state_blob) = account_state_with_proof {
+            let account_state = AccountState::try_from(&account_state_blob)?;
+            Ok(account_state.get(&module_id.access_vector()).cloned())
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+impl ResourceResolver for MockDiemDB {
+    type Error = anyhow::Error;
+
+    fn get_resource(
+        &self,
+        address: &AccountAddress,
+        tag: &StructTag,
+    ) -> Result<Option<Vec<u8>>, Self::Error> {
+        let (account_state_with_proof, _) =
+            self.get_account_state_with_proof_by_version(*address, self.get_latest_version()?)?;
+        if let Some(account_state_blob) = account_state_with_proof {
+            let account_state = AccountState::try_from(&account_state_blob)?;
+            Ok(account_state.get(&tag.access_vector()).cloned())
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+impl MoveDbReader for MockDiemDB {}
 
 // returns MockDiemDB for unit-testing
 #[allow(unused)]
@@ -442,15 +481,7 @@ pub fn create_database_client_and_runtime() -> (MockDiemDB, BlockingClient, Runt
 }
 
 #[allow(unused)]
-pub fn create_db_and_runtime() -> (
-    MockDiemDB,
-    Runtime,
-    String,
-    Receiver<(
-        SignedTransaction,
-        oneshot::Sender<anyhow::Result<SubmissionStatus>>,
-    )>,
-) {
+pub fn create_db_and_runtime() -> (MockDiemDB, Runtime, String, MempoolEventsReceiver) {
     let mock_db = mock_db();
 
     let host = "127.0.0.1";

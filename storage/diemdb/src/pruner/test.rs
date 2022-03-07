@@ -18,6 +18,7 @@ fn put_account_state_set(
     let root = state_store
         .put_account_state_sets(
             vec![account_state_set.into_iter().collect::<HashMap<_, _>>()],
+            None,
             version,
             &mut cs,
         )
@@ -48,7 +49,7 @@ fn test_pruner() {
 
     let tmp_dir = TempPath::new();
     let db = DiemDB::new_for_test(&tmp_dir).db;
-    let state_store = &StateStore::new(Arc::clone(&db));
+    let state_store = &StateStore::new(Arc::clone(&db), true /* account_count_migration */);
     let pruner = Pruner::new(Arc::clone(&db), 0 /* historical_versions_to_keep */);
 
     let _root0 = put_account_state_set(
@@ -109,7 +110,7 @@ fn test_worker_quit_eagerly() {
 
     let tmp_dir = TempPath::new();
     let db = DiemDB::new_for_test(&tmp_dir).db;
-    let state_store = &StateStore::new(Arc::clone(&db));
+    let state_store = &StateStore::new(Arc::clone(&db), true /* account_count_migration */);
 
     let _root0 = put_account_state_set(
         &db,

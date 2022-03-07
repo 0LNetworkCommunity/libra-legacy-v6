@@ -12,7 +12,7 @@ use crate::{
     ledger_info::LedgerInfo,
     transaction::{TransactionInfo, Version},
 };
-use anyhow::{bail, ensure, format_err, Result};
+use anyhow::{bail, ensure, format_err, Context, Result};
 #[cfg(any(test, feature = "fuzzing"))]
 use diem_crypto::hash::TestOnlyHasher;
 use diem_crypto::{
@@ -265,6 +265,95 @@ where
     }
 }
 
+/// An in-memory accumulator for storing a summary of the core transaction info
+/// accumulator. It is a summary in the sense that it only stores maximally
+/// frozen subtree nodes rather than storing all leaves and internal nodes.
+///
+/// Light clients and light nodes use this type to store their currently verified
+/// view of the transaction accumulator. When verifying state proofs, these clients
+/// attempt to extend their accumulator summary with an [`AccumulatorConsistencyProof`]
+/// to verifiably ratchet their trusted view of the accumulator to a newer state.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+pub struct TransactionAccumulatorSummary(InMemoryAccumulator<TransactionAccumulatorHasher>);
+
+impl TransactionAccumulatorSummary {
+    pub fn new(accumulator: InMemoryAccumulator<TransactionAccumulatorHasher>) -> Result<Self> {
+        ensure!(
+            !accumulator.is_empty(),
+            "empty accumulator: we can't verify consistency proofs from an empty accumulator",
+        );
+        Ok(Self(accumulator))
+    }
+
+    pub fn version(&self) -> Version {
+        self.0.version()
+    }
+
+    pub fn root_hash(&self) -> HashValue {
+        self.0.root_hash()
+    }
+
+    /// Verify that this accumulator summary is "consistent" with the given
+    /// [`LedgerInfo`], i.e., they both have the same version and accumulator
+    /// root hash.
+    pub fn verify_consistency(&self, ledger_info: &LedgerInfo) -> Result<()> {
+        ensure!(
+            ledger_info.version() == self.version(),
+            "ledger info and accumulator must be at the same version: \
+             ledger info version={}, accumulator version={}",
+            ledger_info.version(),
+            self.version(),
+        );
+        ensure!(
+            ledger_info.transaction_accumulator_hash() == self.root_hash(),
+            "ledger info root hash and accumulator root hash must match: \
+             ledger info root hash={}, accumulator root hash={}",
+            ledger_info.transaction_accumulator_hash(),
+            self.root_hash(),
+        );
+        Ok(())
+    }
+
+    /// Try to build an accumulator summary using a consistency proof starting
+    /// from pre-genesis.
+    pub fn try_from_genesis_proof(
+        genesis_proof: AccumulatorConsistencyProof,
+        target_version: Version,
+    ) -> Result<Self> {
+        let num_txns = target_version.saturating_add(1);
+        Ok(Self(InMemoryAccumulator::new(
+            genesis_proof.into_subtrees(),
+            num_txns,
+        )?))
+    }
+
+    /// Try to extend an existing accumulator summary with a consistency proof
+    /// starting from our current version. Then validate that the resulting
+    /// accumulator summary is consistent with the given target [`LedgerInfo`].
+    pub fn try_extend_with_proof(
+        &self,
+        consistency_proof: &AccumulatorConsistencyProof,
+        target_li: &LedgerInfo,
+    ) -> Result<Self> {
+        ensure!(
+            target_li.version() >= self.0.version(),
+            "target ledger info version ({}) must be newer than our current accumulator \
+             summary version ({})",
+            target_li.version(),
+            self.0.version(),
+        );
+        let num_new_txns = target_li.version() - self.0.version();
+        let new_accumulator = Self(
+            self.0
+                .append_subtrees(consistency_proof.subtrees(), num_new_txns)?,
+        );
+        new_accumulator
+            .verify_consistency(target_li)
+            .context("accumulator is not consistent with the target ledger info after applying consistency proof")?;
+        Ok(new_accumulator)
+    }
+}
+
 /// A proof that can be used to show that two Merkle accumulators are consistent -- the big one can
 /// be obtained by appending certain leaves to the small one. For example, at some point in time a
 /// client knows that the root hash of the ledger at version 10 is `old_root` (it could be a
@@ -286,9 +375,17 @@ impl AccumulatorConsistencyProof {
         Self { subtrees }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.subtrees.is_empty()
+    }
+
     /// Returns the subtrees.
     pub fn subtrees(&self) -> &[HashValue] {
         &self.subtrees
+    }
+
+    pub fn into_subtrees(self) -> Vec<HashValue> {
+        self.subtrees
     }
 }
 
@@ -473,8 +570,12 @@ pub type TransactionAccumulatorRangeProof = AccumulatorRangeProof<TransactionAcc
 #[cfg(any(test, feature = "fuzzing"))]
 pub type TestAccumulatorRangeProof = AccumulatorRangeProof<TestOnlyHasher>;
 
-/// A proof that can be used authenticate a range of consecutive leaves, from the leftmost leaf to
-/// a certain one, in a sparse Merkle tree. For example, given the following sparse Merkle tree:
+/// Note: this is not a range proof in the sense that a range of nodes is verified!
+/// Instead, it verifies the entire left part of the tree up to a known rightmost node.
+/// See the description below.
+///
+/// A proof that can be used to authenticate a range of consecutive leaves, from the leftmost leaf to
+/// the rightmost known one, in a sparse Merkle tree. For example, given the following sparse Merkle tree:
 ///
 /// ```text
 ///                   root
@@ -505,9 +606,56 @@ impl SparseMerkleRangeProof {
         Self { right_siblings }
     }
 
-    /// Returns the siblings.
+    /// Returns the right siblings.
     pub fn right_siblings(&self) -> &[HashValue] {
         &self.right_siblings
+    }
+
+    /// Verifies that the rightmost known leaf exists in the tree and that the resulting
+    /// root hash matches the expected root hash.
+    pub fn verify(
+        &self,
+        expected_root_hash: HashValue,
+        rightmost_known_leaf: SparseMerkleLeafNode,
+        left_siblings: Vec<HashValue>,
+    ) -> Result<()> {
+        let num_siblings = left_siblings.len() + self.right_siblings.len();
+        let mut left_sibling_iter = left_siblings.iter();
+        let mut right_sibling_iter = self.right_siblings().iter();
+
+        let mut current_hash = rightmost_known_leaf.hash();
+        for bit in rightmost_known_leaf
+            .key()
+            .iter_bits()
+            .rev()
+            .skip(HashValue::LENGTH_IN_BITS - num_siblings)
+        {
+            let (left_hash, right_hash) = if bit {
+                (
+                    *left_sibling_iter
+                        .next()
+                        .ok_or_else(|| format_err!("Missing left sibling."))?,
+                    current_hash,
+                )
+            } else {
+                (
+                    current_hash,
+                    *right_sibling_iter
+                        .next()
+                        .ok_or_else(|| format_err!("Missing right sibling."))?,
+                )
+            };
+            current_hash = SparseMerkleInternalNode::new(left_hash, right_hash).hash();
+        }
+
+        ensure!(
+            current_hash == expected_root_hash,
+            "Root hashes do not match. Actual root hash: {:x}. Expected root hash: {:x}.",
+            current_hash,
+            expected_root_hash,
+        );
+
+        Ok(())
     }
 }
 
@@ -607,7 +755,7 @@ impl AccountStateProof {
         self.transaction_info_to_account_proof.verify(
             self.transaction_info_with_proof
                 .transaction_info
-                .state_root_hash(),
+                .state_change_hash(),
             account_address_hash,
             account_state_blob,
         )?;
@@ -672,21 +820,15 @@ impl EventProof {
     }
 }
 
-/// The complete proof used to authenticate a list of consecutive transactions.
+/// The proof used to authenticate a list of consecutive transaction infos.
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
-pub struct TransactionListProof {
-    /// The accumulator range proof from ledger info root to leaves that authenticates the hashes
-    /// of all `TransactionInfo` objects.
+pub struct TransactionInfoListWithProof {
     pub ledger_info_to_transaction_infos_proof: TransactionAccumulatorRangeProof,
-
-    /// The `TransactionInfo` objects that correspond to all the transactions.
     pub transaction_infos: Vec<TransactionInfo>,
 }
 
-impl TransactionListProof {
-    /// Constructs a new `TransactionListProof` using `ledger_info_to_transaction_info_proof` and
-    /// `transaction_infos`.
+impl TransactionInfoListWithProof {
     pub fn new(
         ledger_info_to_transaction_infos_proof: TransactionAccumulatorRangeProof,
         transaction_infos: Vec<TransactionInfo>,
@@ -697,56 +839,18 @@ impl TransactionListProof {
         }
     }
 
-    /// Constructs a proof for an empty list of transactions.
+    /// Constructs a proof for an empty list of transaction infos. Mostly used for tests.
     pub fn new_empty() -> Self {
         Self::new(AccumulatorRangeProof::new_empty(), vec![])
     }
 
-    /// Returns the list of `TransactionInfo` objects.
-    pub fn transaction_infos(&self) -> &[TransactionInfo] {
-        &self.transaction_infos
-    }
-
-    pub fn left_siblings(&self) -> &Vec<HashValue> {
-        self.ledger_info_to_transaction_infos_proof.left_siblings()
-    }
-
-    pub fn unpack(self) -> (TransactionAccumulatorRangeProof, Vec<TransactionInfo>) {
-        (
-            self.ledger_info_to_transaction_infos_proof,
-            self.transaction_infos,
-        )
-    }
-
-    /// Verifies the list of transactions are correct using the proof. The verifier needs to have
-    /// the ledger info and the version of the first transaction in possession.
+    /// Verifies the list of transaction infos are correct using the proof. The verifier
+    /// needs to have the ledger info and the version of the first transaction in possession.
     pub fn verify(
         &self,
         ledger_info: &LedgerInfo,
-        first_transaction_version: Option<Version>,
-        transaction_hashes: &[HashValue],
+        first_transaction_info_version: Option<Version>,
     ) -> Result<()> {
-        ensure!(
-            self.transaction_infos.len() == transaction_hashes.len(),
-            "The number of TransactionInfo objects ({}) does not match the number of \
-             transactions ({}).",
-            self.transaction_infos.len(),
-            transaction_hashes.len(),
-        );
-
-        itertools::zip_eq(transaction_hashes, &self.transaction_infos)
-            .map(|(txn_hash, txn_info)| {
-                ensure!(
-                    *txn_hash == txn_info.transaction_hash(),
-                    "The hash of transaction does not match the transaction info in proof. \
-                     Transaction hash: {:x}. Transaction hash in txn_info: {:x}.",
-                    txn_hash,
-                    txn_info.transaction_hash(),
-                );
-                Ok(())
-            })
-            .collect::<Result<Vec<_>>>()?;
-
         let txn_info_hashes: Vec<_> = self
             .transaction_infos
             .iter()
@@ -754,10 +858,62 @@ impl TransactionListProof {
             .collect();
         self.ledger_info_to_transaction_infos_proof.verify(
             ledger_info.transaction_accumulator_hash(),
-            first_transaction_version,
+            first_transaction_info_version,
             &txn_info_hashes,
-        )?;
-        Ok(())
+        )
+    }
+
+    pub fn verify_extends_ledger(
+        &self,
+        num_txns_in_ledger: LeafCount,
+        root_hash: HashValue,
+        first_transaction_info_version: Option<Version>,
+    ) -> Result<usize> {
+        if let Some(first_version) = first_transaction_info_version {
+            ensure!(
+                first_version <= num_txns_in_ledger,
+                "Transaction list too new. Expected version: {}. First transaction version: {}.",
+                num_txns_in_ledger,
+                first_version
+            );
+            let num_overlap_txns = (num_txns_in_ledger - first_version) as usize;
+            if num_overlap_txns > self.transaction_infos.len() {
+                // Entire chunk is in the past, hard to verify if there's a fork.
+                // A fork will need to be detected later.
+                return Ok(self.transaction_infos.len());
+            }
+            let overlap_txn_infos = &self.transaction_infos[..num_overlap_txns];
+
+            // Left side of the proof happens to be the frozen subtree roots of the accumulator
+            // right before the list of txns are applied.
+            let frozen_subtree_roots_from_proof = self
+                .ledger_info_to_transaction_infos_proof
+                .left_siblings()
+                .iter()
+                .rev()
+                .cloned()
+                .collect::<Vec<_>>();
+            let accu_from_proof = InMemoryAccumulator::<TransactionAccumulatorHasher>::new(
+                frozen_subtree_roots_from_proof,
+                first_version,
+            )?
+            .append(
+                &overlap_txn_infos
+                    .iter()
+                    .map(CryptoHash::hash)
+                    .collect::<Vec<_>>()[..],
+            );
+            // The two accumulator root hashes should be identical.
+            ensure!(
+                accu_from_proof.root_hash() == root_hash,
+                "Fork happens because the current synced_trees doesn't match the txn list provided."
+            );
+            Ok(num_overlap_txns)
+        } else {
+            // Assuming input is empty
+            ensure!(self.transaction_infos.is_empty());
+            Ok(0)
+        }
     }
 }
 

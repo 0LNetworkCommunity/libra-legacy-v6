@@ -21,11 +21,14 @@ pub mod ledger_info;
 pub mod mempool_status;
 pub mod move_resource;
 pub mod network_address;
+pub mod nft;
+pub mod nibble;
 pub mod on_chain_config;
 pub mod proof;
 #[cfg(any(test, feature = "fuzzing"))]
 pub mod proptest_types;
 pub mod serde_helper;
+pub mod state_proof;
 #[cfg(any(test, feature = "fuzzing"))]
 pub mod test_helpers;
 pub mod transaction;
@@ -37,6 +40,7 @@ pub mod validator_verifier;
 pub mod vm_status;
 pub mod waypoint;
 pub mod write_set;
+
 pub use account_address::AccountAddress as PeerId;
 
 //////// 0L ////////

@@ -9,7 +9,7 @@ publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.38"
+anyhow = "1.0.52"
 async-trait = "0.1.42"
 byteorder = "1.4.3"
 bytes = "1.0.1"
@@ -26,7 +26,7 @@ serde = { version = "1.0.124", features = ["derive"] }
 serde_json = "1.0.64"
 structopt = "0.3.21"
 toml = "0.5.8"
-tokio = { version = "1.3.0", features = ["full"] }
+tokio = { version = "1.8.1", features = ["full"] }
 tokio-stream = "0.1.4"
 tokio-util = { version = "0.6.4", features = ["compat"] }
 
@@ -36,14 +36,14 @@ executor-types = { path = "../../../execution/executor-types" }
 diem-jellyfish-merkle = { path = "../../jellyfish-merkle" }
 bcs = "0.1.2"
 diem-config = { path = "../../../config" }
-diem-crypto = { path = "../../../crypto/crypto" }
-diem-infallible = { path = "../../../common/infallible" }
-diem-logger = { path = "../../../common/logger" }
+diem-crypto = { path = "../../../crates/diem-crypto" }
+diem-infallible = { path = "../../../crates/diem-infallible" }
+diem-logger = { path = "../../../crates/diem-logger" }
 diem-secure-push-metrics = { path = "../../../secure/push-metrics" }
-diem-temppath = { path = "../../../common/temppath" }
+diem-temppath = { path = "../../../crates/diem-temppath" }
 diem-types = { path = "../../../types" }
-diem-vm = { path = "../../../language/diem-vm" }
-diem-workspace-hack = { path = "../../../common/workspace-hack" }
+diem-vm = { path = "../../../diem-move/diem-vm" }
+diem-workspace-hack = { version = "0.1", path = "../../../crates/diem-workspace-hack" }
 diemdb = { path = "../../diemdb" }
 storage-interface = { path = "../../storage-interface" }
 
@@ -55,7 +55,7 @@ backup-service = { path = "../backup-service" }
 executor-test-helpers = { path = "../../../execution/executor-test-helpers" }
 diemdb = { path = "../../diemdb", features = ["fuzzing"] }
 diem-config = { path = "../../../config" }
-diem-proptest-helpers = { path = "../../../common/proptest-helpers" }
+diem-proptest-helpers = { path = "../../../crates/diem-proptest-helpers" }
 storage-interface = { path = "../../storage-interface" }
 
 [features]

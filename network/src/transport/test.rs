@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    protocols::wire::handshake::v1::{MessagingProtocolVersion, ProtocolId, SupportedProtocols},
+    protocols::wire::handshake::v1::{MessagingProtocolVersion, ProtocolId, ProtocolIdSet},
     transport::*,
 };
 use bytes::{Bytes, BytesMut};
@@ -24,7 +24,7 @@ use netcore::{
     transport::{memory, ConnectionOrigin, Transport},
 };
 use rand::{rngs::StdRng, SeedableRng};
-use std::{collections::HashMap, io, sync::Arc};
+use std::{collections::HashMap, io, iter::FromIterator, sync::Arc};
 use tokio::runtime::Runtime;
 
 /// helper to build trusted peer map
@@ -63,7 +63,7 @@ fn setup<TTransport>(
     (PeerId, DiemNetTransport<TTransport>),
     (PeerId, DiemNetTransport<TTransport>),
     Arc<RwLock<PeerSet>>,
-    SupportedProtocols,
+    ProtocolIdSet,
 )
 where
     TTransport: Transport<Error = io::Error> + Clone,
@@ -143,9 +143,8 @@ where
             }
         };
 
-    let supported_protocols = SupportedProtocols::from(
-        [ProtocolId::ConsensusRpc, ProtocolId::DiscoveryDirectSend].iter(),
-    );
+    let supported_protocols =
+        ProtocolIdSet::from_iter([ProtocolId::ConsensusRpcBcs, ProtocolId::DiscoveryDirectSend]);
     let chain_id = ChainId::default();
     let listener_transport = DiemNetTransport::new(
         base_transport.clone(),

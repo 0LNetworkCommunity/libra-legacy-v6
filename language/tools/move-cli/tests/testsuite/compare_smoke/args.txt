@@ -1,3 +1,0 @@
-publish src/modules --mode diem
-run src/scripts/compare.move --mode diem --dry-run
-run src/scripts/set.move --mode diem --dry-run

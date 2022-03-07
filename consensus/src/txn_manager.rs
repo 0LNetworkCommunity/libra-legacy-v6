@@ -5,14 +5,15 @@ use crate::{error::MempoolError, state_replication::TxnManager};
 use anyhow::{format_err, Result};
 use consensus_types::{block::Block, common::Payload};
 use diem_logger::prelude::*;
-use diem_mempool::{
-    CommittedTransaction, ConsensusRequest, ConsensusResponse, TransactionExclusion,
-};
+use diem_mempool::{ConsensusRequest, ConsensusResponse, TransactionSummary};
 use diem_metrics::monitor;
 use diem_types::transaction::TransactionStatus;
 use executor_types::StateComputeResult;
 use fail::fail_point;
-use futures::channel::{mpsc, oneshot};
+use futures::{
+    channel::{mpsc, oneshot},
+    future::BoxFuture,
+};
 use itertools::Itertools;
 use std::time::Duration;
 use tokio::time::{sleep, timeout};
@@ -52,7 +53,7 @@ impl MempoolProxy {
     async fn pull_internal(
         &self,
         max_size: u64,
-        exclude_txns: Vec<TransactionExclusion>,
+        exclude_txns: Vec<TransactionSummary>,
     ) -> Result<Payload, MempoolError> {
         let (callback, callback_rcv) = oneshot::channel();
         let req = ConsensusRequest::GetBlockRequest(max_size, exclude_txns.clone(), callback);
@@ -89,6 +90,8 @@ impl TxnManager for MempoolProxy {
         &self,
         max_size: u64,
         exclude_payloads: Vec<&Payload>,
+        wait_callback: BoxFuture<'static, ()>,
+        pending_ordering: bool,
     ) -> Result<Payload, MempoolError> {
         fail_point!("consensus::pull_txns", |_| {
             Err(anyhow::anyhow!("Injected error in pull_txns").into())
@@ -96,19 +99,22 @@ impl TxnManager for MempoolProxy {
         let mut exclude_txns = vec![];
         for payload in exclude_payloads {
             for transaction in payload {
-                exclude_txns.push(TransactionExclusion {
+                exclude_txns.push(TransactionSummary {
                     sender: transaction.sender(),
                     sequence_number: transaction.sequence_number(),
                 });
             }
         }
-        let no_pending_txns = exclude_txns.is_empty();
+        let mut callback_wrapper = Some(wait_callback);
         // keep polling mempool until there's txn available or there's still pending txns
         let mut count = self.poll_count;
         let txns = loop {
             count -= 1;
             let txns = self.pull_internal(max_size, exclude_txns.clone()).await?;
-            if txns.is_empty() && no_pending_txns && count > 0 {
+            if txns.is_empty() && !pending_ordering && count > 0 {
+                if let Some(callback) = callback_wrapper.take() {
+                    callback.await;
+                }
                 sleep(Duration::from_millis(NO_TXN_DELAY)).await;
                 continue;
             }
@@ -121,8 +127,7 @@ impl TxnManager for MempoolProxy {
         Ok(txns)
     }
 
-    // Consensus notifies mempool of executed transactions
-    async fn notify(
+    async fn notify_failed_txn(
         &self,
         block: &Block,
         compute_results: &StateComputeResult,
@@ -138,7 +143,7 @@ impl TxnManager for MempoolProxy {
             .zip_eq(compute_results.compute_status().iter().skip(1))
         {
             if let TransactionStatus::Discard(_) = status {
-                rejected_txns.push(CommittedTransaction {
+                rejected_txns.push(TransactionSummary {
                     sender: txn.sender(),
                     sequence_number: txn.sequence_number(),
                 });

@@ -144,7 +144,7 @@ pub struct ExecutedTrees {
     /// tree is presenting the latest committed state, it will have a single Subtree node (or
     /// Empty node) whose hash equals the root hash of the newest Sparse Merkle Tree in
     /// storage.
-    state_tree: Arc<SparseMerkleTree>,
+    state_tree: SparseMerkleTree,
 
     /// The in-memory Merkle Accumulator representing a blockchain state consistent with the
     /// `state_tree`.
@@ -175,7 +175,7 @@ pub struct TransactionData {
     /// The in-memory Sparse Merkle Tree after the write set is applied. This is `Arc` because the
     /// tree has uncommitted state and sometimes `StateVersionView` needs to have a pointer to the
     /// tree so VM can read it.
-    state_tree: Arc<SparseMerkleTree>,
+    state_tree: SparseMerkleTree,
 
     /// The in-memory Merkle Accumulator that has all events emitted by this transaction.
     event_tree: Arc<InMemoryAccumulator<EventAccumulatorHasher>>,
@@ -224,7 +224,7 @@ pub trait VMExecutor: Send {
     /// Executes a block of transactions and returns output for each one of them.
     fn execute_block(
         transactions: Vec<Transaction>,
-        state_view: &dyn StateView,
+        state_view: &impl StateView,
     ) -> Result<Vec<TransactionOutput>, VMStatus>;
 }
 ```

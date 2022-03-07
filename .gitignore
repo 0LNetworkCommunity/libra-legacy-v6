@@ -3,7 +3,7 @@
 # .gitignore file locally for IDE/Emacs/Vim generated files.
 **/target
 **/*.rs.bk
-/.idea
+.idea/
 
 # Ignore wallet mnemonic files used for deterministic key derivation
 *.mnemonic
@@ -37,13 +37,22 @@ Temporary Items
 .apdisk
 
 # Generated VM config in vm-genesis
-language/tools/vm-genesis/genesis/vm_config.toml
+diem-move/vm-genesis/genesis/vm_config.toml
 
 # Terraform
 .terraform/
 
 # Move Build Output
 build/
+
+# Move coverage and tracing information
+.trace
+*.mvcov
+
+# Do not ignore the Move build output under the releases for DPN, core, and
+# experimental -- these are the release code.
+!diem-move/diem-framework/DPN/releases/artifacts/**
+!diem-move/diem-framework/experimental/releases/artifacts/**
 
 # Docker incremental build temporary files and directories
 target-out-docker

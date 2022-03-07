@@ -1,6 +1,6 @@
 [package]
 name = "diem-config"
-version = "5.0.11"
+version = "5.0.11" #/////// 0L /////////
 authors = ["Diem Association <opensource@diem.com>"]
 description = "Diem diem-config"
 repository = "https://github.com/diem/diem"
@@ -19,19 +19,19 @@ serde_yaml = "0.8.17"
 thiserror = "1.0.24"
 
 bcs = "0.1.2"
-diem-crypto = { path = "../crypto/crypto" }
-diem-crypto-derive = { path = "../crypto/crypto-derive" }
+diem-crypto = { path = "../crates/diem-crypto" }
+diem-crypto-derive = { path = "../crates/diem-crypto-derive" }
 diem-global-constants = { path = "./global-constants"}
-diem-logger = { path = "../common/logger" }
+diem-logger = { path = "../crates/diem-logger" }
 diem-network-address-encryption = { path = "management/network-address-encryption" }
 diem-secure-storage = { path = "../secure/storage" }
-diem-temppath = { path = "../common/temppath" }
+diem-temppath = { path = "../crates/diem-temppath" }
 diem-types = { path = "../types" }
-diem-workspace-hack = { path = "../common/workspace-hack" }
-short-hex-str = { path = "../common/short-hex-str" }
+diem-workspace-hack = { version = "0.1", path = "../crates/diem-workspace-hack" }
+short-hex-str = { path = "../crates/short-hex-str" }
 
 [dev-dependencies]
-diem-crypto = { path = "../crypto/crypto", features = ["fuzzing"] }
+diem-crypto = { path = "../crates/diem-crypto", features = ["fuzzing"] }
 
 [features]
 default = []

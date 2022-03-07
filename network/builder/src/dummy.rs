@@ -4,25 +4,29 @@
 //! Integration tests for validator_network.
 
 use crate::builder::NetworkBuilder;
-use channel::message_queues::QueueStyle;
+use async_trait::async_trait;
+use channel::diem_channel;
 use diem_config::{
     config::{Peer, PeerRole, PeerSet, RoleType, NETWORK_CHANNEL_SIZE},
     network_id::{NetworkContext, NetworkId},
 };
 use diem_crypto::{test_utils::TEST_SEED, x25519, Uniform};
 use diem_infallible::RwLock;
-use diem_metrics::IntCounterVec;
 use diem_time_service::TimeService;
 use diem_types::{chain_id::ChainId, network_address::NetworkAddress, PeerId};
 use futures::{executor::block_on, StreamExt};
 use netcore::transport::ConnectionOrigin;
 use network::{
+    application::storage::PeerMetadataStorage,
     error::NetworkError,
     peer_manager::{
         builder::AuthenticationMode, ConnectionRequestSender, PeerManagerRequestSender,
     },
     protocols::{
-        network::{Event, NetworkEvents, NetworkSender, NewNetworkSender},
+        network::{
+            AppConfig, ApplicationNetworkSender, Event, NetworkEvents, NetworkSender,
+            NewNetworkSender,
+        },
         rpc::error::RpcError,
     },
     ProtocolId,
@@ -36,25 +40,16 @@ use std::{
 };
 use tokio::runtime::Runtime;
 
-const TEST_RPC_PROTOCOL: ProtocolId = ProtocolId::ConsensusRpc;
-const TEST_DIRECT_SEND_PROTOCOL: ProtocolId = ProtocolId::ConsensusDirectSend;
+const TEST_RPC_PROTOCOL: ProtocolId = ProtocolId::ConsensusRpcBcs;
+const TEST_DIRECT_SEND_PROTOCOL: ProtocolId = ProtocolId::ConsensusDirectSendBcs;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct DummyMsg(pub Vec<u8>);
 
-pub fn network_endpoint_config() -> (
-    Vec<ProtocolId>,
-    Vec<ProtocolId>,
-    QueueStyle,
-    usize,
-    Option<&'static IntCounterVec>,
-) {
-    (
-        vec![TEST_RPC_PROTOCOL],
-        vec![TEST_DIRECT_SEND_PROTOCOL],
-        QueueStyle::LIFO,
-        NETWORK_CHANNEL_SIZE,
-        None,
+pub fn network_endpoint_config() -> AppConfig {
+    AppConfig::p2p(
+        [TEST_RPC_PROTOCOL, TEST_DIRECT_SEND_PROTOCOL],
+        diem_channel::Config::new(NETWORK_CHANNEL_SIZE),
     )
 }
 
@@ -78,14 +73,15 @@ impl NewNetworkSender for DummyNetworkSender {
     }
 }
 
-impl DummyNetworkSender {
-    pub fn send_to(&mut self, recipient: PeerId, message: DummyMsg) -> Result<(), NetworkError> {
+#[async_trait]
+impl ApplicationNetworkSender<DummyMsg> for DummyNetworkSender {
+    fn send_to(&self, recipient: PeerId, message: DummyMsg) -> Result<(), NetworkError> {
         let protocol = TEST_DIRECT_SEND_PROTOCOL;
         self.inner.send_to(recipient, protocol, message)
     }
 
-    pub async fn send_rpc(
-        &mut self,
+    async fn send_rpc(
+        &self,
         recipient: PeerId,
         message: DummyMsg,
         timeout: Duration,
@@ -138,13 +134,9 @@ pub fn setup_network() -> DummyNetwork {
 
     let trusted_peers = Arc::new(RwLock::new(HashMap::new()));
     let authentication_mode = AuthenticationMode::Mutual(listener_identity_private_key);
-
+    let peer_metadata_storage = PeerMetadataStorage::new(&[NetworkId::Validator]);
     // Set up the listener network
-    let network_context = Arc::new(NetworkContext::new(
-        role,
-        network_id.clone(),
-        listener_peer_id,
-    ));
+    let network_context = NetworkContext::new(role, network_id, listener_peer_id);
     let mut network_builder = NetworkBuilder::new_for_test(
         chain_id,
         seeds.clone(),
@@ -153,10 +145,11 @@ pub fn setup_network() -> DummyNetwork {
         TimeService::real(),
         listener_addr,
         authentication_mode,
+        peer_metadata_storage,
     );
 
     let (listener_sender, mut listener_events) = network_builder
-        .add_protocol_handler::<DummyNetworkSender, DummyNetworkEvents>(network_endpoint_config());
+        .add_p2p_service::<DummyNetworkSender, DummyNetworkEvents>(&network_endpoint_config());
     network_builder.build(runtime.handle().clone()).start();
 
     // Add the listener address with port
@@ -169,9 +162,10 @@ pub fn setup_network() -> DummyNetwork {
     let authentication_mode = AuthenticationMode::Mutual(dialer_identity_private_key);
 
     // Set up the dialer network
-    let network_context = Arc::new(NetworkContext::new(role, network_id, dialer_peer_id));
+    let network_context = NetworkContext::new(role, network_id, dialer_peer_id);
 
     let trusted_peers = Arc::new(RwLock::new(HashMap::new()));
+    let peer_metadata_storage = PeerMetadataStorage::new(&[NetworkId::Validator]);
 
     let mut network_builder = NetworkBuilder::new_for_test(
         chain_id,
@@ -181,10 +175,11 @@ pub fn setup_network() -> DummyNetwork {
         TimeService::real(),
         dialer_addr,
         authentication_mode,
+        peer_metadata_storage,
     );
 
     let (dialer_sender, mut dialer_events) = network_builder
-        .add_protocol_handler::<DummyNetworkSender, DummyNetworkEvents>(network_endpoint_config());
+        .add_p2p_service::<DummyNetworkSender, DummyNetworkEvents>(&network_endpoint_config());
     network_builder.build(runtime.handle().clone()).start();
 
     // Wait for establishing connection

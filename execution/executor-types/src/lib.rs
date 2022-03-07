@@ -4,57 +4,95 @@
 #![forbid(unsafe_code)]
 
 mod error;
+mod executed_chunk;
+
 pub use error::Error;
 
 use anyhow::Result;
 use diem_crypto::{
     ed25519::Ed25519Signature,
-    hash::{TransactionAccumulatorHasher, SPARSE_MERKLE_PLACEHOLDER_HASH},
+    hash::{
+        EventAccumulatorHasher, TransactionAccumulatorHasher, ACCUMULATOR_PLACEHOLDER_HASH,
+        SPARSE_MERKLE_PLACEHOLDER_HASH,
+    },
     HashValue,
 };
+use diem_state_view::StateViewId;
 use diem_types::{
+    account_address::AccountAddress,
     account_state_blob::AccountStateBlob,
     contract_event::ContractEvent,
     epoch_state::EpochState,
     ledger_info::LedgerInfoWithSignatures,
+    nibble::nibble_path::NibblePath,
     proof::{accumulator::InMemoryAccumulator, AccumulatorExtensionProof},
     transaction::{
-        Transaction, TransactionInfo, TransactionListWithProof, TransactionStatus, Version,
+        Transaction, TransactionInfo, TransactionListWithProof, TransactionOutputListWithProof,
+        TransactionStatus, Version,
     },
+    write_set::WriteSet,
 };
 use scratchpad::ProofRead;
 use serde::{Deserialize, Serialize};
 use std::{cmp::max, collections::HashMap, sync::Arc};
-use storage_interface::TreeState;
+use storage_interface::{DbReader, TreeState};
+
+pub use executed_chunk::ExecutedChunk;
+use storage_interface::state_view::VerifiedStateView;
 
 type SparseMerkleProof = diem_types::proof::SparseMerkleProof<AccountStateBlob>;
 type SparseMerkleTree = scratchpad::SparseMerkleTree<AccountStateBlob>;
 
-pub trait ChunkExecutor: Send {
+pub trait ChunkExecutorTrait: Send + Sync {
     /// Verifies the transactions based on the provided proofs and ledger info. If the transactions
-    /// are valid, executes them and commits immediately if execution results match the proofs.
-    /// Returns a vector of reconfiguration events in the chunk
-    fn execute_and_commit_chunk(
-        &mut self,
+    /// are valid, executes them and returns the executed result for commit.
+    fn execute_chunk(
+        &self,
         txn_list_with_proof: TransactionListWithProof,
         // Target LI that has been verified independently: the proofs are relative to this version.
-        verified_target_li: LedgerInfoWithSignatures,
-        // An optional end of epoch LedgerInfo. We do not allow chunks that end epoch without
-        // carrying any epoch change LI.
-        epoch_change_li: Option<LedgerInfoWithSignatures>,
-    ) -> Result<Vec<ContractEvent>>;
+        verified_target_li: &LedgerInfoWithSignatures,
+        epoch_change_li: Option<&LedgerInfoWithSignatures>,
+    ) -> Result<()>;
+
+    /// Similar to `execute_chunk`, but instead of executing transactions, apply the transaction
+    /// outputs directly to get the executed result.
+    fn apply_chunk(
+        &self,
+        txn_output_list_with_proof: TransactionOutputListWithProof,
+        // Target LI that has been verified independently: the proofs are relative to this version.
+        verified_target_li: &LedgerInfoWithSignatures,
+        epoch_change_li: Option<&LedgerInfoWithSignatures>,
+    ) -> anyhow::Result<()>;
+
+    /// Commit a previously executed chunk. Returns a vector of reconfiguration
+    /// events in the chunk and the transactions that were committed.
+    fn commit_chunk(&self) -> Result<(Vec<ContractEvent>, Vec<Transaction>)>;
+
+    fn execute_and_commit_chunk(
+        &self,
+        txn_list_with_proof: TransactionListWithProof,
+        verified_target_li: &LedgerInfoWithSignatures,
+        epoch_change_li: Option<&LedgerInfoWithSignatures>,
+    ) -> Result<(Vec<ContractEvent>, Vec<Transaction>)>;
+
+    fn apply_and_commit_chunk(
+        &self,
+        txn_output_list_with_proof: TransactionOutputListWithProof,
+        verified_target_li: &LedgerInfoWithSignatures,
+        epoch_change_li: Option<&LedgerInfoWithSignatures>,
+    ) -> Result<(Vec<ContractEvent>, Vec<Transaction>)>;
 }
 
-pub trait BlockExecutor: Send {
+pub trait BlockExecutorTrait: Send + Sync {
     /// Get the latest committed block id
-    fn committed_block_id(&mut self) -> Result<HashValue, Error>;
+    fn committed_block_id(&self) -> HashValue;
 
     /// Reset the internal state including cache with newly fetched latest committed block from storage.
-    fn reset(&mut self) -> Result<(), Error>;
+    fn reset(&self) -> Result<(), Error>;
 
     /// Executes a block.
     fn execute_block(
-        &mut self,
+        &self,
         block: (HashValue, Vec<Transaction>),
         parent_block_id: HashValue,
     ) -> Result<StateComputeResult, Error>;
@@ -68,26 +106,21 @@ pub trait BlockExecutor: Send {
     /// and only `C` and `E` have signatures, we will send `A`, `B` and `C` in the first batch,
     /// then `D` and `E` later in the another batch.
     /// Commits a block and all its ancestors in a batch manner.
-    ///
-    /// Returns `Ok(Result<Vec<Transaction>, Vec<ContractEvents>)` if successful,
-    /// where Vec<Transaction> is a vector of transactions that were kept from the submitted blocks, and
-    /// Vec<ContractEvents> is a vector of reconfiguration events in the submitted blocks
     fn commit_blocks(
-        &mut self,
+        &self,
         block_ids: Vec<HashValue>,
         ledger_info_with_sigs: LedgerInfoWithSignatures,
-    ) -> Result<(Vec<Transaction>, Vec<ContractEvent>), Error>;
+    ) -> Result<(), Error>;
 }
 
 pub trait TransactionReplayer: Send {
-    fn replay_chunk(
-        &mut self,
-        first_version: Version,
-        txns: Vec<Transaction>,
-        txn_infos: Vec<TransactionInfo>,
+    fn replay(
+        &self,
+        transactions: Vec<Transaction>,
+        transaction_infos: Vec<TransactionInfo>,
     ) -> Result<()>;
 
-    fn expecting_version(&self) -> Version;
+    fn commit(&self) -> Result<Arc<ExecutedChunk>>;
 }
 
 /// A structure that summarizes the result of the execution needed for consensus to agree on.
@@ -128,6 +161,8 @@ pub struct StateComputeResult {
 
     /// The signature of the VoteProposal corresponding to this block.
     signature: Option<Ed25519Signature>,
+
+    reconfig_events: Vec<ContractEvent>,
 }
 
 impl StateComputeResult {
@@ -140,6 +175,7 @@ impl StateComputeResult {
         epoch_state: Option<EpochState>,
         compute_status: Vec<TransactionStatus>,
         transaction_info_hashes: Vec<HashValue>,
+        reconfig_events: Vec<ContractEvent>,
     ) -> Self {
         Self {
             root_hash,
@@ -150,8 +186,35 @@ impl StateComputeResult {
             epoch_state,
             compute_status,
             transaction_info_hashes,
+            reconfig_events,
             signature: None,
         }
+    }
+
+    /// generate a new dummy state compute result with a given root hash.
+    /// this function is used in RandomComputeResultStateComputer to assert that the compute
+    /// function is really called.
+    pub fn new_dummy_with_root_hash(root_hash: HashValue) -> Self {
+        Self {
+            root_hash,
+            frozen_subtree_roots: vec![],
+            num_leaves: 0,
+            parent_frozen_subtree_roots: vec![],
+            parent_num_leaves: 0,
+            epoch_state: None,
+            compute_status: vec![],
+            transaction_info_hashes: vec![],
+            reconfig_events: vec![],
+            signature: None,
+        }
+    }
+
+    /// generate a new dummy state compute result with ACCUMULATOR_PLACEHOLDER_HASH as the root hash.
+    /// this function is used in ordering_state_computer as a dummy state compute result,
+    /// where the real compute result is generated after ordering_state_computer.commit pushes
+    /// the blocks and the finality proof to the execution phase.
+    pub fn new_dummy() -> Self {
+        StateComputeResult::new_dummy_with_root_hash(*ACCUMULATOR_PLACEHOLDER_HASH)
     }
 }
 
@@ -206,6 +269,10 @@ impl StateComputeResult {
         self.epoch_state.is_some()
     }
 
+    pub fn reconfig_events(&self) -> &[ContractEvent] {
+        &self.reconfig_events
+    }
+
     pub fn signature(&self) -> &Option<Ed25519Signature> {
         &self.signature
     }
@@ -223,7 +290,7 @@ pub struct ExecutedTrees {
     /// tree is presenting the latest commited state, it will have a single Subtree node (or
     /// Empty node) whose hash equals the root hash of the newest Sparse Merkle Tree in
     /// storage.
-    state_tree: Arc<SparseMerkleTree>,
+    state_tree: SparseMerkleTree,
 
     /// The in-memory Merkle Accumulator representing a blockchain state consistent with the
     /// `state_tree`.
@@ -242,7 +309,7 @@ impl From<TreeState> for ExecutedTrees {
 
 impl ExecutedTrees {
     pub fn new_copy(
-        state_tree: Arc<SparseMerkleTree>,
+        state_tree: SparseMerkleTree,
         transaction_accumulator: Arc<InMemoryAccumulator<TransactionAccumulatorHasher>>,
     ) -> Self {
         Self {
@@ -251,7 +318,7 @@ impl ExecutedTrees {
         }
     }
 
-    pub fn state_tree(&self) -> &Arc<SparseMerkleTree> {
+    pub fn state_tree(&self) -> &SparseMerkleTree {
         &self.state_tree
     }
 
@@ -278,7 +345,7 @@ impl ExecutedTrees {
         num_leaves_in_accumulator: u64,
     ) -> ExecutedTrees {
         ExecutedTrees {
-            state_tree: Arc::new(SparseMerkleTree::new(state_root_hash)),
+            state_tree: SparseMerkleTree::new(state_root_hash),
             transaction_accumulator: Arc::new(
                 InMemoryAccumulator::new(frozen_subtrees_in_accumulator, num_leaves_in_accumulator)
                     .expect("The startup info read from storage should be valid."),
@@ -288,6 +355,31 @@ impl ExecutedTrees {
 
     pub fn new_empty() -> ExecutedTrees {
         Self::new(*SPARSE_MERKLE_PLACEHOLDER_HASH, vec![], 0)
+    }
+
+    pub fn is_same_view(&self, rhs: &Self) -> bool {
+        self.transaction_accumulator.root_hash() == rhs.transaction_accumulator.root_hash()
+    }
+
+    pub fn state_view(
+        &self,
+        persisted_view: &Self,
+        id: StateViewId,
+        reader: Arc<dyn DbReader>,
+    ) -> VerifiedStateView {
+        VerifiedStateView::new(
+            id,
+            reader.clone(),
+            persisted_view.version(),
+            persisted_view.state_tree.root_hash(),
+            self.state_tree.clone(),
+        )
+    }
+}
+
+impl Default for ExecutedTrees {
+    fn default() -> Self {
+        Self::new_empty()
     }
 }
 
@@ -304,5 +396,103 @@ impl ProofReader {
 impl ProofRead<AccountStateBlob> for ProofReader {
     fn get_proof(&self, key: HashValue) -> Option<&SparseMerkleProof> {
         self.account_to_proof.get(&key)
+    }
+}
+
+/// The entire set of data associated with a transaction. In addition to the output generated by VM
+/// which includes the write set and events, this also has the in-memory trees.
+#[derive(Clone, Debug)]
+pub struct TransactionData {
+    /// Each entry in this map represents the new blob value of an account touched by this
+    /// transaction. The blob is obtained by deserializing the previous blob into a BTreeMap,
+    /// applying relevant portion of write set on the map and serializing the updated map into a
+    /// new blob.
+    account_blobs: HashMap<AccountAddress, AccountStateBlob>,
+
+    /// Each entry in this map represents the the hash of a newly generated jellyfish node
+    /// and its corresponding nibble path.
+    jf_node_hashes: HashMap<NibblePath, HashValue>,
+
+    /// The writeset generated from this transaction.
+    write_set: WriteSet,
+
+    /// The list of events emitted during this transaction.
+    events: Vec<ContractEvent>,
+
+    /// The execution status set by the VM.
+    status: TransactionStatus,
+
+    /// Root hash of the state tree.
+    state_root_hash: HashValue,
+
+    /// The in-memory Merkle Accumulator that has all events emitted by this transaction.
+    event_tree: Arc<InMemoryAccumulator<EventAccumulatorHasher>>,
+
+    /// The amount of gas used.
+    gas_used: u64,
+
+    /// The transaction info hash if the VM status output was keep, None otherwise
+    txn_info_hash: Option<HashValue>,
+}
+
+impl TransactionData {
+    pub fn new(
+        account_blobs: HashMap<AccountAddress, AccountStateBlob>,
+        jf_node_hashes: HashMap<NibblePath, HashValue>,
+        write_set: WriteSet,
+        events: Vec<ContractEvent>,
+        status: TransactionStatus,
+        state_root_hash: HashValue,
+        event_tree: Arc<InMemoryAccumulator<EventAccumulatorHasher>>,
+        gas_used: u64,
+        txn_info_hash: Option<HashValue>,
+    ) -> Self {
+        TransactionData {
+            account_blobs,
+            jf_node_hashes,
+            write_set,
+            events,
+            status,
+            state_root_hash,
+            event_tree,
+            gas_used,
+            txn_info_hash,
+        }
+    }
+
+    pub fn account_blobs(&self) -> &HashMap<AccountAddress, AccountStateBlob> {
+        &self.account_blobs
+    }
+
+    pub fn jf_node_hashes(&self) -> &HashMap<NibblePath, HashValue> {
+        &self.jf_node_hashes
+    }
+
+    pub fn write_set(&self) -> &WriteSet {
+        &self.write_set
+    }
+
+    pub fn events(&self) -> &[ContractEvent] {
+        &self.events
+    }
+
+    pub fn status(&self) -> &TransactionStatus {
+        &self.status
+    }
+
+    pub fn state_root_hash(&self) -> HashValue {
+        self.state_root_hash
+    }
+
+    pub fn event_root_hash(&self) -> HashValue {
+        self.event_tree.root_hash()
+    }
+
+    pub fn gas_used(&self) -> u64 {
+        self.gas_used
+    }
+
+    pub fn txn_info_hash(&self) -> Option<HashValue> {
+        self.txn_info_hash
     }
 }

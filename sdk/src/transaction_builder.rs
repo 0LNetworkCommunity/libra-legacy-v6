@@ -12,8 +12,8 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-pub use diem_transaction_builder::stdlib;
-use diem_types::transaction::Script;
+pub use diem_transaction_builder::{experimental_stdlib, stdlib};
+use diem_types::transaction::{ChangeSet, ModuleBundle, Script, ScriptFunction, WriteSetPayload};
 
 pub struct TransactionBuilder {
     sender: Option<AccountAddress>,
@@ -95,7 +95,7 @@ impl TransactionFactory {
             gas_currency: Currency::XUS,
             transaction_expiration_time: 100,
             chain_id,
-            diem_version: 0,
+            diem_version: 2,
         }
     }
 
@@ -131,6 +131,22 @@ impl TransactionFactory {
 
     pub fn payload(&self, payload: TransactionPayload) -> TransactionBuilder {
         self.transaction_builder(payload)
+    }
+
+    pub fn module(&self, code: Vec<u8>) -> TransactionBuilder {
+        self.payload(TransactionPayload::ModuleBundle(ModuleBundle::singleton(
+            code,
+        )))
+    }
+
+    pub fn change_set(&self, change_set: ChangeSet) -> TransactionBuilder {
+        self.payload(TransactionPayload::WriteSet(WriteSetPayload::Direct(
+            change_set,
+        )))
+    }
+
+    pub fn script_function(&self, func: ScriptFunction) -> TransactionBuilder {
+        self.payload(TransactionPayload::ScriptFunction(func))
     }
 
     pub fn add_currency_to_account(&self, currency: Currency) -> TransactionBuilder {
@@ -257,6 +273,17 @@ impl TransactionFactory {
         }
     }
 
+    pub fn preburn(&self, currency: Currency, amount: u64) -> TransactionBuilder {
+        if self.is_script_function_enabled() {
+            self.payload(stdlib::encode_preburn_script_function(
+                currency.type_tag(),
+                amount,
+            ))
+        } else {
+            self.script(stdlib::encode_preburn_script(currency.type_tag(), amount))
+        }
+    }
+
     pub fn create_child_vasp_account(
         &self,
         coin_type: Currency,
@@ -355,10 +382,17 @@ impl TransactionFactory {
                 new_key.to_vec(),
             ))
         } else {
-            self.script(stdlib::encode_rotate_authentication_key_script(
-                new_key.to_vec(),
-            ))
+            self.rotate_authentication_key_by_script(new_key)
         }
+    }
+
+    pub fn rotate_authentication_key_by_script(
+        &self,
+        new_key: AuthenticationKey,
+    ) -> TransactionBuilder {
+        self.script(stdlib::encode_rotate_authentication_key_script(
+            new_key.to_vec(),
+        ))
     }
 
     pub fn rotate_authentication_key_with_recovery_address(
@@ -426,6 +460,17 @@ impl TransactionFactory {
         }
     }
 
+    pub fn update_diem_consensus_config(
+        &self,
+        sliding_nonce: u64,
+        config: Vec<u8>,
+    ) -> TransactionBuilder {
+        self.payload(stdlib::encode_update_diem_consensus_config_script_function(
+            sliding_nonce,
+            config,
+        ))
+    }
+
     pub fn update_diem_version(&self, sliding_nonce: u64, major: u64) -> TransactionBuilder {
         if self.is_script_function_enabled() {
             self.payload(stdlib::encode_update_diem_version_script_function(
@@ -436,6 +481,30 @@ impl TransactionFactory {
             self.script(stdlib::encode_update_diem_version_script(
                 sliding_nonce,
                 major,
+            ))
+        }
+    }
+
+    pub fn update_exchange_rate(
+        &self,
+        currency: Currency,
+        sliding_nonce: u64,
+        exchange_rate_numerator: u64,
+        exchange_rate_denominator: u64,
+    ) -> TransactionBuilder {
+        if self.is_script_function_enabled() {
+            self.payload(stdlib::encode_update_exchange_rate_script_function(
+                currency.type_tag(),
+                sliding_nonce,
+                exchange_rate_numerator,
+                exchange_rate_denominator,
+            ))
+        } else {
+            self.script(stdlib::encode_update_exchange_rate_script(
+                currency.type_tag(),
+                sliding_nonce,
+                exchange_rate_numerator,
+                exchange_rate_denominator,
             ))
         }
     }
@@ -463,22 +532,18 @@ impl TransactionFactory {
         }
     }
 
-    pub fn add_diem_id_domain(
-        &self,
-        address: AccountAddress,
-        domain: Vec<u8>,
-    ) -> TransactionBuilder {
-        self.payload(stdlib::encode_add_diem_id_domain_script_function(
+    pub fn add_vasp_domain(&self, address: AccountAddress, domain: Vec<u8>) -> TransactionBuilder {
+        self.payload(stdlib::encode_add_vasp_domain_script_function(
             address, domain,
         ))
     }
 
-    pub fn remove_diem_id_domain(
+    pub fn remove_vasp_domain(
         &self,
         address: AccountAddress,
         domain: Vec<u8>,
     ) -> TransactionBuilder {
-        self.payload(stdlib::encode_remove_diem_id_domain_script_function(
+        self.payload(stdlib::encode_remove_vasp_domain_script_function(
             address, domain,
         ))
     }
@@ -487,7 +552,7 @@ impl TransactionFactory {
     // Internal Helpers
     //
 
-    fn script(&self, script: Script) -> TransactionBuilder {
+    pub fn script(&self, script: Script) -> TransactionBuilder {
         self.payload(TransactionPayload::Script(script))
     }
 
@@ -548,14 +613,14 @@ pub enum Currency {
 impl Currency {
     pub fn as_str(&self) -> &str {
         match self {
-            Currency::XDX => GAS_NAME, //////// 0L ////////
+            Currency::XDX => GAS_NAME, /////// 0L /////////
             Currency::XUS => XUS_NAME,
         }
     }
 
     pub fn type_tag(&self) -> TypeTag {
         match self {
-            Currency::XDX => gas_type_tag(), //////// 0L ////////
+            Currency::XDX => gas_type_tag(), /////// 0L /////////
             Currency::XUS => xus_tag(),
         }
     }

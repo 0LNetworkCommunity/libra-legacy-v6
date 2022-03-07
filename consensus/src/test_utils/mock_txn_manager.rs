@@ -13,7 +13,7 @@ use diem_types::{
     vm_status::{KeptVMStatus, StatusCode},
 };
 use executor_types::StateComputeResult;
-use futures::channel::mpsc;
+use futures::{channel::mpsc, future::BoxFuture};
 use rand::Rng;
 
 #[derive(Clone)]
@@ -54,12 +54,14 @@ impl TxnManager for MockTransactionManager {
         &self,
         _max_size: u64,
         _exclude_txns: Vec<&Payload>,
+        _callback: BoxFuture<'static, ()>,
+        _pending_ordering: bool,
     ) -> Result<Payload, MempoolError> {
         // generate 1k txn is too slow with coverage instrumentation
         Ok(random_payload(10))
     }
 
-    async fn notify(
+    async fn notify_failed_txn(
         &self,
         block: &Block,
         compute_results: &StateComputeResult,
@@ -74,12 +76,13 @@ impl TxnManager for MockTransactionManager {
                 compute_results.epoch_state().clone(),
                 mock_transaction_status(block.payload().map_or(0, |txns| txns.len())),
                 compute_results.transaction_info_hashes().clone(),
+                compute_results.reconfig_events().to_vec(),
             );
             assert!(self
                 .mempool_proxy
                 .as_ref()
                 .unwrap()
-                .notify(&block, &mock_compute_result)
+                .notify_failed_txn(block, &mock_compute_result)
                 .await
                 .is_ok());
         }

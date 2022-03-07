@@ -1,2 +1,0 @@
--v check
--v publish src/modules

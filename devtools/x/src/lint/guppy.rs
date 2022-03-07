@@ -4,19 +4,18 @@
 //! Project and package linters that run queries on guppy.
 
 use crate::config::{
-    BannedDepsConfig, EnforcedAttributesConfig, MoveToDiemDepsConfig, OverlayConfig,
+    BannedDepsConfig, DirectDepDupsConfig, EnforcedAttributesConfig, MoveToDiemDepsConfig,
+    OverlayConfig,
 };
-use anyhow::anyhow;
 use guppy::{
     graph::{feature::FeatureFilterFn, PackagePublish},
     Version, VersionReq,
 };
-use hakari::summaries::HakariBuilderSummary;
 use std::{
     collections::{BTreeMap, HashMap},
     iter,
 };
-use x_core::WorkspaceStatus;
+use x_core::{WorkspaceStatus, XCoreContext};
 use x_lint::prelude::*;
 
 /// Ban certain crates from being used as direct dependencies or in the default build.
@@ -223,16 +222,12 @@ impl PackageLinter for IrrelevantBuildDeps {
 /// Ensure that packages within the workspace only depend on one version of a third-party crate.
 #[derive(Debug)]
 pub struct DirectDepDups<'cfg> {
-    hakari_package: &'cfg str,
+    config: &'cfg DirectDepDupsConfig,
 }
 
 impl<'cfg> DirectDepDups<'cfg> {
-    pub fn new(hakari_config: &'cfg HakariBuilderSummary) -> crate::Result<Self> {
-        let hakari_package = hakari_config
-            .hakari_package
-            .as_deref()
-            .ok_or_else(|| anyhow!("hakari.hakari-package not defined in x.toml"))?;
-        Ok(Self { hakari_package })
+    pub fn new(config: &'cfg DirectDepDupsConfig) -> crate::Result<Self> {
+        Ok(Self { config })
     }
 }
 
@@ -255,7 +250,7 @@ impl<'cfg> ProjectLinter for DirectDepDups<'cfg> {
         package_graph.query_workspace().resolve_with_fn(|_, link| {
             // Collect direct dependencies of workspace packages.
             let (from, to) = link.endpoints();
-            if from.name() == self.hakari_package {
+            if from.name() == ctx.workspace_hack_name() {
                 // Skip the workspace hack package.
                 return false;
             }
@@ -271,7 +266,10 @@ impl<'cfg> ProjectLinter for DirectDepDups<'cfg> {
             // dependencies are considered.
             false
         });
-        for (direct_dep, versions) in direct_deps {
+        for (direct_dep, versions) in direct_deps
+            .iter()
+            .filter(|(d, _)| !self.config.allow.contains(&d.to_string()))
+        {
             if versions.len() > 1 {
                 let mut msg = format!("duplicate direct dependency '{}':\n", direct_dep);
                 for (version, packages) in versions {
@@ -387,25 +385,34 @@ fn feature_str(feature: Option<&str>) -> &str {
 
 /// Ensure that all unpublished packages only use path dependencies for workspace dependencies
 #[derive(Debug)]
-pub struct UnpublishedPackagesOnlyUsePathDependencies {
+pub struct UnpublishedPackagesOnlyUsePathDependencies<'cfg> {
+    hakari_package: &'cfg str,
     no_version_req: VersionReq,
 }
 
-impl UnpublishedPackagesOnlyUsePathDependencies {
-    pub fn new() -> Self {
+impl<'cfg> UnpublishedPackagesOnlyUsePathDependencies<'cfg> {
+    pub fn new(core: &'cfg XCoreContext) -> Self {
+        let hakari_package = core
+            .hakari_builder()
+            .expect("hakari builder")
+            .hakari_package()
+            .expect("hakari-package specified")
+            .name();
+
         Self {
-            no_version_req: VersionReq::parse(">=0.0.0").expect(">=0.0.0 should be a valid req"),
+            hakari_package,
+            no_version_req: VersionReq::parse("*").expect("* should be a valid req"),
         }
     }
 }
 
-impl Linter for UnpublishedPackagesOnlyUsePathDependencies {
+impl<'cfg> Linter for UnpublishedPackagesOnlyUsePathDependencies<'cfg> {
     fn name(&self) -> &'static str {
         "unpublished-packages-only-use-path-dependencies"
     }
 }
 
-impl PackageLinter for UnpublishedPackagesOnlyUsePathDependencies {
+impl<'cfg> PackageLinter for UnpublishedPackagesOnlyUsePathDependencies<'cfg> {
     fn run<'l>(
         &self,
         ctx: &PackageContext<'l>,
@@ -418,12 +425,18 @@ impl PackageLinter for UnpublishedPackagesOnlyUsePathDependencies {
             return Ok(RunStatus::Executed);
         }
 
-        for direct_dep in metadata.direct_links().filter(|p| p.to().in_workspace()) {
+        for direct_dep in metadata.direct_links().filter(|p| {
+            let to = p.to();
+            // Ignore the workspace-hack package for this check since its version always
+            // stays the same.
+            to.in_workspace() && to.name() != self.hakari_package
+        }) {
             if direct_dep.version_req() != &self.no_version_req {
                 let msg = format!(
-                    "unpublished package specifies a version of first-party dependency '{}'; \
+                    "unpublished package specifies a version of first-party dependency '{}' ({}); \
                     unpublished packages should only use path dependencies for first-party packages.",
                     direct_dep.dep_name(),
+                    direct_dep.version_req(),
                 );
                 out.write(LintLevel::Error, msg);
             }
@@ -435,15 +448,30 @@ impl PackageLinter for UnpublishedPackagesOnlyUsePathDependencies {
 
 /// Ensure that all published packages only depend on other, published packages
 #[derive(Debug)]
-pub struct PublishedPackagesDontDependOnUnpublishedPackages;
+pub struct PublishedPackagesDontDependOnUnpublishedPackages<'cfg> {
+    hakari_package: &'cfg str,
+}
 
-impl Linter for PublishedPackagesDontDependOnUnpublishedPackages {
+impl<'cfg> PublishedPackagesDontDependOnUnpublishedPackages<'cfg> {
+    pub fn new(core: &'cfg XCoreContext) -> Self {
+        let hakari_package = core
+            .hakari_builder()
+            .expect("hakari builder")
+            .hakari_package()
+            .expect("hakari-package specified")
+            .name();
+
+        Self { hakari_package }
+    }
+}
+
+impl<'cfg> Linter for PublishedPackagesDontDependOnUnpublishedPackages<'cfg> {
     fn name(&self) -> &'static str {
         "published-packages-dont-depend-on-unpublished-packages"
     }
 }
 
-impl PackageLinter for PublishedPackagesDontDependOnUnpublishedPackages {
+impl<'cfg> PackageLinter for PublishedPackagesDontDependOnUnpublishedPackages<'cfg> {
     fn run<'l>(
         &self,
         ctx: &PackageContext<'l>,
@@ -456,10 +484,11 @@ impl PackageLinter for PublishedPackagesDontDependOnUnpublishedPackages {
             return Ok(RunStatus::Executed);
         }
 
-        for direct_dep in metadata
-            .direct_links()
-            .filter(|p| !p.dev_only() && p.to().in_workspace())
-        {
+        for direct_dep in metadata.direct_links().filter(|p| {
+            // Ignore the workspace-hack package because a stub is already on crates.io.
+            let to = p.to();
+            !p.dev_only() && to.in_workspace() && to.name() != self.hakari_package
+        }) {
             // If the direct dependency isn't publishable
             if direct_dep.to().publish().is_never() {
                 out.write(
@@ -517,6 +546,50 @@ impl PackageLinter for OnlyPublishToCratesIo {
     }
 }
 
+/// Crates in the `/crates` directory have a flatten structure and their directory name is the same
+/// as the crate name
+#[derive(Debug)]
+pub struct CratesInCratesDirectory;
+
+impl Linter for CratesInCratesDirectory {
+    fn name(&self) -> &'static str {
+        "only-publish-to-crates-io"
+    }
+}
+
+impl PackageLinter for CratesInCratesDirectory {
+    fn run<'l>(
+        &self,
+        ctx: &PackageContext<'l>,
+        out: &mut LintFormatter<'l, '_>,
+    ) -> Result<RunStatus<'l>> {
+        let mut path_components = ctx.workspace_path().components();
+        match path_components.next().map(|p| p.as_str()) {
+            Some("crates") => {}
+            _ => return Ok(RunStatus::Executed),
+        }
+
+        match path_components.next().map(|p| p.as_str()) {
+            Some(directory) if directory == ctx.metadata().name() => {}
+            _ => {
+                out.write(
+                    LintLevel::Error,
+                    "crates in the `crates/` directory must be in a directory with the same name as the crate",
+                );
+            }
+        }
+
+        if path_components.next().is_some() {
+            out.write(
+                    LintLevel::Error,
+                    "crates in the `crates/` directory must be in a flat directory structure, no nesting",
+                );
+        }
+
+        Ok(RunStatus::Executed)
+    }
+}
+
 // Ensure that Move crates do not depend on Diem crates.
 #[derive(Debug)]
 pub struct MoveCratesDontDependOnDiemCrates<'cfg> {
@@ -561,12 +634,6 @@ impl<'cfg> PackageLinter for MoveCratesDontDependOnDiemCrates<'cfg> {
             false
         };
 
-        let is_existing_move_to_diem_dep = |name1: &str, name2: &str| {
-            self.config
-                .existing_deps
-                .contains(&(name1.to_string(), name2.to_string()))
-        };
-
         if is_move_crate(&crate_path, crate_name) {
             for direct_dep in metadata.direct_links() {
                 let dep = direct_dep.to();
@@ -575,7 +642,6 @@ impl<'cfg> PackageLinter for MoveCratesDontDependOnDiemCrates<'cfg> {
                 if dep.in_workspace()
                     && !self.config.exclude.contains(dep_name)
                     && !is_move_crate(&dep.source().to_string(), dep_name)
-                    && !is_existing_move_to_diem_dep(crate_name, dep_name)
                 {
                     println!("(\"{}\", \"{}\"),", crate_name, dep_name);
                     out.write(

@@ -11,34 +11,43 @@ use crate::{
 };
 use channel::{diem_channel, message_queues::QueueStyle};
 use diem_config::{
-    config::{NodeConfig, PeerNetworkId, PeerRole, RoleType},
-    network_id::{NetworkContext, NetworkId, NodeNetworkId},
+    config::{Identity, NodeConfig, PeerRole, RoleType},
+    network_id::{NetworkContext, NetworkId, PeerNetworkId},
 };
+use diem_crypto::{x25519::PrivateKey, Uniform};
 use diem_infallible::{Mutex, MutexGuard, RwLock};
-use diem_types::{account_address::AccountAddress, transaction::GovernanceRole, PeerId};
+use diem_types::{
+    account_config::AccountSequenceInfo, on_chain_config::ON_CHAIN_CONFIG_REGISTRY,
+    transaction::GovernanceRole, PeerId,
+};
 use enum_dispatch::enum_dispatch;
+use event_notifications::EventSubscriptionService;
 use futures::{
     channel::mpsc::{self, unbounded, UnboundedReceiver},
     FutureExt, StreamExt,
 };
 use netcore::transport::ConnectionOrigin;
 use network::{
+    application::storage::PeerMetadataStorage,
     peer_manager::{
         conn_notifs_channel, ConnectionNotification, ConnectionRequestSender,
         PeerManagerNotification, PeerManagerRequest, PeerManagerRequestSender,
     },
     protocols::network::{NetworkEvents, NewNetworkEvents, NewNetworkSender},
     transport::ConnectionMetadata,
-    DisconnectReason, ProtocolId,
+    ProtocolId,
 };
 use rand::rngs::StdRng;
-use std::{collections::HashMap, sync::Arc};
-use storage_interface::mock::MockDbReader;
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
+use storage_interface::{mock::MockDbReaderWriter, DbReaderWriter};
 use tokio::runtime::{Builder, Runtime};
 use vm_validator::mocks::mock_vm_validator::MockVMValidator;
 
 type MempoolNetworkHandle = (
-    NodeNetworkId,
+    NetworkId,
     MempoolNetworkSender,
     NetworkEvents<MempoolSyncMsg>,
 );
@@ -76,68 +85,74 @@ pub enum NodeInfo {
 }
 
 /// Accessors to the union type of all simulated nodes
-/// TODO: This really only supports 2 networks, but there are currently nodes with 3
 #[enum_dispatch]
 pub trait NodeInfoTrait {
-    /// `PeerId` for primary network interface
-    fn primary_peer_id(&self) -> PeerId;
-    /// `NetworkId` for primary network interface
-    fn primary_network(&self) -> NetworkId;
+    fn supported_networks(&self) -> Vec<NetworkId>;
+
+    fn find_common_network<T: NodeInfoTrait>(&self, other: &T) -> NetworkId {
+        let supported: HashSet<_> = self.supported_networks().into_iter().collect();
+        let other_supported: HashSet<_> = other.supported_networks().into_iter().collect();
+        if supported.contains(&NetworkId::Validator)
+            && other_supported.contains(&NetworkId::Validator)
+        {
+            NetworkId::Validator
+        } else if supported.contains(&NetworkId::Public)
+            && other_supported.contains(&NetworkId::Public)
+        {
+            NetworkId::Public
+        } else if supported.contains(&NetworkId::Vfn) && other_supported.contains(&NetworkId::Vfn) {
+            NetworkId::Vfn
+        } else {
+            panic!("Expected a common network")
+        }
+    }
+
+    fn peer_network_ids(&self) -> Vec<PeerNetworkId> {
+        self.supported_networks()
+            .into_iter()
+            .map(|network| self.peer_network_id(network))
+            .collect()
+    }
+
+    fn peer_id(&self, network_id: NetworkId) -> PeerId;
+
+    fn peer_network_id(&self, network_id: NetworkId) -> PeerNetworkId {
+        PeerNetworkId::new(network_id, self.peer_id(network_id))
+    }
+
     /// `RoleType` of the `Node`
     fn role(&self) -> RoleType;
+
     /// `PeerRole` for use in the upstream / downstream peers
     fn peer_role(&self) -> PeerRole;
-    /// `PeerId` for secondary network interface
-    fn secondary_peer_id(&self) -> Option<PeerId>;
-    /// `NetworkId` for secondary network interface
-    fn secondary_network(&self) -> Option<NetworkId>;
-
-    /// `PeerId` by using the `bool` input for simplicity
-    fn peer_id(&self, is_primary: bool) -> PeerId {
-        if is_primary {
-            self.primary_peer_id()
-        } else {
-            self.secondary_peer_id().unwrap()
-        }
-    }
-
-    /// `NetworkId` by using the `bool` input for simplicity
-    fn network(&self, is_primary: bool) -> NetworkId {
-        if is_primary {
-            self.primary_network()
-        } else {
-            self.secondary_network().unwrap()
-        }
-    }
-
-    fn network_context(&self, is_primary: bool) -> NetworkContext {
-        let role = self.role();
-        let network = self.network(is_primary);
-        let peer_id = self.peer_id(is_primary);
-        NetworkContext::new(role, network, peer_id)
-    }
 }
 
 #[derive(Clone, Debug)]
 pub struct ValidatorNodeInfo {
-    primary_peer_id: PeerId,
+    peer_id: PeerId,
+    vfn_peer_id: PeerId,
 }
 
 impl ValidatorNodeInfo {
-    fn new(peer_id: PeerId) -> Self {
+    fn new(peer_id: PeerId, vfn_peer_id: PeerId) -> Self {
         ValidatorNodeInfo {
-            primary_peer_id: peer_id,
+            peer_id,
+            vfn_peer_id,
         }
     }
 }
 
 impl NodeInfoTrait for ValidatorNodeInfo {
-    fn primary_peer_id(&self) -> PeerId {
-        self.primary_peer_id
+    fn supported_networks(&self) -> Vec<NetworkId> {
+        vec![NetworkId::Validator, NetworkId::Vfn]
     }
 
-    fn primary_network(&self) -> NetworkId {
-        NetworkId::Validator
+    fn peer_id(&self, network_id: NetworkId) -> PeerId {
+        match network_id {
+            NetworkId::Validator => self.peer_id,
+            NetworkId::Vfn => self.vfn_peer_id,
+            NetworkId::Public => panic!("Invalid network id for validator"),
+        }
     }
 
     fn role(&self) -> RoleType {
@@ -147,38 +162,34 @@ impl NodeInfoTrait for ValidatorNodeInfo {
     fn peer_role(&self) -> PeerRole {
         PeerRole::Validator
     }
-
-    fn secondary_peer_id(&self) -> Option<PeerId> {
-        None
-    }
-
-    fn secondary_network(&self) -> Option<NetworkId> {
-        None
-    }
 }
 
 #[derive(Clone, Debug)]
 pub struct ValidatorFullNodeInfo {
-    primary_peer_id: PeerId,
-    secondary_peer_id: PeerId,
+    peer_id: PeerId,
+    vfn_peer_id: PeerId,
 }
 
 impl ValidatorFullNodeInfo {
-    fn new(primary_peer_id: PeerId, secondary_peer_id: PeerId) -> Self {
+    fn new(peer_id: PeerId, vfn_peer_id: PeerId) -> Self {
         ValidatorFullNodeInfo {
-            primary_peer_id,
-            secondary_peer_id,
+            peer_id,
+            vfn_peer_id,
         }
     }
 }
 
 impl NodeInfoTrait for ValidatorFullNodeInfo {
-    fn primary_peer_id(&self) -> PeerId {
-        self.primary_peer_id
+    fn supported_networks(&self) -> Vec<NetworkId> {
+        vec![NetworkId::Public, NetworkId::Vfn]
     }
 
-    fn primary_network(&self) -> NetworkId {
-        NetworkId::vfn_network()
+    fn peer_id(&self, network_id: NetworkId) -> PeerId {
+        match network_id {
+            NetworkId::Public => self.peer_id,
+            NetworkId::Vfn => self.vfn_peer_id,
+            NetworkId::Validator => panic!("Invalid network id for validator full node"),
+        }
     }
 
     fn role(&self) -> RoleType {
@@ -187,14 +198,6 @@ impl NodeInfoTrait for ValidatorFullNodeInfo {
 
     fn peer_role(&self) -> PeerRole {
         PeerRole::ValidatorFullNode
-    }
-
-    fn secondary_peer_id(&self) -> Option<PeerId> {
-        Some(self.secondary_peer_id)
-    }
-
-    fn secondary_network(&self) -> Option<NetworkId> {
-        Some(NetworkId::Public)
     }
 }
 
@@ -211,12 +214,16 @@ impl FullNodeInfo {
 }
 
 impl NodeInfoTrait for FullNodeInfo {
-    fn primary_peer_id(&self) -> PeerId {
-        self.peer_id
+    fn supported_networks(&self) -> Vec<NetworkId> {
+        vec![NetworkId::Public]
     }
 
-    fn primary_network(&self) -> NetworkId {
-        NetworkId::Public
+    fn peer_id(&self, network_id: NetworkId) -> PeerId {
+        if NetworkId::Public == network_id {
+            self.peer_id
+        } else {
+            panic!("Invalid network id for public full node")
+        }
     }
 
     fn role(&self) -> RoleType {
@@ -225,14 +232,6 @@ impl NodeInfoTrait for FullNodeInfo {
 
     fn peer_role(&self) -> PeerRole {
         self.peer_role
-    }
-
-    fn secondary_peer_id(&self) -> Option<PeerId> {
-        None
-    }
-
-    fn secondary_network(&self) -> Option<NetworkId> {
-        None
     }
 }
 
@@ -246,33 +245,46 @@ pub fn validator_config(rng: &mut StdRng, account_idx: u32) -> (ValidatorNodeInf
         .as_ref()
         .expect("Validator must have a validator network")
         .peer_id();
-    (ValidatorNodeInfo::new(peer_id), config)
+    (
+        ValidatorNodeInfo::new(peer_id, PeerId::from_hex_literal("0xDEADBEEF").unwrap()),
+        config,
+    )
 }
 
 /// Provides a `NodeInfo` and `NodeConfig` for a ValidatorFullNode
-pub fn vfn_config(rng: &mut StdRng, account_idx: u32) -> (ValidatorFullNodeInfo, NodeConfig) {
-    let vfn_config = NodeConfig::random_with_template(
+pub fn vfn_config(
+    rng: &mut StdRng,
+    account_idx: u32,
+    peer_id: PeerId,
+) -> (ValidatorFullNodeInfo, NodeConfig) {
+    let mut vfn_config = NodeConfig::random_with_template(
         account_idx,
         &NodeConfig::default_for_validator_full_node(),
         rng,
     );
 
-    let primary_peer_id = vfn_config
+    vfn_config
         .full_node_networks
-        .iter()
-        .find(|network| network.network_id.is_vfn_network())
-        .expect("VFN must have a VFN network")
-        .peer_id();
-
-    let secondary_peer_id = vfn_config
-        .full_node_networks
-        .iter()
-        .filter(|network| network.network_id == NetworkId::Public)
-        .last()
+        .iter_mut()
+        .find(|network| network.network_id == NetworkId::Public)
+        .as_mut()
         .unwrap()
-        .peer_id();
+        .identity = Identity::from_config(PrivateKey::generate_for_testing(), peer_id);
+
+    let networks: HashMap<_, _> = vfn_config
+        .full_node_networks
+        .iter()
+        .map(|network| (network.network_id, network.peer_id()))
+        .collect();
     (
-        ValidatorFullNodeInfo::new(primary_peer_id, secondary_peer_id),
+        ValidatorFullNodeInfo::new(
+            *networks
+                .get(&NetworkId::Public)
+                .expect("VFN config should have a public network"),
+            *networks
+                .get(&NetworkId::Vfn)
+                .expect("VFN config should have a vfn network"),
+        ),
         vfn_config,
     )
 }
@@ -310,16 +322,18 @@ pub struct Node {
     runtime: Arc<Runtime>,
     /// Subscriber for mempool events
     subscriber: UnboundedReceiver<SharedMempoolNotification>,
+    /// Global peer connection data
+    peer_metadata_storage: Arc<PeerMetadataStorage>,
 }
 
 /// Reimplement `NodeInfoTrait` for simplicity
 impl NodeInfoTrait for Node {
-    fn primary_peer_id(&self) -> AccountAddress {
-        self.node_info.primary_peer_id()
+    fn supported_networks(&self) -> Vec<NetworkId> {
+        self.node_info.supported_networks()
     }
 
-    fn primary_network(&self) -> NetworkId {
-        self.node_info.primary_network()
+    fn peer_id(&self, network_id: NetworkId) -> PeerId {
+        self.node_info.peer_id(network_id)
     }
 
     fn role(&self) -> RoleType {
@@ -329,21 +343,15 @@ impl NodeInfoTrait for Node {
     fn peer_role(&self) -> PeerRole {
         self.node_info.peer_role()
     }
-
-    fn secondary_peer_id(&self) -> Option<AccountAddress> {
-        self.node_info.secondary_peer_id()
-    }
-
-    fn secondary_network(&self) -> Option<NetworkId> {
-        self.node_info.secondary_network()
-    }
 }
 
 impl Node {
     /// Sets up a single node by starting up mempool and any network handles
     pub fn new(node: NodeInfo, config: NodeConfig) -> Node {
-        let (network_interfaces, network_handles) = setup_node_network_interfaces(&node);
-        let (mempool, runtime, subscriber) = start_node_mempool(config, network_handles);
+        let (network_interfaces, network_handles, peer_metadata_storage) =
+            setup_node_network_interfaces(&node);
+        let (mempool, runtime, subscriber) =
+            start_node_mempool(config, network_handles, peer_metadata_storage.clone());
 
         Node {
             node_info: node,
@@ -351,6 +359,7 @@ impl Node {
             network_interfaces,
             runtime: Arc::new(runtime),
             subscriber,
+            peer_metadata_storage,
         }
     }
 
@@ -368,56 +377,34 @@ impl Node {
                 transaction.clone(),
                 0,
                 transaction.gas_unit_price(),
-                0,
+                AccountSequenceInfo::Sequential(0),
                 TimelineState::NotReady,
                 GovernanceRole::NonGovernanceRole,
             );
         }
     }
 
-    /// Commits transactions and removes them from the local mempool, stops them from being broadcasted later
-    pub fn commit_txns(&self, txns: Vec<TestTransaction>) {
-        if let NodeInfo::Validator(_) = self.node_info {
-            let mut mempool = self.mempool();
-            for txn in txns {
-                mempool.remove_transaction(
-                    &TestTransaction::get_address(txn.address),
-                    txn.sequence_number,
-                    false,
-                );
-            }
-        } else {
-            panic!("Can't commit transactions on anything but a validator");
-        }
-    }
-
     /// Notifies the `Node` of a `new_peer`
     pub fn send_new_peer_event(
         &mut self,
-        is_primary: bool,
-        new_peer: PeerId,
+        new_peer: PeerNetworkId,
         peer_role: PeerRole,
         origin: ConnectionOrigin,
     ) {
-        let metadata = ConnectionMetadata::mock_with_role_and_origin(new_peer, peer_role, origin);
-        let network_context = self.network_context(is_primary);
-        let notif = ConnectionNotification::NewPeer(metadata, Arc::new(network_context));
-        self.send_connection_event(is_primary, notif)
-    }
-
-    /// Notifies the `Node` of a `lost_peer`
-    pub fn send_lost_peer_event(&mut self, is_primary: bool, lost_peer: PeerId) {
-        let notif = ConnectionNotification::LostPeer(
-            ConnectionMetadata::mock(lost_peer),
-            NetworkContext::mock(),
-            DisconnectReason::ConnectionLost,
-        );
-        self.send_connection_event(is_primary, notif)
+        let mut metadata =
+            ConnectionMetadata::mock_with_role_and_origin(new_peer.peer_id(), peer_role, origin);
+        metadata
+            .application_protocols
+            .insert(ProtocolId::MempoolDirectSend);
+        let notif = ConnectionNotification::NewPeer(metadata.clone(), NetworkContext::mock());
+        self.peer_metadata_storage
+            .insert_connection(new_peer.network_id(), metadata);
+        self.send_connection_event(new_peer.network_id(), notif);
     }
 
     /// Sends a connection event, and waits for the notification to arrive
-    fn send_connection_event(&mut self, is_primary: bool, notif: ConnectionNotification) {
-        self.send_network_notif(is_primary, notif);
+    fn send_connection_event(&mut self, network_id: NetworkId, notif: ConnectionNotification) {
+        self.send_network_notif(network_id, notif);
         self.wait_for_event(SharedMempoolNotification::PeerStateChange);
     }
 
@@ -437,10 +424,10 @@ impl Node {
     }
 
     /// Checks that a node has no pending messages to send.
-    pub fn check_no_network_messages_sent(&mut self, is_primary: bool) {
+    pub fn check_no_network_messages_sent(&mut self, network_id: NetworkId) {
         self.check_no_subscriber_events();
         assert!(self
-            .get_network_interface(is_primary)
+            .get_network_interface(network_id)
             .network_reqs_rx
             .select_next_some()
             .now_or_never()
@@ -448,33 +435,31 @@ impl Node {
     }
 
     /// Retrieves a network interface for a specific `NetworkId` based on whether it's the primary network
-    fn get_network_interface(&mut self, is_primary: bool) -> &mut NodeNetworkInterface {
-        self.network_interfaces
-            .get_mut(&self.network(is_primary))
-            .unwrap()
+    fn get_network_interface(&mut self, network_id: NetworkId) -> &mut NodeNetworkInterface {
+        self.network_interfaces.get_mut(&network_id).unwrap()
     }
 
     /// Retrieves the next network request `PeerManagerRequest`
-    pub fn get_next_network_req(&mut self, is_primary: bool) -> PeerManagerRequest {
+    pub fn get_next_network_req(&mut self, network_id: NetworkId) -> PeerManagerRequest {
         let runtime = self.runtime.clone();
-        self.get_network_interface(is_primary)
+        self.get_network_interface(network_id)
             .get_next_network_req(runtime)
     }
 
     /// Send network request `PeerManagerNotification` from a remote peer to the local node
     pub fn send_network_req(
         &mut self,
-        is_primary: bool,
+        network_id: NetworkId,
         protocol: ProtocolId,
         notif: PeerManagerNotification,
     ) {
-        self.get_network_interface(is_primary)
+        self.get_network_interface(network_id)
             .send_network_req(protocol, notif);
     }
 
     /// Sends a `ConnectionNotification` to the local node
-    pub fn send_network_notif(&mut self, is_primary: bool, notif: ConnectionNotification) {
-        self.get_network_interface(is_primary)
+    pub fn send_network_notif(&mut self, network_id: NetworkId, notif: ConnectionNotification) {
+        self.get_network_interface(network_id)
             .send_connection_notif(notif)
     }
 }
@@ -528,27 +513,24 @@ fn setup_node_network_interfaces(
 ) -> (
     HashMap<NetworkId, NodeNetworkInterface>,
     Vec<MempoolNetworkHandle>,
+    Arc<PeerMetadataStorage>,
 ) {
-    let (network_interface, network_handle) = setup_node_network_interface(PeerNetworkId(
-        NodeNetworkId::new(node.primary_network(), 0),
-        node.primary_peer_id(),
-    ));
-
-    let mut network_handles = vec![network_handle];
+    let mut network_handles = vec![];
     let mut network_interfaces = HashMap::new();
-    network_interfaces.insert(node.primary_network(), network_interface);
+    for network in node.supported_networks() {
+        let (network_interface, network_handle) =
+            setup_node_network_interface(PeerNetworkId::new(network, node.peer_id(network)));
 
-    // Add Secondary network if the node has one
-    if let Some(secondary_network_id) = node.secondary_network() {
-        let (network_interface, network_handle) = setup_node_network_interface(PeerNetworkId(
-            NodeNetworkId::new(secondary_network_id.clone(), 1),
-            node.secondary_peer_id().unwrap(),
-        ));
         network_handles.push(network_handle);
-        network_interfaces.insert(secondary_network_id, network_interface);
+        network_interfaces.insert(network, network_interface);
     }
 
-    (network_interfaces, network_handles)
+    let network_ids: Vec<_> = network_handles
+        .iter()
+        .map(|(network_id, _, _)| *network_id)
+        .collect();
+    let peer_metadata_storage = PeerMetadataStorage::new(&network_ids);
+    (network_interfaces, network_handles, peer_metadata_storage)
 }
 
 /// Builds a single network interface with associated queues, and attaches it to the top level network
@@ -582,6 +564,7 @@ fn setup_node_network_interface(
 fn start_node_mempool(
     config: NodeConfig,
     network_handles: Vec<MempoolNetworkHandle>,
+    peer_metadata_storage: Arc<PeerMetadataStorage>,
 ) -> (
     Arc<Mutex<CoreMempool>>,
     Runtime,
@@ -591,9 +574,13 @@ fn start_node_mempool(
     let (sender, subscriber) = unbounded();
     let (_ac_endpoint_sender, ac_endpoint_receiver) = mpsc::channel(1_024);
     let (_consensus_sender, consensus_events) = mpsc::channel(1_024);
-    let (_state_sync_sender, state_sync_events) = mpsc::channel(1_024);
-    let (_reconfig_events, reconfig_events_receiver) = diem_channel::new(QueueStyle::LIFO, 1, None);
-
+    let (_mempool_notifier, mempool_listener) =
+        mempool_notifications::new_mempool_notifier_listener_pair();
+    let mut event_subscriber = EventSubscriptionService::new(
+        ON_CHAIN_CONFIG_REGISTRY,
+        Arc::new(RwLock::new(DbReaderWriter::new(MockDbReaderWriter))),
+    );
+    let reconfig_event_subscriber = event_subscriber.subscribe_to_reconfigurations().unwrap();
     let runtime = Builder::new_multi_thread()
         .thread_name("shared-mem")
         .enable_all()
@@ -606,11 +593,12 @@ fn start_node_mempool(
         network_handles,
         ac_endpoint_receiver,
         consensus_events,
-        state_sync_events,
-        reconfig_events_receiver,
-        Arc::new(MockDbReader),
+        mempool_listener,
+        reconfig_event_subscriber,
+        Arc::new(MockDbReaderWriter),
         Arc::new(RwLock::new(MockVMValidator)),
         vec![sender],
+        peer_metadata_storage,
     );
 
     (mempool, runtime, subscriber)

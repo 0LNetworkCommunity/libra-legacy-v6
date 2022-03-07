@@ -22,7 +22,9 @@ use short_hex_str::AsShortHexStr;
 use std::{
     collections::{HashMap, HashSet},
     convert::TryFrom,
+    path::PathBuf,
     string::ToString,
+    time::Duration,
 };
 
 // TODO: We could possibly move these constants somewhere else, but since they are defaults for the
@@ -33,19 +35,19 @@ pub const HANDSHAKE_VERSION: u8 = 0;
 pub const NETWORK_CHANNEL_SIZE: usize = 1024;
 pub const PING_INTERVAL_MS: u64 = 1000;
 pub const PING_TIMEOUT_MS: u64 = 10_000;
-pub const PING_FAILURES_TOLERATED: u64 = 10000; //////// 0L ////////
+pub const PING_FAILURES_TOLERATED: u64 = 100; //////// 0L ////////
 pub const CONNECTIVITY_CHECK_INTERVAL_MS: u64 = 5000;
 pub const MAX_CONCURRENT_NETWORK_REQS: usize = 100;
 pub const MAX_CONNECTION_DELAY_MS: u64 = 60_000; /* 1 minute */
-pub const MAX_FULLNODE_OUTBOUND_CONNECTIONS: usize = 100; //////// 0L ////////
+pub const MAX_FULLNODE_OUTBOUND_CONNECTIONS: usize = 10; //////// 0L ////////
 pub const MAX_INBOUND_CONNECTIONS: usize = 100;
-pub const MAX_FRAME_SIZE: usize = 8 * 1024 * 1024; /* 8 MiB */
+pub const MAX_FRAME_SIZE: usize = 16 * 1024 * 1024; /* 16 MiB */
 pub const CONNECTION_BACKOFF_BASE: u64 = 2;
 pub const IP_BYTE_BUCKET_RATE: usize = 102400 /* 100 KiB */;
 pub const IP_BYTE_BUCKET_SIZE: usize = IP_BYTE_BUCKET_RATE;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(default, deny_unknown_fields)]
+#[serde(default)]
 pub struct NetworkConfig {
     // Maximum backoff delay for connecting outbound to peers
     pub max_connection_delay_ms: u64,
@@ -61,6 +63,7 @@ pub struct NetworkConfig {
     // `DiscoveryMethod::None` disables discovery and dialing out (unless you have
     // seed peers configured).
     pub discovery_method: DiscoveryMethod,
+    pub discovery_methods: Vec<DiscoveryMethod>,
     pub identity: Identity,
     // TODO: Add support for multiple listen/advertised addresses in config.
     // The address that this node is listening on for new connections.
@@ -107,6 +110,7 @@ impl NetworkConfig {
     pub fn network_with_id(network_id: NetworkId) -> NetworkConfig {
         let mut config = Self {
             discovery_method: DiscoveryMethod::None,
+            discovery_methods: Vec::new(),
             identity: Identity::None,
             listen_address: "/ip4/0.0.0.0/tcp/6180".parse().unwrap(),
             mutual_authentication: false,
@@ -160,7 +164,21 @@ impl NetworkConfig {
         }
     }
 
-    pub fn encryptor(&self) -> Encryptor {
+    pub fn discovery_methods(&self) -> Vec<&DiscoveryMethod> {
+        // TODO: This is a backwards compatibility feature.  Deprecate discovery_method
+        if self.discovery_method != DiscoveryMethod::None && !self.discovery_methods.is_empty() {
+            panic!("Can't specify discovery_method and discovery_methods")
+        } else if self.discovery_method != DiscoveryMethod::None {
+            vec![&self.discovery_method]
+        } else {
+            self.discovery_methods
+                .iter()
+                .filter(|method| &&DiscoveryMethod::None != method)
+                .collect()
+        }
+    }
+
+    pub fn encryptor(&self) -> Encryptor<Storage> {
         if let Some(backend) = self.network_address_key_backend.as_ref() {
             let storage = backend.into();
             Encryptor::new(storage)
@@ -285,6 +303,7 @@ impl NetworkConfig {
 #[serde(rename_all = "snake_case")]
 pub enum DiscoveryMethod {
     Onchain,
+    File(PathBuf, Duration),
     None,
 }
 
@@ -313,7 +332,6 @@ impl Identity {
 
 /// The identity is stored within the config.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(deny_unknown_fields)]
 pub struct IdentityFromConfig {
     #[serde(flatten)]
     pub key: ConfigKey<x25519::PrivateKey>,
@@ -322,7 +340,6 @@ pub struct IdentityFromConfig {
 
 /// This represents an identity in a secure-storage as defined in NodeConfig::secure.
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(deny_unknown_fields)]
 pub struct IdentityFromStorage {
     pub backend: SecureBackend,
     pub key_name: String,

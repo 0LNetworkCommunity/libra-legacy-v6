@@ -1,6 +1,6 @@
 [package]
 name = "diem-types"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Diem Association <opensource@diem.com>"]
 description = "Diem types"
 repository = "https://github.com/diem/diem"
@@ -11,7 +11,7 @@ edition = "2018"
 
 [dependencies]
 aes-gcm = "0.8.0"
-anyhow = "1.0.38"
+anyhow = "1.0.52"
 bytes = "1.0.1"
 chrono = { version = "0.4.19", default-features = false, features = ["clock"] }
 hex = "0.4.3"
@@ -28,13 +28,14 @@ thiserror = "1.0.24"
 tiny-keccak = { version = "2.0.2", default-features = false, features = ["sha3"] }
 
 bcs = "0.1.2"
-diem-crypto = { path = "../crypto/crypto", version = "0.0.2" }
-diem-crypto-derive = { path = "../crypto/crypto-derive", version = "0.0.2" }
-move-core-types = { path = "../language/move-core/types", version = "0.0.2" }
+diem-crypto = { path = "../crates/diem-crypto", version = "0.0.3" }
+diem-crypto-derive = { path = "../crates/diem-crypto-derive", version = "0.0.3" }
+move-core-types = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860", version = "0.0.3" }
+move-read-write-set-types = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
+diem-workspace-hack = { version = "0.1", path = "../crates/diem-workspace-hack" }
 
 # //////// 0L ////////
 sha2 = "0.9.1"
-
 
 [dev-dependencies]
 regex = "1.4.3"
@@ -42,10 +43,8 @@ proptest = "1.0.0"
 proptest-derive = "0.3.0"
 serde_json = "1.0.64"
 
-diem-crypto = { path = "../crypto/crypto", features = ["fuzzing"] }
-move-core-types = { path = "../language/move-core/types", features = ["fuzzing"]  }
-diem-workspace-hack = { path = "../common/workspace-hack" }
-
+diem-crypto = { path = "../crates/diem-crypto", features = ["fuzzing"] }
+move-core-types = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860", features = ["fuzzing"]  }
 
 [features]
 default = []

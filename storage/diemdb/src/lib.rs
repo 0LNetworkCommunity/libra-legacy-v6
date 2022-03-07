@@ -45,9 +45,9 @@ use crate::{
     ledger_store::LedgerStore,
     metrics::{
         DIEM_STORAGE_API_LATENCY_SECONDS, DIEM_STORAGE_COMMITTED_TXNS,
-        DIEM_STORAGE_LATEST_TXN_VERSION, DIEM_STORAGE_LEDGER_VERSION,
-        DIEM_STORAGE_NEXT_BLOCK_EPOCH, DIEM_STORAGE_OTHER_TIMERS_SECONDS,
-        DIEM_STORAGE_ROCKSDB_PROPERTIES,
+        DIEM_STORAGE_LATEST_ACCOUNT_COUNT, DIEM_STORAGE_LATEST_TXN_VERSION,
+        DIEM_STORAGE_LEDGER_VERSION, DIEM_STORAGE_NEXT_BLOCK_EPOCH,
+        DIEM_STORAGE_OTHER_TIMERS_SECONDS, DIEM_STORAGE_ROCKSDB_PROPERTIES,
     },
     pruner::Pruner,
     schema::*,
@@ -55,40 +55,50 @@ use crate::{
     system_store::SystemStore,
     transaction_store::TransactionStore,
 };
-use anyhow::{ensure, Result};
+use anyhow::{ensure, format_err, Result};
 use diem_config::config::RocksdbConfig;
 use diem_crypto::hash::{CryptoHash, HashValue, SPARSE_MERKLE_PLACEHOLDER_HASH};
 use diem_logger::prelude::*;
 use diem_types::{
     account_address::AccountAddress,
-    account_state_blob::{AccountStateBlob, AccountStateWithProof},
-    contract_event::{ContractEvent, EventWithProof},
+    account_state::AccountState,
+    account_state_blob::{AccountStateBlob, AccountStateWithProof, AccountStatesChunkWithProof},
+    contract_event::{ContractEvent, EventByVersionWithProof, EventWithProof},
     epoch_change::EpochChangeProof,
     event::EventKey,
     ledger_info::LedgerInfoWithSignatures,
     proof::{
         AccountStateProof, AccumulatorConsistencyProof, EventProof, SparseMerkleProof,
-        TransactionListProof,
+        TransactionInfoListWithProof,
     },
+    state_proof::StateProof,
     transaction::{
-        TransactionInfo, TransactionListWithProof, TransactionToCommit, TransactionWithProof,
-        Version, PRE_GENESIS_VERSION,
+        AccountTransactionsWithProof, TransactionInfo, TransactionListWithProof, TransactionOutput,
+        TransactionOutputListWithProof, TransactionToCommit, TransactionWithProof, Version,
+        PRE_GENESIS_VERSION,
     },
 };
 use itertools::{izip, zip_eq};
+use move_core_types::{
+    language_storage::{ModuleId, StructTag},
+    resolver::{ModuleResolver, ResourceResolver},
+};
 use once_cell::sync::Lazy;
 use schemadb::{ColumnFamilyName, Options, DB, DEFAULT_CF_NAME};
 use std::{
     collections::HashMap,
+    convert::TryFrom,
     iter::Iterator,
     path::Path,
     sync::{mpsc, Arc, Mutex},
     thread::{self, JoinHandle},
     time::{Duration, Instant},
 };
-use storage_interface::{DbReader, DbWriter, Order, StartupInfo, TreeState};
+use storage_interface::{
+    DbReader, DbWriter, MoveDbReader, Order, StartupInfo, StateSnapshotReceiver, TreeState,
+};
 
-const MAX_LIMIT: u64 = 1000;
+const MAX_LIMIT: u64 = 5000;
 
 // TODO: Either implement an iteration API to allow a very old client to loop through a long history
 // or guarantee that there is always a recent enough waypoint and client knows to boot from there.
@@ -209,6 +219,7 @@ pub struct DiemDB {
     system_store: SystemStore,
     rocksdb_property_reporter: RocksdbPropertyReporter,
     pruner: Option<Pruner>,
+    prune_window: Option<u64>,
 }
 
 impl DiemDB {
@@ -226,22 +237,25 @@ impl DiemDB {
             TRANSACTION_CF_NAME,
             TRANSACTION_ACCUMULATOR_CF_NAME,
             TRANSACTION_BY_ACCOUNT_CF_NAME,
+            TRANSACTION_BY_HASH_CF_NAME,
             TRANSACTION_INFO_CF_NAME,
+            WRITE_SET_CF_NAME,
         ]
     }
 
-    fn new_with_db(db: DB, prune_window: Option<u64>) -> Self {
+    fn new_with_db(db: DB, prune_window: Option<u64>, account_count_migration: bool) -> Self {
         let db = Arc::new(db);
 
         DiemDB {
             db: Arc::clone(&db),
             event_store: Arc::new(EventStore::new(Arc::clone(&db))),
             ledger_store: Arc::new(LedgerStore::new(Arc::clone(&db))),
-            state_store: Arc::new(StateStore::new(Arc::clone(&db))),
+            state_store: Arc::new(StateStore::new(Arc::clone(&db), account_count_migration)),
             transaction_store: Arc::new(TransactionStore::new(Arc::clone(&db))),
             system_store: SystemStore::new(Arc::clone(&db)),
             rocksdb_property_reporter: RocksdbPropertyReporter::new(Arc::clone(&db)),
             pruner: prune_window.map(|n| Pruner::new(Arc::clone(&db), n)),
+            prune_window,
         }
     }
 
@@ -250,6 +264,7 @@ impl DiemDB {
         readonly: bool,
         prune_window: Option<u64>,
         rocksdb_config: RocksdbConfig,
+        account_count_migration: bool, // ignored when opening readonly
     ) -> Result<Self> {
         ensure!(
             prune_window.is_none() || !readonly,
@@ -261,25 +276,31 @@ impl DiemDB {
 
         let mut rocksdb_opts = gen_rocksdb_options(&rocksdb_config);
 
-        let db = if readonly {
-            DB::open_readonly(
-                path.clone(),
-                "diemdb_ro",
-                Self::column_families(),
-                &rocksdb_opts,
-            )?
+        let (db, account_count_migration) = if readonly {
+            (
+                DB::open_readonly(
+                    path.clone(),
+                    "diemdb_ro",
+                    Self::column_families(),
+                    &rocksdb_opts,
+                )?,
+                true,
+            )
         } else {
             rocksdb_opts.create_if_missing(true);
             rocksdb_opts.create_missing_column_families(true);
-            DB::open(
-                path.clone(),
-                "diemdb",
-                Self::column_families(),
-                &rocksdb_opts,
-            )?
+            (
+                DB::open(
+                    path.clone(),
+                    "diemdb",
+                    Self::column_families(),
+                    &rocksdb_opts,
+                )?,
+                account_count_migration,
+            )
         };
 
-        let ret = Self::new_with_db(db, prune_window);
+        let ret = Self::new_with_db(db, prune_window, account_count_migration);
         info!(
             path = path,
             time_ms = %instant.elapsed().as_millis(),
@@ -308,6 +329,7 @@ impl DiemDB {
                 &rocksdb_opts,
             )?,
             None, // prune_window
+            true, // account_count_migration
         ))
     }
 
@@ -319,6 +341,7 @@ impl DiemDB {
             false, /* readonly */
             None,  /* pruner */
             RocksdbConfig::default(),
+            true, /* account_count_migration */
         )
         .expect("Unable to open DiemDB")
     }
@@ -428,6 +451,18 @@ impl DiemDB {
         )
     }
 
+    /// Creates new physical DB checkpoint in directory specified by `path`.
+    pub fn create_checkpoint<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        let start = Instant::now();
+        self.db.create_checkpoint(&path).map(|_| {
+            info!(
+                path = path.as_ref(),
+                time_ms = %start.elapsed().as_millis(),
+                "Made DiemDB checkpoint."
+            );
+        })
+    }
+
     // ================================== Private APIs ==================================
     fn get_events_with_proof_by_event_key(
         &self,
@@ -444,7 +479,7 @@ impl DiemDB {
             // Caller wants the latest, figure out the latest seq_num.
             // In the case of no events on that path, use 0 and expect empty result below.
             self.event_store
-                .get_latest_sequence_number(ledger_version, &event_key)?
+                .get_latest_sequence_number(ledger_version, event_key)?
                 .unwrap_or(0)
         } else {
             start_seq_num
@@ -455,7 +490,7 @@ impl DiemDB {
 
         // Query the index.
         let mut event_indices = self.event_store.lookup_events_by_key(
-            &event_key,
+            event_key,
             first_seq,
             real_limit,
             ledger_version,
@@ -534,47 +569,74 @@ impl DiemDB {
         let last_version = first_version + txns_to_commit.len() as u64 - 1;
 
         // Account state updates. Gather account state root hashes
-        let account_state_sets = txns_to_commit
-            .iter()
-            .map(|txn_to_commit| txn_to_commit.account_states().clone())
-            .collect::<Vec<_>>();
-        let state_root_hashes =
-            self.state_store
-                .put_account_state_sets(account_state_sets, first_version, &mut cs)?;
+        let state_root_hashes = {
+            let _timer = DIEM_STORAGE_OTHER_TIMERS_SECONDS
+                .with_label_values(&["save_transactions_state"])
+                .start_timer();
+
+            let account_state_sets = txns_to_commit
+                .iter()
+                .map(|txn_to_commit| txn_to_commit.account_states().clone())
+                .collect::<Vec<_>>();
+
+            let node_hashes = txns_to_commit
+                .iter()
+                .map(|txn_to_commit| txn_to_commit.jf_node_hashes())
+                .collect::<Option<Vec<_>>>();
+            self.state_store.put_account_state_sets(
+                account_state_sets,
+                node_hashes,
+                first_version,
+                &mut cs,
+            )?
+        };
 
         // Event updates. Gather event accumulator root hashes.
-        let event_root_hashes = zip_eq(first_version..=last_version, txns_to_commit)
-            .map(|(ver, txn_to_commit)| {
-                self.event_store
-                    .put_events(ver, txn_to_commit.events(), &mut cs)
-            })
-            .collect::<Result<Vec<_>>>()?;
+        let event_root_hashes = {
+            let _timer = DIEM_STORAGE_OTHER_TIMERS_SECONDS
+                .with_label_values(&["save_transactions_events"])
+                .start_timer();
+            zip_eq(first_version..=last_version, txns_to_commit)
+                .map(|(ver, txn_to_commit)| {
+                    self.event_store
+                        .put_events(ver, txn_to_commit.events(), &mut cs)
+                })
+                .collect::<Result<Vec<_>>>()?
+        };
 
-        // Transaction updates. Gather transaction hashes.
-        zip_eq(first_version..=last_version, txns_to_commit).try_for_each(
-            |(ver, txn_to_commit)| {
-                self.transaction_store
-                    .put_transaction(ver, txn_to_commit.transaction(), &mut cs)
-            },
-        )?;
+        let new_root_hash = {
+            let _timer = DIEM_STORAGE_OTHER_TIMERS_SECONDS
+                .with_label_values(&["save_transactions_txn_infos"])
+                .start_timer();
+            zip_eq(first_version..=last_version, txns_to_commit).try_for_each(
+                |(ver, txn_to_commit)| {
+                    // Transaction updates. Gather transaction hashes.
+                    self.transaction_store.put_transaction(
+                        ver,
+                        txn_to_commit.transaction(),
+                        &mut cs,
+                    )?;
+                    self.transaction_store
+                        .put_write_set(ver, txn_to_commit.write_set(), &mut cs)
+                },
+            )?;
+            // Transaction accumulator updates. Get result root hash.
+            let txn_infos = izip!(txns_to_commit, state_root_hashes, event_root_hashes)
+                .map(|(t, s, e)| {
+                    Ok(TransactionInfo::new(
+                        t.transaction().hash(),
+                        s,
+                        e,
+                        t.gas_used(),
+                        t.status().clone(),
+                    ))
+                })
+                .collect::<Result<Vec<_>>>()?;
+            assert_eq!(txn_infos.len(), txns_to_commit.len());
 
-        // Transaction accumulator updates. Get result root hash.
-        let txn_infos = izip!(txns_to_commit, state_root_hashes, event_root_hashes)
-            .map(|(t, s, e)| {
-                Ok(TransactionInfo::new(
-                    t.transaction().hash(),
-                    s,
-                    e,
-                    t.gas_used(),
-                    t.status().clone(),
-                ))
-            })
-            .collect::<Result<Vec<_>>>()?;
-        assert_eq!(txn_infos.len(), txns_to_commit.len());
-
-        let new_root_hash =
             self.ledger_store
-                .put_transaction_infos(first_version, &txn_infos, &mut cs)?;
+                .put_transaction_infos(first_version, &txn_infos, &mut cs)?
+        };
 
         Ok(new_root_hash)
     }
@@ -603,7 +665,7 @@ impl DbReader for DiemDB {
     ) -> Result<EpochChangeProof> {
         gauged_api("get_epoch_ending_ledger_infos", || {
             let (ledger_info_with_sigs, more) =
-                Self::get_epoch_ending_ledger_infos(&self, start_epoch, end_epoch)?;
+                Self::get_epoch_ending_ledger_infos(self, start_epoch, end_epoch)?;
             Ok(EpochChangeProof::new(ledger_info_with_sigs, more))
         })
     }
@@ -628,23 +690,73 @@ impl DbReader for DiemDB {
         })
     }
 
-    /// Returns a transaction that is the `seq_num`-th one associated with the given account. If
-    /// the transaction with given `seq_num` doesn't exist, returns `None`.
-    fn get_txn_by_account(
+    fn get_account_transaction(
         &self,
         address: AccountAddress,
         seq_num: u64,
+        include_events: bool,
         ledger_version: Version,
-        fetch_events: bool,
     ) -> Result<Option<TransactionWithProof>> {
-        gauged_api("get_txn_by_account", || {
+        gauged_api("get_account_transaction", || {
             self.transaction_store
-                .lookup_transaction_by_account(address, seq_num, ledger_version)?
-                .map(|version| {
-                    self.get_transaction_with_proof(version, ledger_version, fetch_events)
+                .get_account_transaction_version(address, seq_num, ledger_version)?
+                .map(|txn_version| {
+                    self.get_transaction_with_proof(txn_version, ledger_version, include_events)
                 })
                 .transpose()
         })
+    }
+
+    fn get_account_transactions(
+        &self,
+        address: AccountAddress,
+        start_seq_num: u64,
+        limit: u64,
+        include_events: bool,
+        ledger_version: Version,
+    ) -> Result<AccountTransactionsWithProof> {
+        gauged_api("get_account_transactions", || {
+            error_if_too_many_requested(limit, MAX_LIMIT)?;
+
+            let txns_with_proofs = self
+                .transaction_store
+                .get_account_transaction_version_iter(
+                    address,
+                    start_seq_num,
+                    limit,
+                    ledger_version,
+                )?
+                .map(|result| {
+                    let (_seq_num, txn_version) = result?;
+                    self.get_transaction_with_proof(txn_version, ledger_version, include_events)
+                })
+                .collect::<Result<Vec<_>>>()?;
+
+            Ok(AccountTransactionsWithProof::new(txns_with_proofs))
+        })
+    }
+
+    /// This API is best-effort in that it CANNOT provide absense proof.
+    fn get_transaction_by_hash(
+        &self,
+        hash: HashValue,
+        ledger_version: Version,
+        fetch_events: bool,
+    ) -> Result<Option<TransactionWithProof>> {
+        self.transaction_store
+            .get_transaction_version_by_hash(&hash, ledger_version)?
+            .map(|v| self.get_transaction_with_proof(v, ledger_version, fetch_events))
+            .transpose()
+    }
+
+    /// Get transaction by version, delegates to `DiemDB::get_transaction_by_hash`
+    fn get_transaction_by_version(
+        &self,
+        version: Version,
+        ledger_version: Version,
+        fetch_events: bool,
+    ) -> Result<TransactionWithProof> {
+        self.get_transaction_with_proof(version, ledger_version, fetch_events)
     }
 
     // ======================= State Synchronizer Internal APIs ===================================
@@ -682,7 +794,7 @@ impl DbReader for DiemDB {
             } else {
                 None
             };
-            let proof = TransactionListProof::new(
+            let proof = TransactionInfoListWithProof::new(
                 self.ledger_store.get_transaction_range_proof(
                     Some(start_version),
                     limit,
@@ -694,6 +806,68 @@ impl DbReader for DiemDB {
             Ok(TransactionListWithProof::new(
                 txns,
                 events,
+                Some(start_version),
+                proof,
+            ))
+        })
+    }
+
+    /// Get the first version that txn starts existent.
+    fn get_first_txn_version(&self) -> Result<Option<Version>> {
+        self.transaction_store.get_first_txn_version()
+    }
+
+    /// Get the first version that write set starts existent.
+    fn get_first_write_set_version(&self) -> Result<Option<Version>> {
+        self.transaction_store.get_first_write_set_version()
+    }
+
+    /// Gets a batch of transactions for the purpose of synchronizing state to another node.
+    ///
+    /// This is used by the State Synchronizer module internally.
+    fn get_transaction_outputs(
+        &self,
+        start_version: Version,
+        limit: u64,
+        ledger_version: Version,
+    ) -> Result<TransactionOutputListWithProof> {
+        gauged_api("get_transactions_outputs", || {
+            error_if_too_many_requested(limit, MAX_LIMIT)?;
+
+            if start_version > ledger_version || limit == 0 {
+                return Ok(TransactionOutputListWithProof::new_empty());
+            }
+
+            let limit = std::cmp::min(limit, ledger_version - start_version + 1);
+
+            let (txn_infos, txns_and_outputs) = (start_version..start_version + limit)
+                .map(|version| {
+                    let txn_info = self.ledger_store.get_transaction_info(version)?;
+                    let events = self.event_store.get_events_by_version(version)?;
+                    let write_set = self.transaction_store.get_write_set(version)?;
+                    let txn = self.transaction_store.get_transaction(version)?;
+                    let txn_output = TransactionOutput::new(
+                        write_set,
+                        events,
+                        txn_info.gas_used(),
+                        txn_info.status().clone().into(),
+                    );
+                    Ok((txn_info, (txn, txn_output)))
+                })
+                .collect::<Result<Vec<_>>>()?
+                .into_iter()
+                .unzip();
+            let proof = TransactionInfoListWithProof::new(
+                self.ledger_store.get_transaction_range_proof(
+                    Some(start_version),
+                    limit,
+                    ledger_version,
+                )?,
+                txn_infos,
+            );
+
+            Ok(TransactionOutputListWithProof::new(
+                txns_and_outputs,
                 Some(start_version),
                 proof,
             ))
@@ -727,16 +901,10 @@ impl DbReader for DiemDB {
         known_version: Option<u64>,
     ) -> Result<Vec<EventWithProof>> {
         gauged_api("get_events_with_proofs", || {
-            let version;
-            if let Some(v) = known_version {
-                version = v
-            } else {
-                version = self
-                    .ledger_store
-                    .get_latest_ledger_info()?
-                    .ledger_info()
-                    .version();
-            }
+            let version = match known_version {
+                Some(version) => version,
+                None => self.get_latest_version()?,
+            };
             let events =
                 self.get_events_with_proof_by_event_key(event_key, start, order, limit, version)?;
             Ok(events)
@@ -754,7 +922,7 @@ impl DbReader for DiemDB {
         &self,
         known_version: u64,
         ledger_info_with_sigs: LedgerInfoWithSignatures,
-    ) -> Result<(EpochChangeProof, AccumulatorConsistencyProof)> {
+    ) -> Result<StateProof> {
         gauged_api("get_state_proof_with_ledger_info", || {
             let ledger_info = ledger_info_with_sigs.ledger_info();
             ensure!(
@@ -764,38 +932,48 @@ impl DbReader for DiemDB {
                 ledger_info.version(),
             );
             let known_epoch = self.ledger_store.get_epoch(known_version)?;
-            let epoch_change_proof = if known_epoch < ledger_info.next_block_epoch() {
-                let (ledger_infos_with_sigs, more) = self
-                    .get_epoch_ending_ledger_infos(known_epoch, ledger_info.next_block_epoch())?;
+            let end_epoch = ledger_info.next_block_epoch();
+            let epoch_change_proof = if known_epoch < end_epoch {
+                let (ledger_infos_with_sigs, more) =
+                    self.get_epoch_ending_ledger_infos(known_epoch, end_epoch)?;
                 EpochChangeProof::new(ledger_infos_with_sigs, more)
             } else {
                 EpochChangeProof::new(vec![], /* more = */ false)
             };
 
-            let ledger_consistency_proof = self
+            // Only return a consistency proof up to the verifiable end LI. If a
+            // client still needs to sync more epoch change LI's, then they cannot
+            // verify the latest LI nor verify a consistency proof up to the latest
+            // LI. If the client needs more epochs, we just return the consistency
+            // proof up to the last epoch change LI.
+            let verifiable_li = if epoch_change_proof.more {
+                epoch_change_proof
+                    .ledger_info_with_sigs
+                    .last()
+                    .ok_or_else(|| format_err!(
+                        "No epoch changes despite claiming the client needs to sync more epochs: known_epoch={}, end_epoch={}",
+                        known_epoch, end_epoch,
+                    ))?
+                    .ledger_info()
+            } else {
+                ledger_info
+            };
+
+            let consistency_proof = self
                 .ledger_store
-                .get_consistency_proof(known_version, ledger_info.version())?;
-            Ok((epoch_change_proof, ledger_consistency_proof))
+                .get_consistency_proof(Some(known_version), verifiable_li.version())?;
+            Ok(StateProof::new(
+                ledger_info_with_sigs,
+                epoch_change_proof,
+                consistency_proof,
+            ))
         })
     }
 
-    fn get_state_proof(
-        &self,
-        known_version: u64,
-    ) -> Result<(
-        LedgerInfoWithSignatures,
-        EpochChangeProof,
-        AccumulatorConsistencyProof,
-    )> {
+    fn get_state_proof(&self, known_version: u64) -> Result<StateProof> {
         gauged_api("get_state_proof", || {
             let ledger_info_with_sigs = self.ledger_store.get_latest_ledger_info()?;
-            let (epoch_change_proof, ledger_consistency_proof) = self
-                .get_state_proof_with_ledger_info(known_version, ledger_info_with_sigs.clone())?;
-            Ok((
-                ledger_info_with_sigs,
-                epoch_change_proof,
-                ledger_consistency_proof,
-            ))
+            self.get_state_proof_with_ledger_info(known_version, ledger_info_with_sigs)
         })
     }
 
@@ -857,7 +1035,7 @@ impl DbReader for DiemDB {
     fn get_latest_state_root(&self) -> Result<(Version, HashValue)> {
         gauged_api("get_latest_state_root", || {
             let (version, txn_info) = self.ledger_store.get_latest_transaction_info()?;
-            Ok((version, txn_info.state_root_hash()))
+            Ok((version, txn_info.state_change_hash()))
         })
     }
 
@@ -898,6 +1076,85 @@ impl DbReader for DiemDB {
         })
     }
 
+    fn get_event_by_version_with_proof(
+        &self,
+        event_key: &EventKey,
+        event_version: u64,
+        proof_version: u64,
+    ) -> Result<EventByVersionWithProof> {
+        gauged_api("get_event_by_version_with_proof", || {
+            let latest_version = self.get_latest_version()?;
+            ensure!(
+                proof_version <= latest_version,
+                "cannot construct proofs for a version that doesn't exist yet: proof_version: {}, latest_version: {}",
+                proof_version, latest_version,
+            );
+            ensure!(
+                event_version <= proof_version,
+                "event_version {} must be <= proof_version {}",
+                event_version,
+                proof_version,
+            );
+
+            // Get the latest sequence number of an event at or before the
+            // requested event_version.
+            let maybe_seq_num = self
+                .event_store
+                .get_latest_sequence_number(event_version, event_key)?;
+
+            let (lower_bound_incl, upper_bound_excl) = if let Some(seq_num) = maybe_seq_num {
+                // We need to request the surrounding events (surrounding
+                // as in E_i.version <= event_version < E_{i+1}.version) in order
+                // to prove that there are no intermediate events, i.e.,
+                // E_j, where E_i.version < E_j.version <= event_version.
+                //
+                // This limit also works for the case where `event_version` is
+                // after the latest event, since the upper bound will just be None.
+                let limit = 2;
+
+                let events = self.get_events_with_proof_by_event_key(
+                    event_key,
+                    seq_num,
+                    Order::Ascending,
+                    limit,
+                    proof_version,
+                )?;
+
+                let mut events_iter = events.into_iter();
+                let lower_bound_incl = events_iter.next();
+                let upper_bound_excl = events_iter.next();
+                assert_eq!(events_iter.len(), 0);
+
+                (lower_bound_incl, upper_bound_excl)
+            } else {
+                // Since there is no event at or before `event_version`, we need to
+                // show that either (1.) there are no events or (2.) events start
+                // at some later version.
+                let seq_num = 0;
+                let limit = 1;
+
+                let events = self.get_events_with_proof_by_event_key(
+                    event_key,
+                    seq_num,
+                    Order::Ascending,
+                    limit,
+                    proof_version,
+                )?;
+
+                let mut events_iter = events.into_iter();
+                let upper_bound_excl = events_iter.next();
+                assert_eq!(events_iter.len(), 0);
+
+                (None, upper_bound_excl)
+            };
+
+            Ok(EventByVersionWithProof::new(
+                lower_bound_incl,
+                upper_bound_excl,
+            ))
+        })
+    }
+
     fn get_last_version_before_timestamp(
         &self,
         timestamp: u64,
@@ -920,7 +1177,81 @@ impl DbReader for DiemDB {
             self.ledger_store.get_root_hash(version)
         })
     }
+
+    fn get_accumulator_consistency_proof(
+        &self,
+        client_known_version: Option<Version>,
+        ledger_version: Version,
+    ) -> Result<AccumulatorConsistencyProof> {
+        gauged_api("get_accumulator_consistency_proof", || {
+            self.ledger_store
+                .get_consistency_proof(client_known_version, ledger_version)
+        })
+    }
+
+    fn get_account_count(&self, version: Version) -> Result<usize> {
+        gauged_api("get_account_count", || {
+            self.state_store
+                .get_account_count(version)
+                .and_then(|count| {
+                    count.ok_or_else(|| {
+                        DiemDbError::NotFound(format!("Account count at version {}", version))
+                            .into()
+                    })
+                })
+        })
+    }
+
+    fn get_account_chunk_with_proof(
+        &self,
+        version: Version,
+        first_index: usize,
+        chunk_size: usize,
+    ) -> Result<AccountStatesChunkWithProof> {
+        gauged_api("get_account_chunk_with_proof", || {
+            self.state_store
+                .get_account_chunk_with_proof(version, first_index, chunk_size)
+        })
+    }
+
+    fn get_state_prune_window(&self) -> Option<usize> {
+        self.prune_window.map(|u| u as usize)
+    }
 }
+
+impl ModuleResolver for DiemDB {
+    type Error = anyhow::Error;
+
+    fn get_module(&self, module_id: &ModuleId) -> Result<Option<Vec<u8>>> {
+        let (account_state_with_proof, _) = self.get_account_state_with_proof_by_version(
+            *module_id.address(),
+            self.get_latest_version()?,
+        )?;
+        if let Some(account_state_blob) = account_state_with_proof {
+            let account_state = AccountState::try_from(&account_state_blob)?;
+            Ok(account_state.get(&module_id.access_vector()).cloned())
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+impl ResourceResolver for DiemDB {
+    type Error = anyhow::Error;
+
+    fn get_resource(&self, address: &AccountAddress, tag: &StructTag) -> Result<Option<Vec<u8>>> {
+        let (account_state_with_proof, _) =
+            self.get_account_state_with_proof_by_version(*address, self.get_latest_version()?)?;
+        if let Some(account_state_blob) = account_state_with_proof {
+            let account_state = AccountState::try_from(&account_state_blob)?;
+            Ok(account_state.get(&tag.access_vector()).cloned())
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+impl MoveDbReader for DiemDB {}
 
 impl DbWriter for DiemDB {
     /// `first_version` is the version of the first transaction in `txns_to_commit`.
@@ -999,11 +1330,29 @@ impl DbWriter for DiemDB {
                 counters
                     .expect("Counters should be bumped with transactions being saved.")
                     .bump_op_counters();
+                // -1 for "not fully migrated", -2 for "error on get_account_count()"
+                DIEM_STORAGE_LATEST_ACCOUNT_COUNT.set(
+                    self.state_store
+                        .get_account_count(last_version)
+                        .map(|opt| opt.map_or(-1, |n| n as i64))
+                        .unwrap_or(-2),
+                );
 
                 self.wake_pruner(last_version);
             }
 
             Ok(())
+        })
+    }
+
+    fn get_state_snapshot_receiver(
+        &self,
+        version: Version,
+        expected_root_hash: HashValue,
+    ) -> Result<Box<dyn StateSnapshotReceiver<AccountStateBlob>>> {
+        gauged_api("get_state_snapshot_receiver", || {
+            self.state_store
+                .get_snapshot_receiver(version, expected_root_hash)
         })
     }
 }

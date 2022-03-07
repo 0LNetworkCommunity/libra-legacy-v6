@@ -10,16 +10,16 @@ publish = false
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0.38"
+anyhow = "1.0.52"
 structopt = "0.3.21"
 
 executor = { path = "../executor" }
 bcs = "0.1.2"
 diemdb = { path = "../../storage/diemdb" }
 diem-config = { path = "../../config" }
-diem-crypto = { path = "../../crypto/crypto" }
-diem-temppath = { path = "../../common/temppath" }
+diem-crypto = { path = "../../crates/diem-crypto" }
+diem-temppath = { path = "../../crates/diem-temppath" }
 diem-types = { path = "../../types" }
-diem-vm = { path = "../../language/diem-vm" }
-diem-workspace-hack = { path = "../../common/workspace-hack" }
+diem-vm = { path = "../../diem-move/diem-vm" }
+diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 storage-interface = { path = "../../storage/storage-interface" }

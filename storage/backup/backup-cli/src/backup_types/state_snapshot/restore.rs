@@ -28,6 +28,7 @@ use diem_types::{
     proof::TransactionInfoWithProof, transaction::Version,
 };
 use std::sync::Arc;
+use storage_interface::StateSnapshotReceiver;
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
@@ -48,6 +49,7 @@ pub struct StateSnapshotRestoreController {
     /// nothing will be done, otherwise, this has no effect.
     target_version: Version,
     epoch_history: Option<Arc<EpochHistory>>,
+    account_count_migration: bool,
 }
 
 impl StateSnapshotRestoreController {
@@ -64,6 +66,7 @@ impl StateSnapshotRestoreController {
             manifest_handle: opt.manifest_handle,
             target_version: global_opt.target_version,
             epoch_history,
+            account_count_migration: global_opt.account_count_migration,
         }
     }
 
@@ -99,18 +102,20 @@ impl StateSnapshotRestoreController {
             self.storage.load_bcs_file(&manifest.proof).await?;
         txn_info_with_proof.verify(li.ledger_info(), manifest.version)?;
         ensure!(
-            txn_info_with_proof.transaction_info().state_root_hash() == manifest.root_hash,
+            txn_info_with_proof.transaction_info().state_change_hash() == manifest.root_hash,
             "Root hash mismatch with that in proof. root hash: {}, expected: {}",
             manifest.root_hash,
-            txn_info_with_proof.transaction_info().state_root_hash(),
+            txn_info_with_proof.transaction_info().state_change_hash(),
         );
         if let Some(epoch_history) = self.epoch_history.as_ref() {
             epoch_history.verify_ledger_info(&li)?;
         }
 
-        let mut receiver = self
-            .run_mode
-            .get_state_restore_receiver(self.version, manifest.root_hash)?;
+        let mut receiver = self.run_mode.get_state_restore_receiver(
+            self.version,
+            manifest.root_hash,
+            self.account_count_migration,
+        )?;
 
         let (ver_gauge, tgt_leaf_idx, leaf_idx) = if self.run_mode.is_verify() {
             (

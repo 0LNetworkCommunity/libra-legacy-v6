@@ -8,6 +8,8 @@ use crate::{
     Result,
 };
 use anyhow::Context;
+use camino::Utf8PathBuf;
+use std::convert::TryInto;
 use x_core::XCoreContext;
 
 /// Global context shared across x commands.
@@ -25,12 +27,18 @@ impl XContext {
 
     /// Creates a new `GlobalContext` based on the given config.
     pub fn with_config(x_config: XConfig) -> Result<Self> {
-        let current_dir =
-            std::env::current_dir().with_context(|| "error while fetching current dir")?;
+        let current_dir: Utf8PathBuf = std::env::current_dir()
+            .with_context(|| "error while fetching current dir")?
+            .try_into()
+            .with_context(|| "current dir is not valid UTF-8")?;
         let XConfig { core, config } = x_config;
         Ok(Self {
             core: XCoreContext::new(project_root(), current_dir, core)?,
-            installer: Installer::new(config.cargo_config().clone(), config.tools()),
+            installer: Installer::new(
+                config.cargo_config().clone(),
+                config.tools(),
+                vec!["llvm-tools-preview".to_string()],
+            ),
             config,
         })
     }

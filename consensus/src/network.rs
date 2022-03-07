@@ -12,6 +12,7 @@ use channel::{self, diem_channel, message_queues::QueueStyle};
 use consensus_types::{
     block_retrieval::{BlockRetrievalRequest, BlockRetrievalResponse, MAX_BLOCKS_PER_REQUEST},
     common::Author,
+    experimental::commit_decision::CommitDecision,
     sync_info::SyncInfo,
     vote_msg::VoteMsg,
 };
@@ -19,10 +20,16 @@ use diem_logger::prelude::*;
 use diem_metrics::monitor;
 use diem_types::{
     account_address::AccountAddress, epoch_change::EpochChangeProof,
-    validator_verifier::ValidatorVerifier,
+    ledger_info::LedgerInfoWithSignatures, validator_verifier::ValidatorVerifier,
 };
 use futures::{channel::oneshot, stream::select, SinkExt, Stream, StreamExt};
-use network::protocols::{network::Event, rpc::error::RpcError};
+use network::{
+    protocols::{
+        network::{ApplicationNetworkSender, Event},
+        rpc::error::RpcError,
+    },
+    ProtocolId,
+};
 use std::{
     mem::{discriminant, Discriminant},
     time::Duration,
@@ -33,6 +40,7 @@ use std::{
 #[derive(Debug)]
 pub struct IncomingBlockRetrievalRequest {
     pub req: BlockRetrievalRequest,
+    pub protocol: ProtocolId,
     pub response_sender: oneshot::Sender<Result<Bytes, RpcError>>,
 }
 
@@ -93,11 +101,7 @@ impl NetworkSender {
             _ => return Err(anyhow!("Invalid response to request")),
         };
         response
-            .verify(
-                retrieval_request.block_id(),
-                retrieval_request.num_blocks(),
-                &self.validators,
-            )
+            .verify(retrieval_request, &self.validators)
             .map_err(|e| {
                 error!(
                     SecurityEvent::InvalidRetrievedBlock,
@@ -137,6 +141,27 @@ impl NetworkSender {
         }
     }
 
+    /// Tries to send msg to given recipients.
+    pub async fn send(&self, msg: ConsensusMsg, recipients: Vec<Author>) {
+        let network_sender = self.network_sender.clone();
+        let mut self_sender = self.self_sender.clone();
+        for peer in recipients {
+            if self.author == peer {
+                let self_msg = Event::Message(self.author, msg.clone());
+                if let Err(err) = self_sender.send(self_msg).await {
+                    error!(error = ?err, "Error delivering a self msg");
+                }
+                continue;
+            }
+            if let Err(e) = network_sender.send_to(peer, msg.clone()) {
+                error!(
+                    remote_peer = peer,
+                    error = ?e, "Failed to send a msg to peer",
+                );
+            }
+        }
+    }
+
     /// Sends the vote to the chosen recipients (typically that would be the recipients that
     /// we believe could serve as proposers in the next round). The recipients on the receiving
     /// end are going to be notified about a new vote in the vote queue.
@@ -146,51 +171,28 @@ impl NetworkSender {
     /// out. It does not give indication about when the message is delivered to the recipients,
     /// as well as there is no indication about the network failures.
     pub async fn send_vote(&self, vote_msg: VoteMsg, recipients: Vec<Author>) {
-        let mut network_sender = self.network_sender.clone();
-        let mut self_sender = self.self_sender.clone();
         let msg = ConsensusMsg::VoteMsg(Box::new(vote_msg));
-        for peer in recipients {
-            if self.author == peer {
-                let self_msg = Event::Message(self.author, msg.clone());
-                if let Err(err) = self_sender.send(self_msg).await {
-                    error!(error = ?err, "Error delivering a self vote");
-                }
-                continue;
-            }
-            if let Err(e) = network_sender.send_to(peer, msg.clone()) {
-                error!(
-                    remote_peer = peer,
-                    error = ?e, "Failed to send a vote to peer",
-                );
-            }
-        }
+        self.send(msg, recipients).await
     }
 
     /// Sends the given sync info to the given author.
     /// The future is fulfilled as soon as the message is added to the internal network channel
     /// (does not indicate whether the message is delivered or sent out).
-    pub fn send_sync_info(&self, sync_info: SyncInfo, recipient: Author) {
+    pub async fn send_sync_info(&self, sync_info: SyncInfo, recipient: Author) {
         let msg = ConsensusMsg::SyncInfo(Box::new(sync_info));
-        let mut network_sender = self.network_sender.clone();
-        if let Err(e) = network_sender.send_to(recipient, msg) {
-            warn!(
-                remote_peer = recipient,
-                error = "Failed to send a sync info msg to peer {:?}",
-                "{:?}",
-                e
-            );
-        }
+        self.send(msg, vec![recipient]).await
     }
 
     pub async fn notify_epoch_change(&mut self, proof: EpochChangeProof) {
         let msg = ConsensusMsg::EpochChangeProof(Box::new(proof));
-        let self_msg = Event::Message(self.author, msg);
-        if let Err(e) = self.self_sender.send(self_msg).await {
-            warn!(
-                error = "Failed to notify to self an epoch change",
-                "{:?}", e
-            );
-        }
+        self.send(msg, vec![self.author]).await
+    }
+
+    /// Sends the ledger info to self buffer manager
+    pub async fn notify_commit_proof(&self, ledger_info: LedgerInfoWithSignatures) {
+        // this requires re-verification of the ledger info we can probably optimize it later
+        let msg = ConsensusMsg::CommitDecisionMsg(Box::new(CommitDecision::new(ledger_info)));
+        self.send(msg, vec![self.author]).await
     }
 }
 
@@ -244,7 +246,7 @@ impl NetworkTask {
                         );
                     }
                 }
-                Event::RpcRequest(peer_id, msg, callback) => match msg {
+                Event::RpcRequest(peer_id, msg, protocol, callback) => match msg {
                     ConsensusMsg::BlockRetrievalRequest(request) => {
                         debug!(
                             remote_peer = peer_id,
@@ -262,6 +264,7 @@ impl NetworkTask {
                         }
                         let req_with_callback = IncomingBlockRetrievalRequest {
                             req: *request,
+                            protocol,
                             response_sender: callback,
                         };
                         if let Err(e) = self.block_retrieval_tx.push(peer_id, req_with_callback) {
@@ -273,11 +276,8 @@ impl NetworkTask {
                         continue;
                     }
                 },
-                Event::NewPeer(metadata) => {
-                    debug!(remote_peer = metadata.remote_peer_id, "Peer connected");
-                }
-                Event::LostPeer(metadata) => {
-                    debug!(remote_peer = metadata.remote_peer_id, "Peer disconnected");
+                _ => {
+                    // Ignore `NewPeer` and `LostPeer` events
                 }
             }
         }

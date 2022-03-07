@@ -253,10 +253,38 @@ pub static PENDING_CONSENSUS_NETWORK_EVENTS: Lazy<IntCounterVec> = Lazy::new(|| 
     .unwrap()
 });
 
+/// Count of the pending state sync notification.
+pub static PENDING_STATE_SYNC_NOTIFICATION: Lazy<IntGauge> = Lazy::new(|| {
+    register_int_gauge!(
+        "diem_consensus_pending_state_sync_notification",
+        "Count of the pending state sync notification"
+    )
+    .unwrap()
+});
+
+pub static BUFFER_MANAGER_MSGS: Lazy<IntCounterVec> = Lazy::new(|| {
+    register_int_counter_vec!(
+        "diem_consensus_buffer_manager_msgs_count",
+        "Counters(queued,dequeued,dropped) related to pending commit votes",
+        &["state"]
+    )
+    .unwrap()
+});
+
 /// Counters(queued,dequeued,dropped) related to consensus channel
 pub static CONSENSUS_CHANNEL_MSGS: Lazy<IntCounterVec> = Lazy::new(|| {
     register_int_counter_vec!(
         "diem_consensus_channel_msgs_count",
+        "Counters(queued,dequeued,dropped) related to consensus channel",
+        &["state"]
+    )
+    .unwrap()
+});
+
+/// Counters(queued,dequeued,dropped) related to consensus channel
+pub static ROUND_MANAGER_CHANNEL_MSGS: Lazy<IntCounterVec> = Lazy::new(|| {
+    register_int_counter_vec!(
+        "diem_consensus_round_manager_msgs_count",
         "Counters(queued,dequeued,dropped) related to consensus channel",
         &["state"]
     )

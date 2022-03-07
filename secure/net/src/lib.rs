@@ -142,6 +142,8 @@ pub enum Error {
     NetworkError(#[from] std::io::Error),
     #[error("No active stream")]
     NoActiveStream,
+    #[error("Overflow error: {0}")]
+    OverflowError(String),
     #[error("Remote stream cleanly closed")]
     RemoteStreamClosed,
 }
@@ -180,7 +182,7 @@ impl NetworkClient {
                 NetworkMode::Client,
                 LogEvent::DisconnectedPeerOnRead,
             )
-            .error(&err)
+            .error(err)
             .remote_peer(&self.server));
 
             self.stream = None;
@@ -215,7 +217,7 @@ impl NetworkClient {
                 NetworkMode::Client,
                 LogEvent::DisconnectedPeerOnWrite,
             )
-            .error(&err)
+            .error(err)
             .remote_peer(&self.server));
 
             self.stream = None;
@@ -309,8 +311,8 @@ impl NetworkServer {
                 NetworkMode::Server,
                 LogEvent::DisconnectedPeerOnRead,
             )
-            .error(&err)
-            .remote_peer(&remote));
+            .error(err)
+            .remote_peer(remote));
 
             self.stream = None;
         } else {
@@ -351,8 +353,8 @@ impl NetworkServer {
                 NetworkMode::Server,
                 LogEvent::DisconnectedPeerOnWrite,
             )
-            .error(&err)
-            .remote_peer(&remote));
+            .error(err)
+            .remote_peer(remote));
 
             self.stream = None;
         } else {
@@ -499,12 +501,14 @@ impl NetworkStream {
     /// This wraps around that buffer and blocks until all the data has been pushed.
     fn write_all(&mut self, data: &[u8]) -> Result<(), Error> {
         let mut unwritten = data;
-        let mut total_written = 0;
+        let mut total_written: u64 = 0;
 
         while !unwritten.is_empty() {
             let written = self.stream.write(unwritten)?;
-            total_written += written;
-            unwritten = &data[total_written..];
+            total_written = total_written
+                .checked_add(written as u64)
+                .ok_or_else(|| Error::OverflowError("write_all::total_written".into()))?;
+            unwritten = &data[total_written as usize..];
         }
         Ok(())
     }

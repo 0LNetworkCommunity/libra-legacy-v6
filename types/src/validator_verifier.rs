@@ -43,6 +43,8 @@ pub enum VerifyError {
     #[error("Signature is invalid")]
     /// The signature does not match the hash.
     InvalidSignature,
+    #[error("Inconsistent Block Info")]
+    InconsistentBlockInfo,
 }
 
 /// Helper struct to manage validator information for validation
@@ -192,7 +194,7 @@ impl ValidatorVerifier {
             .iter()
             .flat_map(|(address, signature)| {
                 let sig = signature.clone();
-                self.get_public_key(&address).map(|pub_key| (pub_key, sig))
+                self.get_public_key(address).map(|pub_key| (pub_key, sig))
             })
             .collect();
         // Fallback is required to identify the source of the problem if batching fails.
@@ -226,7 +228,7 @@ impl ValidatorVerifier {
         // Add voting power for valid accounts, exiting early for unknown authors
         let mut aggregated_voting_power = 0;
         for account_address in authors {
-            match self.get_voting_power(&account_address) {
+            match self.get_voting_power(account_address) {
                 Some(voting_power) => aggregated_voting_power += voting_power,
                 None => return Err(VerifyError::UnknownAuthor),
             }
@@ -244,14 +246,14 @@ impl ValidatorVerifier {
     /// Returns the public key for this address.
     pub fn get_public_key(&self, author: &AccountAddress) -> Option<Ed25519PublicKey> {
         self.address_to_validator_info
-            .get(&author)
+            .get(author)
             .map(|validator_info| validator_info.public_key.clone())
     }
 
     /// Returns the voting power for this address.
     pub fn get_voting_power(&self, author: &AccountAddress) -> Option<u64> {
         self.address_to_validator_info
-            .get(&author)
+            .get(author)
             .map(|validator_info| validator_info.voting_power)
     }
 

@@ -9,7 +9,6 @@
 //! authentication -- a network end-point running with remote authentication enabled will
 //! connect to or accept connections from an end-point running in authenticated mode as
 //! long as the latter is in its trusted peers set.
-use channel::{self, message_queues::QueueStyle};
 use diem_config::{
     config::{
         DiscoveryMethod, NetworkConfig, Peer, PeerRole, PeerSet, RateLimitConfig, RoleType,
@@ -22,11 +21,11 @@ use diem_config::{
 use diem_crypto::x25519::PublicKey;
 use diem_infallible::RwLock;
 use diem_logger::prelude::*;
-use diem_metrics::IntCounterVec;
-use diem_network_address_encryption::Encryptor;
 use diem_time_service::TimeService;
 use diem_types::{chain_id::ChainId, network_address::NetworkAddress};
+use event_notifications::{EventSubscriptionService, ReconfigNotificationListener};
 use network::{
+    application::storage::PeerMetadataStorage,
     connectivity_manager::{builder::ConnectivityManagerBuilder, ConnectivityRequest},
     logging::NetworkSchema,
     peer_manager::{
@@ -35,15 +34,15 @@ use network::{
     },
     protocols::{
         health_checker::{self, builder::HealthCheckerBuilder},
-        network::{NewNetworkEvents, NewNetworkSender},
+        network::{AppConfig, NewNetworkEvents, NewNetworkSender},
     },
-    ProtocolId,
 };
-use network_simple_onchain_discovery::{
-    builder::ValidatorSetChangeListenerBuilder, gen_simple_discovery_reconfig_subscription,
+use network_discovery::DiscoveryChangeListener;
+use std::{
+    clone::Clone,
+    collections::{HashMap, HashSet},
+    sync::Arc,
 };
-use std::{clone::Clone, collections::HashMap, sync::Arc};
-use subscription_service::ReconfigSubscription;
 use tokio::runtime::Handle;
 
 #[derive(Debug, PartialEq, PartialOrd)]
@@ -62,24 +61,23 @@ pub struct NetworkBuilder {
     state: State,
     executor: Option<Handle>,
     time_service: TimeService,
-    network_context: Arc<NetworkContext>,
-
-    validator_set_listener_builder: Option<ValidatorSetChangeListenerBuilder>,
+    network_context: NetworkContext,
+    discovery_listeners: Option<Vec<DiscoveryChangeListener>>,
     connectivity_manager_builder: Option<ConnectivityManagerBuilder>,
     health_checker_builder: Option<HealthCheckerBuilder>,
     peer_manager_builder: PeerManagerBuilder,
-
-    // (StateSync) ReconfigSubscriptions required by internal Network components.
-    reconfig_subscriptions: Vec<ReconfigSubscription>,
+    peer_metadata_storage: Arc<PeerMetadataStorage>,
 }
 
 impl NetworkBuilder {
     /// Return a new NetworkBuilder initialized with default configuration values.
     // TODO:  Remove `pub`.  NetworkBuilder should only be created thorugh `::create()`
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         chain_id: ChainId,
         trusted_peers: Arc<RwLock<PeerSet>>,
-        network_context: Arc<NetworkContext>,
+        peer_metadata_storage: Arc<PeerMetadataStorage>,
+        network_context: NetworkContext,
         time_service: TimeService,
         listen_address: NetworkAddress,
         authentication_mode: AuthenticationMode,
@@ -95,9 +93,10 @@ impl NetworkBuilder {
         // TODO:  construct this in create and pass it to new() as a parameter. The complication is manual construction of NetworkBuilder in various tests.
         let peer_manager_builder = PeerManagerBuilder::create(
             chain_id,
-            network_context.clone(),
+            network_context,
             time_service.clone(),
             listen_address,
+            peer_metadata_storage.clone(),
             trusted_peers,
             authentication_mode,
             network_channel_size,
@@ -114,11 +113,11 @@ impl NetworkBuilder {
             executor: None,
             time_service,
             network_context,
-            validator_set_listener_builder: None,
+            discovery_listeners: None,
             connectivity_manager_builder: None,
             health_checker_builder: None,
             peer_manager_builder,
-            reconfig_subscriptions: vec![],
+            peer_metadata_storage,
         }
     }
 
@@ -126,16 +125,18 @@ impl NetworkBuilder {
         chain_id: ChainId,
         seeds: PeerSet,
         trusted_peers: Arc<RwLock<PeerSet>>,
-        network_context: Arc<NetworkContext>,
+        network_context: NetworkContext,
         time_service: TimeService,
         listen_address: NetworkAddress,
         authentication_mode: AuthenticationMode,
+        peer_metadata_storage: Arc<PeerMetadataStorage>,
     ) -> NetworkBuilder {
         let mutual_authentication = matches!(authentication_mode, AuthenticationMode::Mutual(_));
 
         let mut builder = NetworkBuilder::new(
             chain_id,
             trusted_peers.clone(),
+            peer_metadata_storage,
             network_context,
             time_service,
             listen_address,
@@ -169,6 +170,8 @@ impl NetworkBuilder {
         role: RoleType,
         config: &NetworkConfig,
         time_service: TimeService,
+        mut reconfig_subscription_service: Option<&mut EventSubscriptionService>,
+        peer_metadata_storage: Arc<PeerMetadataStorage>,
     ) -> NetworkBuilder {
         let peer_id = config.peer_id();
         let identity_key = config.identity_key();
@@ -180,17 +183,14 @@ impl NetworkBuilder {
             AuthenticationMode::MaybeMutual(identity_key)
         };
 
-        let network_context = Arc::new(NetworkContext::new(
-            role,
-            config.network_id.clone(),
-            peer_id,
-        ));
+        let network_context = NetworkContext::new(role, config.network_id, peer_id);
 
         let trusted_peers = Arc::new(RwLock::new(HashMap::new()));
 
         let mut network_builder = NetworkBuilder::new(
             chain_id,
             trusted_peers.clone(),
+            peer_metadata_storage,
             network_context,
             time_service,
             config.listen_address.clone(),
@@ -210,43 +210,53 @@ impl NetworkBuilder {
             config.ping_failures_tolerated,
         );
 
-        // Don't turn on connectivity manager if we're a public-facing server,
-        // for example.
-        //
-        // Cases that require connectivity manager:
-        //
-        // 1) mutual authentication networks currently require connmgr to set the
-        //    trusted peers set.
-        // 2) networks with a discovery protocol need connmgr to connect to newly
-        //    discovered peers.
-        // 3) if we have seed peers, then we need connmgr to connect to them.
-        // TODO(philiphayes): could probably use a better way to specify these cases
-        // TODO:  Why not add ConnectivityManager always?
-        if config.mutual_authentication
-            || config.discovery_method != DiscoveryMethod::None
-            || !config.seed_addrs.is_empty()
-            || !config.seeds.is_empty()
-        {
-            let seeds = merge_seeds(config);
+        // Always add a connectivity manager to keep track of known peers
+        let seeds = merge_seeds(config);
 
-            network_builder.add_connectivity_manager(
-                seeds,
-                trusted_peers,
-                config.max_outbound_connections,
-                config.connection_backoff_base,
-                config.max_connection_delay_ms,
-                config.connectivity_check_interval_ms,
-                config.network_channel_size,
-                config.mutual_authentication,
+        network_builder.add_connectivity_manager(
+            seeds,
+            trusted_peers,
+            config.max_outbound_connections,
+            config.connection_backoff_base,
+            config.max_connection_delay_ms,
+            config.connectivity_check_interval_ms,
+            config.network_channel_size,
+            config.mutual_authentication,
+        );
+
+        network_builder.discovery_listeners = Some(Vec::new());
+        for discovery_method in config.discovery_methods() {
+            let reconfig_listener = if *discovery_method == DiscoveryMethod::Onchain {
+                Some(
+                    reconfig_subscription_service
+                        .as_deref_mut()
+                        .expect("An event subscription service is required for on-chain discovery!")
+                        .subscribe_to_reconfigurations()
+                        .expect("On-chain discovery is unable to subscribe to reconfigurations!"),
+                )
+            } else {
+                None
+            };
+
+            network_builder.add_discovery_change_listener(
+                discovery_method,
+                pubkey,
+                reconfig_listener,
             );
         }
 
-        match &config.discovery_method {
-            DiscoveryMethod::Onchain => {
-                network_builder.add_validator_set_listener(pubkey, config.encryptor());
-            }
-            DiscoveryMethod::None => {}
-        }
+        // Ensure there are no duplicate source types
+        let set: HashSet<_> = network_builder
+            .discovery_listeners
+            .as_ref()
+            .unwrap()
+            .iter()
+            .map(|listener| listener.discovery_source())
+            .collect();
+        assert_eq!(
+            set.len(),
+            network_builder.discovery_listeners.as_ref().unwrap().len()
+        );
 
         network_builder
     }
@@ -289,22 +299,16 @@ impl NetworkBuilder {
             );
         }
 
-        if let Some(validator_set_listener_builder) = self.validator_set_listener_builder.as_mut() {
-            validator_set_listener_builder.start(executor);
-            debug!(
-                NetworkSchema::new(&self.network_context),
-                "{} Started validator set listener", self.network_context
-            );
+        if let Some(discovery_listeners) = self.discovery_listeners.take() {
+            discovery_listeners
+                .into_iter()
+                .for_each(|listener| listener.start(executor))
         }
         self
     }
 
-    pub fn reconfig_subscriptions(&mut self) -> &mut Vec<ReconfigSubscription> {
-        &mut self.reconfig_subscriptions
-    }
-
-    pub fn network_context(&self) -> Arc<NetworkContext> {
-        self.network_context.clone()
+    pub fn network_context(&self) -> NetworkContext {
+        self.network_context
     }
 
     pub fn conn_mgr_reqs_tx(&self) -> Option<channel::Sender<ConnectivityRequest>> {
@@ -362,23 +366,41 @@ impl NetworkBuilder {
         self
     }
 
-    fn add_validator_set_listener(&mut self, pubkey: PublicKey, encryptor: Encryptor) -> &mut Self {
+    fn add_discovery_change_listener(
+        &mut self,
+        discovery_method: &DiscoveryMethod,
+        pubkey: PublicKey,
+        reconfig_events: Option<ReconfigNotificationListener>,
+    ) {
         let conn_mgr_reqs_tx = self
             .conn_mgr_reqs_tx()
-            .expect("ConnectivityManager must be installed for validator");
-        let (simple_discovery_reconfig_subscription, simple_discovery_reconfig_rx) =
-            gen_simple_discovery_reconfig_subscription();
-        self.reconfig_subscriptions
-            .push(simple_discovery_reconfig_subscription);
+            .expect("ConnectivityManager must exist");
 
-        self.validator_set_listener_builder = Some(ValidatorSetChangeListenerBuilder::create(
-            self.network_context.clone(),
-            pubkey,
-            encryptor,
-            conn_mgr_reqs_tx,
-            simple_discovery_reconfig_rx,
-        ));
-        self
+        let listener = match discovery_method {
+            DiscoveryMethod::Onchain => {
+                let reconfig_events =
+                    reconfig_events.expect("Reconfiguration listener is expected!");
+                DiscoveryChangeListener::validator_set(
+                    self.network_context,
+                    conn_mgr_reqs_tx,
+                    pubkey,
+                    reconfig_events,
+                )
+            }
+            DiscoveryMethod::File(path, interval_duration) => DiscoveryChangeListener::file(
+                self.network_context,
+                conn_mgr_reqs_tx,
+                path,
+                *interval_duration,
+                self.time_service.clone(),
+            ),
+            DiscoveryMethod::None => return,
+        };
+
+        self.discovery_listeners
+            .as_mut()
+            .expect("Can only add listeners before starting")
+            .push(listener);
     }
 
     /// Add a HealthChecker to the network.
@@ -390,8 +412,7 @@ impl NetworkBuilder {
     ) -> &mut Self {
         // Initialize and start HealthChecker.
         let (hc_network_tx, hc_network_rx) =
-            self.add_protocol_handler(health_checker::network_endpoint_config());
-
+            self.add_p2p_service(&health_checker::network_endpoint_config());
         self.health_checker_builder = Some(HealthCheckerBuilder::new(
             self.network_context(),
             self.time_service.clone(),
@@ -400,6 +421,7 @@ impl NetworkBuilder {
             ping_failures_tolerated,
             hc_network_tx,
             hc_network_rx,
+            self.peer_metadata_storage.clone(),
         ));
         debug!(
             NetworkSchema::new(&self.network_context),
@@ -408,34 +430,30 @@ impl NetworkBuilder {
         self
     }
 
-    /// Adds a endpoints for the provided configuration.  Returns NetworkSender and NetworkEvent which
-    /// can be attached to other components.
-    pub fn add_protocol_handler<SenderT, EventT>(
+    /// Register a new Peer-to-Peer (both client and service) application with
+    /// network and return the specialized client and service interfaces.
+    pub fn add_p2p_service<SenderT: NewNetworkSender, EventsT: NewNetworkEvents>(
         &mut self,
-        (rpc_protocols, direct_send_protocols, queue_preference, max_queue_size_per_peer, counter): (
-            Vec<ProtocolId>,
-            Vec<ProtocolId>,
-            QueueStyle,
-            usize,
-            Option<&'static IntCounterVec>,
-        ),
-    ) -> (SenderT, EventT)
-    where
-        EventT: NewNetworkEvents,
-        SenderT: NewNetworkSender,
-    {
-        let (peer_mgr_reqs_tx, peer_mgr_reqs_rx, connection_reqs_tx, connection_notifs_rx) =
-            self.peer_manager_builder.add_protocol_handler(
-                rpc_protocols,
-                direct_send_protocols,
-                queue_preference,
-                max_queue_size_per_peer,
-                counter,
-            );
-        (
-            SenderT::new(peer_mgr_reqs_tx, connection_reqs_tx),
-            EventT::new(peer_mgr_reqs_rx, connection_notifs_rx),
-        )
+        config: &AppConfig,
+    ) -> (SenderT, EventsT) {
+        (self.add_client(config), self.add_service(config))
+    }
+
+    /// Register a new client application with network. Return the client
+    /// interface for sending messages via network.
+    // TODO(philiphayes): return new NetworkClient (name TBD) interface?
+    pub fn add_client<SenderT: NewNetworkSender>(&mut self, config: &AppConfig) -> SenderT {
+        let (peer_mgr_reqs_tx, connection_reqs_tx) = self.peer_manager_builder.add_client(config);
+        SenderT::new(peer_mgr_reqs_tx, connection_reqs_tx)
+    }
+
+    /// Register a new service application with network. Return the service
+    /// interface for handling new requests from network.
+    // TODO(philiphayes): return new NetworkService (name TBD) interface?
+    pub fn add_service<EventsT: NewNetworkEvents>(&mut self, config: &AppConfig) -> EventsT {
+        let (peer_mgr_reqs_rx, connection_notifs_rx) =
+            self.peer_manager_builder.add_service(config);
+        EventsT::new(peer_mgr_reqs_rx, connection_notifs_rx)
     }
 }
 
