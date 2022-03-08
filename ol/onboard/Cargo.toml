@@ -13,7 +13,7 @@ gumdrop = "0.7"
 serde = { version = "1", features = ["serde_derive"] }
 thiserror = "1"
 serde_json = "1"
-diem-wallet = { path = "../../testsuite/cli/diem-wallet" }
+diem-wallet = { path = "../../crates/diem-wallet" }
 diem-types = { path = "../../types/" }
 rustyline = "6.2.0"
 anyhow = "1.0.31"
@@ -22,7 +22,7 @@ reqwest = { version = "0.11.2", features = ["blocking", "json"], default_feature
 diem-global-constants = { path = "../../config/global-constants"}
 dirs = "2.0.2"
 diem-genesis-tool = { path = "../../config/management/genesis" }
-diem-crypto = { path = "../../crypto/crypto" }
+diem-crypto = { path = "../../crates/diem-crypto" }
 ol-keys = { path = "../keys/" }
 ol = { path = "../cli"}
 txs = { path = "../txs"}

@@ -24,13 +24,13 @@ tokio-stream = "0.1.4"
 
 channel = { path = "../common/channel" }
 diem-config = { path = "../config" }
-diem-crypto = { path = "../crypto/crypto" }
+diem-crypto = { path = "../crates/diem-crypto" }
 diem-infallible = { path = "../common/infallible" }
-diem-logger = { path = "../common/logger" }
+diem-logger = { path = "../crates/diem-logger" }
 diem-mempool = { path = "../mempool"}
 diem-metrics = { path = "../common/metrics" }
 diem-proptest-helpers = { path = "../common/proptest-helpers", optional = true }
-diem-temppath = { path = "../common/temppath" }
+diem-temppath = { path = "../crates/diem-temppath" }
 diem-types = { path = "../types" }
 diem-vm = { path = "../language/diem-vm" }
 diem-workspace-hack = { path = "../common/workspace-hack" }
@@ -43,7 +43,7 @@ netcore = { path = "../network/netcore" }
 network = { path = "../network" }
 storage-interface = { path = "../storage/storage-interface" }
 subscription-service = { path = "../common/subscription-service" }
-vm-genesis = { path = "../language/tools/vm-genesis", optional = true }
+vm-genesis = { path = "../diem-move/vm-genesis", optional = true }
 
 [dev-dependencies]
 bytes = "1.0.1"
@@ -51,7 +51,7 @@ proptest = "1.0.0"
 
 channel = { path = "../common/channel" }
 diem-framework-releases= { path = "../language/diem-framework/releases" }
-diem-crypto = { path = "../crypto/crypto" }
+diem-crypto = { path = "../crates/diem-crypto" }
 diem-genesis-tool = {path = "../config/management/genesis", features = ["testing"] }
 diem-mempool = { path = "../mempool", features = ["fuzzing"] }
 diem-proptest-helpers = { path = "../common/proptest-helpers" }
@@ -64,7 +64,7 @@ storage-service = { path = "../storage/storage-service" }
 subscription-service = { path = "../common/subscription-service" }
 diem-transaction-builder = { path = "../sdk/transaction-builder" }
 diem-time-service = { path = "../common/time-service", features = ["testing"] }
-vm-genesis = { path = "../language/tools/vm-genesis", features = ["fuzzing"] }
+vm-genesis = { path = "../diem-move/vm-genesis", features = ["fuzzing"] }
 
 [features]
 default = []

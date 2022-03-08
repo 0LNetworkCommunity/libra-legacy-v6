@@ -16,17 +16,16 @@ gumdrop = "0.7"
 serde = { version = "1", features = ["serde_derive"] }
 thiserror = "1"
 reqwest = { version = "0.11.2", features = ["blocking", "json"], default_features = false }
-cli = { path = "../../testsuite/cli/", version = "0.1.0" }
 diem-types = { path = "../../types/" }
 num-format = "0.4.0"
-resource-viewer = { path = "../../language/tools/resource-viewer", version = "0.1.0" }
+move-resource-viewer = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
 anyhow = "1.0"
 diem-global-constants = { path = "../../config/global-constants", version = "0.1.0"}
 byteorder = "1"
 dirs = "2.0.2"
 toml = "0.5.6"
 rustyline = "6.2.0"
-diem-json-rpc-client = { path = "../../client/json-rpc", version = "0.1.0" }
+diem-json-rpc = { path = "../../json-rpc", version = "0.1.0" }
 crossterm = "0.19.0"
 tokio = { version = "1.0", features = ["full"] }
 tokio-stream = "0.1.1"
@@ -47,9 +46,9 @@ hex = "0.4"
 machine-ip = "0.2.1"
 url = { version = "^2.1", features = ["serde"]}
 diem-genesis-tool = { path = "../../config/management/genesis", version = "0.1.0" }
-diem-wallet = { path = "../../testsuite/cli/diem-wallet", version = "0.1.0" }
+diem-wallet = { path = "../../crates/diem-wallet", version = "0.1.0" }
 diemdb = { path = "../../storage/diemdb", version = "0.1.0" }
-diem-temppath = { path = "../../common/temppath", version = "0.1.0" }
+diem-temppath = { path = "../../crates/diem-temppath", version = "0.1.0" }
 ol-keys = { path = "../../ol/keys/", version = "0.1.0" }
 abscissa_tokio = "0.5"
 regex = "1"
@@ -58,14 +57,14 @@ storage-interface = { path = "../../storage/storage-interface", version = "0.1.0
 fs_extra = "1"
 port_scanner = "0.1.5"
 backup-cli = { path = "../../storage/backup/backup-cli", version = "0.1.0" }
-move-core-types = { path = "../../language/move-core/types" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
 walkdir = "2.3"
 rand = "0.8"
 bcs = "0.1.2"
-move-vm-types = { path = "../../language/move-vm/types" } # 0L todo: which move-vm/ path?
-move-binary-format = { path = "../../language/move-binary-format" }
+move-vm-types = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" } # 0L todo: which move-vm/ path?
+move-binary-format = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
 dialoguer = "0.8.0"
-diem-crypto = { path = "../../crypto/crypto" }
+diem-crypto = { path = "../../crates/diem-crypto" }
 
 
 # Parity with Storage create

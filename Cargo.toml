@@ -88,7 +88,6 @@ members = [
     # "network/discovery", # /////// 0L /////////
     "network/memsocket",
     "network/netcore",
-    "network/simple-onchain-discovery", # /////// 0L /////////  
     "network/socket-bench-server",
     "sdk",
     "sdk/compatibility",
