@@ -1,20 +1,18 @@
-# edit this document and replace <<YOUR USERNAME!>> with your linux user
 [Unit]
 Description=0L Node Service
 
 [Service]
 LimitNOFILE=200000
 
-WorkingDirectory=/home/<<YOUR USERNAME!>>/.0L
-ExecStart=/home/<<YOUR USERNAME!>>/bin/diem-node --config /home/<<YOUR USERNAME!>>/.0L/validator.node.yaml
-
+WorkingDirectory=%h/.0L
+ExecStart=%h/bin/diem-node --config %h/.0L/validator.node.yaml
 
 Restart=always
 RestartSec=10s
 
 # Make sure you CREATE the directory and file for your node.log
-StandardOutput=file:/home/<<YOUR USERNAME!>>/logs/node.log
-StandardError=file:/home/<<YOUR USERNAME!>>/logs/node.log
+StandardOutput=file:%h/.0L/logs/node.log
+StandardError=file:%h/.0L/logs/node.log
 
 [Install]
 WantedBy=multi-user.target

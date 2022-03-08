@@ -313,10 +313,8 @@ start-full:
 	cargo run -p diem-node -- --config ${DATA_PATH}/fullnode.node.yaml
 
 daemon:
-# your node's custom diem-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
-	@echo REMEMBER TO COPY A TEMPLATE from ./ol/util/diem-node.service and edit the username
 	mkdir -p ~/.config/systemd/user/
-	cp ~/.0L/diem-node.service ~/.config/systemd/user/
+	cp ./ol/util/diem-node.service ~/.config/systemd/user/
 
 	@if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
