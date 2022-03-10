@@ -88,7 +88,7 @@ impl DiemAccountResource {
     /// Replace the authkey in place
     pub fn rotate_auth_key(mut self, new_key: Vec<u8>) -> Self {
         self.authentication_key = new_key;
-        AccountResource {
+        DiemAccountResource {
             authentication_key: self.authentication_key,
             withdrawal_capability: self.withdrawal_capability,
             key_rotation_capability: self.key_rotation_capability,
