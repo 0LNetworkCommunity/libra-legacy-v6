@@ -24,16 +24,16 @@ diem-metrics = { path = "../../crates/diem-metrics" }
 diem-state-view = { path = "../../storage/state-view" }
 diem-types = { path = "../../types" }
 diem-workspace-hack = { path = "../../crates/diem-workspace-hack" }
-move-core-types = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
-move-vm-runtime = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
-move-vm-types = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
-move-binary-format = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
-move-bytecode-utils = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
-move-stdlib = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
+move-vm-runtime = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
+move-vm-types = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
+move-binary-format = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
+move-bytecode-utils = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
+move-stdlib = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
 diem-framework = { path = "../../diem-move/diem-framework" }
 serde_json = "1.0.64"
 serde = { version = "1.0.124", default-features = false }
-read-write-set-dynamic = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860"}
+read-write-set-dynamic = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860"}
 
 mvhashmap = { path = "../mvhashmap" }
 diem-parallel-executor = {path = "../parallel-executor" }

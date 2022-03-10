@@ -40,7 +40,7 @@ move-core-types = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed
 ol = {path = "../cli"}
 ol-keys = { path = "../keys/", version = "0.1.0" }
 ol-types = {path = "../../ol/types"}
-move-resource-viewer = { git = "https://github.com/diem/move", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
+move-resource-viewer = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
 reqwest = { version = "0.11.2", features = ["blocking", "json"], default_features = false }
 storage-interface= {path = "../../storage/storage-interface"}
 vdf = { path = "../../ol/verifiable_delay/vdf", version = "^0.1.0" }
