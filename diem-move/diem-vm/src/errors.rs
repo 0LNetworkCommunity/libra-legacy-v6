@@ -100,6 +100,9 @@ pub fn convert_prologue_error(
                         "[diem_vm] Unexpected prologue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
                         location, code, category, reason,
                     );
+
+                    //////// 0L ////////
+                    // TODO: Improve error reporting for devs https://github.com/OLSF/libra/issues/760
                     return Err(VMStatus::Error(
                         StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION,
                     ));
@@ -186,6 +189,9 @@ pub fn expect_only_successful_execution(
                 function_name,
                 status,
             );
+
+            //////// 0L ////////
+            // TODO: Improve error reporting for devs https://github.com/OLSF/libra/issues/760
             VMStatus::Error(StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION)
         }
     })

@@ -5,6 +5,7 @@ module DiemFramework::AccountLimits {
     use DiemFramework::Roles;
     use Std::Errors;
     use Std::Signer;
+    use DiemFramework::DiemConfig;
     friend DiemFramework::XDX;
     friend DiemFramework::XUS;
 
@@ -180,6 +181,32 @@ module DiemFramework::AccountLimits {
         aborts_if exists<Window<CoinType>>(Signer::address_of(to_limit)) with Errors::ALREADY_PUBLISHED;
     }
 
+    /////// 0L /////////
+    // OL function to publish window by account without diemroot
+    public fun publish_window_OL<CoinType: store>(
+        to_limit: &signer,
+        limit_address: address,
+    ) {
+        assert(
+            exists<LimitsDefinition<CoinType>>(limit_address),
+            Errors::not_published(ELIMITS_DEFINITION)
+        );
+        assert(
+            !exists<Window<CoinType>>(Signer::address_of(to_limit)),
+            Errors::already_published(EWINDOW)
+        );
+        move_to(
+            to_limit,
+            Window<CoinType> {
+                window_start: current_time(),
+                window_inflow: 0,
+                window_outflow: 0,
+                tracked_balance: 0,
+                limit_address,
+            }
+        )
+    }
+
     /// Unrestricted limits are represented by setting all fields in the
     /// limits definition to `MAX_U64`. Anyone can publish an unrestricted
     /// limits since no windows will point to this limits definition unless the
@@ -235,7 +262,7 @@ module DiemFramework::AccountLimits {
         new_max_holding_balance: u64,
         new_time_period: u64,
     ) acquires LimitsDefinition {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_diem_root(tc_account); /////// 0L /////////
         assert!(exists<LimitsDefinition<CoinType>>(limit_address), Errors::not_published(ELIMITS_DEFINITION));
 
         // As we don't have Optionals for txn scripts, in update_account_limit_definition.move
@@ -263,6 +290,30 @@ module DiemFramework::AccountLimits {
         ensures new_time_period == 0 ==> new_limits_def.time_period == old_limits_def.time_period;
     }
 
+    /////// 0L /////////
+    // OL function to publish restricted limits
+    public fun publish_restricted_limits_definition_OL<CoinType: store>(
+        account: &signer
+    ) {
+        
+        let sender_addr = Signer::address_of(account);
+        // As we don't have Optionals for txn scripts, in update_account_limit_definition.move
+        // we use 0 value to represent a None (ie no update to that variable)
+        assert(
+            !exists<LimitsDefinition<CoinType>>(sender_addr),
+            Errors::already_published(ELIMITS_DEFINITION)
+        );
+        move_to(
+            account,
+            LimitsDefinition<CoinType> {
+                max_inflow: MAX_U64,
+                max_outflow: DiemConfig::get_epoch_transfer_limit(),
+                max_holding: MAX_U64,
+                time_period: ONE_DAY
+            }
+        )
+    }
+
     /// Update either the `tracked_balance` or `limit_address` fields of the
     /// `Window<CoinType>` stored under `window_address`.
     /// * Since we don't track balances of accounts before they are limited, once
@@ -279,7 +330,7 @@ module DiemFramework::AccountLimits {
         aggregate_balance: u64,
         new_limit_address: address,
     ) acquires Window {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_diem_root(tc_account); /////// 0L /////////
         let window = borrow_global_mut<Window<CoinType>>(window_address);
         if (aggregate_balance != 0)  { window.tracked_balance = aggregate_balance };
         assert!(exists<LimitsDefinition<CoinType>>(new_limit_address), Errors::not_published(ELIMITS_DEFINITION));
@@ -443,6 +494,33 @@ module DiemFramework::AccountLimits {
         update_field(update_field(receiving,
             window_inflow, receiving.window_inflow + amount),
             tracked_balance, receiving.tracked_balance + amount)
+    }
+
+    /////// 0L /////////
+    // First return value is max withdrawal amount, second is whether withdrawal is allowed at all
+    public fun max_withdrawal<CoinType: store>(
+        addr: address,
+    ): (u64, bool) acquires Window, LimitsDefinition {
+        if (!exists<Window<CoinType>>(addr)) {
+            return (0, false)
+        };
+        let sending = borrow_global_mut<Window<CoinType>>(addr);
+
+        if (!exists<LimitsDefinition<CoinType>>(sending.limit_address)) {
+            return (0, false)
+        };
+        let limits_definition = borrow_global<LimitsDefinition<CoinType>>(sending.limit_address);
+        // If the limits are unrestricted then don't do any more work.
+        if (is_unrestricted(limits_definition)) return (MAX_U64, true);
+
+        reset_window(sending, limits_definition);
+        // Check outflow is OK
+        if (limits_definition.max_outflow < sending.window_outflow) {
+            return (0, false)
+        };
+        let max_outflow = limits_definition.max_outflow - sending.window_outflow;
+        // Flow is OK, so record it.
+        (max_outflow, true)
     }
 
     /// Verify that `amount` can be withdrawn from the account tracked

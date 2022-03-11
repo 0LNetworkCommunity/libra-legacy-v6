@@ -16,12 +16,14 @@ use diem_state_view::StateView;
 use diem_types::{
     account_config,
     account_config::{ChainSpecificAccountInfo, CurrencyInfoResource},
+    block_metadata::BlockMetadata,
     contract_event::ContractEvent,
     event::EventKey,
     on_chain_config::{
         ConfigStorage, DiemVersion, OnChainConfig, VMConfig, VMPublishingOption, DIEM_VERSION_3,
     },
     transaction::{SignedTransaction, TransactionOutput, TransactionStatus},
+    ol_upgrade_payload::UpgradePayloadResource,
     vm_status::{KeptVMStatus, StatusCode, VMStatus},
     write_set::{WriteOp, WriteSet, WriteSetMut},
 };
@@ -40,6 +42,7 @@ use move_core_types::{
 use move_vm_runtime::{logging::expect_no_verification_errors, move_vm::MoveVM, session::Session};
 use move_vm_types::gas_schedule::{calculate_intrinsic_gas, GasStatus};
 use std::{convert::TryFrom, sync::Arc};
+use diem_framework_releases::import_stdlib;
 
 #[derive(Clone)]
 /// A wrapper to make VMRuntime standalone and thread safe.
@@ -511,6 +514,123 @@ impl DiemVMImpl {
     ) -> VMResult<()> {
         self.move_vm.load_module(module_id, remote)
     }
+
+    //////// 0L ////////    
+    // Note: currently the upgrade needs two blocks to happen: 
+    // In the first block, consensus is reached and recorded; 
+    // in the second block, the payload is applied and history is recorded
+    pub(crate) fn tick_oracle_consensus<S: MoveStorage> (
+        &self,
+        session: &mut Session<S>,
+        _block_metadata: BlockMetadata,
+        txn_data: &TransactionMetadata,
+        gas_status: &mut GasStatus,
+        log_context: &impl LogContext,
+    ) -> Result<(), VMStatus> {
+        println!("0L ==== stdlib upgrade: checking for stdlib upgrade");
+        // tick Oracle::check_upgrade
+        let args = vec![
+            MoveValue::Signer(txn_data.sender),
+        ];
+        session.execute_function(
+            &ORACLE_MODULE,
+            &CHECK_UPGRADE,
+            vec![],
+            serialize_values(&args),
+            // txn_data.sender(),
+            gas_status,
+            log_context,
+        ).map_err(|e| { info!("Couldn't check upgrade"); e } )?;
+        Ok(())
+    }
+
+    //////// 0L ////////    
+    pub(crate) fn apply_stdlib_upgrade<S: MoveStorage> (
+        &self,
+        session: &mut Session<S>,
+        remote_cache: &S,
+        block_metadata: BlockMetadata,
+        txn_data: &TransactionMetadata,
+        gas_status: &mut GasStatus,
+        log_context: &impl LogContext,
+    ) -> Result<(), VMStatus> {
+        let (round, timestamp, _previous_vote, _proposer) = block_metadata.into_inner();
+        // hardcoding upgrade on round 2
+        if round==2 {
+            let payload = get_upgrade_payload(remote_cache)?.payload;
+            if payload.len() > 0 {
+                println!("0L ==== stdlib upgrade: upgrade payload elected in previous epoch");
+
+                // publish the agreed stdlib
+                let new_stdlib = import_stdlib(&payload)
+                    .map_err(|_|{ 
+                        println!("faliled to import stdlib"); 
+                        VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR)
+                      })?;
+                let mut counter = 0;
+                for module in new_stdlib {
+                    let mut bytes = vec![];
+                    module
+                        .serialize(&mut bytes)
+                        .map_err(|_|{ 
+                          println!("faliled to serialize stdlib"); 
+                          VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR)
+                        })?;
+                    session.revise_module(
+                        bytes, 
+                        account_config::CORE_CODE_ADDRESS, 
+                        gas_status, 
+                        log_context
+                    ).map_err(|_|{ 
+                      println!("faliled to publish module");
+                      VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR)
+                    })?;
+
+                    counter += 1;
+                }
+
+                println!("0L ==== stdlib upgrade: published {} modules", counter);
+
+                // trigger a reconfiguration of type Upgrade
+                let args = vec![
+                    MoveValue::Signer(txn_data.sender),
+                ];
+                session.execute_function(
+                    &UPGRADE_MODULE,
+                    &UPGRADE_RECONFIG,
+                    vec![],
+                    serialize_values(&args),
+                    gas_status,
+                    log_context,
+                ).map_err(|_|{ 
+                  println!("Couldn't trigger upgrade reconfig event");
+                  VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR)
+                })?;
+
+                println!("0L ==== successfully triggered upgrade reconfig event");
+
+                println!("==== stdlib upgrade: end upgrade at time: {} ====", timestamp);
+            }
+        }
+
+        Ok(())
+    }
+}
+
+//////// 0L ////////
+fn get_upgrade_payload<S: MoveStorage>(
+    remote_cache: &S,
+) -> Result<UpgradePayloadResource, VMStatus> {
+    if let Ok(Some(blob)) = remote_cache.get_resource(
+      &account_config::diem_root_address(),
+      &UpgradePayloadResource::struct_tag(),
+  ) {
+      let x = bcs::from_bytes::<UpgradePayloadResource>(&blob)
+          .map_err(|_| VMStatus::Error(StatusCode::RESOURCE_DOES_NOT_EXIST))?;
+      Ok(x)
+  } else {
+      Err(VMStatus::Error(StatusCode::CURRENCY_INFO_DOES_NOT_EXIST))
+  }
 }
 
 /// Internal APIs for the Diem VM, primarily used for testing.

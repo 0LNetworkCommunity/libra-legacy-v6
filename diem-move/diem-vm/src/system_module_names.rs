@@ -16,6 +16,32 @@ pub static DIEM_BLOCK_MODULE: Lazy<ModuleId> = Lazy::new(|| {
     )
 });
 
+//////// 0L ////////
+// Oracle module
+pub static ORACLE_MODULE: Lazy<ModuleId> = Lazy::new(|| {
+    ModuleId::new(
+        account_config::CORE_CODE_ADDRESS,
+        ORACLE_MODULE_NAME.clone(),
+    )
+});
+pub static UPGRADE_MODULE: Lazy<ModuleId> = Lazy::new(|| {
+    ModuleId::new(
+        account_config::CORE_CODE_ADDRESS,
+        UPGRADE_MODULE_NAME.clone(),
+    )
+});
+
+//////// 0L ////////
+// Oracles
+static ORACLE_MODULE_NAME: Lazy<Identifier> =
+    Lazy::new(|| Identifier::new("Oracle").unwrap());
+pub static CHECK_UPGRADE: Lazy<Identifier> =
+    Lazy::new(|| Identifier::new("check_upgrade").unwrap());
+static UPGRADE_MODULE_NAME: Lazy<Identifier> =
+    Lazy::new(|| Identifier::new("Upgrade").unwrap());
+pub static UPGRADE_RECONFIG: Lazy<Identifier> =
+    Lazy::new(|| Identifier::new("upgrade_reconfig").unwrap());
+
 // TZ: TODO: remove these except for the block-related names
 // Names for special functions and structs
 pub const SCRIPT_PROLOGUE_NAME: &IdentStr = ident_str!("script_prologue");
