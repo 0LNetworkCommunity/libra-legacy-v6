@@ -1,10 +1,30 @@
 /// This module defines a struct storing the metadata of the block and new block events.
+/// it also contains all of the block prologue logic which is called from the Rust executor.
+//////// 0L ////////
+/// For 0L the following changes are applied to the block prologue
+// Autopay gets processed when the Autopay Tick occurs. This occurs on round X (TODO)
+// Round 2
+// On the Rust side, every round 2, is an Upgrade Tick. That's when the VM checks if there are upgrade proposals that have reached consensus, and if so and there is an upgrade payload available (binary) then a writeset of that binary is executed and the 0x1 address is overwritten with the upgrade binary.
+// Round 3
+// In Move, we check if we are in a Migrate Tick, which is every round 3. (TODO: should this be 2?). That's when any data and state migrations that can happen on the fly will occur.
+// Epoch Boundary
+// In the prologue we finally check for a roughtime 24h period to have passed, and that is what triggers an epoch boundary, and the necessary reconfiguration and account updates.
+
 module DiemFramework::DiemBlock {
     use DiemFramework::CoreAddresses;
     use DiemFramework::DiemSystem;
     use DiemFramework::DiemTimestamp;
     use Std::Errors;
     use Std::Event;
+    //////// 0L ////////
+    use 0x1::EpochBoundary;
+    use 0x1::Stats;
+    use 0x1::AutoPay;
+    use 0x1::Epoch;
+    use 0x1::GAS::GAS;
+    use 0x1::DiemAccount;
+    use 0x1::Migrations;
+    use 0x1::MigrateTowerCounter;    
 
     struct BlockMetadata has key {
         /// Height of the current block
@@ -75,6 +95,25 @@ module DiemFramework::DiemBlock {
             Errors::requires_address(EVM_OR_VALIDATOR)
         );
 
+        //////// 0L ////////
+        // increment stats        
+        Stats::process_set_votes(&vm, &previous_block_votes);
+        Stats::inc_prop(&vm, *&proposer);
+        if (AutoPay::tick(&vm)){
+            // triggers autopay at beginning of each epoch 
+            // tick is reset at end of previous epoch
+            DiemAccount::process_escrow<GAS>(&vm);
+            AutoPay::process_autopay(&vm);
+        };
+        // Do any pending migrations
+        // TODO: should this be round 2 (when upgrade writeset happens). May be a on off-by-one.
+        if (round == 3){
+          // safety. Maybe init Migration struct
+          Migrations::init(&vm);
+          // Migration UID 1
+          MigrateTowerCounter::migrate_tower_counter(&vm);
+        };        
+
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(@DiemRoot);
         DiemTimestamp::update_global_time(&vm, proposer, timestamp);
         block_metadata_ref.height = block_metadata_ref.height + 1;
@@ -87,6 +126,15 @@ module DiemFramework::DiemBlock {
                 time_microseconds: timestamp,
             }
         );
+
+        //////// 0L ////////
+        // EPOCH BOUNDARY
+        if (Epoch::epoch_finished()) {
+            // TODO: We don't need to pass block height to EpochBoundaryOL. 
+            // It should use the BlockMetadata. But there's a circular reference 
+            // there when we try.
+            EpochBoundary::reconfigure(&vm, get_current_block_height());
+        };        
     }
     spec block_prologue {
         include DiemTimestamp::AbortsIfNotOperating;
