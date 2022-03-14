@@ -1,6 +1,8 @@
 /// Functions to initialize, accumulated, and burn transaction fees.
 module DiemFramework::TransactionFee {
-    use DiemFramework::XUS::XUS;
+    // use DiemFramework::XUS::XUS; /////// 0L /////////
+    use 0x1::GAS::GAS; /////// 0L /////////
+    use DiemFramework::CoreAddresses;    
     use DiemFramework::XDX;
     use DiemFramework::Diem::{Self, Diem, Preburn};
     use DiemFramework::Roles;
@@ -16,24 +18,24 @@ module DiemFramework::TransactionFee {
     }
 
     /// A `TransactionFee` resource is not in the required state
-    const ETRANSACTION_FEE: u64 = 0;
+    const ETRANSACTION_FEE: u64 = 20000; /////// 0L /////////
 
     /// Called in genesis. Sets up the needed resources to collect transaction fees from the
     /// `TransactionFee` resource with the TreasuryCompliance account.
     public fun initialize(
-        tc_account: &signer,
+        dr_account: &signer,
     ) {
         DiemTimestamp::assert_genesis();
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_treasury_compliance(dr_account);
         // accept fees in all the currencies
-        add_txn_fee_currency<XUS>(tc_account);
+        add_txn_fee_currency<GAS>(dr_account);
     }
     spec initialize {
         include DiemTimestamp::AbortsIfNotGenesis;
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
-        include AddTxnFeeCurrencyAbortsIf<XUS>;
+        include Roles::AbortsIfNotTreasuryCompliance{account: dr_account};
+        include AddTxnFeeCurrencyAbortsIf<GAS>;
         ensures is_initialized();
-        ensures spec_transaction_fee<XUS>().balance.value == 0;
+        ensures spec_transaction_fee<GAS>().balance.value == 0;
     }
     spec schema AddTxnFeeCurrencyAbortsIf<CoinType> {
         include Diem::AbortsIfNoCurrency<CoinType>;
@@ -46,24 +48,24 @@ module DiemFramework::TransactionFee {
     }
 
     fun is_initialized(): bool {
-        is_coin_initialized<XUS>()
+        is_coin_initialized<GAS>() //////// 0L ////////
     }
 
     /// Sets up the needed transaction fee state for a given `CoinType` currency by
-    /// (1) configuring `tc_account` to accept `CoinType`
-    /// (2) publishing a wrapper of the `Preburn<CoinType>` resource under `tc_account`
-    public fun add_txn_fee_currency<CoinType>(tc_account: &signer) {
-        Roles::assert_treasury_compliance(tc_account);
+    /// (1) configuring `dr_account` to accept `CoinType`
+    /// (2) publishing a wrapper of the `Preburn<CoinType>` resource under `dr_account`
+    public fun add_txn_fee_currency<CoinType>(dr_account: &signer) {
+        Roles::assert_diem_root(dr_account); /////// 0L /////////
         Diem::assert_is_currency<CoinType>();
         assert!(
             !is_coin_initialized<CoinType>(),
             Errors::already_published(ETRANSACTION_FEE)
         );
         move_to(
-            tc_account,
+            dr_account,
             TransactionFee<CoinType> {
                 balance: Diem::zero(),
-                preburn: Diem::create_preburn(tc_account)
+                preburn: Diem::create_preburn(dr_account)
             }
         )
     }
@@ -98,10 +100,10 @@ module DiemFramework::TransactionFee {
     /// If the `CoinType` is XDX, it unpacks the coin and preburns the
     /// underlying fiat.
     public fun burn_fees<CoinType>(
-        tc_account: &signer,
+        dr_account: &signer,
     ) acquires TransactionFee {
         DiemTimestamp::assert_operating();
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_diem_root(dr_account); /////// 0L /////////
         assert!(is_coin_initialized<CoinType>(), Errors::not_published(ETRANSACTION_FEE));
         if (XDX::is_xdx<CoinType>()) {
             // TODO: Once the composition of XDX is determined fill this in to
@@ -111,7 +113,7 @@ module DiemFramework::TransactionFee {
             // extract fees
             let fees = borrow_global_mut<TransactionFee<CoinType>>(@TreasuryCompliance);
             let coin = Diem::withdraw_all(&mut fees.balance);
-            let burn_cap = Diem::remove_burn_capability<CoinType>(tc_account);
+            let burn_cap = Diem::remove_burn_capability<CoinType>(dr_account);
             // burn
             Diem::burn_now(
                 coin,
@@ -119,13 +121,13 @@ module DiemFramework::TransactionFee {
                 @TreasuryCompliance,
                 &burn_cap
             );
-            Diem::publish_burn_capability(tc_account, burn_cap);
+            Diem::publish_burn_capability(dr_account, burn_cap);
         }
     }
     spec burn_fees {
         pragma disable_invariants_in_body;
         /// Must abort if the account does not have the TreasuryCompliance role [[H3]][PERMISSION].
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotTreasuryCompliance{account: dr_account};
 
         include DiemTimestamp::AbortsIfNotOperating;
         aborts_if !is_coin_initialized<CoinType>() with Errors::NOT_PUBLISHED;
@@ -141,21 +143,21 @@ module DiemFramework::TransactionFee {
     ///
     /// # Specification of the case where burn type is XDX.
     spec schema BurnFeesXDX {
-        tc_account: signer;
+        dr_account: signer;
         aborts_if true with Errors::INVALID_STATE;
     }
     /// # Specification of the case where burn type is not XDX.
     spec schema BurnFeesNotXDX<CoinType> {
-        tc_account: signer;
+        dr_account: signer;
         /// Must abort if the account does not have BurnCapability [[H3]][PERMISSION].
-        include Diem::AbortsIfNoBurnCapability<CoinType>{account: tc_account};
+        include Diem::AbortsIfNoBurnCapability<CoinType>{account: dr_account};
 
         let fees = spec_transaction_fee<CoinType>();
         include Diem::BurnNowAbortsIf<CoinType>{coin: fees.balance, preburn: fees.preburn};
 
-        /// tc_account retrieves BurnCapability [[H3]][PERMISSION].
+        /// dr_account retrieves BurnCapability [[H3]][PERMISSION].
         /// BurnCapability is not transferrable [[J3]][PERMISSION].
-        ensures exists<Diem::BurnCapability<CoinType>>(Signer::address_of(tc_account));
+        ensures exists<Diem::BurnCapability<CoinType>>(Signer::address_of(dr_account));
     }
 
     spec module {} // Switch documentation context to module level.
@@ -172,4 +174,51 @@ module DiemFramework::TransactionFee {
     spec fun spec_transaction_fee<CoinType>(): TransactionFee<CoinType> {
         borrow_global<TransactionFee<CoinType>>(@TreasuryCompliance)
     }
+
+    /////// 0L /////////
+    public fun get_amount_to_distribute(dr_account: &signer): u64 acquires TransactionFee {
+        // Can only be invoked by DiemVM privilege.
+        // Allowed association to invoke for testing purposes.
+        CoreAddresses::assert_diem_root(dr_account);
+        // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
+        // DiemAccount::balance<Token>(0xFEE);
+        let fees = borrow_global<TransactionFee<GAS>>(
+            @DiemRoot
+        );
+
+        let amount_collected = Diem::value<GAS>(&fees.balance);
+        amount_collected
+    }
+
+    /////// 0L /////////
+    public fun get_transaction_fees_coins<Token: store>(
+        dr_account: &signer
+    ): Diem<Token> acquires TransactionFee {
+        // Can only be invoked by DiemVM privilege.
+        // Allowed association to invoke for testing purposes.
+        CoreAddresses::assert_diem_root(dr_account);
+        // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
+        // DiemAccount::balance<Token>(0xFEE);
+        let fees = borrow_global_mut<TransactionFee<Token>>(
+            @DiemRoot
+        );
+
+        Diem::withdraw_all(&mut fees.balance)
+    }
+
+    /////// 0L /////////
+    public fun get_transaction_fees_coins_amount<Token: store>(
+        dr_account: &signer, amount: u64
+    ): Diem<Token>  acquires TransactionFee {
+        // Can only be invoked by DiemVM privilege.
+        // Allowed association to invoke for testing purposes.
+        CoreAddresses::assert_diem_root(dr_account);
+        // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
+        // DiemAccount::balance<Token>(0xFEE);
+        let fees = borrow_global_mut<TransactionFee<Token>>(
+            @DiemRoot
+        );
+
+        Diem::withdraw(&mut fees.balance, amount)
+    }    
 }
