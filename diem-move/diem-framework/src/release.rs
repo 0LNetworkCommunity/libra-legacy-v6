@@ -41,6 +41,9 @@ pub struct ReleaseOptions {
     pub package: PathBuf,
     #[structopt(long = "output", default_value = "current", parse(from_os_str))]
     pub output: PathBuf,
+     //////// 0L ////////
+    #[structopt(long = "upgrade-payload")]
+    pub upgrade_payload: bool,
 }
 
 impl Default for ReleaseOptions {
