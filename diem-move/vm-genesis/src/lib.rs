@@ -5,6 +5,10 @@
 
 mod genesis_context;
 
+use anyhow::Error;
+use serde::{Deserialize, Serialize};
+use std::env;
+
 use crate::genesis_context::GenesisStateView;
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
@@ -45,6 +49,9 @@ use once_cell::sync::Lazy;
 use rand::prelude::*;
 use transaction_builder::encode_create_designated_dealer_script_function;
 
+//////// 0L ////////
+use ol_types::account::ValConfigs;
+
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
 
@@ -58,8 +65,8 @@ pub static GENESIS_KEYPAIR: Lazy<(Ed25519PrivateKey, Ed25519PublicKey)> = Lazy::
 });
 
 pub fn encode_genesis_transaction(
-    diem_root_key: Ed25519PublicKey,
-    treasury_compliance_key: Ed25519PublicKey,
+    diem_root_key: Option<&Ed25519PublicKey>, //////// 0L ////////
+    treasury_compliance_key: Option<&Ed25519PublicKey>, //////// 0L ////////
     validators: &[Validator],
     stdlib_module_bytes: &[Vec<u8>],
     vm_publishing_option: Option<VMPublishingOption>,
@@ -115,8 +122,23 @@ pub fn encode_genesis_change_set(
         consensus_config,
         chain_id,
     );
+    //////// 0L ////////
+    println!("OK create_and_initialize_main_accounts =============== ");
+    let genesis_env = get_env();
+    println!("Initializing with env: {}", genesis_env);
+    if genesis_env != "prod" {
+        initialize_testnet(&mut session);
+    }
+    
     // generate the genesis WriteSet
     create_and_initialize_owners_operators(&mut session, validators);
+
+    //////// 0L ////////
+    println!("OK create_and_initialize_owners_operators =============== ");
+    distribute_genesis_subsidy(&mut session);
+    println!("OK Genesis subsidy =============== ");
+    fund_operators(&mut session, validators);
+    
     reconfigure(&mut session);
 
     if has_dd_module
@@ -170,6 +192,93 @@ pub fn encode_genesis_change_set(
     ChangeSet::new(write_set, events)
 }
 
+// 0L todo diem-1.4.1: Double check 0L patch for this fn.
+// Reason, the diem `fn encode_genesis_change_set` which we copy and modify to
+// create this fn, changed significantly.
+// Fn body is mostly updated, but need to update the fn signature also.
+//////// 0L ////////
+pub fn encode_recovery_genesis_changeset(
+    val_assignments: &[ValRecover],
+    operator_registrations: &[OperRecover],
+    val_set: &[AccountAddress],
+    // stdlib_modules: &[Vec<u8>],
+    // vm_publishing_option: VMPublishingOption,
+    chain: u8,
+) -> Result<ChangeSet, Error> {
+    let mut stdlib_modules = Vec::new();
+    // create a data view for move_vm
+    let mut state_view = GenesisStateView::new();
+    for module_bytes in current_module_blobs() {
+        let module = CompiledModule::deserialize(module_bytes).unwrap();
+        state_view.add_module(&module.self_id(), &module_bytes);
+        stdlib_modules.push(module)
+    }
+    let data_cache = StateViewCache::new(&state_view);
+
+    let move_vm = MoveVM::new(diem_vm::natives::diem_natives()).unwrap();
+    let mut session = move_vm.new_session(&data_cache);
+
+    //////// 0L ////////
+    let xdx_ty = TypeTag::Struct(StructTag {
+        address: *account_config::GAS_MODULE.address(),
+        module: account_config::GAS_MODULE.name().to_owned(),
+        name: account_config::GAS_IDENTIFIER.to_owned(),
+        type_params: vec![],
+    });
+
+    create_and_initialize_main_accounts(
+        &mut session,
+        None,
+        None,
+        VMPublishingOption::open(),
+        &xdx_ty,
+        ChainId::new(chain),
+    );
+    //////// 0L ////////
+    println!("OK create_and_initialize_main_accounts =============== ");
+
+    let genesis_env = get_env();
+    println!("Initializing with env: {}", genesis_env);
+    if genesis_env != "prod" {
+        initialize_testnet(&mut session);
+    }
+    //////// 0L end ////////
+
+    // generate the genesis WriteSet
+    recovery_owners_operators(
+        &mut session, val_assignments, operator_registrations, val_set
+    );
+
+    //////// 0L ////////
+    println!("OK recovery_owners_operators =============== ");
+
+    distribute_genesis_subsidy(&mut session);
+    println!("OK Genesis subsidy =============== ");
+
+    // 0L todo diem-1.4.1
+    // fund_operators(&mut session, validators);
+    //////// 0L end ////////
+    
+    reconfigure(&mut session);
+
+    let (mut changeset1, mut events1) = session.finish().unwrap();
+
+    let state_view = GenesisStateView::new();
+    let data_cache = StateViewCache::new(&state_view);
+    let mut session = move_vm.new_session(&data_cache);
+    publish_stdlib(&mut session, Modules::new(stdlib_modules.iter()));
+    let (changeset2, events2) = session.finish().unwrap();
+
+    changeset1.squash(changeset2).unwrap();
+    events1.extend(events2);
+
+    let (write_set, events) = convert_changeset_and_events(changeset1, events1).unwrap();
+
+    assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
+    verify_genesis_write_set(&events);
+    Ok(ChangeSet::new(write_set, events))
+}
+
 fn exec_function(
     session: &mut Session<StateViewCache<GenesisStateView>>,
     module_name: &str,
@@ -219,17 +328,27 @@ fn exec_script_function(
 /// Create and initialize Association and Core Code accounts.
 fn create_and_initialize_main_accounts(
     session: &mut Session<StateViewCache<GenesisStateView>>,
-    diem_root_key: &Ed25519PublicKey,
-    treasury_compliance_key: &Ed25519PublicKey,
+    diem_root_key: Option<&Ed25519PublicKey>, //////// 0L ////////
+    _treasury_compliance_key: Option<&Ed25519PublicKey>, //////// 0L ////////
     publishing_option: VMPublishingOption,
     consensus_config: OnChainConsensusConfig,
     chain_id: ChainId,
 ) {
-    let diem_root_auth_key = AuthenticationKey::ed25519(diem_root_key);
-    let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
+    //////// 0L ////////
+    let diem_root_auth_key: AuthenticationKey;
+    if diem_root_key.is_some() {
+        diem_root_auth_key = AuthenticationKey::ed25519(&diem_root_key.unwrap());
+    } else {
+        diem_root_auth_key = AuthenticationKey::new([
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0,
+        ]);
+    }
+    // let treasury_compliance_auth_key = AuthenticationKey::ed25519(treasury_compliance_key);
 
     let root_diem_root_address = account_config::diem_root_address();
-    let tc_account_address = account_config::treasury_compliance_account_address();
+    //////// 0L ////////
+    // let tc_account_address = account_config::treasury_compliance_account_address();
 
     let initial_allow_list = MoveValue::Vector(
         publishing_option
@@ -255,9 +374,9 @@ fn create_and_initialize_main_accounts(
         vec![],
         serialize_values(&vec![
             MoveValue::Signer(root_diem_root_address),
-            MoveValue::Signer(tc_account_address),
+            // MoveValue::Signer(tc_account_address), //////// 0L ////////
             MoveValue::vector_u8(diem_root_auth_key.to_vec()),
-            MoveValue::vector_u8(treasury_compliance_auth_key.to_vec()),
+            // MoveValue::vector_u8(treasury_compliance_auth_key.to_vec()), //////// 0L ////////
             initial_allow_list,
             MoveValue::Bool(publishing_option.is_open_module),
             MoveValue::vector_u8(instr_gas_costs),
@@ -269,7 +388,7 @@ fn create_and_initialize_main_accounts(
     );
 }
 
-fn create_and_initialize_testnet_minting(
+fn _create_and_initialize_testnet_minting( //////// 0L ////////
     session: &mut Session<StateViewCache<GenesisStateView>>,
 
     public_key: &Ed25519PublicKey,
@@ -324,6 +443,9 @@ fn create_and_initialize_owners_operators(
     validators: &[Validator],
 ) {
     let diem_root_address = account_config::diem_root_address();
+
+    println!("0 ======== Create Owner and Operator Accounts"); //////// 0L ////////
+
     let mut owners = vec![];
     let mut owner_names = vec![];
     let mut owner_auth_keys = vec![];
@@ -344,6 +466,73 @@ fn create_and_initialize_owners_operators(
         operator_auth_keys.push(MoveValue::vector_u8(v.operator_auth_key.to_vec()));
         validator_network_addresses.push(MoveValue::vector_u8(v.network_address.clone()));
         full_node_network_addresses.push(MoveValue::vector_u8(v.full_node_network_address.clone()));
+
+        //////// 0L ////////
+        // Submit mining proof
+        let preimage = hex::decode(&v.genesis_mining_proof.preimage).unwrap();
+        let proof = hex::decode(&v.genesis_mining_proof.proof).unwrap();
+        exec_function(
+            session,
+            "TowerState",
+            "genesis_helper",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Signer(v.address),
+                MoveValue::vector_u8(preimage),
+                MoveValue::vector_u8(proof),
+            ]),
+        );
+
+        //////// 0L ////////
+        // submit any transactions for user e.g. Autopay
+        if let Some(profile) = &v.genesis_mining_proof.profile {
+            match &profile.autopay_instructions {
+                Some(list) => {
+                    list.into_iter().for_each(|ins| {
+                        let autopay_instruction =
+                            transaction_builder::encode_autopay_create_instruction_script_function(
+                                ins.uid.unwrap(),
+                                ins.type_move.unwrap(),
+                                ins.destination,
+                                ins.duration_epochs.unwrap(),
+                                ins.value_move.unwrap(),
+                            )
+                            .into_script_function();
+                        exec_script_function(
+                            session,
+                            v.address,
+                            &autopay_instruction,
+                        );
+                    });
+                }
+                None => {}
+            }
+        }
+
+        //////// 0L ////////
+        exec_function(
+            session,
+            "ValidatorUniverse",
+            "genesis_helper",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Signer(v.address),
+            ]),
+        );
+
+        //////// 0L ////////
+        // enable oracle upgrade delegation for all genesis nodes.
+        exec_function(
+            session,
+            "Oracle",
+            "enable_delegation",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(v.address),
+            ]),
+        );        
     }
     exec_function(
         session,
@@ -363,6 +552,178 @@ fn create_and_initialize_owners_operators(
             MoveValue::Vector(full_node_network_addresses),
         ]),
     );
+}
+
+//////// 0L ///////
+// Validator/owner state to recover in genesis recovery mode
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+pub struct ValRecover {
+    ///
+    pub val_account: AccountAddress,
+    ///
+    pub operator_delegated_account: AccountAddress,
+    ///
+    pub val_auth_key: AuthenticationKey,
+}
+
+//////// 0L ///////
+/// Operator state to recover in genesis recovery mode
+#[derive(Debug, Clone, PartialEq)]
+pub struct OperRecover {
+    ///
+    pub operator_account: AccountAddress,
+    ///
+    pub operator_auth_key: AuthenticationKey,
+    ///
+    pub validator_to_represent: AccountAddress,
+    ///
+    pub operator_consensus_pubkey: Vec<u8>,
+    ///
+    pub validator_network_addresses: Vec<u8>,
+    ///
+    pub fullnode_network_addresses: Vec<u8>,
+}
+
+//////// 0L ////////
+/// TODO: recovery mode is WIP.
+/// 
+/// Creates and initializes each validator owner and validator operator. This method creates all
+/// the required accounts, sets the validator operators for each validator owner, and sets the
+/// validator config on-chain.
+fn recovery_owners_operators(
+    session: &mut Session<StateViewCache>,
+    // log_context: &impl LogContext,
+    val_assignments: &[ValRecover],
+    operator_registrations: &[OperRecover],
+    val_set: &[AccountAddress],
+) {
+    let diem_root_address = account_config::diem_root_address();
+
+    // Create accounts for each validator owner. The inputs for creating an account are the auth
+    // key prefix and account address. Internally move then computes the auth key as auth key
+    // prefix || address. Because of this, the initial auth key will be invalid as we produce the
+    // account address from the name and not the public key.
+    println!("0 ======== Create Owner Accounts");
+    for i in val_assignments {
+        println!("account: {:?}", i.val_account);
+        // TODO: why does this need to be derived from human name?
+        // let owner_address = staged_owner_auth_key.derived_address();
+        let create_owner_script =
+            transaction_builder::encode_create_validator_account_script_function(
+                0,
+                i.val_account,
+                i.val_auth_key.prefix().to_vec(),
+                i.val_account.to_vec(),
+            )
+            .into_script_function();
+        exec_script_function(
+            session,
+            // log_context,
+            diem_root_address,
+            &create_owner_script,
+        );
+
+        println!("======== recover miner state");
+        // TODO: Where's this function recover_miner_state. Lost from v4 to v5?
+        // exec_function(
+        //     session,
+        //     // log_context,
+        //     "TowerState",
+        //     "recover_miner_state", 
+        //     vec![],
+        //     serialize_values(&vec![
+        //         MoveValue::Signer(diem_root_address),
+        //         MoveValue::Signer(i.val_account),
+        //     ]),
+        // );
+
+        exec_function(
+            session,
+            // log_context,
+            "ValidatorUniverse",
+            "genesis_helper",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Signer(i.val_account),
+            ]),
+        );
+    }
+
+    println!("1 ======== Create OP Accounts");
+    // Create accounts for each validator operator
+    for i in operator_registrations {
+        let create_operator_script =
+            transaction_builder::encode_create_validator_operator_account_script_function(
+                0,
+                i.operator_account,
+                i.operator_auth_key.prefix().to_vec(),
+                i.operator_account.to_vec(),
+            )
+            .into_script_function();
+        exec_script_function(
+            session,
+            // log_context,
+            diem_root_address,
+            &create_operator_script,
+        );
+    }
+
+    println!("2 ======== Link owner to OP");
+    // Authorize an operator for a validator/owner
+    for i in val_assignments {
+        let create_operator_script =
+            transaction_builder::encode_set_validator_operator_with_nonce_admin_script_function(
+                0,
+                i.operator_delegated_account.to_vec(),
+                i.operator_delegated_account,
+            )
+            .into_script_function();
+        exec_script_function(
+            session,
+            // log_context,
+            i.val_account, //TODO: check the signer is correct
+            &create_operator_script,
+        );
+    }
+
+    println!("3 ======== OP sends network info to Owner config");
+    // Set the validator operator configs for each owner
+    for i in operator_registrations {
+        let create_operator_script =
+            transaction_builder::encode_register_validator_config_script_function(
+                i.validator_to_represent,
+                i.operator_consensus_pubkey.clone(),
+                i.validator_network_addresses.clone(),
+                i.fullnode_network_addresses.clone(),
+            )
+            .into_script_function();
+        exec_script_function(
+            session,
+            // log_context,
+            i.operator_account,
+            &create_operator_script,
+        );
+    }
+
+    println!("4 ======== Add owner to validator set");
+    // Add each validator to the validator set
+    for i in val_set {
+        // let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
+        // let owner_address = staged_owner_auth_key.derived_address();
+        // // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
+        exec_function(
+            session,
+            // log_context,
+            "DiemSystem",
+            "add_validator",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Address(*i),
+            ]),
+        );
+    }
 }
 
 /// Publish the standard library.
@@ -423,17 +784,18 @@ fn verify_genesis_write_set(events: &[ContractEvent]) {
         CreateAccountEvent::event_key(),
     );
 
-    // (3) The first non-account creation event should be the new epoch event
-    let new_epoch_events: Vec<&ContractEvent> = events
-        .iter()
-        .filter(|e| e.key() == &NewEpochEvent::event_key())
-        .collect();
-    assert!(
-        new_epoch_events.len() == 1,
-        "There should only be one NewEpochEvent"
-    );
-    // (4) This should be the first new_epoch_event
-    assert_eq!(new_epoch_events[0].sequence_number(), 0,);
+    //////// 0L ////////
+    // // (3) The first non-account creation event should be the new epoch event
+    // let new_epoch_events: Vec<&ContractEvent> = events
+    //     .iter()
+    //     .filter(|e| e.key() == &NewEpochEvent::event_key())
+    //     .collect();
+    // assert!(
+    //     new_epoch_events.len() == 1,
+    //     "There should only be one NewEpochEvent"
+    // );
+    // // (4) This should be the first new_epoch_event
+    // assert_eq!(new_epoch_events[0].sequence_number(), 0,);
 }
 
 /// An enum specifying whether the compiled stdlib/scripts should be used or freshly built versions
@@ -493,6 +855,8 @@ pub struct Validator {
     pub network_address: Vec<u8>,
     /// `NetworkAddress` for the validator's full node
     pub full_node_network_address: Vec<u8>,
+    //////// 0L ////////
+    pub genesis_mining_proof: GenesisMiningProof, // proof of work    
 }
 
 pub struct TestValidator {
@@ -530,6 +894,7 @@ impl TestValidator {
             operator_auth_key,
             network_address,
             full_node_network_address,
+            genesis_mining_proof: GenesisMiningProof::default(), //////// 0L ////////
         };
         Self { key, data }
     }
@@ -546,8 +911,8 @@ pub fn generate_test_genesis(
     let validators = &validators_;
 
     let genesis = encode_genesis_change_set(
-        &GENESIS_KEYPAIR.1,
-        &GENESIS_KEYPAIR.1,
+        Some(&GENESIS_KEYPAIR.1), //////// 0L ////////
+        Some(&GENESIS_KEYPAIR.1), //////// 0L ////////
         validators,
         stdlib_modules,
         vm_publishing_option,
@@ -556,4 +921,140 @@ pub fn generate_test_genesis(
         enable_parallel_execution,
     );
     (genesis, test_validators)
+}
+
+//////// 0L ////////
+/// Genesis subsidy to genesis set
+fn distribute_genesis_subsidy(
+    session: &mut Session<StateViewCache>,
+    // log_context: &impl LogContext,
+) {
+    let diem_root_address = account_config::diem_root_address();
+
+    exec_function(
+        session,
+        // log_context,
+        "Subsidy",
+        "genesis",
+        vec![],
+        serialize_values(&vec![MoveValue::Signer(diem_root_address)]),
+    )
+}
+
+// 0L todo diem-1.4.1 - updated patch, needs review
+//////// 0L /////////
+fn fund_operators(
+  session: &mut Session<StateViewCache>,
+  // log_context: &impl LogContext,
+  validators: &[Validator],
+) {
+    println!("======== Fund operators");
+
+    for v in validators {
+        let diem_root_address = account_config::diem_root_address();
+        // give the operator balance to be able to send txs for owner, e.g. tower-builder
+        exec_function(
+            session,
+            // log_context,
+            "DiemAccount",
+            "genesis_fund_operator",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Signer(v.address),
+                MoveValue::Address(v.operator_address),
+            ]),
+        );
+    }
+
+    // Old (diem 1.3.0 patch) - to remove after review
+    //
+    // // Add each validator to the validator set
+    // for (owner_key, _owner_name, _op_assignment, _genesis_proof, operator_account) in
+    //     operator_assignments
+    // {
+    //     let diem_root_address = account_config::diem_root_address();
+
+    //     // give the operator balance to be able to send txs for owner, e.g. tower-builder
+    //     exec_function(
+    //         session,
+    //         // log_context,
+    //         "DiemAccount",
+    //         "genesis_fund_operator",
+    //         vec![],
+    //         serialize_values(&vec![
+    //             MoveValue::Signer(diem_root_address),
+    //             MoveValue::Signer(owner_address),
+    //             MoveValue::Address(*operator_account),
+    //         ]),
+    //     );
+    // }
+}
+
+//////// 0L ////////
+fn get_env() -> String {
+    match env::var("NODE_ENV") {
+        Ok(val) => val,
+        _ => "test".to_string(), // default to "test" if not set
+    }
+}
+
+//////// 0L ////////
+// 0L Change: Necessary for genesis transaction.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct GenesisMiningProof {
+    pub preimage: String,
+    pub proof: String,
+    pub profile: Option<ValConfigs>,
+}
+
+//////// 0L ////////
+impl Default for GenesisMiningProof {
+    fn default() -> GenesisMiningProof {
+        // These use "alice" fixtures from ../fixtures and used elsewhere in the project, in both easy(stage) and hard(Prod) mode.
+
+        let easy_preimage = "87515d94a244235a1433d7117bc0cb154c613c2f4b1e67ca8d98a542ee3f59f5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000304c20746573746e65746400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000050726f74657374732072616765206163726f737320746865206e6174696f6e".to_owned();
+
+        let easy_proof = "002c4dc1276a8a58ea88fc9974c847f14866420cbc62e5712baf1ae26b6c38a393c4acba3f72d8653e4b2566c84369601bdd1de5249233f60391913b59f0b7f797f66897de17fb44a6024570d2f60e6c5c08e3156d559fbd901fad0f1343e0109a9083e661e5d7f8c1cc62e815afeee31d04af8b8f31c39a5f4636af2b468bf59a0010f48d79e7475be62e7007d71b7355944f8164e761cd9aca671a4066114e1382fbe98834fe32cf494d01f31d1b98e3ef6bffa543928810535a063c7bbf491c472263a44d9269b1cbcb0aa351f8bd894e278b5d5667cc3f26a35b9f8fd985e4424bedbb3b77bdcc678ccbb9ed92c1730dcdd3a89c1a8766cbefa75d6eeb7e5921000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001".to_owned();
+
+        //NOTE: this is same as easy_preimage
+        // let hard_preimage = easy_preimage.to_owned();
+        let hard_preimage = "87515d94a244235a1433d7117bc0cb154c613c2f4b1e67ca8d98a542ee3f59f5000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000304c20746573746e6574404b4c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000050726f74657374732072616765206163726f737320746865206e6174696f6e".to_owned();
+
+        let hard_proof =  "001725678f78425dac39e394fc07698dd8fc891dfba0822cecc5d21434dacde903f508c1e12844eb4b97a598653cc6d03524335edf51b43f090199288488b537fd977cc5f53069f609a2f758f121e887f28f0fc1150aa5649255f8b7caea9edf6228640358d1a4fe43ddb6ad6ce1c3a6a28166e2f0b7e7310e80bfbb1db85e096000065a89b7f44ebc495d70db6034fd529a80e0b5bb74ace62cffb89f4e16e54f93e4a0063ca3651dd8486b466607973a51aacb0c66213e64e0b7bf291c64d81ed4a517a0abe58da4ae46f6191c808d9ba7c636cee404ed02248794db3fab6e5e4ab517f6f3fa12f39fb88fb5a143b5d9c16a31e3c3e173deb11494f792b52a67a70034a065c665b1ef05921a6a8ac4946365d61b2b4d5b86a607ba73659863d774c3fc7c2372f5b6c8b5ae068d4e20aac5e42b501bf441569d377f70e8f87db8a6f9b1eadb813880dbeb89872121849df312383f4d8007747ae76e66e5a13d9457af173ebb0c5eb9c39ee1ac5cef94aa75e1d5286349c88051c36507960de1f37377ffddc80a66578b437ac2a6d04fc7a595075b978bd844919d03ffe9db5b6440b753273c498aa2a139de42188d278d1ce1e3ddfdd99a97a64907e1cdf30d1c55dfc7262cd3175eb1f268ee2a91576fcd6bd644031413f55e42c510d08a81e747de36c0a6c9019d219571ea6851f43a551d6012a5317cc52992a72c270c1570419665".to_owned();
+
+        if get_env() == "test" {
+            return GenesisMiningProof {
+                preimage: easy_preimage,
+                proof: easy_proof,
+                profile: None,
+            };
+        } else {
+            return GenesisMiningProof {
+                preimage: hard_preimage,
+                proof: hard_proof,
+                profile: None,
+            };
+        }
+    }
+}
+
+//////// 0L ////////
+fn initialize_testnet(
+    session: &mut Session<StateViewCache>/*, log_context: &impl LogContext*/
+) {
+    let diem_root_address = account_config::diem_root_address();
+    let mut module_name = "Testnet";
+    if get_env() == "stage" {
+        module_name = "StagingNet";
+    };
+    exec_function(
+        session,
+        // log_context,
+        module_name,
+        "initialize",
+        vec![],
+        serialize_values(&vec![MoveValue::Signer(diem_root_address)]),
+    );
 }

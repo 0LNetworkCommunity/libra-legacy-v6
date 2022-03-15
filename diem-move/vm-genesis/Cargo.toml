@@ -31,6 +31,10 @@ diem-transaction-builder = { path = "../../sdk/transaction-builder"}
 move-binary-format = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
 diem-vm = { path = "../diem-vm" }
 read-write-set = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
+# //////// 0L ////////
+hex = "0.4"
+serde = { version = "1.0.116", features = ["rc"], default-features = false }
+ol-types = {path = "../../../ol/types"}
 
 [dev-dependencies]
 proptest = "1.0.0"

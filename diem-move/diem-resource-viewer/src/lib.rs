@@ -18,9 +18,10 @@ pub use move_resource_viewer::{AnnotatedMoveStruct, AnnotatedMoveValue};
 
 pub struct DiemValueAnnotator<'a, T>(MoveValueAnnotator<'a, T>);
 
+//////// 0L ////////
 /// A wrapper around `MoveValueAnnotator` that adds a few diem-specific funtionalities.
 #[derive(Debug)]
-pub struct AnnotatedAccountStateBlob(BTreeMap<StructTag, AnnotatedMoveStruct>);
+pub struct AnnotatedAccountStateBlob(pub BTreeMap<StructTag, AnnotatedMoveStruct>);
 
 impl<'a, T: MoveResolver> DiemValueAnnotator<'a, T> {
     pub fn new(storage: &'a T) -> Self {
