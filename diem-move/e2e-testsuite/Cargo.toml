@@ -41,7 +41,6 @@ diem-state-view = { path = "../../storage/state-view" }
 diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 
 # //////// 0L ////////
-hex = "0.4.2"
 diem-global-constants = { path = "../../config/global-constants" }
 ol-types = { path = "../../ol/types" }
 

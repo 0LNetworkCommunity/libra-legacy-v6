@@ -11,10 +11,19 @@ use move_package::{BuildConfig, ModelConfig};
 use std::{
     collections::BTreeMap,
     fs::{create_dir_all, remove_dir_all, File},
-    io::Read,
+    io::{Read,Write},
     path::{Path, PathBuf},
 };
 use structopt::*;
+
+//////// 0L ////////
+// for Upgrade oracle
+/// The output path under which staged files will be put
+pub const STAGED_OUTPUT_PATH: &str = "staged";
+/// The file name for the staged stdlib
+pub const STAGED_STDLIB_NAME: &str = "stdlib";
+/// The extension for staged files
+pub const STAGED_EXTENSION: &str = "mv";
 
 /// Options to configure the generation of a release.
 #[derive(Debug, StructOpt, Clone)]
@@ -57,6 +66,7 @@ impl Default for ReleaseOptions {
             script_builder: true,
             errmap: true,
             output: PathBuf::from("current"),
+            upgrade_payload: true, //////// 0L ////////
         }
     }
 }
@@ -273,5 +283,5 @@ pub fn create_upgrade_payload_fn(build:  &BTreeMap<String, CompiledModule> ) {
         .collect();
     let bytes = bcs::to_bytes(&modules).unwrap();
     let mut module_file = File::create(module_path).unwrap();
-    module_file.write(&bytes).unwrap();
+    module_file.write_all(&bytes).unwrap();
 }

@@ -38,10 +38,8 @@ read-write-set-dynamic = { git = "https://github.com/simsekgokhan/move-0L", rev 
 mvhashmap = { path = "../mvhashmap" }
 diem-parallel-executor = {path = "../parallel-executor" }
 
-diem-framework-releases = { path = "../diem-framework/releases"}
-
 #/////// 0L /////////
-diem-framework-releases = { path = "../diem-framework/releases"}
+diem-framework-releases = { path = "../../diem-move/diem-framework/DPN/releases" }
 
 [dev-dependencies]
 proptest = "1.0.0"

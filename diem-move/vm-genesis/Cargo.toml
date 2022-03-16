@@ -34,7 +34,7 @@ read-write-set = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed2
 # //////// 0L ////////
 hex = "0.4"
 serde = { version = "1.0.116", features = ["rc"], default-features = false }
-ol-types = {path = "../../../ol/types"}
+ol-types = {path = "../../ol/types"}
 
 [dev-dependencies]
 proptest = "1.0.0"
