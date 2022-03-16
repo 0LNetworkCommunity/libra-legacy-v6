@@ -255,9 +255,20 @@ where
         .enumerate()
         .filter_map(|(idx, t)| {
             if let Ok(crsn_or_seqno) = seq_numbers[idx] {
-                if t.sequence_number() >= crsn_or_seqno.min_seq() {
+                //////// 0L ////////
+                if t.sequence_number() == crsn_or_seqno.min_seq() {
                     return Some((t, crsn_or_seqno));
-                } else {
+                } else if t.sequence_number() > sequence_number{
+                    statuses.push((
+        
+                        t,
+                        (
+                            MempoolStatus::new(MempoolStatusCode::VmError),
+                            Some(DiscardedVMStatus::SEQUENCE_NUMBER_TOO_NEW),
+                        ),
+                    ));
+                } 
+                else {
                     statuses.push((
                         t,
                         (
@@ -403,7 +414,9 @@ pub(crate) fn process_consensus_request<V: TransactionValidation>(
                 counters::COMMIT_CONSENSUS_LABEL,
                 transactions.len(),
             );
-            process_committed_transactions(&smp.mempool, transactions, 0, true);
+            //////// 0L ////////
+            // process_committed_transactions(&smp.mempool, transactions, 0, true);
+            reject_txns(mempool, transactions).await;
             (
                 ConsensusResponse::CommitResponse(),
                 callback,
@@ -425,11 +438,49 @@ pub(crate) fn process_consensus_request<V: TransactionValidation>(
     counters::mempool_service_latency(counter_label, result, latency);
 }
 
+/// Commits txns and GCs mempool //////// 0L ////////
 /// Remove transactions that are committed (or rejected) so that we can stop broadcasting them.
 pub(crate) fn process_committed_transactions(
     mempool: &Mutex<CoreMempool>,
     transactions: Vec<TransactionSummary>,
     block_timestamp_usecs: u64,
+    is_rejected: bool,
+) {
+    /////// 0L /////////
+    remove_txns(mempool, transactions, false).await;
+    if block_timestamp_usecs > 0 {
+        mempool.lock().gc_by_expiration_time(Duration::from_micros(block_timestamp_usecs));
+    }
+
+    // let mut pool = mempool.lock();
+
+    // for transaction in transactions {
+    //     pool.remove_transaction(
+    //         &transaction.sender,
+    //         transaction.sequence_number,
+    //         is_rejected,
+    //     );
+    // }
+
+    // if block_timestamp_usecs > 0 {
+    //     pool.gc_by_expiration_time(Duration::from_micros(block_timestamp_usecs));
+    // }
+}
+
+//////// 0L ////////
+/// Reject all txns for the associated account
+async fn reject_txns(
+    mempool: &Mutex<CoreMempool>,
+    transactions: Vec<CommittedTransaction>,
+) {
+    remove_txns(mempool, transactions, true).await;
+}
+
+//////// 0L ////////
+/// Removes txns from the local mempool
+async fn remove_txns(
+    mempool: &Mutex<CoreMempool>,
+    transactions: Vec<CommittedTransaction>,
     is_rejected: bool,
 ) {
     let mut pool = mempool.lock();
@@ -441,11 +492,6 @@ pub(crate) fn process_committed_transactions(
             is_rejected,
         );
     }
-
-    /////// 0L /////////
-    // if block_timestamp_usecs > 0 {
-    //     pool.gc_by_expiration_time(Duration::from_micros(block_timestamp_usecs));
-    // }
 }
 
 /// Processes on-chain reconfiguration notifications.  Restarts validator with the new info.

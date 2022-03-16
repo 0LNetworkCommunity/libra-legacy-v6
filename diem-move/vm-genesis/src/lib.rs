@@ -79,8 +79,10 @@ pub fn encode_genesis_transaction(
         &treasury_compliance_key,
         validators,
         stdlib_module_bytes,
-        vm_publishing_option
-            .unwrap_or_else(|| VMPublishingOption::locked(LegacyStdlibScript::allowlist())),
+        //////// 0L ////////
+        // vm_publishing_option
+        //     .unwrap_or_else(|| VMPublishingOption::locked(LegacyStdlibScript::allowlist())),
+        vm_publishing_option.unwrap_or_else(|| VMPublishingOption::open()), // :)
         consensus_config,
         chain_id,
         enable_parallel_execution,
@@ -88,8 +90,8 @@ pub fn encode_genesis_transaction(
 }
 
 pub fn encode_genesis_change_set(
-    diem_root_key: &Ed25519PublicKey,
-    treasury_compliance_key: &Ed25519PublicKey,
+    diem_root_key: Option<&Ed25519PublicKey>, //////// 0L ////////
+    treasury_compliance_key: Option<&Ed25519PublicKey>, //////// 0L ////////
     validators: &[Validator],
     stdlib_module_bytes: &[Vec<u8>],
     vm_publishing_option: VMPublishingOption,
@@ -114,6 +116,14 @@ pub fn encode_genesis_change_set(
     let move_vm = MoveVM::new(diem_vm::natives::diem_natives()).unwrap();
     let mut session = move_vm.new_session(&data_cache);
 
+    //////// 0L ////////
+    let xdx_ty = TypeTag::Struct(StructTag {
+        address: *account_config::GAS_MODULE.address(),
+        module: account_config::GAS_MODULE.name().to_owned(),
+        name: account_config::GAS_IDENTIFIER.to_owned(),
+        type_params: vec![],
+    });
+    
     create_and_initialize_main_accounts(
         &mut session,
         diem_root_key,
@@ -236,13 +246,11 @@ pub fn encode_recovery_genesis_changeset(
     );
     //////// 0L ////////
     println!("OK create_and_initialize_main_accounts =============== ");
-
     let genesis_env = get_env();
     println!("Initializing with env: {}", genesis_env);
     if genesis_env != "prod" {
         initialize_testnet(&mut session);
     }
-    //////// 0L end ////////
 
     // generate the genesis WriteSet
     recovery_owners_operators(
@@ -251,13 +259,10 @@ pub fn encode_recovery_genesis_changeset(
 
     //////// 0L ////////
     println!("OK recovery_owners_operators =============== ");
-
     distribute_genesis_subsidy(&mut session);
     println!("OK Genesis subsidy =============== ");
-
     // 0L todo diem-1.4.1
     // fund_operators(&mut session, validators);
-    //////// 0L end ////////
     
     reconfigure(&mut session);
 
