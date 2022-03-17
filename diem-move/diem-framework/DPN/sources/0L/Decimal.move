@@ -1,4 +1,4 @@
-address 0x1 {
+address DiemFramework {
 module Decimal {
     // The Move Decimal data structure is optimized for readability and compatibility.
     // In particular it is indended for compatibility with the underlying rust_decimal crate https://github.com/paupino/rust-decimal. In that library a new decimal type is initialized with Decimal::from_i128_with_scale(mantissa: i128, scale: u32)
@@ -49,10 +49,10 @@ module Decimal {
 
     public fun new(sign: bool, int: u128, scale: u8): Decimal {
 
-      assert(int < MAX_RUST_DECIMAL_U128, 01);
+      assert!(int < MAX_RUST_DECIMAL_U128, 01);
 
       // check scale < 28
-      assert(scale < 28, 02);
+      assert!(scale < 28, 02);
 
       return Decimal {
         sign: sign,

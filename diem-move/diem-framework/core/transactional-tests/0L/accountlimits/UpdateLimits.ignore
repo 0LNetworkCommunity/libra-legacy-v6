@@ -33,7 +33,7 @@
 //   use DiemFramework::DiemTimestamp;
 //   use DiemFramework::DiemAccount;
 //   use DiemFramework::DiemConfig;
-//   use 0x1::AccountLimits;
+//   use DiemFramework::AccountLimits;
 //   use 0x1::GAS::GAS;
 //   fun main(account: signer) {
 //     let time = DiemTimestamp::now_seconds();
@@ -54,7 +54,7 @@
 // //! sender: alice
 // script {
 //   use DiemFramework::DiemAccount;
-//   use 0x1::AccountLimits;
+//   use DiemFramework::AccountLimits;
 //   use 0x1::GAS::GAS;
 //   fun main(account: signer) {
 //     let with_cap = DiemAccount::extract_withdraw_capability(account);

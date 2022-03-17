@@ -1,11 +1,11 @@
 // Transaction script which miners use to submit proofs.
-address 0x1 {
+address DiemFramework {
 module TowerStateScripts {
 
-use 0x1::Globals;
-use 0x1::TowerState;
-use 0x1::TestFixtures;
-use 0x1::Testnet;
+use DiemFramework::Globals;
+use DiemFramework::TowerState;
+use DiemFramework::TestFixtures;
+use DiemFramework::Testnet;
 
     public(script) fun minerstate_commit_by_operator(
         operator_sig: signer, 
@@ -43,7 +43,7 @@ use 0x1::Testnet;
     }
 
     public(script) fun minerstate_helper(sender: signer) {
-        assert(Testnet::is_testnet(), 01);
+        assert!(Testnet::is_testnet(), 01);
         
         TowerState::test_helper_init_val(
             &sender,

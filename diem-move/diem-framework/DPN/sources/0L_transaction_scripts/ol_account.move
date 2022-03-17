@@ -4,14 +4,14 @@
 // The same algortihm for generating account addresses is available offline. 
 // This transaction confirms the address.
 
-address 0x1 {
+address DiemFramework {
 module AccountScripts {
-    use 0x1::DiemAccount;
-    use 0x1::GAS::GAS;
-    use 0x1::ValidatorConfig;
-    use 0x1::Globals;
-    use 0x1::VDF;
-    use 0x1::Errors;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::GAS::GAS;
+    use DiemFramework::ValidatorConfig;
+    use DiemFramework::Globals;
+    use DiemFramework::VDF;
+    use Std::Errors;
 
     const ACCOUNT_ALREADY_EXISTS: u64 = 0;
 
@@ -22,7 +22,7 @@ module AccountScripts {
         unscaled_value: u64,
     ) {
         // check if the account already exists.
-        assert(!DiemAccount::exists_at(account), Errors::invalid_state(ACCOUNT_ALREADY_EXISTS));
+        assert!(!DiemAccount::exists_at(account), Errors::invalid_state(ACCOUNT_ALREADY_EXISTS));
 
         // IMPORTANT: the human representation of a value is unscaled. The user which expects to send 10 coins, will input that as an unscaled_value. This script converts it to the Move internal scale by multiplying by COIN_SCALING_FACTOR.
         let value = unscaled_value * Globals::get_coin_scaling_factor();
@@ -34,7 +34,7 @@ module AccountScripts {
         );
 
         // Check the account exists and the balance is 0
-        assert(DiemAccount::balance<GAS>(new_account_address) > 0, 01);
+        assert!(DiemAccount::balance<GAS>(new_account_address) > 0, 01);
     }
 
     public(script) fun create_acc_user(
@@ -53,7 +53,7 @@ module AccountScripts {
         );
 
         // Check the account exists and the balance is 0
-        assert(DiemAccount::balance<GAS>(new_account_address) > 0, 01);
+        assert!(DiemAccount::balance<GAS>(new_account_address) > 0, 01);
     }
 
     public(script) fun create_acc_val(
@@ -73,7 +73,7 @@ module AccountScripts {
 
       // check if this account exists
       let (new_account_address, _) = VDF::extract_address_from_challenge(&challenge);
-      // assert(!DiemAccount::exists_at(new_account_address), Errors::invalid_state(ACCOUNT_ALREADY_EXISTS));
+      // assert!(!DiemAccount::exists_at(new_account_address), Errors::invalid_state(ACCOUNT_ALREADY_EXISTS));
 
 
       DiemAccount::create_validator_account_with_proof(
@@ -92,10 +92,10 @@ module AccountScripts {
         );
         
         // Check the account has the Validator role
-        assert(ValidatorConfig::is_valid(new_account_address), 03);
+        assert!(ValidatorConfig::is_valid(new_account_address), 03);
         
         // Check the account exists and the balance is greater than 0
-        assert(DiemAccount::balance<GAS>(new_account_address) > 0, 04);
+        assert!(DiemAccount::balance<GAS>(new_account_address) > 0, 04);
     }
 
 }

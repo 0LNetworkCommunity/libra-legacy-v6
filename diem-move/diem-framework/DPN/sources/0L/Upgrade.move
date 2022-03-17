@@ -2,12 +2,12 @@
 // Upgrade payload
 // File Prefix for errors: 2100
 ///////////////////////////////////////////////////////////////////////////
-address 0x1 {
+address DiemFramework {
 module Upgrade {
-    use 0x1::CoreAddresses;
-    use 0x1::Errors;
-    use 0x1::Signer;
-    use 0x1::Vector;
+    use DiemFramework::CoreAddresses;
+    use Std::Errors;
+    use Std::Signer;
+    use Std::Vector;
 
     /// Structs for UpgradePayload resource
     struct UpgradePayload has key {
@@ -28,23 +28,23 @@ module Upgrade {
 
     // Function code: 01
     public fun initialize(account: &signer) {
-        assert(Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(210001)); 
+        assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_role(210001)); 
         move_to(account, UpgradePayload{payload: x""});
         move_to(account, UpgradeHistory{
             records: Vector::empty<UpgradeBlobs>()},
         );
     }
 
-        // Function code: 02
+    // Function code: 02
     public fun set_update(account: &signer, payload: vector<u8>) acquires UpgradePayload {
-        assert(Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(210002)); 
-        assert(exists<UpgradePayload>(CoreAddresses::DIEM_ROOT_ADDRESS()), Errors::not_published(210002)); 
-        let temp = borrow_global_mut<UpgradePayload>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_role(210002)); 
+        assert!(exists<UpgradePayload>(@DiemRoot), Errors::not_published(210002)); 
+        let temp = borrow_global_mut<UpgradePayload>(@DiemRoot);
         temp.payload = payload;
     }
 
-    use 0x1::Epoch;
-    use 0x1::DiemConfig;
+    use DiemFramework::Epoch;
+    use DiemFramework::DiemConfig;
 
     // private. Can only be called by the VM
     fun upgrade_reconfig(vm: &signer) acquires UpgradePayload {
@@ -59,8 +59,8 @@ module Upgrade {
         // Function code: 03
     fun reset_payload(vm: &signer) acquires UpgradePayload {
         CoreAddresses::assert_vm(vm);
-        assert(exists<UpgradePayload>(CoreAddresses::DIEM_ROOT_ADDRESS()), Errors::not_published(210003)); 
-        let temp = borrow_global_mut<UpgradePayload>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        assert!(exists<UpgradePayload>(@DiemRoot), Errors::not_published(210003)); 
+        let temp = borrow_global_mut<UpgradePayload>(@DiemRoot);
         temp.payload = Vector::empty<u8>();
     }
 
@@ -72,20 +72,20 @@ module Upgrade {
         validators_signed: vector<address>,
         consensus_height: u64,
     ) acquires UpgradeHistory {
-        assert(Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(210004)); 
+        assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_role(210004)); 
         let new_record = UpgradeBlobs {
             upgraded_version: upgraded_version,
             upgraded_payload: upgraded_payload,
             validators_signed: validators_signed,
             consensus_height: consensus_height,
         };
-        let history = borrow_global_mut<UpgradeHistory>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        let history = borrow_global_mut<UpgradeHistory>(@DiemRoot);
         Vector::push_back(&mut history.records, new_record);
     }
 
         // Function code: 05
     public fun retrieve_latest_history(): (u64, vector<u8>, vector<address>, u64) acquires UpgradeHistory {
-        let history = borrow_global<UpgradeHistory>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        let history = borrow_global<UpgradeHistory>(@DiemRoot);
         let len = Vector::length<UpgradeBlobs>(&history.records);
         if (len == 0) {
             return (0, Vector::empty<u8>(), Vector::empty<address>(), 0)
@@ -96,20 +96,20 @@ module Upgrade {
 
         // Function code: 06
     public fun has_upgrade(): bool acquires UpgradePayload {
-        assert(exists<UpgradePayload>(CoreAddresses::DIEM_ROOT_ADDRESS()), Errors::requires_role(210005)); 
-        !Vector::is_empty(&borrow_global<UpgradePayload>(CoreAddresses::DIEM_ROOT_ADDRESS()).payload)
+        assert!(exists<UpgradePayload>(@DiemRoot), Errors::requires_role(210005)); 
+        !Vector::is_empty(&borrow_global<UpgradePayload>(@DiemRoot).payload)
     }
 
         // Function code: 07
     public fun get_payload(): vector<u8> acquires UpgradePayload {
-        assert(exists<UpgradePayload>(CoreAddresses::DIEM_ROOT_ADDRESS()), Errors::requires_role(210006));
-        *&borrow_global<UpgradePayload>(CoreAddresses::DIEM_ROOT_ADDRESS()).payload
+        assert!(exists<UpgradePayload>(@DiemRoot), Errors::requires_role(210006));
+        *&borrow_global<UpgradePayload>(@DiemRoot).payload
     }
 
     //////// FOR E2E Testing ////////
     // NOTE: See file Upgrade.move.e2e
     // Do not delete these lines. Uncomment when needed to generate e2e test fixtures. 
-    // use 0x1::Debug::print;
+    // use DiemFramework::Debug::print;
     // public fun foo() {
     //     print(&0x050D1AC);
     // }

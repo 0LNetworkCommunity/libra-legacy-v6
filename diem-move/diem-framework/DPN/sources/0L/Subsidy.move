@@ -7,23 +7,23 @@
 // File Prefix for errors: 1901
 ///////////////////////////////////////////////////////////////////////////
 
-address 0x1 {
+address DiemFramework {
   module Subsidy {
-    use 0x1::CoreAddresses;
-    use 0x1::Errors;
-    use 0x1::GAS::GAS;
-    use 0x1::Diem;
-    use 0x1::Signer;
-    use 0x1::DiemAccount;
-    use 0x1::Vector;
-    // use 0x1::Stats;
-    use 0x1::ValidatorUniverse;
-    use 0x1::Globals;
-    use 0x1::DiemTimestamp;
-    use 0x1::TransactionFee;
-    use 0x1::ValidatorConfig;
-    use 0x1::TowerState;
-    use 0x1::FixedPoint32;
+    use DiemFramework::CoreAddresses;
+    use Std::Errors;
+    use DiemFramework::GAS::GAS;
+    use DiemFramework::Diem;
+    use Std::Signer;
+    use DiemFramework::DiemAccount;
+    use Std::Vector;
+    // use DiemFramework::Stats;
+    use DiemFramework::ValidatorUniverse;
+    use DiemFramework::Globals;
+    use DiemFramework::DiemTimestamp;
+    use DiemFramework::TransactionFee;
+    use DiemFramework::ValidatorConfig;
+    use DiemFramework::TowerState;
+    use Std::FixedPoint32;
 
     // estimated gas unit cost for proof verification divided coin scaling factor
     // Cost for verification test/easy difficulty: 1173 / 1000000
@@ -73,7 +73,7 @@ address 0x1 {
     public fun calculate_subsidy(vm: &signer, network_density: u64): (u64, u64) {
       CoreAddresses::assert_vm(vm);
       // skip genesis
-      assert(!DiemTimestamp::is_genesis(), Errors::invalid_state(190102));
+      assert!(!DiemTimestamp::is_genesis(), Errors::invalid_state(190102));
 
       // Gets the transaction fees in the epoch
       let txn_fee_amount = TransactionFee::get_amount_to_distribute(vm);
@@ -138,7 +138,7 @@ address 0x1 {
     public fun genesis(vm_sig: &signer) { // Todo: rename to "genesis_deposit" ?
       // Need to check for association or vm account
       let vm_addr = Signer::address_of(vm_sig);
-      assert(vm_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190104));
+      assert!(vm_addr == @DiemRoot, Errors::requires_role(190104));
 
       // Get eligible validators list
       let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
@@ -161,7 +161,7 @@ address 0x1 {
         );
         
         // Confirm the calculations, and that the ending balance is incremented accordingly.
-        assert(
+        assert!(
           DiemAccount::balance<GAS>(node_address) == old_validator_bal + subsidy,
           Errors::invalid_argument(190104)
         );

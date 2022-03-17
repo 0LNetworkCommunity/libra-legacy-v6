@@ -1,8 +1,8 @@
-address 0x1 {
+address DiemFramework {
 module WalletScripts {
 
-    use 0x1::Wallet;
-    use 0x1::DiemAccount;
+    use DiemFramework::Wallet;
+    use DiemFramework::DiemAccount;
 
     public(script) fun set_wallet_type(sender: signer, type_of: u8) {
       if (type_of == 0) {

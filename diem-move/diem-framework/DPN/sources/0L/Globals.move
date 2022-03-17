@@ -4,16 +4,16 @@
 // Error code: 0700
 ///////////////////////////////////////////////////////////////////
 
-address 0x1 {
+address DiemFramework {
 
 /// # Summary 
 /// This module provides global variables and constants that have no specific owner 
 module Globals {
-    use 0x1::Testnet;
-    use 0x1::Errors;
-    use 0x1::StagingNet;
-    use 0x1::Diem;
-    use 0x1::GAS;
+    use DiemFramework::Testnet;
+    use Std::Errors;
+    use DiemFramework::StagingNet;
+    use DiemFramework::Diem;
+    use DiemFramework::GAS;
     
     /// Global constants determining validator settings & requirements 
     /// Some constants need to be changed based on environment; dev, testing, prod.
@@ -85,7 +85,7 @@ module Globals {
     /// Get the constants for the current network 
     fun get_constants(): GlobalConstants {
       // let coin_scale = 1000000; // Diem::scaling_factor<GAS::T>();
-      assert(COIN_SCALING_FACTOR == Diem::scaling_factor<GAS::GAS>(), Errors::invalid_argument(070001));
+      assert!(COIN_SCALING_FACTOR == Diem::scaling_factor<GAS::GAS>(), Errors::invalid_argument(070001));
 
       if (Testnet::is_testnet()) {
         return GlobalConstants {

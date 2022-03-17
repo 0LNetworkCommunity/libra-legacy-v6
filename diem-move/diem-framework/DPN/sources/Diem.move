@@ -1012,7 +1012,7 @@ module DiemFramework::Diem {
         // update the market cap
         assert_is_currency<CoinType>();
         let info = borrow_global_mut<CurrencyInfo<CoinType>>(@CurrencyInfo);
-        assert(info.total_value >= (value as u128), Errors::limit_exceeded(ECURRENCY_INFO));
+        assert!(info.total_value >= (value as u128), Errors::limit_exceeded(ECURRENCY_INFO));
         info.total_value = info.total_value - (value as u128);
 
         // zero and destroy

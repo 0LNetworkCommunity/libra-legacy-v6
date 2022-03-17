@@ -81,7 +81,7 @@ module DiemFramework::ValidatorConfig {
     ) {
         DiemTimestamp::assert_operating();
         Roles::assert_validator_operator(validator_operator_account);
-        assert(
+        assert!(
             !has_validator_operator_config(Signer::address_of(validator_operator_account)),
             Errors::already_published(EVALIDATOR_OPERATOR_CONFIG)
         );
@@ -119,7 +119,7 @@ module DiemFramework::ValidatorConfig {
     ) {
         DiemTimestamp::assert_operating();
         Roles::assert_validator(validator_account);
-        assert(
+        assert!(
             !exists<ValidatorConfig>(Signer::address_of(validator_account)),
             Errors::already_published(EVALIDATOR_CONFIG)
         );
@@ -291,12 +291,12 @@ module DiemFramework::ValidatorConfig {
         fullnode_network_addresses: vector<u8>,
     ) acquires ValidatorConfig {
         let validator_addr = Signer::address_of(validator_account);
-        assert(
+        assert!(
             Signature::ed25519_validate_pubkey(copy consensus_pubkey),
             Errors::invalid_argument(EINVALID_CONSENSUS_KEY)
         );
         // // TODO(valerini): verify the proof of posession for consensus_pubkey
-        assert(exists_config(validator_addr), Errors::not_published(EVALIDATOR_CONFIG));
+        assert!(exists_config(validator_addr), Errors::not_published(EVALIDATOR_CONFIG));
         let t_ref = borrow_global_mut<ValidatorConfig>(validator_addr);
         t_ref.config = Option::some(Config {
             consensus_pubkey,

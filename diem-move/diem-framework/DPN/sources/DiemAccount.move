@@ -34,15 +34,15 @@ module DiemFramework::DiemAccount {
     use Std::Signer;
     use Std::Vector;
     //////// 0L ////////
-    use 0x1::VDF;
-    use 0x1::Globals;
-    use 0x1::TowerState;
-    use 0x1::Testnet::is_testnet;
-    use 0x1::FIFO;
+    use DiemFramework::VDF;
+    use DiemFramework::Globals;
+    use DiemFramework::TowerState;
+    use DiemFramework::Testnet::is_testnet;
+    use DiemFramework::FIFO;
     use Std::FixedPoint32;
-    use 0x1::GAS::GAS;
-    use 0x1::ValidatorUniverse;
-    use 0x1::Wallet;    
+    use DiemFramework::GAS::GAS;
+    use DiemFramework::ValidatorUniverse;
+    use DiemFramework::Wallet;    
 
     friend DiemFramework::AccountAdministrationScripts;
 
@@ -193,7 +193,7 @@ module DiemFramework::DiemAccount {
     const EACCOUNT_OPERATIONS_CAPABILITY: u64 = 120122;
     /// The `DiemWriteSetManager` was not in the required state
     const EWRITESET_MANAGER: u64 = 120123;
-    /// An account cannot be created at the reserved core code address of 0x1
+    /// An account cannot be created at the reserved core code address of DiemFramework
     const ECANNOT_CREATE_AT_CORE_CODE: u64 = 120124;
     /////// 0L end /////////
 
@@ -400,11 +400,11 @@ module DiemFramework::DiemAccount {
     //     sender: &signer, 
     //     new_percentage: u64,
     // ) acquires EscrowList {
-    //     assert(new_percentage >= 50, 1);
-    //     assert(new_percentage <= 100, 1);
+    //     assert!(new_percentage >= 50, 1);
+    //     assert!(new_percentage <= 100, 1);
 
     //     let escrow_list = &mut borrow_global_mut<EscrowList<Token>>(
-    //         CoreAddresses::DIEM_ROOT_ADDRESS()
+    //         @DiemRoot
     //     ).accounts;
     //     let account = Signer::address_of(sender);
     //     let idx = 0;
@@ -418,7 +418,7 @@ module DiemFramework::DiemAccount {
     //         idx = idx + 1;
     //     };
     //     // Should never reach this point, if you do, autopay does not exist for the account.
-    //     assert(false, 1);
+    //     assert!(false, 1);
     // }
 
     /// Initialize this module. This is only callable from genesis.
@@ -553,10 +553,10 @@ module DiemFramework::DiemAccount {
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
         // check the validator is in set before creating
-        assert(DiemSystem::is_validator(sender_addr), Errors::limit_exceeded(120101));
-        assert(TowerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
+        assert!(DiemSystem::is_validator(sender_addr), Errors::limit_exceeded(120101));
+        assert!(TowerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120102));
         // Check there's enough balance for bootstrapping both operator and validator account
-        assert(
+        assert!(
             balance<GAS>(sender_addr) > 2 * BOOTSTRAP_COIN_VALUE, 
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
@@ -584,7 +584,7 @@ module DiemFramework::DiemAccount {
         };
 
         // TODO: Perhaps this needs to be moved to the epoch boundary, so that it is only the VM which can escalate these privileges.
-        Roles::new_validator_role_with_proof(&new_signer, &create_signer(CoreAddresses::DIEM_ROOT_ADDRESS()));
+        Roles::new_validator_role_with_proof(&new_signer, &create_signer(@DiemRoot));
         Event::publish_generator(&new_signer);
         ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
         add_currencies_for_account<GAS>(&new_signer, false);
@@ -652,9 +652,9 @@ module DiemFramework::DiemAccount {
     ):address acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWalletList { //////// 0L ////////
         let sender_addr = Signer::address_of(sender);
         // Rate limit spam accounts.
-        assert(TowerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120103));
+        assert!(TowerState::can_create_val_account(sender_addr), Errors::limit_exceeded(120103));
         // Check there's enough balance for bootstrapping both operator and validator account
-        assert(
+        assert!(
             balance<GAS>(sender_addr) > 2 * BOOTSTRAP_COIN_VALUE, 
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
@@ -662,8 +662,8 @@ module DiemFramework::DiemAccount {
         let (new_account_address, _auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
 
-        assert(exists_at(new_account_address), Errors::not_published(EACCOUNT));
-        // assert(TowerState::is_init(new_account_address), 120104);
+        assert!(exists_at(new_account_address), Errors::not_published(EACCOUNT));
+        // assert!(TowerState::is_init(new_account_address), 120104);
         // verifies the VDF proof, since we are not calling TowerState init.
 
         // if the account already has a tower started just verify the block zero submitted
@@ -675,7 +675,7 @@ module DiemFramework::DiemAccount {
               &security,
           );
 
-          assert(valid, Errors::invalid_argument(120105));
+          assert!(valid, Errors::invalid_argument(120105));
         } else {
           // otherwise initialize this TowerState with a block 0.
 
@@ -691,7 +691,7 @@ module DiemFramework::DiemAccount {
 
         // TODO: Perhaps this needs to be moved to the epoch boundary, so that it is only the VM which can escalate these privileges.
         // Upgrade the user
-        Roles::upgrade_user_to_validator(&new_signer, &create_signer(CoreAddresses::DIEM_ROOT_ADDRESS()));
+        Roles::upgrade_user_to_validator(&new_signer, &create_signer(@DiemRoot));
         // Event::publish_generator(&new_signer);
         ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
 
@@ -1043,7 +1043,7 @@ module DiemFramework::DiemAccount {
 
         /////// 0L /////////
         // Do not attempt sending to a payee that does not have balance
-        assert(exists<Balance<Token>>(payee), Errors::not_published(EPAYER_DOESNT_HOLD_CURRENCY));
+        assert!(exists<Balance<Token>>(payee), Errors::not_published(EPAYER_DOESNT_HOLD_CURRENCY));
         
         // Make sure that this withdrawal is compliant with the limits on
         // the account if it's a inter-VASP transfer,
@@ -1115,7 +1115,7 @@ module DiemFramework::DiemAccount {
 
         /////// 0L /////////
         // Do not attempt sending to a payee that does not have balance
-        assert(exists<Balance<Token>>(payee), Errors::not_published(EPAYER_DOESNT_HOLD_CURRENCY));
+        assert!(exists<Balance<Token>>(payee), Errors::not_published(EPAYER_DOESNT_HOLD_CURRENCY));
 
         let account_balance = borrow_global_mut<Balance<Token>>(payer);
         // Load the payer's account and emit an event to record the withdrawal
@@ -1252,7 +1252,7 @@ module DiemFramework::DiemAccount {
         /////// 0L /////////
         // Community wallets have own transfer mechanism.
         let community_wallets = Wallet::get_comm_list();
-        assert(
+        assert!(
             !Vector::contains(&community_wallets, &sender_addr), 
             Errors::limit_exceeded(EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET)
         );
@@ -1261,7 +1261,7 @@ module DiemFramework::DiemAccount {
         if (is_slow(sender_addr) && !DiemConfig::check_transfer_enabled() ) {
           // if transfers are not enabled for slow wallets
           // then the tx should fail
-            assert(
+            assert!(
                 false, 
                 Errors::limit_exceeded(ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE)
             );
@@ -1333,16 +1333,16 @@ module DiemFramework::DiemAccount {
     //     metadata_signature: vector<u8>,
     //     vm: &signer
     // ) acquires DiemAccount , Balance, AccountOperationsCapability, AutopayEscrow, CumulativeDeposits, SlowWallet { //////// 0L ////////
-    //     if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
+    //     if (Signer::address_of(vm) != @DiemRoot) return;
     //     if (amount == 0) return;
 
     //     // Check payee can receive funds in this currency.
     //     if (!exists<Balance<Token>>(payee)) return; 
-    //     // assert(exists<Balance<Token>>(payee), Errors::not_published(EROLE_CANT_STORE_BALANCE));
+    //     // assert!(exists<Balance<Token>>(payee), Errors::not_published(EROLE_CANT_STORE_BALANCE));
 
     //     // Check there is a payer
     //     if (!exists_at(payer)) return; 
-    //     // assert(exists_at(payer), Errors::not_published(EACCOUNT));
+    //     // assert!(exists_at(payer), Errors::not_published(EACCOUNT));
 
     //     // Check the payer is in possession of withdraw token.
     //     if (delegated_withdraw_capability(payer)) return; 
@@ -1382,7 +1382,7 @@ module DiemFramework::DiemAccount {
     public fun process_community_wallets(
         vm: &signer, epoch: u64
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
-        if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
+        if (Signer::address_of(vm) != @DiemRoot) return;
         
         // Migrate on the fly if state doesn't exist on upgrade.
         if (!Wallet::is_init_comm()) {
@@ -1420,17 +1420,17 @@ module DiemFramework::DiemAccount {
         metadata_signature: vector<u8>,
         vm: &signer
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
-        if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
+        if (Signer::address_of(vm) != @DiemRoot) return;
         // don't try to send a 0 balance, will halt.
         if (amount < 1) return;
 
         // Check payee can receive funds in this currency.
         if (!exists<Balance<Token>>(payee)) return; 
-        // assert(exists<Balance<Token>>(payee), Errors::not_published(EROLE_CANT_STORE_BALANCE));
+        // assert!(exists<Balance<Token>>(payee), Errors::not_published(EROLE_CANT_STORE_BALANCE));
 
         // Check there is a payer
         if (!exists_at(payer)) return; 
-        // assert(exists_at(payer), Errors::not_published(EACCOUNT));
+        // assert!(exists_at(payer), Errors::not_published(EACCOUNT));
 
         // Check the payer is in possession of withdraw token.
         if (delegated_withdraw_capability(payer)) return; 
@@ -1470,7 +1470,7 @@ module DiemFramework::DiemAccount {
         metadata: vector<u8>,
         vm: &signer
     ) acquires DiemAccount, Balance, AccountOperationsCapability { 
-        if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
+        if (Signer::address_of(vm) != @DiemRoot) return;
         // don't try to send a 0 balance, will halt.
         if (amount < 1) return; 
         // Check there is a payer and has balance
@@ -1515,7 +1515,7 @@ module DiemFramework::DiemAccount {
         /////// 0L /////////
         // check amount if it is a slow wallet
         if (is_slow(*&cap.account_address)) {
-          assert(
+          assert!(
                 amount < unlocked_amount(*&cap.account_address),
                 Errors::limit_exceeded(EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT)
             );
@@ -1667,13 +1667,13 @@ module DiemFramework::DiemAccount {
         let balance_coin = &mut account_balance.coin;
 
         // value needs to be greater than boostrapping value
-        assert(
+        assert!(
             value >= BOOTSTRAP_COIN_VALUE,
             Errors::limit_exceeded(EBELOW_MINIMUM_VALUE_BOOTSTRAP_COIN)
         );
 
         // Doubly check balance exists.
-        assert(
+        assert!(
             Diem::value(balance_coin) > value,
             Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
         );
@@ -3419,13 +3419,14 @@ module DiemFramework::DiemAccount {
         metadata_signature: vector<u8>
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         let sender = Signer::address_of(vm);
-        assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), 4010);
+        assert!(sender == @DiemRoot, 4010);
         deposit(
-            CoreAddresses::DIEM_ROOT_ADDRESS(),
+            @DiemRoot,
             payee,
             to_deposit,
             metadata,
-            metadata_signature
+            metadata_signature,
+            false // 0L todo diem-1.4.1 - new patch, needs review
         );
     }
     
@@ -3589,7 +3590,7 @@ module DiemFramework::DiemAccount {
     // TODO: This is scary. How else to lock down this function for testing only?
     public fun test_helper_create_signer(vm: &signer, addr: address): signer {
         CoreAddresses::assert_diem_root(vm);
-        assert(is_testnet(), 120102011021);
+        assert!(is_testnet(), 120102011021);
         create_signer(addr)
     }
 }

@@ -4,15 +4,15 @@
 // Error code for File: 0320
 /////////////////////////////////////////////////////////////////////////
 
-address 0x1 {
+address DiemFramework {
 
 /// # Summary
 /// Implementation of a FIFO that utilizes two vectors
 /// Achieves Amortized O(1) cost per operation 
 /// CAUTION: In worst case this can result in O(n) cost, adjust gas allowance accordingly 
 module FIFO {
-    use 0x1::Vector;
-    use 0x1::Errors;
+    use Std::Vector;
+    use Std::Errors;
 
     const ACCESSING_EMPTY_FIFO: u64 = 032001;
 
@@ -82,7 +82,7 @@ module FIFO {
     fun perform_swap<Element>(v: &mut FIFO<Element>) {
         if (Vector::length<Element>(& v.outgoing) == 0) {
             let len = Vector::length<Element>(&v.incoming);
-            assert(len > 0, Errors::invalid_state(ACCESSING_EMPTY_FIFO));
+            assert!(len > 0, Errors::invalid_state(ACCESSING_EMPTY_FIFO));
             //If outgoing is empty, pop all of incoming into outgoing
             while (len > 0) {
                 Vector::push_back<Element>(&mut v.outgoing, 

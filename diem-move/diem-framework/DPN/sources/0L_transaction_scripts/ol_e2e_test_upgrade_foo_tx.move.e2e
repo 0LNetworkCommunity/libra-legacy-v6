@@ -12,10 +12,10 @@
 // Must update the compiled upgrade_payload/stdlib.mv file 
 // everytime after an actual upgrade to include this script, or the e2e 
 // test will fail
-address 0x1 {
+address DiemFramework {
 module OracleUpgradeFooTx {
-    use 0x1::Upgrade;
-    use 0x1::Debug::print;
+    use DiemFramework::Upgrade;
+    use DiemFramework::Debug::print;
 
     public(script) fun ol_oracle_upgrade_foo_tx () {
         print(&0x0000000000000000000000000011e110); // Bello!

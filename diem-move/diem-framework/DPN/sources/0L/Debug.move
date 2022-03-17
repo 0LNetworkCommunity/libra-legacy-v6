@@ -1,4 +1,4 @@
-address 0x1 {
+address DiemFramework {
 
 /// Module providing debug functionality.
 module Debug {

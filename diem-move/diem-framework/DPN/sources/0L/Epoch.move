@@ -2,17 +2,17 @@
 // Error Code: 0500
 /////////////////////////////////////////////////////////////////////////
 
-address 0x1 {
+address DiemFramework {
 
 /// # Summary 
 /// This module allows the root to determine epoch boundaries, triggering 
 /// epoch change operations (e.g. updating the validator set)
 module Epoch {
-  use 0x1::DiemTimestamp;
-  use 0x1::CoreAddresses;
-  use 0x1::Globals;
-  use 0x1::DiemConfig;
-  use 0x1::Roles;
+  use DiemFramework::DiemTimestamp;
+  use DiemFramework::CoreAddresses;
+  use DiemFramework::Globals;
+  use DiemFramework::DiemConfig;
+  use DiemFramework::Roles;
 
   /// Contains timing info for the current epoch
   /// epoch: the epoch number
@@ -42,7 +42,7 @@ module Epoch {
   /// Simply checks if the elapsed time is greater than the epoch time 
   public fun epoch_finished(): bool acquires Timer {
       let epoch_secs = Globals::get_epoch_length();
-      let time = borrow_global<Timer>(CoreAddresses::DIEM_ROOT_ADDRESS());
+      let time = borrow_global<Timer>(@DiemRoot);
       DiemTimestamp::now_seconds() > (epoch_secs + time.seconds_start)
   }
 
@@ -51,7 +51,7 @@ module Epoch {
   /// Called by root in the reconfiguration process
   public fun reset_timer(vm: &signer, height: u64) acquires Timer {
       Roles::assert_diem_root(vm);
-      let time = borrow_global_mut<Timer>(CoreAddresses::DIEM_ROOT_ADDRESS());
+      let time = borrow_global_mut<Timer>(@DiemRoot);
       time.epoch = DiemConfig::get_current_epoch() + 1;
       time.height_start = height;
       time.seconds_start = DiemTimestamp::now_seconds();
@@ -60,14 +60,14 @@ module Epoch {
   /// Accessor Function, returns the time (in seconds) of the start of the current epoch
   public fun get_timer_seconds_start(vm: &signer):u64 acquires Timer {
       Roles::assert_diem_root(vm);
-      let time = borrow_global<Timer>(CoreAddresses::DIEM_ROOT_ADDRESS());
+      let time = borrow_global<Timer>(@DiemRoot);
       time.seconds_start
   }
 
   /// Accessor Function, returns the block height of the start of the current epoch
   public fun get_timer_height_start(vm: &signer):u64 acquires Timer {
       Roles::assert_diem_root(vm);
-      let time = borrow_global<Timer>(CoreAddresses::DIEM_ROOT_ADDRESS());
+      let time = borrow_global<Timer>(@DiemRoot);
       time.height_start
   }
 }

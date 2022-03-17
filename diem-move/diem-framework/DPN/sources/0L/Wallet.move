@@ -1,13 +1,13 @@
-address 0x1 {
+address DiemFramework {
 module Wallet {
-    use 0x1::CoreAddresses;
-    use 0x1::Vector;
-    use 0x1::Signer;
-    use 0x1::Errors;
-    use 0x1::DiemConfig;
-    use 0x1::Option::{Self,Option};
-    use 0x1::DiemSystem;
-    use 0x1::NodeWeight;
+    use DiemFramework::CoreAddresses;
+    use Std::Vector;
+    use Std::Signer;
+    use Std::Errors;
+    use DiemFramework::DiemConfig;
+    use Std::Option::{Self,Option};
+    use DiemFramework::DiemSystem;
+    use DiemFramework::NodeWeight;
 
     const ERR_PREFIX: u64 = 023;
 
@@ -128,11 +128,11 @@ module Wallet {
       // TODO: This function should check if the account is a slow wallet before sending
       // but there's a circular dependency with DiemAccount which has the slow wallet struct.
       // curretly we move that check to the transaction script to initialize the payment.
-      // assert(DiemAccount::is_slow(payee), EIS_NOT_SLOW_WALLET);
+      // assert!(DiemAccount::is_slow(payee), EIS_NOT_SLOW_WALLET);
 
       let sender_addr = Signer::address_of(sender);
       let list = get_comm_list();
-      assert(
+      assert!(
         Vector::contains<address>(&list, &sender_addr),
         Errors::requires_role(ERR_PREFIX + 001)
       );
@@ -171,7 +171,7 @@ module Wallet {
     uid: u64
   ) acquires CommunityTransfers, CommunityFreeze {
     let addr = Signer::address_of(sender);
-    assert(
+    assert!(
       DiemSystem::is_validator(addr),
       Errors::requires_role(ERR_PREFIX + 001)
     );

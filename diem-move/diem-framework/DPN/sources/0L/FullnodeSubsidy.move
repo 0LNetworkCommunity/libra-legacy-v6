@@ -7,14 +7,14 @@
 // File Prefix for errors: 1901
 ///////////////////////////////////////////////////////////////////////////
 
-address 0x1 {
+address DiemFramework {
   module FullnodeSubsidy {
-    use 0x1::CoreAddresses;
-    use 0x1::GAS::GAS;
-    use 0x1::Diem;
-    use 0x1::DiemAccount;
-    use 0x1::DiemSystem;
-    use 0x1::TowerState;
+    use DiemFramework::CoreAddresses;
+    use DiemFramework::GAS::GAS;
+    use DiemFramework::Diem;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::TowerState;
 
     public fun get_proof_price(one_val_subsidy: u64): u64 {
 

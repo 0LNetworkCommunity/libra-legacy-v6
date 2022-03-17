@@ -28,7 +28,7 @@ fun main(account: signer) {
 // //! sender: diemroot
 // //! gas-currency: GAS
 // script {
-// use 0x1::Diem;
+// use DiemFramework::Diem;
 // use DiemFramework::DiemAccount;
 // use 0x1::GAS;
 // ;

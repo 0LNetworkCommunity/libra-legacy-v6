@@ -6,13 +6,13 @@
 
 // THe module stores the last receipt of payment to an account (if the user chooses to document the receipt), in addition the running cumulative payments to an account. This can be used by smart contracts to prove payments interactively, event when a payment is not part of an atomic transaction involving the smart contract. E.g. when an autopay transaction happens a payment to a community wallet can have a receipt for later use in a smart contract.
 
-address 0x1 {
+address DiemFramework {
 
 module Receipts {
-  use 0x1::Vector;
-  use 0x1::DiemTimestamp;
-  use 0x1::Signer;
-  use 0x1::CoreAddresses;
+  use Std::Vector;
+  use DiemFramework::DiemTimestamp;
+  use Std::Signer;
+  use DiemFramework::CoreAddresses;
 
     struct UserReceipts has key {
       destination: vector<address>,

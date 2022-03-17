@@ -1,9 +1,9 @@
-address 0x1 {
+address DiemFramework {
 module AutoPayScripts {
 
-    use 0x1::AutoPay;
-    use 0x1::Signer;
-    use 0x1::Errors;
+    use DiemFramework::AutoPay;
+    use Std::Signer;
+    use Std::Errors;
 
     const EAUTOPAY_NOT_ENABLED: u64 = 01001;
 
@@ -13,7 +13,7 @@ module AutoPayScripts {
         if (!AutoPay::is_enabled(account)) {
             AutoPay::enable_autopay(&sender);
         };
-        assert(AutoPay::is_enabled(account), 0);
+        assert!(AutoPay::is_enabled(account), 0);
     }
 
     public(script) fun autopay_disable(sender: signer) {
@@ -22,7 +22,7 @@ module AutoPayScripts {
         if (AutoPay::is_enabled(account)) {
             AutoPay::disable_autopay(&sender);
         };
-        assert(!AutoPay::is_enabled(account), 010001);
+        assert!(!AutoPay::is_enabled(account), 010001);
     }
 
     public(script) fun autopay_create_instruction(
@@ -36,7 +36,7 @@ module AutoPayScripts {
         let account = Signer::address_of(&sender);
         if (!AutoPay::is_enabled(account)) {
             AutoPay::enable_autopay(&sender);
-            assert(
+            assert!(
                 AutoPay::is_enabled(account), 
                 Errors::invalid_state(EAUTOPAY_NOT_ENABLED)
             );

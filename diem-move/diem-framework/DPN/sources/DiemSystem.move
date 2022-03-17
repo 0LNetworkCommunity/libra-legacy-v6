@@ -18,10 +18,10 @@ module DiemFramework::DiemSystem {
     use Std::Signer;
     use Std::Vector;
     //////// 0L ////////
-    use 0x1::FixedPoint32;
-    use 0x1::Stats;
-    use 0x1::Cases;
-    use 0x1::NodeWeight;
+    use Std::FixedPoint32;
+    use DiemFramework::Stats;
+    use DiemFramework::Cases;
+    use DiemFramework::NodeWeight;
 
     /// Information about a Validator Owner.
     struct ValidatorInfo has copy, drop, store {
@@ -705,7 +705,7 @@ module DiemFramework::DiemSystem {
         new_validators: vector<address>
     ) acquires CapabilityHolder {
         DiemTimestamp::assert_operating();
-        assert(Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(120001));
+        assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_role(120001));
 
         // Either check for each validator and add/remove them or clear the current list and append the list.
         // The first way might be computationally expensive, so I choose to go with second approach.
@@ -720,7 +720,7 @@ module DiemFramework::DiemSystem {
             let account_address = *(Vector::borrow<address>(&new_validators, index));
 
             // A prospective validator must have a validator config resource
-            assert(ValidatorConfig::is_valid(account_address), Errors::invalid_argument(EINVALID_PROSPECTIVE_VALIDATOR));
+            assert!(ValidatorConfig::is_valid(account_address), Errors::invalid_argument(EINVALID_PROSPECTIVE_VALIDATOR));
                         
             if (!is_validator(account_address)) {
                 add_validator(account, account_address);
@@ -740,9 +740,9 @@ module DiemFramework::DiemSystem {
         };
 
         let next_count = Vector::length<ValidatorInfo>(&next_epoch_validators);
-        assert(next_count > 0, Errors::invalid_argument(120001) );
-        // Transaction::assert(next_count > n, 90000000002 );
-        assert(next_count == n, Errors::invalid_argument(1200011) );
+        assert!(next_count > 0, Errors::invalid_argument(120001) );
+        // Transaction::assert!(next_count > n, 90000000002 );
+        assert!(next_count == n, Errors::invalid_argument(1200011) );
 
         // We have vector of validators - updated!
         // Next, let us get the current validator set for the current parameters
@@ -789,7 +789,7 @@ module DiemFramework::DiemSystem {
              k = k + 1;
         };
 
-        assert(Vector::length(&compliant_nodes) == Vector::length(&fee_ratios),Errors::invalid_argument(120002) );
+        assert!(Vector::length(&compliant_nodes) == Vector::length(&fee_ratios),Errors::invalid_argument(120002) );
 
         (compliant_nodes, fee_ratios)
     }

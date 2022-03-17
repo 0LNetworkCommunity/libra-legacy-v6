@@ -25,17 +25,17 @@ module DiemFramework::Genesis {
     use DiemFramework::ValidatorOperatorConfig;
     use Std::Signer;
     use Std::Vector;
-    use 0x1::Stats;
-    use 0x1::ValidatorUniverse;
-    use 0x1::GAS;
-    use 0x1::AutoPay;
-    use 0x1::Oracle;
+    use DiemFramework::Stats;
+    use DiemFramework::ValidatorUniverse;
+    use DiemFramework::GAS;
+    use DiemFramework::AutoPay;
+    use DiemFramework::Oracle;
     use Std::Hash;
-    // use 0x1::FullnodeSubsidy;
-    use 0x1::Epoch;
-    use 0x1::TowerState;
-    use 0x1::Wallet;
-    use 0x1::Migrations;    
+    // use DiemFramework::FullnodeSubsidy;
+    use DiemFramework::Epoch;
+    use DiemFramework::TowerState;
+    use DiemFramework::Wallet;
+    use DiemFramework::Migrations;    
 
     /// Initializes the Diem framework.
     fun initialize(
@@ -52,10 +52,10 @@ module DiemFramework::Genesis {
         consensus_config: vector<u8>,
     ) {
         initialize_internal(
-            &dr_account,
+            // &dr_account, /////// 0L /////////
             &tc_account,
             dr_auth_key,
-            tc_auth_key,
+            // tc_auth_key, /////// 0L /////////
             initial_script_allow_list,
             is_open_module,
             instruction_schedule,

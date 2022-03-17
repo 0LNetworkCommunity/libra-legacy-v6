@@ -8,6 +8,7 @@ module DiemFramework::AccountLimits {
     use DiemFramework::DiemConfig;
     friend DiemFramework::XDX;
     friend DiemFramework::XUS;
+    friend DiemFramework::GAS;
 
     /// An operations capability that restricts callers of this module since
     /// the operations can mutate account states.
@@ -187,11 +188,11 @@ module DiemFramework::AccountLimits {
         to_limit: &signer,
         limit_address: address,
     ) {
-        assert(
+        assert!(
             exists<LimitsDefinition<CoinType>>(limit_address),
             Errors::not_published(ELIMITS_DEFINITION)
         );
-        assert(
+        assert!(
             !exists<Window<CoinType>>(Signer::address_of(to_limit)),
             Errors::already_published(EWINDOW)
         );
@@ -299,7 +300,7 @@ module DiemFramework::AccountLimits {
         let sender_addr = Signer::address_of(account);
         // As we don't have Optionals for txn scripts, in update_account_limit_definition.move
         // we use 0 value to represent a None (ie no update to that variable)
-        assert(
+        assert!(
             !exists<LimitsDefinition<CoinType>>(sender_addr),
             Errors::already_published(ELIMITS_DEFINITION)
         );

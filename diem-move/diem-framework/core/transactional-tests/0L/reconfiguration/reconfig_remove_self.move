@@ -135,7 +135,7 @@ script {
 //! sender: carol
 script {
 use 0x1::TowerState;
-// use 0x1::DiemConfig;
+// use DiemFramework::DiemConfig;
 fun main(sender: signer) {
     // Mock some mining so carol can send rejoin tx
     TowerState::test_helper_mock_mining(&sender, 100);

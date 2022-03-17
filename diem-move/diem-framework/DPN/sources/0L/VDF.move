@@ -3,7 +3,7 @@
 // difficulty is the amount of work/time the vdf proof ran, usually milliseconds. Is an integer (e.g. '100' milliseconds)
 // alleged_solution is the result of the proof that was run on the user's computer of type Vec<u8>. (e.g. '005271e8f9ab2eb')
 
-address 0x1 {
+address DiemFramework {
   module VDF {
 
       // verifies a VDF proof with security parameters.

@@ -1,8 +1,8 @@
 // DEMOWARE: this is to test the Decimal implementation for curved bonding cases.
-address 0x1 {
+address DiemFramework {
 module Bonding {
-  use 0x1::Decimal;
-  use 0x1::Debug::print;
+  use DiemFramework::Decimal;
+  use DiemFramework::Debug::print;
 
   struct CurveState has key {
     is_deprecated: bool,
@@ -28,7 +28,7 @@ module Bonding {
     supply_init: u128,
   ) {
     // let deposit_value = Diem::value<XUS>(&deposit);
-    assert(deposit > 0, 7357001);
+    assert!(deposit > 0, 7357001);
 
     let init_state = CurveState {
       is_deprecated: false, // deprecate mode
@@ -91,12 +91,12 @@ module Bonding {
   ///////// API /////////
   // this simulates the depositing and getting a minted token out, but just using integers, not coin types for now.
   public fun test_bond_to_mint(_sender: &signer, service_addr: address, deposit: u128): u128 acquires CurveState {
-    assert(exists<CurveState>(service_addr), 73570002);
+    assert!(exists<CurveState>(service_addr), 73570002);
     let state = borrow_global_mut<CurveState>(service_addr);
 
     let post_supply = deposit_calc(deposit, state.reserve, state.supply_issued);
     print(&post_supply);
-    assert(post_supply > state.supply_issued, 73570003);
+    assert!(post_supply > state.supply_issued, 73570003);
     let mint = post_supply - state.supply_issued;
     print(&mint);
     // update the new curve state
@@ -108,10 +108,10 @@ module Bonding {
 
 //   public fun burn_to_withdraw(sender: &signer, service_addr: address, burn_value: u128):Decimal acquires CurveState, Token {
 
-//     assert(exists<CurveState>(service_addr), 73570002);
+//     assert!(exists<CurveState>(service_addr), 73570002);
 //     let sender_addr = Signer::address_of(sender);
-//     assert(exists<Token>(sender_addr), 73570003);
-//     assert(Coin::balance(sender_addr) >= burn_value, 73570004);
+//     assert!(exists<Token>(sender_addr), 73570003);
+//     assert!(Coin::balance(sender_addr) >= burn_value, 73570004);
 
 //     let state = borrow_global_mut<CurveState>(service_addr);
 

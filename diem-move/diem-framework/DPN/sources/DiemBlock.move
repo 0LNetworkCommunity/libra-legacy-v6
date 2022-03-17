@@ -8,7 +8,7 @@
 // Round 2
 // On the Rust side, every round 2, is an Upgrade Tick. That's when the VM checks
 // if there are upgrade proposals that have reached consensus, and if so and there is an 
-// upgrade payload available (binary) then a writeset of that binary is executed and the 0x1 
+// upgrade payload available (binary) then a writeset of that binary is executed and the DiemFramework 
 // address is overwritten with the upgrade binary.
 // Round 3
 // In Move, we check if we are in a Migrate Tick, which is every round 3. (TODO: should this be 2?). 
@@ -24,14 +24,14 @@ module DiemFramework::DiemBlock {
     use Std::Errors;
     use Std::Event;
     //////// 0L ////////
-    use 0x1::EpochBoundary;
-    use 0x1::Stats;
-    use 0x1::AutoPay;
-    use 0x1::Epoch;
-    use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
-    use 0x1::Migrations;
-    use 0x1::MigrateTowerCounter;    
+    use DiemFramework::EpochBoundary;
+    use DiemFramework::Stats;
+    use DiemFramework::AutoPay;
+    use DiemFramework::Epoch;
+    use DiemFramework::GAS::GAS;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::Migrations;
+    use DiemFramework::MigrateTowerCounter;    
 
     struct BlockMetadata has key {
         /// Height of the current block

@@ -4,14 +4,14 @@
 // Error code: 1905
 /////////////////////////////////////////////////////////////////////////
 
-address 0x1 {
+address DiemFramework {
   module Audit {
-    use 0x1::ValidatorConfig;
-    use 0x1::DiemAccount;
-    // use 0x1::GAS::GAS;
-    use 0x1::AutoPay;
-    use 0x1::TowerState;
-    use 0x1::Testnet;
+    use DiemFramework::ValidatorConfig;
+    use DiemFramework::DiemAccount;
+    // use DiemFramework::GAS::GAS;
+    use DiemFramework::AutoPay;
+    use DiemFramework::TowerState;
+    use DiemFramework::Testnet;
 
     public fun val_audit_passing(val: address): bool {
       // has valid configs
@@ -35,7 +35,7 @@ address 0x1 {
 
     ////////// TEST HELPERS
     public fun test_helper_make_passing(account: &signer){
-      assert(Testnet::is_testnet(), 1905001);
+      assert!(Testnet::is_testnet(), 1905001);
       AutoPay::enable_autopay(account);
     }
   }

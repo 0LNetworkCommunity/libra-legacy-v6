@@ -51,7 +51,7 @@ module DiemFramework::ValidatorOperatorConfig {
     ) {
         DiemTimestamp::assert_operating();
         Roles::assert_validator_operator(validator_operator_account);
-        assert(
+        assert!(
             !has_validator_operator_config(Signer::address_of(validator_operator_account)),
             Errors::already_published(EVALIDATOR_OPERATOR_CONFIG)
         );

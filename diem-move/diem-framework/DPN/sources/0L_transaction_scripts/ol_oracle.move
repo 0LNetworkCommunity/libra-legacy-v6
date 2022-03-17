@@ -1,6 +1,6 @@
-address 0x1 {
+address DiemFramework {
 module OracleScripts {
-    use 0x1::Oracle;
+    use DiemFramework::Oracle;
 
     public(script) fun ol_oracle_tx(sender: signer, id: u64, data: vector<u8>) {
         Oracle::handler(&sender, id, data);

@@ -1,7 +1,7 @@
 /// Publishes configuration information for validators, and issues reconfiguration events
 /// to synchronize configuration changes for the validators.
 module DiemFramework::DiemConfig {
-    friend 0x1::Upgrade;
+    friend DiemFramework::Upgrade;
 
     use DiemFramework::CoreAddresses;
     use DiemFramework::DiemTimestamp;
@@ -9,7 +9,7 @@ module DiemFramework::DiemConfig {
     use Std::Errors;
     use Std::Event;
     use Std::Signer;
-    use 0x1::Testnet;    
+    use DiemFramework::Testnet;    
     friend DiemFramework::DiemVersion;
     friend DiemFramework::RegisteredCurrencies;
     friend DiemFramework::DiemTransactionPublishingOption;
@@ -396,8 +396,8 @@ module DiemFramework::DiemConfig {
     /// this is used only in upgrade scenarios.
     public(friend) fun upgrade_reconfig(vm: &signer) acquires Configuration {
         CoreAddresses::assert_vm(vm);
-        assert(exists<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS()), Errors::not_published(ECONFIGURATION));
-        let config_ref = borrow_global_mut<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        assert!(exists<Configuration>(@DiemRoot), Errors::not_published(ECONFIGURATION));
+        let config_ref = borrow_global_mut<Configuration>(@DiemRoot);
         
         // Must increment otherwise the diem-nodes lose track due to safety-rules.
         config_ref.epoch = config_ref.epoch + 1;
@@ -496,7 +496,7 @@ module DiemFramework::DiemConfig {
 
     //////// 0L ////////
     public fun get_current_epoch(): u64 acquires Configuration {
-        let config_ref = borrow_global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        let config_ref = borrow_global<Configuration>(@DiemRoot);
         config_ref.epoch
     }
 
@@ -504,7 +504,7 @@ module DiemFramework::DiemConfig {
     public fun get_epoch_transfer_limit(): u64 acquires Configuration {
         // Constant to start the withdrawal limit calculation from 
         let transfer_enabled_epoch = TRANSFER_ENABLED_EPOCH;
-        let config_ref = borrow_global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        let config_ref = borrow_global<Configuration>(@DiemRoot);
         
         if (transfer_enabled_epoch > config_ref.epoch) {
           // Calculating transfer limit in multiples of epoch

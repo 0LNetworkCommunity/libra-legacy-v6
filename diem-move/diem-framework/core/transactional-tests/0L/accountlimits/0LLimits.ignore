@@ -4,11 +4,11 @@
 // //! new-transaction
 // //! sender: diemroot
 // script {
-//     use 0x1::AccountLimits;
-//     use 0x1::CoreAddresses;
+//     use DiemFramework::AccountLimits;
+//     use DiemFramework::CoreAddresses;
 //     use 0x1::GAS::GAS;
 //     fun main(account: signer) {
-//         AccountLimits::update_limits_definition<GAS>(account, CoreAddresses::DIEM_ROOT_ADDRESS(), 0, 10, 0, 0);
+//         AccountLimits::update_limits_definition<GAS>(account, @DiemRoot, 0, 10, 0, 0);
 //     }
 // }
 // // check: "Keep(EXECUTED)"
@@ -17,7 +17,7 @@
 // //! sender: diemroot
 // //! execute-as: alice
 // script {
-// use 0x1::AccountLimits;
+// use DiemFramework::AccountLimits;
 // use 0x1::GAS::GAS;
 // fun main(lr: signer, alice_account: signer) {
 //     AccountLimits::publish_unrestricted_limits<GAS>(alice_account);
@@ -32,7 +32,7 @@
 // //! sender: diemroot
 // //! execute-as: bob
 // script {
-// use 0x1::AccountLimits;
+// use DiemFramework::AccountLimits;
 // use 0x1::GAS::GAS;
 // fun main(lr: signer, bob_account: signer) {
 //     AccountLimits::publish_unrestricted_limits<GAS>(bob_account);

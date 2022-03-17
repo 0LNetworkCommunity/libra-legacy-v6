@@ -4,15 +4,15 @@
 // Error code for File: 0300
 /////////////////////////////////////////////////////////////////////////
 
-address 0x1{
+address DiemFramework{
     /// # Summary
     /// This module can be used by root to determine whether a validator is compliant 
     /// Validators who are no longer compliant may be kicked out of the validator 
     /// set and/or jailed. To be compliant, validators must be BOTH validating and mining. 
     module Cases{
-        use 0x1::TowerState;
-        use 0x1::Stats;
-        use 0x1::Roles;
+        use DiemFramework::TowerState;
+        use DiemFramework::Stats;
+        use DiemFramework::Roles;
 
         const VALIDATOR_COMPLIANT: u64 = 1;
         const VALIDATOR_HALF_COMPLIANT: u64 = 2;

@@ -4,7 +4,7 @@
 // Error code: 0710
 ///////////////////////////////////////////////////////////////////
 
-address 0x1 {
+address DiemFramework {
 
 /// # Summary 
 /// This module is used to record migrations from old versions of stdlib to new 
@@ -15,9 +15,9 @@ address 0x1 {
 /// 2. run the migration 
 /// 3. record that the migration has run using the `push` function
 module Migrations {
-  use 0x1::Vector;
-  use 0x1::CoreAddresses;
-  use 0x1::Option::{Self,Option};
+  use Std::Vector;
+  use DiemFramework::CoreAddresses;
+  use Std::Option::{Self,Option};
 
   /// A list of Migrations that have been 
   struct Migrations has key {
@@ -90,9 +90,9 @@ module Migrations {
 /// # Summary 
 /// Module to migrate the tower statistics from TowerState to TowerCounter
 module MigrateTowerCounter {
-  use 0x1::TowerState;
-  use 0x1::Migrations;
-  use 0x1::CoreAddresses;
+  use DiemFramework::TowerState;
+  use DiemFramework::Migrations;
+  use DiemFramework::CoreAddresses;
 
   const UID:u64 = 1;
   // Migration to migrate all wallets to be slow wallets

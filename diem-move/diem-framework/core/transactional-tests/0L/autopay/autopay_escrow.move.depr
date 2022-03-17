@@ -18,13 +18,13 @@ module {{default}}::Holder {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::AccountLimits;
-    use 0x1::CoreAddresses;
+    use DiemFramework::AccountLimits;
+    use DiemFramework::CoreAddresses;
     use 0x1::GAS::GAS;
     use 0x1::AutoPay2;
     fun main(account: signer) {
         AccountLimits::update_limits_definition<GAS>(
-            &account, CoreAddresses::DIEM_ROOT_ADDRESS(), 0, 30, 0, 1
+            &account, @DiemRoot, 0, 30, 0, 1
         );
         AutoPay2::enable_account_limits(&account);
     }
@@ -35,7 +35,7 @@ script {
 //! sender: diemroot
 //! execute-as: alice
 script {
-use 0x1::AccountLimits;
+use DiemFramework::AccountLimits;
 use 0x1::GAS::GAS;
 use DiemFramework::DiemAccount;
 use {{default}}::Holder;
@@ -52,7 +52,7 @@ fun main(lr: signer, alice_account: signer) {
 //! sender: diemroot
 //! execute-as: bob
 script {
-use 0x1::AccountLimits;
+use DiemFramework::AccountLimits;
 use 0x1::GAS::GAS;
 use DiemFramework::DiemAccount;
 use {{default}}::Holder;
@@ -69,7 +69,7 @@ fun main(lr: signer, bob_account: signer) {
 //! sender: diemroot
 //! execute-as: greg
 script {
-use 0x1::AccountLimits;
+use DiemFramework::AccountLimits;
 use 0x1::GAS::GAS;
 use DiemFramework::DiemAccount;
 use {{default}}::Holder;

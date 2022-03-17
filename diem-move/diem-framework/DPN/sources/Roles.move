@@ -174,7 +174,7 @@ module DiemFramework::Roles {
     //     include GrantRole{addr: Signer::address_of(new_account), role_id: USER_ID};
     // }
 
-    use 0x1::Debug::print;
+    use DiemFramework::Debug::print;
 
     //////// 0L /////////
     // Creates a user account
@@ -204,7 +204,7 @@ module DiemFramework::Roles {
         let addr = Signer::address_of(new_account);
         // grant_role(new_account, USER_ID);
         let role = borrow_global_mut<RoleId>(addr);
-        assert(role.role_id == USER_ID, EROLE_ID);
+        assert!(role.role_id == USER_ID, EROLE_ID);
         role.role_id = VALIDATOR_ROLE_ID;
     }
 
@@ -469,8 +469,8 @@ module DiemFramework::Roles {
     /// Assert that the account has the validator role.
     public fun assert_validator_addr(validator_addr: address): bool acquires RoleId {
         // let validator_addr = Signer::address_of(validator_account);
-        assert(exists<RoleId>(validator_addr), Errors::not_published(EROLE_ID));
-        assert(
+        assert!(exists<RoleId>(validator_addr), Errors::not_published(EROLE_ID));
+        assert!(
             borrow_global<RoleId>(validator_addr).role_id == VALIDATOR_ROLE_ID,
             Errors::requires_role(EVALIDATOR)
         );
@@ -499,8 +499,8 @@ module DiemFramework::Roles {
     /// Assert that the account has the validator operator role.
     public fun assert_validator_operator_addr(validator_operator_addr: address):bool acquires RoleId {
         // let validator_operator_addr = Signer::address_of(validator_operator_account);
-        assert(exists<RoleId>(validator_operator_addr), Errors::not_published(EROLE_ID));
-        assert(
+        assert!(exists<RoleId>(validator_operator_addr), Errors::not_published(EROLE_ID));
+        assert!(
             borrow_global<RoleId>(validator_operator_addr).role_id == VALIDATOR_OPERATOR_ROLE_ID,
             Errors::requires_role(EVALIDATOR_OPERATOR)
         );

@@ -7,23 +7,23 @@
 ///////////////////////////////////////////////////////////////////////////
 
 
-address 0x1 {
+address DiemFramework {
 module EpochBoundary {
-    use 0x1::CoreAddresses;
-    use 0x1::Subsidy;
-    use 0x1::NodeWeight;
-    use 0x1::DiemSystem;
-    use 0x1::TowerState;
-    use 0x1::Globals;
-    use 0x1::Vector;
-    use 0x1::Stats;
-    use 0x1::AutoPay;
-    use 0x1::Epoch;
-    use 0x1::DiemConfig;
-    use 0x1::Audit;
-    use 0x1::DiemAccount;
-    use 0x1::Burn;
-    use 0x1::FullnodeSubsidy;
+    use DiemFramework::CoreAddresses;
+    use DiemFramework::Subsidy;
+    use DiemFramework::NodeWeight;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::TowerState;
+    use DiemFramework::Globals;
+    use Std::Vector;
+    use DiemFramework::Stats;
+    use DiemFramework::AutoPay;
+    use DiemFramework::Epoch;
+    use DiemFramework::DiemConfig;
+    use DiemFramework::Audit;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::Burn;
+    use DiemFramework::FullnodeSubsidy;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001

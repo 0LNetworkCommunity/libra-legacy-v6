@@ -5,12 +5,12 @@
 // Error Code: 0400
 /////////////////////////////////////////////////////////////////////////
 
-address 0x1{
+address DiemFramework{
     module PersistenceDemo{
-        use 0x1::Vector;
-        use 0x1::Signer;
-        use 0x1::Errors;
-        use 0x1::Testnet::is_testnet;
+        use Std::Vector;
+        use Std::Signer;
+        use Std::Errors;
+        use DiemFramework::Testnet::is_testnet;
 
         // In Move the types for data storage are `resource struct`. Here a type 
         // State is being defined. Once a type is initialized in the global state, 
@@ -33,7 +33,7 @@ address 0x1{
           // `assert can be used to evaluate a bool and exit the program with 
           // an error code, e.g. testing if this is being run in testnet, and 
           // throwing error 01.
-          assert(is_testnet(), Errors::invalid_state(ETESTNET));
+          assert!(is_testnet(), Errors::invalid_state(ETESTNET));
           // In the actual module, must assert that this is the sender is the association
           move_to<State>(sender, State{ hist: Vector::empty() });
         }
@@ -50,7 +50,7 @@ address 0x1{
         // permission a function. NOTE all downsteam functions will also need 
         // permission on that data struct, i.e. need the same `acquires` parameters.
         public fun add_stuff(sender: &signer ) acquires State {
-          assert(is_testnet(), Errors::invalid_state(ETESTNET));
+          assert!(is_testnet(), Errors::invalid_state(ETESTNET));
 
           // Resource Struct state is always "borrowed" and "moved" and generally 
           // cannot be copied. A struct can be mutably borrowed, if it is written to, 
@@ -71,7 +71,7 @@ address 0x1{
 
         // Similar to above, except removing state.
         public fun remove_stuff(sender: &signer) acquires State{
-          assert(is_testnet(), Errors::invalid_state(ETESTNET));
+          assert!(is_testnet(), Errors::invalid_state(ETESTNET));
           let st = borrow_global_mut<State>(Signer::address_of(sender));
           let s = &mut st.hist;
 
@@ -82,7 +82,7 @@ address 0x1{
 
         // Here are examples of read operations. Note the `aquires` here again.
         public fun isEmpty(sender: &signer): bool acquires State {
-          assert(is_testnet(), Errors::invalid_state(ETESTNET));
+          assert!(is_testnet(), Errors::invalid_state(ETESTNET));
 
           // Note this is not a mutable borrow. Read only.
           let st = borrow_global<State>(Signer::address_of(sender));
@@ -91,14 +91,14 @@ address 0x1{
 
         // Showing the Vector::length method
         public fun length(sender: &signer): u64 acquires State{
-          assert(is_testnet(), Errors::invalid_state(ETESTNET));
+          assert!(is_testnet(), Errors::invalid_state(ETESTNET));
           let st = borrow_global<State>(Signer::address_of(sender));
           Vector::length(&st.hist)
         }
 
         // Showing the Vector::contains method
         public fun contains(sender: &signer, num: u8): bool acquires State {
-          assert(is_testnet(), Errors::invalid_state(ETESTNET));
+          assert!(is_testnet(), Errors::invalid_state(ETESTNET));
           let st = borrow_global<State>(Signer::address_of(sender));
           Vector::contains(&st.hist, &num)
         }
