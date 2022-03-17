@@ -398,7 +398,7 @@ module DiemFramework::DiemConfig {
         CoreAddresses::assert_vm(vm);
         assert(exists<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS()), Errors::not_published(ECONFIGURATION));
         let config_ref = borrow_global_mut<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
-
+        
         // Must increment otherwise the diem-nodes lose track due to safety-rules.
         config_ref.epoch = config_ref.epoch + 1;
 
@@ -408,7 +408,7 @@ module DiemFramework::DiemConfig {
                 epoch: config_ref.epoch,
             },
         );
-    }    
+    }
 
     /// Emit a `NewEpochEvent` event. This function will be invoked by genesis directly to generate the very first
     /// reconfiguration event.
@@ -505,14 +505,14 @@ module DiemFramework::DiemConfig {
         // Constant to start the withdrawal limit calculation from 
         let transfer_enabled_epoch = TRANSFER_ENABLED_EPOCH;
         let config_ref = borrow_global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
-
+        
         if (transfer_enabled_epoch > config_ref.epoch) {
           // Calculating transfer limit in multiples of epoch
           ((config_ref.epoch - transfer_enabled_epoch) * 10)
         } else {
           0
         }
-
+        
     }
 
     //////// 0L ////////

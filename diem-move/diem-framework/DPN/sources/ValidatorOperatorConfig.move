@@ -44,6 +44,23 @@ module DiemFramework::ValidatorOperatorConfig {
         ensures has_validator_operator_config(Signer::address_of(validator_operator_account));
     }
 
+    //////// 0L ////////
+    public fun publish_with_proof(
+        validator_operator_account: &signer,
+        human_name: vector<u8>,
+    ) {
+        DiemTimestamp::assert_operating();
+        Roles::assert_validator_operator(validator_operator_account);
+        assert(
+            !has_validator_operator_config(Signer::address_of(validator_operator_account)),
+            Errors::already_published(EVALIDATOR_OPERATOR_CONFIG)
+        );
+
+        move_to(validator_operator_account, ValidatorOperatorConfig {
+            human_name,
+        });
+    }    
+
     spec schema PublishAbortsIf {
         validator_operator_account: signer;
         dr_account: signer;

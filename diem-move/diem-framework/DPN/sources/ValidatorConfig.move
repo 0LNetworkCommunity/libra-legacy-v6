@@ -3,6 +3,12 @@
 /// later inclusion (by functions in DiemConfig) in a `DiemConfig::DiemConfig<DiemSystem>`
 /// struct (the `Self::ValidatorConfig` in a `DiemConfig::ValidatorInfo` which is a member
 /// of the `DiemSystem::DiemSystem.validators` vector).
+
+/////// 0L /////////
+///////////////////////////////////////////////////////////////////////////
+// File Prefix for errors: 2200
+///////////////////////////////////////////////////////////////////////////
+
 module DiemFramework::ValidatorConfig {
     use DiemFramework::DiemTimestamp;
     use Std::Errors;
@@ -106,8 +112,7 @@ module DiemFramework::ValidatorConfig {
     /// will have critical info such as keys, network addresses for validators,
     /// and the address of the validator operator.
     /// Permissions: PUBLIC, ANYONE, SIGNER
-    /// Needs to be a signer, is called from DiemAccount, which can create a signer. 
-    /// Otherwise, not callable publicly, and can only grant role to the signer's address.
+    /// Needs to be a signer, is called from DiemAccount, which can create a signer. Otherwise, not callable publicly, and can only grant role to the signer's address.
     public fun publish_with_proof(
         validator_account: &signer,
         human_name: vector<u8>,

@@ -1,6 +1,7 @@
 /// Module managing dual attestation.
 module DiemFramework::DualAttestation {
     use DiemFramework::CoreAddresses;
+    // use 0x1::XDX::XDX; //////// 0L ////////
     use DiemFramework::GAS::GAS;
     use DiemFramework::Diem;
     use DiemFramework::DiemTimestamp;

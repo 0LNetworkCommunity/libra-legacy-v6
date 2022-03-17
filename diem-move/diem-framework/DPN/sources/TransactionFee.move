@@ -1,4 +1,8 @@
-/// Functions to initialize, accumulated, and burn transaction fees.
+/////// 0L /////////
+///////////////////////////////////////////////////////////////////////////
+// Functions to initialize, accumulated, and burn transaction fees.
+// File Prefix for errors: 2000
+///////////////////////////////////////////////////////////////////////////
 module DiemFramework::TransactionFee {
     // use DiemFramework::XUS::XUS; /////// 0L /////////
     use 0x1::GAS::GAS; /////// 0L /////////
@@ -23,12 +27,12 @@ module DiemFramework::TransactionFee {
     /// Called in genesis. Sets up the needed resources to collect transaction fees from the
     /// `TransactionFee` resource with the TreasuryCompliance account.
     public fun initialize(
-        dr_account: &signer,
+        dr_account: &signer, /////// 0L /////////
     ) {
         DiemTimestamp::assert_genesis();
-        Roles::assert_treasury_compliance(dr_account);
+        Roles::assert_diem_root(dr_account); /////// 0L /////////
         // accept fees in all the currencies
-        add_txn_fee_currency<GAS>(dr_account);
+        add_txn_fee_currency<GAS>(dr_account); /////// 0L /////////
     }
     spec initialize {
         include DiemTimestamp::AbortsIfNotGenesis;
@@ -183,7 +187,7 @@ module DiemFramework::TransactionFee {
         // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
         // DiemAccount::balance<Token>(0xFEE);
         let fees = borrow_global<TransactionFee<GAS>>(
-            @DiemRoot
+            CoreAddresses::DIEM_ROOT_ADDRESS()
         );
 
         let amount_collected = Diem::value<GAS>(&fees.balance);
@@ -200,7 +204,7 @@ module DiemFramework::TransactionFee {
         // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
         // DiemAccount::balance<Token>(0xFEE);
         let fees = borrow_global_mut<TransactionFee<Token>>(
-            @DiemRoot
+            CoreAddresses::DIEM_ROOT_ADDRESS()
         );
 
         Diem::withdraw_all(&mut fees.balance)
@@ -216,9 +220,9 @@ module DiemFramework::TransactionFee {
         // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
         // DiemAccount::balance<Token>(0xFEE);
         let fees = borrow_global_mut<TransactionFee<Token>>(
-            @DiemRoot
+            CoreAddresses::DIEM_ROOT_ADDRESS()
         );
 
         Diem::withdraw(&mut fees.balance, amount)
-    }    
+    }
 }

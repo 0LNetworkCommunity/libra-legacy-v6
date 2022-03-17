@@ -592,7 +592,7 @@ module DiemFramework::TreasuryComplianceScripts {
                 new_exchange_rate_numerator,
                 new_exchange_rate_denominator
         );
-        // include Diem::UpdateXDXExchangeRateAbortsIf<Currency>; /////// 0L /////////
+        // include Diem::UpdateXDXExchangeRateAbortsIf<Currency>; //////// 0L ////////
         include Diem::UpdateXDXExchangeRateEnsures<Currency>{xdx_exchange_rate: rate};
         include Diem::UpdateXDXExchangeRateEmits<Currency>{xdx_exchange_rate: rate};
 

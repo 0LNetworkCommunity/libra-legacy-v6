@@ -20,7 +20,7 @@ module DiemFramework::XUS {
         Diem::register_SCS_currency<XUS>(
             dr_account,
             // tc_account, /////// 0L /////////
-            FixedPoint32::create_from_rational(1, 1), // exchange rate to XDX
+            FixedPoint32::create_from_rational(1, 1), // exchange rate to GAS
             1000000, // scaling_factor = 10^6
             100,     // fractional_part = 10^2
             b"XUS"

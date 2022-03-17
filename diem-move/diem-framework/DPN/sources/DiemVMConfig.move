@@ -93,6 +93,7 @@ module DiemFramework::DiemVMConfig {
             min_transaction_gas_units: 600,
             large_transaction_cutoff: 600,
             intrinsic_gas_per_byte: 8,
+            intrinsic_gas_per_byte: 8,
             // Changed temporarily for oversized upgrade payload
             maximum_number_of_gas_units: 100000000000, /////// 0L /////////
             min_price_per_gas_unit: min_price_per_gas_unit, /////// 0L /////////
