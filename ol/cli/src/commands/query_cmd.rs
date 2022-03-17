@@ -4,7 +4,9 @@ use abscissa_core::{Command, Options, Runnable, status_info};
 use crate::{
     entrypoint,
     prelude::app_config,
-    node::query::{QueryType, WalletType, find_value_from_state, find_value_in_struct},
+    node::query::{
+        QueryType, WalletType, find_value_from_state,
+        find_value_in_struct, is_slow_wallet, is_community_wallet},
     node::client,
     node::node::Node
 };
@@ -177,58 +179,4 @@ pub fn get_wallet_type(account: AccountAddress, mut node: Node) -> WalletType {
     }
 }
 
-fn is_slow_wallet(r: &AnnotatedAccountStateBlob) -> bool {
-    let slow_module_name = "DiemAccount";
-    let slow_struct_name = "SlowWallet";
-    let unlocked = find_value_from_state(
-        &r,
-        slow_module_name.to_string(),
-        slow_struct_name.to_string(),
-        "unlocked".to_string(),
-    );
-    if let (Some(U64(0))) = unlocked {
-        let transferred = find_value_from_state(
-            &r,
-            slow_module_name.to_string(),
-            slow_struct_name.to_string(),
-            "transferred".to_string(),
-        );
-        if let (Some(U64(0))) = transferred {
-            return true;
-        }
-    }
-    false
-}
 
-fn is_community_wallet(r: &AnnotatedAccountStateBlob) -> bool {
-    let community_module_name = "Wallet";
-    let community_struct_name = "CommunityFreeze";
-    let is_frozen = find_value_from_state(
-        &r,
-        community_module_name.to_string(),
-        community_struct_name.to_string(),
-        "is_frozen".to_string(),
-    );
-    if let (Some(Bool(false))) = is_frozen {
-        let consecutive_rejections = find_value_from_state(
-            &r,
-            community_module_name.to_string(),
-            community_struct_name.to_string(),
-            "consecutive_rejections".to_string(),
-        );
-        if let (Some(U64(0))) = consecutive_rejections {
-            let unfreeze_votes = find_value_from_state(
-                &r,
-                community_module_name.to_string(),
-                community_struct_name.to_string(),
-                "unfreeze_votes".to_string(),
-            );
-            if let (Some(Vector(TypeTag::Address, vec))) = unfreeze_votes {
-                if vec.len() == 0 {
-                    return true;
-                }
-            }
-        }
-    }
-    false
-}
