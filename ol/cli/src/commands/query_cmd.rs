@@ -5,18 +5,12 @@ use crate::{
     entrypoint,
     prelude::app_config,
     node::query::{
-        QueryType, WalletType, find_value_from_state,
-        find_value_in_struct, is_slow_wallet, is_community_wallet},
+        QueryType, WalletType, is_slow_wallet, is_community_wallet},
     node::client,
     node::node::Node
 };
 use std::process::exit;
-use move_core_types::{
-    account_address::AccountAddress,
-    language_storage::TypeTag
-};
-use resource_viewer::AnnotatedAccountStateBlob;
-use resource_viewer::AnnotatedMoveValue::{Bool, U64, Vector};
+use move_core_types::account_address::AccountAddress;
 
 /// `bal` subcommand
 ///

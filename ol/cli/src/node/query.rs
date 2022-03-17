@@ -486,7 +486,7 @@ fn test_is_slow_wallet_should_return_true() {
 }
 
 #[test]
-fn test_is_slow_wallet_should_return_true_with_wrong_unlocked() {
+fn test_is_slow_wallet_should_return_false_with_wrong_unlocked() {
     let value = vec![
         (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(1)),
         (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(0))
@@ -496,7 +496,7 @@ fn test_is_slow_wallet_should_return_true_with_wrong_unlocked() {
 }
 
 #[test]
-fn test_is_slow_wallet_should_return_true_with_wrong_transferred() {
+fn test_is_slow_wallet_should_return_false_with_wrong_transferred() {
     let value = vec![
         (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0)),
         (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(1))
@@ -506,7 +506,7 @@ fn test_is_slow_wallet_should_return_true_with_wrong_transferred() {
 }
 
 #[test]
-fn test_is_slow_wallet_should_return_true_if_missing_transferred() {
+fn test_is_slow_wallet_should_return_false_if_missing_transferred() {
     let value = vec![
         (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0))
     ];
@@ -515,7 +515,7 @@ fn test_is_slow_wallet_should_return_true_if_missing_transferred() {
 }
 
 #[test]
-fn test_is_slow_wallet_should_return_true_if_missing_unlocked() {
+fn test_is_slow_wallet_should_return_false_if_missing_unlocked() {
     let value = vec![
         (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(0))
     ];
@@ -524,7 +524,7 @@ fn test_is_slow_wallet_should_return_true_if_missing_unlocked() {
 }
 
 #[test]
-fn test_is_slow_wallet_should_return_true_with_wrong_module_name() {
+fn test_is_slow_wallet_should_return_false_with_wrong_module_name() {
     let value = vec![
         (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0)),
         (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(1))
@@ -534,7 +534,7 @@ fn test_is_slow_wallet_should_return_true_with_wrong_module_name() {
 }
 
 #[test]
-fn test_is_slow_wallet_should_return_true_with_wrong_struct_name() {
+fn test_is_slow_wallet_should_return_false_with_wrong_struct_name() {
     let value = vec![
         (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0)),
         (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(1))
