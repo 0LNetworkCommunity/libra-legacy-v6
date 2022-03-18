@@ -61,7 +61,7 @@ module DiemFramework::ValidatorConfig {
         human_name: vector<u8>,
     ) {
         DiemTimestamp::assert_operating();
-        Roles::assert_diem_root(tc_account); /////// 0L /////////
+        Roles::assert_diem_root(dr_account); /////// 0L /////////
         Roles::assert_validator(validator_account);
         assert!(
             !exists<ValidatorConfig>(Signer::address_of(validator_account)),
@@ -70,23 +70,6 @@ module DiemFramework::ValidatorConfig {
         move_to(validator_account, ValidatorConfig {
             config: Option::none(),
             operator_account: Option::none(),
-            human_name,
-        });
-    }
-
-    //////// 0L ////////
-    public fun publish_with_proof(
-        validator_operator_account: &signer,
-        human_name: vector<u8>,
-    ) {
-        DiemTimestamp::assert_operating();
-        Roles::assert_validator_operator(validator_operator_account);
-        assert!(
-            !has_validator_operator_config(Signer::address_of(validator_operator_account)),
-            Errors::already_published(EVALIDATOR_OPERATOR_CONFIG)
-        );
-
-        move_to(validator_operator_account, ValidatorOperatorConfig {
             human_name,
         });
     }

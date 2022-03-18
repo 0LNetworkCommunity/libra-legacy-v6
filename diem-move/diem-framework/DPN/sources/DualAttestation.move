@@ -2,7 +2,7 @@
 module DiemFramework::DualAttestation {
     use DiemFramework::CoreAddresses;
     // use DiemFramework::XDX::XDX; //////// 0L ////////
-    use DiemFramework::GAS;
+    use DiemFramework::GAS::GAS;
     use DiemFramework::Diem;
     use DiemFramework::DiemTimestamp;
     use DiemFramework::Roles;
@@ -486,7 +486,9 @@ module DiemFramework::DualAttestation {
         CoreAddresses::assert_diem_root(dr_account); // operational constraint.
         assert!(!exists<Limit>(@DiemRoot), Errors::already_published(ELIMIT));
         //////// 0L ////////
-        let initial_limit = (INITIAL_DUAL_ATTESTATION_LIMIT as u128) * (Diem::scaling_factor<GAS>() as u128);
+        let initial_limit = 
+            (INITIAL_DUAL_ATTESTATION_LIMIT as u128) * 
+            (Diem::scaling_factor<GAS>() as u128);
         assert!(initial_limit <= MAX_U64, Errors::limit_exceeded(ELIMIT));
         move_to(
             dr_account,

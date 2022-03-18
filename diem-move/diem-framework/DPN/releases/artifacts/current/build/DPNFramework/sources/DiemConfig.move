@@ -1,12 +1,15 @@
 /// Publishes configuration information for validators, and issues reconfiguration events
 /// to synchronize configuration changes for the validators.
 module DiemFramework::DiemConfig {
+    friend DiemFramework::Upgrade;
+
     use DiemFramework::CoreAddresses;
     use DiemFramework::DiemTimestamp;
     use DiemFramework::Roles;
     use Std::Errors;
     use Std::Event;
     use Std::Signer;
+    use DiemFramework::Testnet;    
     friend DiemFramework::DiemVersion;
     friend DiemFramework::RegisteredCurrencies;
     friend DiemFramework::DiemTransactionPublishingOption;
@@ -54,6 +57,10 @@ module DiemFramework::DiemConfig {
     const EINVALID_BLOCK_TIME: u64 = 3;
     /// The largest possible u64 value
     const MAX_U64: u64 = 18446744073709551615;
+
+    //////// 0L ////////
+    /// Epoch when transfers are enabled
+    const TRANSFER_ENABLED_EPOCH: u64 = 1000;
 
     /// Publishes `Configuration` resource. Can only be invoked by Diem root, and only a single time in Genesis.
     public fun initialize(
@@ -384,6 +391,25 @@ module DiemFramework::DiemConfig {
         emits msg to handle if (!spec_reconfigure_omitted() && now != config.last_reconfiguration_time);
     }
 
+    //////// 0L ////////
+    /// Emit a `NewEpochEvent` event but DO NOT increment the EPOCH.
+    /// this is used only in upgrade scenarios.
+    public(friend) fun upgrade_reconfig(vm: &signer) acquires Configuration {
+        CoreAddresses::assert_vm(vm);
+        assert!(exists<Configuration>(@DiemRoot), Errors::not_published(ECONFIGURATION));
+        let config_ref = borrow_global_mut<Configuration>(@DiemRoot);
+        
+        // Must increment otherwise the diem-nodes lose track due to safety-rules.
+        config_ref.epoch = config_ref.epoch + 1;
+
+        Event::emit_event<NewEpochEvent>(
+            &mut config_ref.events,
+            NewEpochEvent {
+                epoch: config_ref.epoch,
+            },
+        );
+    }
+
     /// Emit a `NewEpochEvent` event. This function will be invoked by genesis directly to generate the very first
     /// reconfiguration event.
     fun emit_genesis_reconfiguration_event() acquires Configuration {
@@ -468,4 +494,33 @@ module DiemFramework::DiemConfig {
         }
     }
 
+    //////// 0L ////////
+    public fun get_current_epoch(): u64 acquires Configuration {
+        let config_ref = borrow_global<Configuration>(@DiemRoot);
+        config_ref.epoch
+    }
+
+    //////// 0L ////////
+    public fun get_epoch_transfer_limit(): u64 acquires Configuration {
+        // Constant to start the withdrawal limit calculation from 
+        let transfer_enabled_epoch = TRANSFER_ENABLED_EPOCH;
+        let config_ref = borrow_global<Configuration>(@DiemRoot);
+        
+        if (transfer_enabled_epoch > config_ref.epoch) {
+          // Calculating transfer limit in multiples of epoch
+          ((config_ref.epoch - transfer_enabled_epoch) * 10)
+        } else {
+          0
+        }
+        
+    }
+
+    //////// 0L ////////
+    public fun check_transfer_enabled(): bool acquires Configuration {
+        if(Testnet::is_testnet()){
+            true
+        } else {
+            get_current_epoch() > TRANSFER_ENABLED_EPOCH
+        }
+    }
 }

@@ -2,7 +2,7 @@
 module DiemFramework::DesignatedDealer {
     use DiemFramework::Diem;
     use DiemFramework::Roles;
-    use DiemFramework::XUS::XUS;
+    // use DiemFramework::XUS::XUS; //////// 0L ////////
     use Std::Errors;
     use Std::Event;
     use Std::Signer;

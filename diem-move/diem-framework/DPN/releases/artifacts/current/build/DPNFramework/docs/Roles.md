@@ -18,6 +18,10 @@ For a conceptual discussion of roles, see the [DIP-2 document][ACCESS_CONTROL].
 -  [Function `grant_treasury_compliance_role`](#0x1_Roles_grant_treasury_compliance_role)
 -  [Function `new_designated_dealer_role`](#0x1_Roles_new_designated_dealer_role)
 -  [Function `new_validator_role`](#0x1_Roles_new_validator_role)
+-  [Function `new_user_role_with_proof`](#0x1_Roles_new_user_role_with_proof)
+-  [Function `upgrade_user_to_validator`](#0x1_Roles_upgrade_user_to_validator)
+-  [Function `new_validator_role_with_proof`](#0x1_Roles_new_validator_role_with_proof)
+-  [Function `new_validator_operator_role_with_proof`](#0x1_Roles_new_validator_operator_role_with_proof)
 -  [Function `new_validator_operator_role`](#0x1_Roles_new_validator_operator_role)
 -  [Function `new_parent_vasp_role`](#0x1_Roles_new_parent_vasp_role)
 -  [Function `new_child_vasp_role`](#0x1_Roles_new_child_vasp_role)
@@ -30,6 +34,7 @@ For a conceptual discussion of roles, see the [DIP-2 document][ACCESS_CONTROL].
 -  [Function `has_validator_operator_role`](#0x1_Roles_has_validator_operator_role)
 -  [Function `has_parent_VASP_role`](#0x1_Roles_has_parent_VASP_role)
 -  [Function `has_child_VASP_role`](#0x1_Roles_has_child_VASP_role)
+-  [Function `has_user_role`](#0x1_Roles_has_user_role)
 -  [Function `get_role_id`](#0x1_Roles_get_role_id)
 -  [Function `can_hold_balance`](#0x1_Roles_can_hold_balance)
 -  [Function `assert_diem_root`](#0x1_Roles_assert_diem_root)
@@ -38,7 +43,9 @@ For a conceptual discussion of roles, see the [DIP-2 document][ACCESS_CONTROL].
 -  [Function `assert_child_vasp_role`](#0x1_Roles_assert_child_vasp_role)
 -  [Function `assert_designated_dealer`](#0x1_Roles_assert_designated_dealer)
 -  [Function `assert_validator`](#0x1_Roles_assert_validator)
+-  [Function `assert_validator_addr`](#0x1_Roles_assert_validator_addr)
 -  [Function `assert_validator_operator`](#0x1_Roles_assert_validator_operator)
+-  [Function `assert_validator_operator_addr`](#0x1_Roles_assert_validator_operator_addr)
 -  [Function `assert_parent_vasp_or_designated_dealer`](#0x1_Roles_assert_parent_vasp_or_designated_dealer)
 -  [Function `assert_parent_vasp_or_child_vasp`](#0x1_Roles_assert_parent_vasp_or_child_vasp)
 -  [Module Specification](#@Module_Specification_1)
@@ -234,6 +241,15 @@ The signer didn't have the required Validator Operator role
 
 
 
+<a name="0x1_Roles_USER_ID"></a>
+
+
+
+<pre><code><b>const</b> <a href="Roles.md#0x1_Roles_USER_ID">USER_ID</a>: u64 = 10;
+</code></pre>
+
+
+
 <a name="0x1_Roles_VALIDATOR_OPERATOR_ROLE_ID"></a>
 
 
@@ -366,7 +382,7 @@ The <code>creating_account</code> must be treasury compliance.
     creating_account: &signer,
     new_account: &signer,
 ) <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">assert_treasury_compliance</a>(creating_account);
+    <a href="Roles.md#0x1_Roles_assert_diem_root">assert_diem_root</a>(creating_account); /////// 0L /////////
     <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(new_account, <a href="Roles.md#0x1_Roles_DESIGNATED_DEALER_ROLE_ID">DESIGNATED_DEALER_ROLE_ID</a>);
 }
 </code></pre>
@@ -425,6 +441,150 @@ The <code>creating_account</code> must be diem root.
 
 <pre><code><b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotDiemRoot">AbortsIfNotDiemRoot</a>{account: creating_account};
 <b>include</b> <a href="Roles.md#0x1_Roles_GrantRole">GrantRole</a>{addr: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(new_account), role_id: <a href="Roles.md#0x1_Roles_VALIDATOR_ROLE_ID">VALIDATOR_ROLE_ID</a>};
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Roles_new_user_role_with_proof"></a>
+
+## Function `new_user_role_with_proof`
+
+Permissions: PUBLIC, ANYONE, SIGNER
+Needs to be a signer, is called from LibraAccount, which can create a signer.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_new_user_role_with_proof">new_user_role_with_proof</a>(new_account: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_new_user_role_with_proof">new_user_role_with_proof</a>(
+    new_account: &signer
+) {
+    // assert_libra_root(creating_account);
+    <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(new_account, <a href="Roles.md#0x1_Roles_USER_ID">USER_ID</a>);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Roles_upgrade_user_to_validator"></a>
+
+## Function `upgrade_user_to_validator`
+
+upgrades a user role to validator role
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_upgrade_user_to_validator">upgrade_user_to_validator</a>(new_account: &signer, vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_upgrade_user_to_validator">upgrade_user_to_validator</a>(
+    new_account: &signer,
+    vm: &signer,
+) <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
+    <a href="Roles.md#0x1_Roles_assert_diem_root">assert_diem_root</a>(vm);
+    <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(new_account);
+    // <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(new_account, <a href="Roles.md#0x1_Roles_USER_ID">USER_ID</a>);
+    <b>let</b> role = <b>borrow_global_mut</b>&lt;<a href="Roles.md#0x1_Roles_RoleId">RoleId</a>&gt;(addr);
+    <b>assert</b>!(role.role_id == <a href="Roles.md#0x1_Roles_USER_ID">USER_ID</a>, <a href="Roles.md#0x1_Roles_EROLE_ID">EROLE_ID</a>);
+    role.role_id = <a href="Roles.md#0x1_Roles_VALIDATOR_ROLE_ID">VALIDATOR_ROLE_ID</a>;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Roles_new_validator_role_with_proof"></a>
+
+## Function `new_validator_role_with_proof`
+
+Publish a Validator <code><a href="Roles.md#0x1_Roles_RoleId">RoleId</a></code> under <code>new_account</code>.
+The <code>creating_account</code> must be libra root.
+Permissions: PUBLIC, ANYONE, SIGNER
+Needs to be a signer, is called from LibraAccount, which can create a signer.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">new_validator_role_with_proof</a>(new_account: &signer, vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_new_validator_role_with_proof">new_validator_role_with_proof</a>(
+    new_account: &signer,
+    vm: &signer,
+) <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
+    <a href="Roles.md#0x1_Roles_assert_diem_root">assert_diem_root</a>(vm);
+    <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(new_account, <a href="Roles.md#0x1_Roles_VALIDATOR_ROLE_ID">VALIDATOR_ROLE_ID</a>);
+}
+</code></pre>
+
+
+
+</details>
+
+<details>
+<summary>Specification</summary>
+
+
+
+<pre><code><b>include</b> <a href="Roles.md#0x1_Roles_GrantRole">GrantRole</a>{addr: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(new_account), role_id: <a href="Roles.md#0x1_Roles_VALIDATOR_ROLE_ID">VALIDATOR_ROLE_ID</a>};
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Roles_new_validator_operator_role_with_proof"></a>
+
+## Function `new_validator_operator_role_with_proof`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_new_validator_operator_role_with_proof">new_validator_operator_role_with_proof</a>(new_account: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_new_validator_operator_role_with_proof">new_validator_operator_role_with_proof</a>(
+    new_account: &signer,
+) {
+    <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(new_account, <a href="Roles.md#0x1_Roles_VALIDATOR_OPERATOR_ROLE_ID">VALIDATOR_OPERATOR_ROLE_ID</a>);
+}
+</code></pre>
+
+
+
+</details>
+
+<details>
+<summary>Specification</summary>
+
+
+
+<pre><code><b>include</b> <a href="Roles.md#0x1_Roles_GrantRole">GrantRole</a>{addr: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(new_account), role_id: <a href="Roles.md#0x1_Roles_VALIDATOR_OPERATOR_ROLE_ID">VALIDATOR_OPERATOR_ROLE_ID</a>};
 </code></pre>
 
 
@@ -495,7 +655,7 @@ The <code>creating_account</code> must be TreasuryCompliance
     creating_account: &signer,
     new_account: &signer,
 ) <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">assert_treasury_compliance</a>(creating_account);
+    <a href="Roles.md#0x1_Roles_assert_diem_root">assert_diem_root</a>(creating_account); /////// 0L /////////
     <a href="Roles.md#0x1_Roles_grant_role">grant_role</a>(new_account, <a href="Roles.md#0x1_Roles_PARENT_VASP_ROLE_ID">PARENT_VASP_ROLE_ID</a>);
 }
 </code></pre>
@@ -812,6 +972,30 @@ Helper function to grant a role.
 
 </details>
 
+<a name="0x1_Roles_has_user_role"></a>
+
+## Function `has_user_role`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_has_user_role">has_user_role</a>(account: &signer): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_has_user_role">has_user_role</a>(account: &signer): bool <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
+    <a href="Roles.md#0x1_Roles_has_role">has_role</a>(account, <a href="Roles.md#0x1_Roles_USER_ID">USER_ID</a>)
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_Roles_get_role_id"></a>
 
 ## Function `get_role_id`
@@ -859,7 +1043,10 @@ Return true if <code>addr</code> is allowed to receive and send <code><a href="D
     // `DiemRoot`) cannot.
     <a href="Roles.md#0x1_Roles_has_parent_VASP_role">has_parent_VASP_role</a>(account) ||
     <a href="Roles.md#0x1_Roles_has_child_VASP_role">has_child_VASP_role</a>(account) ||
-    <a href="Roles.md#0x1_Roles_has_designated_dealer_role">has_designated_dealer_role</a>(account)
+    <a href="Roles.md#0x1_Roles_has_designated_dealer_role">has_designated_dealer_role</a>(account) ||
+    /////// 0L /////////
+    <a href="Roles.md#0x1_Roles_has_user_role">has_user_role</a>(account) ||
+    <a href="Roles.md#0x1_Roles_has_validator_role">has_validator_role</a>(account)
 }
 </code></pre>
 
@@ -926,7 +1113,7 @@ Assert that the account is treasury compliance.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_assert_treasury_compliance">assert_treasury_compliance</a>(account: &signer) <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
-    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_treasury_compliance">CoreAddresses::assert_treasury_compliance</a>(account);
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(account); /////// 0L /////////
     <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
     <b>assert</b>!(<b>exists</b>&lt;<a href="Roles.md#0x1_Roles_RoleId">RoleId</a>&gt;(addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="Roles.md#0x1_Roles_EROLE_ID">EROLE_ID</a>));
     <b>assert</b>!(
@@ -1125,6 +1312,51 @@ Assert that the account has the validator role.
 
 </details>
 
+<a name="0x1_Roles_assert_validator_addr"></a>
+
+## Function `assert_validator_addr`
+
+Need api with <code>account</code> and not <code>signer</code>
+Assert that the account has the validator role.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_assert_validator_addr">assert_validator_addr</a>(validator_addr: <b>address</b>): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_assert_validator_addr">assert_validator_addr</a>(validator_addr: <b>address</b>): bool <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
+    // <b>let</b> validator_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator_account);
+    <b>assert</b>!(<b>exists</b>&lt;<a href="Roles.md#0x1_Roles_RoleId">RoleId</a>&gt;(validator_addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="Roles.md#0x1_Roles_EROLE_ID">EROLE_ID</a>));
+    <b>assert</b>!(
+        <b>borrow_global</b>&lt;<a href="Roles.md#0x1_Roles_RoleId">RoleId</a>&gt;(validator_addr).role_id == <a href="Roles.md#0x1_Roles_VALIDATOR_ROLE_ID">VALIDATOR_ROLE_ID</a>,
+        <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(<a href="Roles.md#0x1_Roles_EVALIDATOR">EVALIDATOR</a>)
+    );
+    <b>true</b>
+}
+</code></pre>
+
+
+
+</details>
+
+<details>
+<summary>Specification</summary>
+
+
+
+<pre><code><b>pragma</b> opaque;
+<b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotValidator">AbortsIfNotValidator</a>{validator_addr: validator_addr};
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_Roles_assert_validator_operator"></a>
 
 ## Function `assert_validator_operator`
@@ -1162,6 +1394,37 @@ Assert that the account has the validator operator role.
 
 <pre><code><b>pragma</b> opaque;
 <b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotValidatorOperator">AbortsIfNotValidatorOperator</a>{account: validator_operator_account};
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Roles_assert_validator_operator_addr"></a>
+
+## Function `assert_validator_operator_addr`
+
+Assert that the account has the validator operator role.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_assert_validator_operator_addr">assert_validator_operator_addr</a>(validator_operator_addr: <b>address</b>): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Roles.md#0x1_Roles_assert_validator_operator_addr">assert_validator_operator_addr</a>(validator_operator_addr: <b>address</b>):bool <b>acquires</b> <a href="Roles.md#0x1_Roles_RoleId">RoleId</a> {
+    // <b>let</b> validator_operator_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator_operator_account);
+    <b>assert</b>!(<b>exists</b>&lt;<a href="Roles.md#0x1_Roles_RoleId">RoleId</a>&gt;(validator_operator_addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="Roles.md#0x1_Roles_EROLE_ID">EROLE_ID</a>));
+    <b>assert</b>!(
+        <b>borrow_global</b>&lt;<a href="Roles.md#0x1_Roles_RoleId">RoleId</a>&gt;(validator_operator_addr).role_id == <a href="Roles.md#0x1_Roles_VALIDATOR_OPERATOR_ROLE_ID">VALIDATOR_OPERATOR_ROLE_ID</a>,
+        <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(<a href="Roles.md#0x1_Roles_EVALIDATOR_OPERATOR">EVALIDATOR_OPERATOR</a>)
+    );
+    <b>true</b>
+}
 </code></pre>
 
 

@@ -17,6 +17,10 @@ module DiemFramework::Diem {
     friend DiemFramework::XDX;
     friend DiemFramework::TransactionFee;
 
+    //////// 0L ////////
+    // Info: All "tc_account"s are replaced by "dr_account"
+    // Info: Some XDX replaced by GAS
+
     /// The `Diem` resource defines the Diem coin for each currency in
     /// Diem. Each "coin" is coupled with a type `CoinType` specifying the
     /// currency of the coin, and a `value` field specifying the value
@@ -31,7 +35,7 @@ module DiemFramework::Diem {
     /// The `MintCapability` resource defines a capability to allow minting
     /// of coins of `CoinType` currency by the holder of this capability.
     /// This capability is held only either by the `@TreasuryCompliance`
-    /// account or the `DiemFramework::XDX` module (and `@DiemRoot` in testnet).
+    /// account or the `DiemFramework::GAS` module (and `@DiemRoot` in testnet).
     struct MintCapability<phantom CoinType> has key, store { }
 
     /// The `BurnCapability` resource defines a capability to allow coins
@@ -46,7 +50,7 @@ module DiemFramework::Diem {
     struct MintEvent has drop, store {
         /// Funds added to the system
         amount: u64,
-        /// ASCII encoded symbol for the coin type (e.g., "XDX")
+        /// ASCII encoded symbol for the coin type (e.g., "GAS")
         currency_code: vector<u8>,
     }
 
@@ -60,7 +64,7 @@ module DiemFramework::Diem {
     struct BurnEvent has drop, store {
         /// Funds removed from the system
         amount: u64,
-        /// ASCII encoded symbol for the coin type (e.g., "XDX")
+        /// ASCII encoded symbol for the coin type (e.g., "GAS")
         currency_code: vector<u8>,
         /// Address with the `PreburnQueue` resource that stored the now-burned funds
         preburn_address: address,
@@ -72,7 +76,7 @@ module DiemFramework::Diem {
     struct PreburnEvent has drop, store {
         /// The amount of funds waiting to be removed (burned) from the system
         amount: u64,
-        /// ASCII encoded symbol for the coin type (e.g., "XDX")
+        /// ASCII encoded symbol for the coin type (e.g., "GAS")
         currency_code: vector<u8>,
         /// Address with the `PreburnQueue` resource that now holds the funds
         preburn_address: address,
@@ -85,19 +89,19 @@ module DiemFramework::Diem {
     struct CancelBurnEvent has drop, store {
         /// The amount of funds returned
         amount: u64,
-        /// ASCII encoded symbol for the coin type (e.g., "XDX")
+        /// ASCII encoded symbol for the coin type (e.g., "GAS")
         currency_code: vector<u8>,
         /// Address of the `PreburnQueue` resource that held the now-returned funds.
         preburn_address: address,
     }
 
-    /// An `ToXDXExchangeRateUpdateEvent` is emitted every time the to-XDX exchange
+    /// An `ToXDXExchangeRateUpdateEvent` is emitted every time the to-GAS exchange
     /// rate for the currency given by `currency_code` is updated.
     struct ToXDXExchangeRateUpdateEvent has drop, store {
         /// The currency code of the currency whose exchange rate was updated.
         currency_code: vector<u8>,
-        /// The new on-chain to-XDX exchange rate between the
-        /// `currency_code` currency and XDX. Represented in conversion
+        /// The new on-chain to-GAS exchange rate between the
+        /// `currency_code` currency and GAS. Represented in conversion
         /// between the (on-chain) base-units for the currency and microdiem.
         new_to_xdx_exchange_rate: u64,
     }
@@ -115,11 +119,11 @@ module DiemFramework::Diem {
         total_value: u128,
         /// Value of funds that are in the process of being burned.  Mutable.
         preburn_value: u64,
-        /// The (rough) exchange rate from `CoinType` to `XDX`. Mutable.
+        /// The (rough) exchange rate from `CoinType` to `GAS`. Mutable. //////// 0L ////////
         to_xdx_exchange_rate: FixedPoint32,
         /// Holds whether or not this currency is synthetic (contributes to the
         /// off-chain reserve) or not. An example of such a synthetic
-        ///currency would be the XDX.
+        ///currency would be the GAS. //////// 0L ////////
         is_synthetic: bool,
         /// The scaling factor for the coin (i.e. the amount to divide by
         /// to get to the human-readable representation for this currency).
@@ -130,7 +134,7 @@ module DiemFramework::Diem {
         /// 10^2 for `XUS` cents)
         fractional_part: u64,
         /// The code symbol for this `CoinType`. ASCII encoded.
-        /// e.g. for "XDX" this is x"584458". No character limit.
+        /// e.g. for "GAS" this is x"584458". No character limit. //////// 0L ////////
         currency_code: vector<u8>,
         /// Minting of new currency of CoinType is allowed only if this field is true.
         /// We may want to disable the ability to mint further coins of a
@@ -265,16 +269,16 @@ module DiemFramework::Diem {
     /// Publishes the `BurnCapability` `cap` for the `CoinType` currency under `account`. `CoinType`
     /// must be a registered currency type. The caller must pass a treasury compliance account.
     public(friend) fun publish_burn_capability<CoinType>(
-        tc_account: &signer,
+        dr_account: &signer, /////// 0L /////////
         cap: BurnCapability<CoinType>,
     ) {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_diem_root(dr_account); //////// 0L ////////
         assert_is_currency<CoinType>();
         assert!(
-            !exists<BurnCapability<CoinType>>(Signer::address_of(tc_account)),
+            !exists<BurnCapability<CoinType>>(Signer::address_of(dr_account)),
             Errors::already_published(EBURN_CAPABILITY)
         );
-        move_to(tc_account, cap)
+        move_to(dr_account, cap)
     }
     spec publish_burn_capability {
         pragma delegate_invariants_to_caller;
@@ -282,15 +286,15 @@ module DiemFramework::Diem {
         include PublishBurnCapAbortsIfs<CoinType>;
     }
     spec schema PublishBurnCapAbortsIfs<CoinType> {
-        tc_account: &signer;
-        /// Must abort if tc_account does not have the TreasuryCompliance role.
+        dr_account: &signer; //////// 0L ////////
+        /// Must abort if dr_account does not have the TreasuryCompliance role.
         /// Only a TreasuryCompliance account can have the BurnCapability [[H3]][PERMISSION].
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
-        aborts_if exists<BurnCapability<CoinType>>(Signer::address_of(tc_account)) with Errors::ALREADY_PUBLISHED;
+        include Roles::AbortsIfNotTreasuryCompliance{account: dr_account};
+        aborts_if exists<BurnCapability<CoinType>>(Signer::address_of(dr_account)) with Errors::ALREADY_PUBLISHED;
     }
     spec schema PublishBurnCapEnsures<CoinType> {
-        tc_account: &signer;
-        ensures exists<BurnCapability<CoinType>>(Signer::address_of(tc_account));
+        dr_account: &signer; //////// 0L ////////
+        ensures exists<BurnCapability<CoinType>>(Signer::address_of(dr_account));
     }
 
     /// Mints `amount` of currency. The `account` must hold a
@@ -408,7 +412,8 @@ module DiemFramework::Diem {
 
     /// Mint a new `Diem` coin of `CoinType` currency worth `value`. The
     /// caller must have a reference to a `MintCapability<CoinType>`. Only
-    /// the treasury compliance account or the `DiemFramework::XDX` module can acquire such a
+    /// //////// 0L ////////
+    /// the treasury compliance account or the `DiemFramework::GAS` module can acquire such a
     /// reference.
     public(friend) fun mint_with_capability<CoinType>(
         value: u64,
@@ -551,11 +556,11 @@ module DiemFramework::Diem {
 
     /// Create a `Preburn<CoinType>` resource.
     /// This is useful for places where a module needs to be able to burn coins
-    /// outside of a Designated Dealer, e.g., for transaction fees, or for the XDX reserve.
+    /// outside of a Designated Dealer, e.g., for transaction fees, or for the GAS reserve.
     public fun create_preburn<CoinType>(
-        tc_account: &signer
+        dr_account: &signer //////// 0L ////////
     ): Preburn<CoinType> {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_diem_root(dr_account); //////// 0L ////////
         assert_is_currency<CoinType>();
         Preburn<CoinType> { to_burn: zero<CoinType>() }
     }
@@ -563,8 +568,8 @@ module DiemFramework::Diem {
         include CreatePreburnAbortsIf<CoinType>;
     }
     spec schema CreatePreburnAbortsIf<CoinType> {
-        tc_account: signer;
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        dr_account: signer;
+        include Roles::AbortsIfNotTreasuryCompliance{account: dr_account};
         include AbortsIfNoCurrency<CoinType>;
     }
 
@@ -618,14 +623,14 @@ module DiemFramework::Diem {
 
     /// Publish a `Preburn` resource under `account`. This function is
     /// used for bootstrapping the designated dealer at account-creation
-    /// time, and the association TC account `tc_account` (at `@TreasuryCompliance`) is creating
+    /// time, and the association TC account `dr_account` (at `@TreasuryCompliance`) is creating
     /// this resource for the designated dealer `account`.
     public(friend) fun publish_preburn_queue_to_account<CoinType>(
         account: &signer,
-        tc_account: &signer
+        dr_account: &signer /////// 0L /////////
     ) acquires CurrencyInfo {
         Roles::assert_designated_dealer(account);
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_diem_root(dr_account); //////// 0L ////////
         assert!(!is_synthetic_currency<CoinType>(), Errors::invalid_argument(EIS_SYNTHETIC_CURRENCY));
         publish_preburn_queue<CoinType>(account)
     }
@@ -641,7 +646,7 @@ module DiemFramework::Diem {
         include PublishPreburnQueueEnsures<CoinType>;
         ensures exists<PreburnQueue<CoinType>>(account_addr);
 
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotTreasuryCompliance{account: dr_account};
         include AbortsIfNoCurrency<CoinType>;
         aborts_if is_synthetic_currency<CoinType>() with Errors::INVALID_ARGUMENT;
         aborts_if exists<PreburnQueue<CoinType>>(account_addr) with Errors::ALREADY_PUBLISHED;
@@ -652,9 +657,9 @@ module DiemFramework::Diem {
     // #[test_only] TODO: uncomment once unit tests are fully migrated
     public fun publish_preburn_queue_to_account_for_test<CoinType>(
            account: &signer,
-           tc_account: &signer
+           dr_account: &signer
     ) acquires CurrencyInfo {
-        publish_preburn_queue_to_account<CoinType>(account, tc_account)
+        publish_preburn_queue_to_account<CoinType>(account, dr_account)
     }
     spec publish_preburn_queue_to_account_for_test {
         pragma verify = false;
@@ -993,6 +998,38 @@ module DiemFramework::Diem {
             to handle if !info.is_synthetic;
     }
 
+    //////// 0L ////////
+    // Only the VM should at times be able to burn a coin in its posession.
+    // should burn immediately, and bypass the Diem preburn stuff.
+    public fun vm_burn_this_coin<CoinType: store>(
+        vm: &signer,
+        coin: Diem<CoinType>,
+    ) acquires CurrencyInfo {
+        CoreAddresses::assert_vm(vm);
+        let currency_code = currency_code<CoinType>();
+        let value = coin.value;
+
+        // update the market cap
+        assert_is_currency<CoinType>();
+        let info = borrow_global_mut<CurrencyInfo<CoinType>>(@CurrencyInfo);
+        assert!(info.total_value >= (value as u128), Errors::limit_exceeded(ECURRENCY_INFO));
+        info.total_value = info.total_value - (value as u128);
+
+        // zero and destroy
+        coin.value = 0;
+        destroy_zero(coin);
+
+        Event::emit_event(
+            &mut info.burn_events,
+            BurnEvent {
+                amount: value,
+                currency_code,
+                preburn_address: @BurnAddress,
+            }
+        );
+        // TODO: formal verfication specs
+    }
+
     /// Cancels the oldest preburn request held in the `PreburnQueue` resource under
     /// `preburn_address` with a `to_burn` amount matching `amount`. It then returns these coins to the caller.
     /// This function can only be called by the holder of a
@@ -1069,7 +1106,7 @@ module DiemFramework::Diem {
     }
 
     /// A shortcut for immediately burning a coin. This calls preburn followed by a subsequent burn, and is
-    /// used for administrative burns, like unpacking an XDX coin or charging fees.
+    /// used for administrative burns, like unpacking an GAS coin or charging fees. /////// 0L /////////
     public(friend) fun burn_now<CoinType>(
         coin: Diem<CoinType>,
         preburn: &mut Preburn<CoinType>,
@@ -1079,6 +1116,7 @@ module DiemFramework::Diem {
         assert!(coin.value > 0, Errors::invalid_argument(ECOIN));
         preburn_with_resource(coin, preburn, preburn_address);
         burn_with_resource_cap(preburn, preburn_address, capability);
+        // QUESTION: Why is there no destroy_zero here? /////// 0L /////////
     }
     spec burn_now {
         pragma delegate_invariants_to_caller;
@@ -1321,13 +1359,13 @@ module DiemFramework::Diem {
     /// accounts.
     public fun register_SCS_currency<CoinType>(
         dr_account: &signer,
-        tc_account: &signer,
+        // dr_account: &signer, /////// 0L /////////
         to_xdx_exchange_rate: FixedPoint32,
         scaling_factor: u64,
         fractional_part: u64,
         currency_code: vector<u8>,
     ) {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_treasury_compliance(dr_account); /////// 0L /////////
         Roles::assert_diem_root(dr_account);
         let (mint_cap, burn_cap) =
             register_currency<CoinType>(
@@ -1338,12 +1376,13 @@ module DiemFramework::Diem {
                 fractional_part,
                 currency_code,
             );
-        assert!(
-            !exists<MintCapability<CoinType>>(Signer::address_of(tc_account)),
-            Errors::already_published(EMINT_CAPABILITY)
-        );
-        move_to(tc_account, mint_cap);
-        publish_burn_capability<CoinType>(tc_account, burn_cap);
+        /////// 0L /////////
+        // assert!(
+        //     !exists<MintCapability<CoinType>>(Signer::address_of(dr_account)),
+        //     Errors::already_published(EMINT_CAPABILITY)
+        // );
+        move_to(dr_account, mint_cap);
+        publish_burn_capability<CoinType>(dr_account, burn_cap);
     }
 
     spec register_SCS_currency {
@@ -1351,23 +1390,23 @@ module DiemFramework::Diem {
         include RegisterSCSCurrencyEnsures<CoinType>;
     }
     spec schema RegisterSCSCurrencyAbortsIf<CoinType> {
-        tc_account: signer;
+        dr_account: signer; /////// 0L /////////
         dr_account: signer;
         currency_code: vector<u8>;
         scaling_factor: u64;
 
-        /// Must abort if tc_account does not have the TreasuryCompliance role.
+        /// Must abort if dr_account does not have the TreasuryCompliance role.
         /// Only a TreasuryCompliance account can have the MintCapability [[H1]][PERMISSION].
         /// Only a TreasuryCompliance account can have the BurnCapability [[H3]][PERMISSION].
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotTreasuryCompliance{account: dr_account};
 
-        aborts_if exists<MintCapability<CoinType>>(Signer::address_of(tc_account)) with Errors::ALREADY_PUBLISHED;
+        aborts_if exists<MintCapability<CoinType>>(Signer::address_of(dr_account)) with Errors::ALREADY_PUBLISHED;
         include RegisterCurrencyAbortsIf<CoinType>;
         include PublishBurnCapAbortsIfs<CoinType>;
     }
     spec schema RegisterSCSCurrencyEnsures<CoinType> {
-        tc_account: signer;
-        ensures spec_has_mint_capability<CoinType>(Signer::address_of(tc_account));
+        dr_account: signer;
+        ensures spec_has_mint_capability<CoinType>(Signer::address_of(dr_account));
     }
 
     /// Returns the total amount of currency minted of type `CoinType`.
@@ -1381,7 +1420,7 @@ module DiemFramework::Diem {
         global<CurrencyInfo<CoinType>>(@CurrencyInfo).total_value
     }
 
-    /// Returns the value of the coin in the `FromCoinType` currency in XDX.
+    /// Returns the value of the coin in the `FromCoinType` currency in GAS.
     /// This should only be used where a _rough_ approximation of the exchange
     /// rate is needed.
     public fun approx_xdx_for_value<FromCoinType>(from_value: u64): u64
@@ -1469,10 +1508,10 @@ module DiemFramework::Diem {
     /// Updates the `to_xdx_exchange_rate` held in the `CurrencyInfo` for
     /// `FromCoinType` to the new passed-in `xdx_exchange_rate`.
     public fun update_xdx_exchange_rate<FromCoinType>(
-        tc_account: &signer,
+        dr_account: &signer, /////// 0L /////////
         xdx_exchange_rate: FixedPoint32
     ) acquires CurrencyInfo {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_diem_root(dr_account); /////// 0L /////////
         assert_is_currency<FromCoinType>();
         // XDX is not allowed to update the exchange rate.
         assert!(currency_code<FromCoinType>() != b"XDX", Errors::invalid_argument(ECOIN));
@@ -1493,9 +1532,9 @@ module DiemFramework::Diem {
     }
 
     spec schema UpdateXDXExchangeRateAbortsIf<FromCoinType> {
-        tc_account: signer;
+        dr_account: signer; /////// 0L /////////
         /// Must abort if the account does not have the TreasuryCompliance Role [[H5]][PERMISSION].
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotTreasuryCompliance{account: dr_account}; /////// 0L /////////
 
         include AbortsIfNoCurrency<FromCoinType>;
         aborts_if spec_currency_code<FromCoinType>() == b"XDX" with Errors::INVALID_ARGUMENT;
@@ -1515,7 +1554,7 @@ module DiemFramework::Diem {
         emits msg to handle;
     }
 
-    /// Returns the (rough) exchange rate between `CoinType` and `XDX`
+    /// Returns the (rough) exchange rate between `CoinType` and `GAS` //////// 0L ////////
     public fun xdx_exchange_rate<CoinType>(): FixedPoint32
     acquires CurrencyInfo {
         assert_is_currency<CoinType>();
@@ -1536,11 +1575,11 @@ module DiemFramework::Diem {
     /// disallowed until it is turned back on via this function. All coins
     /// start out in the default state of `can_mint = true`.
     public fun update_minting_ability<CoinType>(
-        tc_account: &signer,
+        dr_account: &signer, /////// 0L /////////
         can_mint: bool,
         )
     acquires CurrencyInfo {
-        Roles::assert_treasury_compliance(tc_account);
+        Roles::assert_diem_root(dr_account); /////// 0L /////////
         assert_is_currency<CoinType>();
         let currency_info = borrow_global_mut<CurrencyInfo<CoinType>>(@CurrencyInfo);
         currency_info.can_mint = can_mint;
@@ -1550,13 +1589,13 @@ module DiemFramework::Diem {
         include UpdateMintingAbilityEnsures<CoinType>;
     }
     spec schema UpdateMintingAbilityAbortsIf<CoinType> {
-        tc_account: signer;
+        dr_account: signer; //////// 0L ////////
         include AbortsIfNoCurrency<CoinType>;
         /// Only the TreasuryCompliance role can enable/disable minting [[H2]][PERMISSION].
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
+        include Roles::AbortsIfNotTreasuryCompliance{account: dr_account};
     }
     spec schema UpdateMintingAbilityEnsures<CoinType> {
-        tc_account: signer;
+        dr_account: signer; //////// 0L ////////
         can_mint: bool;
         ensures spec_currency_info<CoinType>().can_mint == can_mint;
     }
@@ -1605,7 +1644,7 @@ module DiemFramework::Diem {
         /// Only `register_SCS_currency` creates MintCapability, which must abort if the account
         /// does not have the TreasuryCompliance role [[H1]][PERMISSION].
         apply PreserveMintCapAbsence<CoinType> to *<CoinType> except register_SCS_currency<CoinType>;
-        apply Roles::AbortsIfNotTreasuryCompliance{account: tc_account} to register_SCS_currency<CoinType>;
+        apply Roles::AbortsIfNotTreasuryCompliance{account: dr_account} to register_SCS_currency<CoinType>;
 
         /// Only TreasuryCompliance can have MintCapability [[H1]][PERMISSION].
         /// If an account has MintCapability, it is a TreasuryCompliance account.
@@ -1684,7 +1723,7 @@ module DiemFramework::Diem {
         /// which must abort if the account does not have the TreasuryCompliance role [[H8]][PERMISSION].
         apply PreserveBurnCapAbsence<CoinType> to *<CoinType>
             except register_SCS_currency<CoinType>, publish_burn_capability<CoinType>;
-        apply Roles::AbortsIfNotTreasuryCompliance{account: tc_account} to register_SCS_currency<CoinType>;
+        apply Roles::AbortsIfNotTreasuryCompliance{account: dr_account} to register_SCS_currency<CoinType>;
 
         /// Only TreasuryCompliance can have BurnCapability [[H3]][PERMISSION].
         /// If an account has BurnCapability, it is a TreasuryCompliance account.

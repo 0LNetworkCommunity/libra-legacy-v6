@@ -7,8 +7,6 @@ module DiemFramework::CoreAddresses {
     use Std::Errors;
     use Std::Signer;
 
-    // 0L todo: This section is not 0L-patched yet. Where are these addresses,
-    //          e.g. 0xA550C18, defined in code?
     /// The operation can only be performed by the account at 0xA550C18 (Diem Root)
     const EDIEM_ROOT: u64 = 0;
     /// The operation can only be performed by the account at 0xB1E55ED (Treasury & Compliance)

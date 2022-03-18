@@ -220,7 +220,7 @@ The provided gas constants were inconsistent.
 Initialize the table under the diem root account
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DiemVMConfig.md#0x1_DiemVMConfig_initialize">initialize</a>(dr_account: &signer, instruction_schedule: vector&lt;u8&gt;, native_schedule: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="DiemVMConfig.md#0x1_DiemVMConfig_initialize">initialize</a>(dr_account: &signer, instruction_schedule: vector&lt;u8&gt;, native_schedule: vector&lt;u8&gt;, _chain_id: u8)
 </code></pre>
 
 
@@ -233,11 +233,18 @@ Initialize the table under the diem root account
     dr_account: &signer,
     instruction_schedule: vector&lt;u8&gt;,
     native_schedule: vector&lt;u8&gt;,
+    _chain_id: u8, /////// 0L /////////
 ) {
     <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_genesis">DiemTimestamp::assert_genesis</a>();
 
     // The permission "UpdateVMConfig" is granted <b>to</b> DiemRoot [[H11]][PERMISSION].
     <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(dr_account);
+
+    /////// 0L /////////
+    <b>let</b> min_price_per_gas_unit = 0;
+    // <b>if</b> (chain_id == 7 || chain_id == 1) {
+    //     min_price_per_gas_unit = 1;
+    // };
 
     <b>let</b> gas_constants = <a href="DiemVMConfig.md#0x1_DiemVMConfig_GasConstants">GasConstants</a> {
         global_memory_per_byte_cost: 4,
@@ -245,10 +252,12 @@ Initialize the table under the diem root account
         min_transaction_gas_units: 600,
         large_transaction_cutoff: 600,
         intrinsic_gas_per_byte: 8,
-        maximum_number_of_gas_units: 4000000,
-        min_price_per_gas_unit: 0,
+        // Changed temporarily for oversized upgrade payload
+        maximum_number_of_gas_units: 100000000000, /////// 0L /////////
+        min_price_per_gas_unit: min_price_per_gas_unit, /////// 0L /////////
         max_price_per_gas_unit: 10000,
-        max_transaction_size_in_bytes: 4096,
+        // Changed temporarily for oversized upgrade payload
+        max_transaction_size_in_bytes: 409600, /////// 0L /////////
         gas_unit_scaling_factor: 1000,
         default_account_size: 800,
     };

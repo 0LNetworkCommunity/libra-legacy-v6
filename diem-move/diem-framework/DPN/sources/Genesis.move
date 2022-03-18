@@ -52,8 +52,8 @@ module DiemFramework::Genesis {
         consensus_config: vector<u8>,
     ) {
         initialize_internal(
-            // &dr_account, /////// 0L /////////
-            &tc_account,
+            &dr_account,
+            // &tc_account, /////// 0L /////////
             dr_auth_key,
             // tc_auth_key, /////// 0L /////////
             initial_script_allow_list,

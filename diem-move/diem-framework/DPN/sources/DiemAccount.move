@@ -35,12 +35,13 @@ module DiemFramework::DiemAccount {
     use Std::Vector;
     //////// 0L ////////
     use DiemFramework::VDF;
-    use DiemFramework::Globals;
     use DiemFramework::TowerState;
     use DiemFramework::Testnet::is_testnet;
     use DiemFramework::FIFO;
     use Std::FixedPoint32;
     use DiemFramework::GAS::GAS;
+    use DiemFramework::Receipts;
+    use DiemFramework::DiemSystem;
     use DiemFramework::ValidatorUniverse;
     use DiemFramework::Wallet;    
 
@@ -226,18 +227,18 @@ module DiemFramework::DiemAccount {
     const BOOTSTRAP_COIN_VALUE: u64 = 1000000;
 
     //////// 0L ////////
-    struct Escrow <Token> has store {
+    struct Escrow <phantom Token> has store {
         to_account: address,
         escrow: Diem::Diem<Token>,
     }
 
     //////// 0L //////////
-    struct AutopayEscrow <Token> has key, store {
+    struct AutopayEscrow <phantom Token> has key, store {
         list: FIFO::FIFO<Escrow<Token>>,
     }
 
     //////// 0L //////////
-    struct EscrowList<Token> has key {
+    struct EscrowList<phantom Token> has key {
         accounts: vector<EscrowSettings>
     }
 
@@ -475,9 +476,8 @@ module DiemFramework::DiemAccount {
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
-        Event::publish_generator(&new_signer);
         add_currencies_for_account<GAS>(&new_signer, false);
-        make_account(new_signer, auth_key_prefix);
+        make_account(&new_signer, auth_key_prefix);
 
         onboarding_gas_transfer<GAS>(sender, new_account_address, BOOTSTRAP_COIN_VALUE);
         // Init the miner state
@@ -499,9 +499,8 @@ module DiemFramework::DiemAccount {
     ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount, SlowWallet {
         let new_signer = create_signer(new_account);
         Roles::new_user_role_with_proof(&new_signer);
-        Event::publish_generator(&new_signer);
         add_currencies_for_account<GAS>(&new_signer, false);
-        make_account(new_signer, new_account_authkey_prefix);
+        make_account(&new_signer, new_account_authkey_prefix);
 
         // if the initial coin sent is the minimum amount, don't check transfer limits.
         if (value <= BOOTSTRAP_COIN_VALUE) {
@@ -585,7 +584,6 @@ module DiemFramework::DiemAccount {
 
         // TODO: Perhaps this needs to be moved to the epoch boundary, so that it is only the VM which can escalate these privileges.
         Roles::new_validator_role_with_proof(&new_signer, &create_signer(@DiemRoot));
-        Event::publish_generator(&new_signer);
         ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
         add_currencies_for_account<GAS>(&new_signer, false);
 
@@ -595,7 +593,6 @@ module DiemFramework::DiemAccount {
         // Create OP Account
         let new_op_account = create_signer(op_address);
         Roles::new_validator_operator_role_with_proof(&new_op_account);
-        Event::publish_generator(&new_op_account);
         ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
         add_currencies_for_account<GAS>(&new_op_account, false);
         // Link owner to OP
@@ -613,8 +610,8 @@ module DiemFramework::DiemAccount {
         // the mining is above the threshold in the preceeding period.
         ValidatorUniverse::add_self(&new_signer);
 
-        make_account(new_signer, auth_key_prefix);
-        make_account(new_op_account, op_auth_key_prefix);
+        make_account(&new_signer, auth_key_prefix);
+        make_account(&new_op_account, op_auth_key_prefix);
 
         TowerState::reset_rate_limit(sender);
 
@@ -703,7 +700,6 @@ module DiemFramework::DiemAccount {
         // Create OP Account
         let new_op_account = create_signer(op_address);
         Roles::new_validator_operator_role_with_proof(&new_op_account);
-        Event::publish_generator(&new_op_account);
         ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
         add_currencies_for_account<GAS>(&new_op_account, false);
 
@@ -724,7 +720,7 @@ module DiemFramework::DiemAccount {
         // no need to make the owner address.
 
         // make_account(new_signer, auth_key_prefix);
-        make_account(new_op_account, op_auth_key_prefix);
+        make_account(&new_op_account, op_auth_key_prefix);
 
         TowerState::reset_rate_limit(sender);
         // the miner who is upgrading may have coins, but better safe...
@@ -1454,7 +1450,8 @@ module DiemFramework::DiemAccount {
             payee,
             withdraw_from(&cap, payee, amount, copy metadata),
             metadata,
-            metadata_signature
+            metadata_signature,
+            false // 0L todo diem-1.4.1 - new patch, needs review        
         );
         
         Receipts::write_receipt(vm, payer, payee, amount);
@@ -1685,7 +1682,8 @@ module DiemFramework::DiemAccount {
             payee,
             coin_to_deposit,
             metadata,
-            b""
+            b"",
+            false // 0L todo diem-1.4.1 - new patch, needs review
         );
     }
 

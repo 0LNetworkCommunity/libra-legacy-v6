@@ -15,12 +15,15 @@ a given time period.
 -  [Function `update_deposit_limits`](#0x1_AccountLimits_update_deposit_limits)
 -  [Function `update_withdrawal_limits`](#0x1_AccountLimits_update_withdrawal_limits)
 -  [Function `publish_window`](#0x1_AccountLimits_publish_window)
+-  [Function `publish_window_OL`](#0x1_AccountLimits_publish_window_OL)
 -  [Function `publish_unrestricted_limits`](#0x1_AccountLimits_publish_unrestricted_limits)
 -  [Function `publish_unrestricted_limits_for_testing`](#0x1_AccountLimits_publish_unrestricted_limits_for_testing)
 -  [Function `update_limits_definition`](#0x1_AccountLimits_update_limits_definition)
+-  [Function `publish_restricted_limits_definition_OL`](#0x1_AccountLimits_publish_restricted_limits_definition_OL)
 -  [Function `update_window_info`](#0x1_AccountLimits_update_window_info)
 -  [Function `reset_window`](#0x1_AccountLimits_reset_window)
 -  [Function `can_receive_and_update_window`](#0x1_AccountLimits_can_receive_and_update_window)
+-  [Function `max_withdrawal`](#0x1_AccountLimits_max_withdrawal)
 -  [Function `can_withdraw_and_update_window`](#0x1_AccountLimits_can_withdraw_and_update_window)
 -  [Function `is_unrestricted`](#0x1_AccountLimits_is_unrestricted)
 -  [Function `limits_definition_address`](#0x1_AccountLimits_limits_definition_address)
@@ -31,7 +34,8 @@ a given time period.
     -  [Access Control](#@Access_Control_2)
 
 
-<pre><code><b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
+<pre><code><b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
+<b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -522,6 +526,50 @@ Only ParentVASP and ChildVASP can have the account limits [[E1]][ROLE][[E2]][ROL
 
 </details>
 
+<a name="0x1_AccountLimits_publish_window_OL"></a>
+
+## Function `publish_window_OL`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_publish_window_OL">publish_window_OL</a>&lt;CoinType: store&gt;(to_limit: &signer, limit_address: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_publish_window_OL">publish_window_OL</a>&lt;CoinType: store&gt;(
+    to_limit: &signer,
+    limit_address: <b>address</b>,
+) {
+    <b>assert</b>!(
+        <b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;&gt;(limit_address),
+        <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AccountLimits.md#0x1_AccountLimits_ELIMITS_DEFINITION">ELIMITS_DEFINITION</a>)
+    );
+    <b>assert</b>!(
+        !<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(to_limit)),
+        <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="AccountLimits.md#0x1_AccountLimits_EWINDOW">EWINDOW</a>)
+    );
+    <b>move_to</b>(
+        to_limit,
+        <a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt; {
+            window_start: <a href="AccountLimits.md#0x1_AccountLimits_current_time">current_time</a>(),
+            window_inflow: 0,
+            window_outflow: 0,
+            tracked_balance: 0,
+            limit_address,
+        }
+    )
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_AccountLimits_publish_unrestricted_limits"></a>
 
 ## Function `publish_unrestricted_limits`
@@ -663,7 +711,7 @@ If any of the field arguments is <code>0</code> the corresponding field is not u
     new_max_holding_balance: u64,
     new_time_period: u64,
 ) <b>acquires</b> <a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a> {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(tc_account); /////// 0L /////////
     <b>assert</b>!(<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;&gt;(limit_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AccountLimits.md#0x1_AccountLimits_ELIMITS_DEFINITION">ELIMITS_DEFINITION</a>));
 
     // As we don't have Optionals for txn scripts, in update_account_limit_definition.<b>move</b>
@@ -705,6 +753,48 @@ If any of the field arguments is <code>0</code> the corresponding field is not u
 
 </details>
 
+<a name="0x1_AccountLimits_publish_restricted_limits_definition_OL"></a>
+
+## Function `publish_restricted_limits_definition_OL`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_publish_restricted_limits_definition_OL">publish_restricted_limits_definition_OL</a>&lt;CoinType: store&gt;(account: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_publish_restricted_limits_definition_OL">publish_restricted_limits_definition_OL</a>&lt;CoinType: store&gt;(
+    account: &signer
+) {
+
+    <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
+    // As we don't have Optionals for txn scripts, in update_account_limit_definition.<b>move</b>
+    // we <b>use</b> 0 value <b>to</b> represent a None (ie no <b>update</b> <b>to</b> that variable)
+    <b>assert</b>!(
+        !<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;&gt;(sender_addr),
+        <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="AccountLimits.md#0x1_AccountLimits_ELIMITS_DEFINITION">ELIMITS_DEFINITION</a>)
+    );
+    <b>move_to</b>(
+        account,
+        <a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt; {
+            max_inflow: <a href="AccountLimits.md#0x1_AccountLimits_MAX_U64">MAX_U64</a>,
+            max_outflow: <a href="DiemConfig.md#0x1_DiemConfig_get_epoch_transfer_limit">DiemConfig::get_epoch_transfer_limit</a>(),
+            max_holding: <a href="AccountLimits.md#0x1_AccountLimits_MAX_U64">MAX_U64</a>,
+            time_period: <a href="AccountLimits.md#0x1_AccountLimits_ONE_DAY">ONE_DAY</a>
+        }
+    )
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_AccountLimits_update_window_info"></a>
 
 ## Function `update_window_info`
@@ -736,7 +826,7 @@ but the <code>limit_address</code> should remain the same, the current
     aggregate_balance: u64,
     new_limit_address: <b>address</b>,
 ) <b>acquires</b> <a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a> {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account);
+    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(tc_account); /////// 0L /////////
     <b>let</b> window = <b>borrow_global_mut</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;&gt;(window_address);
     <b>if</b> (aggregate_balance != 0)  { window.tracked_balance = aggregate_balance };
     <b>assert</b>!(<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;&gt;(new_limit_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="AccountLimits.md#0x1_AccountLimits_ELIMITS_DEFINITION">ELIMITS_DEFINITION</a>));
@@ -1050,6 +1140,51 @@ Checks whether receiving limits are satisfied.
    update_field(update_field(receiving,
        window_inflow, receiving.window_inflow + amount),
        tracked_balance, receiving.tracked_balance + amount)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_AccountLimits_max_withdrawal"></a>
+
+## Function `max_withdrawal`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_max_withdrawal">max_withdrawal</a>&lt;CoinType: store&gt;(addr: <b>address</b>): (u64, bool)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AccountLimits.md#0x1_AccountLimits_max_withdrawal">max_withdrawal</a>&lt;CoinType: store&gt;(
+    addr: <b>address</b>,
+): (u64, bool) <b>acquires</b> <a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>, <a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a> {
+    <b>if</b> (!<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;&gt;(addr)) {
+        <b>return</b> (0, <b>false</b>)
+    };
+    <b>let</b> sending = <b>borrow_global_mut</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_Window">Window</a>&lt;CoinType&gt;&gt;(addr);
+
+    <b>if</b> (!<b>exists</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;&gt;(sending.limit_address)) {
+        <b>return</b> (0, <b>false</b>)
+    };
+    <b>let</b> limits_definition = <b>borrow_global</b>&lt;<a href="AccountLimits.md#0x1_AccountLimits_LimitsDefinition">LimitsDefinition</a>&lt;CoinType&gt;&gt;(sending.limit_address);
+    // If the limits are unrestricted then don't do any more work.
+    <b>if</b> (<a href="AccountLimits.md#0x1_AccountLimits_is_unrestricted">is_unrestricted</a>(limits_definition)) <b>return</b> (<a href="AccountLimits.md#0x1_AccountLimits_MAX_U64">MAX_U64</a>, <b>true</b>);
+
+    <a href="AccountLimits.md#0x1_AccountLimits_reset_window">reset_window</a>(sending, limits_definition);
+    // Check outflow is OK
+    <b>if</b> (limits_definition.max_outflow &lt; sending.window_outflow) {
+        <b>return</b> (0, <b>false</b>)
+    };
+    <b>let</b> max_outflow = limits_definition.max_outflow - sending.window_outflow;
+    // Flow is OK, so record it.
+    (max_outflow, <b>true</b>)
 }
 </code></pre>
 

@@ -144,20 +144,6 @@ module DiemFramework::Roles {
         include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_ROLE_ID};
     }
 
-    /// Publish a ValidatorOperator `RoleId` under `new_account`.
-    /// The `creating_account` must be DiemRoot
-    public(friend) fun new_validator_operator_role(
-        creating_account: &signer,
-        new_account: &signer,
-    ) acquires RoleId {
-        assert_diem_root(creating_account);
-        grant_role(new_account, VALIDATOR_OPERATOR_ROLE_ID);
-    }
-    spec new_validator_operator_role {
-        include AbortsIfNotDiemRoot{account: creating_account};
-        include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_OPERATOR_ROLE_ID};
-    }
-
     //////// 0L /////////
     // Creates a user account
     /// Permissions: PUBLIC, ANYONE, SIGNER
@@ -169,30 +155,10 @@ module DiemFramework::Roles {
         // assert_libra_root(creating_account);
         grant_role(new_account, USER_ID);
     }
-
-    // spec new_user_role_with_proof {
-    //     include GrantRole{addr: Signer::address_of(new_account), role_id: USER_ID};
-    // }
-
-    use DiemFramework::Debug::print;
-
-    //////// 0L /////////
-    // Creates a user account
-    /// Permissions: PUBLIC, ANYONE, SIGNER
-    /// Needs to be a signer, is called from LibraAccount, which can create a signer. 
-    // Otherwise, not callable publicly, and can only grant role to the signer's address.
-    public fun new_user_role_with_proof(
-        new_account: &signer
-    ) {
-        // assert_libra_root(creating_account);
-        grant_role(new_account, USER_ID);
-    }
-
     // TODO: spec
     // spec new_user_role_with_proof {
     //     include GrantRole{addr: Signer::address_of(new_account), role_id: USER_ID};
     // }
-
 
     //////// 0L ////////
     /// upgrades a user role to validator role
@@ -235,36 +201,21 @@ module DiemFramework::Roles {
     }
     spec new_validator_operator_role_with_proof {
         include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_OPERATOR_ROLE_ID};
-    }
+    }    
 
-    //////// 0L ////////
-    /// Publish a Validator `RoleId` under `new_account`.
-    /// The `creating_account` must be libra root.
-    /// Permissions: PUBLIC, ANYONE, SIGNER
-    /// Needs to be a signer, is called from LibraAccount, which can create a signer. 
-    // Otherwise, not callable publicly, and can only grant role to the signer's address.
-    public fun new_validator_role_with_proof(
-        new_account: &signer, 
-        vm: &signer,
-    ) acquires RoleId {
-        assert_diem_root(vm);
-        grant_role(new_account, VALIDATOR_ROLE_ID);
-    }
-    spec new_validator_role_with_proof {
-        include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_ROLE_ID};
-    }
-
-    //////// 0L ////////
-    // same for operator 
-    // can only be called by signer
-    public fun new_validator_operator_role_with_proof(
+    /// Publish a ValidatorOperator `RoleId` under `new_account`.
+    /// The `creating_account` must be DiemRoot
+    public(friend) fun new_validator_operator_role(
+        creating_account: &signer,
         new_account: &signer,
-    ) {
+    ) acquires RoleId {
+        assert_diem_root(creating_account);
         grant_role(new_account, VALIDATOR_OPERATOR_ROLE_ID);
     }
-    spec new_validator_operator_role_with_proof {
+    spec new_validator_operator_role {
+        include AbortsIfNotDiemRoot{account: creating_account};
         include GrantRole{addr: Signer::address_of(new_account), role_id: VALIDATOR_OPERATOR_ROLE_ID};
-    }    
+    }
 
     /// Publish a ParentVASP `RoleId` under `new_account`.
     /// The `creating_account` must be TreasuryCompliance

@@ -16,6 +16,7 @@ when executing from a fresh state.
 
 
 <pre><code><b>use</b> <a href="AccountFreezing.md#0x1_AccountFreezing">0x1::AccountFreezing</a>;
+<b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="ChainId.md#0x1_ChainId">0x1::ChainId</a>;
 <b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
@@ -28,14 +29,21 @@ when executing from a fresh state.
 <b>use</b> <a href="DiemVMConfig.md#0x1_DiemVMConfig">0x1::DiemVMConfig</a>;
 <b>use</b> <a href="DiemVersion.md#0x1_DiemVersion">0x1::DiemVersion</a>;
 <b>use</b> <a href="DualAttestation.md#0x1_DualAttestation">0x1::DualAttestation</a>;
+<b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
+<b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
+<b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
+<b>use</b> <a href="Oracle.md#0x1_Oracle">0x1::Oracle</a>;
 <b>use</b> <a href="ParallelExecutionConfig.md#0x1_ParallelExecutionConfig">0x1::ParallelExecutionConfig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
+<b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
 <b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
 <b>use</b> <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig">0x1::ValidatorOperatorConfig</a>;
+<b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
-<b>use</b> <a href="XDX.md#0x1_XDX">0x1::XDX</a>;
-<b>use</b> <a href="XUS.md#0x1_XUS">0x1::XUS</a>;
+<b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
 </code></pre>
 
 
@@ -47,7 +55,7 @@ when executing from a fresh state.
 Initializes the Diem framework.
 
 
-<pre><code><b>fun</b> <a href="Genesis.md#0x1_Genesis_initialize">initialize</a>(dr_account: signer, tc_account: signer, dr_auth_key: vector&lt;u8&gt;, tc_auth_key: vector&lt;u8&gt;, initial_script_allow_list: vector&lt;vector&lt;u8&gt;&gt;, is_open_module: bool, instruction_schedule: vector&lt;u8&gt;, native_schedule: vector&lt;u8&gt;, chain_id: u8, initial_diem_version: u64, consensus_config: vector&lt;u8&gt;)
+<pre><code><b>fun</b> <a href="Genesis.md#0x1_Genesis_initialize">initialize</a>(dr_account: signer, dr_auth_key: vector&lt;u8&gt;, initial_script_allow_list: vector&lt;vector&lt;u8&gt;&gt;, is_open_module: bool, instruction_schedule: vector&lt;u8&gt;, native_schedule: vector&lt;u8&gt;, chain_id: u8, initial_diem_version: u64, consensus_config: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -58,9 +66,9 @@ Initializes the Diem framework.
 
 <pre><code><b>fun</b> <a href="Genesis.md#0x1_Genesis_initialize">initialize</a>(
     dr_account: signer,
-    tc_account: signer,
+    // tc_account: signer, //////// 0L ////////
     dr_auth_key: vector&lt;u8&gt;,
-    tc_auth_key: vector&lt;u8&gt;,
+    // tc_auth_key: vector&lt;u8&gt;, //////// 0L ////////
     initial_script_allow_list: vector&lt;vector&lt;u8&gt;&gt;,
     is_open_module: bool,
     instruction_schedule: vector&lt;u8&gt;,
@@ -71,9 +79,9 @@ Initializes the Diem framework.
 ) {
     <a href="Genesis.md#0x1_Genesis_initialize_internal">initialize_internal</a>(
         &dr_account,
-        &tc_account,
+        // &tc_account, /////// 0L /////////
         dr_auth_key,
-        tc_auth_key,
+        // tc_auth_key, /////// 0L /////////
         initial_script_allow_list,
         is_open_module,
         instruction_schedule,
@@ -119,7 +127,7 @@ Assume that this is called in genesis state (no timestamp).
 Initializes the Diem Framework. Internal so it can be used by both genesis code, and for testing purposes
 
 
-<pre><code><b>fun</b> <a href="Genesis.md#0x1_Genesis_initialize_internal">initialize_internal</a>(dr_account: &signer, tc_account: &signer, dr_auth_key: vector&lt;u8&gt;, tc_auth_key: vector&lt;u8&gt;, initial_script_allow_list: vector&lt;vector&lt;u8&gt;&gt;, is_open_module: bool, instruction_schedule: vector&lt;u8&gt;, native_schedule: vector&lt;u8&gt;, chain_id: u8, initial_diem_version: u64, consensus_config: vector&lt;u8&gt;)
+<pre><code><b>fun</b> <a href="Genesis.md#0x1_Genesis_initialize_internal">initialize_internal</a>(dr_account: &signer, dr_auth_key: vector&lt;u8&gt;, initial_script_allow_list: vector&lt;vector&lt;u8&gt;&gt;, is_open_module: bool, instruction_schedule: vector&lt;u8&gt;, native_schedule: vector&lt;u8&gt;, chain_id: u8, initial_diem_version: u64, consensus_config: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -130,9 +138,9 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
 
 <pre><code><b>fun</b> <a href="Genesis.md#0x1_Genesis_initialize_internal">initialize_internal</a>(
     dr_account: &signer,
-    tc_account: &signer,
+    // tc_account: &signer, /////// 0L /////////
     dr_auth_key: vector&lt;u8&gt;,
-    tc_auth_key: vector&lt;u8&gt;,
+    // tc_auth_key: vector&lt;u8&gt;, /////// 0L /////////
     initial_script_allow_list: vector&lt;vector&lt;u8&gt;&gt;,
     is_open_module: bool,
     instruction_schedule: vector&lt;u8&gt;,
@@ -157,18 +165,26 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
     // Currency setup
     <a href="Diem.md#0x1_Diem_initialize">Diem::initialize</a>(dr_account);
 
-    // Currency setup
-    <a href="XUS.md#0x1_XUS_initialize">XUS::initialize</a>(dr_account, tc_account);
-
-    <a href="XDX.md#0x1_XDX_initialize">XDX::initialize</a>(dr_account, tc_account);
+    /////// 0L /////////
+    // // Currency setup
+    // <a href="XUS.md#0x1_XUS_initialize">XUS::initialize</a>(dr_account, tc_account);
+    // <a href="XDX.md#0x1_XDX_initialize">XDX::initialize</a>(dr_account, tc_account);
+    <a href="GAS.md#0x1_GAS_initialize">GAS::initialize</a>(dr_account);
 
     <a href="AccountFreezing.md#0x1_AccountFreezing_initialize">AccountFreezing::initialize</a>(dr_account);
-    <a href="TransactionFee.md#0x1_TransactionFee_initialize">TransactionFee::initialize</a>(tc_account);
+    <a href="TransactionFee.md#0x1_TransactionFee_initialize">TransactionFee::initialize</a>(dr_account); /////// 0L /////////
 
     <a href="DiemSystem.md#0x1_DiemSystem_initialize_validator_set">DiemSystem::initialize_validator_set</a>(dr_account);
     <a href="DiemVersion.md#0x1_DiemVersion_initialize">DiemVersion::initialize</a>(dr_account, initial_diem_version);
     <a href="DualAttestation.md#0x1_DualAttestation_initialize">DualAttestation::initialize</a>(dr_account);
     <a href="DiemBlock.md#0x1_DiemBlock_initialize_block_metadata">DiemBlock::initialize_block_metadata</a>(dr_account);
+
+    /////// 0L /////////
+    // DiemAccount::create_burn_account(dr_account, x"00000000000000000000000000000000");
+    // Outside of testing, brick the diemroot account.
+    <b>if</b> (chain_id == 1 || chain_id == 7) {
+        dr_auth_key = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Hash.md#0x1_Hash_sha3_256">Hash::sha3_256</a>(b"Protests rage across the nation");
+    };
 
     // Rotate auth keys for DiemRoot and TreasuryCompliance accounts <b>to</b> the given
     // values
@@ -176,9 +192,10 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
     <a href="DiemAccount.md#0x1_DiemAccount_rotate_authentication_key">DiemAccount::rotate_authentication_key</a>(&dr_rotate_key_cap, dr_auth_key);
     <a href="DiemAccount.md#0x1_DiemAccount_restore_key_rotation_capability">DiemAccount::restore_key_rotation_capability</a>(dr_rotate_key_cap);
 
-    <b>let</b> tc_rotate_key_cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_key_rotation_capability">DiemAccount::extract_key_rotation_capability</a>(tc_account);
-    <a href="DiemAccount.md#0x1_DiemAccount_rotate_authentication_key">DiemAccount::rotate_authentication_key</a>(&tc_rotate_key_cap, tc_auth_key);
-    <a href="DiemAccount.md#0x1_DiemAccount_restore_key_rotation_capability">DiemAccount::restore_key_rotation_capability</a>(tc_rotate_key_cap);
+    /////// 0L /////////
+    // <b>let</b> tc_rotate_key_cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_key_rotation_capability">DiemAccount::extract_key_rotation_capability</a>(tc_account);
+    // <a href="DiemAccount.md#0x1_DiemAccount_rotate_authentication_key">DiemAccount::rotate_authentication_key</a>(&tc_rotate_key_cap, tc_auth_key);
+    // <a href="DiemAccount.md#0x1_DiemAccount_restore_key_rotation_capability">DiemAccount::restore_key_rotation_capability</a>(tc_rotate_key_cap);
 
     <a href="DiemTransactionPublishingOption.md#0x1_DiemTransactionPublishingOption_initialize">DiemTransactionPublishingOption::initialize</a>(
         dr_account,
@@ -190,14 +207,30 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
         dr_account,
         instruction_schedule,
         native_schedule,
+        chain_id /////// 0L /////////
     );
 
     <a href="DiemConsensusConfig.md#0x1_DiemConsensusConfig_set">DiemConsensusConfig::set</a>(dr_account, consensus_config);
+
+    /////// 0L /////////
+    // <b>let</b> tc_rotate_key_cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_key_rotation_capability">DiemAccount::extract_key_rotation_capability</a>(tc_account);
+    // <a href="DiemAccount.md#0x1_DiemAccount_rotate_authentication_key">DiemAccount::rotate_authentication_key</a>(&tc_rotate_key_cap, tc_auth_key);
+    // <a href="DiemAccount.md#0x1_DiemAccount_restore_key_rotation_capability">DiemAccount::restore_key_rotation_capability</a>(tc_rotate_key_cap);
+    <a href="Stats.md#0x1_Stats_initialize">Stats::initialize</a>(dr_account);
+    <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_initialize">ValidatorUniverse::initialize</a>(dr_account);
+    <a href="AutoPay.md#0x1_AutoPay_initialize">AutoPay::initialize</a>(dr_account);
+    // FullnodeSubsidy::init_fullnode_sub(dr_account);
+    <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(dr_account);
+    <a href="TowerState.md#0x1_TowerState_init_miner_list_and_stats">TowerState::init_miner_list_and_stats</a>(dr_account);
+    <a href="Wallet.md#0x1_Wallet_init">Wallet::init</a>(dr_account);
+    <a href="DiemAccount.md#0x1_DiemAccount_vm_init_slow">DiemAccount::vm_init_slow</a>(dr_account);
+    <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(dr_account);
 
     // After we have called this function, all invariants which are guarded by
     // `<a href="DiemTimestamp.md#0x1_DiemTimestamp_is_operating">DiemTimestamp::is_operating</a>() ==&gt; ...` will become active and a verification condition.
     // See also discussion at function specification.
     <a href="DiemTimestamp.md#0x1_DiemTimestamp_set_time_has_started">DiemTimestamp::set_time_has_started</a>(dr_account);
+    <a href="Epoch.md#0x1_Epoch_initialize">Epoch::initialize</a>(dr_account); /////// 0L /////////
 }
 </code></pre>
 
