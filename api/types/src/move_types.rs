@@ -328,6 +328,12 @@ impl From<TransactionArgument> for MoveValue {
             TransactionArgument::Bool(v) => MoveValue::Bool(v),
             TransactionArgument::Address(v) => MoveValue::Address(v.into()),
             TransactionArgument::U8Vector(bytes) => MoveValue::Bytes(HexEncodedBytes(bytes)),
+            //////// 0L ////////
+            TransactionArgument::AddressVector(v) => {
+                MoveValue::Vector(v.into_iter().map(|a|{
+                  MoveValue::Address(Address::from(a))
+                }).collect())
+            }            
         }
     }
 }

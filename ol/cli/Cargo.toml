@@ -18,7 +18,7 @@ thiserror = "1"
 reqwest = { version = "0.11.2", features = ["blocking", "json"], default_features = false }
 diem-types = { path = "../../types/" }
 num-format = "0.4.0"
-move-resource-viewer = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
+move-resource-viewer = { git = "https://github.com/simsekgokhan/move-0L", branch = "v6" }
 anyhow = "1.0"
 diem-global-constants = { path = "../../config/global-constants", version = "0.1.0"}
 byteorder = "1"
@@ -57,12 +57,12 @@ storage-interface = { path = "../../storage/storage-interface", version = "0.1.0
 fs_extra = "1"
 port_scanner = "0.1.5"
 backup-cli = { path = "../../storage/backup/backup-cli", version = "0.1.0" }
-move-core-types = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L", branch = "v6" }
 walkdir = "2.3"
 rand = "0.8"
 bcs = "0.1.2"
-move-vm-types = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" } # 0L todo: which move-vm/ path?
-move-binary-format = { git = "https://github.com/simsekgokhan/move-0L", rev = "98ed299a7e3a9223019c9bdf4dd92fea9faef860" }
+move-vm-types = { git = "https://github.com/simsekgokhan/move-0L", branch = "v6" } # 0L todo: which move-vm/ path?
+move-binary-format = { git = "https://github.com/simsekgokhan/move-0L", branch = "v6" }
 dialoguer = "0.8.0"
 diem-crypto = { path = "../../crates/diem-crypto" }
 

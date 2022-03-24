@@ -20,6 +20,7 @@ use diem_infallible::{Mutex, RwLock};
 use diem_logger::prelude::*;
 use diem_metrics::HistogramTimer;
 use diem_types::{
+    account_config::AccountSequenceInfo::Sequential,
     mempool_status::{MempoolStatus, MempoolStatusCode},
     on_chain_config::OnChainConfigPayload,
     transaction::SignedTransaction,
@@ -258,16 +259,17 @@ where
                 //////// 0L ////////
                 if t.sequence_number() == crsn_or_seqno.min_seq() {
                     return Some((t, crsn_or_seqno));
-                } else if t.sequence_number() > sequence_number{
-                    statuses.push((
-        
-                        t,
-                        (
-                            MempoolStatus::new(MempoolStatusCode::VmError),
-                            Some(DiscardedVMStatus::SEQUENCE_NUMBER_TOO_NEW),
-                        ),
-                    ));
-                } 
+                } else if let Sequential(sequence_number) = crsn_or_seqno {
+                    if t.sequence_number() > sequence_number {
+                        statuses.push((
+                            t,
+                            (
+                                MempoolStatus::new(MempoolStatusCode::VmError),
+                                Some(DiscardedVMStatus::SEQUENCE_NUMBER_TOO_NEW),
+                            ),
+                        ));
+                    }
+                }
                 else {
                     statuses.push((
                         t,
@@ -416,7 +418,7 @@ pub(crate) fn process_consensus_request<V: TransactionValidation>(
             );
             //////// 0L ////////
             // process_committed_transactions(&smp.mempool, transactions, 0, true);
-            reject_txns(mempool, transactions).await;
+            reject_txns(&smp.mempool, transactions);
             (
                 ConsensusResponse::CommitResponse(),
                 callback,
@@ -447,11 +449,12 @@ pub(crate) fn process_committed_transactions(
     is_rejected: bool,
 ) {
     /////// 0L /////////
-    remove_txns(mempool, transactions, false).await;
+    remove_txns(mempool, transactions, is_rejected);
     if block_timestamp_usecs > 0 {
         mempool.lock().gc_by_expiration_time(Duration::from_micros(block_timestamp_usecs));
     }
 
+    /////// 0L /////////
     // let mut pool = mempool.lock();
 
     // for transaction in transactions {
@@ -469,18 +472,18 @@ pub(crate) fn process_committed_transactions(
 
 //////// 0L ////////
 /// Reject all txns for the associated account
-async fn reject_txns(
+fn reject_txns(
     mempool: &Mutex<CoreMempool>,
-    transactions: Vec<CommittedTransaction>,
+    transactions: Vec<TransactionSummary>,
 ) {
-    remove_txns(mempool, transactions, true).await;
+    remove_txns(mempool, transactions, true);
 }
 
 //////// 0L ////////
 /// Removes txns from the local mempool
-async fn remove_txns(
+fn remove_txns(
     mempool: &Mutex<CoreMempool>,
-    transactions: Vec<CommittedTransaction>,
+    transactions: Vec<TransactionSummary>,
     is_rejected: bool,
 ) {
     let mut pool = mempool.lock();

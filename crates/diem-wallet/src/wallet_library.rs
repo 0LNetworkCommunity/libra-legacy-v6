@@ -195,6 +195,11 @@ impl WalletLibrary {
             Err(WalletError::DiemWalletGeneric("missing address".to_string()).into())
         }
     }
+
+    //////// 0L ////////
+    pub fn get_key_factory(&self) -> &KeyFactory{
+        &self.key_factory
+    }    
 }
 
 /// WalletLibrary naturally support TransactionSigner trait.

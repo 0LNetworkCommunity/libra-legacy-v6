@@ -23,5 +23,5 @@ url = "2.2.2"
 diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 
 [[bin]]
-name = "forge"
+name = "forge-cli" #//////// 0L ////////
 path = "src/main.rs"

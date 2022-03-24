@@ -8,9 +8,11 @@ use crate::{
     errors::{convert_epilogue_error, convert_prologue_error, expect_only_successful_execution},
     logging::AdapterLogSchema,
     natives::diem_natives,
+    system_module_names::*,
     transaction_metadata::TransactionMetadata,
 };
 use diem_crypto::HashValue;
+use diem_framework_releases::import_stdlib;
 use diem_logger::prelude::*;
 use diem_state_view::StateView;
 use diem_types::{
@@ -42,7 +44,6 @@ use move_core_types::{
 use move_vm_runtime::{logging::expect_no_verification_errors, move_vm::MoveVM, session::Session};
 use move_vm_types::gas_schedule::{calculate_intrinsic_gas, GasStatus};
 use std::{convert::TryFrom, sync::Arc};
-use diem_framework_releases::import_stdlib;
 
 #[derive(Clone)]
 /// A wrapper to make VMRuntime standalone and thread safe.
@@ -519,13 +520,12 @@ impl DiemVMImpl {
     // Note: currently the upgrade needs two blocks to happen: 
     // In the first block, consensus is reached and recorded; 
     // in the second block, the payload is applied and history is recorded
-    pub(crate) fn tick_oracle_consensus<S: MoveStorage> (
+    pub(crate) fn tick_oracle_consensus<S: MoveResolver> (
         &self,
         session: &mut Session<S>,
         _block_metadata: BlockMetadata,
         txn_data: &TransactionMetadata,
         gas_status: &mut GasStatus,
-        log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
         println!("0L ==== stdlib upgrade: checking for stdlib upgrade");
         // tick Oracle::check_upgrade
@@ -539,20 +539,18 @@ impl DiemVMImpl {
             serialize_values(&args),
             // txn_data.sender(),
             gas_status,
-            log_context,
         ).map_err(|e| { info!("Couldn't check upgrade"); e } )?;
         Ok(())
     }
 
     //////// 0L ////////    
-    pub(crate) fn apply_stdlib_upgrade<S: MoveStorage> (
+    pub(crate) fn apply_stdlib_upgrade<S: MoveResolver> (
         &self,
         session: &mut Session<S>,
         remote_cache: &S,
         block_metadata: BlockMetadata,
         txn_data: &TransactionMetadata,
         gas_status: &mut GasStatus,
-        log_context: &impl LogContext,
     ) -> Result<(), VMStatus> {
         let (round, timestamp, _previous_vote, _proposer) = block_metadata.into_inner();
         // hardcoding upgrade on round 2
@@ -580,7 +578,6 @@ impl DiemVMImpl {
                         bytes, 
                         account_config::CORE_CODE_ADDRESS, 
                         gas_status, 
-                        log_context
                     ).map_err(|_|{ 
                       println!("faliled to publish module");
                       VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR)
@@ -601,7 +598,6 @@ impl DiemVMImpl {
                     vec![],
                     serialize_values(&args),
                     gas_status,
-                    log_context,
                 ).map_err(|_|{ 
                   println!("Couldn't trigger upgrade reconfig event");
                   VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR)
@@ -618,7 +614,7 @@ impl DiemVMImpl {
 }
 
 //////// 0L ////////
-fn get_upgrade_payload<S: MoveStorage>(
+fn get_upgrade_payload<S: MoveResolver>(
     remote_cache: &S,
 ) -> Result<UpgradePayloadResource, VMStatus> {
     if let Ok(Some(blob)) = remote_cache.get_resource(

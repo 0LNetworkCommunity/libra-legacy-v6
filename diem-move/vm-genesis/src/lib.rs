@@ -21,10 +21,10 @@ use diem_transaction_builder::stdlib as transaction_builder;
 use diem_types::{
     account_config::{
         self,
-        events::{CreateAccountEvent, NewEpochEvent},
+        events::{CreateAccountEvent},
         DESIGNATED_DEALER_MODULE,
     },
-    chain_id::{ChainId, NamedChain},
+    chain_id::{ChainId},
     contract_event::ContractEvent,
     on_chain_config::{
         ConsensusConfigV1, OnChainConsensusConfig, ReadWriteSetAnalysis, VMPublishingOption,
@@ -75,8 +75,8 @@ pub fn encode_genesis_transaction(
     enable_parallel_execution: bool,
 ) -> Transaction {
     Transaction::GenesisTransaction(WriteSetPayload::Direct(encode_genesis_change_set(
-        &diem_root_key,
-        &treasury_compliance_key,
+        diem_root_key,
+        treasury_compliance_key,
         validators,
         stdlib_module_bytes,
         //////// 0L ////////
@@ -116,14 +116,6 @@ pub fn encode_genesis_change_set(
     let move_vm = MoveVM::new(diem_vm::natives::diem_natives()).unwrap();
     let mut session = move_vm.new_session(&data_cache);
 
-    //////// 0L ////////
-    let xdx_ty = TypeTag::Struct(StructTag {
-        address: *account_config::GAS_MODULE.address(),
-        module: account_config::GAS_MODULE.name().to_owned(),
-        name: account_config::GAS_IDENTIFIER.to_owned(),
-        type_params: vec![],
-    });
-    
     create_and_initialize_main_accounts(
         &mut session,
         diem_root_key,
@@ -151,13 +143,14 @@ pub fn encode_genesis_change_set(
     
     reconfigure(&mut session);
 
-    if has_dd_module
-        && [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
-            .iter()
-            .any(|test_chain_id| test_chain_id.id() == chain_id.id())
-    {
-        create_and_initialize_testnet_minting(&mut session, treasury_compliance_key);
-    }
+    //////// 0L ////////
+    // if has_dd_module
+    //     && [NamedChain::TESTNET, NamedChain::DEVNET, NamedChain::TESTING]
+    //         .iter()
+    //         .any(|test_chain_id| test_chain_id.id() == chain_id.id())
+    // {
+    //     create_and_initialize_testnet_minting(&mut session, treasury_compliance_key);
+    // }
 
     if enable_parallel_execution {
         let payload = bcs::to_bytes(&ReadWriteSetAnalysis::V1(
@@ -213,7 +206,7 @@ pub fn encode_recovery_genesis_changeset(
     val_set: &[AccountAddress],
     // stdlib_modules: &[Vec<u8>],
     // vm_publishing_option: VMPublishingOption,
-    chain: u8,
+    // chain: u8,
 ) -> Result<ChangeSet, Error> {
     let mut stdlib_modules = Vec::new();
     // create a data view for move_vm
@@ -228,22 +221,15 @@ pub fn encode_recovery_genesis_changeset(
     let move_vm = MoveVM::new(diem_vm::natives::diem_natives()).unwrap();
     let mut session = move_vm.new_session(&data_cache);
 
-    //////// 0L ////////
-    let xdx_ty = TypeTag::Struct(StructTag {
-        address: *account_config::GAS_MODULE.address(),
-        module: account_config::GAS_MODULE.name().to_owned(),
-        name: account_config::GAS_IDENTIFIER.to_owned(),
-        type_params: vec![],
-    });
-
-    create_and_initialize_main_accounts(
-        &mut session,
-        None,
-        None,
-        VMPublishingOption::open(),
-        &xdx_ty,
-        ChainId::new(chain),
-    );
+    // 0L todo diem-1.4.1
+    // create_and_initialize_main_accounts(
+    //     &mut session,
+    //     None,
+    //     None,
+    //     VMPublishingOption::open(),
+    //     &xdx_ty,
+    //     ChainId::new(chain),
+    // );
     //////// 0L ////////
     println!("OK create_and_initialize_main_accounts =============== ");
     let genesis_env = get_env();
@@ -596,8 +582,7 @@ pub struct OperRecover {
 /// the required accounts, sets the validator operators for each validator owner, and sets the
 /// validator config on-chain.
 fn recovery_owners_operators(
-    session: &mut Session<StateViewCache>,
-    // log_context: &impl LogContext,
+    session: &mut Session<StateViewCache<GenesisStateView>>,
     val_assignments: &[ValRecover],
     operator_registrations: &[OperRecover],
     val_set: &[AccountAddress],
@@ -931,8 +916,7 @@ pub fn generate_test_genesis(
 //////// 0L ////////
 /// Genesis subsidy to genesis set
 fn distribute_genesis_subsidy(
-    session: &mut Session<StateViewCache>,
-    // log_context: &impl LogContext,
+    session: &mut Session<StateViewCache<GenesisStateView>>,
 ) {
     let diem_root_address = account_config::diem_root_address();
 
@@ -949,8 +933,7 @@ fn distribute_genesis_subsidy(
 // 0L todo diem-1.4.1 - updated patch, needs review
 //////// 0L /////////
 fn fund_operators(
-  session: &mut Session<StateViewCache>,
-  // log_context: &impl LogContext,
+  session: &mut Session<StateViewCache<GenesisStateView>>,
   validators: &[Validator],
 ) {
     println!("======== Fund operators");
@@ -1047,7 +1030,7 @@ impl Default for GenesisMiningProof {
 
 //////// 0L ////////
 fn initialize_testnet(
-    session: &mut Session<StateViewCache>/*, log_context: &impl LogContext*/
+    session: &mut Session<StateViewCache<GenesisStateView>>
 ) {
     let diem_root_address = account_config::diem_root_address();
     let mut module_name = "Testnet";

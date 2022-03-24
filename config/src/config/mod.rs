@@ -34,6 +34,8 @@ mod network_config;
 pub use network_config::*;
 mod json_rpc_config;
 pub use json_rpc_config::*;
+mod ol_upstream_config;
+pub use ol_upstream_config::*;
 mod secure_backend_config;
 pub use secure_backend_config::*;
 mod state_sync_config;

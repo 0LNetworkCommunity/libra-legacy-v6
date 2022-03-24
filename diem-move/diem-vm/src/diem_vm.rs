@@ -26,6 +26,7 @@ use diem_state_view::StateView;
 use diem_types::{
     account_config,
     block_metadata::BlockMetadata,
+    // move_resource::MoveStorage,
     on_chain_config::{
         DiemVersion, OnChainConfig, ParallelExecutionConfig, VMConfig, VMPublishingOption,
         DIEM_VERSION_2, DIEM_VERSION_3,
@@ -555,7 +556,6 @@ impl DiemVM {
                 block_metadata.clone(),
                 &txn_data,
                 &mut gas_status,
-                log_context,
             )?;
 
             //////// 0L ////////
@@ -566,7 +566,6 @@ impl DiemVM {
                 block_metadata.clone(),
                 &txn_data,
                 &mut gas_status,
-                log_context,
             ) {
                 Ok(_) => {},
                 Err(e) => {
@@ -583,7 +582,6 @@ impl DiemVM {
                 block_metadata.clone(),
                 &txn_data,
                 &mut gas_status,
-                log_context,
             )?;
 
             //////// 0L ////////
@@ -594,7 +592,6 @@ impl DiemVM {
                 block_metadata.clone(),
                 &txn_data,
                 &mut gas_status,
-                log_context,
             ) {
                 Ok(_) => {},
                 Err(e) => {

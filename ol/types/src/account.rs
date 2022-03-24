@@ -4,7 +4,13 @@ use dialoguer::Confirm;
 use diem_config::network_id::NetworkId;
 use diem_crypto::x25519::PublicKey;
 use diem_global_constants::{DEFAULT_VAL_PORT, DEFAULT_VFN_PORT, DEFAULT_PUB_PORT};
-use diem_types::{account_address::AccountAddress, network_address::{NetworkAddress, encrypted::{TEST_SHARED_VAL_NETADDR_KEY, TEST_SHARED_VAL_NETADDR_KEY_VERSION}}, transaction::{SignedTransaction, TransactionPayload}};
+use diem_types::{
+    account_address::AccountAddress, 
+    network_address::{
+        NetworkAddress, 
+    }, 
+    transaction::{SignedTransaction, TransactionPayload}
+};
 
 use crate::pay_instruction::PayInstruction;
 use anyhow::{self, bail};
@@ -90,20 +96,25 @@ impl ValConfigs {
             .unwrap();
 
         
-        let val_addr_for_val_net = ValConfigs::make_unencrypted_addr(&val_ip_address, val_pubkey, NetworkId::Validator);
+        let val_addr_for_val_net = ValConfigs::make_unencrypted_addr(
+            &val_ip_address, val_pubkey, NetworkId::Validator
+        );
 
-        let encrypted_addr =  val_addr_for_val_net.clone().encrypt(
-            // NOTE: 0L is not setting an encrypted network key initially.
-              &TEST_SHARED_VAL_NETADDR_KEY,
-              TEST_SHARED_VAL_NETADDR_KEY_VERSION,
-              &owner_address,
-              0,
-              0,
-          )
-          .expect("unable to encrypt network address");
+        // 0L todo diem-1.4.1: No encrypt()
+        // let encrypted_addr =  val_addr_for_val_net.clone().encrypt(
+        //     // NOTE: 0L is not setting an encrypted network key initially.
+        //       &TEST_SHARED_VAL_NETADDR_KEY,
+        //       TEST_SHARED_VAL_NETADDR_KEY_VERSION,
+        //       &owner_address,
+        //       0,
+        //       0,
+        //   )
+        //   .expect("unable to encrypt network address");
 
         // For the private VFN Fullnode network the Validator uses this identity:
-        let val_addr_for_vfn_net = ValConfigs::make_unencrypted_addr(&val_ip_address, val_pubkey, NetworkId::Private("vfn".to_owned()));
+        let val_addr_for_vfn_net = ValConfigs::make_unencrypted_addr(
+            &val_ip_address, val_pubkey, NetworkId::Vfn
+        );
 
         // Create the list of VFN fullnode addresses. Usually only one
         // This is the VFN (validator fullnode) address information which the validator will use
@@ -125,7 +136,10 @@ impl ValConfigs {
                 .prefix()
                 .to_vec(),
             op_consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().to_vec(),
-            op_validator_network_addresses: bcs::to_bytes(&vec![encrypted_addr]).unwrap(),
+            // 0L todo diem-1.4.1
+            // op_validator_network_addresses: bcs::to_bytes(&vec![encrypted_addr]).unwrap(),
+            op_validator_network_addresses: bcs::to_bytes(&vec![&val_addr_for_val_net]).unwrap(),
+
             op_fullnode_network_addresses: bcs::to_bytes(&vec![&vfn_addr_obj]).unwrap(),
             op_val_net_addr_for_vals: val_addr_for_val_net.to_owned(),
             op_val_net_addr_for_vfn: val_addr_for_vfn_net.to_owned(),
@@ -180,7 +194,7 @@ impl ValConfigs {
       let port = match net {
           NetworkId::Validator => DEFAULT_VAL_PORT,
           NetworkId::Public => DEFAULT_PUB_PORT,
-          NetworkId::Private(_) => DEFAULT_VFN_PORT,
+          NetworkId::Vfn => DEFAULT_VFN_PORT,
       };
       
       let fullnode_network_string = format!("/ip4/{}/tcp/{}", ip_address.to_string(), port);

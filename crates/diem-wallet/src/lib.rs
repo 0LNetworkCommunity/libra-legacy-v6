@@ -14,7 +14,7 @@ mod internal_macros;
 pub mod io_utils;
 
 /// Utils for key derivation
-mod key_factory;
+pub mod key_factory; //////// 0L ////////
 
 /// Utils for mnemonic seed
 mod mnemonic;

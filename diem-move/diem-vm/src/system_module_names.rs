@@ -3,7 +3,7 @@
 //! Names of modules, functions, and types used by Diem System.
 
 use diem_types::account_config;
-use move_core_types::{ident_str, identifier::IdentStr, language_storage::ModuleId};
+use move_core_types::{ident_str, identifier::{IdentStr, Identifier}, language_storage::ModuleId};
 use once_cell::sync::Lazy;
 
 // Data to resolve basic account and transaction flow functions and structs
