@@ -20,6 +20,7 @@ module Migrations {
   use 0x1::Option::{Self,Option};
 
   /// A list of Migrations that have been 
+  /// Note: Used ids are (add to this list when needed): 1, 10, 11, ...
   struct Migrations has key {
     list: vector<Job>
   }
@@ -88,22 +89,71 @@ module Migrations {
 }
 
 /// # Summary 
-/// Module to migrate the tower statistics from TowerState to TowerCounter
-module MigrateTowerCounter {
-  use 0x1::TowerState;
+/// Module to make whole underpaid Carpe users
+module MigrateMakeWhole{
   use 0x1::Migrations;
+  use 0x1::DiemAccount;
+  use 0x1::Vector;
   use 0x1::CoreAddresses;
+  use 0x1::GAS::GAS;
+  use 0x1::Diem;
 
-  const UID:u64 = 1;
-  // Migration to migrate all wallets to be slow wallets
-  public fun migrate_tower_counter(vm: &signer) {
+  const UID:u64 = 11;
+  
+
+  // I've split this into two pieces to ease testing. 
+  public fun migrate_make_whole(vm: &signer){
     CoreAddresses::assert_diem_root(vm);
     if (!Migrations::has_run(UID)) {
-      let (global, val, fn) = TowerState::danger_migrate_get_lifetime_proof_count();
-      TowerState::init_tower_counter(vm, global, val, fn);
-      Migrations::push(vm, UID, b"MigrateTowerCounter");
+      let payees: vector<address> = Vector::empty<address>();
+      let amounts: vector<u64> = Vector::empty<u64>();
+
+      // TODO: A new address and amount must be pushed back for each miner that needs to be repaid
+      // This can be done more easily in more recent version of move, but it seems 0L currently does not support them. 
+      Vector::push_back<address>(&mut payees, @0x01);
+      Vector::push_back<u64>(&mut amounts, 10);
+
+      Vector::push_back<address>(&mut payees, @0x02);
+      Vector::push_back<u64>(&mut amounts, 20);
+
+      make_whole(vm, &payees, &amounts);
+    };
+  }
+  
+  /// Pays payees[i] amounts[i] GAS in order to make whole carpe users
+  public fun make_whole(vm: &signer, payees: &vector<address>, amounts: &vector<u64>) {
+    CoreAddresses::assert_diem_root(vm);
+    if (!Migrations::has_run(UID)) {
+      let size = Vector::length<address>(payees);
+      if (size != Vector::length<u64>(amounts)) {
+        // something has been implemented wrong, don't complete the payout 
+        // don't abort either though as that would halt the network
+        return
+      };
+
+      // mint the coins and deposit after ensuring miner can accept GAS
+      let i = 0;
+      while (i < size) {
+        if (DiemAccount::accepts_currency<GAS>(*Vector::borrow<address>(payees, i))){ 
+          let minted_coins = Diem::mint<GAS>(vm, *Vector::borrow<u64>(amounts, i));
+          DiemAccount::vm_deposit_with_metadata<GAS>(
+            vm,
+            *Vector::borrow<address>(payees, i),
+            minted_coins,
+            b"carpe miner make whole",
+            b""
+          );
+        };
+
+        i = i + 1;
+      };
+
+      //record that the migration has completed so as to not run it twice
+      Migrations::push(vm, UID, b"MigrateMakeWhole");
     };
   }
 
 }
+
+
 }
