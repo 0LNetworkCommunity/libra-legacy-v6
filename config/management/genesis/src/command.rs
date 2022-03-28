@@ -43,7 +43,7 @@ pub enum Command {
     #[structopt(about = "Creates own repo for submitting genesis info")]
     CreateRepo(crate::ol_create_repo::CreateGenesisRepo),
     #[structopt(about = "Shows seed peers in a genesis blob")]
-    GenesisSeedPeers(crate::seeds::Seeds),  
+    GenesisSeedPeers(crate::ol_seeds::Seeds),  
 }
 
 #[derive(Debug, PartialEq)]

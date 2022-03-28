@@ -1,7 +1,9 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use diem_types::vm_status::{StatusCode, VMStatus};
 use move_binary_format::{compatibility::Compatibility, normalized::Module, CompiledModule};
+use move_bytecode_verifier::verify_module;
 use move_command_line_common::files::{
     extension_equals, find_filenames, MOVE_COMPILED_EXTENSION, MOVE_ERROR_DESC_EXTENSION,
 };
@@ -11,10 +13,19 @@ use move_package::{BuildConfig, ModelConfig};
 use std::{
     collections::BTreeMap,
     fs::{create_dir_all, remove_dir_all, File},
-    io::{Read},
+    io::{Read, Write},
     path::{Path, PathBuf},
 };
 use structopt::*;
+
+//////// 0L ////////
+// for Upgrade oracle
+/// The output path under which staged files will be put
+pub const STAGED_OUTPUT_PATH: &str = "staged";
+/// The file name for the staged stdlib
+pub const STAGED_STDLIB_NAME: &str = "stdlib";
+/// The extension for staged files
+pub const STAGED_EXTENSION: &str = "mv";
 
 /// Options to configure the generation of a release.
 #[derive(Debug, StructOpt, Clone)]
@@ -41,9 +52,10 @@ pub struct ReleaseOptions {
     pub package: PathBuf,
     #[structopt(long = "output", default_value = "current", parse(from_os_str))]
     pub output: PathBuf,
-     //////// 0L ////////
-    #[structopt(long = "upgrade-payload")]
-    pub upgrade_payload: bool,
+    //////// 0L ////////
+    /// .help("generate test/stdlib.mv for upgrade oracle")
+    #[structopt(long = "create-upgrade-payload")]
+    pub create_upgrade_payload: bool,
 }
 
 impl Default for ReleaseOptions {
@@ -57,7 +69,7 @@ impl Default for ReleaseOptions {
             script_builder: true,
             errmap: true,
             output: PathBuf::from("current"),
-            upgrade_payload: true, //////// 0L ////////
+            create_upgrade_payload: true, //////// 0L ////////
         }
     }
 }
@@ -119,6 +131,12 @@ impl ReleaseOptions {
                 &output_path.join("transaction_script_builder.rs"),
                 &[&output_path, Path::new("DPN/releases/legacy/script_abis")],
             )
+        }
+
+        //////// 0L ////////
+        if self.create_upgrade_payload {
+            println!("Generating upgrade payload");
+            create_upgrade_payload_fn();
         }
     }
 }
@@ -234,3 +252,49 @@ where
         }
     }
 }
+
+// 0L todo
+//////// 0L ////////
+// Update stdlib with a byte string, used as part of the upgrade oracle
+pub fn import_stdlib(lib_bytes: &Vec<u8>) -> Result<Vec<CompiledModule>, Box<dyn std::error::Error>> {
+    // set as empty array if err occurred
+    let modules : Vec<CompiledModule> = bcs::from_bytes::<Vec<Vec<u8>>>(lib_bytes)?
+        .into_iter()
+        .filter_map(|bytes| CompiledModule::deserialize(&bytes).ok())
+        .collect();
+
+    // verify the compiled module
+    let mut verified_modules = vec![];
+    for module in modules {
+        verify_module(&module)
+        .map_err(|_| VMStatus::Error(StatusCode::CODE_DESERIALIZATION_ERROR))?;
+
+        // TODO: Do we still need to run dependency checker?
+        // DependencyChecker::verify_module(&module, &verified_modules)
+        //     .expect("stdlib module dependency failed to verify");
+        verified_modules.push(module)
+    }
+    Ok(verified_modules)
+}
+
+//////// 0L ////////
+pub fn create_upgrade_payload_fn() {
+    // let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
+    // TODO: set the .0L path the right way.
+    let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
+    module_path.push(STAGED_STDLIB_NAME);
+    module_path.set_extension(STAGED_EXTENSION);
+    print!("{:?} ", &module_path);
+    // let modules: Vec<Vec<u8>> = modules_map
+    //     .values().into_iter()
+    //     .map(|compiled_module| {
+    //         let mut ser = Vec::new();
+    //         compiled_module.serialize(&mut ser).unwrap();
+    //         ser
+    //     })
+    //     .collect();
+    let modules = crate::module_blobs();
+    let bytes = bcs::to_bytes(&modules).unwrap();
+    let mut module_file = File::create(module_path).unwrap();
+    module_file.write(&bytes).unwrap();
+    }

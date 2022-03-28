@@ -24,8 +24,8 @@ Line 972 delete the & at sender
 
 ### Comment the lines out:
 
-```nano -l ~/diem/language/diem-framework/modules/DiemAccount.move
-sed -n '1554,1557p' ~/diem/language/diem-framework/modules/DiemAccount.move
+```nano -l ~/diem/diem-move/diem-framework/DPN/sources/DiemAccount.move
+sed -n '1554,1557p' ~/diem/diem-move/diem-framework/DPN/sources/DiemAccount.move
 1551         assert(
 1552             DiemTransactionPublishingOption::is_module_allowed(&sender),
 1553             Errors::invalid_state(PROLOGUE_EMODULE_NOT_ALLOWED),

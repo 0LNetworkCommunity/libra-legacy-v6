@@ -34,7 +34,7 @@ The main fixtures is a `fixture_upgraded_stdlib.mv`.
 The important feature of this file is that it is essentially identical to the stdlib (in development) with one exception, it contains a function foo() which is only located in it.
 
 1. - Uncomment the code at the end of Upgrade.move, which includes foo().
-   - Remove .e2e extension of `language/diem-framework/modules/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move.e2e`.
+   - Remove .e2e extension of `diem-move/diem-framework/DPN/sources/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move.e2e`.
 
 2. Build stdlib: `ol/util/build-stdlib.sh`
 
@@ -49,7 +49,7 @@ The important feature of this file is that it is essentially identical to the st
 - `cp language/diem-framework/staged/stdlib.mv ol/fixtures/upgrade_payload/foo_stdlib.mv`
 
 6. Important, you must now *comment away* the foo() code again in Upgrade.move and 
-   add `.e2e` extension - rename to `language/diem-framework/modules/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move.e2e`.
+   add `.e2e` extension - rename to `diem-move/diem-framework/DPN/sources/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move.e2e`.
 
 7. Rebuild stdlib again. (Otherwise the e2e test will be starting from an stdlib which includes foo(), when it should not)
 `ol/util/build-stdlib.sh`

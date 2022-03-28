@@ -143,7 +143,7 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
                 println!("{:?}:\n", &peer_id);
                 println!("{:?}\n", &addr);
             }
-            NetworkId::Private(_) => {
+            NetworkId::Vfn(_) => {
                 println!("Address on PRIVATE VFN Network\n");
 
                 let peer_id = &n.peer_id();
@@ -152,7 +152,7 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
                 let addr = ValConfigs::make_unencrypted_addr(
                     &ip,
                     pub_key,
-                    NetworkId::Private("vfn".to_string()),
+                    NetworkId::Vfn,
                 );
                 println!("{:?}:\n", &peer_id);
                 println!("{:?}\n", &addr);

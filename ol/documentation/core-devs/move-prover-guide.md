@@ -31,7 +31,7 @@ https://github.com/Z3Prover/z3/releases
 **~/.mvprc**  
 ```
 move_deps = [
-    "/home/<user>/libra-fork/language/diem-framework/modules/",
+    "/home/<user>/libra-fork/diem-move/diem-framework/DPN/sources/",
     "/home/<user>/libra-fork/language/move-stdlib/modules/"
 ]
 

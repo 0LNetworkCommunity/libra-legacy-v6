@@ -322,7 +322,7 @@ pub fn get_resources(
 //////// 0L ////////
 /// Get miner state
 pub fn get_miner_state(
-    db: &dyn DbReader,
+    db: &dyn MoveDbReader,
     version: u64,
     account: AccountAddress,
     ledger_info: &LedgerInfoWithSignatures,
@@ -331,15 +331,13 @@ pub fn get_miner_state(
     match get_account_state(db, account, version)? {
         Some(s) => TowerStateResourceView::from_state_and_epoch(s, epoch).map_err(Into::into),
         None => Err(JsonRpcError::internal_error("No account state found".to_owned())),
-    }
-
-    
+    }    
 }
 
 //////// 0L ////////
 /// Get miner state
 pub fn get_oracle_upgrade_state(
-    db: &dyn DbReader,
+    db: &dyn MoveDbReader,
     version: u64,
 ) -> Result<OracleUpgradeStateView, JsonRpcError> {
     match get_account_state(db, diem_root_address(), version)? {

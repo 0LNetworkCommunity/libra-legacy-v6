@@ -224,7 +224,7 @@ impl Node {
             // When not committing, we open the DB as secondary so the tool 
             // is usable along side a running node on the same DB. 
             // Using a TempPath since it won't run for long.
-            match DiemDB::open(file, true, None, RocksdbConfig::default()) {
+            match DiemDB::open(file, true, None, RocksdbConfig::default(), true) {
                 Ok(db) => {
                     return db.get_latest_version().is_ok();
                 }

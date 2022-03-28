@@ -8,7 +8,7 @@ use anyhow::{bail, Error};
 
 
 
-use diem_genesis_tool::seeds::SeedAddresses;
+use diem_genesis_tool::ol_seeds::SeedAddresses;
 
 impl Node {
     /// refresh the fullnode peers, and save to file

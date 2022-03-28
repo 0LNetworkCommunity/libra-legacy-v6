@@ -75,7 +75,7 @@ pub fn extract_waypoint_from_file(genesis_path: &PathBuf) -> Result<Waypoint, Er
         .map_err(|_| Error::UnexpectedError("cannot open genesis.blob file".to_string()))?;
 
     let path = TempPath::new();
-    let libradb = DiemDB::open(&path, false, None, RocksdbConfig::default())
+    let libradb = DiemDB::open(&path, false, None, RocksdbConfig::default(), true)
         .map_err(|e| Error::UnexpectedError(e.to_string()))?;
     let db_rw = DbReaderWriter::new(libradb);
 
@@ -86,7 +86,7 @@ pub fn extract_waypoint_from_file(genesis_path: &PathBuf) -> Result<Waypoint, Er
 //////// 0L ////////
 pub fn extract_waypoint(gen_tx: Transaction) -> Result<Waypoint, Error> {
     let path = TempPath::new();
-    let libradb = DiemDB::open(&path, false, None, RocksdbConfig::default())
+    let libradb = DiemDB::open(&path, false, None, RocksdbConfig::default(), true)
         .map_err(|e| Error::UnexpectedError(e.to_string()))?;
     let db_rw = DbReaderWriter::new(libradb);
 

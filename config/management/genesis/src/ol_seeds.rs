@@ -49,8 +49,6 @@ impl Seeds {
         Ok(yaml)
     }
 
-
-
     pub fn get_network_peers_info(&self)->Result<SeedAddresses, Error> {
         let db_path = TempPath::new();
 

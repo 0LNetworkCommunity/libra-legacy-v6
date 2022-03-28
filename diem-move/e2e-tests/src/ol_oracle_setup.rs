@@ -11,7 +11,7 @@ pub fn oracle_helper_tx(
     seq_num: u64,
 ) -> SignedTransaction {
     let stdlib_bytes = std::include_bytes!(
-        "../../../../ol/fixtures/upgrade_payload/foo_stdlib.mv"
+        "../../../ol/fixtures/upgrade_payload/foo_stdlib.mv"
     );
     sender
         .transaction()
