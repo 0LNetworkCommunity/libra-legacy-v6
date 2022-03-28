@@ -2,14 +2,14 @@
 
 use crate::{cache::Vitals, check::items::Items, config::AppCfg, mgmt::management::NodeMode};
 use anyhow::Error;
-use cli::diem_client::DiemClient;
+use diem_client::client::Client;
 use diem_config::config::{NodeConfig, RocksdbConfig};
 use diemdb::DiemDB;
 use std::path::PathBuf;
 use std::{process::Command, str};
 use sysinfo::SystemExt;
 use sysinfo::{ProcessExt, ProcessStatus};
-use diem_json_rpc_client::views::TowerStateResourceView;
+use diem_json_rpc::views::TowerStateResourceView;
 use diem_types::waypoint::Waypoint;
 use diem_types::{account_address::AccountAddress, account_state::AccountState};
 use super::client;
@@ -36,7 +36,7 @@ pub struct Node {
     /// 0L configs
     pub app_conf: AppCfg,
     /// diemclient for connecting
-    pub client: DiemClient,
+    pub client: Client,
     /// vitals
     pub vitals: Vitals,
     /// node conf
@@ -48,7 +48,7 @@ pub struct Node {
 
 impl Node {
     /// Create a instance of Check
-    pub fn new(client: DiemClient, conf: &AppCfg, is_swarm: bool) -> Self {
+    pub fn new(client: Client, conf: &AppCfg, is_swarm: bool) -> Self {
         let node_yaml = if is_swarm {
             "node.yaml"
         } else {

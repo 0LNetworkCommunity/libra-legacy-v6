@@ -2,13 +2,18 @@
 
 use crate::node::node::Node;
 use anyhow::{Error, Result};
-use diem_json_rpc_client::{views::{AccountView, EventView}, AccountAddress};
-use diem_types::{account_state::AccountState, event::{EventHandle, EventKey}, transaction::Version};
+use diem_json_rpc::views::{AccountView, EventView};
+use diem_types::{
+    account_address::AccountAddress,
+    account_state::AccountState,
+    event::{EventHandle, EventKey},
+    transaction::Version
+};
 use ol_types::{
     autopay::{AutoPayResource, AutoPayView}, 
     validator_config::{ValidatorConfigResource, ValidatorConfigView}
 };
-use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
+use diem_resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator};
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
@@ -182,8 +187,8 @@ impl Node {
     ) -> Result<(Option<AnnotatedAccountStateBlob>, Version)> {
         let (blob, ver) = self.client.get_account_state_blob(&account)?;
         if let Some(account_blob) = blob {
-            let state_view = NullStateView::default();
-            let annotator = MoveValueAnnotator::new(&state_view);
+            // let state_view = NullStateView::default();
+            let annotator = MoveValueAnnotator::new(&self.client.db);
             let annotate_blob =
                 annotator.view_account_state(&AccountState::try_from(&account_blob)?)?;
             Ok((Some(annotate_blob), ver))

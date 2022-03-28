@@ -1,7 +1,6 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::{format_err};
 use diem_types::{
     account_address::{AccountAddress, HashAccountAddress},
     account_state_blob::AccountStateBlob,
@@ -38,6 +37,6 @@ pub fn generate_genesis_state() -> (
                 .collect(),
             &proof_reader,
         )
-        .map_err(|e| format_err!("Failed to update state tree. err: {:?}", e)); /////// 0L /////////
+        .expect("Failed to update state tree.");
     (blobs, new_tree)
 }

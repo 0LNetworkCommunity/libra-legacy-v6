@@ -12,7 +12,7 @@ use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use anyhow::{bail, Error};
 use dialoguer::Confirm;
 use diem_genesis_tool::{init, key, ol_node_files};
-use diem_json_rpc_client::AccountAddress;
+use diem_types::account_address::AccountAddress;
 use diem_types::transaction::authenticator::AuthenticationKey;
 use diem_types::waypoint::Waypoint;
 use diem_wallet::WalletLibrary;

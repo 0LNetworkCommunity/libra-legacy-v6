@@ -29,9 +29,11 @@ pub struct Seeds {
 impl Seeds {
     pub fn execute(self) -> Result<String, Error> {
 
-     let peers = &self.get_network_peers_info()?;
-     dbg!(peers);
-     Ok("ok".to_string())
+        // 0L todo diem-1.4.1: See get_network_peers_info()
+        // let peers = &self.get_network_peers_info()?;
+        // dbg!(peers);
+
+        Ok("ok".to_string())
     }
 
     pub fn new(genesis_path: PathBuf) -> Self {
@@ -49,43 +51,46 @@ impl Seeds {
         Ok(yaml)
     }
 
-    pub fn get_network_peers_info(&self)->Result<SeedAddresses, Error> {
-        let db_path = TempPath::new();
+    // 0L todo diem-1.4.1: 
+    // PeerId::from_identity_public_key(x25519) creates cyclic dependency
+    //  
+    // pub fn get_network_peers_info(&self)->Result<SeedAddresses, Error> {
+    //     let db_path = TempPath::new();
 
-        let (db_rw, _expected_waypoint) = compute_genesis(&self.genesis_path, db_path.path())?;
+    //     let (db_rw, _expected_waypoint) = compute_genesis(&self.genesis_path, db_path.path())?;
 
-        let blob = db_rw
-            .reader
-            .get_latest_account_state(account_config::validator_set_address())
-            .map_err(|e| {
-                Error::UnexpectedError(format!("ValidatorSet Account issue {}", e.to_string()))
-            })
-            .unwrap()
-            .unwrap();
+    //     let blob = db_rw
+    //         .reader
+    //         .get_latest_account_state(account_config::validator_set_address())
+    //         .map_err(|e| {
+    //             Error::UnexpectedError(format!("ValidatorSet Account issue {}", e.to_string()))
+    //         })
+    //         .unwrap()
+    //         .unwrap();
 
-        let account_state = AccountState::try_from(&blob)
-            .map_err(|e| Error::UnexpectedError(format!("Failed to parse blob: {}", e)))
-            .unwrap();
+    //     let account_state = AccountState::try_from(&blob)
+    //         .map_err(|e| Error::UnexpectedError(format!("Failed to parse blob: {}", e)))
+    //         .unwrap();
 
-        let validator_set: ValidatorSet = account_state
-            .get_validator_set()
-            .map_err(|e| Error::UnexpectedError(format!("ValidatorSet issue {}", e.to_string())))?
-            .ok_or_else(|| Error::UnexpectedError("ValidatorSet does not exist".into()))?;
+    //     let validator_set: ValidatorSet = account_state
+    //         .get_validator_set()
+    //         .map_err(|e| Error::UnexpectedError(format!("ValidatorSet issue {}", e.to_string())))?
+    //         .ok_or_else(|| Error::UnexpectedError("ValidatorSet does not exist".into()))?;
 
-        let mut seed_addr = SeedAddresses::default();
-        let info = validator_set.payload();
-        for info in info.iter() {
-            let seed_pubkey = info.config().consensus_public_key.clone();
-            //NOTE: This usually expects a x25519 key
-            let x25519 = PublicKey::from_ed25519_public_bytes(&seed_pubkey.to_bytes()).expect("Seed peers could not generate x25519 identitykey from ed25519 key provided");
-            let peer_id = PeerId::from_identity_public_key(x25519);
+    //     let mut seed_addr = SeedAddresses::default();
+    //     let info = validator_set.payload();
+    //     for info in info.iter() {
+    //         let seed_pubkey = info.config().consensus_public_key.clone();
+    //         //NOTE: This usually expects a x25519 key
+    //         let x25519 = PublicKey::from_ed25519_public_bytes(&seed_pubkey.to_bytes()).expect("Seed peers could not generate x25519 identitykey from ed25519 key provided");
+    //         let peer_id = PeerId::from_identity_public_key(x25519);
 
-            // use validator address, not the operator consensus key.
-            // let peer_id = info.account_address().to_owned();
-            let addr_vec = info.config().fullnode_network_addresses().expect("Get the Fullnode network address");
-            seed_addr.insert(peer_id, addr_vec);
-        }
+    //         // use validator address, not the operator consensus key.
+    //         // let peer_id = info.account_address().to_owned();
+    //         let addr_vec = info.config().fullnode_network_addresses().expect("Get the Fullnode network address");
+    //         seed_addr.insert(peer_id, addr_vec);
+    //     }
 
-        Ok(seed_addr)
-    }
+    //     Ok(seed_addr)
+    // }
   }

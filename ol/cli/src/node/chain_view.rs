@@ -1,7 +1,7 @@
 //! `chain_info`
 use anyhow::{Error, bail};
 use chrono::Utc;
-use diem_json_rpc_client::views::{OracleUpgradeStateView};
+use diem_json_rpc::views::{OracleUpgradeStateView};
 use diem_types::{
     account_address::AccountAddress, 
     account_state::AccountState, waypoint::Waypoint,

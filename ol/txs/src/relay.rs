@@ -9,7 +9,7 @@ use crate::{
   tx_params::TxParams,
 };
 use anyhow::Error;
-use cli::diem_client::DiemClient;
+use diem_api::context::Context;
 use diem_json_rpc_types::views::TransactionView;
 use diem_types::transaction::SignedTransaction;
 use ol_types::config::TxType;

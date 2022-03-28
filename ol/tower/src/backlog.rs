@@ -4,7 +4,7 @@
 use crate::commit_proof::commit_proof_tx;
 use crate::proof::{parse_block_height, FILENAME};
 use anyhow::{anyhow, bail, Error, Result};
-use cli::diem_client::DiemClient;
+use diem_api::context::Context;
 use diem_logger::prelude::*;
 use ol_types::block::VDFProof;
 use ol_types::config::AppCfg;

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 mod accounts;
-mod context;
+pub mod context; //////// 0L ////////
 mod events;
 mod index;
 pub(crate) mod log;

@@ -152,7 +152,7 @@ version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fcb51a0695d8f838b1ee009b3fbf66bda078cd64590202a864a8f3e8c4315c47"
 dependencies = [
- "getrandom 0.2.5",
+ "getrandom 0.2.6",
  "once_cell",
  "version_check",
 ]
@@ -601,7 +601,7 @@ checksum = "e3b5ca7a04898ad4bcd41c90c5285445ff5b791899bb1b0abdd2a2aa791211d7"
 [[package]]
 name = "bytecode-interpreter-crypto"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "curve25519-dalek-fiat",
@@ -691,7 +691,7 @@ checksum = "4acbb09d9ee8e23699b9634375c72795d095bf268439da88562cf9b501f181fa"
 dependencies = [
  "camino",
  "cargo-platform",
- "semver 1.0.6",
+ "semver 1.0.7",
  "serde 1.0.136",
  "serde_json",
 ]
@@ -862,7 +862,7 @@ dependencies = [
 [[package]]
 name = "classgroup"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/libra?branch=v6#d979a6a3be32b6244a15c56df9c1cc1a795f1193"
+source = "git+https://github.com/simsekgokhan/libra?branch=v6#9ac00c8ade79df9fb4081130593769d837ac5640"
 dependencies = [
  "libc",
  "num-traits 0.2.14",
@@ -1726,7 +1726,7 @@ dependencies = [
 [[package]]
 name = "diem-crypto"
 version = "0.0.3"
-source = "git+https://github.com/simsekgokhan/libra?branch=v6#d979a6a3be32b6244a15c56df9c1cc1a795f1193"
+source = "git+https://github.com/simsekgokhan/libra?branch=v6#9ac00c8ade79df9fb4081130593769d837ac5640"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1767,7 +1767,7 @@ dependencies = [
 [[package]]
 name = "diem-crypto-derive"
 version = "0.0.3"
-source = "git+https://github.com/simsekgokhan/libra?branch=v6#d979a6a3be32b6244a15c56df9c1cc1a795f1193"
+source = "git+https://github.com/simsekgokhan/libra?branch=v6#9ac00c8ade79df9fb4081130593769d837ac5640"
 dependencies = [
  "diem-workspace-hack 0.1.0 (git+https://github.com/simsekgokhan/libra?branch=v6)",
  "proc-macro2 1.0.36",
@@ -2048,7 +2048,7 @@ version = "0.1.0"
 [[package]]
 name = "diem-global-constants"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/libra?branch=v6#d979a6a3be32b6244a15c56df9c1cc1a795f1193"
+source = "git+https://github.com/simsekgokhan/libra?branch=v6#9ac00c8ade79df9fb4081130593769d837ac5640"
 
 [[package]]
 name = "diem-id-generator"
@@ -2739,7 +2739,7 @@ dependencies = [
 [[package]]
 name = "diem-types"
 version = "0.0.3"
-source = "git+https://github.com/simsekgokhan/libra?branch=v6#d979a6a3be32b6244a15c56df9c1cc1a795f1193"
+source = "git+https://github.com/simsekgokhan/libra?branch=v6#9ac00c8ade79df9fb4081130593769d837ac5640"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -2909,7 +2909,7 @@ dependencies = [
 [[package]]
 name = "diem-workspace-hack"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/libra?branch=v6#d979a6a3be32b6244a15c56df9c1cc1a795f1193"
+source = "git+https://github.com/simsekgokhan/libra?branch=v6#9ac00c8ade79df9fb4081130593769d837ac5640"
 dependencies = [
  "Inflector",
  "anyhow",
@@ -3872,9 +3872,9 @@ dependencies = [
 
 [[package]]
 name = "getrandom"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d39cd93900197114fa1fcb7ae84ca742095eed9442088988ae74fa744e930e77"
+checksum = "9be70c98951c83b8d2f8f60d7065fa6d5146873094452a1008da8c2f1e4205ad"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
@@ -3997,7 +3997,7 @@ dependencies = [
  "pathdiff",
  "petgraph 0.6.0",
  "rayon",
- "semver 1.0.6",
+ "semver 1.0.7",
  "serde 1.0.136",
  "serde_json",
  "smallvec 1.8.0",
@@ -4014,7 +4014,7 @@ dependencies = [
  "camino",
  "cfg-if 1.0.0",
  "diffus",
- "semver 1.0.6",
+ "semver 1.0.7",
  "serde 1.0.136",
  "toml",
 ]
@@ -4937,7 +4937,7 @@ checksum = "c9be0862c1b3f26a88803c4a49de6889c10e608b3ee9344e6ef5b45fb37ad3d1"
 [[package]]
 name = "move-abigen"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "bcs",
@@ -4954,7 +4954,7 @@ dependencies = [
 [[package]]
 name = "move-binary-format"
 version = "0.0.3"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "mirai-annotations",
@@ -4971,7 +4971,7 @@ dependencies = [
 [[package]]
 name = "move-borrow-graph"
 version = "0.0.1"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "mirai-annotations",
  "workspace-hack",
@@ -4980,7 +4980,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-source-map"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "bcs",
@@ -4997,7 +4997,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-utils"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -5009,7 +5009,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-verifier"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "mirai-annotations",
@@ -5023,7 +5023,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-viewer"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -5041,7 +5041,7 @@ dependencies = [
 [[package]]
 name = "move-cli"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5084,7 +5084,7 @@ dependencies = [
 [[package]]
 name = "move-command-line-common"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "difference",
@@ -5098,7 +5098,7 @@ dependencies = [
 [[package]]
 name = "move-compiler"
 version = "0.0.1"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5126,7 +5126,7 @@ dependencies = [
 [[package]]
 name = "move-core-types"
 version = "0.0.3"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5146,7 +5146,7 @@ dependencies = [
 [[package]]
 name = "move-coverage"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5168,7 +5168,7 @@ dependencies = [
 [[package]]
 name = "move-disassembler"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "colored",
@@ -5187,7 +5187,7 @@ dependencies = [
 [[package]]
 name = "move-docgen"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "codespan",
@@ -5207,7 +5207,7 @@ dependencies = [
 [[package]]
 name = "move-errmapgen"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5222,7 +5222,7 @@ dependencies = [
 [[package]]
 name = "move-ir-compiler"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5242,7 +5242,7 @@ dependencies = [
 [[package]]
 name = "move-ir-to-bytecode"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "codespan-reporting",
@@ -5262,7 +5262,7 @@ dependencies = [
 [[package]]
 name = "move-ir-to-bytecode-syntax"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "hex 0.4.3",
@@ -5276,7 +5276,7 @@ dependencies = [
 [[package]]
 name = "move-ir-types"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "hex 0.4.3",
@@ -5291,7 +5291,7 @@ dependencies = [
 [[package]]
 name = "move-model"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "codespan",
@@ -5318,7 +5318,7 @@ dependencies = [
 [[package]]
 name = "move-package"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5350,7 +5350,7 @@ dependencies = [
 [[package]]
 name = "move-prover"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5389,7 +5389,7 @@ dependencies = [
 [[package]]
 name = "move-prover-boogie-backend"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5418,7 +5418,7 @@ dependencies = [
 [[package]]
 name = "move-read-write-set-types"
 version = "0.0.3"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -5430,7 +5430,7 @@ dependencies = [
 [[package]]
 name = "move-resource-viewer"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5446,7 +5446,7 @@ dependencies = [
 [[package]]
 name = "move-stackless-bytecode"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "codespan",
  "codespan-reporting",
@@ -5473,7 +5473,7 @@ dependencies = [
 [[package]]
 name = "move-stackless-bytecode-interpreter"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "bytecode-interpreter-crypto",
@@ -5493,7 +5493,7 @@ dependencies = [
 [[package]]
 name = "move-stdlib"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "diem-global-constants 0.1.0 (git+https://github.com/simsekgokhan/libra?branch=v6)",
  "diem-types 0.0.3 (git+https://github.com/simsekgokhan/libra?branch=v6)",
@@ -5520,7 +5520,7 @@ dependencies = [
 [[package]]
 name = "move-symbol-pool"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "once_cell",
  "serde 1.0.136",
@@ -5530,7 +5530,7 @@ dependencies = [
 [[package]]
 name = "move-transactional-test-runner"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "colored",
@@ -5562,7 +5562,7 @@ dependencies = [
 [[package]]
 name = "move-unit-test"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "colored",
@@ -5587,7 +5587,7 @@ dependencies = [
 [[package]]
 name = "move-vm-runtime"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "fail",
  "mirai-annotations",
@@ -5605,7 +5605,7 @@ dependencies = [
 [[package]]
 name = "move-vm-test-utils"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -5617,7 +5617,7 @@ dependencies = [
 [[package]]
 name = "move-vm-types"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "bcs",
  "mirai-annotations",
@@ -5663,9 +5663,9 @@ dependencies = [
 
 [[package]]
 name = "native-tls"
-version = "0.2.8"
+version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48ba9f7719b5a0f42f338907614285fb5fd70e53858141f69898a1fb7203b24d"
+checksum = "09bf6f32a3afefd0b587ee42ed19acd945c6d1f3b5424040f50b2f24ab16be77"
 dependencies = [
  "lazy_static 1.4.0",
  "libc",
@@ -6101,11 +6101,13 @@ dependencies = [
  "clokwerk",
  "crossterm",
  "dialoguer",
+ "diem-client",
  "diem-config",
  "diem-crypto 0.0.3",
  "diem-genesis-tool",
  "diem-global-constants 0.1.0",
  "diem-json-rpc",
+ "diem-resource-viewer",
  "diem-secure-storage",
  "diem-temppath",
  "diem-types 0.0.3",
@@ -6121,7 +6123,6 @@ dependencies = [
  "machine-ip",
  "move-binary-format",
  "move-core-types",
- "move-resource-viewer",
  "move-vm-types",
  "nix 0.23.1",
  "num-format",
@@ -6444,9 +6445,9 @@ dependencies = [
 
 [[package]]
 name = "paste"
-version = "1.0.6"
+version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0744126afe1a6dd7f394cb50a716dbe086cb06e255e53d8d0185d82828358fb5"
+checksum = "0c520e05135d6e763148b6426a837e239041653ba7becd2e538c076c738025fc"
 
 [[package]]
 name = "pathdiff"
@@ -6947,7 +6948,7 @@ version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d34f1408f55294453790c48b2f1ebbb1c5b4b7563eb1f418bcfcfdbb06ebb4e7"
 dependencies = [
- "getrandom 0.2.5",
+ "getrandom 0.2.6",
 ]
 
 [[package]]
@@ -7014,7 +7015,7 @@ dependencies = [
 [[package]]
 name = "read-write-set"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -7031,7 +7032,7 @@ dependencies = [
 [[package]]
 name = "read-write-set-dynamic"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -7065,7 +7066,7 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7776223e2696f1aa4c6b0170e83212f47296a00424305117d013dfe86fb0fe55"
 dependencies = [
- "getrandom 0.2.5",
+ "getrandom 0.2.6",
  "redox_syscall",
  "thiserror",
 ]
@@ -7338,9 +7339,9 @@ checksum = "3e52c148ef37f8c375d49d5a73aa70713125b7f19095948a923f80afdeb22ec2"
 
 [[package]]
 name = "rust_decimal"
-version = "1.22.0"
+version = "1.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d37baa70cf8662d2ba1c1868c5983dda16ef32b105cce41fb5c47e72936a90b3"
+checksum = "22dc69eadbf0ee2110b8d20418c0c6edbaefec2811c4963dc17b6344e11fe0f8"
 dependencies = [
  "arrayvec 0.7.2",
  "num-traits 0.2.14",
@@ -7383,7 +7384,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bfa0f585226d2e68097d4f95d113b15b83a82e819ab25717ec0590d9584ef366"
 dependencies = [
- "semver 1.0.6",
+ "semver 1.0.7",
 ]
 
 [[package]]
@@ -7658,9 +7659,9 @@ dependencies = [
 
 [[package]]
 name = "semver"
-version = "1.0.6"
+version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4a3381e03edd24287172047536f20cabde766e2cd3e65e6b00fb3af51c4f38d"
+checksum = "d65bd28f48be7196d222d95b9243287f48d27aca604e08497513019ff0502cc4"
 dependencies = [
  "serde 1.0.136",
 ]
@@ -9090,14 +9091,13 @@ dependencies = [
 
 [[package]]
 name = "tokio-util"
-version = "0.7.0"
+version = "0.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "64910e1b9c1901aaf5375561e35b9c057d95ff41a44ede043a03e09279eabaf1"
+checksum = "0edfdeb067411dba2044da6d1cb2df793dd35add7888d73c16e3381ded401764"
 dependencies = [
  "bytes 1.1.0",
  "futures-core",
  "futures-sink",
- "log",
  "pin-project-lite 0.2.8",
  "tokio 1.17.0",
 ]
@@ -9135,7 +9135,7 @@ dependencies = [
  "pin-project",
  "pin-project-lite 0.2.8",
  "tokio 1.17.0",
- "tokio-util 0.7.0",
+ "tokio-util 0.7.1",
  "tower-layer",
  "tower-service",
  "tracing",
@@ -9678,7 +9678,7 @@ dependencies = [
 [[package]]
 name = "vdf"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/libra?branch=v6#d979a6a3be32b6244a15c56df9c1cc1a795f1193"
+source = "git+https://github.com/simsekgokhan/libra?branch=v6#9ac00c8ade79df9fb4081130593769d837ac5640"
 dependencies = [
  "bit-vec 0.5.1",
  "classgroup 0.1.0 (git+https://github.com/simsekgokhan/libra?branch=v6)",
@@ -10054,7 +10054,7 @@ dependencies = [
 [[package]]
 name = "workspace-hack"
 version = "0.1.0"
-source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#87f696067047f55fc5da51c449fbe61f07549c10"
+source = "git+https://github.com/simsekgokhan/move-0L?branch=v6#34e0bb9d5eee58629e4d1c0da9479a13bb75474d"
 dependencies = [
  "arrayvec 0.5.2",
  "block-buffer 0.9.0",
@@ -10062,7 +10062,7 @@ dependencies = [
  "byteorder",
  "codespan-reporting",
  "crossbeam-utils",
- "getrandom 0.2.5",
+ "getrandom 0.2.6",
  "libc",
  "log",
  "memchr",

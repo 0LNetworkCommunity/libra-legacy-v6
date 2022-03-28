@@ -2,7 +2,7 @@
 
 use std::convert::TryFrom;
 
-use cli::diem_client::DiemClient;
+use diem_api::context::Context;
 use diem_types::{account_address::AccountAddress, account_state::AccountState};
 
 use crate::tx_params::TxParams;

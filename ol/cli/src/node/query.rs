@@ -3,10 +3,8 @@ use std::collections::BTreeMap;
 
 use super::node::Node;
 use anyhow::Error;
-use diem_json_rpc_client::{
-    views::{BytesView, EventView, TransactionView},
-    AccountAddress,
-};
+use diem_json_rpc::views::{BytesView, EventView, TransactionView};
+use diem_types::account_address::AccountAddress;
 use hex::decode;
 use move_binary_format::file_format::{Ability, AbilitySet};
 use move_core_types::{
@@ -14,7 +12,7 @@ use move_core_types::{
     language_storage::{StructTag, TypeTag},
 };
 use num_format::{Locale, ToFormattedString};
-use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
+use diem_resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
 
 const SCALING_FACTOR: u64 = 1_000_000;
 
@@ -168,7 +166,7 @@ impl Node {
                     .unwrap();
 
                 if let Some(t) = txs_type {
-                    use diem_json_rpc_client::views::TransactionDataView;
+                    use diem_json_rpc::views::TransactionDataView;
                     let filter: Vec<TransactionView> = txs
                         .into_iter()
                         .filter(|tv| match &tv.transaction {
@@ -248,7 +246,7 @@ impl Node {
 fn format_event_view(e: EventView) -> String {
     // TODO: make this more idiomatic.
 
-    use diem_json_rpc_client::views::EventDataView::*;
+    use diem_json_rpc::views::EventDataView::*;
     let (a, s, r, BytesView(m), ..) = match e.data {
         ReceivedPayment {
             amount,
