@@ -23,6 +23,50 @@ address 0x1 {
       TowerState::get_tower_height(node_addr)
     }
 
+    public fun sorted_accounts(account: &signer): vector<address> {
+      CoreAddresses::assert_vm(account);
+
+      //Get all validators from Validator Universe and then find the eligible validators 
+      let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
+
+
+      let length = Vector::length<address>(&eligible_validators);
+
+      // Vector to store each address's node_weight
+      let weights = Vector::empty<u64>();
+      let k = 0;
+      while (k < length) {
+        let cur_address = *Vector::borrow<address>(&eligible_validators, k);
+        // Ensure that this address is an active validator
+        Vector::push_back<u64>(&mut weights, proof_of_weight(cur_address));
+        k = k + 1;
+      };
+
+      // Sorting the accounts vector based on value (weights).
+      // Bubble sort algorithm
+      let i = 0;
+      while (i < length){
+        let j = 0;
+        while(j < length-i-1){
+
+          let value_j = *(Vector::borrow<u64>(&weights, j));
+          let value_jp1 = *(Vector::borrow<u64>(&weights, j+1));
+          if(value_j > value_jp1){
+            Vector::swap<u64>(&mut weights, j, j+1);
+            Vector::swap<address>(&mut eligible_validators, j, j+1);
+          };
+          j = j + 1;
+        };
+        i = i + 1;
+      };
+
+      // Reverse to have sorted order - high to low.
+      Vector::reverse<address>(&mut eligible_validators);
+
+      return eligible_validators
+    }
+
+
     // Recommend a new validator set. This uses a Proof of Weight calculation in
 
     // is now eligible for the second step of the proof of work of running a validator.
@@ -57,15 +101,18 @@ address 0x1 {
       // Sorting the accounts vector based on value (weights).
       // Bubble sort algorithm
       let i = 0;
-      while (i < length){
+      let swap = true;
+      while (i < length && swap == true){
+        swap = false;
         let j = 0;
-        while(j < length-i-1){
+        while(j < length-1){
 
           let value_j = *(Vector::borrow<u64>(&weights, j));
           let value_jp1 = *(Vector::borrow<u64>(&weights, j+1));
           if(value_j > value_jp1){
             Vector::swap<u64>(&mut weights, j, j+1);
             Vector::swap<address>(&mut eligible_validators, j, j+1);
+            swap = true;
           };
           j = j + 1;
         };

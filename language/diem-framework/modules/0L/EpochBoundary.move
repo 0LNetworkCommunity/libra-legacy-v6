@@ -111,9 +111,7 @@ module EpochBoundary {
         // save all the eligible list, before the jailing removes them.
         let proposed_set = Vector::empty();
 
-        let top_accounts = NodeWeight::top_n_accounts(
-            vm, Globals::get_max_validators_per_set()
-        );
+        let top_accounts = NodeWeight::sorted_accounts(vm);
 
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
 
@@ -129,8 +127,11 @@ module EpochBoundary {
 
         let burn_value = 1000000; // TODO: switch to a variable cost, as above.
 
+        let accounts_added = 0;
+        let max_accounts = Globals::get_max_validators_per_set();
+
         let i = 0;
-        while (i < Vector::length<address>(&top_accounts)) {
+        while (i < Vector::length<address>(&top_accounts)  && accounts_added <= max_accounts) {
             let addr = *Vector::borrow(&top_accounts, i);
             let mined_last_epoch = TowerState::node_above_thresh(addr);
             // TODO: temporary until jailing is enabled.
@@ -141,13 +142,16 @@ module EpochBoundary {
             ) {
                 Vector::push_back(&mut proposed_set, addr);
                 Burn::epoch_start_burn(vm, addr, burn_value);
+                accounts_added = accounts_added + 1;
             };
             i = i+ 1;
         };
 
         // If the cardinality of validator_set in the next epoch is less than 4, 
         // we keep the same validator set. 
-        if (Vector::length<address>(&proposed_set) <= 3) proposed_set = *&top_accounts;
+        if (Vector::length<address>(&proposed_set) <= 3) {
+            proposed_set = *&NodeWeight::top_n_accounts(vm, Globals::get_max_validators_per_set());
+        };
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with 
         // at least 6 nodes and 6 rounds. If we reach an epoch boundary with 

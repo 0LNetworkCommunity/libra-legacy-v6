@@ -227,7 +227,7 @@ script {
         Vector::push_back<address>(&mut voters, @{{bob}});
         Vector::push_back<address>(&mut voters, @{{carol}});
         Vector::push_back<address>(&mut voters, @{{dave}});
-        // Vector::push_back<address>(&mut voters, @{{eve}});
+        Vector::push_back<address>(&mut voters, @{{eve}});
         Vector::push_back<address>(&mut voters, @{{frank}});
 
         let i = 1;
