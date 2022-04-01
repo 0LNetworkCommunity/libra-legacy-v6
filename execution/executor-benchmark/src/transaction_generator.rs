@@ -65,7 +65,7 @@ struct P2pTestCase {
 }
 
 #[derive(Deserialize, Serialize)]
-struct AccountData {
+pub struct AccountData { /////// 0L /////////
     private_key: Ed25519PrivateKey,
     public_key: Ed25519PublicKey,
     address: AccountAddress,

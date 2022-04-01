@@ -34,8 +34,9 @@ impl Node {
     /// check if node is synced
     pub fn check_sync(&mut self) -> Result<SyncState, Error> {
         let mut s = SyncState::default();
-
-        if !Node::node_running() { // this should not fail for `ol start` command. The node is usually off when the command and sync is checked.
+        // this should not fail for `ol start` command. The node is usually 
+        // off when the command and sync is checked.
+        if !Node::node_running() {
             return Ok(SyncState {
                 is_synced: false,
                 sync_height: 0,
@@ -43,10 +44,8 @@ impl Node {
                 sync_delay: 404,
             });
         }
-        // let config = &self.app_conf;
-        let waypoint = &self.waypoint()?;
 
-        let remote_client = find_a_remote_jsonrpc(&self.app_conf, *waypoint).map_err(|e| {
+        let remote_client = find_a_remote_jsonrpc(&self.app_conf).map_err(|e| {
             println!("cannot connect to upstream node");
             e
         })?;

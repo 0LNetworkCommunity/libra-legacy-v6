@@ -180,21 +180,16 @@ impl Node {
         }
     }
 
-    // 0L todo diem 1.4.1
+    // // 0L todo diem 1.4.1
     // /// Return a full Move-annotated account resource struct
     // pub fn get_annotate_account_blob(
     //     &mut self,
     //     account: AccountAddress,
     // ) -> Result<(Option<AnnotatedAccountStateBlob>, Version)> {
-    //     let xx = self.chain_state;
-    //     let annotator = MoveValueAnnotator::new(&self.client.db);
-    //     let annotate_blob =
-    //         annotator.view_account_state(&AccountState::try_from(&account_blob)?)?;
-
     //     let (blob, ver) = self.client.get_account_state_blob(&account)?;
     //     if let Some(account_blob) = blob {
     //         // let state_view = NullStateView::default();
-    //         let annotator = MoveValueAnnotator::new(&self.client.db);
+    //         let annotator = DiemValueAnnotator::new(&self.client.db);
     //         let annotate_blob =
     //             annotator.view_account_state(&AccountState::try_from(&account_blob)?)?;
     //         Ok((Some(annotate_blob), ver))

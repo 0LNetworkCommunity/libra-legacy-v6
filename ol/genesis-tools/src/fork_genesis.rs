@@ -65,7 +65,8 @@ pub fn get_baseline_genesis_change_set(
         &genesis_accounts.vals,
         &genesis_accounts.opers,
         &validator_set,
-        1, // mainnet
+        // 0L todo diem 1.4.1
+        // 1, // mainnet
     )
 }
 

@@ -24,6 +24,7 @@ toml = "0.5.6"
 wait-timeout = "0.2.0"
 
 classgroup = { path = "../../ol/verifiable_delay/classgroup", version = "^0.1.0" }
+diem-client = { path = "../../crates/diem-client" }
 diem-config = { path = "../../config/" }
 diem-crypto = { path = "../../crates/diem-crypto" }
 diem-genesis-tool = { path = "../../config/management/genesis" }
@@ -36,6 +37,7 @@ diem-types = { path = "../../types/" }
 diem-wallet = { path = "../../crates/diem-wallet" }
 diemdb = { path = "../../storage/diemdb"}
 diem-transaction-builder = { path = "../../sdk/transaction-builder" }
+executor-benchmark = { path = "../../execution/executor-benchmark" }
 move-core-types = { git = "https://github.com/OLSF/move-0L", branch = "v6" }
 ol = {path = "../cli"}
 ol-keys = { path = "../keys/", version = "0.1.0" }

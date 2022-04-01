@@ -6,23 +6,19 @@ use crate::{
     save_tx::save_tx,
     sign_tx::sign_tx, tx_params::TxParams,
 };
-use anyhow::{Error, anyhow};
-use cli::{diem_client::DiemClient, AccountData, AccountStatus};
-
-
+use anyhow::{anyhow, Error};
+use diem_client::{BlockingClient as DiemClient};
 use diem_json_rpc_types::views::{TransactionView, VMStatusView};
-
 use diem_types::{account_address::AccountAddress};
 use diem_types::{
     chain_id::ChainId,
     transaction::{SignedTransaction, TransactionPayload},
 };
-
+use executor_benchmark::transaction_generator::AccountData;
 use ol_types::{
     self,
     config::TxType,
 };
-
 use std::{
     io::{stdout, Write},
     path::PathBuf,
@@ -100,14 +96,7 @@ pub fn maybe_submit(
     tx_params: &TxParams,
     save_path: Option<PathBuf>,
 ) -> Result<TransactionView, TxError> {
-    let mut client =
-        DiemClient::new(tx_params.url.clone(), tx_params.waypoint).map_err(|e| TxError {
-            err: Some(e),
-            tx_view: None,
-            location: None,
-            abort_code: None,
-        })?;
-
+    let mut client = DiemClient::new(tx_params.url);
     let (mut account_data, txn) = stage(script, tx_params, &mut client)?;
     if let Some(path) = save_path {
         // TODO: This will not work with batch operations like autopay_batch, last one will overwrite the file.
@@ -131,15 +120,7 @@ pub fn save_dont_send_tx(
     tx_params: &TxParams,
     save_path: Option<PathBuf>,
 ) -> Result<SignedTransaction, TxError> {
-    let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint)
-    .map_err(|e| { TxError { 
-      err: Some(e),
-      tx_view:  None,
-      location: None,
-      abort_code: None,
-      }
-    })?;
-
+    let mut client = DiemClient::new(tx_params.url);
     let (_account_data, txn) = stage(script, tx_params, &mut client)?;
     if let Some(path) = save_path {
         // TODO: This will not work with batch operations like autopay_batch, last one will overwrite the file.
@@ -181,31 +162,30 @@ fn stage(
 ) -> Result<(AccountData, SignedTransaction), TxError> {
     match client.get_metadata() {
         Ok(meta) => {
-            if let Some(av) = client.get_account(&tx_params.signer_address)? {
+            if let Some(av) = client.get_account(tx_params.signer_address).unwrap().into_inner() {
                 let sequence_number = av.sequence_number;
                 // Sign the transaction script
                 let txn = sign_tx(
-                  script,
-                  tx_params,
-                  sequence_number,
-                  ChainId::new(meta.chain_id)
+                    script,
+                    tx_params,
+                    sequence_number,
+                    ChainId::new(meta.into_inner().chain_id)
                 )?;
 
                 // Get account_data struct
                 let signer_account_data = AccountData {
+                    private_key: tx_params.keypair.private_key,
+                    public_key: tx_params.keypair.public_key,
                     address: tx_params.signer_address,
-                    authentication_key: Some(tx_params.auth_key.to_vec()),
-                    key_pair: Some(tx_params.keypair.clone()),
                     sequence_number,
-                    status: AccountStatus::Persisted,
                 };
                 Ok((signer_account_data, txn))
             } else {
-              let msg = format!("ERROR: cannot get account_state from chain");
-              println!("{}", &msg);
-              let mut e: TxError = anyhow!(msg).into();
-              e.abort_code = Some(PROLOGUE_EACCOUNT_DNE);
-              Err(e)
+                let msg = format!("ERROR: cannot get account_state from chain");
+                println!("{}", &msg);
+                let mut e: TxError = anyhow!(msg).into();
+                e.abort_code = Some(PROLOGUE_EACCOUNT_DNE);
+                Err(e)
             }
         },
         _ => {
@@ -225,7 +205,7 @@ pub fn submit_tx(
     mut _signer_account_data: &mut AccountData,
 ) -> Result<TransactionView, Error> {
     // Submit the transaction with diem_client
-    match client.submit_transaction(&txn) {
+    match client.submit(&txn) {
         Ok(_) => match wait_for_tx(txn.sender(), txn.sequence_number(), &mut client) {
             Some(res) => Ok(res),
             None => Err(Error::msg("No Transaction View returned")),

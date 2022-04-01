@@ -120,7 +120,8 @@ impl Node {
                 ),
                 Err(e) => e.to_string(),
             },
-            // 0L todo diem 1.4.1
+            // // 0L todo diem 1.4.1
+            Resources { .. } => { todo!() },
             // Resources { account } => {
             //     // account
             //     match self.get_annotate_account_blob(account) {
@@ -129,7 +130,8 @@ impl Node {
             //         _ => format!("Error, cannot find account state for {:#?}", account),
             //     }
             // },
-            // 0L todo diem 1.4.1
+            // // 0L todo diem 1.4.1
+            MoveValue { .. } => { todo!() }
             // MoveValue {
             //     account,
             //     module_name,

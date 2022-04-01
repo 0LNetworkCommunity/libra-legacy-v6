@@ -1,6 +1,6 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
-use cli::{diem_client::DiemClient, AccountData, AccountStatus};
+use diem_client::BlockingClient as DiemClient;
 use ol_types::block::VDFProof;
 use txs::{
   sign_tx::sign_tx,
@@ -18,7 +18,7 @@ pub fn commit_proof_tx(
 ) -> Result<TransactionView, TxError> {
 
     // Create a client object
-    let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+    let client = DiemClient::new(tx_params.url.clone()).unwrap();
 
     let chain_id = tx_params.chain_id;
 

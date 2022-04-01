@@ -48,6 +48,13 @@ impl AccountResource {
     pub fn address(&self) -> AccountAddress {
         self.self_address
     }
+
+    //////// 0L /////////
+    /// Replace the authkey in place
+    pub fn rotate_auth_key(mut self, new_key: Vec<u8>) -> Self {
+        self.authentication_key = new_key;
+        self
+    }
 }
 
 impl MoveStructType for AccountResource {

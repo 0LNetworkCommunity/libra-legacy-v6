@@ -29,21 +29,21 @@ pub fn run_checks(
 
 
 impl Node {
-  /// Run healtchecks once
-  pub fn check_once(&mut self, verbose: bool) -> &mut Self {
-      let home_path = self.app_conf.workspace.node_home.clone();
+    /// Run healtchecks once
+    pub fn check_once(&mut self, verbose: bool) -> &mut Self {
+        let home_path = self.app_conf.workspace.node_home.clone();
 
-      &self.refresh_onchain_state();
-      &self.refresh_chain_info();
-      &self.refresh_account_info();
-      &self.refresh_checks();
-      &self.vitals.write_json(&home_path);
-      if verbose {
-          print_it(&self)
-      }
+        let _ = &self.refresh_onchain_state();
+        let _ = &self.refresh_chain_info();
+        let _ = &self.refresh_account_info();
+        let _ = &self.refresh_checks();
+        let _ = &self.vitals.write_json(&home_path);
+        if verbose {
+            print_it(&self)
+        }
 
-      self
-  }
+        self
+    }
 }
 
 

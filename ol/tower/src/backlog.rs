@@ -4,7 +4,7 @@
 use crate::commit_proof::commit_proof_tx;
 use crate::proof::{parse_block_height, FILENAME};
 use anyhow::{anyhow, bail, Error, Result};
-use diem_api::context::Context;
+use diem_client::BlockingClient as DiemClient;
 use diem_logger::prelude::*;
 use ol_types::block::VDFProof;
 use ol_types::config::AppCfg;
@@ -80,7 +80,7 @@ pub fn process_backlog(
 
 /// returns remote tower height and current proofs in epoch
 pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<(u64, u64), Error> {
-    let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint)?;
+    let client = DiemClient::new(tx_params.url.clone())?;
     info!(
         "Fetching remote tower height: {}, {}",
         tx_params.url.clone(),
