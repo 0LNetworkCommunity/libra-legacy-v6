@@ -6,11 +6,12 @@ use crate::{
     views::{
         AccountStateWithProofView, AccountTransactionsWithProofView, AccountView,
         AccumulatorConsistencyProofView, CurrencyInfoView, EventByVersionWithProofView, EventView,
-        EventWithProofView, MetadataView, StateProofView, TransactionView,
-        TransactionsWithProofsView,
+        EventWithProofView, MetadataView,  OracleUpgradeStateView, StateProofView,
+        TowerStateResourceView, TransactionView, TransactionsWithProofsView,
     },
     Error, State,
 };
+use diem_json_rpc_types::views::WaypointView;
 use serde_json::Value;
 
 #[derive(Debug)]
@@ -84,6 +85,11 @@ pub enum MethodResponse {
     GetAccountTransactionsWithProofs(AccountTransactionsWithProofView),
     GetEventsWithProofs(Vec<EventWithProofView>),
     GetEventByVersionWithProof(EventByVersionWithProofView),
+
+    //////// 0L ////////
+    GetTowerStateView(TowerStateResourceView),
+    GetOracleUpgradeStateView(OracleUpgradeStateView),
+    GetWaypointView(WaypointView),
 }
 
 impl MethodResponse {
@@ -125,6 +131,16 @@ impl MethodResponse {
             Method::GetEventByVersionWithProof => {
                 MethodResponse::GetEventByVersionWithProof(serde_json::from_value(json)?)
             }
+            //////// 0L ////////
+            Method::GetTowerStateView => {
+                MethodResponse::GetTowerStateView(serde_json::from_value(json)?)
+            }
+            Method::GetOracleUpgradeStateView => {
+                MethodResponse::GetOracleUpgradeStateView(serde_json::from_value(json)?)
+            }
+            Method::GetWaypointView => {
+                MethodResponse::GetWaypointView(serde_json::from_value(json)?)
+            }            
         };
 
         Ok(response)
@@ -152,6 +168,10 @@ impl MethodResponse {
             }
             MethodResponse::GetEventsWithProofs(_) => Method::GetEventsWithProofs,
             MethodResponse::GetEventByVersionWithProof(_) => Method::GetEventByVersionWithProof,
+            /////// 0L /////////          
+            MethodResponse::GetTowerStateView(_) => Method::GetTowerStateView,            
+            MethodResponse::GetOracleUpgradeStateView(_) => Method::GetOracleUpgradeStateView,                        
+            MethodResponse::GetWaypointView(_) => Method::GetWaypointView,
         }
     }
 

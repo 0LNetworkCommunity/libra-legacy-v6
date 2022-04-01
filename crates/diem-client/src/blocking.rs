@@ -13,18 +13,22 @@ use crate::{
     views::{
         AccountStateWithProofView, AccountTransactionsWithProofView, AccountView,
         AccumulatorConsistencyProofView, CurrencyInfoView, EventByVersionWithProofView, EventView,
-        EventWithProofView, MetadataView, StateProofView, TransactionView,
-        TransactionsWithProofsView,
+        EventWithProofView, MetadataView, OracleUpgradeStateView, StateProofView, TowerStateResourceView, 
+        TransactionView, TransactionsWithProofsView,
     },
     Error, Result, Retry, State,
 };
 use diem_crypto::{hash::CryptoHash, HashValue};
+use diem_json_rpc_types::views::WaypointView;
 use diem_types::{
     account_address::AccountAddress,
+    account_state_blob::AccountStateBlob,
     event::EventKey,
-    transaction::{SignedTransaction, Transaction},
+    transaction::{SignedTransaction, Transaction, Version},
+    waypoint::Waypoint,
 };
 use move_core_types::move_resource::{MoveResource, MoveStructType};
+use reqwest::Url;
 use serde::{de::DeserializeOwned, Serialize};
 use std::{mem, time::Duration};
 
@@ -198,6 +202,22 @@ impl BlockingClient {
             limit,
             include_events,
         ))
+    }
+
+    // 0L todo: Not sure if it is possible to implement this fn with diem 1.3.0 code
+    /////// 0L /////////
+    /// Get all transactions for an account within a range
+    pub fn get_transactions_by_account_range(
+        &mut self,
+        account: AccountAddress,
+        start_height: u64,
+        num_txs_limit: u64,
+        fetch_events: bool
+    ) -> Result<Vec<TransactionView>> {
+      self
+        .get_account_transactions(account, start_height, num_txs_limit, fetch_events)
+        .map_err(Into::into)
+        .map(Response::into_inner)
     }
 
     pub fn get_events(
@@ -427,4 +447,42 @@ impl BlockingClient {
 
         resp.into_json_deserialize().map_err(Error::decode)
     }
+
+    /////// 0L /////////
+    pub fn get_miner_state(&self, address: AccountAddress) 
+    -> Result<Response<Option<TowerStateResourceView>>> {
+        self.send(MethodRequest::get_miner_state(address))
+    }
+
+    /////// 0L /////////
+    pub fn get_oracle_upgrade_state(&self) 
+    -> Result<Response<Option<OracleUpgradeStateView>>> {
+        self.send(MethodRequest::get_oracle_upgrade_state())
+    }
+
+    /////// 0L /////////
+    pub fn get_waypoint(&self) 
+    -> Result<Response<Option<WaypointView>>> {
+        self.send(MethodRequest::get_waypoint_state())
+    }
+
+    /////// 0L /////////
+    pub fn url(&self) -> Url {
+        self.url.parse().unwrap()
+    }
+
+    /////// 0L /////////
+    pub fn get_account_state_blob(
+        &self,
+        account: &AccountAddress,
+    ) -> Result<(Option<AccountStateBlob>, Version)> {
+        let ret = self
+            .get_account_state_with_proof(*account, None, None)
+            .map(Response::into_inner)?;
+        if let Some(blob) = ret.blob {
+            Ok((Some(bcs::from_bytes(&blob).unwrap()), ret.version))
+        } else {
+            Ok((None, ret.version))
+        }
+    }    
 }

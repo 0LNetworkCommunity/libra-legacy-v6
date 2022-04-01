@@ -53,7 +53,7 @@ impl Node {
 
         let local_db = self.get_db_state()?;
         s.remote_height = match remote_client.get_metadata() {
-            Ok(m) => m.version,
+            Ok(response) => response.into_inner().version,
             Err(_) => 404,
         };
         s.sync_height = local_db.synced_version;

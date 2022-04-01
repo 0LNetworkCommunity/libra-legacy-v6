@@ -143,7 +143,7 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
                 println!("{:?}:\n", &peer_id);
                 println!("{:?}\n", &addr);
             }
-            NetworkId::Vfn(_) => {
+            NetworkId::Vfn => {
                 println!("Address on PRIVATE VFN Network\n");
 
                 let peer_id = &n.peer_id();

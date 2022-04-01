@@ -108,7 +108,7 @@ impl Node {
   /// fetch state from system address 0x0
   pub fn refresh_chain_info(&mut self) -> Result<(ChainView, Vec<ValidatorView>), Error> {
     // let mut client = client::pick_client();
-    let (blob, _version) = match self.client
+    let (blob, version) = match self.client
       .get_account_state_blob(&AccountAddress::ZERO) {
         Ok(t)=> t,
         Err(_) => (None, 0),
@@ -116,13 +116,13 @@ impl Node {
     let mut cs = ChainView::default();
 
     // TODO: This is duplicated with check.rs
-    let _ = self.client.update_and_verify_state_proof();
+    let _ = self.client.get_state_proof(version);
     
-    cs.waypoint = self.client.waypoint().ok();
+    cs.waypoint = Some(self.client.get_waypoint()?.into_inner().unwrap().waypoint);
 
     if let Some(account_blob) = blob {
       let account_state = AccountState::try_from(&account_blob).unwrap();
-      let meta = self.client.get_metadata().unwrap();
+      let meta = self.client.get_metadata()?.into_inner();
       cs.epoch = account_state
         .get_configuration_resource()
         .unwrap()
@@ -171,9 +171,11 @@ impl Node {
 
       cs.height = meta.version;
 
-      cs.upgrade = self.client.get_oracle_upgrade_state().expect(
-        "could not get upgrade oracle view"
-      );
+      cs.upgrade = self.client.get_oracle_upgrade_state()?.into_inner();
+      // 0L todo
+      // .expect(
+      //   "could not get upgrade oracle view"
+      // );
 
       let dict = self.load_account_dictionary();
       let validators: Vec<ValidatorView> = account_state
@@ -196,7 +198,7 @@ impl Node {
           let validator_ip = match v.config().validator_network_addresses() {
             Ok(ips) => {
               if !ips.is_empty() {
-                ips.get(0).unwrap().seq_num().to_string()
+                ips.get(0).unwrap().to_string()
               } else {
                 "--".to_string()
               }
@@ -205,8 +207,9 @@ impl Node {
           };
           let ms = self
             .client
-            .get_miner_state(&v.account_address().clone())
+            .get_miner_state(v.account_address().clone())
             .unwrap()
+            .into_inner()
             .unwrap();
 
           let validator_stats = validators_stats.get_validator_current_stats(v.account_address().clone());

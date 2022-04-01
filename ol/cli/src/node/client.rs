@@ -3,7 +3,7 @@
 use crate::{config::AppCfg, entrypoint, node::node::Node, prelude::app_config};
 use anyhow::Error;
 use anyhow::Result;
-use diem_api::context::Context;
+use diem_client::BlockingClient as DiemClient;
 use diem_types::waypoint::Waypoint;
 use rand::prelude::SliceRandom;
 use rand::thread_rng;

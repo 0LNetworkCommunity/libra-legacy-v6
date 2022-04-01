@@ -83,21 +83,23 @@ impl Node {
         let print = match query_type {
             Balance { account } => {
                 // TODO: get scaling factor from chain.
-                match self.client.get_account(&account) {
-                    Ok(Some(account_view)) => {
-                        match account_view
-                            .balances
-                            .iter()
-                            .find(|av| av.currency == "GAS")
-                        {
-                            Some(av) => {
-                                let a = av.amount as f64;
-                                a.to_string()
+                match self.client.get_account(account) {
+                    Ok(response) => match response.into_inner() {
+                        Some(account_view) => {
+                            match account_view
+                                .balances
+                                .iter()
+                                .find(|av| av.currency == "GAS")
+                            {
+                                Some(av) => {
+                                    let a = av.amount as f64;
+                                    a.to_string()
+                                }
+                                _ => "No GAS found on account".to_owned(),
                             }
-                            _ => "No GAS found on account".to_owned(),
                         }
+                        _ => format!("No account {} found on chain, account", account),
                     }
-                    Ok(None) => format!("No account {} found on chain, account", account),
                     Err(e) => format!("Chain query error: {:?}", e),
                 }
             }
@@ -118,30 +120,32 @@ impl Node {
                 ),
                 Err(e) => e.to_string(),
             },
-            Resources { account } => {
-                // account
-                match self.get_annotate_account_blob(account) {
-                    Ok((Some(r), _)) => format!("{:#?}", r),
-                    Err(e) => format!("Error querying account resource. Message: {:#?}", e),
-                    _ => format!("Error, cannot find account state for {:#?}", account),
-                }
-            },
-            MoveValue {
-                account,
-                module_name,
-                struct_name,
-                key_name,
-            } => {
-                // account
-                match self.get_annotate_account_blob(account) {
-                    Ok((Some(r), _)) => {
-                        let value = find_value_from_state(&r, module_name, struct_name, key_name);
-                        format!("{:#?}", value)
-                    }
-                    Err(e) => format!("Error querying account resource. Message: {:#?}", e),
-                    _ => format!("Error, cannot find account state for {:#?}", account),
-                }
-            }
+            // 0L todo diem 1.4.1
+            // Resources { account } => {
+            //     // account
+            //     match self.get_annotate_account_blob(account) {
+            //         Ok((Some(r), _)) => format!("{:#?}", r),
+            //         Err(e) => format!("Error querying account resource. Message: {:#?}", e),
+            //         _ => format!("Error, cannot find account state for {:#?}", account),
+            //     }
+            // },
+            // 0L todo diem 1.4.1
+            // MoveValue {
+            //     account,
+            //     module_name,
+            //     struct_name,
+            //     key_name,
+            // } => {
+            //     // account
+            //     match self.get_annotate_account_blob(account) {
+            //         Ok((Some(r), _)) => {
+            //             let value = find_value_from_state(&r, module_name, struct_name, key_name);
+            //             format!("{:#?}", value)
+            //         }
+            //         Err(e) => format!("Error querying account resource. Message: {:#?}", e),
+            //         _ => format!("Error, cannot find account state for {:#?}", account),
+            //     }
+            // }
             Txs {
                 account,
                 txs_height,
@@ -157,7 +161,7 @@ impl Node {
 
                 let txs = self
                     .client
-                    .get_txn_by_acc_range(
+                    .get_transactions_by_account_range(
                         account,
                         txs_height.unwrap_or(query_height),
                         txs_count.unwrap_or(100),
@@ -209,26 +213,15 @@ impl Node {
                 match self.get_account_state(account) {
                     Ok(a) => {
                       if let Some(cr) = a.get_validator_config_resource()?{
-                        
-                        let val_addr = cr.clone().validator_config.unwrap().validator_network_addresses()?;
-                        
-                        let val_decrypted = val_addr
-                          .first()
-                          .unwrap()
-                          .clone()
-                          .decrypt(
-                            &diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
-                            &account, 
-                            0
-                          )?;
-
+                        let net_addrs = cr.clone().validator_config.unwrap().validator_network_addresses()?;
+                        let net_addr = net_addrs.first().unwrap();
                         format!("\n
                             consensus pubkey: {:?}\n
                             validator network addr: {:?}\n
                             fullnode network addr: {:?}\n
                             ", 
                           cr.clone().validator_config.unwrap().consensus_public_key.to_string(),
-                          val_decrypted,
+                          net_addr,
                           cr.validator_config.unwrap().fullnode_network_addresses()?,
                         )
                       } else {

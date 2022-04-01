@@ -32,6 +32,11 @@ pub enum MethodRequest {
     GetAccountTransactionsWithProofs(AccountAddress, u64, u64, bool, Option<u64>),
     GetEventsWithProofs(EventKey, u64, u64),
     GetEventByVersionWithProof(EventKey, Option<u64>),
+
+    //////// 0L ////////
+    GetTowerStateView((AccountAddress,)), // this is the format for passing a list of params
+    GetOracleUpgradeStateView(),
+    GetWaypointView(),    
 }
 
 impl MethodRequest {
@@ -55,6 +60,21 @@ impl MethodRequest {
     pub fn get_account(address: AccountAddress) -> Self {
         Self::GetAccount(address, None)
     }
+
+    /////// 0L /////////
+    pub fn get_miner_state(address: AccountAddress) -> Self {
+        Self::GetTowerStateView((address,))
+    }
+
+    /////// 0L /////////
+    pub fn get_oracle_upgrade_state() -> Self {
+        Self::GetOracleUpgradeStateView()
+    }
+
+    /////// 0L /////////
+    pub fn get_waypoint_state() -> Self {
+        Self::GetWaypointView()
+    }    
 
     pub fn get_transactions(start_seq: u64, limit: u64, include_events: bool) -> Self {
         Self::GetTransactions(start_seq, limit, include_events)
@@ -166,6 +186,10 @@ impl MethodRequest {
             }
             MethodRequest::GetEventsWithProofs(_, _, _) => Method::GetEventsWithProofs,
             MethodRequest::GetEventByVersionWithProof(_, _) => Method::GetEventByVersionWithProof,
+            /////// 0L /////////
+            MethodRequest::GetTowerStateView(_) => Method::GetTowerStateView,
+            MethodRequest::GetOracleUpgradeStateView() => Method::GetOracleUpgradeStateView,
+            MethodRequest::GetWaypointView() => Method::GetWaypointView,            
         }
     }
 }

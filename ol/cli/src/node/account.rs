@@ -13,7 +13,8 @@ use ol_types::{
     autopay::{AutoPayResource, AutoPayView}, 
     validator_config::{ValidatorConfigResource, ValidatorConfigView}
 };
-use diem_resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator};
+use diem_resource_viewer::{AnnotatedAccountStateBlob};
+use move_resource_viewer::MoveValueAnnotator;
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
@@ -97,10 +98,7 @@ impl Node {
     /// Get the account view struct
     pub fn get_account_view(&mut self) -> Option<AccountView> {
         let account = self.app_conf.profile.account;
-        match self.client.get_account(&account) {
-            Ok(account_view) => account_view,
-            Err(_) => None
-        }
+        self.client.get_account(account).unwrap().into_inner()
     }
 
     /// Get account auto pay resource
@@ -173,29 +171,37 @@ impl Node {
 
     /// Get account balance
     pub fn get_account_balance(&mut self, address: AccountAddress) -> Option<f64> {
-        match self.client.get_account(&address) {
-            Ok(Some(account_view)) => Some(get_balance(account_view)),
-            Ok(None) => None,
+        match self.client.get_account(address) {
+            Ok(response) => match response.into_inner() {
+                Some(account_view) => Some(get_balance(account_view)),
+                None => None,
+            }
             Err(_) => None
         }
     }
 
-    /// Return a full Move-annotated account resource struct
-    pub fn get_annotate_account_blob(
-        &mut self,
-        account: AccountAddress,
-    ) -> Result<(Option<AnnotatedAccountStateBlob>, Version)> {
-        let (blob, ver) = self.client.get_account_state_blob(&account)?;
-        if let Some(account_blob) = blob {
-            // let state_view = NullStateView::default();
-            let annotator = MoveValueAnnotator::new(&self.client.db);
-            let annotate_blob =
-                annotator.view_account_state(&AccountState::try_from(&account_blob)?)?;
-            Ok((Some(annotate_blob), ver))
-        } else {
-            Ok((None, ver))
-        }
-    }
+    // 0L todo diem 1.4.1
+    // /// Return a full Move-annotated account resource struct
+    // pub fn get_annotate_account_blob(
+    //     &mut self,
+    //     account: AccountAddress,
+    // ) -> Result<(Option<AnnotatedAccountStateBlob>, Version)> {
+    //     let xx = self.chain_state;
+    //     let annotator = MoveValueAnnotator::new(&self.client.db);
+    //     let annotate_blob =
+    //         annotator.view_account_state(&AccountState::try_from(&account_blob)?)?;
+
+    //     let (blob, ver) = self.client.get_account_state_blob(&account)?;
+    //     if let Some(account_blob) = blob {
+    //         // let state_view = NullStateView::default();
+    //         let annotator = MoveValueAnnotator::new(&self.client.db);
+    //         let annotate_blob =
+    //             annotator.view_account_state(&AccountState::try_from(&account_blob)?)?;
+    //         Ok((Some(annotate_blob), ver))
+    //     } else {
+    //         Ok((None, ver))
+    //     }
+    // }
 
     /// get any account state with client
     pub fn get_account_state(&mut self, address: AccountAddress) -> Result<AccountState, Error> {
@@ -219,7 +225,7 @@ impl Node {
         match self.get_account_state(account) {
             Ok(account_state) => {
               let handles = account_state
-              .get_account_resource()?
+              .get_diem_account_resource()?
               .map(|resource| {
                 (
                     resource.sent_events().clone(),
@@ -239,7 +245,7 @@ impl Node {
         start: u64,
         limit: u64,
     ) -> Result<Vec<EventView>> {
-        self.client.get_events(*event_key, start, limit)
+        Ok(self.client.get_events(*event_key, start, limit).unwrap().into_inner())
     }
 
     /// get all events associated with an EventHandle

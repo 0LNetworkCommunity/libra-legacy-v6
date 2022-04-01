@@ -82,6 +82,10 @@ pub enum Method {
     GetAccountTransactionsWithProofs,
     GetEventsWithProofs,
     GetEventByVersionWithProof,
+
+    GetTowerStateView,         /////// 0L /////////
+    GetOracleUpgradeStateView, /////// 0L /////////
+    GetWaypointView,           /////// 0L /////////    
 }
 
 cfg_async_or_blocking! {

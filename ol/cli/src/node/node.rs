@@ -2,7 +2,7 @@
 
 use crate::{cache::Vitals, check::items::Items, config::AppCfg, mgmt::management::NodeMode};
 use anyhow::Error;
-use diem_client::client::Client;
+use diem_client::BlockingClient as DiemClient;
 use diem_config::config::{NodeConfig, RocksdbConfig};
 use diemdb::DiemDB;
 use std::path::PathBuf;
@@ -36,7 +36,7 @@ pub struct Node {
     /// 0L configs
     pub app_conf: AppCfg,
     /// diemclient for connecting
-    pub client: Client,
+    pub client: DiemClient,
     /// vitals
     pub vitals: Vitals,
     /// node conf
@@ -48,7 +48,7 @@ pub struct Node {
 
 impl Node {
     /// Create a instance of Check
-    pub fn new(client: Client, conf: &AppCfg, is_swarm: bool) -> Self {
+    pub fn new(client: DiemClient, conf: &AppCfg, is_swarm: bool) -> Self {
         let node_yaml = if is_swarm {
             "node.yaml"
         } else {
@@ -132,9 +132,9 @@ impl Node {
             Err(_) => None,
         };
         self.miner_state = match self.client.get_miner_state(
-            &self.app_conf.profile.account
+            self.app_conf.profile.account
         ) {
-            Ok(state) => state,
+            Ok(state) => state.into_inner(),
             _ => None,
         };
         self
@@ -170,8 +170,13 @@ impl Node {
 
     /// Get waypoint from client
     pub fn waypoint(&mut self) -> Result<Waypoint, Error> {
-        match self.client.update_and_verify_state_proof() {
-            Ok(_t) => self.client.waypoint(),
+        let version = self.client.get_metadata().unwrap().into_inner().version;
+        // 0L todo diem 1.4.1
+        // No "update_and_verify_state_proof()" in latest Diem
+        // match self.client.update_and_verify_state_proof() {
+        match self.client.get_state_proof(version) {
+            Ok(_t) =>
+                Ok(self.client.get_waypoint()?.into_inner().unwrap().waypoint),
             Err(_) => self.app_conf.get_waypoint(None),
         }
     }
@@ -207,13 +212,10 @@ impl Node {
     /// the owner and operator accounts exist on chain
     pub fn accounts_exist_on_chain(&mut self) -> bool {
         let addr = self.app_conf.profile.account;
-        let account = self.client.get_account(&addr);
+        let account = self.client.get_account(addr).unwrap().into_inner();
         match account {
-            Ok(opt) => match opt {
-                Some(_) => true,
-                None => false,
-            },
-            Err(_) => false,
+            Some(_) => true,
+            None => false,
         }
     }
 
