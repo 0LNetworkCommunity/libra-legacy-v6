@@ -9167,6 +9167,7 @@ dependencies = [
  "diem-wallet",
  "diemdb",
  "dirs",
+ "executor-benchmark",
  "glob",
  "gumdrop 0.7.0",
  "hex 0.4.3",

@@ -10,6 +10,7 @@ use diem_config::{
     },
     config::{Identity, WaypointConfig},
     network_id::NetworkId,
+    
 };
 use diem_crypto::x25519::PublicKey;
 use diem_global_constants::{
@@ -488,5 +489,5 @@ fn encode_validator_seed_for_vfn_discovery(
 
 #[test]
 fn test() {
-    default_for_public_full_node();
+    NodeConfig::default_for_public_full_node();
 }

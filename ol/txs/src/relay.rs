@@ -20,11 +20,11 @@ pub fn relay_tx(
     txn: SignedTransaction,
     // original_signer: AccountAddress,
 ) -> Result<TransactionView, Error> {
-    let mut client = DiemClient::new(tx_params.url.to_owned()).unwrap();
-
+    let mut client = DiemClient::new(tx_params.url.clone());
+  
     let original_signer = txn.sender();
     // let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
-    let account_state = client.get_account(&original_signer).unwrap();
+    let account_state = client.get_account(original_signer)?.into_inner();
 
     let original_signer_sequence_number = match account_state {
         Some(av) => av.sequence_number,
@@ -42,7 +42,7 @@ pub fn relay_tx(
                 None => Err(Error::msg("No Transaction View returned")),
             }
         }
-        Err(err) => Err(err),
+        Err(err) => Err(Error::new(err)),
     }
 }
 

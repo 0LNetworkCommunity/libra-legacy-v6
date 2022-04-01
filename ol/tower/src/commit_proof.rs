@@ -9,6 +9,7 @@ use txs::{
 };
 use diem_json_rpc_types::views::{TransactionView};
 use diem_transaction_builder::stdlib as transaction_builder;
+use executor_benchmark::transaction_generator::AccountData;
 
 /// Submit a miner transaction to the network.
 pub fn commit_proof_tx(
@@ -18,12 +19,12 @@ pub fn commit_proof_tx(
 ) -> Result<TransactionView, TxError> {
 
     // Create a client object
-    let client = DiemClient::new(tx_params.url.clone()).unwrap();
+    let client = DiemClient::new(tx_params.url.clone());
 
     let chain_id = tx_params.chain_id;
 
     // For sequence number
-    let account_state = client.get_account(&tx_params.signer_address)?;
+    let account_state = client.get_account(tx_params.signer_address).unwrap().into_inner();
     let sequence_number = match account_state {
         Some(av) => av.sequence_number,
         None => 0,
@@ -51,11 +52,10 @@ pub fn commit_proof_tx(
 
     // get account_data struct
     let mut signer_account_data = AccountData {
+        private_key: tx_params.keypair.private_key.clone(),
+        public_key: tx_params.keypair.public_key.clone(),
         address: tx_params.signer_address,
-        authentication_key: Some(tx_params.auth_key.to_vec()),
-        key_pair: Some(tx_params.keypair.clone()),
         sequence_number,
-        status: AccountStatus::Persisted,
     };
 
     let t = submit_tx(client, signed_tx, &mut signer_account_data )?;

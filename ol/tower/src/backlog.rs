@@ -80,15 +80,18 @@ pub fn process_backlog(
 
 /// returns remote tower height and current proofs in epoch
 pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<(u64, u64), Error> {
-    let client = DiemClient::new(tx_params.url.clone())?;
+    let client = DiemClient::new(tx_params.url.clone());
     info!(
         "Fetching remote tower height: {}, {}",
         tx_params.url.clone(),
         tx_params.owner_address.clone()
     );
-    let tower_state = client.get_miner_state(&tx_params.owner_address);
+    let tower_state = client.get_miner_state(tx_params.owner_address);
     match tower_state {
-        Ok(Some(s)) => Ok((s.verified_tower_height, s.actual_count_proofs_in_epoch)),
+        Ok(response) => { 
+            let tower_state = response.into_inner().unwrap();
+            Ok((tower_state.verified_tower_height, tower_state.actual_count_proofs_in_epoch))
+        }
         _ => bail!("Info: Received response but no remote state found. Exiting."),
     }
 }

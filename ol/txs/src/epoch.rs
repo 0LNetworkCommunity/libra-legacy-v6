@@ -7,7 +7,7 @@ use crate::tx_params::TxParams;
 
 /// convenience to get the epoch
 pub fn get_epoch(tx_params: &TxParams) -> u64 {
-    let client = DiemClient::new(tx_params.url.clone()).unwrap();
+    let client = DiemClient::new(tx_params.url.clone());
 
     let (blob, _version) = client.get_account_state_blob(&AccountAddress::ZERO).unwrap();
     if let Some(account_blob) = blob {

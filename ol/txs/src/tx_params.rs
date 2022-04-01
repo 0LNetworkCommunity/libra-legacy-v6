@@ -60,11 +60,7 @@ pub fn what_url(config: &AppCfg, use_first_upstream: bool) -> Result<Url, Error>
     if use_first_upstream {
         Ok(config.profile.upstream_nodes[0].to_owned())
     } else {
-        if let Some(w) = config.chain_info.base_waypoint {
-            Ok(find_a_remote_jsonrpc(&config, w)?.url()?)
-        } else {
-            bail!("no base_waypoint provided in 0L.toml")
-        }
+        Ok(find_a_remote_jsonrpc(&config)?.url())
     }
 }
 

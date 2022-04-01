@@ -66,10 +66,10 @@ struct P2pTestCase {
 
 #[derive(Deserialize, Serialize)]
 pub struct AccountData { /////// 0L /////////
-    private_key: Ed25519PrivateKey,
-    public_key: Ed25519PublicKey,
-    address: AccountAddress,
-    sequence_number: u64,
+    pub private_key: Ed25519PrivateKey, /////// 0L /////////
+    pub public_key: Ed25519PublicKey,   /////// 0L /////////
+    pub address: AccountAddress,        /////// 0L /////////
+    pub sequence_number: u64,           /////// 0L /////////
 }
 
 impl AccountData {

@@ -96,7 +96,7 @@ pub fn maybe_submit(
     tx_params: &TxParams,
     save_path: Option<PathBuf>,
 ) -> Result<TransactionView, TxError> {
-    let mut client = DiemClient::new(tx_params.url);
+    let mut client = DiemClient::new(tx_params.url.clone());
     let (mut account_data, txn) = stage(script, tx_params, &mut client)?;
     if let Some(path) = save_path {
         // TODO: This will not work with batch operations like autopay_batch, last one will overwrite the file.
@@ -120,7 +120,7 @@ pub fn save_dont_send_tx(
     tx_params: &TxParams,
     save_path: Option<PathBuf>,
 ) -> Result<SignedTransaction, TxError> {
-    let mut client = DiemClient::new(tx_params.url);
+    let mut client = DiemClient::new(tx_params.url.clone());
     let (_account_data, txn) = stage(script, tx_params, &mut client)?;
     if let Some(path) = save_path {
         // TODO: This will not work with batch operations like autopay_batch, last one will overwrite the file.
@@ -174,8 +174,8 @@ fn stage(
 
                 // Get account_data struct
                 let signer_account_data = AccountData {
-                    private_key: tx_params.keypair.private_key,
-                    public_key: tx_params.keypair.public_key,
+                    private_key: tx_params.keypair.private_key.clone(),
+                    public_key: tx_params.keypair.public_key.clone(),
                     address: tx_params.signer_address,
                     sequence_number,
                 };
@@ -210,7 +210,7 @@ pub fn submit_tx(
             Some(res) => Ok(res),
             None => Err(Error::msg("No Transaction View returned")),
         },
-        Err(err) => Err(err),
+        Err(err) => Err(Error::new(err)),
     }
 }
 
@@ -426,15 +426,10 @@ pub fn wait_for_tx(
         // it loops through the query.
         stdout().flush().unwrap();
 
-        match &mut client.get_txn_by_acc_seq(&signer_address, sequence_number, false) {
-            Ok(Some(txn_view)) => {
-                return Some(txn_view.to_owned());
-            }
+        match client.get_account_transaction(signer_address, sequence_number, false) {
+            Ok(response) => return response.into_inner(),
             Err(e) => {
                 println!("Response with error: {:?}", e);
-            }
-            _ => {
-                print!(".");
             }
         }
         iter += 1;

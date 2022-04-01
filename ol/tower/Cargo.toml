@@ -49,6 +49,7 @@ ol = { path = "../cli"}
 txs = { path = "../txs"}
 ol-types = { path = "../../ol/types"}
 diem-client = { path = "../../crates/diem-client" }
+executor-benchmark = { path = "../../execution/executor-benchmark" }
 
 [dependencies.abscissa_core]
 version = "0.5.2"
