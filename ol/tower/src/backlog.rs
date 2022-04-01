@@ -14,7 +14,6 @@ use std::{fs::File, path::PathBuf};
 use txs::submit_tx::{eval_tx_status, TxError};
 use txs::tx_params::TxParams;
 
-
 /// Submit a backlog of blocks that may have been mined while network is offline.
 /// Likely not more than 1.
 pub fn process_backlog(
@@ -23,9 +22,8 @@ pub fn process_backlog(
     is_operator: bool,
 ) -> Result<(), TxError> {
     // Getting remote miner state
-    //let remote_state = get_remote_state(tx_params)?;
-    //let remote_height = remote_state.verified_tower_height;
-    let (remote_height, proofs_in_epoch) = get_remote_tower_height(tx_params).unwrap();
+    // there may not be any onchain state.
+    let (remote_height, proofs_in_epoch) = get_remote_tower_height(tx_params)?;
 
     info!("Remote tower height: {}", remote_height);
     // Getting local state height
@@ -82,7 +80,7 @@ pub fn process_backlog(
 
 /// returns remote tower height and current proofs in epoch
 pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<(u64, u64), Error> {
-    let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
+    let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint)?;
     info!(
         "Fetching remote tower height: {}, {}",
         tx_params.url.clone(),
