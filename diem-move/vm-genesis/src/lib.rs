@@ -195,18 +195,16 @@ pub fn encode_genesis_change_set(
     ChangeSet::new(write_set, events)
 }
 
-// 0L todo diem-1.4.1: Double check 0L patch for this fn.
+// 0L todo diem-1.4.1: This fn is double checked.
+//                     But, still need third check/review from another person.
 // Reason, the diem `fn encode_genesis_change_set` which we copy and modify to
 // create this fn, changed significantly.
-// Fn body is mostly updated, but need to update the fn signature also.
 //////// 0L ////////
 pub fn encode_recovery_genesis_changeset(
     val_assignments: &[ValRecover],
     operator_registrations: &[OperRecover],
     val_set: &[AccountAddress],
-    // stdlib_modules: &[Vec<u8>],
-    // vm_publishing_option: VMPublishingOption,
-    // chain: u8,
+    chain: u8,
 ) -> Result<ChangeSet, Error> {
     let mut stdlib_modules = Vec::new();
     // create a data view for move_vm
@@ -221,15 +219,15 @@ pub fn encode_recovery_genesis_changeset(
     let move_vm = MoveVM::new(diem_vm::natives::diem_natives()).unwrap();
     let mut session = move_vm.new_session(&data_cache);
 
-    // 0L todo diem-1.4.1
-    // create_and_initialize_main_accounts(
-    //     &mut session,
-    //     None,
-    //     None,
-    //     VMPublishingOption::open(),
-    //     &xdx_ty,
-    //     ChainId::new(chain),
-    // );
+    //////// 0L ////////
+    create_and_initialize_main_accounts(
+        &mut session,
+        None,
+        None,
+        VMPublishingOption::open(),
+        OnChainConsensusConfig::V1(ConsensusConfigV1 { two_chain: true }),
+        ChainId::new(chain),
+    );
     //////// 0L ////////
     println!("OK create_and_initialize_main_accounts =============== ");
     let genesis_env = get_env();
@@ -244,12 +242,10 @@ pub fn encode_recovery_genesis_changeset(
     );
 
     //////// 0L ////////
-    println!("OK recovery_owners_operators =============== ");
-    distribute_genesis_subsidy(&mut session);
-    println!("OK Genesis subsidy =============== ");
-    // 0L todo diem-1.4.1
-    // fund_operators(&mut session, validators);
-    
+    // println!("OK recovery_owners_operators =============== ");
+    // distribute_genesis_subsidy(&mut session);
+    // println!("OK Genesis subsidy =============== ");
+
     reconfigure(&mut session);
 
     let (mut changeset1, mut events1) = session.finish().unwrap();

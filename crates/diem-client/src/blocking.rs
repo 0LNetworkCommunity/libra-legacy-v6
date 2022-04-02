@@ -25,7 +25,6 @@ use diem_types::{
     account_state_blob::AccountStateBlob,
     event::EventKey,
     transaction::{SignedTransaction, Transaction, Version},
-    waypoint::Waypoint,
 };
 use move_core_types::move_resource::{MoveResource, MoveStructType};
 use reqwest::Url;
