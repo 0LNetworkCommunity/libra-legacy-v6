@@ -1,7 +1,7 @@
 //! Txs App submit_tx module
 #![forbid(unsafe_code)]
 use crate::config::AppCfg;
-use anyhow::{bail, Error};
+use anyhow::Error;
 
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},

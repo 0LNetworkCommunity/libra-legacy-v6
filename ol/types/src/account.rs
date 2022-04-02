@@ -100,7 +100,7 @@ impl ValConfigs {
             &val_ip_address, val_pubkey, NetworkId::Validator
         );
 
-        // 0L todo diem-1.4.1: No encrypt()
+        // 0L todo diem-1.4.1: No "encrypt()"
         // let encrypted_addr =  val_addr_for_val_net.clone().encrypt(
         //     // NOTE: 0L is not setting an encrypted network key initially.
         //       &TEST_SHARED_VAL_NETADDR_KEY,
@@ -139,7 +139,6 @@ impl ValConfigs {
             // 0L todo diem-1.4.1
             // op_validator_network_addresses: bcs::to_bytes(&vec![encrypted_addr]).unwrap(),
             op_validator_network_addresses: bcs::to_bytes(&vec![&val_addr_for_val_net]).unwrap(),
-
             op_fullnode_network_addresses: bcs::to_bytes(&vec![&vfn_addr_obj]).unwrap(),
             op_val_net_addr_for_vals: val_addr_for_val_net.to_owned(),
             op_val_net_addr_for_vfn: val_addr_for_vfn_net.to_owned(),

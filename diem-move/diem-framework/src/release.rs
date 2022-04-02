@@ -253,7 +253,6 @@ where
     }
 }
 
-// 0L todo
 //////// 0L ////////
 // Update stdlib with a byte string, used as part of the upgrade oracle
 pub fn import_stdlib(lib_bytes: &Vec<u8>) -> Result<Vec<CompiledModule>, Box<dyn std::error::Error>> {

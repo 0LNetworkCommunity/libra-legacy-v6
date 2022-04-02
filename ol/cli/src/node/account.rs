@@ -7,14 +7,14 @@ use diem_types::{
     account_address::AccountAddress,
     account_state::AccountState,
     event::{EventHandle, EventKey},
-    transaction::Version
+    // transaction::Version // 0L todo
 };
 use ol_types::{
     autopay::{AutoPayResource, AutoPayView}, 
     validator_config::{ValidatorConfigResource, ValidatorConfigView}
 };
-use diem_resource_viewer::{AnnotatedAccountStateBlob};
-use move_resource_viewer::MoveValueAnnotator;
+// use diem_resource_viewer::{AnnotatedAccountStateBlob}; // 0L todo
+// use move_resource_viewer::MoveValueAnnotator; // 0L todo
 use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
@@ -180,7 +180,7 @@ impl Node {
         }
     }
 
-    // // 0L todo diem 1.4.1
+    // // 0L todo diem 1.4.1: How to get the "annotator"?
     // /// Return a full Move-annotated account resource struct
     // pub fn get_annotate_account_blob(
     //     &mut self,

@@ -601,7 +601,7 @@ checksum = "e3b5ca7a04898ad4bcd41c90c5285445ff5b791899bb1b0abdd2a2aa791211d7"
 [[package]]
 name = "bytecode-interpreter-crypto"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "curve25519-dalek-fiat",
@@ -862,7 +862,7 @@ dependencies = [
 [[package]]
 name = "classgroup"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?branch=v6#3949534b2d7e357aabef46d1e2836802f99f80f3"
+source = "git+https://github.com/OLSF/libra?branch=v6#db303c9c2556da274e30b7de0dc268473439daf4"
 dependencies = [
  "libc",
  "num-traits 0.2.14",
@@ -1726,7 +1726,7 @@ dependencies = [
 [[package]]
 name = "diem-crypto"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/libra?branch=v6#3949534b2d7e357aabef46d1e2836802f99f80f3"
+source = "git+https://github.com/OLSF/libra?branch=v6#db303c9c2556da274e30b7de0dc268473439daf4"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1767,7 +1767,7 @@ dependencies = [
 [[package]]
 name = "diem-crypto-derive"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/libra?branch=v6#3949534b2d7e357aabef46d1e2836802f99f80f3"
+source = "git+https://github.com/OLSF/libra?branch=v6#db303c9c2556da274e30b7de0dc268473439daf4"
 dependencies = [
  "diem-workspace-hack 0.1.0 (git+https://github.com/OLSF/libra?branch=v6)",
  "proc-macro2 1.0.36",
@@ -2048,7 +2048,7 @@ version = "0.1.0"
 [[package]]
 name = "diem-global-constants"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?branch=v6#3949534b2d7e357aabef46d1e2836802f99f80f3"
+source = "git+https://github.com/OLSF/libra?branch=v6#db303c9c2556da274e30b7de0dc268473439daf4"
 
 [[package]]
 name = "diem-id-generator"
@@ -2236,7 +2236,7 @@ dependencies = [
  "serde 1.0.136",
  "serde_json",
  "tracing",
- "tracing-subscriber 0.3.9",
+ "tracing-subscriber 0.3.10",
 ]
 
 [[package]]
@@ -2739,7 +2739,7 @@ dependencies = [
 [[package]]
 name = "diem-types"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/libra?branch=v6#3949534b2d7e357aabef46d1e2836802f99f80f3"
+source = "git+https://github.com/OLSF/libra?branch=v6#db303c9c2556da274e30b7de0dc268473439daf4"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -2909,7 +2909,7 @@ dependencies = [
 [[package]]
 name = "diem-workspace-hack"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?branch=v6#3949534b2d7e357aabef46d1e2836802f99f80f3"
+source = "git+https://github.com/OLSF/libra?branch=v6#db303c9c2556da274e30b7de0dc268473439daf4"
 dependencies = [
  "Inflector",
  "anyhow",
@@ -4027,9 +4027,9 @@ checksum = "92620684d99f750bae383ecb3be3748142d6095760afd5cbcf2261e9a279d780"
 
 [[package]]
 name = "h2"
-version = "0.3.12"
+version = "0.3.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62eeb471aa3e3c9197aa4bfeabfe02982f6dc96f750486c0bb0009ac58b26d2b"
+checksum = "37a82c6d637fc9515a4694bbf1cb2457b79d81ce52b3108bdeea58b07dd34a57"
 dependencies = [
  "bytes 1.1.0",
  "fnv",
@@ -4040,7 +4040,7 @@ dependencies = [
  "indexmap",
  "slab",
  "tokio 1.17.0",
- "tokio-util 0.6.9",
+ "tokio-util 0.7.1",
  "tracing",
 ]
 
@@ -4937,7 +4937,7 @@ checksum = "c9be0862c1b3f26a88803c4a49de6889c10e608b3ee9344e6ef5b45fb37ad3d1"
 [[package]]
 name = "move-abigen"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "bcs",
@@ -4954,7 +4954,7 @@ dependencies = [
 [[package]]
 name = "move-binary-format"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "mirai-annotations",
@@ -4971,7 +4971,7 @@ dependencies = [
 [[package]]
 name = "move-borrow-graph"
 version = "0.0.1"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "mirai-annotations",
  "workspace-hack",
@@ -4980,7 +4980,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-source-map"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "bcs",
@@ -4997,7 +4997,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-utils"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -5009,7 +5009,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-verifier"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "mirai-annotations",
@@ -5023,7 +5023,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-viewer"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -5041,7 +5041,7 @@ dependencies = [
 [[package]]
 name = "move-cli"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5084,7 +5084,7 @@ dependencies = [
 [[package]]
 name = "move-command-line-common"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "difference",
@@ -5098,7 +5098,7 @@ dependencies = [
 [[package]]
 name = "move-compiler"
 version = "0.0.1"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5126,7 +5126,7 @@ dependencies = [
 [[package]]
 name = "move-core-types"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5146,7 +5146,7 @@ dependencies = [
 [[package]]
 name = "move-coverage"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5168,7 +5168,7 @@ dependencies = [
 [[package]]
 name = "move-disassembler"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "colored",
@@ -5187,7 +5187,7 @@ dependencies = [
 [[package]]
 name = "move-docgen"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "codespan",
@@ -5207,7 +5207,7 @@ dependencies = [
 [[package]]
 name = "move-errmapgen"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5222,7 +5222,7 @@ dependencies = [
 [[package]]
 name = "move-ir-compiler"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5242,7 +5242,7 @@ dependencies = [
 [[package]]
 name = "move-ir-to-bytecode"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "codespan-reporting",
@@ -5262,7 +5262,7 @@ dependencies = [
 [[package]]
 name = "move-ir-to-bytecode-syntax"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "hex 0.4.3",
@@ -5276,7 +5276,7 @@ dependencies = [
 [[package]]
 name = "move-ir-types"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "hex 0.4.3",
@@ -5291,7 +5291,7 @@ dependencies = [
 [[package]]
 name = "move-model"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "codespan",
@@ -5318,7 +5318,7 @@ dependencies = [
 [[package]]
 name = "move-package"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5350,7 +5350,7 @@ dependencies = [
 [[package]]
 name = "move-prover"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5389,7 +5389,7 @@ dependencies = [
 [[package]]
 name = "move-prover-boogie-backend"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5418,7 +5418,7 @@ dependencies = [
 [[package]]
 name = "move-read-write-set-types"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -5430,7 +5430,7 @@ dependencies = [
 [[package]]
 name = "move-resource-viewer"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5446,7 +5446,7 @@ dependencies = [
 [[package]]
 name = "move-stackless-bytecode"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "codespan",
  "codespan-reporting",
@@ -5473,7 +5473,7 @@ dependencies = [
 [[package]]
 name = "move-stackless-bytecode-interpreter"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "bytecode-interpreter-crypto",
@@ -5493,7 +5493,7 @@ dependencies = [
 [[package]]
 name = "move-stdlib"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "diem-global-constants 0.1.0 (git+https://github.com/OLSF/libra?branch=v6)",
  "diem-types 0.0.3 (git+https://github.com/OLSF/libra?branch=v6)",
@@ -5520,7 +5520,7 @@ dependencies = [
 [[package]]
 name = "move-symbol-pool"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "once_cell",
  "serde 1.0.136",
@@ -5530,7 +5530,7 @@ dependencies = [
 [[package]]
 name = "move-transactional-test-runner"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "colored",
@@ -5562,7 +5562,7 @@ dependencies = [
 [[package]]
 name = "move-unit-test"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "colored",
@@ -5587,7 +5587,7 @@ dependencies = [
 [[package]]
 name = "move-vm-runtime"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "fail",
  "mirai-annotations",
@@ -5605,7 +5605,7 @@ dependencies = [
 [[package]]
 name = "move-vm-test-utils"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -5617,7 +5617,7 @@ dependencies = [
 [[package]]
 name = "move-vm-types"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "bcs",
  "mirai-annotations",
@@ -6395,7 +6395,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "87f5ec2493a61ac0506c0f4199f99070cbe83857b0337006a30f3e6719b8ef58"
 dependencies = [
  "lock_api",
- "parking_lot_core 0.9.1",
+ "parking_lot_core 0.9.2",
 ]
 
 [[package]]
@@ -6414,9 +6414,9 @@ dependencies = [
 
 [[package]]
 name = "parking_lot_core"
-version = "0.9.1"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28141e0cc4143da2443301914478dc976a61ffdb3f043058310c70df2fed8954"
+checksum = "995f667a6c822200b0433ac218e05582f0e2efa1b922a3fd2fbaadc5f87bab37"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
@@ -6637,9 +6637,9 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "pkg-config"
-version = "0.3.24"
+version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58893f751c9b0412871a09abd62ecd2a00298c6c83befa223ef98c52aef40cbe"
+checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
 
 [[package]]
 name = "plotters"
@@ -7016,7 +7016,7 @@ dependencies = [
 [[package]]
 name = "read-write-set"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -7033,7 +7033,7 @@ dependencies = [
 [[package]]
 name = "read-write-set-dynamic"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -7045,9 +7045,9 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
-version = "0.2.12"
+version = "0.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8ae183fc1b06c149f0c1793e1eb447c8b04bfe46d48e9e48bfb8d2d7ed64ecf0"
+checksum = "62f25bc4c7e55e0b0b7a1d43fb893f4fa1361d0abe38b9ce4f323c2adfe6ef42"
 dependencies = [
  "bitflags",
 ]
@@ -7063,9 +7063,9 @@ dependencies = [
 
 [[package]]
 name = "redox_users"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7776223e2696f1aa4c6b0170e83212f47296a00424305117d013dfe86fb0fe55"
+checksum = "b033d837a7cf162d7993aded9304e30a83213c648b6e389db233191f891e5c2b"
 dependencies = [
  "getrandom 0.2.6",
  "redox_syscall",
@@ -8129,9 +8129,9 @@ dependencies = [
 
 [[package]]
 name = "slab"
-version = "0.4.5"
+version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9def91fd1e018fe007022791f865d0ccc9b3a0d5001e01aabb8b40e46000afb5"
+checksum = "eb703cfe953bccee95685111adeedb76fabe4e97549a58d16f03ea7b9367bb32"
 
 [[package]]
 name = "slug"
@@ -9101,6 +9101,7 @@ dependencies = [
  "futures-sink",
  "pin-project-lite 0.2.8",
  "tokio 1.17.0",
+ "tracing",
 ]
 
 [[package]]
@@ -9231,9 +9232,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-core"
-version = "0.1.23"
+version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa31669fa42c09c34d94d8165dd2012e8ff3c66aca50f3bb226b68f216f2706c"
+checksum = "90442985ee2f57c9e1b548ee72ae842f4a9a20e3f417cc38dbc5dc684d9bb4ee"
 dependencies = [
  "lazy_static 1.4.0",
  "valuable",
@@ -9269,9 +9270,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-subscriber"
-version = "0.3.9"
+version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e0ab7bdc962035a87fba73f3acca9b8a8d0034c2e6f60b84aeaaddddc155dce"
+checksum = "b9df98b037d039d03400d9dd06b0f8ce05486b5f25e9a2d7d36196e142ebbc52"
 dependencies = [
  "ansi_term 0.12.1",
  "sharded-slab",
@@ -9334,9 +9335,9 @@ checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
 
 [[package]]
 name = "trybuild"
-version = "1.0.57"
+version = "1.0.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2ae8c4cee9b97b861a6e3be1d5acb6f50a86bbb68b1f3a896db8342fb6d0f94c"
+checksum = "3bc674dacaf52ce01cb84dc01e60af886dbed641f2b62e306ba7e266dacef17b"
 dependencies = [
  "glob",
  "once_cell",
@@ -9684,7 +9685,7 @@ dependencies = [
 [[package]]
 name = "vdf"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?branch=v6#3949534b2d7e357aabef46d1e2836802f99f80f3"
+source = "git+https://github.com/OLSF/libra?branch=v6#db303c9c2556da274e30b7de0dc268473439daf4"
 dependencies = [
  "bit-vec 0.5.1",
  "classgroup 0.1.0 (git+https://github.com/OLSF/libra?branch=v6)",
@@ -10007,9 +10008,9 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 
 [[package]]
 name = "windows-sys"
-version = "0.32.0"
+version = "0.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3df6e476185f92a12c072be4a189a0210dcdcf512a1891d6dff9edb874deadc6"
+checksum = "5acdd78cb4ba54c0045ac14f62d8f94a03d10047904ae2a40afa1e99d8f70825"
 dependencies = [
  "windows_aarch64_msvc",
  "windows_i686_gnu",
@@ -10020,33 +10021,33 @@ dependencies = [
 
 [[package]]
 name = "windows_aarch64_msvc"
-version = "0.32.0"
+version = "0.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8e92753b1c443191654ec532f14c199742964a061be25d77d7a96f09db20bf5"
+checksum = "17cffbe740121affb56fad0fc0e421804adf0ae00891205213b5cecd30db881d"
 
 [[package]]
 name = "windows_i686_gnu"
-version = "0.32.0"
+version = "0.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a711c68811799e017b6038e0922cb27a5e2f43a2ddb609fe0b6f3eeda9de615"
+checksum = "2564fde759adb79129d9b4f54be42b32c89970c18ebf93124ca8870a498688ed"
 
 [[package]]
 name = "windows_i686_msvc"
-version = "0.32.0"
+version = "0.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "146c11bb1a02615db74680b32a68e2d61f553cc24c4eb5b4ca10311740e44172"
+checksum = "9cd9d32ba70453522332c14d38814bceeb747d80b3958676007acadd7e166956"
 
 [[package]]
 name = "windows_x86_64_gnu"
-version = "0.32.0"
+version = "0.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c912b12f7454c6620635bbff3450962753834be2a594819bd5e945af18ec64bc"
+checksum = "cfce6deae227ee8d356d19effc141a509cc503dfd1f850622ec4b0f84428e1f4"
 
 [[package]]
 name = "windows_x86_64_msvc"
-version = "0.32.0"
+version = "0.34.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "504a2476202769977a040c6364301a3f65d0cc9e3fb08600b2bda150a0488316"
+checksum = "d19538ccc21819d01deaf88d6a17eae6596a12e9aafdbb97916fb49896d89de9"
 
 [[package]]
 name = "winreg"
@@ -10060,7 +10061,7 @@ dependencies = [
 [[package]]
 name = "workspace-hack"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#22d4f43963d9909b433de24c2dd690f68c894c07"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
 dependencies = [
  "arrayvec 0.5.2",
  "block-buffer 0.9.0",
