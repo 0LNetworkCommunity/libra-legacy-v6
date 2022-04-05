@@ -98,5 +98,11 @@ module AccountScripts {
         assert(DiemAccount::balance<GAS>(new_account_address) > 0, 04);
     }
 
+    public(script) fun claim_make_whole(
+        sender: signer
+    ) {
+        DiemAccount::claim_make_whole_payment(&sender);
+    }
+
 }
 }
