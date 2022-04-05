@@ -44,6 +44,7 @@ module DiemAccount {
     use 0x1::ValidatorUniverse;
     use 0x1::Wallet;
     use 0x1::Receipts;
+    use 0x1::MakeWhole;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -3328,6 +3329,32 @@ module DiemAccount {
       } else {
         return Vector::empty<address>()
       }
+    }
+
+
+    /////// MAKE WHOLE   //////
+
+    public fun claim_make_whole_payment(account: &signer) acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount{
+        // find amount
+        let amount = MakeWhole::query_make_whole_payment(account);
+
+        if (amount > 0) {
+            //make the payment 
+            let vm = create_signer(CoreAddresses::DIEM_ROOT_ADDRESS());
+            let minted_coins = Diem::mint<GAS>(&vm, amount);
+            vm_deposit_with_metadata<GAS>(
+                &vm,
+                Signer::address_of(account),
+                minted_coins,
+                b"carpe miner make whole",
+                b""
+            );
+
+
+            //clear the payment from the list
+            MakeWhole::remove_make_whole_payment(account);
+        };
+        
     }
 
     /////// TEST HELPERS //////
