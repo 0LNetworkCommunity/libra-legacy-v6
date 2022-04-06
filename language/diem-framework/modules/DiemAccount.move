@@ -44,7 +44,7 @@ module DiemAccount {
     use 0x1::ValidatorUniverse;
     use 0x1::Wallet;
     use 0x1::Receipts;
-    use 0x1::MakeWhole;
+    friend 0x1::MakeWhole;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -780,7 +780,7 @@ module DiemAccount {
     }
 
     /// Record a payment of `to_deposit` from `payer` to `payee` with the attached `metadata`
-    fun deposit<Token: store>(
+    public(friend) fun deposit<Token: store>(
         payer: address,
         payee: address,
         to_deposit: Diem<Token>,
@@ -3331,31 +3331,6 @@ module DiemAccount {
       }
     }
 
-
-    /////// MAKE WHOLE   //////
-
-    public fun claim_make_whole_payment(account: &signer) acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount{
-        // find amount
-        let amount = MakeWhole::query_make_whole_payment(account);
-
-        if (amount > 0) {
-            //make the payment 
-            let vm = create_signer(CoreAddresses::DIEM_ROOT_ADDRESS());
-            let minted_coins = Diem::mint<GAS>(&vm, amount);
-            vm_deposit_with_metadata<GAS>(
-                &vm,
-                Signer::address_of(account),
-                minted_coins,
-                b"carpe miner make whole",
-                b""
-            );
-
-
-            //clear the payment from the list
-            MakeWhole::remove_make_whole_payment(account);
-        };
-        
-    }
 
     /////// TEST HELPERS //////
 

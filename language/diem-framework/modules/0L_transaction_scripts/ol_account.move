@@ -12,6 +12,7 @@ module AccountScripts {
     use 0x1::Globals;
     use 0x1::VDF;
     use 0x1::Errors;
+    use 0x1::MakeWhole;
 
     const ACCOUNT_ALREADY_EXISTS: u64 = 0;
 
@@ -101,7 +102,7 @@ module AccountScripts {
     public(script) fun claim_make_whole(
         sender: signer
     ) {
-        DiemAccount::claim_make_whole_payment(&sender);
+        let _ = MakeWhole::claim_make_whole_payment(&sender);
     }
 
 }

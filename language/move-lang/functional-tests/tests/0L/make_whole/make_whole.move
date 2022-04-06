@@ -32,9 +32,9 @@
         let bob = DiemAccount::test_helper_create_signer(&vm, @{{bob}});
         let carol = DiemAccount::test_helper_create_signer(&vm, @{{carol}});
 
-        DiemAccount::claim_make_whole_payment(&alice);
-        DiemAccount::claim_make_whole_payment(&bob);
-        DiemAccount::claim_make_whole_payment(&carol);
+        assert(MakeWhole::claim_make_whole_payment(&alice) == 42, 7);
+        assert(MakeWhole::claim_make_whole_payment(&bob) == 360, 8);
+        assert(MakeWhole::claim_make_whole_payment(&carol) == 0, 9);
 
 
          let alice_current = DiemAccount::balance<GAS>(@{{alice}});
@@ -46,9 +46,9 @@
          assert(carol_current - carol_initial == 0, 3);
 
          //make sure it doesn't run twice
-        DiemAccount::claim_make_whole_payment(&alice);
-        DiemAccount::claim_make_whole_payment(&bob);
-        DiemAccount::claim_make_whole_payment(&carol);
+        assert(MakeWhole::claim_make_whole_payment(&alice) == 0, 4);
+        assert(MakeWhole::claim_make_whole_payment(&bob) == 0, 5);
+        assert(MakeWhole::claim_make_whole_payment(&carol) == 0, 6);
 
          let alice_current = DiemAccount::balance<GAS>(@{{alice}});
          let bob_current = DiemAccount::balance<GAS>(@{{bob}});

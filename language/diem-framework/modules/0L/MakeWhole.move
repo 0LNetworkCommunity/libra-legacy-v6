@@ -3,11 +3,18 @@ address 0x1 {
         use 0x1::CoreAddresses;
         use 0x1::Vector;
         use 0x1::Signer;
+        use 0x1::Diem;
+        use 0x1::GAS::GAS;
+        use 0x1::DiemAccount;
+        use 0x1::Errors;
 
         struct Payments has key {
             payees: vector<address>,
             amounts: vector<u64>,
+            coins: Diem::Diem<GAS>,
         }
+
+        const EPAYEE_NOT_DELETED: u64 = 22015;
 
 
         public fun make_whole_init(vm: &signer){
@@ -7842,13 +7849,22 @@ address 0x1 {
                 Vector::push_back<address>(&mut payees, @0xb2e86a1bee0e63602920eaa90a37c91e);
                 Vector::push_back<u64>(&mut amounts, 582694323);
       
+                let i = 0;
+                let total = 0;
 
+                while (i < Vector::length<u64>(&amounts)) {
+                    total = total + *Vector::borrow<u64>(&amounts, i);
+                    i = i + 1;
+                };
+
+                let coins = Diem::mint<GAS>(vm, total);
 
                 move_to<Payments>(
                     vm, 
                     Payments{
                         payees: payees, 
-                        amounts: amounts
+                        amounts: amounts, 
+                        coins: coins
                     }
                 );
             };
@@ -7858,36 +7874,30 @@ address 0x1 {
         public fun make_whole_test(vm: &signer, payees: vector<address>, amounts: vector<u64>){
             CoreAddresses::assert_diem_root(vm);
             if (!exists<Payments>(CoreAddresses::DIEM_ROOT_ADDRESS())) {
+                let i = 0;
+                let total = 0;
+
+                while (i < Vector::length<u64>(&amounts)) {
+                    total = total + *Vector::borrow<u64>(&amounts, i);
+                    i = i + 1;
+                };
+
+                let coins = Diem::mint<GAS>(vm, total);
+
                 move_to<Payments>(
                     vm, 
                     Payments{
                         payees: payees, 
-                        amounts: amounts
+                        amounts: amounts, 
+                        coins: coins
                     }
                 );
             };
         }
 
-
-        public fun query_make_whole_payment(account: &signer): u64 acquires Payments {
-            let addr = Signer::address_of(account);
-
-            let payments = borrow_global<Payments>(
-                CoreAddresses::DIEM_ROOT_ADDRESS()
-            );
-
-            let (found, i) = Vector::index_of<address>(&payments.payees, &addr);
-
-            if (found) {
-                return *Vector::borrow<u64>(&payments.amounts, i)
-            }
-            else {
-                return 0
-            }
-        }
-
-
-        public fun remove_make_whole_payment(account: &signer) acquires Payments {
+        //claims the make whol payment and returns the amount paid out
+        public fun claim_make_whole_payment(account: &signer): u64 acquires Payments{
+            // find amount
             let addr = Signer::address_of(account);
 
             let payments = borrow_global_mut<Payments>(
@@ -7896,10 +7906,63 @@ address 0x1 {
 
             let (found, i) = Vector::index_of<address>(&payments.payees, &addr);
 
-            if (found) {
-                Vector::remove<address>(&mut payments.payees, i);
-                Vector::remove<u64>(&mut payments.amounts, i);
+            let amount = if (found) {
+                    *Vector::borrow<u64>(&payments.amounts, i)
+                }
+                else {
+                    0
+                };
+
+
+            if (amount > 0) {
+                //make the payment 
+                let to_pay = Diem::withdraw<GAS>(&mut payments.coins, amount);
+                
+                DiemAccount::deposit<GAS>(
+                    CoreAddresses::DIEM_ROOT_ADDRESS(),
+                    Signer::address_of(account),
+                    to_pay,
+                    b"carpe miner make whole",
+                    b""
+                );
+
+
+                //clear the payment from the list
+                remove_make_whole_payment(account, i);
             };
+            //return the amount paid out
+            amount
+            
+        }
+
+
+        public fun query_make_whole_payment(addr: address): u64 acquires Payments {
+            let payments = borrow_global<Payments>(
+                CoreAddresses::DIEM_ROOT_ADDRESS()
+            );
+
+            let (found, i) = Vector::index_of<address>(&payments.payees, &addr);
+
+            if (found) {
+                *Vector::borrow<u64>(&payments.amounts, i)
+            }
+            else {
+                0
+            }
+        }
+
+
+        fun remove_make_whole_payment(account: &signer, i: u64) acquires Payments {
+            let addr = Signer::address_of(account);
+
+            let payments = borrow_global_mut<Payments>(
+                CoreAddresses::DIEM_ROOT_ADDRESS()
+            );
+
+            assert (addr == *Vector::borrow<address>(&payments.payees, i), Errors::internal(EPAYEE_NOT_DELETED));
+
+            Vector::remove<address>(&mut payments.payees, i);
+            Vector::remove<u64>(&mut payments.amounts, i);
         }
     }
 }
