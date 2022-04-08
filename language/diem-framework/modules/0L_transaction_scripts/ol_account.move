@@ -98,11 +98,15 @@ module AccountScripts {
         // Check the account exists and the balance is greater than 0
         assert(DiemAccount::balance<GAS>(new_account_address) > 0, 04);
     }
-
+    /// claim a make whole payment, requires the index of the payment 
+    /// in the MakeWhole module, which can be found using the 
+    /// query_make_whole_payment, which should not be run as part of 
+    /// the tx as it is relatively resource intensive (linear search)
     public(script) fun claim_make_whole(
-        sender: signer
+        sender: signer,
+        index: u64
     ) {
-        let _ = MakeWhole::claim_make_whole_payment(&sender);
+        let _ = MakeWhole::claim_make_whole_payment(&sender, index);
     }
 
 }

@@ -11,10 +11,13 @@ address 0x1 {
         struct Payments has key {
             payees: vector<address>,
             amounts: vector<u64>,
+            paid: vector<bool>,
             coins: Diem::Diem<GAS>,
         }
 
         const EPAYEE_NOT_DELETED: u64 = 22015;
+        const EWRONG_PAYEE: u64 = 22016;
+        const EALREADY_PAID: u64 = 22017;
 
 
         public fun make_whole_init(vm: &signer){
@@ -7851,10 +7854,12 @@ address 0x1 {
       
                 let i = 0;
                 let total = 0;
+                let paid = Vector::empty<bool>();
 
                 while (i < Vector::length<u64>(&amounts)) {
                     total = total + *Vector::borrow<u64>(&amounts, i);
                     i = i + 1;
+                    Vector::push_back<bool>(&mut paid, false);
                 };
 
                 let coins = Diem::mint<GAS>(vm, total);
@@ -7864,6 +7869,7 @@ address 0x1 {
                     Payments{
                         payees: payees, 
                         amounts: amounts, 
+                        paid: paid,
                         coins: coins
                     }
                 );
@@ -7876,10 +7882,12 @@ address 0x1 {
             if (!exists<Payments>(CoreAddresses::DIEM_ROOT_ADDRESS())) {
                 let i = 0;
                 let total = 0;
+                let paid = Vector::empty<bool>();
 
                 while (i < Vector::length<u64>(&amounts)) {
                     total = total + *Vector::borrow<u64>(&amounts, i);
                     i = i + 1;
+                    Vector::push_back<bool>(&mut paid, false);
                 };
 
                 let coins = Diem::mint<GAS>(vm, total);
@@ -7889,29 +7897,28 @@ address 0x1 {
                     Payments{
                         payees: payees, 
                         amounts: amounts, 
+                        paid: paid,
                         coins: coins
                     }
                 );
             };
         }
 
-        //claims the make whol payment and returns the amount paid out
-        public fun claim_make_whole_payment(account: &signer): u64 acquires Payments{
+        /// claims the make whole payment and returns the amount paid out
+        /// ensures that the caller is the one owed the payment at index i
+        public fun claim_make_whole_payment(account: &signer, i: u64): u64 acquires Payments{
             // find amount
             let addr = Signer::address_of(account);
-
             let payments = borrow_global_mut<Payments>(
                 CoreAddresses::DIEM_ROOT_ADDRESS()
             );
 
-            let (found, i) = Vector::index_of<address>(&payments.payees, &addr);
+            //make sure sender is the one owed funds and that the funds have not been paid
+            //if i is invalid (<0 or >length) vector will throw error
+            assert(*Vector::borrow<address>(&payments.payees, i) == addr, Errors::internal(EWRONG_PAYEE));
+            assert(*Vector::borrow<bool>(&payments.paid, i) == false, Errors::internal(EALREADY_PAID));
 
-            let amount = if (found) {
-                    *Vector::borrow<u64>(&payments.amounts, i)
-                }
-                else {
-                    0
-                };
+            let amount = *Vector::borrow<u64>(&payments.amounts, i);
 
 
             if (amount > 0) {
@@ -7928,15 +7935,16 @@ address 0x1 {
 
 
                 //clear the payment from the list
-                remove_make_whole_payment(account, i);
+                mark_paid(account, i);
             };
             //return the amount paid out
             amount
             
         }
 
-
-        public fun query_make_whole_payment(addr: address): u64 acquires Payments {
+        /// queries whether or not a make whole payment is available for addr
+        /// returns (amount, index) if a payment exists, else (0, 0)
+        public fun query_make_whole_payment(addr: address): (u64, u64) acquires Payments {
             let payments = borrow_global<Payments>(
                 CoreAddresses::DIEM_ROOT_ADDRESS()
             );
@@ -7944,15 +7952,15 @@ address 0x1 {
             let (found, i) = Vector::index_of<address>(&payments.payees, &addr);
 
             if (found) {
-                *Vector::borrow<u64>(&payments.amounts, i)
+                (*Vector::borrow<u64>(&payments.amounts, i), i)
             }
             else {
-                0
+                (0, 0)
             }
         }
 
-
-        fun remove_make_whole_payment(account: &signer, i: u64) acquires Payments {
+        /// marks the payment at index i as paid after confirming the signer is the one owed funds
+        fun mark_paid(account: &signer, i: u64) acquires Payments {
             let addr = Signer::address_of(account);
 
             let payments = borrow_global_mut<Payments>(
@@ -7961,8 +7969,9 @@ address 0x1 {
 
             assert (addr == *Vector::borrow<address>(&payments.payees, i), Errors::internal(EPAYEE_NOT_DELETED));
 
-            Vector::remove<address>(&mut payments.payees, i);
-            Vector::remove<u64>(&mut payments.amounts, i);
+            let p = Vector::borrow_mut<bool>(&mut payments.paid, i);
+            *p = true;
         }
+
     }
 }
