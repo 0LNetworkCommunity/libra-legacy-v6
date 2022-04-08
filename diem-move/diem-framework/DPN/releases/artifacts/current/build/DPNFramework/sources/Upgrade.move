@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////////////////
 address DiemFramework {
 module Upgrade {
-    use DiemFramework::CoreAddresses;
     use Std::Errors;
     use Std::Signer;
     use Std::Vector;
@@ -35,7 +34,7 @@ module Upgrade {
         );
     }
 
-    // Function code: 02
+        // Function code: 02
     public fun set_update(account: &signer, payload: vector<u8>) acquires UpgradePayload {
         assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_role(210002)); 
         assert!(exists<UpgradePayload>(@DiemRoot), Errors::not_published(210002)); 
@@ -43,22 +42,9 @@ module Upgrade {
         temp.payload = payload;
     }
 
-    use DiemFramework::Epoch;
-    use DiemFramework::DiemConfig;
-
-    // private. Can only be called by the VM
-    fun upgrade_reconfig(vm: &signer) acquires UpgradePayload {
-        CoreAddresses::assert_vm(vm);
-        reset_payload(vm);
-        let new_epoch_height = Epoch::get_timer_height_start(vm) + 2; // This is janky, but there's no other way to get the current block height, unless the prologue gives it to us. The upgrade reconfigure happens on round 2, so we'll increment the new start by 2 from previous.
-        Epoch::reset_timer(vm, new_epoch_height);
-        DiemConfig::upgrade_reconfig(vm);
-
-    }
-
         // Function code: 03
-    fun reset_payload(vm: &signer) acquires UpgradePayload {
-        CoreAddresses::assert_vm(vm);
+    public fun reset_payload(account: &signer) acquires UpgradePayload {
+        assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_role(210003)); 
         assert!(exists<UpgradePayload>(@DiemRoot), Errors::not_published(210003)); 
         let temp = borrow_global_mut<UpgradePayload>(@DiemRoot);
         temp.payload = Vector::empty<u8>();
@@ -107,13 +93,11 @@ module Upgrade {
     }
 
     //////// FOR E2E Testing ////////
-    // NOTE: See file Upgrade.move.e2e
     // Do not delete these lines. Uncomment when needed to generate e2e test fixtures. 
-    // use DiemFramework::Debug::print;
-    // public fun foo() {
-    //     print(&0x050D1AC);
-    // }
-
+    use DiemFramework::Debug::print;
+    public fun foo() {
+        print(&0x050D1AC);
+    }
     //////// FOR E2E Testing ////////
 }
 }

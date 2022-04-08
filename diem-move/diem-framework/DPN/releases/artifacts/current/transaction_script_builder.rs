@@ -2286,6 +2286,8 @@ pub enum ScriptFunctionCall {
         data: Bytes,
     },
 
+    OlOracleUpgradeFooTx {},
+
     OlReconfigBulkUpdateSetup {
         alice: AccountAddress,
         bob: AccountAddress,
@@ -3790,6 +3792,7 @@ impl ScriptFunctionCall {
             OlDelegateVote { dest } => encode_ol_delegate_vote_script_function(dest),
             OlEnableDelegation {} => encode_ol_enable_delegation_script_function(),
             OlOracleTx { id, data } => encode_ol_oracle_tx_script_function(id, data),
+            OlOracleUpgradeFooTx {} => encode_ol_oracle_upgrade_foo_tx_script_function(),
             OlReconfigBulkUpdateSetup {
                 alice,
                 bob,
@@ -5253,6 +5256,18 @@ pub fn encode_ol_oracle_tx_script_function(id: u64, data: Vec<u8>) -> Transactio
         ident_str!("ol_oracle_tx").to_owned(),
         vec![],
         vec![bcs::to_bytes(&id).unwrap(), bcs::to_bytes(&data).unwrap()],
+    ))
+}
+
+pub fn encode_ol_oracle_upgrade_foo_tx_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("OracleUpgradeFooTx").to_owned(),
+        ),
+        ident_str!("ol_oracle_upgrade_foo_tx").to_owned(),
+        vec![],
+        vec![],
     ))
 }
 
@@ -8762,6 +8777,16 @@ fn decode_ol_oracle_tx_script_function(payload: &TransactionPayload) -> Option<S
     }
 }
 
+fn decode_ol_oracle_upgrade_foo_tx_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::OlOracleUpgradeFooTx {})
+    } else {
+        None
+    }
+}
+
 fn decode_ol_reconfig_bulk_update_setup_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9693,6 +9718,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "OracleScriptsol_oracle_tx".to_string(),
             Box::new(decode_ol_oracle_tx_script_function),
+        );
+        map.insert(
+            "OracleUpgradeFooTxol_oracle_upgrade_foo_tx".to_string(),
+            Box::new(decode_ol_oracle_upgrade_foo_tx_script_function),
         );
         map.insert(
             "ValidatorScriptsol_reconfig_bulk_update_setup".to_string(),

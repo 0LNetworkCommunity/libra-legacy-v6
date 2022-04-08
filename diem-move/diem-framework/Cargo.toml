@@ -58,3 +58,8 @@ fuzzing = ["diem-types/fuzzing"]
 [[test]]
 name = "transactional_tests"
 harness = false
+
+#/////// 0L /////////
+[[test]]
+name = "ol_transactional_tests"
+harness = false

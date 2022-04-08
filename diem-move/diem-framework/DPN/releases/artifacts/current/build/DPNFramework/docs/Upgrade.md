@@ -10,17 +10,15 @@
 -  [Resource `UpgradeHistory`](#0x1_Upgrade_UpgradeHistory)
 -  [Function `initialize`](#0x1_Upgrade_initialize)
 -  [Function `set_update`](#0x1_Upgrade_set_update)
--  [Function `upgrade_reconfig`](#0x1_Upgrade_upgrade_reconfig)
 -  [Function `reset_payload`](#0x1_Upgrade_reset_payload)
 -  [Function `record_history`](#0x1_Upgrade_record_history)
 -  [Function `retrieve_latest_history`](#0x1_Upgrade_retrieve_latest_history)
 -  [Function `has_upgrade`](#0x1_Upgrade_has_upgrade)
 -  [Function `get_payload`](#0x1_Upgrade_get_payload)
+-  [Function `foo`](#0x1_Upgrade_foo)
 
 
-<pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
-<b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
+<pre><code><b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
@@ -184,42 +182,13 @@ Structs for UpgradeHistory resource
 
 </details>
 
-<a name="0x1_Upgrade_upgrade_reconfig"></a>
-
-## Function `upgrade_reconfig`
-
-
-
-<pre><code><b>fun</b> <a href="Upgrade.md#0x1_Upgrade_upgrade_reconfig">upgrade_reconfig</a>(vm: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="Upgrade.md#0x1_Upgrade_upgrade_reconfig">upgrade_reconfig</a>(vm: &signer) <b>acquires</b> <a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a> {
-    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-    <a href="Upgrade.md#0x1_Upgrade_reset_payload">reset_payload</a>(vm);
-    <b>let</b> new_epoch_height = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm) + 2; // This is janky, but there's no other way <b>to</b> get the current block height, unless the prologue gives it <b>to</b> us. The upgrade reconfigure happens on round 2, so we'll increment the new start by 2 from previous.
-    <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, new_epoch_height);
-    <a href="DiemConfig.md#0x1_DiemConfig_upgrade_reconfig">DiemConfig::upgrade_reconfig</a>(vm);
-
-}
-</code></pre>
-
-
-
-</details>
-
 <a name="0x1_Upgrade_reset_payload"></a>
 
 ## Function `reset_payload`
 
 
 
-<pre><code><b>fun</b> <a href="Upgrade.md#0x1_Upgrade_reset_payload">reset_payload</a>(vm: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="Upgrade.md#0x1_Upgrade_reset_payload">reset_payload</a>(account: &signer)
 </code></pre>
 
 
@@ -228,8 +197,8 @@ Structs for UpgradeHistory resource
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Upgrade.md#0x1_Upgrade_reset_payload">reset_payload</a>(vm: &signer) <b>acquires</b> <a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a> {
-    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+<pre><code><b>public</b> <b>fun</b> <a href="Upgrade.md#0x1_Upgrade_reset_payload">reset_payload</a>(account: &signer) <b>acquires</b> <a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a> {
+    <b>assert</b>!(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == @DiemRoot, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(210003));
     <b>assert</b>!(<b>exists</b>&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(@DiemRoot), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(210003));
     <b>let</b> temp = <b>borrow_global_mut</b>&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(@DiemRoot);
     temp.payload = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u8&gt;();
@@ -351,6 +320,30 @@ Structs for UpgradeHistory resource
 <pre><code><b>public</b> <b>fun</b> <a href="Upgrade.md#0x1_Upgrade_get_payload">get_payload</a>(): vector&lt;u8&gt; <b>acquires</b> <a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a> {
     <b>assert</b>!(<b>exists</b>&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(@DiemRoot), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(210006));
     *&<b>borrow_global</b>&lt;<a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a>&gt;(@DiemRoot).payload
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Upgrade_foo"></a>
+
+## Function `foo`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Upgrade.md#0x1_Upgrade_foo">foo</a>()
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Upgrade.md#0x1_Upgrade_foo">foo</a>() {
+    print(&0x050D1AC);
 }
 </code></pre>
 

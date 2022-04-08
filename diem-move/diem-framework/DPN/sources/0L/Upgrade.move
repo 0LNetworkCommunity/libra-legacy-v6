@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////////////////
 address DiemFramework {
 module Upgrade {
-    use DiemFramework::CoreAddresses;
     use Std::Errors;
     use Std::Signer;
     use Std::Vector;

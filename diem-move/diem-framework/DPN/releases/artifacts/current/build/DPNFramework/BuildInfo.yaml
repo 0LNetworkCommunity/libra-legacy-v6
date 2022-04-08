@@ -176,6 +176,9 @@ compiled_package_info:
       name: OracleScripts
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: OracleUpgradeFooTx
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: ParallelExecutionConfig
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -283,7 +286,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 6927DA583BF7EDA55D5E3552C675D72EF2434DA1BF6F1CA641A25F244020865B
+  source_digest: B2FE4EA8974E892B9ACFF61B876B25E520E8D1B217DF7EFDB30187CD1AEB677E
   build_flags:
     dev_mode: false
     test_mode: false
