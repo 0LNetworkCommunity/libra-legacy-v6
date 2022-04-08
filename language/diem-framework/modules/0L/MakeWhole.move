@@ -7951,7 +7951,7 @@ address 0x1 {
 
             let (found, i) = Vector::index_of<address>(&payments.payees, &addr);
 
-            if (found) {
+            if (found && *Vector::borrow<bool>(&payments.paid, i) == false) {
                 (*Vector::borrow<u64>(&payments.amounts, i), i)
             }
             else {
