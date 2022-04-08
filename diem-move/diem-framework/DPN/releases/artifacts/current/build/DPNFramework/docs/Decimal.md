@@ -7,9 +7,9 @@
 
 -  [Resource `Decimal`](#0x1_Decimal_Decimal)
 -  [Constants](#@Constants_0)
--  [Function `decimal_demo`](#0x1_Decimal_decimal_demo)
--  [Function `single_op`](#0x1_Decimal_single_op)
--  [Function `pair_op`](#0x1_Decimal_pair_op)
+-  [Function `demo`](#0x1_Decimal_demo)
+-  [Function `single`](#0x1_Decimal_single)
+-  [Function `pair`](#0x1_Decimal_pair)
 -  [Function `new`](#0x1_Decimal_new)
 -  [Function `trunc`](#0x1_Decimal_trunc)
 -  [Function `sqrt`](#0x1_Decimal_sqrt)
@@ -173,13 +173,13 @@
 
 
 
-<a name="0x1_Decimal_decimal_demo"></a>
+<a name="0x1_Decimal_demo"></a>
 
-## Function `decimal_demo`
+## Function `demo`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_decimal_demo">decimal_demo</a>(sign: bool, int: u128, scale: u8): (bool, u128, u8)
+<pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_demo">demo</a>(sign: bool, int: u128, scale: u8): (bool, u128, u8)
 </code></pre>
 
 
@@ -188,20 +188,20 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>native</b> <b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_decimal_demo">decimal_demo</a>(sign: bool, int: u128, scale: u8): (bool, u128, u8);
+<pre><code><b>native</b> <b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_demo">demo</a>(sign: bool, int: u128, scale: u8): (bool, u128, u8);
 </code></pre>
 
 
 
 </details>
 
-<a name="0x1_Decimal_single_op"></a>
+<a name="0x1_Decimal_single"></a>
 
-## Function `single_op`
+## Function `single`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_single_op">single_op</a>(op_id: u8, sign: bool, int: u128, scale: u8): (bool, u128, u8)
+<pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_single">single</a>(op_id: u8, sign: bool, int: u128, scale: u8): (bool, u128, u8)
 </code></pre>
 
 
@@ -210,20 +210,20 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>native</b> <b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_single_op">single_op</a>(op_id: u8, sign: bool, int: u128, scale: u8): (bool, u128, u8);
+<pre><code><b>native</b> <b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_single">single</a>(op_id: u8, sign: bool, int: u128, scale: u8): (bool, u128, u8);
 </code></pre>
 
 
 
 </details>
 
-<a name="0x1_Decimal_pair_op"></a>
+<a name="0x1_Decimal_pair"></a>
 
-## Function `pair_op`
+## Function `pair`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_pair_op">pair_op</a>(op_id: u8, rounding_strategy_id: u8, sign_1: bool, int_1: u128, scale_1: u8, sign_2: bool, int_2: u128, scale_3: u8): (bool, u128, u8)
+<pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_pair">pair</a>(op_id: u8, rounding_strategy_id: u8, sign_1: bool, int_1: u128, scale_1: u8, sign_2: bool, int_2: u128, scale_3: u8): (bool, u128, u8)
 </code></pre>
 
 
@@ -232,7 +232,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>native</b> <b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_pair_op">pair_op</a>(
+<pre><code><b>native</b> <b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_pair">pair</a>(
   op_id: u8,
   rounding_strategy_id: u8,
   // left number
@@ -300,7 +300,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_trunc">trunc</a>(d: &<a href="Decimal.md#0x1_Decimal">Decimal</a>): <a href="Decimal.md#0x1_Decimal">Decimal</a> {
-  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_single_op">single_op</a>(<a href="Decimal.md#0x1_Decimal_TRUNC">TRUNC</a>, *&d.sign, *&d.int, *&d.scale);
+  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_single">single</a>(<a href="Decimal.md#0x1_Decimal_TRUNC">TRUNC</a>, *&d.sign, *&d.int, *&d.scale);
   <b>return</b> <a href="Decimal.md#0x1_Decimal">Decimal</a> {
     sign: sign,
     int: int,
@@ -329,7 +329,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_sqrt">sqrt</a>(d: &<a href="Decimal.md#0x1_Decimal">Decimal</a>): <a href="Decimal.md#0x1_Decimal">Decimal</a> {
-  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_single_op">single_op</a>(<a href="Decimal.md#0x1_Decimal_SQRT">SQRT</a>, *&d.sign, *&d.int, *&d.scale);
+  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_single">single</a>(<a href="Decimal.md#0x1_Decimal_SQRT">SQRT</a>, *&d.sign, *&d.int, *&d.scale);
   <b>return</b> <a href="Decimal.md#0x1_Decimal">Decimal</a> {
     sign: sign,
     int: int,
@@ -358,7 +358,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_add">add</a>(l: &<a href="Decimal.md#0x1_Decimal">Decimal</a>, r: &<a href="Decimal.md#0x1_Decimal">Decimal</a>): <a href="Decimal.md#0x1_Decimal">Decimal</a> {
-  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_pair_op">pair_op</a>(<a href="Decimal.md#0x1_Decimal_ADD">ADD</a>, <a href="Decimal.md#0x1_Decimal_ROUND_MID_TO_EVEN">ROUND_MID_TO_EVEN</a>, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_pair">pair</a>(<a href="Decimal.md#0x1_Decimal_ADD">ADD</a>, <a href="Decimal.md#0x1_Decimal_ROUND_MID_TO_EVEN">ROUND_MID_TO_EVEN</a>, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
   <b>return</b> <a href="Decimal.md#0x1_Decimal">Decimal</a> {
     sign: sign,
     int: int,
@@ -387,7 +387,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_sub">sub</a>(l: &<a href="Decimal.md#0x1_Decimal">Decimal</a>, r: &<a href="Decimal.md#0x1_Decimal">Decimal</a>): <a href="Decimal.md#0x1_Decimal">Decimal</a> {
-  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_pair_op">pair_op</a>(<a href="Decimal.md#0x1_Decimal_SUB">SUB</a>, <a href="Decimal.md#0x1_Decimal_ROUND_MID_TO_EVEN">ROUND_MID_TO_EVEN</a>, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_pair">pair</a>(<a href="Decimal.md#0x1_Decimal_SUB">SUB</a>, <a href="Decimal.md#0x1_Decimal_ROUND_MID_TO_EVEN">ROUND_MID_TO_EVEN</a>, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
   <b>return</b> <a href="Decimal.md#0x1_Decimal">Decimal</a> {
     sign: sign,
     int: int,
@@ -416,7 +416,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_mul">mul</a>(l: &<a href="Decimal.md#0x1_Decimal">Decimal</a>, r: &<a href="Decimal.md#0x1_Decimal">Decimal</a>): <a href="Decimal.md#0x1_Decimal">Decimal</a> {
-  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_pair_op">pair_op</a>(<a href="Decimal.md#0x1_Decimal_MUL">MUL</a>, <a href="Decimal.md#0x1_Decimal_ROUND_MID_TO_EVEN">ROUND_MID_TO_EVEN</a>, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_pair">pair</a>(<a href="Decimal.md#0x1_Decimal_MUL">MUL</a>, <a href="Decimal.md#0x1_Decimal_ROUND_MID_TO_EVEN">ROUND_MID_TO_EVEN</a>, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
   <b>return</b> <a href="Decimal.md#0x1_Decimal">Decimal</a> {
     sign: sign,
     int: int,
@@ -445,7 +445,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_div">div</a>(l: &<a href="Decimal.md#0x1_Decimal">Decimal</a>, r: &<a href="Decimal.md#0x1_Decimal">Decimal</a>): <a href="Decimal.md#0x1_Decimal">Decimal</a> {
- <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_pair_op">pair_op</a>(<a href="Decimal.md#0x1_Decimal_DIV">DIV</a>, <a href="Decimal.md#0x1_Decimal_ROUND_MID_TO_EVEN">ROUND_MID_TO_EVEN</a>, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+ <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_pair">pair</a>(<a href="Decimal.md#0x1_Decimal_DIV">DIV</a>, <a href="Decimal.md#0x1_Decimal_ROUND_MID_TO_EVEN">ROUND_MID_TO_EVEN</a>, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
  <b>return</b> <a href="Decimal.md#0x1_Decimal">Decimal</a> {
    sign: sign,
    int: int,
@@ -474,7 +474,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_rescale">rescale</a>(l: &<a href="Decimal.md#0x1_Decimal">Decimal</a>, r: &<a href="Decimal.md#0x1_Decimal">Decimal</a>): <a href="Decimal.md#0x1_Decimal">Decimal</a> {
-  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_pair_op">pair_op</a>(0, <a href="Decimal.md#0x1_Decimal_ROUND_MID_TO_EVEN">ROUND_MID_TO_EVEN</a>, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_pair">pair</a>(0, <a href="Decimal.md#0x1_Decimal_ROUND_MID_TO_EVEN">ROUND_MID_TO_EVEN</a>, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
   <b>return</b> <a href="Decimal.md#0x1_Decimal">Decimal</a> {
     sign: sign,
     int: int,
@@ -503,7 +503,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_round">round</a>(l: &<a href="Decimal.md#0x1_Decimal">Decimal</a>, r: &<a href="Decimal.md#0x1_Decimal">Decimal</a>, strategy: u8): <a href="Decimal.md#0x1_Decimal">Decimal</a> {
-  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_pair_op">pair_op</a>(<a href="Decimal.md#0x1_Decimal_ROUND">ROUND</a>, strategy, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_pair">pair</a>(<a href="Decimal.md#0x1_Decimal_ROUND">ROUND</a>, strategy, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
   <b>return</b> <a href="Decimal.md#0x1_Decimal">Decimal</a> {
     sign: sign,
     int: int,
@@ -532,7 +532,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Decimal.md#0x1_Decimal_power">power</a>(l: &<a href="Decimal.md#0x1_Decimal">Decimal</a>, r: &<a href="Decimal.md#0x1_Decimal">Decimal</a>): <a href="Decimal.md#0x1_Decimal">Decimal</a> {
-  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_pair_op">pair_op</a>(<a href="Decimal.md#0x1_Decimal_POW">POW</a>, <a href="Decimal.md#0x1_Decimal_ROUND_MID_TO_EVEN">ROUND_MID_TO_EVEN</a>, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
+  <b>let</b> (sign, int, scale) = <a href="Decimal.md#0x1_Decimal_pair">pair</a>(<a href="Decimal.md#0x1_Decimal_POW">POW</a>, <a href="Decimal.md#0x1_Decimal_ROUND_MID_TO_EVEN">ROUND_MID_TO_EVEN</a>, *&l.sign, *&l.int, *&l.scale,  *&r.sign, *&r.int, *&r.scale);
   <b>return</b> <a href="Decimal.md#0x1_Decimal">Decimal</a> {
     sign: sign,
     int: int,

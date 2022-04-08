@@ -51,6 +51,9 @@ module DiemFramework::Genesis {
         initial_diem_version: u64,
         consensus_config: vector<u8>,
     ) {
+        use DiemFramework::Debug::print;
+        print(&42);
+
         initialize_internal(
             &dr_account,
             // &tc_account, /////// 0L /////////

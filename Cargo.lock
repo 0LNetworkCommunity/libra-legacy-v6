@@ -48,9 +48,9 @@ checksum = "74f5722bc48763cb9d81d8427ca05b6aa2842f6632cf8e4c0a29eef9baececcc"
 dependencies = [
  "darling",
  "ident_case",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
  "synstructure",
 ]
 
@@ -263,9 +263,9 @@ version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "10f203db73a71dfa2fb6dd22763990fa26f3d2625a6da2da900d23b87d26be27"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -274,9 +274,9 @@ version = "0.1.53"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed6aa3524a2dfcf9fe180c51eae2b58738348d819517ceadf95789c51fff7600"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -454,7 +454,7 @@ dependencies = [
  "lazy_static 1.4.0",
  "lazycell",
  "peeking_take_while",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
  "regex",
  "rustc-hash",
@@ -601,7 +601,7 @@ checksum = "e3b5ca7a04898ad4bcd41c90c5285445ff5b791899bb1b0abdd2a2aa791211d7"
 [[package]]
 name = "bytecode-interpreter-crypto"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "curve25519-dalek-fiat",
@@ -862,7 +862,7 @@ dependencies = [
 [[package]]
 name = "classgroup"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?branch=v6#db303c9c2556da274e30b7de0dc268473439daf4"
+source = "git+https://github.com/OLSF/libra?branch=v6#0e13e9d8f4061c989c686998ec6d295b4be17b9f"
 dependencies = [
  "libc",
  "num-traits 0.2.14",
@@ -1363,10 +1363,10 @@ checksum = "f0c960ae2da4de88a91b2d920c2a7233b400bc33cb28453a2987822d8392519b"
 dependencies = [
  "fnv",
  "ident_case",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
  "strsim 0.9.3",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -1377,7 +1377,7 @@ checksum = "d9b5a2f4ac4969822c62224815d069952656cadc7084fdca9751e6d959189b72"
 dependencies = [
  "darling_core",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -1726,7 +1726,7 @@ dependencies = [
 [[package]]
 name = "diem-crypto"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/libra?branch=v6#db303c9c2556da274e30b7de0dc268473439daf4"
+source = "git+https://github.com/OLSF/libra?branch=v6#0e13e9d8f4061c989c686998ec6d295b4be17b9f"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1759,20 +1759,20 @@ version = "0.0.3"
 dependencies = [
  "anyhow",
  "diem-workspace-hack 0.1.0",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
 name = "diem-crypto-derive"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/libra?branch=v6#db303c9c2556da274e30b7de0dc268473439daf4"
+source = "git+https://github.com/OLSF/libra?branch=v6#0e13e9d8f4061c989c686998ec6d295b4be17b9f"
 dependencies = [
  "diem-workspace-hack 0.1.0 (git+https://github.com/OLSF/libra?branch=v6)",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -2048,7 +2048,7 @@ version = "0.1.0"
 [[package]]
 name = "diem-global-constants"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?branch=v6#db303c9c2556da274e30b7de0dc268473439daf4"
+source = "git+https://github.com/OLSF/libra?branch=v6#0e13e9d8f4061c989c686998ec6d295b4be17b9f"
 
 [[package]]
 name = "diem-id-generator"
@@ -2215,9 +2215,9 @@ name = "diem-log-derive"
 version = "0.1.0"
 dependencies = [
  "diem-workspace-hack 0.1.0",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -2739,7 +2739,7 @@ dependencies = [
 [[package]]
 name = "diem-types"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/libra?branch=v6#db303c9c2556da274e30b7de0dc268473439daf4"
+source = "git+https://github.com/OLSF/libra?branch=v6#0e13e9d8f4061c989c686998ec6d295b4be17b9f"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -2895,7 +2895,7 @@ dependencies = [
  "serde_json",
  "standback",
  "subtle",
- "syn 1.0.90",
+ "syn 1.0.91",
  "tiny-keccak",
  "tokio 1.17.0",
  "tokio-util 0.6.9",
@@ -2909,7 +2909,7 @@ dependencies = [
 [[package]]
 name = "diem-workspace-hack"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?branch=v6#db303c9c2556da274e30b7de0dc268473439daf4"
+source = "git+https://github.com/OLSF/libra?branch=v6#0e13e9d8f4061c989c686998ec6d295b4be17b9f"
 dependencies = [
  "Inflector",
  "anyhow",
@@ -2949,7 +2949,7 @@ dependencies = [
  "serde_json",
  "standback",
  "subtle",
- "syn 1.0.90",
+ "syn 1.0.91",
  "tiny-keccak",
  "tokio 1.17.0",
  "tokio-util 0.6.9",
@@ -3240,9 +3240,9 @@ checksum = "a357d28ed41a50f9c765dbfe56cbc04a64e53e5fc58ba79fbc34c10ef3df831f"
 
 [[package]]
 name = "encoding_rs"
-version = "0.8.30"
+version = "0.8.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7896dc8abb250ffdda33912550faa54c88ec8b998dec0b2c55ab224921ce11df"
+checksum = "9852635589dc9f9ea1b6fe9f05b50ef208c85c834a562f0c6abb1c475736ec2b"
 dependencies = [
  "cfg-if 1.0.0",
 ]
@@ -3254,9 +3254,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0eb359f1476bf611266ac1f5355bc14aeca37b299d0ebccc038ee7058891c9cb"
 dependencies = [
  "once_cell",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -3717,9 +3717,9 @@ checksum = "18e4a4b95cea4b4ccbcf1c5675ca7c4ee4e9e75eb79944d07defde18068f79bb"
 dependencies = [
  "autocfg",
  "proc-macro-hack",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -3961,9 +3961,9 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90454ce4de40b7ca6a8968b5ef367bdab48413962588d0d2b1638d60090c35d7"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -3972,9 +3972,9 @@ version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "729f9bd3449d77e7831a18abfb7ba2f99ee813dfd15b8c2167c9a54ba20aa99d"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -4396,9 +4396,9 @@ checksum = "0a0c890c85da4bab7bce4204c707396bbd3c6c8a681716a51c8814cfc2b682df"
 dependencies = [
  "anyhow",
  "proc-macro-hack",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -4531,9 +4531,9 @@ dependencies = [
 
 [[package]]
 name = "js-sys"
-version = "0.3.56"
+version = "0.3.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a38fc24e30fd564ce974c02bf1d337caddff65be6cc4735a1f7eab22a7440f04"
+checksum = "671a26f820db17c2a2750743f1dd03bafd15b98c9f30c7c2628c024c05d73397"
 dependencies = [
  "wasm-bindgen",
 ]
@@ -4713,9 +4713,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.121"
+version = "0.2.122"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "efaa7b300f3b5fe8eb6bf21ce3895e1751d9665086af2d64b42f19701015ff4f"
+checksum = "ec647867e2bf0772e28c8bcde4f0d19a9216916e890543b5a03ed8ef27b8f259"
 
 [[package]]
 name = "libfuzzer-sys"
@@ -4937,7 +4937,7 @@ checksum = "c9be0862c1b3f26a88803c4a49de6889c10e608b3ee9344e6ef5b45fb37ad3d1"
 [[package]]
 name = "move-abigen"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "bcs",
@@ -4954,7 +4954,7 @@ dependencies = [
 [[package]]
 name = "move-binary-format"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "mirai-annotations",
@@ -4971,7 +4971,7 @@ dependencies = [
 [[package]]
 name = "move-borrow-graph"
 version = "0.0.1"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "mirai-annotations",
  "workspace-hack",
@@ -4980,7 +4980,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-source-map"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "bcs",
@@ -4997,7 +4997,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-utils"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -5009,7 +5009,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-verifier"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "mirai-annotations",
@@ -5023,7 +5023,7 @@ dependencies = [
 [[package]]
 name = "move-bytecode-viewer"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -5041,7 +5041,7 @@ dependencies = [
 [[package]]
 name = "move-cli"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5084,7 +5084,7 @@ dependencies = [
 [[package]]
 name = "move-command-line-common"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "difference",
@@ -5098,7 +5098,7 @@ dependencies = [
 [[package]]
 name = "move-compiler"
 version = "0.0.1"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5126,7 +5126,7 @@ dependencies = [
 [[package]]
 name = "move-core-types"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5146,7 +5146,7 @@ dependencies = [
 [[package]]
 name = "move-coverage"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5168,7 +5168,7 @@ dependencies = [
 [[package]]
 name = "move-disassembler"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "colored",
@@ -5187,7 +5187,7 @@ dependencies = [
 [[package]]
 name = "move-docgen"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "codespan",
@@ -5207,7 +5207,7 @@ dependencies = [
 [[package]]
 name = "move-errmapgen"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5222,7 +5222,7 @@ dependencies = [
 [[package]]
 name = "move-ir-compiler"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5242,7 +5242,7 @@ dependencies = [
 [[package]]
 name = "move-ir-to-bytecode"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "codespan-reporting",
@@ -5262,7 +5262,7 @@ dependencies = [
 [[package]]
 name = "move-ir-to-bytecode-syntax"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "hex 0.4.3",
@@ -5276,7 +5276,7 @@ dependencies = [
 [[package]]
 name = "move-ir-types"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "hex 0.4.3",
@@ -5291,7 +5291,7 @@ dependencies = [
 [[package]]
 name = "move-model"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "codespan",
@@ -5318,7 +5318,7 @@ dependencies = [
 [[package]]
 name = "move-package"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5350,7 +5350,7 @@ dependencies = [
 [[package]]
 name = "move-prover"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5389,7 +5389,7 @@ dependencies = [
 [[package]]
 name = "move-prover-boogie-backend"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5418,7 +5418,7 @@ dependencies = [
 [[package]]
 name = "move-read-write-set-types"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -5430,7 +5430,7 @@ dependencies = [
 [[package]]
 name = "move-resource-viewer"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5446,7 +5446,7 @@ dependencies = [
 [[package]]
 name = "move-stackless-bytecode"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "codespan",
  "codespan-reporting",
@@ -5473,7 +5473,7 @@ dependencies = [
 [[package]]
 name = "move-stackless-bytecode-interpreter"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "bytecode-interpreter-crypto",
@@ -5493,7 +5493,7 @@ dependencies = [
 [[package]]
 name = "move-stdlib"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "diem-global-constants 0.1.0 (git+https://github.com/OLSF/libra?branch=v6)",
  "diem-types 0.0.3 (git+https://github.com/OLSF/libra?branch=v6)",
@@ -5520,7 +5520,7 @@ dependencies = [
 [[package]]
 name = "move-symbol-pool"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "once_cell",
  "serde 1.0.136",
@@ -5530,7 +5530,7 @@ dependencies = [
 [[package]]
 name = "move-transactional-test-runner"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "colored",
@@ -5562,7 +5562,7 @@ dependencies = [
 [[package]]
 name = "move-unit-test"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "colored",
@@ -5587,7 +5587,7 @@ dependencies = [
 [[package]]
 name = "move-vm-runtime"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "fail",
  "mirai-annotations",
@@ -5605,7 +5605,7 @@ dependencies = [
 [[package]]
 name = "move-vm-test-utils"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -5617,7 +5617,7 @@ dependencies = [
 [[package]]
 name = "move-vm-types"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "bcs",
  "mirai-annotations",
@@ -5959,9 +5959,9 @@ version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "876a53fff98e03a936a674b29568b0e605f06b29372c2489ff4de23f1949743d"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -6030,9 +6030,9 @@ name = "num-variants"
 version = "0.1.0"
 dependencies = [
  "diem-workspace-hack 0.1.0",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -6357,9 +6357,9 @@ checksum = "03f2cb802b5bdfdf52f1ffa0b54ce105e4d346e91990dd571f86c91321ad49e2"
 dependencies = [
  "Inflector",
  "proc-macro-error",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -6522,9 +6522,9 @@ checksum = "99b8db626e31e5b81787b9783425769681b347011cc59471e33ea46d2ea0cf55"
 dependencies = [
  "pest",
  "pest_meta",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -6612,9 +6612,9 @@ version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "744b6f092ba29c3650faf274db506afd39944f48420f6c86b17cfe0ee1cb36bb"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -6709,9 +6709,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
 dependencies = [
  "proc-macro-error-attr",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
  "version_check",
 ]
 
@@ -6721,7 +6721,7 @@ version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
  "version_check",
 ]
@@ -6749,9 +6749,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.36"
+version = "1.0.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7342d5883fbccae1cc37a2353b09c87c9b0f3afd73f5fb9bba687a1f733b029"
+checksum = "ec757218438d5fda206afc041538b2f6d889286160d649a86a24d37e1235afd1"
 dependencies = [
  "unicode-xid 0.2.2",
 ]
@@ -6880,7 +6880,7 @@ version = "1.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "632d02bff7f874a36f33ea8bb416cd484b90cc66c1194b1a1110d067a7013f58"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
 ]
 
 [[package]]
@@ -7016,7 +7016,7 @@ dependencies = [
 [[package]]
 name = "read-write-set"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -7033,7 +7033,7 @@ dependencies = [
 [[package]]
 name = "read-write-set-dynamic"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -7087,9 +7087,9 @@ version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c38e3aecd2b21cb3959637b883bb3714bc7e43f0268b9a29d3743ee3e55cdd2"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -7228,10 +7228,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "041bb0202c14f6a158bbbf086afb03d0c6e975c2dec7d4912f8061ed44f290af"
 dependencies = [
  "cfg-if 1.0.0",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
  "rustc_version 0.3.3",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -7784,9 +7784,9 @@ version = "1.0.136"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08597e7152fcd306f41838ed3e37be9eaeed2b61c42e2117266a554fab4662f9"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -7807,9 +7807,9 @@ version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "98d0516900518c29efa217c298fa1f4e6c6ffc85ae29fd7f4ee48f176e1a9ed5"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -7865,9 +7865,9 @@ version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b2acd6defeddb41eb60bb468f8825d0cfd0c2a76bc03bfd235b6a1dc4f6a1ad5"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -8437,11 +8437,11 @@ version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c87a60a40fccc84bef0652345bbbbbe20a605bf5d0ce81719fc476f5c03b50ef"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
  "serde 1.0.136",
  "serde_derive",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -8451,13 +8451,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "58fa5ff6ad0d98d1ffa8cb115892b6e69d67799f6763e162a1c9db421dc22e11"
 dependencies = [
  "base-x",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
  "serde 1.0.136",
  "serde_derive",
  "serde_json",
  "sha1",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -8621,9 +8621,9 @@ checksum = "dcb5ae327f9cc13b68763b5749770cb9e048a99bd9dfdfa58d0cf05d5f64afe0"
 dependencies = [
  "heck",
  "proc-macro-error",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -8672,11 +8672,11 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.90"
+version = "1.0.91"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "704df27628939572cd88d33f171cd6f896f4eaca85252c6e0a72d8d8287ee86f"
+checksum = "b683b2b825c8eef438b77c36a06dc262294da3d5a5813fac20da149241dcd44d"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
  "unicode-xid 0.2.2",
 ]
@@ -8687,9 +8687,9 @@ version = "0.12.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f36bdaa60a83aca3921b5259d5400cbf5e90fc51931376a9bd4a0eb79aa7210f"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
  "unicode-xid 0.2.2",
 ]
 
@@ -8849,9 +8849,9 @@ version = "1.0.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa32fd3f627f367fe16f893e2597ae3c05020f8bba2666a4e6ea73d377e5714b"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -8906,10 +8906,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd3c141a1b43194f3f56a1411225df8646c55781d5f26db825b3d98507eb482f"
 dependencies = [
  "proc-macro-hack",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
  "standback",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -9001,9 +9001,9 @@ version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b557f72f448c511a979e2564e55d74e6c4432fc96ff4f6241bc6bded342643b7"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -9225,9 +9225,9 @@ version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e65ce065b4b5c53e73bb28912318cb8c9e9ad3921f1d669eb0e68b4c8143a2b"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -9335,9 +9335,9 @@ checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
 
 [[package]]
 name = "trybuild"
-version = "1.0.58"
+version = "1.0.59"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bc674dacaf52ce01cb84dc01e60af886dbed641f2b62e306ba7e266dacef17b"
+checksum = "606ab3fe0065741fdbb51f64bcb6ba76f13fad49f1723030041826c631782764"
 dependencies = [
  "glob",
  "once_cell",
@@ -9660,7 +9660,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aae2faf80ac463422992abf4de234731279c058aaf33171ca70277c98406b124"
 dependencies = [
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
 ]
 
 [[package]]
@@ -9685,7 +9685,7 @@ dependencies = [
 [[package]]
 name = "vdf"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?branch=v6#db303c9c2556da274e30b7de0dc268473439daf4"
+source = "git+https://github.com/OLSF/libra?branch=v6#0e13e9d8f4061c989c686998ec6d295b4be17b9f"
 dependencies = [
  "bit-vec 0.5.1",
  "classgroup 0.1.0 (git+https://github.com/OLSF/libra?branch=v6)",
@@ -9789,7 +9789,7 @@ version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d257817081c7dffcdbab24b9e62d2def62e2ff7d00b1c20062551e6cccc145ff"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
 ]
 
@@ -9874,9 +9874,9 @@ checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
 
 [[package]]
 name = "wasm-bindgen"
-version = "0.2.79"
+version = "0.2.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25f1af7423d8588a3d840681122e72e6a24ddbcb3f0ec385cac0d12d24256c06"
+checksum = "27370197c907c55e3f1a9fbe26f44e937fe6451368324e009cba39e139dc08ad"
 dependencies = [
  "cfg-if 1.0.0",
  "wasm-bindgen-macro",
@@ -9884,24 +9884,24 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-backend"
-version = "0.2.79"
+version = "0.2.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b21c0df030f5a177f3cba22e9bc4322695ec43e7257d865302900290bcdedca"
+checksum = "53e04185bfa3a779273da532f5025e33398409573f348985af9a1cbf3774d3f4"
 dependencies = [
  "bumpalo",
  "lazy_static 1.4.0",
  "log",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
  "wasm-bindgen-shared",
 ]
 
 [[package]]
 name = "wasm-bindgen-futures"
-version = "0.4.29"
+version = "0.4.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2eb6ec270a31b1d3c7e266b999739109abce8b6c87e4b31fcfcd788b65267395"
+checksum = "6f741de44b75e14c35df886aff5f1eb73aa114fa5d4d00dcd37b5e01259bf3b2"
 dependencies = [
  "cfg-if 1.0.0",
  "js-sys",
@@ -9911,9 +9911,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro"
-version = "0.2.79"
+version = "0.2.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f4203d69e40a52ee523b2529a773d5ffc1dc0071801c87b3d270b471b80ed01"
+checksum = "17cae7ff784d7e83a2fe7611cfe766ecf034111b49deb850a3dc7699c08251f5"
 dependencies = [
  "quote 1.0.17",
  "wasm-bindgen-macro-support",
@@ -9921,28 +9921,28 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro-support"
-version = "0.2.79"
+version = "0.2.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bfa8a30d46208db204854cadbb5d4baf5fcf8071ba5bf48190c3e59937962ebc"
+checksum = "99ec0dc7a4756fffc231aab1b9f2f578d23cd391390ab27f952ae0c9b3ece20b"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
 
 [[package]]
 name = "wasm-bindgen-shared"
-version = "0.2.79"
+version = "0.2.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d958d035c4438e28c70e4321a2911302f10135ce78a9c7834c0cab4123d06a2"
+checksum = "d554b7f530dee5964d9a9468d95c1f8b8acae4f282807e7d27d4b03099a46744"
 
 [[package]]
 name = "web-sys"
-version = "0.3.56"
+version = "0.3.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c060b319f29dd25724f09a2ba1418f142f539b2be99fbf4d2d5a8f7330afb8eb"
+checksum = "7b17e741662c70c8bd24ac5c5b18de314a2c26c32bf8346ee1e6f53de919c283"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
@@ -10061,7 +10061,7 @@ dependencies = [
 [[package]]
 name = "workspace-hack"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#48b0a042110676b3c460a4f9625589be33f261e4"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
 dependencies = [
  "arrayvec 0.5.2",
  "block-buffer 0.9.0",
@@ -10076,7 +10076,7 @@ dependencies = [
  "num-traits 0.2.14",
  "plotters",
  "proc-macro2 0.4.30",
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 0.6.13",
  "quote 1.0.17",
  "rand_core 0.5.1",
@@ -10085,7 +10085,7 @@ dependencies = [
  "regex-syntax",
  "serde 1.0.136",
  "syn 0.15.44",
- "syn 1.0.90",
+ "syn 1.0.91",
  "tracing-core",
 ]
 
@@ -10197,9 +10197,9 @@ version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f8f187641dad4f680d25c4bfc4225b418165984179f26ca76ec4fb6441d3a17"
 dependencies = [
- "proc-macro2 1.0.36",
+ "proc-macro2 1.0.37",
  "quote 1.0.17",
- "syn 1.0.90",
+ "syn 1.0.91",
  "synstructure",
 ]
 
