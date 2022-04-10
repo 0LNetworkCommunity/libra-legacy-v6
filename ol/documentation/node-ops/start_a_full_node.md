@@ -7,7 +7,7 @@
 - Recommended minimum specs: 
   - 256G storage, 2 core CPU, 8G RAM
 - Firewall rules:
-  - Open the ports: 8080, 6178
+  - Open the ports: 8080
 
 ## 1. Set up a host
 These instructions target Ubuntu.
