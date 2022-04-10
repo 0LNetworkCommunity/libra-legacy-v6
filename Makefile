@@ -370,13 +370,13 @@ ifdef TEST
 	@echo NAMESPACE: ${NS}
 	@echo GENESIS: ${V}
 	@if test ! -d ${DATA_PATH}; then \
-		echo Creating Directories \
+		echo Creating Directories; \
 		mkdir ${DATA_PATH}; \
 		mkdir -p ${DATA_PATH}/vdf_proofs/; \
 	fi
 
 	@if test ! -d ${DATA_PATH}/vdf_proofs; then \
-		echo Creating Directories \
+		echo Creating Directories; \
 		mkdir -p ${DATA_PATH}/vdf_proofs/; \
 	fi
 
