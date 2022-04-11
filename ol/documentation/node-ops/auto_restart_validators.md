@@ -19,7 +19,7 @@ You may need to choose your favorite text Editor. So choose *nano*, do yourself 
 
   `0 * * * * killall diem-node ol tower`
   
-  `1 * * * * ~/bin/diem-node --config ~/.0L/fullnode.node.yaml  >> ~/.0L/logs/node.log 2>&1`
+  `1 * * * * ~/bin/diem-node --config ~/.0L/validator.node.yaml  >> ~/.0L/logs/node.log 2>&1`
 
 Save the file and let it do its magic.
 
