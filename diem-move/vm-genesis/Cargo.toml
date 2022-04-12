@@ -32,6 +32,7 @@ move-binary-format = { git = "https://github.com/OLSF/move-0L", branch = "v6" }
 diem-vm = { path = "../diem-vm" }
 read-write-set = { git = "https://github.com/OLSF/move-0L", branch = "v6" }
 # //////// 0L ////////
+diem-global-constants = { path = "../../config/global-constants" }
 hex = "0.4"
 serde = { version = "1.0.116", features = ["rc"], default-features = false }
 ol-types = {path = "../../ol/types"}

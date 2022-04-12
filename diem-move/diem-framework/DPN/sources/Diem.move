@@ -1359,13 +1359,13 @@ module DiemFramework::Diem {
     /// accounts.
     public fun register_SCS_currency<CoinType>(
         dr_account: &signer,
-        // dr_account: &signer, /////// 0L /////////
+        // tc_account: &signer, /////// 0L /////////
         to_xdx_exchange_rate: FixedPoint32,
         scaling_factor: u64,
         fractional_part: u64,
         currency_code: vector<u8>,
     ) {
-        Roles::assert_treasury_compliance(dr_account); /////// 0L /////////
+        // Roles::assert_treasury_compliance(tc_account); /////// 0L /////////
         Roles::assert_diem_root(dr_account);
         let (mint_cap, burn_cap) =
             register_currency<CoinType>(
@@ -1381,8 +1381,8 @@ module DiemFramework::Diem {
         //     !exists<MintCapability<CoinType>>(Signer::address_of(dr_account)),
         //     Errors::already_published(EMINT_CAPABILITY)
         // );
-        move_to(dr_account, mint_cap);
-        publish_burn_capability<CoinType>(dr_account, burn_cap);
+        move_to(dr_account, mint_cap); /////// 0L /////////
+        publish_burn_capability<CoinType>(dr_account, burn_cap); /////// 0L /////////
     }
 
     spec register_SCS_currency {

@@ -3151,13 +3151,13 @@ accounts.
 
 <pre><code><b>public</b> <b>fun</b> <a href="Diem.md#0x1_Diem_register_SCS_currency">register_SCS_currency</a>&lt;CoinType&gt;(
     dr_account: &signer,
-    // dr_account: &signer, /////// 0L /////////
+    // tc_account: &signer, /////// 0L /////////
     to_xdx_exchange_rate: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">FixedPoint32</a>,
     scaling_factor: u64,
     fractional_part: u64,
     currency_code: vector&lt;u8&gt;,
 ) {
-    <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(dr_account); /////// 0L /////////
+    // <a href="Roles.md#0x1_Roles_assert_treasury_compliance">Roles::assert_treasury_compliance</a>(tc_account); /////// 0L /////////
     <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(dr_account);
     <b>let</b> (mint_cap, burn_cap) =
         <a href="Diem.md#0x1_Diem_register_currency">register_currency</a>&lt;CoinType&gt;(
@@ -3173,8 +3173,8 @@ accounts.
     //     !<b>exists</b>&lt;<a href="Diem.md#0x1_Diem_MintCapability">MintCapability</a>&lt;CoinType&gt;&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(dr_account)),
     //     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_already_published">Errors::already_published</a>(<a href="Diem.md#0x1_Diem_EMINT_CAPABILITY">EMINT_CAPABILITY</a>)
     // );
-    <b>move_to</b>(dr_account, mint_cap);
-    <a href="Diem.md#0x1_Diem_publish_burn_capability">publish_burn_capability</a>&lt;CoinType&gt;(dr_account, burn_cap);
+    <b>move_to</b>(dr_account, mint_cap); /////// 0L /////////
+    <a href="Diem.md#0x1_Diem_publish_burn_capability">publish_burn_capability</a>&lt;CoinType&gt;(dr_account, burn_cap); /////// 0L /////////
 }
 </code></pre>
 
