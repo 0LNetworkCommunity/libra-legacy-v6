@@ -237,7 +237,7 @@ impl Node {
 
         tower_height: ms.verified_tower_height,
         tower_epoch: ms.latest_epoch_mining,
-        count_proofs_in_epoch: ms.count_proofs_in_epoch,
+        count_proofs_in_epoch: ms.actual_count_proofs_in_epoch,
         epochs_validating_and_mining: ms.epochs_validating_and_mining,
         contiguous_epochs_validating_and_mining: ms.contiguous_epochs_validating_and_mining,
         epochs_since_last_account_creation: ms.epochs_since_last_account_creation,
