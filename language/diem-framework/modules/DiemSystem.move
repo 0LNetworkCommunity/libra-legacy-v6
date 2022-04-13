@@ -239,12 +239,14 @@ module DiemSystem {
                                    );
     }
 
+    use 0x1::Debug::print;
 
     /// Removes a validator, aborts unless called by diem root account
     public fun remove_validator(
         dr_account: &signer,
         validator_addr: address
     ) acquires CapabilityHolder {
+        print(&validator_addr);
         DiemTimestamp::assert_operating();
         Roles::assert_diem_root(dr_account);
         let diem_system_config = get_diem_system_config();

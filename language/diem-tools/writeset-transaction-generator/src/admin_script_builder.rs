@@ -5,7 +5,7 @@ use anyhow::Result;
 use diem_types::{
     account_address::AccountAddress,
     account_config::diem_root_address,
-    transaction::{Script, WriteSetPayload},
+    transaction::{Script, WriteSetPayload, TransactionArgument},
 };
 use handlebars::Handlebars;
 use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
@@ -101,6 +101,21 @@ pub fn encode_halt_network_payload() -> WriteSetPayload {
             compile_script(script.to_str().unwrap().to_owned()),
             vec![],
             vec![],
+        ),
+        execute_as: diem_root_address(),
+    }
+}
+
+
+pub fn encode_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPayload {
+    let mut script = template_path();
+    script.push("bulk_update.move");
+
+    WriteSetPayload::Script {
+        script: Script::new(
+            compile_script(script.to_str().unwrap().to_owned()),
+            vec![],
+            vec![TransactionArgument::AddressVector(vals)],
         ),
         execute_as: diem_root_address(),
     }

@@ -40,6 +40,7 @@ and "configuration" are used for several distinct concepts.
 
 <pre><code><b>use</b> <a href="Cases.md#0x1_Cases">0x1::Cases</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
@@ -566,6 +567,7 @@ Removes a validator, aborts unless called by diem root account
     dr_account: &signer,
     validator_addr: address
 ) <b>acquires</b> <a href="DiemSystem.md#0x1_DiemSystem_CapabilityHolder">CapabilityHolder</a> {
+    print(&validator_addr);
     <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
     <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(dr_account);
     <b>let</b> diem_system_config = <a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>();

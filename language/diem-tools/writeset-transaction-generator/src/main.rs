@@ -10,7 +10,7 @@ use diem_types::{
 
 use diem_writeset_generator::{
     create_release, encode_custom_script, encode_halt_network_payload,
-    encode_remove_validators_payload, release_flow::artifacts::load_latest_artifact,
+    encode_remove_validators_payload, encode_bulk_update_vals_payload, release_flow::artifacts::load_latest_artifact,
     verify_release,
 };
 use move_binary_format::CompiledModule;
@@ -36,6 +36,9 @@ enum Command {
     /// List of addresses to remove from validator set
     #[structopt(name = "remove-validators")]
     RemoveValidators { addresses: Vec<AccountAddress> },
+    /// List of addresses to remove from validator set
+    #[structopt(name = "update-validators")]
+    UpdateValidators { addresses: Vec<AccountAddress> },
     /// Block the execution of any transaction in the network
     #[structopt(name = "halt-network")]
     HaltNetwork,
@@ -109,6 +112,7 @@ fn main() -> Result<()> {
     let opt = Opt::from_args();
     let payload = match opt.cmd {
         Command::RemoveValidators { addresses } => encode_remove_validators_payload(addresses),
+        Command::UpdateValidators { addresses } => encode_bulk_update_vals_payload(addresses),
         Command::HaltNetwork => encode_halt_network_payload(),
         Command::BuildCustomScript {
             script_name,
