@@ -302,8 +302,6 @@ pub fn get_miner_state(
         Some(s) => TowerStateResourceView::from_state_and_epoch(s, epoch).map_err(Into::into),
         None => Err(JsonRpcError::internal_error("No account state found".to_owned())),
     }
-
-    
 }
 
 /// Get miner state

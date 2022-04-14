@@ -14,7 +14,7 @@ module CoreAddresses {
     /// ultimate authority over the permissions granted (or removed) from
     /// accounts on-chain.
     public fun DIEM_ROOT_ADDRESS(): address {
-        @0x0 //////// 0L ////////
+        @0x0 //////// 0L //////// // A.K.A. OttO :)
     }
 
     /// The (singleton) address under which the `0x1::Diem::CurrencyInfo` resource for

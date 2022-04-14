@@ -38,6 +38,8 @@
 -  [Function `get_count_above_thresh_in_epoch`](#0x1_TowerState_get_count_above_thresh_in_epoch)
 -  [Function `lazy_reset_count_in_epoch`](#0x1_TowerState_lazy_reset_count_in_epoch)
 -  [Function `can_create_val_account`](#0x1_TowerState_can_create_val_account)
+-  [Function `tower_for_teams`](#0x1_TowerState_tower_for_teams)
+-  [Function `collective_tower_height`](#0x1_TowerState_collective_tower_height)
 -  [Function `get_validator_proofs_in_epoch`](#0x1_TowerState_get_validator_proofs_in_epoch)
 -  [Function `get_fullnode_proofs_in_epoch`](#0x1_TowerState_get_fullnode_proofs_in_epoch)
 -  [Function `get_fullnode_proofs_in_epoch_above_thresh`](#0x1_TowerState_get_fullnode_proofs_in_epoch_above_thresh)
@@ -358,7 +360,16 @@ the miner last created a new account
 
 
 
-<pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>: u64 = 14;
+<pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>: u64 = 13;
+</code></pre>
+
+
+
+<a name="0x1_TowerState_TEAM_MEMBER_TOWER_MIN"></a>
+
+
+
+<pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_TEAM_MEMBER_TOWER_MIN">TEAM_MEMBER_TOWER_MIN</a>: u64 = 336;
 </code></pre>
 
 
@@ -454,6 +465,8 @@ Create empty miners list and stats
 
   // Note: for testing migration we need <b>to</b> destroy this <b>struct</b>, see test_danger_destroy_tower_counter
   <a href="TowerState.md#0x1_TowerState_init_tower_counter">init_tower_counter</a>(vm, 0, 0, 0);
+
+  // init_team_thresholds(vm);
 }
 </code></pre>
 
@@ -602,7 +615,7 @@ adds <code>tower</code> to list of towers
   solution: vector&lt;u8&gt;,
   difficulty: u64,
   security: u64,
-) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>  {
   // TODO: Previously in OLv3 is_genesis() returned <b>true</b>.
   // How <b>to</b> check that this is part of genesis? is_genesis returns <b>false</b> here.
 
@@ -691,7 +704,7 @@ Permissions: PUBLIC, ANYONE
   operator_sig: &signer,
   miner_addr: address,
   proof: <a href="TowerState.md#0x1_TowerState_Proof">Proof</a>
-) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>{
 
   // Check the signer is in fact an operator delegated by the owner.
 
@@ -936,7 +949,7 @@ Checks to see if miner submitted enough proofs to be considered compliant
   solution: &vector&lt;u8&gt;,
   difficulty: u64,
   security: u64
-) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>{
 
   // NOTE Only <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a> can <b>update</b> own state.
   // Should only happen once.
@@ -1090,11 +1103,13 @@ Checks to see if miner submitted enough proofs to be considered compliant
     state.fullnode_proofs_in_epoch = state.fullnode_proofs_in_epoch + 1;
     state.lifetime_fullnode_proofs = state.lifetime_fullnode_proofs + 1;
     // Preceding proofs before threshold was met are not counted <b>to</b> payment.
-    <b>if</b> (above) { state.fullnode_proofs_in_epoch_above_thresh = state.fullnode_proofs_in_epoch_above_thresh + 1; }
+    <b>if</b> (above) { state.fullnode_proofs_in_epoch_above_thresh = state.fullnode_proofs_in_epoch_above_thresh + 1; };
+
   };
 
   state.proofs_in_epoch = state.proofs_in_epoch + 1;
   state.lifetime_proofs = state.lifetime_proofs + 1;
+
 }
 </code></pre>
 
@@ -1327,6 +1342,77 @@ Public Getters ///
       &gt;= <a href="TowerState.md#0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>
   };
   <b>false</b>
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_tower_for_teams"></a>
+
+## Function `tower_for_teams`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_tower_for_teams">tower_for_teams</a>(node_addr: address): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_tower_for_teams">tower_for_teams</a>(node_addr: address): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
+  // For a Member's tower height <b>to</b> be counted for a Team for delegation purposes
+  // it must be an active tower (doing work above threshold in an epoch)
+  // and it must not be a new tower, it needs <b>to</b> have a minimum of 7 days equivalent height.
+  <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(node_addr)) {
+    <b>let</b> s = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(node_addr);
+    <b>if</b> (
+      s.count_proofs_in_epoch &gt; <a href="Globals.md#0x1_Globals_get_epoch_mining_thres_lower">Globals::get_epoch_mining_thres_lower</a>()
+      && s.verified_tower_height &gt; <a href="TowerState.md#0x1_TowerState_TEAM_MEMBER_TOWER_MIN">TEAM_MEMBER_TOWER_MIN</a>
+    ) {
+      <b>return</b> s.verified_tower_height
+    };
+  };
+  0
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_collective_tower_height"></a>
+
+## Function `collective_tower_height`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_collective_tower_height">collective_tower_height</a>(members: &vector&lt;address&gt;): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_collective_tower_height">collective_tower_height</a>(members: &vector&lt;address&gt;): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
+  // count the collective tower height of valid towers.
+  <b>let</b> collective = 0;
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(members)) {
+    <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(members, i);
+    <b>let</b> one_height = <a href="TowerState.md#0x1_TowerState_tower_for_teams">tower_for_teams</a>(*addr);
+    <b>if</b> (one_height &gt; 0) {
+      collective = collective + one_height;
+    };
+    i = i + 1;
+  };
+  collective
 }
 </code></pre>
 

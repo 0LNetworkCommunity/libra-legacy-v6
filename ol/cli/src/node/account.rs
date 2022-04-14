@@ -19,7 +19,7 @@ pub struct OwnerAccountView {
     address: AccountAddress,
     /// balance of this node
     balance: f64,
-    /// if is jailed
+    /// if is in validator set
     is_in_validator_set: bool,
     /// auto pay
     autopay: Option<AutoPayView>,

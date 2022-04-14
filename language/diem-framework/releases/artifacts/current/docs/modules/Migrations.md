@@ -1,49 +1,41 @@
 
-<a name="0x1_MigrateTowerCounter"></a>
+<a name="0x1_MigrateInitDelegation"></a>
 
-# Module `0x1::MigrateTowerCounter`
-
-
-<a name="@Summary_0"></a>
-
-## Summary
-
-Module to migrate the tower statistics from TowerState to TowerCounter
+# Module `0x1::MigrateInitDelegation`
 
 
--  [Summary](#@Summary_0)
--  [Constants](#@Constants_1)
--  [Function `migrate_tower_counter`](#0x1_MigrateTowerCounter_migrate_tower_counter)
+
+-  [Constants](#@Constants_0)
+-  [Function `do_it`](#0x1_MigrateInitDelegation_do_it)
 
 
-<pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
-<b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
+<pre><code><b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
+<b>use</b> <a href="Teams.md#0x1_Teams">0x1::Teams</a>;
 </code></pre>
 
 
 
-<a name="@Constants_1"></a>
+<a name="@Constants_0"></a>
 
 ## Constants
 
 
-<a name="0x1_MigrateTowerCounter_UID"></a>
+<a name="0x1_MigrateInitDelegation_UID"></a>
 
 
 
-<pre><code><b>const</b> <a href="Migrations.md#0x1_MigrateTowerCounter_UID">UID</a>: u64 = 1;
+<pre><code><b>const</b> <a href="Migrations.md#0x1_MigrateInitDelegation_UID">UID</a>: u64 = 2;
 </code></pre>
 
 
 
-<a name="0x1_MigrateTowerCounter_migrate_tower_counter"></a>
+<a name="0x1_MigrateInitDelegation_do_it"></a>
 
-## Function `migrate_tower_counter`
+## Function `do_it`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Migrations.md#0x1_MigrateTowerCounter_migrate_tower_counter">migrate_tower_counter</a>(vm: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="Migrations.md#0x1_MigrateInitDelegation_do_it">do_it</a>(vm: &signer)
 </code></pre>
 
 
@@ -52,13 +44,13 @@ Module to migrate the tower statistics from TowerState to TowerCounter
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Migrations.md#0x1_MigrateTowerCounter_migrate_tower_counter">migrate_tower_counter</a>(vm: &signer) {
-  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
-  <b>if</b> (!<a href="Migrations.md#0x1_Migrations_has_run">Migrations::has_run</a>(<a href="Migrations.md#0x1_MigrateTowerCounter_UID">UID</a>)) {
-    <b>let</b> (<b>global</b>, val, fn) = <a href="TowerState.md#0x1_TowerState_danger_migrate_get_lifetime_proof_count">TowerState::danger_migrate_get_lifetime_proof_count</a>();
-    <a href="TowerState.md#0x1_TowerState_init_tower_counter">TowerState::init_tower_counter</a>(vm, <b>global</b>, val, fn);
-    <a href="Migrations.md#0x1_Migrations_push">Migrations::push</a>(vm, <a href="Migrations.md#0x1_MigrateTowerCounter_UID">UID</a>, b"<a href="Migrations.md#0x1_MigrateTowerCounter">MigrateTowerCounter</a>");
-  };
+<pre><code><b>public</b> <b>fun</b> <a href="Migrations.md#0x1_MigrateInitDelegation_do_it">do_it</a>(vm: &signer) {
+  <b>if</b> (!<a href="Migrations.md#0x1_Migrations_has_run">Migrations::has_run</a>(<a href="Migrations.md#0x1_MigrateInitDelegation_UID">UID</a>)) {
+    <a href="Teams.md#0x1_Teams_vm_init">Teams::vm_init</a>(vm);
+    // also initialize relevant state in <a href="TowerState.md#0x1_TowerState">TowerState</a>
+    // TowerState::init_team_thresholds(vm);
+    <a href="Migrations.md#0x1_Migrations_push">Migrations::push</a>(vm, <a href="Migrations.md#0x1_MigrateInitDelegation_UID">UID</a>, b"MigrateInitTeams");
+  }
 }
 </code></pre>
 

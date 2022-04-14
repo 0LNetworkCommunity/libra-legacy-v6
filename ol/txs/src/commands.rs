@@ -19,12 +19,13 @@ pub mod community_pay_cmd;
 pub mod val_config_cmd;
 
 mod relay_cmd;
-mod valset_cmd;
 mod autopay_cmd;
 mod authkey_cmd;
 mod create_validator_cmd;
 mod oracle_upgrade_cmd;
 mod version_cmd;
+mod join_team_cmd;
+mod create_team_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use ol::commands::CONFIG_FILE;
@@ -39,10 +40,11 @@ use self::{
     autopay_cmd::AutopayCmd,
     demo_cmd::DemoCmd,
     relay_cmd::RelayCmd,
-    valset_cmd::ValSetCmd,
     wallet_cmd::WalletCmd,
     authkey_cmd::AuthkeyCmd,
-    transfer_cmd::TransferCmd,   
+    transfer_cmd::TransferCmd,
+    join_team_cmd::JoinTeamCmd,
+    create_team_cmd::CreateTeamCmd,
     community_pay_cmd::CommunityPayCmd,
     val_config_cmd::ValConfigCmd,
 
@@ -98,10 +100,6 @@ pub enum TxsCmd {
     #[options(help = "submit a saved transaction from file")]
     Relay(RelayCmd),
 
-    /// The `valset` subcommand
-    #[options(help = "join or leave the validator universe, i.e. candidate for validator set")]
-    ValSet(ValSetCmd),
-
     /// The `wallet` subcommand
     #[options(help = "set a wallet type to the address")]
     Wallet(WalletCmd),
@@ -113,6 +111,14 @@ pub enum TxsCmd {
     /// The `val-config` subcommand updates validator configuration on chain.
     #[options(help = "update the validator and operators on-chain configs (e.g. discovery)")]
     ValConfig(ValConfigCmd),
+
+    /// The `join-team`subcommand for users to join a Team
+    #[options(help = "a non-validator account can join a Team")]
+    JoinTeam(JoinTeamCmd),
+
+    /// The `create-team` subcommand for validators to create a Team
+    #[options(help = "a account can create a Team and becomes its Captain")]
+    CreateTeam(CreateTeamCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

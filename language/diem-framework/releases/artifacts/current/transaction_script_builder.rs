@@ -2031,6 +2031,11 @@ pub enum ScriptFunctionCall {
     /// * `Script::rotate_authentication_key_with_recovery_address`
     CreateRecoveryAddress {},
 
+    CreateTeam {
+        team_name: Bytes,
+        operator_pct_reward: u64,
+    },
+
     CreateUserByCoinTx {
         account: AccountAddress,
         authkey_prefix: Bytes,
@@ -2226,7 +2231,9 @@ pub enum ScriptFunctionCall {
 
     Join {},
 
-    Leave {},
+    JoinTeam {
+        captain: AccountAddress,
+    },
 
     MinerstateCommit {
         challenge: Bytes,
@@ -3197,8 +3204,6 @@ pub enum ScriptFunctionCall {
         currency: TypeTag,
         allow_minting: bool,
     },
-
-    ValAddSelf {},
 }
 
 impl ScriptCall {
@@ -3616,6 +3621,10 @@ impl ScriptFunctionCall {
                 add_all_currencies,
             ),
             CreateRecoveryAddress {} => encode_create_recovery_address_script_function(),
+            CreateTeam {
+                team_name,
+                operator_pct_reward,
+            } => encode_create_team_script_function(team_name, operator_pct_reward),
             CreateUserByCoinTx {
                 account,
                 authkey_prefix,
@@ -3656,7 +3665,7 @@ impl ScriptFunctionCall {
                 encode_initialize_diem_consensus_config_script_function(sliding_nonce)
             }
             Join {} => encode_join_script_function(),
-            Leave {} => encode_leave_script_function(),
+            JoinTeam { captain } => encode_join_team_script_function(captain),
             MinerstateCommit {
                 challenge,
                 solution,
@@ -3860,7 +3869,6 @@ impl ScriptFunctionCall {
                 currency,
                 allow_minting,
             } => encode_update_minting_ability_script_function(currency, allow_minting),
-            ValAddSelf {} => encode_val_add_self_script_function(),
         }
     }
 
@@ -4718,6 +4726,24 @@ pub fn encode_create_recovery_address_script_function() -> TransactionPayload {
     ))
 }
 
+pub fn encode_create_team_script_function(
+    team_name: Vec<u8>,
+    operator_pct_reward: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("TeamsScripts").to_owned(),
+        ),
+        ident_str!("create_team").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&team_name).unwrap(),
+            bcs::to_bytes(&operator_pct_reward).unwrap(),
+        ],
+    ))
+}
+
 pub fn encode_create_user_by_coin_tx_script_function(
     account: AccountAddress,
     authkey_prefix: Vec<u8>,
@@ -4998,15 +5024,15 @@ pub fn encode_join_script_function() -> TransactionPayload {
     ))
 }
 
-pub fn encode_leave_script_function() -> TransactionPayload {
+pub fn encode_join_team_script_function(captain: AccountAddress) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorScripts").to_owned(),
+            ident_str!("TeamsScripts").to_owned(),
         ),
-        ident_str!("leave").to_owned(),
+        ident_str!("join_team").to_owned(),
         vec![],
-        vec![],
+        vec![bcs::to_bytes(&captain).unwrap()],
     ))
 }
 
@@ -6378,18 +6404,6 @@ pub fn encode_update_minting_ability_script_function(
         ident_str!("update_minting_ability").to_owned(),
         vec![currency],
         vec![bcs::to_bytes(&allow_minting).unwrap()],
-    ))
-}
-
-pub fn encode_val_add_self_script_function() -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorScripts").to_owned(),
-        ),
-        ident_str!("val_add_self").to_owned(),
-        vec![],
-        vec![],
     ))
 }
 
@@ -8333,6 +8347,17 @@ fn decode_create_recovery_address_script_function(
     }
 }
 
+fn decode_create_team_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::CreateTeam {
+            team_name: bcs::from_bytes(script.args().get(0)?).ok()?,
+            operator_pct_reward: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_create_user_by_coin_tx_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -8420,9 +8445,11 @@ fn decode_join_script_function(payload: &TransactionPayload) -> Option<ScriptFun
     }
 }
 
-fn decode_leave_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::Leave {})
+fn decode_join_team_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::JoinTeam {
+            captain: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
     } else {
         None
     }
@@ -8854,14 +8881,6 @@ fn decode_update_minting_ability_script_function(
             currency: script.ty_args().get(0)?.clone(),
             allow_minting: bcs::from_bytes(script.args().get(0)?).ok()?,
         })
-    } else {
-        None
-    }
-}
-
-fn decode_val_add_self_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::ValAddSelf {})
     } else {
         None
     }
@@ -9349,6 +9368,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_create_recovery_address_script_function),
         );
         map.insert(
+            "TeamsScriptscreate_team".to_string(),
+            Box::new(decode_create_team_script_function),
+        );
+        map.insert(
             "AccountScriptscreate_user_by_coin_tx".to_string(),
             Box::new(decode_create_user_by_coin_tx_script_function),
         );
@@ -9377,8 +9400,8 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_join_script_function),
         );
         map.insert(
-            "ValidatorScriptsleave".to_string(),
-            Box::new(decode_leave_script_function),
+            "TeamsScriptsjoin_team".to_string(),
+            Box::new(decode_join_team_script_function),
         );
         map.insert(
             "TowerStateScriptsminerstate_commit".to_string(),
@@ -9508,10 +9531,6 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "TreasuryComplianceScriptsupdate_minting_ability".to_string(),
             Box::new(decode_update_minting_ability_script_function),
-        );
-        map.insert(
-            "ValidatorScriptsval_add_self".to_string(),
-            Box::new(decode_val_add_self_script_function),
         );
         map
     });

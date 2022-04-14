@@ -8,8 +8,6 @@
 -  [Constants](#@Constants_0)
 -  [Function `ol_reconfig_bulk_update_setup`](#0x1_ValidatorScripts_ol_reconfig_bulk_update_setup)
 -  [Function `join`](#0x1_ValidatorScripts_join)
--  [Function `leave`](#0x1_ValidatorScripts_leave)
--  [Function `val_add_self`](#0x1_ValidatorScripts_val_add_self)
 
 
 <pre><code><b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
@@ -124,67 +122,6 @@
     // <b>if</b> is jailed, try <b>to</b> unjail
     <b>if</b> (<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_jailed">ValidatorUniverse::is_jailed</a>(addr)) {
         <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_unjail_self">ValidatorUniverse::unjail_self</a>(&validator);
-    };
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_ValidatorScripts_leave"></a>
-
-## Function `leave`
-
-
-
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_leave">leave</a>(validator: signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_leave">leave</a>(validator: signer) {
-    <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&validator);
-    <b>if</b> (<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(addr)) {
-        <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_remove_self">ValidatorUniverse::remove_self</a>(&validator);
-    };
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_ValidatorScripts_val_add_self"></a>
-
-## Function `val_add_self`
-
-
-
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_val_add_self">val_add_self</a>(validator: signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_val_add_self">val_add_self</a>(validator: signer) {
-    <b>let</b> validator = &validator;
-    <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(validator);
-    // <b>if</b> is above threshold <b>continue</b>, or raise error.
-    <b>assert</b>(
-        <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr),
-        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="ol_validator.md#0x1_ValidatorScripts_NOT_ABOVE_THRESH_ADD">NOT_ABOVE_THRESH_ADD</a>)
-    );
-    // <b>if</b> is not in universe, add back
-    <b>if</b> (!<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(addr)) {
-        <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(validator);
     };
 }
 </code></pre>

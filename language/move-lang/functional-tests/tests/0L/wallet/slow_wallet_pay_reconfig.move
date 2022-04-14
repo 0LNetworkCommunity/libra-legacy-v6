@@ -1,4 +1,4 @@
-//! account: alice, 1000000GAS, 0, validator
+//! account: alice, 10000000GAS, 0, validator
 //! account: bob, 10GAS,
 //! account: carol, 10GAS,
 

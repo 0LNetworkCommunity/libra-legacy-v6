@@ -24,18 +24,23 @@ module EpochBoundary {
     use 0x1::DiemAccount;
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
+    use 0x1::Teams;
+    use 0x1::ValidatorUniverse;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
         CoreAddresses::assert_vm(vm);
 
+        // for safety maybe ititialize any structs that may not have been created in migration.
+        safety_init(vm);
+
         let height_start = Epoch::get_timer_height_start(vm);
         
         let (outgoing_compliant_set, _) = 
             DiemSystem::get_fee_ratio(vm, height_start, height_now);
 
-        // NOTE: This is "nominal" because it doesn't check
+        // NOTE: This is the "nominal" award to a miner. We haven't yet checked if the miner is above threshold
         let compliant_nodes_count = Vector::length(&outgoing_compliant_set);
         let (subsidy_units, nominal_subsidy_per) = 
             Subsidy::calculate_subsidy(vm, compliant_nodes_count);
@@ -43,7 +48,9 @@ module EpochBoundary {
         process_fullnodes(vm, nominal_subsidy_per);
         
         process_validators(vm, subsidy_units, *&outgoing_compliant_set);
-        
+
+        process_burn(vm);
+
         let proposed_set = propose_new_set(vm, height_start, height_now);
         
         // Update all slow wallet limits
@@ -52,6 +59,11 @@ module EpochBoundary {
             // update_validator_withdrawal_limit(vm);
         };
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
+    }
+
+    fun safety_init(vm: &signer) {
+      Teams::vm_init(vm);
+
     }
 
     // process fullnode subsidy
@@ -101,6 +113,29 @@ module EpochBoundary {
         Subsidy::process_fees(vm, &outgoing_compliant_set);
     }
 
+    fun process_burn(vm: &signer) {
+        Burn::reset_ratios(vm);
+
+        // LEAVE THIS CODE COMMENTED for future use
+        // TODO: Make the burn value dynamic.
+        // let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
+        // let burn_value = Subsidy::subsidy_curve(
+        //   Globals::get_subsidy_ceiling_gas(),
+        //   incoming_count,
+        //   Globals::get_max_node_density()
+        // )/4;
+
+        let burn_value = 1000000; // TODO: switch to a variable cost, as above.
+
+        let vals = ValidatorUniverse::get_eligible_validators(vm);
+        let i = 0;
+        while (i < Vector::length<address>(&vals)) {
+          let addr = *Vector::borrow(&vals, i);
+          Burn::epoch_start_burn(vm, addr, burn_value);
+          i = i + 1;
+        };
+    }
+
     fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> {
         // Propose upcoming validator set:
         // Step 1: Sort Top N eligible validators
@@ -117,17 +152,6 @@ module EpochBoundary {
 
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
 
-        Burn::reset_ratios(vm);
-        // LEAVE THIS CODE COMMENTED for future use
-        // TODO: Make the burn value dynamic.
-        // let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
-        // let burn_value = Subsidy::subsidy_curve(
-        //   Globals::get_subsidy_ceiling_gas(),
-        //   incoming_count,
-        //   Globals::get_max_node_density()
-        // )/4;
-
-        let burn_value = 1000000; // TODO: switch to a variable cost, as above.
 
         let i = 0;
         while (i < Vector::length<address>(&top_accounts)) {
@@ -140,7 +164,7 @@ module EpochBoundary {
                 Audit::val_audit_passing(addr)
             ) {
                 Vector::push_back(&mut proposed_set, addr);
-                Burn::epoch_start_burn(vm, addr, burn_value);
+                // Burn::epoch_start_burn(vm, addr, burn_value);
             };
             i = i+ 1;
         };
@@ -174,5 +198,6 @@ module EpochBoundary {
         AutoPay::reconfig_reset_tick(vm);
         Epoch::reset_timer(vm, height_now);
     }
+
 }
 }

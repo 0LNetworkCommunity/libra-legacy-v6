@@ -5,8 +5,8 @@
       "uid": 0,
       "destination": "88E74DFED34420F2AD8032148280A84B",
       "type_of": "FixedOnce",
-      "value": 1,
-      "duration_epochs": 2
+      "value": 5,
+      "duration_epochs": 3
     }
   ]
 }

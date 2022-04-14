@@ -103,23 +103,25 @@ script {
       let eve = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
       let old_account_bal = DiemAccount::balance<GAS>(eve);
       let old_account_bal_oper = DiemAccount::balance<GAS>(@0xfa72817f1b5aab94658238ddcdc08010);
+      
+      assert(old_account_bal == 1000000, 7357001);
 
       EpochBoundary::reconfigure(&vm, 100);
       let new_account_bal = DiemAccount::balance<GAS>(eve);
 
-      assert(old_account_bal == 1000000, 7357001);
 
       // eve did not mine or validator in last epoch, case != 1. So there wont be a reward 
+      // there is also a 1 coin burn
       assert(Cases::get_case(&vm, @{{bob}}, 0, 100) != 1, 7357002);
-      assert(new_account_bal == 1000000, 7357003);
+      assert(new_account_bal == 0, 7357003);
 
       // Operator account should not increase after epoch change
       assert(
         DiemAccount::balance<GAS>(@0xfa72817f1b5aab94658238ddcdc08010) == old_account_bal_oper, 
-        7357003
+        7357004
       );
 
-      assert(TowerState::can_create_val_account(@{{bob}}) == false, 7357004);
+      assert(TowerState::can_create_val_account(@{{bob}}) == false, 7357005);
       
   }
 }

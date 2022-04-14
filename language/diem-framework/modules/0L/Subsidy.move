@@ -24,6 +24,7 @@ address 0x1 {
     use 0x1::ValidatorConfig;
     use 0x1::TowerState;
     use 0x1::FixedPoint32;
+    use 0x1::Teams;
 
     // estimated gas unit cost for proof verification divided coin scaling factor
     // Cost for verification test/easy difficulty: 1173 / 1000000
@@ -49,25 +50,73 @@ address 0x1 {
       if (subsidy_units > len && subsidy_units > 0 ) { // arithmetic safety check
         subsidy_granted = subsidy_units/len;
       } else { return };
-
+      
       let i = 0;
       while (i < len) {
-        let node_address = *(Vector::borrow<address>(outgoing_set, i));
+        let node_address = Vector::borrow<address>(outgoing_set, i);
         // Transfer gas from vm address to validator
-        let minted_coins = Diem::mint<GAS>(vm, subsidy_granted);
-        DiemAccount::vm_deposit_with_metadata<GAS>(
-          vm,
-          node_address,
-          minted_coins,
-          b"validator subsidy",
-          b""
-        );
-
+        check_team_and_pay(vm, node_address, subsidy_granted);
         // refund operator tx fees for mining
-        refund_operator_tx_fees(vm, node_address);
+        refund_operator_tx_fees(vm, *node_address);
         i = i + 1;
       };
     }
+
+    fun check_team_and_pay(vm: &signer, captain_address: &address, subsidy_granted: u64) {
+      // this is a solo validator. Exists during transition to delegation mode. This is a fallback condition to keep the node from halting
+      let captain_value = subsidy_granted;
+      if (Teams::team_is_init(*captain_address)) {
+        // split captain reward and send to captain.
+        let captain_pct = Teams::get_operator_reward(*captain_address);
+        if (captain_pct == 0 || captain_pct > 100) return;
+        // split off the captain value
+        captain_value = FixedPoint32::multiply_u64(
+          subsidy_granted,
+          FixedPoint32::create_from_rational(captain_pct, 100) 
+        );
+        let value_to_members = subsidy_granted - captain_value;
+        // get team members
+        let members = Teams::get_team_members(*captain_address);
+        // split the team subsidy
+        split_subsidy_to_team(vm, &members, value_to_members);
+      };
+      let captain_coins = Diem::mint<GAS>(vm, captain_value);
+            
+      // payment to captain
+      DiemAccount::vm_deposit_with_metadata<GAS>(
+        vm,
+        *captain_address,
+        captain_coins,
+        b"validator subsidy",
+        b""
+      );
+    }
+
+    fun split_subsidy_to_team(vm: &signer, members: &vector<address>, value_to_members: u64) {
+      let collective_height = TowerState::collective_tower_height(members);
+      let i = 0;
+      while (i < Vector::length(members)) {
+        let addr = Vector::borrow(members, i);
+        let one_height = TowerState::tower_for_teams(*addr);
+        if (one_height > 0) {
+          let payment_to_this_member = FixedPoint32::multiply_u64(
+            value_to_members,
+            FixedPoint32::create_from_rational(one_height, collective_height)
+          );
+          // let payment_to_this_member = value_to_members * pct;
+          let minted_coins = Diem::mint<GAS>(vm, payment_to_this_member);
+          DiemAccount::vm_deposit_with_metadata<GAS>(
+              vm,
+              *addr,
+              minted_coins,
+              b"team consensus payment",
+              b""
+          );
+        };
+        i = i + 1;
+      }
+    }
+
 
     // Function code: 02 Prefix: 190102
     public fun calculate_subsidy(vm: &signer, network_density: u64): (u64, u64) {
