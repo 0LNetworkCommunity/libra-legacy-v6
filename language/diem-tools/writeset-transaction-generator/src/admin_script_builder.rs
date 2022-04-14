@@ -220,7 +220,7 @@ fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Res
 
 fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
-
+    
     let v = db.get_latest_version()?;
     db.run_session_at_version(
       v, 
