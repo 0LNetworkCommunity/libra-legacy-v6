@@ -7,8 +7,7 @@ use cli::client_proxy::encode_stdlib_upgrade_transaction;
 use diem_transaction_replay::DiemDebugger;
 use diem_types::{
     account_address::AccountAddress,
-    account_config::{self, diem_root_address, NewEpochEvent},
-    contract_event::ContractEvent,
+    account_config::{self, diem_root_address},
     transaction::{ChangeSet, Script, TransactionArgument, WriteSetPayload},
 };
 
@@ -16,10 +15,9 @@ use handlebars::Handlebars;
 use move_core_types::{
     identifier::Identifier,
     language_storage::ModuleId,
-    move_resource::MoveStructType,
     value::{serialize_values, MoveValue},
 };
-use move_core_types::{language_storage::TypeTag};
+
 use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
 use move_vm_runtime::logging::NoContextLog;
 use move_vm_types::gas_schedule::GasStatus;
