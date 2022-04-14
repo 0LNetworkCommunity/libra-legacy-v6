@@ -15,14 +15,14 @@ use handlebars::Handlebars;
 use move_core_types::{
     identifier::Identifier,
     language_storage::ModuleId,
-    value::{serialize_values, MoveValue},
+    value::{serialize_values, MoveValue}, transaction_argument::convert_txn_args,
 };
 
 use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
 use move_vm_runtime::logging::NoContextLog;
 use move_vm_types::gas_schedule::GasStatus;
 use serde::Serialize;
-use std::{collections::HashMap, io::Write, path::PathBuf};
+use std::{collections::HashMap, io::Write, path::PathBuf, process::exit};
 use tempfile::NamedTempFile;
 
 /// The relative path to the scripts templates
@@ -133,6 +133,8 @@ pub fn encode_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPay
     }
 }
 
+
+
 /// create the upgrade payload INCLUDING the epoch reconfigure
 pub fn encode_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
@@ -140,26 +142,42 @@ pub fn encode_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
 
     let reconfig = ol_reconfig_changeset(path).unwrap();
 
-    // get stlib_cs writeset mut and apply reconfig changeset over it
-    let mut stdlib_ws_mut = stdlib_cs.write_set().clone().into_mut();
+    WriteSetPayload::Direct(merge_change_set(stdlib_cs, reconfig).unwrap())
+}
 
-    let r_ws = reconfig.write_set().clone().into_mut();
+/// create the upgrade payload INCLUDING the epoch reconfigure
+pub fn ol_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+    if vals.len() == 0 { println!("need to provide list of addresses"); exit(1)};
+
+    let stdlib_cs = encode_stdlib_upgrade_transaction();
+
+    // Take the stdlib upgrade change set.
+    let update_vals = ol_bulk_validators_changeset(path, vals).unwrap();
+
+    WriteSetPayload::Direct(merge_change_set(stdlib_cs, update_vals).unwrap())
+}
+
+fn merge_change_set(left: ChangeSet, right: ChangeSet) -> Result<ChangeSet>{
+    // get stlib_cs writeset mut and apply reconfig changeset over it
+    let mut stdlib_ws_mut = left.write_set().clone().into_mut();
+
+    let r_ws = right.write_set().clone().into_mut();
     
     r_ws.get().into_iter()
     .for_each(|item|{
       stdlib_ws_mut.push(item)
     });
 
-    let mut all_events = stdlib_cs.events().to_owned().clone();
-    let mut reconfig_events = reconfig.events().to_owned().clone();
+    let mut all_events = left.events().to_owned().clone();
+    let mut reconfig_events = right.events().to_owned().clone();
     all_events.append(&mut reconfig_events);
 
     let new_cs = ChangeSet::new(
-      stdlib_ws_mut.freeze().unwrap(), 
+      stdlib_ws_mut.freeze()?, 
       all_events
     );
 
-    WriteSetPayload::Direct(new_cs)
+    Ok(new_cs)
 }
 
 
@@ -168,6 +186,39 @@ pub fn ol_create_reconfig_payload(path: PathBuf) -> WriteSetPayload {
 
     WriteSetPayload::Direct(ol_reconfig_changeset(path).expect("could not create reconfig change set"))
 }
+
+fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+
+    
+    let v = db.get_latest_version()?;
+    db.run_session_at_version(
+      v, 
+      None, 
+      |session| {
+          let mut gas_status = GasStatus::new_unmetered();
+          let log_context = NoContextLog::new();
+
+          let txn_args = vec![
+            TransactionArgument::Address(diem_root_address()),
+            TransactionArgument::AddressVector(vals)
+          ];
+          dbg!(&txn_args);
+
+          session.execute_function(
+            &ModuleId::new(
+              account_config::CORE_CODE_ADDRESS, Identifier::new("DiemSystem").unwrap()
+              ),
+            &Identifier::new("bulk_update_validators").unwrap(), 
+            vec![], 
+            convert_txn_args(&txn_args), 
+             &mut gas_status,
+             &log_context
+            );
+          Ok(())
+      })
+}
+
 
 fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
@@ -193,35 +244,3 @@ fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
           Ok(())
       })
 }
-
-// pub fn encode_halt_network_payload() -> WriteSetPayload {
-//     let mut script = template_path();
-//     script.push("halt_transactions.move");
-
-//     WriteSetPayload::Script {
-//         script: Script::new(
-//             compile_script(script.to_str().unwrap().to_owned()),
-//             vec![],
-//             vec![],
-//         ),
-//         execute_as: diem_root_address(),
-//     }
-// }
-
-
-// TransactionPayload::WriteSet(WriteSetPayload::Direct(
-//                     encode_stdlib_upgrade_transaction()
-
-// fn mock_new_epoch_event(epoch: u64) -> ContractEvent {
-//     let key = NewEpochEvent::event_key(); // TODO
-//     let sequence_number = epoch;
-//     // let type_tag = move_core_types::language_storage::TypeTag::Struct(());
-
-//     let e = NewEpochEvent::new(epoch + 1);
-//     let type_tag = TypeTag::Struct(NewEpochEvent::struct_tag());
-//     let event_data = bcs::to_bytes(&e).unwrap();
-
-//     // StructTag
-
-//     ContractEvent::new(key, sequence_number, type_tag, event_data)
-// }

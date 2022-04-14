@@ -11,7 +11,7 @@ use diem_types::{
 use diem_writeset_generator::{
     create_release, encode_custom_script, encode_halt_network_payload,
     encode_remove_validators_payload, encode_bulk_update_vals_payload, release_flow::artifacts::load_latest_artifact,
-    verify_release, encode_stdlib_upgrade, ol_create_reconfig_payload,
+    verify_release, encode_stdlib_upgrade, ol_create_reconfig_payload, ol_encode_rescue,
 };
 use move_binary_format::CompiledModule;
 use std::path::PathBuf;
@@ -24,6 +24,9 @@ struct Opt {
     /// Path to the output serialized bytes
     #[structopt(long, short, parse(from_os_str))]
     output: Option<PathBuf>,
+
+    #[structopt(long, short, parse(from_os_str))]
+    db: Option<PathBuf>,
     /// Output as serialized WriteSet payload. Set this flag if this payload is submitted to AOS portal.
     #[structopt(long)]
     output_payload: bool,
@@ -41,6 +44,8 @@ enum Command {
     UpdateValidators { addresses: Vec<AccountAddress> },
     #[structopt(name = "update-stdlib")]
     UpdateStdlib { path: PathBuf },
+    #[structopt(name = "rescue")]
+    Rescue { addresses: Vec<AccountAddress> },
     #[structopt(name = "reconfig")]
     Reconfig { path: PathBuf },
     /// Block the execution of any transaction in the network
@@ -120,6 +125,8 @@ fn main() -> Result<()> {
         Command::UpdateValidators { addresses } => encode_bulk_update_vals_payload(addresses),
         Command::UpdateStdlib { path } => encode_stdlib_upgrade(path),
         Command::Reconfig { path } => ol_create_reconfig_payload(path),
+        Command::Rescue { addresses } => ol_encode_rescue(opt.db.unwrap(), addresses),
+
         //////// end 0L ////////
         
         Command::HaltNetwork => encode_halt_network_payload(),
