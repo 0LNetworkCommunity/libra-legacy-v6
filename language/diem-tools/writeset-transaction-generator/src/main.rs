@@ -11,7 +11,7 @@ use diem_types::{
 use diem_writeset_generator::{
     create_release, encode_custom_script, encode_halt_network_payload,
     encode_remove_validators_payload, encode_bulk_update_vals_payload, release_flow::artifacts::load_latest_artifact,
-    verify_release, encode_stdlib_upgrade,
+    verify_release, encode_stdlib_upgrade, ol_create_reconfig_change_set,
 };
 use move_binary_format::CompiledModule;
 use std::path::PathBuf;
@@ -41,6 +41,8 @@ enum Command {
     UpdateValidators { addresses: Vec<AccountAddress> },
     #[structopt(name = "update-stdlib")]
     UpdateStdlib { epoch: u64 },
+    #[structopt(name = "reconfig")]
+    Reconfig { path: PathBuf },
     /// Block the execution of any transaction in the network
     #[structopt(name = "halt-network")]
     HaltNetwork,
@@ -117,6 +119,7 @@ fn main() -> Result<()> {
         //////// 0L ////////
         Command::UpdateValidators { addresses } => encode_bulk_update_vals_payload(addresses),
         Command::UpdateStdlib { epoch } => encode_stdlib_upgrade(epoch),
+        Command::Reconfig { path } => ol_create_reconfig_change_set(path),
         //////// end 0L ////////
         
         Command::HaltNetwork => encode_halt_network_payload(),

@@ -4,22 +4,33 @@
 use anyhow::{bail, Result};
 use cli::client_proxy::encode_stdlib_upgrade_transaction;
 
+use diem_transaction_replay::DiemDebugger;
 use diem_types::{
     account_address::AccountAddress,
-    account_config::{diem_root_address, NewEpochEvent},
-    transaction::{ChangeSet, Script, TransactionArgument, WriteSetPayload}, contract_event::ContractEvent, event::EventKey,
+    account_config::{self, diem_root_address, NewEpochEvent},
+    contract_event::ContractEvent,
+    event::EventKey,
+    transaction::{ChangeSet, Script, TransactionArgument, WriteSetPayload},
 };
 use diem_validator_interface::DebuggerStateView;
+use diem_vm::system_module_names::{ORACLE_MODULE, UPGRADE_MODULE, UPGRADE_RECONFIG};
 use handlebars::Handlebars;
-use move_core_types::{move_resource, language_storage::TypeTag};
+use move_core_types::{
+    identifier::Identifier,
+    language_storage::ModuleId,
+    move_resource::MoveStructType,
+    value::{serialize_values, MoveValue},
+};
+use move_core_types::{language_storage::TypeTag, move_resource};
 use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
+use move_vm_runtime::logging::NoContextLog;
+use move_vm_types::gas_schedule::GasStatus;
 use serde::Serialize;
 use std::{collections::HashMap, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
-use move_core_types::move_resource::MoveStructType;
 
-use crate::build_changeset;
-    // move_resource::MoveStructType,
+use crate::{build_changeset, GenesisSession};
+// move_resource::MoveStructType,
 
 /// The relative path to the scripts templates
 pub const SCRIPTS_DIR_PATH: &str = "templates";
@@ -133,41 +144,70 @@ pub fn encode_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPay
 pub fn encode_stdlib_upgrade(epoch: u64) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
     let stdlib_cs = encode_stdlib_upgrade_transaction();
-    
+
     // let event = NewEpochEvent::new(50000);
     let contract_event = mock_new_epoch_event(epoch);
 
-    let new_cs = ChangeSet::new(
-      stdlib_cs.write_set().to_owned(),
-      vec![contract_event]
-    );
+    let new_cs = ChangeSet::new(stdlib_cs.write_set().to_owned(), vec![contract_event]);
 
     WriteSetPayload::Direct(new_cs)
-
 }
 
-fn mock_new_epoch_event(epoch: u64 ) -> ContractEvent{
-  let key = NewEpochEvent::event_key(); // TODO
-  let sequence_number = epoch;
-  // let type_tag = move_core_types::language_storage::TypeTag::Struct(());
+// TransactionPayload::WriteSet(WriteSetPayload::Direct(
+//                     encode_stdlib_upgrade_transaction()
 
-  let e = NewEpochEvent::new(epoch+1);
-  let type_tag = TypeTag::Struct(NewEpochEvent::struct_tag());
-  let event_data = bcs::to_bytes(&e).unwrap();
-  // let move_type = e.into();
+fn mock_new_epoch_event(epoch: u64) -> ContractEvent {
+    let key = NewEpochEvent::event_key(); // TODO
+    let sequence_number = epoch;
+    // let type_tag = move_core_types::language_storage::TypeTag::Struct(());
 
-  // StructTag
+    let e = NewEpochEvent::new(epoch + 1);
+    let type_tag = TypeTag::Struct(NewEpochEvent::struct_tag());
+    let event_data = bcs::to_bytes(&e).unwrap();
+    // let move_type = e.into();
 
-  ContractEvent::new(key, sequence_number, type_tag, event_data)
+    // StructTag
 
+    ContractEvent::new(key, sequence_number, type_tag, event_data)
 }
 
+pub fn ol_create_reconfig_change_set(path: PathBuf) -> WriteSetPayload {
+    let db = DiemDebugger::db(path).unwrap();
 
-fn ol_create_upgrade_change_set() {
-  let state_view = DebuggerStateView::new(&remote, artifact.version);
-  
-  let (updated_version_writeset, events) = build_changeset(&state_view, |session| {
-      session.set_diem_version(updated_diem_version);
-  })
-  .into_inner();
+    let v = db.get_latest_version().unwrap();
+    let cs = db
+        .run_session_at_version(v, None, |session| {
+            let mut gas_status = GasStatus::new_unmetered();
+            let log_context = NoContextLog::new();
+
+            let args = vec![MoveValue::Signer(diem_root_address())];
+
+            session.execute_function(
+                &ModuleId::new(account_config::CORE_CODE_ADDRESS, Identifier::new("DiemConfig").unwrap()),
+                &Identifier::new("upgrade_reconfig").unwrap(),
+                vec![],
+                serialize_values(&args),
+                &mut gas_status,
+                &log_context,
+            );
+
+            Ok(())
+        })
+        .unwrap();
+
+    WriteSetPayload::Direct(cs)
 }
+
+// pub fn encode_halt_network_payload() -> WriteSetPayload {
+//     let mut script = template_path();
+//     script.push("halt_transactions.move");
+
+//     WriteSetPayload::Script {
+//         script: Script::new(
+//             compile_script(script.to_str().unwrap().to_owned()),
+//             vec![],
+//             vec![],
+//         ),
+//         execute_as: diem_root_address(),
+//     }
+// }
