@@ -40,7 +40,7 @@ enum Command {
     #[structopt(name = "update-validators")]
     UpdateValidators { addresses: Vec<AccountAddress> },
     #[structopt(name = "update-stdlib")]
-    UpdateStdlib { epoch: u64 },
+    UpdateStdlib { path: PathBuf },
     #[structopt(name = "reconfig")]
     Reconfig { path: PathBuf },
     /// Block the execution of any transaction in the network
@@ -118,7 +118,7 @@ fn main() -> Result<()> {
         Command::RemoveValidators { addresses } => encode_remove_validators_payload(addresses),
         //////// 0L ////////
         Command::UpdateValidators { addresses } => encode_bulk_update_vals_payload(addresses),
-        Command::UpdateStdlib { epoch } => encode_stdlib_upgrade(epoch),
+        Command::UpdateStdlib { path } => encode_stdlib_upgrade(path),
         Command::Reconfig { path } => ol_create_reconfig_payload(path),
         //////// end 0L ////////
         

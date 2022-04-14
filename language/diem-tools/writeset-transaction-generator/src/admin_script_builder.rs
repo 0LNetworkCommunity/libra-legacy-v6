@@ -12,7 +12,6 @@ use diem_types::{
     transaction::{ChangeSet, Script, TransactionArgument, WriteSetPayload},
 };
 
-
 use handlebars::Handlebars;
 use move_core_types::{
     identifier::Identifier,
@@ -27,9 +26,6 @@ use move_vm_types::gas_schedule::GasStatus;
 use serde::Serialize;
 use std::{collections::HashMap, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
-
-
-// move_resource::MoveStructType,
 
 /// The relative path to the scripts templates
 pub const SCRIPTS_DIR_PATH: &str = "templates";
@@ -140,35 +136,20 @@ pub fn encode_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPay
 }
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
-pub fn encode_stdlib_upgrade(epoch: u64) -> WriteSetPayload {
+pub fn encode_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
     let stdlib_cs = encode_stdlib_upgrade_transaction();
+// }
+//     // let event = NewEpochEvent::new(50000);
+// pub fn encode_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
+    let reconfig = ol_reconfig_changeset(path).unwrap();
 
-    // let event = NewEpochEvent::new(50000);
-    let contract_event = mock_new_epoch_event(epoch);
-
-    let new_cs = ChangeSet::new(stdlib_cs.write_set().to_owned(), vec![contract_event]);
+    let new_cs = ChangeSet::new(stdlib_cs.write_set().to_owned(), reconfig.events().to_vec());
 
     WriteSetPayload::Direct(new_cs)
 }
 
-// TransactionPayload::WriteSet(WriteSetPayload::Direct(
-//                     encode_stdlib_upgrade_transaction()
 
-fn mock_new_epoch_event(epoch: u64) -> ContractEvent {
-    let key = NewEpochEvent::event_key(); // TODO
-    let sequence_number = epoch;
-    // let type_tag = move_core_types::language_storage::TypeTag::Struct(());
-
-    let e = NewEpochEvent::new(epoch + 1);
-    let type_tag = TypeTag::Struct(NewEpochEvent::struct_tag());
-    let event_data = bcs::to_bytes(&e).unwrap();
-    // let move_type = e.into();
-
-    // StructTag
-
-    ContractEvent::new(key, sequence_number, type_tag, event_data)
-}
 
 pub fn ol_create_reconfig_payload(path: PathBuf) -> WriteSetPayload {
 
@@ -212,4 +193,22 @@ fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
 //         ),
 //         execute_as: diem_root_address(),
 //     }
+// }
+
+
+// TransactionPayload::WriteSet(WriteSetPayload::Direct(
+//                     encode_stdlib_upgrade_transaction()
+
+// fn mock_new_epoch_event(epoch: u64) -> ContractEvent {
+//     let key = NewEpochEvent::event_key(); // TODO
+//     let sequence_number = epoch;
+//     // let type_tag = move_core_types::language_storage::TypeTag::Struct(());
+
+//     let e = NewEpochEvent::new(epoch + 1);
+//     let type_tag = TypeTag::Struct(NewEpochEvent::struct_tag());
+//     let event_data = bcs::to_bytes(&e).unwrap();
+
+//     // StructTag
+
+//     ContractEvent::new(key, sequence_number, type_tag, event_data)
 // }
