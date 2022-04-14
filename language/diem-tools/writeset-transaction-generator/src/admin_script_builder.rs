@@ -1,7 +1,7 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::{bail, Result};
+use anyhow::{Result};
 use cli::client_proxy::encode_stdlib_upgrade_transaction;
 
 use diem_transaction_replay::DiemDebugger;
@@ -9,11 +9,10 @@ use diem_types::{
     account_address::AccountAddress,
     account_config::{self, diem_root_address, NewEpochEvent},
     contract_event::ContractEvent,
-    event::EventKey,
     transaction::{ChangeSet, Script, TransactionArgument, WriteSetPayload},
 };
-use diem_validator_interface::DebuggerStateView;
-use diem_vm::system_module_names::{ORACLE_MODULE, UPGRADE_MODULE, UPGRADE_RECONFIG};
+
+
 use handlebars::Handlebars;
 use move_core_types::{
     identifier::Identifier,
@@ -21,7 +20,7 @@ use move_core_types::{
     move_resource::MoveStructType,
     value::{serialize_values, MoveValue},
 };
-use move_core_types::{language_storage::TypeTag, move_resource};
+use move_core_types::{language_storage::TypeTag};
 use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
 use move_vm_runtime::logging::NoContextLog;
 use move_vm_types::gas_schedule::GasStatus;
@@ -29,7 +28,7 @@ use serde::Serialize;
 use std::{collections::HashMap, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 
-use crate::{build_changeset, GenesisSession};
+
 // move_resource::MoveStructType,
 
 /// The relative path to the scripts templates
@@ -196,7 +195,7 @@ fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
               serialize_values(&args),
               &mut gas_status,
               &log_context,
-          );
+          ).unwrap(); // TODO: don't use unwraps.
           Ok(())
       })
 }
