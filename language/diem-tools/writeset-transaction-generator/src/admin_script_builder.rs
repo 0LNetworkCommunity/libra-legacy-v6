@@ -204,7 +204,7 @@ pub fn encode_stdlib_upgrade() -> Result<WriteSetPayload> {
 /// 2. Appends a bulk_update of the validator set. This transaction emits a network reconfiguration event.
 /// Note that for any db-bootstrapper writeset to work, one new epoch event (reconfiguration) needs to be present. That is accomplished in #2. If you were only to apply #1, you would need to craft an epoch reconfig event, and we provide a script upgrade_reconfig.move in the templates here. But again, for this merged writset we only want one.
 /// For this operation to work MAKE SURE THE STDLIB HAS BEEN COMPILED BEFOREHAND.
-pub fn rescue_writeset(vals: Vec<AccountAddress>) -> Result<WriteSetPayload>{
+pub fn encode_rescue_writeset(vals: Vec<AccountAddress>) -> Result<WriteSetPayload>{
     // get the stdlib changes through sdk magic
     let stdlib_cs = encode_stdlib_upgrade_transaction();
 

@@ -11,7 +11,7 @@ use diem_types::{
 use diem_writeset_generator::{
     create_release, encode_custom_script, encode_halt_network_payload,
     encode_remove_validators_payload, encode_bulk_update_vals_payload, release_flow::artifacts::load_latest_artifact,
-    verify_release,
+    verify_release, encode_rescue_writeset,
 };
 use move_binary_format::CompiledModule;
 use std::path::PathBuf;
@@ -39,6 +39,8 @@ enum Command {
     /// List of addresses to remove from validator set
     #[structopt(name = "update-validators")]
     UpdateValidators { addresses: Vec<AccountAddress> },
+    #[structopt(name = "rescue-mission")]
+    RescueMission { addresses: Vec<AccountAddress> },
     /// Block the execution of any transaction in the network
     #[structopt(name = "halt-network")]
     HaltNetwork,
@@ -112,7 +114,11 @@ fn main() -> Result<()> {
     let opt = Opt::from_args();
     let payload = match opt.cmd {
         Command::RemoveValidators { addresses } => encode_remove_validators_payload(addresses),
+        //////// 0L ////////
         Command::UpdateValidators { addresses } => encode_bulk_update_vals_payload(addresses),
+        Command::RescueMission { addresses } => encode_rescue_writeset(addresses).expect("could not encode rescue writeset"),
+        //////// end 0L ////////
+        
         Command::HaltNetwork => encode_halt_network_payload(),
         Command::BuildCustomScript {
             script_name,
