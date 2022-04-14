@@ -171,31 +171,34 @@ fn mock_new_epoch_event(epoch: u64) -> ContractEvent {
     ContractEvent::new(key, sequence_number, type_tag, event_data)
 }
 
-pub fn ol_create_reconfig_change_set(path: PathBuf) -> WriteSetPayload {
-    let db = DiemDebugger::db(path).unwrap();
+pub fn ol_create_reconfig_payload(path: PathBuf) -> WriteSetPayload {
 
-    let v = db.get_latest_version().unwrap();
-    let cs = db
-        .run_session_at_version(v, None, |session| {
-            let mut gas_status = GasStatus::new_unmetered();
-            let log_context = NoContextLog::new();
+    WriteSetPayload::Direct(ol_reconfig_changeset(path).expect("could not create reconfig change set"))
+}
 
-            let args = vec![MoveValue::Signer(diem_root_address())];
+fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
 
-            session.execute_function(
-                &ModuleId::new(account_config::CORE_CODE_ADDRESS, Identifier::new("DiemConfig").unwrap()),
-                &Identifier::new("upgrade_reconfig").unwrap(),
-                vec![],
-                serialize_values(&args),
-                &mut gas_status,
-                &log_context,
-            );
+    let v = db.get_latest_version()?;
+    db.run_session_at_version(
+      v, 
+      None, 
+      |session| {
+          let mut gas_status = GasStatus::new_unmetered();
+          let log_context = NoContextLog::new();
 
-            Ok(())
-        })
-        .unwrap();
+          let args = vec![MoveValue::Signer(diem_root_address())];
 
-    WriteSetPayload::Direct(cs)
+          session.execute_function(
+              &ModuleId::new(account_config::CORE_CODE_ADDRESS, Identifier::new("DiemConfig").unwrap()),
+              &Identifier::new("upgrade_reconfig").unwrap(),
+              vec![],
+              serialize_values(&args),
+              &mut gas_status,
+              &log_context,
+          );
+          Ok(())
+      })
 }
 
 // pub fn encode_halt_network_payload() -> WriteSetPayload {
