@@ -137,12 +137,27 @@ pub fn encode_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPay
 pub fn encode_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
     let stdlib_cs = encode_stdlib_upgrade_transaction();
-// }
-//     // let event = NewEpochEvent::new(50000);
-// pub fn encode_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
+
     let reconfig = ol_reconfig_changeset(path).unwrap();
 
-    let new_cs = ChangeSet::new(stdlib_cs.write_set().to_owned(), reconfig.events().to_vec());
+    // get stlib_cs writeset mut and apply reconfig changeset over it
+    let mut stdlib_ws_mut = stdlib_cs.write_set().clone().into_mut();
+
+    let r_ws = reconfig.write_set().clone().into_mut();
+    
+    r_ws.get().into_iter()
+    .for_each(|item|{
+      stdlib_ws_mut.push(item)
+    });
+
+    let mut all_events = stdlib_cs.events().to_owned().clone();
+    let mut reconfig_events = reconfig.events().to_owned().clone();
+    all_events.append(&mut reconfig_events);
+
+    let new_cs = ChangeSet::new(
+      stdlib_ws_mut.freeze().unwrap(), 
+      all_events
+    );
 
     WriteSetPayload::Direct(new_cs)
 }
