@@ -3,7 +3,7 @@
 
 use anyhow::{Result, bail};
 use cli::client_proxy::encode_stdlib_upgrade_transaction;
-use diem_transaction_builder::stdlib as transaction_builder;
+
 use diem_types::{
     account_address::AccountAddress,
     account_config::diem_root_address,
@@ -123,7 +123,7 @@ pub fn encode_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPay
 }
 
 //////// 0L ////////
-fn encode_upgrade_reconfig_script(vals: Vec<AccountAddress>) -> WriteSetPayload {
+fn encode_upgrade_reconfig_script(_vals: Vec<AccountAddress>) -> WriteSetPayload {
     let mut script = template_path();
     script.push("upgrade_reconfig.move");
 
@@ -169,7 +169,7 @@ pub fn rescue_writeset(vals: Vec<AccountAddress>) -> Result<WriteSetPayload>{
     let stdlib_cs = encode_stdlib_upgrade_transaction();
 
     // dive into the object to get the mutable writeset.
-    let mut temp = stdlib_cs.write_set().to_owned();
+    let temp = stdlib_cs.write_set().to_owned();
     let mut stdlib_ws = temp.into_mut();
 
     // get the validator change payload.
@@ -200,6 +200,6 @@ pub fn rescue_writeset(vals: Vec<AccountAddress>) -> Result<WriteSetPayload>{
             );
             Ok(golden)
         },
-        WriteSetPayload::Script { execute_as, script } => bail!("cannot get a validator update writeset"),
+        WriteSetPayload::Script { execute_as: _, script: _ } => bail!("cannot get a validator update writeset"),
     }
 }
