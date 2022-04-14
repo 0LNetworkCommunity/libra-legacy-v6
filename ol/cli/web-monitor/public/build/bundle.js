@@ -19346,7 +19346,7 @@ var app = (function () {
     }
 
     // (17:8) {#if has_notes}
-    function create_if_block_2$5(ctx) {
+    function create_if_block_1$5(ctx) {
     	let th;
 
     	const block = {
@@ -19366,7 +19366,7 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_2$5.name,
+    		id: create_if_block_1$5.name,
     		type: "if",
     		source: "(17:8) {#if has_notes}",
     		ctx
@@ -19415,7 +19415,7 @@ var app = (function () {
     }
 
     // (31:10) {#if has_notes}
-    function create_if_block_1$5(ctx) {
+    function create_if_block$7(ctx) {
     	let td;
     	let t_value = /*val*/ ctx[4].note + "";
     	let t;
@@ -19441,38 +19441,9 @@ var app = (function () {
 
     	dispatch_dev("SvelteRegisterBlock", {
     		block,
-    		id: create_if_block_1$5.name,
-    		type: "if",
-    		source: "(31:10) {#if has_notes}",
-    		ctx
-    	});
-
-    	return block;
-    }
-
-    // (40:14) {#if val.ports_status[port]}
-    function create_if_block$7(ctx) {
-    	let span;
-
-    	const block = {
-    		c: function create() {
-    			span = element("span");
-    			attr_dev(span, "uk-icon", "icon: check");
-    			add_location(span, file$b, 40, 16, 1334);
-    		},
-    		m: function mount(target, anchor) {
-    			insert_dev(target, span, anchor);
-    		},
-    		d: function destroy(detaching) {
-    			if (detaching) detach_dev(span);
-    		}
-    	};
-
-    	dispatch_dev("SvelteRegisterBlock", {
-    		block,
     		id: create_if_block$7.name,
     		type: "if",
-    		source: "(40:14) {#if val.ports_status[port]}",
+    		source: "(31:10) {#if has_notes}",
     		ctx
     	});
 
@@ -19482,34 +19453,46 @@ var app = (function () {
     // (38:10) {#each ports as port}
     function create_each_block_1$3(ctx) {
     	let td;
-    	let if_block = /*val*/ ctx[4].ports_status[/*port*/ ctx[7]] && create_if_block$7(ctx);
+    	let span;
+    	let span_uk_icon_value;
+    	let span_class_value;
 
     	const block = {
     		c: function create() {
     			td = element("td");
-    			if (if_block) if_block.c();
+    			span = element("span");
+
+    			attr_dev(span, "uk-icon", span_uk_icon_value = "icon: " + (/*val*/ ctx[4].ports_status[/*port*/ ctx[7]]
+    			? "check"
+    			: "close"));
+
+    			attr_dev(span, "class", span_class_value = /*val*/ ctx[4].ports_status[/*port*/ ctx[7]]
+    			? "uk-text-success"
+    			: "uk-text-danger");
+
+    			add_location(span, file$b, 39, 14, 1289);
     			attr_dev(td, "class", "uk-text-center");
     			add_location(td, file$b, 38, 12, 1247);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, td, anchor);
-    			if (if_block) if_block.m(td, null);
+    			append_dev(td, span);
     		},
     		p: function update(ctx, dirty) {
-    			if (/*val*/ ctx[4].ports_status[/*port*/ ctx[7]]) {
-    				if (if_block) ; else {
-    					if_block = create_if_block$7(ctx);
-    					if_block.c();
-    					if_block.m(td, null);
-    				}
-    			} else if (if_block) {
-    				if_block.d(1);
-    				if_block = null;
+    			if (dirty & /*set, ports*/ 3 && span_uk_icon_value !== (span_uk_icon_value = "icon: " + (/*val*/ ctx[4].ports_status[/*port*/ ctx[7]]
+    			? "check"
+    			: "close"))) {
+    				attr_dev(span, "uk-icon", span_uk_icon_value);
+    			}
+
+    			if (dirty & /*set, ports*/ 3 && span_class_value !== (span_class_value = /*val*/ ctx[4].ports_status[/*port*/ ctx[7]]
+    			? "uk-text-success"
+    			: "uk-text-danger")) {
+    				attr_dev(span, "class", span_class_value);
     			}
     		},
     		d: function destroy(detaching) {
     			if (detaching) detach_dev(td);
-    			if (if_block) if_block.d();
     		}
     	};
 
@@ -19545,7 +19528,7 @@ var app = (function () {
     	let t7;
     	let t8;
     	let t9;
-    	let if_block = /*has_notes*/ ctx[2] && create_if_block_1$5(ctx);
+    	let if_block = /*has_notes*/ ctx[2] && create_if_block$7(ctx);
     	let each_value_1 = /*ports*/ ctx[1];
     	validate_each_argument(each_value_1);
     	let each_blocks = [];
@@ -19613,7 +19596,7 @@ var app = (function () {
     				if (if_block) {
     					if_block.p(ctx, dirty);
     				} else {
-    					if_block = create_if_block_1$5(ctx);
+    					if_block = create_if_block$7(ctx);
     					if_block.c();
     					if_block.m(tr, t0);
     				}
@@ -19683,7 +19666,7 @@ var app = (function () {
     	let t6;
     	let t7;
     	let tbody;
-    	let if_block = /*has_notes*/ ctx[2] && create_if_block_2$5(ctx);
+    	let if_block = /*has_notes*/ ctx[2] && create_if_block_1$5(ctx);
     	let each_value_2 = /*ports*/ ctx[1];
     	validate_each_argument(each_value_2);
     	let each_blocks_1 = [];
@@ -19773,7 +19756,7 @@ var app = (function () {
     		p: function update(ctx, [dirty]) {
     			if (/*has_notes*/ ctx[2]) {
     				if (if_block) ; else {
-    					if_block = create_if_block_2$5(ctx);
+    					if_block = create_if_block_1$5(ctx);
     					if_block.c();
     					if_block.m(tr, t0);
     				}
@@ -21484,7 +21467,7 @@ var app = (function () {
     	return child_ctx;
     }
 
-    // (41:34) {#if !has_notes}
+    // (44:34) {#if !has_notes}
     function create_if_block_5$1(ctx) {
     	let addressnotetip;
     	let current;
@@ -21516,14 +21499,14 @@ var app = (function () {
     		block,
     		id: create_if_block_5$1.name,
     		type: "if",
-    		source: "(41:34) {#if !has_notes}",
+    		source: "(44:34) {#if !has_notes}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (95:2) {:else}
+    // (98:2) {:else}
     function create_else_block_1$3(ctx) {
     	let network;
     	let current;
@@ -21564,14 +21547,14 @@ var app = (function () {
     		block,
     		id: create_else_block_1$3.name,
     		type: "else",
-    		source: "(95:2) {:else}",
+    		source: "(98:2) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (49:2) {#if view == "Chain"}
+    // (52:2) {#if view == "Chain"}
     function create_if_block$3(ctx) {
     	let div;
     	let table;
@@ -21627,15 +21610,15 @@ var app = (function () {
     			}
 
     			attr_dev(th0, "class", "uk-text-center");
-    			add_location(th0, file$7, 57, 14, 2054);
-    			add_location(th1, file$7, 70, 14, 2645);
-    			add_location(tr, file$7, 53, 10, 1932);
-    			add_location(thead, file$7, 52, 8, 1914);
-    			add_location(tbody, file$7, 73, 8, 2696);
+    			add_location(th0, file$7, 60, 14, 2124);
+    			add_location(th1, file$7, 73, 14, 2715);
+    			add_location(tr, file$7, 56, 10, 2002);
+    			add_location(thead, file$7, 55, 8, 1984);
+    			add_location(tbody, file$7, 76, 8, 2766);
     			attr_dev(table, "class", "uk-table uk-table-hover uk-text-muted");
-    			add_location(table, file$7, 51, 6, 1852);
+    			add_location(table, file$7, 54, 6, 1922);
     			attr_dev(div, "class", "uk-overflow-auto");
-    			add_location(div, file$7, 50, 4, 1815);
+    			add_location(div, file$7, 53, 4, 1885);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, div, anchor);
@@ -21672,7 +21655,7 @@ var app = (function () {
     				if_block = null;
     			}
 
-    			if (dirty & /*thOnClick, sortableColumns, sortOrder, sortOption*/ 396) {
+    			if (dirty & /*thOnClick, sortableColumns, sortOrder, sortOption*/ 408) {
     				each_value_1 = /*sortableColumns*/ ctx[7];
     				validate_each_argument(each_value_1);
     				let i;
@@ -21696,7 +21679,7 @@ var app = (function () {
     				each_blocks_1.length = each_value_1.length;
     			}
 
-    			if (dirty & /*set, data, selectedVal, modal_id, has_notes*/ 99) {
+    			if (dirty & /*set, data, selectedVal, modal_id, has_notes*/ 71) {
     				each_value = /*set*/ ctx[1];
     				validate_each_argument(each_value);
     				let i;
@@ -21734,14 +21717,14 @@ var app = (function () {
     		block,
     		id: create_if_block$3.name,
     		type: "if",
-    		source: "(49:2) {#if view == \\\"Chain\\\"}",
+    		source: "(52:2) {#if view == \\\"Chain\\\"}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (55:14) {#if has_notes}
+    // (58:14) {#if has_notes}
     function create_if_block_4$1(ctx) {
     	let th;
 
@@ -21750,7 +21733,7 @@ var app = (function () {
     			th = element("th");
     			th.textContent = "note";
     			attr_dev(th, "class", "uk-text-center");
-    			add_location(th, file$7, 55, 16, 1983);
+    			add_location(th, file$7, 58, 16, 2053);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, th, anchor);
@@ -21764,19 +21747,19 @@ var app = (function () {
     		block,
     		id: create_if_block_4$1.name,
     		type: "if",
-    		source: "(55:14) {#if has_notes}",
+    		source: "(58:14) {#if has_notes}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (62:18) {#if sortOption == col.sortKey}
+    // (65:18) {#if sortOption == col.sortKey}
     function create_if_block_2$3(ctx) {
     	let if_block_anchor;
 
     	function select_block_type_1(ctx, dirty) {
-    		if (/*sortOrder*/ ctx[3] == 1) return create_if_block_3$2;
+    		if (/*sortOrder*/ ctx[4] == 1) return create_if_block_3$2;
     		return create_else_block$3;
     	}
 
@@ -21813,14 +21796,14 @@ var app = (function () {
     		block,
     		id: create_if_block_2$3.name,
     		type: "if",
-    		source: "(62:18) {#if sortOption == col.sortKey}",
+    		source: "(65:18) {#if sortOption == col.sortKey}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (65:20) {:else}
+    // (68:20) {:else}
     function create_else_block$3(ctx) {
     	let span;
 
@@ -21828,7 +21811,7 @@ var app = (function () {
     		c: function create() {
     			span = element("span");
     			attr_dev(span, "uk-icon", "icon: triangle-down");
-    			add_location(span, file$7, 65, 22, 2493);
+    			add_location(span, file$7, 68, 22, 2563);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -21842,14 +21825,14 @@ var app = (function () {
     		block,
     		id: create_else_block$3.name,
     		type: "else",
-    		source: "(65:20) {:else}",
+    		source: "(68:20) {:else}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (63:20) {#if sortOrder == 1}
+    // (66:20) {#if sortOrder == 1}
     function create_if_block_3$2(ctx) {
     	let span;
 
@@ -21857,7 +21840,7 @@ var app = (function () {
     		c: function create() {
     			span = element("span");
     			attr_dev(span, "uk-icon", "icon: triangle-up");
-    			add_location(span, file$7, 63, 22, 2401);
+    			add_location(span, file$7, 66, 22, 2471);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, span, anchor);
@@ -21871,14 +21854,14 @@ var app = (function () {
     		block,
     		id: create_if_block_3$2.name,
     		type: "if",
-    		source: "(63:20) {#if sortOrder == 1}",
+    		source: "(66:20) {#if sortOrder == 1}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (59:14) {#each sortableColumns as col}
+    // (62:14) {#each sortableColumns as col}
     function create_each_block_1$2(ctx) {
     	let th;
     	let span;
@@ -21887,7 +21870,7 @@ var app = (function () {
     	let t1;
     	let mounted;
     	let dispose;
-    	let if_block = /*sortOption*/ ctx[2] == /*col*/ ctx[15].sortKey && create_if_block_2$3(ctx);
+    	let if_block = /*sortOption*/ ctx[3] == /*col*/ ctx[15].sortKey && create_if_block_2$3(ctx);
 
     	function click_handler_1() {
     		return /*click_handler_1*/ ctx[10](/*col*/ ctx[15]);
@@ -21901,9 +21884,9 @@ var app = (function () {
     			t1 = space();
     			if (if_block) if_block.c();
     			attr_dev(span, "class", "disable-select");
-    			add_location(span, file$7, 60, 18, 2240);
+    			add_location(span, file$7, 63, 18, 2310);
     			attr_dev(th, "class", "uk-text-right");
-    			add_location(th, file$7, 59, 16, 2155);
+    			add_location(th, file$7, 62, 16, 2225);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, th, anchor);
@@ -21920,7 +21903,7 @@ var app = (function () {
     		p: function update(new_ctx, dirty) {
     			ctx = new_ctx;
 
-    			if (/*sortOption*/ ctx[2] == /*col*/ ctx[15].sortKey) {
+    			if (/*sortOption*/ ctx[3] == /*col*/ ctx[15].sortKey) {
     				if (if_block) {
     					if_block.p(ctx, dirty);
     				} else {
@@ -21945,14 +21928,14 @@ var app = (function () {
     		block,
     		id: create_each_block_1$2.name,
     		type: "each",
-    		source: "(59:14) {#each sortableColumns as col}",
+    		source: "(62:14) {#each sortableColumns as col}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (77:14) {#if has_notes}
+    // (80:14) {#if has_notes}
     function create_if_block_1$3(ctx) {
     	let td;
     	let t_value = /*val*/ ctx[12].note + "";
@@ -21963,7 +21946,7 @@ var app = (function () {
     			td = element("td");
     			t = text(t_value);
     			attr_dev(td, "class", "uk-text-center");
-    			add_location(td, file$7, 77, 16, 2915);
+    			add_location(td, file$7, 80, 16, 2985);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, td, anchor);
@@ -21981,14 +21964,14 @@ var app = (function () {
     		block,
     		id: create_if_block_1$3.name,
     		type: "if",
-    		source: "(77:14) {#if has_notes}",
+    		source: "(80:14) {#if has_notes}",
     		ctx
     	});
 
     	return block;
     }
 
-    // (75:10) {#each set as val, i}
+    // (78:10) {#each set as val, i}
     function create_each_block$3(ctx) {
     	let tr;
     	let t0;
@@ -22062,29 +22045,29 @@ var app = (function () {
     			span = element("span");
     			t15 = space();
     			attr_dev(td0, "class", "uk-visible@s uk-text-center");
-    			add_location(td0, file$7, 79, 14, 2992);
+    			add_location(td0, file$7, 82, 14, 3062);
     			attr_dev(td1, "class", "uk-hidden@s uk-text-truncate");
-    			add_location(td1, file$7, 80, 14, 3073);
+    			add_location(td1, file$7, 83, 14, 3143);
     			attr_dev(td2, "class", "uk-text-right");
-    			add_location(td2, file$7, 81, 14, 3155);
+    			add_location(td2, file$7, 84, 14, 3225);
     			attr_dev(td3, "class", "uk-text-right");
-    			add_location(td3, file$7, 82, 14, 3219);
+    			add_location(td3, file$7, 85, 14, 3289);
     			attr_dev(td4, "class", "uk-text-right");
-    			add_location(td4, file$7, 83, 14, 3292);
+    			add_location(td4, file$7, 86, 14, 3362);
     			attr_dev(td5, "class", "uk-text-right");
-    			add_location(td5, file$7, 84, 14, 3356);
+    			add_location(td5, file$7, 87, 14, 3426);
     			attr_dev(td6, "class", "uk-text-right");
-    			add_location(td6, file$7, 85, 14, 3427);
+    			add_location(td6, file$7, 88, 14, 3497);
     			attr_dev(span, "uk-icon", "icon: info");
     			attr_dev(span, "uk-toggle", "target: #" + modal_id$1);
-    			add_location(span, file$7, 87, 16, 3519);
-    			add_location(td7, file$7, 86, 14, 3498);
+    			add_location(span, file$7, 90, 16, 3589);
+    			add_location(td7, file$7, 89, 14, 3568);
 
     			attr_dev(tr, "class", tr_class_value = "" + (null_to_empty(/*val*/ ctx[12].account_address === /*data*/ ctx[0].account_view.address
     			? 'owner'
     			: '') + " svelte-n6q91t"));
 
-    			add_location(tr, file$7, 75, 10, 2746);
+    			add_location(tr, file$7, 78, 10, 2816);
     		},
     		m: function mount(target, anchor) {
     			insert_dev(target, tr, anchor);
@@ -22162,7 +22145,7 @@ var app = (function () {
     		block,
     		id: create_each_block$3.name,
     		type: "each",
-    		source: "(75:10) {#each set as val, i}",
+    		source: "(78:10) {#each set as val, i}",
     		ctx
     	});
 
@@ -22198,7 +22181,7 @@ var app = (function () {
     	const if_blocks = [];
 
     	function select_block_type(ctx, dirty) {
-    		if (/*view*/ ctx[4] == "Chain") return 0;
+    		if (/*view*/ ctx[5] == "Chain") return 0;
     		return 1;
     	}
 
@@ -22207,7 +22190,7 @@ var app = (function () {
 
     	validatormodal = new ValidatorModal({
     			props: {
-    				validator: /*selectedVal*/ ctx[5],
+    				validator: /*selectedVal*/ ctx[2],
     				id: modal_id$1
     			},
     			$$inline: true
@@ -22234,28 +22217,28 @@ var app = (function () {
     			if_block1.c();
     			t7 = space();
     			create_component(validatormodal.$$.fragment);
-    			add_location(span, file$7, 40, 4, 1294);
+    			add_location(span, file$7, 43, 4, 1364);
     			attr_dev(h2, "class", "uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom");
-    			add_location(h2, file$7, 39, 2, 1192);
+    			add_location(h2, file$7, 42, 2, 1262);
     			attr_dev(input0, "class", "uk-radio");
     			attr_dev(input0, "type", "radio");
     			attr_dev(input0, "name", "radio2");
     			input0.value = "Chain";
     			input0.checked = true;
-    			add_location(input0, file$7, 44, 11, 1591);
-    			add_location(label0, file$7, 44, 4, 1584);
+    			add_location(input0, file$7, 47, 11, 1661);
+    			add_location(label0, file$7, 47, 4, 1654);
     			attr_dev(input1, "class", "uk-radio");
     			attr_dev(input1, "type", "radio");
     			attr_dev(input1, "name", "radio2");
     			input1.value = "Network";
-    			add_location(input1, file$7, 45, 11, 1690);
-    			add_location(label1, file$7, 45, 4, 1683);
+    			add_location(input1, file$7, 48, 11, 1760);
+    			add_location(label1, file$7, 48, 4, 1753);
     			attr_dev(div, "id", "radio2");
     			attr_dev(div, "class", "uk-margin uk-grid-small uk-child-width-auto uk-align-center uk-text-center");
     			attr_dev(div, "uk-grid", "");
-    			add_location(div, file$7, 43, 2, 1382);
+    			add_location(div, file$7, 46, 2, 1452);
     			attr_dev(main, "uk-height-viewport", "expand: true");
-    			add_location(main, file$7, 38, 0, 1149);
+    			add_location(main, file$7, 41, 0, 1219);
     		},
     		l: function claim(nodes) {
     			throw new Error("options.hydrate only works if the component was compiled with the `hydratable: true` option");
@@ -22338,7 +22321,7 @@ var app = (function () {
     			}
 
     			const validatormodal_changes = {};
-    			if (dirty & /*selectedVal*/ 32) validatormodal_changes.validator = /*selectedVal*/ ctx[5];
+    			if (dirty & /*selectedVal*/ 4) validatormodal_changes.validator = /*selectedVal*/ ctx[2];
     			validatormodal.$set(validatormodal_changes);
     		},
     		i: function intro(local) {
@@ -22414,10 +22397,10 @@ var app = (function () {
 
     	function thOnClick(key) {
     		if (sortOption == key) {
-    			$$invalidate(3, sortOrder = -sortOrder);
+    			$$invalidate(4, sortOrder = -sortOrder);
     		}
 
-    		$$invalidate(2, sortOption = key);
+    		$$invalidate(3, sortOption = key);
     	}
 
     	const writable_props = ['data'];
@@ -22427,11 +22410,11 @@ var app = (function () {
     	});
 
     	const click_handler = () => {
-    		$$invalidate(4, view = document.querySelector('input[name="radio2"]:checked').value);
+    		$$invalidate(5, view = document.querySelector('input[name="radio2"]:checked').value);
     	};
 
     	const click_handler_1 = col => thOnClick(col.sortKey);
-    	const click_handler_2 = val => $$invalidate(5, selectedVal = val);
+    	const click_handler_2 = val => $$invalidate(2, selectedVal = val);
 
     	$$self.$$set = $$props => {
     		if ('data' in $$props) $$invalidate(0, data = $$props.data);
@@ -22455,12 +22438,12 @@ var app = (function () {
 
     	$$self.$inject_state = $$props => {
     		if ('data' in $$props) $$invalidate(0, data = $$props.data);
-    		if ('view' in $$props) $$invalidate(4, view = $$props.view);
+    		if ('view' in $$props) $$invalidate(5, view = $$props.view);
     		if ('set' in $$props) $$invalidate(1, set = $$props.set);
-    		if ('selectedVal' in $$props) $$invalidate(5, selectedVal = $$props.selectedVal);
+    		if ('selectedVal' in $$props) $$invalidate(2, selectedVal = $$props.selectedVal);
     		if ('sortableColumns' in $$props) $$invalidate(7, sortableColumns = $$props.sortableColumns);
-    		if ('sortOption' in $$props) $$invalidate(2, sortOption = $$props.sortOption);
-    		if ('sortOrder' in $$props) $$invalidate(3, sortOrder = $$props.sortOrder);
+    		if ('sortOption' in $$props) $$invalidate(3, sortOption = $$props.sortOption);
+    		if ('sortOrder' in $$props) $$invalidate(4, sortOrder = $$props.sortOrder);
     		if ('has_notes' in $$props) $$invalidate(6, has_notes = $$props.has_notes);
     	};
 
@@ -22469,15 +22452,19 @@ var app = (function () {
     	}
 
     	$$self.$$.update = () => {
-    		if ($$self.$$.dirty & /*data, set*/ 3) {
+    		if ($$self.$$.dirty & /*data, set, selectedVal*/ 7) {
     			if (data.chain_view && data.chain_view.validator_view) {
     				$$invalidate(1, set = data.chain_view.validator_view);
     				$$invalidate(6, has_notes = set.some(e => e.note != ""));
-    				$$invalidate(5, selectedVal = set[0]);
+
+    				if (selectedVal == null) {
+    					// initial selection
+    					$$invalidate(2, selectedVal = set[0]);
+    				}
     			}
     		}
 
-    		if ($$self.$$.dirty & /*set, sortOption, sortOrder*/ 14) {
+    		if ($$self.$$.dirty & /*set, sortOption, sortOrder*/ 26) {
     			$$invalidate(1, set = set.sort((a, b) => a[sortOption] > b[sortOption] ? sortOrder : -sortOrder));
     		}
     	};
@@ -22485,10 +22472,10 @@ var app = (function () {
     	return [
     		data,
     		set,
+    		selectedVal,
     		sortOption,
     		sortOrder,
     		view,
-    		selectedVal,
     		has_notes,
     		sortableColumns,
     		thOnClick,

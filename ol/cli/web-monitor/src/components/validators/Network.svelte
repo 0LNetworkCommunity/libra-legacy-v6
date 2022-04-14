@@ -39,9 +39,10 @@
           <td>{val.vfn_ip}</td>
           {#each ports as port}
             <td class="uk-text-center">
-              {#if val.ports_status[port]}
-                <span uk-icon="icon: check"></span>
-              {/if}
+              <span 
+                uk-icon="icon: {val.ports_status[port] ? "check" : "close"}"
+                class="{val.ports_status[port] ? "uk-text-success" : "uk-text-danger"}"
+              ></span>
             </td> 
           {/each}          
         </tr>

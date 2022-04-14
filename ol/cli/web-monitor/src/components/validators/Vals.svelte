@@ -39,7 +39,10 @@
   $: if (data.chain_view && data.chain_view.validator_view) {
     set = data.chain_view.validator_view;
     has_notes = set.some(e => e.note != "");
-    selectedVal = set[0];
+    if (selectedVal == null) {
+      // initial selection
+      selectedVal = set[0];
+    }
   }
   $: set = set.sort((a, b) => (a[sortOption] > b[sortOption]) ? sortOrder : -sortOrder);
   
