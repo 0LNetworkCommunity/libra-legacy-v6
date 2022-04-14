@@ -179,7 +179,7 @@ pub fn encode_stdlib_upgrade() -> Result<WriteSetPayload> {
 
           Ok(golden)
         },
-        WriteSetPayload::Script { execute_as, script } => bail!("could not get upgrade reconfig payload"),
+        WriteSetPayload::Script { execute_as: _, script: _ } => bail!("could not get upgrade reconfig payload"),
     }
 }
 // // Update WriteSet
