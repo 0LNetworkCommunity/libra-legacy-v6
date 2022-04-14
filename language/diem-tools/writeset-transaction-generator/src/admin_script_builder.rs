@@ -203,8 +203,6 @@ fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Res
             TransactionArgument::Address(diem_root_address()),
             TransactionArgument::AddressVector(vals)
           ];
-          dbg!(&txn_args);
-
           session.execute_function(
             &ModuleId::new(
               account_config::CORE_CODE_ADDRESS, Identifier::new("DiemSystem").unwrap()
@@ -214,7 +212,7 @@ fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Res
             convert_txn_args(&txn_args), 
              &mut gas_status,
              &log_context
-            );
+            ).unwrap(); // todo remove this unwrap.
           Ok(())
       })
 }
