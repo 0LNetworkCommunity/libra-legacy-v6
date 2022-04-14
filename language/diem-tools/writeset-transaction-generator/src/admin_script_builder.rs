@@ -143,12 +143,12 @@ pub fn encode_upgrade_reconfig_script() -> WriteSetPayload {
 }
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
-pub fn encode_stdlib_upgrade() -> WriteSetPayload {
+pub fn encode_stdlib_upgrade(epoch: u64) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
     let stdlib_cs = encode_stdlib_upgrade_transaction();
     
-    let event = NewEpochEvent::new(0);
-    let contract_event = dummy_new_epoch_event();
+    // let event = NewEpochEvent::new(50000);
+    let contract_event = create_new_epoch_event(epoch);
 
     let new_cs = ChangeSet::new(
       stdlib_cs.write_set().to_owned(),
@@ -191,14 +191,14 @@ pub fn encode_stdlib_upgrade() -> WriteSetPayload {
     // }
 }
 
-fn dummy_new_epoch_event() -> ContractEvent{
+fn create_new_epoch_event(epoch: u64 ) -> ContractEvent{
   let key = NewEpochEvent::event_key(); // TODO
-  let sequence_number = 0;
+  let sequence_number = epoch;
   // let type_tag = move_core_types::language_storage::TypeTag::Struct(());
 
-  let e = NewEpochEvent::new(0);
+  let e = NewEpochEvent::new(epoch+1);
   let type_tag = TypeTag::Struct(NewEpochEvent::struct_tag());
-  let event_data = vec![]; //bcs::to_bytes().unwrap();
+  let event_data = bcs::to_bytes(&e).unwrap();
   // let move_type = e.into();
 
   // StructTag

@@ -39,8 +39,8 @@ enum Command {
     /// List of addresses to remove from validator set
     #[structopt(name = "update-validators")]
     UpdateValidators { addresses: Vec<AccountAddress> },
-    #[structopt(name = "rescue-mission")]
-    RescueMission { addresses: Vec<AccountAddress> },
+    #[structopt(name = "update-stdlib")]
+    UpdateStdlib { epoch: u64 },
     /// Block the execution of any transaction in the network
     #[structopt(name = "halt-network")]
     HaltNetwork,
@@ -116,7 +116,7 @@ fn main() -> Result<()> {
         Command::RemoveValidators { addresses } => encode_remove_validators_payload(addresses),
         //////// 0L ////////
         Command::UpdateValidators { addresses } => encode_bulk_update_vals_payload(addresses),
-        Command::RescueMission { addresses: _ } => encode_stdlib_upgrade(),
+        Command::UpdateStdlib { epoch } => encode_stdlib_upgrade(epoch),
         //////// end 0L ////////
         
         Command::HaltNetwork => encode_halt_network_payload(),
