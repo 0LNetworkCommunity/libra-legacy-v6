@@ -9,6 +9,7 @@ use diem_types::{
     account_config::{diem_root_address, NewEpochEvent},
     transaction::{ChangeSet, Script, TransactionArgument, WriteSetPayload}, contract_event::ContractEvent, event::EventKey,
 };
+use diem_validator_interface::DebuggerStateView;
 use handlebars::Handlebars;
 use move_core_types::{move_resource, language_storage::TypeTag};
 use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
@@ -16,6 +17,8 @@ use serde::Serialize;
 use std::{collections::HashMap, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
 use move_core_types::move_resource::MoveStructType;
+
+use crate::build_changeset;
     // move_resource::MoveStructType,
 
 /// The relative path to the scripts templates
@@ -126,29 +129,13 @@ pub fn encode_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPay
     }
 }
 
-//////// 0L ////////
-/// helper function to triggeer a reconfig after a stdlib upgrade.
-pub fn encode_upgrade_reconfig_script() -> WriteSetPayload {
-    let mut script = template_path();
-    script.push("upgrade_reconfig.move");
-
-    WriteSetPayload::Script {
-        script: Script::new(
-            compile_script(script.to_str().unwrap().to_owned()),
-            vec![],
-            vec![],
-        ),
-        execute_as: diem_root_address(),
-    }
-}
-
 /// create the upgrade payload INCLUDING the epoch reconfigure
 pub fn encode_stdlib_upgrade(epoch: u64) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
     let stdlib_cs = encode_stdlib_upgrade_transaction();
     
     // let event = NewEpochEvent::new(50000);
-    let contract_event = create_new_epoch_event(epoch);
+    let contract_event = mock_new_epoch_event(epoch);
 
     let new_cs = ChangeSet::new(
       stdlib_cs.write_set().to_owned(),
@@ -157,41 +144,9 @@ pub fn encode_stdlib_upgrade(epoch: u64) -> WriteSetPayload {
 
     WriteSetPayload::Direct(new_cs)
 
-    // // take the upgrade reconfig script WriteSet.
-    // match encode_upgrade_reconfig_script() {
-    //     WriteSetPayload::Direct(upgrade_cs) => {
-    //         // add the reconfig changes to the stdlib upgrade changeset
-    //         // NOTE theree should be no changes, we are mostly interested in the events emitted.
-
-    //         // create a new meerged writeset payload with
-    //         // a. stdlib upgrade appended with upgrade reconfig script changes
-    //         // b. events from upgrade reconfig script.
-
-    //         let mut stdlib_ws = stdlib_change.write_set().to_owned().into_mut();
-
-    //         upgrade_cs
-    //             .write_set()
-    //             .to_owned()
-    //             .into_mut()
-    //             .get()
-    //             .into_iter()
-    //             .for_each(|item| stdlib_ws.push(item));
-
-    //         let golden = WriteSetPayload::Direct(ChangeSet::new(
-    //             stdlib_ws.freeze()?,
-    //             upgrade_cs.events().to_owned(),
-    //         ));
-
-    //         Ok(golden)
-    //     }
-    //     WriteSetPayload::Script {
-    //         execute_as: _,
-    //         script: _,
-    //     } => bail!("could not get upgrade reconfig payload"),
-    // }
 }
 
-fn create_new_epoch_event(epoch: u64 ) -> ContractEvent{
+fn mock_new_epoch_event(epoch: u64 ) -> ContractEvent{
   let key = NewEpochEvent::event_key(); // TODO
   let sequence_number = epoch;
   // let type_tag = move_core_types::language_storage::TypeTag::Struct(());
@@ -206,58 +161,13 @@ fn create_new_epoch_event(epoch: u64 ) -> ContractEvent{
   ContractEvent::new(key, sequence_number, type_tag, event_data)
 
 }
-  // // Update WriteSet
-// fn encode_stdlib_upgrade_transaction() -> ChangeSet {
-//     let mut write_set = WriteSetMut::new(vec![]);
-//     for module in diem_framework::modules() {
-//         let mut bytes = vec![];
-//         module.serialize(&mut bytes).unwrap();
-//         write_set.push((
-//             AccessPath::code_access_path(module.self_id()),
-//             WriteOp::Value(bytes),
-//         ));
-//     }
-//     ChangeSet::new(
-//         write_set.freeze().expect("Failed to create writeset"),
-//         vec![],
-//     )
-// }
 
-// /// This is a combination of writesets needed to rescue a stuck network
-// /// 1. Flash a new stdlib library writeset (assumes you've made changes to Move code).
-// /// 2. Appends a bulk_update of the validator set. This transaction emits a network reconfiguration event.
-// /// Note that for any db-bootstrapper writeset to work, one new epoch event (reconfiguration) needs to be present. That is accomplished in #2. If you were only to apply #1, you would need to craft an epoch reconfig event, and we provide a script upgrade_reconfig.move in the templates here. But again, for this merged writset we only want one.
-// /// For this operation to work MAKE SURE THE STDLIB HAS BEEN COMPILED BEFOREHAND.
-// pub fn encode_rescue_writeset(vals: Vec<AccountAddress>) -> Result<WriteSetPayload> {
-//     // get the stdlib changes through sdk magic
-//     let stdlib_cs = encode_stdlib_upgrade_transaction();
 
-//     // dive into the object to get the mutable writeset.
-//     let temp = stdlib_cs.write_set().to_owned();
-//     let mut stdlib_ws = temp.into_mut();
-
-//     // get the validator change payload.
-//     // let bulk_update_payload = encode_bulk_update_vals_payload(vals);
-
-//     // destructure and get actual changes on the validator
-//     match encode_bulk_update_vals_payload(vals) {
-//         WriteSetPayload::Direct(bulk_update_cs) => bail!("cannot get a validator update writeset"),
-//         WriteSetPayload::Script {
-//             execute_as: _,
-//             script: _,
-//         } => {
-//             let paths = bulk_update_cs.write_set().to_owned().into_mut().get();
-
-//             // loop through the changes and push to writeset.
-//             paths.into_iter().for_each(|item| {
-//                 stdlib_ws.push(item);
-//             });
-
-//             let frozen = stdlib_ws.freeze()?;
-
-//             let golden =
-//                 WriteSetPayload::Direct(ChangeSet::new(frozen, stdlib_cs.events().to_owned()));
-//             Ok(golden)
-//         }
-//     }
-// }
+fn ol_create_upgrade_change_set() {
+  let state_view = DebuggerStateView::new(&remote, artifact.version);
+  
+  let (updated_version_writeset, events) = build_changeset(&state_view, |session| {
+      session.set_diem_version(updated_diem_version);
+  })
+  .into_inner();
+}
