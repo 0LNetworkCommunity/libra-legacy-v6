@@ -123,7 +123,8 @@ pub fn encode_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPay
 }
 
 //////// 0L ////////
-fn encode_upgrade_reconfig_script(_vals: Vec<AccountAddress>) -> WriteSetPayload {
+/// helper function to triggeer a reconfig after a stdlib upgrade.
+pub fn encode_upgrade_reconfig_script() -> WriteSetPayload {
     let mut script = template_path();
     script.push("upgrade_reconfig.move");
 
@@ -137,10 +138,49 @@ fn encode_upgrade_reconfig_script(_vals: Vec<AccountAddress>) -> WriteSetPayload
     }
 }
 
-pub fn encode_stdlib_upgrade() -> ChangeSet {
+/// create the upgrade payload INCLUDING the epoch reconfigure
+pub fn encode_stdlib_upgrade() -> Result<WriteSetPayload> {
+    
+  // Take the stdlib upgrade change set.
     let stdlib_change = encode_stdlib_upgrade_transaction();
 
-    stdlib_change
+
+    // take the upgrade reconfig script WriteSet.
+    match encode_upgrade_reconfig_script()  {
+        WriteSetPayload::Direct(upgrade_cs) => {
+              
+        // add the reconfig changes to the stdlib upgrade changeset
+        // NOTE theree should be no changes, we are mostly interested in the events emitted.
+
+        // create a new meerged writeset payload with
+        // a. stdlib upgrade appended with upgrade reconfig script changes
+        // b. events from upgrade reconfig script.
+
+
+          let mut stdlib_ws = stdlib_change.write_set().to_owned().into_mut();
+
+          upgrade_cs
+            .write_set()
+            .to_owned()
+            .into_mut()
+            .get()
+            .into_iter()
+            .for_each(|item| {
+              stdlib_ws.push(item)
+            });
+          
+
+          let golden = WriteSetPayload::Direct(
+            ChangeSet::new(
+              stdlib_ws.freeze()?, 
+              upgrade_cs.events().to_owned()
+            )
+          );
+
+          Ok(golden)
+        },
+        WriteSetPayload::Script { execute_as, script } => bail!("could not get upgrade reconfig payload"),
+    }
 }
 // // Update WriteSet
 // fn encode_stdlib_upgrade_transaction() -> ChangeSet {
