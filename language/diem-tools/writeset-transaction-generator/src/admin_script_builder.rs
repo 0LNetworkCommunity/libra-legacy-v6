@@ -1,19 +1,23 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::{Result, bail};
+use anyhow::{bail, Result};
 use cli::client_proxy::encode_stdlib_upgrade_transaction;
 
 use diem_types::{
     account_address::AccountAddress,
-    account_config::diem_root_address,
-    transaction::{ChangeSet, Script, TransactionArgument, WriteSetPayload},
+    account_config::{diem_root_address, NewEpochEvent},
+    transaction::{ChangeSet, Script, TransactionArgument, WriteSetPayload}, contract_event::ContractEvent, event::EventKey,
 };
 use handlebars::Handlebars;
+use move_core_types::{move_resource, language_storage::TypeTag};
 use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
 use serde::Serialize;
 use std::{collections::HashMap, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
+use move_core_types::move_resource::MoveStructType;
+    // move_resource::MoveStructType,
+
 /// The relative path to the scripts templates
 pub const SCRIPTS_DIR_PATH: &str = "templates";
 
@@ -139,50 +143,70 @@ pub fn encode_upgrade_reconfig_script() -> WriteSetPayload {
 }
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
-pub fn encode_stdlib_upgrade() -> Result<WriteSetPayload> {
+pub fn encode_stdlib_upgrade() -> WriteSetPayload {
+    // Take the stdlib upgrade change set.
+    let stdlib_cs = encode_stdlib_upgrade_transaction();
     
-  // Take the stdlib upgrade change set.
-    let stdlib_change = encode_stdlib_upgrade_transaction();
+    let event = NewEpochEvent::new(0);
+    let contract_event = dummy_new_epoch_event();
 
+    let new_cs = ChangeSet::new(
+      stdlib_cs.write_set().to_owned(),
+      vec![contract_event]
+    );
 
-    // take the upgrade reconfig script WriteSet.
-    match encode_upgrade_reconfig_script()  {
-        WriteSetPayload::Direct(upgrade_cs) => {
-              
-        // add the reconfig changes to the stdlib upgrade changeset
-        // NOTE theree should be no changes, we are mostly interested in the events emitted.
+    WriteSetPayload::Direct(new_cs)
 
-        // create a new meerged writeset payload with
-        // a. stdlib upgrade appended with upgrade reconfig script changes
-        // b. events from upgrade reconfig script.
+    // // take the upgrade reconfig script WriteSet.
+    // match encode_upgrade_reconfig_script() {
+    //     WriteSetPayload::Direct(upgrade_cs) => {
+    //         // add the reconfig changes to the stdlib upgrade changeset
+    //         // NOTE theree should be no changes, we are mostly interested in the events emitted.
 
+    //         // create a new meerged writeset payload with
+    //         // a. stdlib upgrade appended with upgrade reconfig script changes
+    //         // b. events from upgrade reconfig script.
 
-          let mut stdlib_ws = stdlib_change.write_set().to_owned().into_mut();
+    //         let mut stdlib_ws = stdlib_change.write_set().to_owned().into_mut();
 
-          upgrade_cs
-            .write_set()
-            .to_owned()
-            .into_mut()
-            .get()
-            .into_iter()
-            .for_each(|item| {
-              stdlib_ws.push(item)
-            });
-          
+    //         upgrade_cs
+    //             .write_set()
+    //             .to_owned()
+    //             .into_mut()
+    //             .get()
+    //             .into_iter()
+    //             .for_each(|item| stdlib_ws.push(item));
 
-          let golden = WriteSetPayload::Direct(
-            ChangeSet::new(
-              stdlib_ws.freeze()?, 
-              upgrade_cs.events().to_owned()
-            )
-          );
+    //         let golden = WriteSetPayload::Direct(ChangeSet::new(
+    //             stdlib_ws.freeze()?,
+    //             upgrade_cs.events().to_owned(),
+    //         ));
 
-          Ok(golden)
-        },
-        WriteSetPayload::Script { execute_as: _, script: _ } => bail!("could not get upgrade reconfig payload"),
-    }
+    //         Ok(golden)
+    //     }
+    //     WriteSetPayload::Script {
+    //         execute_as: _,
+    //         script: _,
+    //     } => bail!("could not get upgrade reconfig payload"),
+    // }
 }
-// // Update WriteSet
+
+fn dummy_new_epoch_event() -> ContractEvent{
+  let key = NewEpochEvent::event_key(); // TODO
+  let sequence_number = 0;
+  // let type_tag = move_core_types::language_storage::TypeTag::Struct(());
+
+  let e = NewEpochEvent::new(0);
+  let type_tag = TypeTag::Struct(NewEpochEvent::struct_tag());
+  let event_data = vec![]; //bcs::to_bytes().unwrap();
+  // let move_type = e.into();
+
+  // StructTag
+
+  ContractEvent::new(key, sequence_number, type_tag, event_data)
+
+}
+  // // Update WriteSet
 // fn encode_stdlib_upgrade_transaction() -> ChangeSet {
 //     let mut write_set = WriteSetMut::new(vec![]);
 //     for module in diem_framework::modules() {
@@ -199,47 +223,41 @@ pub fn encode_stdlib_upgrade() -> Result<WriteSetPayload> {
 //     )
 // }
 
-/// This is a combination of writesets needed to rescue a stuck network
-/// 1. Flash a new stdlib library writeset (assumes you've made changes to Move code).
-/// 2. Appends a bulk_update of the validator set. This transaction emits a network reconfiguration event.
-/// Note that for any db-bootstrapper writeset to work, one new epoch event (reconfiguration) needs to be present. That is accomplished in #2. If you were only to apply #1, you would need to craft an epoch reconfig event, and we provide a script upgrade_reconfig.move in the templates here. But again, for this merged writset we only want one.
-/// For this operation to work MAKE SURE THE STDLIB HAS BEEN COMPILED BEFOREHAND.
-pub fn encode_rescue_writeset(vals: Vec<AccountAddress>) -> Result<WriteSetPayload>{
-    // get the stdlib changes through sdk magic
-    let stdlib_cs = encode_stdlib_upgrade_transaction();
+// /// This is a combination of writesets needed to rescue a stuck network
+// /// 1. Flash a new stdlib library writeset (assumes you've made changes to Move code).
+// /// 2. Appends a bulk_update of the validator set. This transaction emits a network reconfiguration event.
+// /// Note that for any db-bootstrapper writeset to work, one new epoch event (reconfiguration) needs to be present. That is accomplished in #2. If you were only to apply #1, you would need to craft an epoch reconfig event, and we provide a script upgrade_reconfig.move in the templates here. But again, for this merged writset we only want one.
+// /// For this operation to work MAKE SURE THE STDLIB HAS BEEN COMPILED BEFOREHAND.
+// pub fn encode_rescue_writeset(vals: Vec<AccountAddress>) -> Result<WriteSetPayload> {
+//     // get the stdlib changes through sdk magic
+//     let stdlib_cs = encode_stdlib_upgrade_transaction();
 
-    // dive into the object to get the mutable writeset.
-    let temp = stdlib_cs.write_set().to_owned();
-    let mut stdlib_ws = temp.into_mut();
+//     // dive into the object to get the mutable writeset.
+//     let temp = stdlib_cs.write_set().to_owned();
+//     let mut stdlib_ws = temp.into_mut();
 
-    // get the validator change payload.
-    // let bulk_update_payload = encode_bulk_update_vals_payload(vals);
+//     // get the validator change payload.
+//     // let bulk_update_payload = encode_bulk_update_vals_payload(vals);
 
-    // destructure and get actual changes on the validator
-    match encode_bulk_update_vals_payload(vals) {
-        WriteSetPayload::Direct(bulk_update_cs) => {
-            let paths = bulk_update_cs
-              .write_set()
-              .to_owned()
-              .into_mut()
-              .get();
+//     // destructure and get actual changes on the validator
+//     match encode_bulk_update_vals_payload(vals) {
+//         WriteSetPayload::Direct(bulk_update_cs) => bail!("cannot get a validator update writeset"),
+//         WriteSetPayload::Script {
+//             execute_as: _,
+//             script: _,
+//         } => {
+//             let paths = bulk_update_cs.write_set().to_owned().into_mut().get();
 
-            // loop through the changes and push to writeset.
-            paths.into_iter().for_each(|item| {
-                stdlib_ws.push(item);
-            });
+//             // loop through the changes and push to writeset.
+//             paths.into_iter().for_each(|item| {
+//                 stdlib_ws.push(item);
+//             });
 
-            let frozen = stdlib_ws.freeze()?;
+//             let frozen = stdlib_ws.freeze()?;
 
-            
-            let golden = WriteSetPayload::Direct(
-              ChangeSet::new(
-                frozen, 
-                stdlib_cs.events().to_owned()
-              )
-            );
-            Ok(golden)
-        },
-        WriteSetPayload::Script { execute_as: _, script: _ } => bail!("cannot get a validator update writeset"),
-    }
-}
+//             let golden =
+//                 WriteSetPayload::Direct(ChangeSet::new(frozen, stdlib_cs.events().to_owned()));
+//             Ok(golden)
+//         }
+//     }
+// }

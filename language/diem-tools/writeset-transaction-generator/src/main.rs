@@ -11,7 +11,7 @@ use diem_types::{
 use diem_writeset_generator::{
     create_release, encode_custom_script, encode_halt_network_payload,
     encode_remove_validators_payload, encode_bulk_update_vals_payload, release_flow::artifacts::load_latest_artifact,
-    verify_release, encode_rescue_writeset,
+    verify_release, encode_stdlib_upgrade,
 };
 use move_binary_format::CompiledModule;
 use std::path::PathBuf;
@@ -116,7 +116,7 @@ fn main() -> Result<()> {
         Command::RemoveValidators { addresses } => encode_remove_validators_payload(addresses),
         //////// 0L ////////
         Command::UpdateValidators { addresses } => encode_bulk_update_vals_payload(addresses),
-        Command::RescueMission { addresses } => encode_rescue_writeset(addresses).expect("could not encode rescue writeset"),
+        Command::RescueMission { addresses: _ } => encode_stdlib_upgrade(),
         //////// end 0L ////////
         
         Command::HaltNetwork => encode_halt_network_payload(),
