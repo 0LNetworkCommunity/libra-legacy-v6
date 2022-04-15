@@ -26,6 +26,10 @@ cd libra/language/diem-tools/writeset-transaction-generator
 // Starting from a reference db
 tar -xv db-reference.tar.gz ~/.0L/db
 
+// Export the list of validators ADDRESS that will be leading the mission
+
+export VALS = <alice> <bob> <carol>
+
 // save a writset transaction binary
 make tx
 
