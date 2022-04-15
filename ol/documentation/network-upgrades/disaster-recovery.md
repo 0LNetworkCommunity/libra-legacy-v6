@@ -13,6 +13,37 @@ The CLI Tools you will use:
 `diem-writeset-generator`: Create transaction binaries, and save the files. Those file will be applied to db at a later step.
 `db-boostrapper`: a tool typically to create genesis files, can be used to apply writesets to a database at rest (halted network).
 
+##  Cheatsheet
+
+
+```
+// checkout source
+git checkout rescue-mission -f
+
+// go to transaction generator Makefile
+cd libra/language/diem-tools/writeset-transaction-generator
+
+// Starting from a reference db
+tar -xv db-reference.tar.gz ~/.0L/db
+
+// save a writset transaction binary
+make tx
+
+// check it can be applied to the db
+make check
+
+// commit the writset to db at rest
+make commit
+
+// reinitilize your key-store.json
+make init
+
+// start your node
+make start
+```
+
+
+
 ## Creating a Forked DB
 1. Take a known good state snapshot (Snapshot A)
 
@@ -122,7 +153,12 @@ Using DB backup snapshot the new "lab grown" database.
 
 ## Starting Up again
 
-7. reinitialize key-store 
+8. Create a temporary validator.node.yaml file
+- Remove the fullnode networks fields.
+- Change `validator_network.service_discovery`: to `none`
+- Add `seeds` peer information for the nodes participating in rescue in `validator_network.seeds`.
+
+9. reinitialize key-store.json
 
 Two things need to be changed in key-store: 1) clear the safety rules and 2) set new waypoint
 

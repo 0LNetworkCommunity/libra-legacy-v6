@@ -6,7 +6,7 @@ ifndef DATA_PATH
 DATA_PATH = $$HOME/.0L
 endif
 
-DATE= $(shell date "+%Y-%m-%d-%T")
+DATE = $(shell date "+%Y-%m-%d-%T")
 
 echo:
 	echo ${DATE}
@@ -40,8 +40,11 @@ diff:
 	@shasum ${DATA_PATH}/dump-commit
 	@shasum ${DATA_PATH}/dump-start
 
-start:
+init:
+	mv ${DATA_PATH}/key-store.json ${DATA_PATH}/key-store.json.bak.${DATE}
 	ol init --key-store --waypoint ${WAY}
+
+start:
 	diem-node -f ${DATA_PATH}/validator.node.yaml
 
 .PHONY:dump
