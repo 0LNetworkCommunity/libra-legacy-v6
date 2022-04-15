@@ -156,7 +156,7 @@ pub fn ol_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPay
     let stdlib_cs = encode_stdlib_upgrade_transaction();
 
     // Take the stdlib upgrade change set.
-    let update_vals = ol_bulk_validators_changeset(path, vals).unwrap();
+    let update_vals = ol_force_boundary(path, vals).unwrap();
 
     WriteSetPayload::Direct(merge_change_set(stdlib_cs, update_vals).unwrap())
 }
