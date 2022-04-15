@@ -22,7 +22,7 @@ use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
 use move_vm_runtime::logging::NoContextLog;
 use move_vm_types::gas_schedule::GasStatus;
 use serde::Serialize;
-use std::{collections::HashMap, io::Write, path::PathBuf, process::exit};
+use std::{collections::HashMap, io::Write, path::PathBuf, process::exit, borrow::Borrow};
 use tempfile::NamedTempFile;
 
 /// The relative path to the scripts templates
@@ -189,6 +189,40 @@ fn merge_change_set(left: ChangeSet, right: ChangeSet) -> Result<ChangeSet>{
 pub fn ol_create_reconfig_payload(path: PathBuf) -> WriteSetPayload {
 
     WriteSetPayload::Direct(ol_reconfig_changeset(path).expect("could not create reconfig change set"))
+}
+
+// NOTE: all new "genesis" writesets to be applied on db-bootstrapper must emit a reconfig NewEpochEvent.
+// However. The Diemconfig::reconfig_ has a naive implementation of deduplication of reconfig events it checks that the current time is NOT equal to the last reconfig time.
+// For db backups/snapshots using the backup-cli, the archives are generally made at an epoch boundary. And as such the timestamp will be identical to the last reconfiguration time, and ANY WRITESET USING DB-BOOTSTRAPPER WILL FAIL.
+// This function is used to force a new timestamp in those cases, so that writesets will trigger reconfigs (if that is what is expected/intended).
+
+fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+
+    db.run_session_at_version(
+      v, 
+      None, 
+      |session| {
+          let mut gas_status = GasStatus::new_unmetered();
+          let log_context = NoContextLog::new();
+
+          let txn_args = vec![
+            TransactionArgument::Address(diem_root_address()),
+            TransactionArgument::U64(1)
+          ];
+          session.execute_function(
+            &ModuleId::new(
+              account_config::CORE_CODE_ADDRESS, Identifier::new("DiemTimestamp").unwrap()
+              ),
+            &Identifier::new("offline_increment").unwrap(), 
+            vec![], 
+            convert_txn_args(&txn_args), 
+             &mut gas_status,
+             &log_context
+            ).unwrap(); // todo remove this unwrap.
+          Ok(())
+      })
 }
 
 fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
