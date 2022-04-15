@@ -52,7 +52,7 @@ diff:
 	@shasum ${DATA_PATH}/dump-start
 
 init:
-	mv ${DATA_PATH}/key-store.json ${DATA_PATH}/key-store.json.bak.${DATE}
+	mv ${DATA_PATH}/key_store.json ${DATA_PATH}/key_store.json.bak.${DATE}
 	ol init --key-store --waypoint $(shell cat ${DATA_PATH}/rescue_waypoint.txt)
 
 start:
