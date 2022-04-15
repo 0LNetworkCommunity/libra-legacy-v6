@@ -98,7 +98,8 @@ module DiemTimestamp {
 
 
     /// An admin function for incrementing timestamp. Needed to advance the state in the case of using writesets in databases at rest, so that reconfigurations can be emitted successfully.
-    public fun offline_increment(
+    /// This is not public so it cannot be called by scripts. Only from vm session.
+    fun offline_increment(
         account: &signer,
         microseconds: u64
     ) acquires CurrentTimeMicroseconds {
