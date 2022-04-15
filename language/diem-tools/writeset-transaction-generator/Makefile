@@ -3,16 +3,20 @@ SOURCE_PATH = $$HOME/libra
 endif
 
 ifndef DATA_PATH
-DATA_PATH = $$HOME/.0L/
+DATA_PATH = $$HOME/.0L
 endif
 
+DATE= $(shell date "+%Y-%m-%d-%T")
+
+echo:
+	echo ${DATE}
 wipe:
-	mv -f ${DATA_PATH}/db ${DATA_PATH}/db-bak
+	mv -f ${DATA_PATH}/db ${DATA_PATH}/db.bak.${DATE}
 	cp -r ${DATA_PATH}/db-reference ${DATA_PATH}/db
 	STEP=wipe make dump
 
 tx:
-	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${DATA_PATH}/restore/rescue.blob rescue 46A7A744B5D33C47F6B20766F8088B10 
+	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${DATA_PATH}/restore/rescue.blob rescue ECAF65ADD1B785B0495E3099F4045EC0 46A7A744B5D33C47F6B20766F8088B10 7EC16859C24200D8E074809D252AC740
 
 # tx-reconfig:
 # 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${DATA_PATH}/restore/rescue.blob reconfig 
