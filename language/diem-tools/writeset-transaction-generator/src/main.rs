@@ -11,7 +11,7 @@ use diem_types::{
 use diem_writeset_generator::{
     create_release, encode_custom_script, encode_halt_network_payload,
     encode_remove_validators_payload, encode_bulk_update_vals_payload, release_flow::artifacts::load_latest_artifact,
-    verify_release, encode_stdlib_upgrade, ol_create_reconfig_payload, ol_encode_rescue,
+    verify_release, encode_stdlib_upgrade, ol_create_reconfig_payload, ol_encode_rescue, ol_encode_force_boundary,
 };
 use move_binary_format::CompiledModule;
 use std::path::PathBuf;
@@ -125,7 +125,7 @@ fn main() -> Result<()> {
         Command::UpdateValidators { addresses } => encode_bulk_update_vals_payload(addresses),
         Command::UpdateStdlib { path } => encode_stdlib_upgrade(path),
         Command::Reconfig { path } => ol_create_reconfig_payload(path),
-        Command::Rescue { addresses } => ol_encode_rescue(opt.db.unwrap(), addresses),
+        Command::Rescue { addresses } => ol_encode_force_boundary(opt.db.unwrap(), addresses),
 
         //////// end 0L ////////
         

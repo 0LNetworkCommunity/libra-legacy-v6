@@ -61,14 +61,16 @@ cargo r -p diem-writeset-generator -- --output ~/.0L/restore/rescue.blob remove-
 ### stdlib update:
 After making changes and compiling your Move code, the following writset can be created to update all the system contracts, and issue a reconfiguration event.
 ```
-cargo r -p diem-writeset-generator -- --output ~/.0L/restore/rescue.blob update-stdlib ~/.0L/db
+cargo r -p diem-writeset-generator -- --db ~/.0L/db --output ~/.0L/restore/rescue.blob update-stdlib 
 ```
 
 ### rescue mission:
 A combined Stdlib update and change of validator set. This dispenses with an intermediary reconfiguration and epoch change. That is, the change of the validator set will issue a reconfiguration event.
 
+Node the `--db` field
+
 ```
-cargo r -p diem-writeset-generator -- --output ~/.0L/restore/rescue.blob update-stdlib ~/.0L/db
+cargo r -p diem-writeset-generator -- --db ~/.0L/db --output ~/.0L/restore/rescue.blob rescue ECAF65ADD1B785B0495E3099F4045EC0 46A7A744B5D33C47F6B20766F8088B10 7EC16859C24200D8E074809D252AC740 
 ```
 
 
