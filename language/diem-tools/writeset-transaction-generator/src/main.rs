@@ -43,11 +43,11 @@ enum Command {
     #[structopt(name = "update-validators")]
     UpdateValidators { addresses: Vec<AccountAddress> },
     #[structopt(name = "update-stdlib")]
-    UpdateStdlib { path: PathBuf },
+    UpdateStdlib { },
     #[structopt(name = "rescue")]
     Rescue { addresses: Vec<AccountAddress> },
     #[structopt(name = "reconfig")]
-    Reconfig { path: PathBuf },
+    Reconfig { },
     /// Block the execution of any transaction in the network
     #[structopt(name = "halt-network")]
     HaltNetwork,
@@ -123,8 +123,8 @@ fn main() -> Result<()> {
         Command::RemoveValidators { addresses } => encode_remove_validators_payload(addresses),
         //////// 0L ////////
         Command::UpdateValidators { addresses } => encode_bulk_update_vals_payload(addresses),
-        Command::UpdateStdlib { path } => encode_stdlib_upgrade(path),
-        Command::Reconfig { path } => ol_create_reconfig_payload(path),
+        Command::UpdateStdlib { } => encode_stdlib_upgrade(opt.db.unwrap()),
+        Command::Reconfig { } => ol_create_reconfig_payload(opt.db.unwrap()),
         Command::Rescue { addresses } => ol_encode_rescue(opt.db.unwrap(), addresses),
 
         //////// end 0L ////////
