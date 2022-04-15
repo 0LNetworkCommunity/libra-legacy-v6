@@ -14,7 +14,7 @@ VALS = ECAF65ADD1B785B0495E3099F4045EC0 46A7A744B5D33C47F6B20766F8088B10 7EC1685
 endif
 
 wipe:
-	mv -f ${DATA_PATH}/db ${DATA_PATH}/db.bak.${DATE}
+	mv -f ${DATA_PATH}/db ${DATA_PATH}/db.bak.${DATE} | true
 	cp -r ${DATA_PATH}/db-reference ${DATA_PATH}/db
 	STEP=wipe make dump
 
