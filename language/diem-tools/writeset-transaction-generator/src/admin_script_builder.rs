@@ -189,10 +189,10 @@ fn merge_change_set(left: ChangeSet, right: ChangeSet) -> Result<ChangeSet>{
 pub fn ol_test_timestamp(path: PathBuf) -> WriteSetPayload {
     
    
-    let timestamp = ol_increment_timestamp(path.clone()).unwrap();
+    let timestamp = ol_increment_timestamp(path.clone()).expect("could not get timestamp writeset");
 
     // Take the stdlib upgrade change set.
-    let reconfig = ol_reconfig_changeset(path).unwrap();
+    let reconfig = ol_reconfig_changeset(path).expect("could not get reconfig writeset");
 
     WriteSetPayload::Direct(merge_change_set(timestamp, reconfig).unwrap())
 }
