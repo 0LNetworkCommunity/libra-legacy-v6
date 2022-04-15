@@ -24,6 +24,7 @@ module EpochBoundary {
     use 0x1::DiemAccount;
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
+    use 0x1::ValidatorUniverse;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -148,8 +149,29 @@ module EpochBoundary {
         };
 
         // If the cardinality of validator_set in the next epoch is less than 4, 
-        // we keep the same validator set. 
-        if (Vector::length<address>(&proposed_set) <= 3) proposed_set = DiemSystem::get_val_set_addr();
+        // we keep the same validator set, removing validators who have removed themselves 
+        if (Vector::length<address>(&proposed_set) <= 3) {
+            let eligible_validators = ValidatorUniverse::get_eligible_validators(vm);
+            proposed_set = DiemSystem::get_val_set_addr();
+
+            let i = 0;
+            while (i < Vector::length<address>(&proposed_set)) {
+                let addr = Vector::borrow<address>(&proposed_set, i);
+                if ( ! Vector::contains<address>(&eligible_validators, addr) ) {
+                    Vector::remove<address>(&mut proposed_set, i);
+                }
+                else {
+                    i = i + 1;
+                };
+            };
+
+
+        };
+        
+        // Just in case too many validators removed themselves, one last shot at redemption. 
+        if (Vector::length<address>(&proposed_set) <= 3) {
+            proposed_set = *&top_accounts;
+        };
 
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with 
