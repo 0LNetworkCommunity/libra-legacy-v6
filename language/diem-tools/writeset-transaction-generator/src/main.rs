@@ -11,7 +11,7 @@ use diem_types::{
 use diem_writeset_generator::{
     create_release, encode_custom_script, encode_halt_network_payload,
     encode_remove_validators_payload, encode_bulk_update_vals_payload, release_flow::artifacts::load_latest_artifact,
-    verify_release, encode_stdlib_upgrade, ol_create_reconfig_payload, ol_encode_rescue,
+    verify_release, encode_stdlib_upgrade, ol_create_reconfig_payload, ol_encode_rescue, ol_test_timestamp,
 };
 use move_binary_format::CompiledModule;
 use std::path::PathBuf;
@@ -48,6 +48,8 @@ enum Command {
     Rescue { addresses: Vec<AccountAddress> },
     #[structopt(name = "reconfig")]
     Reconfig { },
+    #[structopt(name = "time")]
+    Timestamp { },
     /// Block the execution of any transaction in the network
     #[structopt(name = "halt-network")]
     HaltNetwork,
@@ -123,9 +125,10 @@ fn main() -> Result<()> {
         Command::RemoveValidators { addresses } => encode_remove_validators_payload(addresses),
         //////// 0L ////////
         Command::UpdateValidators { addresses } => encode_bulk_update_vals_payload(addresses),
-        Command::UpdateStdlib { } => encode_stdlib_upgrade(opt.db.unwrap()),
-        Command::Reconfig { } => ol_create_reconfig_payload(opt.db.unwrap()),
+        Command::UpdateStdlib {} => encode_stdlib_upgrade(opt.db.unwrap()),
+        Command::Reconfig {} => ol_create_reconfig_payload(opt.db.unwrap()),
         Command::Rescue { addresses } => ol_encode_rescue(opt.db.unwrap(), addresses),
+        Command::Timestamp {} => ol_test_timestamp(opt.db.unwrap()),
 
         //////// end 0L ////////
         

@@ -1,5 +1,6 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Result};
 use cli::client_proxy::encode_stdlib_upgrade_transaction;
@@ -185,9 +186,20 @@ fn merge_change_set(left: ChangeSet, right: ChangeSet) -> Result<ChangeSet>{
 }
 
 
+pub fn ol_test_timestamp(path: PathBuf) -> WriteSetPayload {
+    
+   
+    let timestamp = ol_increment_timestamp(path.clone()).unwrap();
+
+    // Take the stdlib upgrade change set.
+    let reconfig = ol_reconfig_changeset(path).unwrap();
+
+    WriteSetPayload::Direct(merge_change_set(timestamp, reconfig).unwrap())
+}
+
 
 pub fn ol_create_reconfig_payload(path: PathBuf) -> WriteSetPayload {
-
+    
     WriteSetPayload::Direct(ol_reconfig_changeset(path).expect("could not create reconfig change set"))
 }
 
@@ -199,6 +211,11 @@ pub fn ol_create_reconfig_payload(path: PathBuf) -> WriteSetPayload {
 fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
+    
+    let start = SystemTime::now();
+    let now = start
+        .duration_since(UNIX_EPOCH)?;
+    let microseconds = now.as_micros();
 
     db.run_session_at_version(
       v, 
@@ -209,13 +226,15 @@ fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
 
           let txn_args = vec![
             TransactionArgument::Address(diem_root_address()),
-            TransactionArgument::U64(1)
+            TransactionArgument::Address(AccountAddress::random()),
+
+            TransactionArgument::U64(microseconds as u64)
           ];
           session.execute_function(
             &ModuleId::new(
               account_config::CORE_CODE_ADDRESS, Identifier::new("DiemTimestamp").unwrap()
               ),
-            &Identifier::new("offline_increment").unwrap(), 
+            &Identifier::new("update_global_time").unwrap(), 
             vec![], 
             convert_txn_args(&txn_args), 
              &mut gas_status,
