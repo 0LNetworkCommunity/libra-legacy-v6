@@ -25,10 +25,18 @@ module EpochBoundary {
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
 
+    struct RescueOperation has key {
+        is_recovery_operation: bool
+    };
+
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
-    public fun reconfigure(vm: &signer, height_now: u64) {
+    public fun reconfigure(vm: &signer, height_now: u64) acquires RescueOperation {
         CoreAddresses::assert_vm(vm);
+
+        if(!exists<RecoveryOperation>(Signer::address_of(vm))){
+            move_to<State>(vm, RescueOperation{ is_recovery_operation: false });
+        }
 
         let height_start = Epoch::get_timer_height_start(vm);
         
@@ -42,6 +50,7 @@ module EpochBoundary {
         
         process_fullnodes(vm, nominal_subsidy_per);
         
+        // If in rescue mode, maybe maybe send rewards directly to engineering(?) community wallet
         process_validators(vm, subsidy_units, *&outgoing_compliant_set);
         
         let proposed_set = propose_new_set(vm, height_start, height_now);
@@ -101,19 +110,12 @@ module EpochBoundary {
         Subsidy::process_fees(vm, &outgoing_compliant_set);
     }
 
-    fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> {
-        // Propose upcoming validator set:
-        // Step 1: Sort Top N eligible validators
-        // Step 2: Jail non-performing validators
-        // Step 3: Reset counters
-        // Step 4: Bulk update validator set (reconfig)
-
-        // save all the eligible list, before the jailing removes them.
+    // Propose upcoming validator set
+    fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> acquires RescueOperation {
+        
         let proposed_set = Vector::empty();
 
-        let top_accounts = NodeWeight::top_n_accounts(
-            vm, Globals::get_max_validators_per_set()
-        );
+        let current_set = DiemSystem::get_val_set_addr();
 
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
 
@@ -129,33 +131,92 @@ module EpochBoundary {
 
         let burn_value = 1000000; // TODO: switch to a variable cost, as above.
 
+        // remove jailed and non-eligible validators (did not mine enough proofs)
         let i = 0;
-        while (i < Vector::length<address>(&top_accounts)) {
-            let addr = *Vector::borrow(&top_accounts, i);
+        while (i < Vector::length<address>(&current_set)) {
+            let addr = *Vector::borrow(&current_set, i);
             let mined_last_epoch = TowerState::node_above_thresh(addr);
             // TODO: temporary until jailing is enabled.
-            if (
-                !Vector::contains(&jailed_set, &addr) && 
+            if (!Vector::contains(&jailed_set, &addr) && 
                 mined_last_epoch &&
                 Audit::val_audit_passing(addr)
             ) {
                 Vector::push_back(&mut proposed_set, addr);
                 Burn::epoch_start_burn(vm, addr, burn_value);
             };
-            i = i+ 1;
+            i = i + 1;
         };
 
-        // If the cardinality of validator_set in the next epoch is less than 4, 
-        // we keep the same validator set. 
-        if (Vector::length<address>(&proposed_set) <= 3) proposed_set = *&top_accounts;
-        // Usually an issue in staging network for QA only.
+        let proposed_set_length = Vector::length<address>(&proposed_set);
+
+        if (proposed_set_length <= 3) {
+            // 911 case - very few submitted proofs in epoch, try with 50% of current validator set 
+
+            // try 50% of current validator set sorted by number of epochs mining and verifying 
+            // update proposed set   
+
+            // qstn : do we need this? 
+
+            // State of emergency case - RESCUE team takes over 
+            if (Vector::length<address>(&proposed_set)<=10) {
+                    // RESCUE OPERATIONS time
+                    // proposed set is hardcoded list of validators 
+                    // proposed set = hardcoded list of addresses 
+            }
+
+            // set rescue operation to TRUE
+            let rescue_oper = borrow_global_mut<RescueOperation>(Signer::address_of(vm));
+            let is_recovery = &mut rescue_oper.is_recovery_operation;
+            is_recovery = true;
+            
+        } else {
+
+            // generic case: fill remaining spots in validator set
+
+            // number of free slots = 0.25% of current set size. We choose 25% because 33% is maximum failures we can tolerate upto 33% failures
+            // TO DO LATER: define 25% in globals as constant. 
+            // NOW - figure out how to use decimal 
+            let free_slots = 
+
+            if (free_slots + proposed_set_length > Global::get_max_validators)
+                free_slots = Global::get_max_validators - proposed_set_length;
+
+            // Assumption: we can fill all validator slots by top 2 * N vaidators. 
+            // TO DO LATER: more like sorting list of eligible vaidator candidates from validator universe                  
+            let top_accounts = NodeWeight::top_n_accounts(vm, 2 * Globals::get_max_validators_per_set());
+                
+            // fill in the empty slots with eligible and top validators  
+            let j = 0;
+            let k = 0;
+            while (j < Vector::length<address>(&top_accounts) && k < free_slots) {
+                let addr = *Vector::borrow(&top_accounts, i);
+                let mined_last_epoch = TowerState::node_above_thresh(addr);
+                // TODO: temporary until jailing is enabled.
+                if (!Vector::contains(&proposed_set, &addr) && 
+                    !Vector::contains(&jailed_set, &addr) && 
+                    mined_last_epoch &&
+                    Audit::val_audit_passing(addr)
+                ) {
+                    Vector::push_back(&mut proposed_set, addr);
+                    Burn::epoch_start_burn(vm, addr, burn_value);
+                    k = k + 1;
+                };
+                j = j + 1;
+            };
+
+            // set rescue operation to FALSE
+            let rescue_oper = borrow_global_mut<RescueOperation>(Signer::address_of(vm));
+            let is_recovery = &mut rescue_oper.is_recovery_operation;
+            is_recovery = false;                 
+        };
         // This is very rare and theoretically impossible for network with 
         // at least 6 nodes and 6 rounds. If we reach an epoch boundary with 
         // at least 6 rounds, we would have at least 2/3rd of the validator 
-        // set with at least 66% liveliness. 
+        // set with at least 66% liveliness. [LOL only true for jailing and assumes at least 6 rounds - not network halt]
         proposed_set
     }
 
+    // Reset counters and bulk update validator set (reconfig)
     fun reset_counters(vm: &signer, proposed_set: vector<address>, outgoing_compliant: vector<address>, height_now: u64) {
 
         // Reset Stats
