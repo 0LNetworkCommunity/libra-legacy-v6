@@ -29,10 +29,11 @@ tx:
 
 
 check:
-	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${DATA_PATH}/restore/rescue.blob
+	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${DATA_PATH}/restore/rescue.blob | grep -oP 'waypoint: \K\w+:\w+' ${DATA_PATH}/rescue_waypoint.txt 
+	@echo Waypoint: $(shell cat ${DATA_PATH}/rescue_waypoint.txt )
 
 commit:
-	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${DATA_PATH}/restore/rescue.blob --commit --waypoint-to-verify ${WAY}
+	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${DATA_PATH}/restore/rescue.blob --commit --waypoint-to-verify $(shell cat ${DATA_PATH}/rescue_waypoint.txt)
 	STEP=commit make dump
 
 diff:
@@ -42,7 +43,7 @@ diff:
 
 init:
 	mv ${DATA_PATH}/key-store.json ${DATA_PATH}/key-store.json.bak.${DATE}
-	ol init --key-store --waypoint ${WAY}
+	ol init --key-store --waypoint $(shell cat ${DATA_PATH}/rescue_waypoint.txt)
 
 start:
 	diem-node -f ${DATA_PATH}/validator.node.yaml
