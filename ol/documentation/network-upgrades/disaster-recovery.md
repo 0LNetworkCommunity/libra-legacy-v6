@@ -121,7 +121,16 @@ Using DB backup snapshot the new "lab grown" database.
 
 
 ## Starting Up again
-7. clear the safety rules in key-store.json
+
+7. reinitialize key-store 
+
+Two things need to be changed in key-store: 1) clear the safety rules and 2) set new waypoint
+
+This can be accomplished with one command:
+```
+ol init --key-store --waypoint <WAYPOINT> 
+```
+
 Otherwise you will see a Safety rules not initialized error, and a Voting power Quorum error
 The easiest way is to rewrite the entire key-store.json file.
 ```
@@ -137,8 +146,6 @@ Example error:
 {"committed_round":0,"error":"[RoundManager] SafetyRules \u001b[38;5;1mRejected\u001b[39m [id: 0c66fd46 (NIL), epoch: 168, round: 01, parent_id: f692f815]\n\nCaused by:\n    Invalid EpochChangeProof: The voting power (0) is less than quorum voting power (300903)","kind":"SafetyRules","pending_votes":"PendingVotes: []","round":1}
 
 ```
-8. set new waypoint in key-store.json 
-
-Otherwise there will be an "Epochs are not consecutive error".
+Regarding Waypoint you may see a ` "Epochs are not consecutive error".`
 
 
