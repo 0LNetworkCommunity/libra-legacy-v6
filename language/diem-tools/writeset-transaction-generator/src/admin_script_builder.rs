@@ -23,7 +23,7 @@ use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
 use move_vm_runtime::logging::NoContextLog;
 use move_vm_types::gas_schedule::GasStatus;
 use serde::Serialize;
-use std::{collections::HashMap, io::Write, path::PathBuf, process::exit, borrow::Borrow};
+use std::{collections::HashMap, io::Write, path::PathBuf, process::exit};
 use tempfile::NamedTempFile;
 
 /// The relative path to the scripts templates
@@ -244,7 +244,7 @@ fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
       })
 }
 
-fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
+fn _ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
 
     
