@@ -35,6 +35,13 @@ tx-vals:
 # tx-time:
 # 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${DATA_PATH}/restore/rescue.blob time
 
+tx-testnet:
+	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${DATA_PATH}/restore/rescue.blob testnet
+
+# tx-custom:
+# 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${DATA_PATH}/restore/rescue.blob build-custom-script set_testnet.move '{}'
+
+
 
 # check:
 # 	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${DATA_PATH}/restore/rescue.blob
@@ -65,4 +72,4 @@ dump:
 	rm -f ${DATA_PATH}/dump
 	cd ${SOURCE_PATH} && cargo r -p diem-transaction-replay -- --db ${DATA_PATH}/db annotate-account 00000000000000000000000000000000 > ${DATA_PATH}/dump-${STEP}
 
-test: wipe tx-vals check commit init start
+test: wipe tx check commit init start

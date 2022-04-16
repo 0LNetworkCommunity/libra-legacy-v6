@@ -8,7 +8,7 @@ pub mod release_flow;
 mod writeset_builder;
 
 pub use admin_script_builder::{
-    encode_custom_script, encode_halt_network_payload, encode_remove_validators_payload, encode_bulk_update_vals_payload, encode_stdlib_upgrade, ol_create_reconfig_payload, ol_encode_rescue, ol_encode_force_boundary, ol_test_timestamp
+    encode_custom_script, encode_halt_network_payload, encode_remove_validators_payload, encode_bulk_update_vals_payload, encode_stdlib_upgrade, ol_create_reconfig_payload, ol_encode_rescue, ol_encode_force_boundary, ol_test_timestamp, ol_testnet
 };
 
 pub use release_flow::{create_release, verify_release};

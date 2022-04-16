@@ -11,7 +11,7 @@ use diem_types::{
 use diem_writeset_generator::{
     create_release, encode_custom_script, encode_halt_network_payload,
     encode_remove_validators_payload, encode_bulk_update_vals_payload, release_flow::artifacts::load_latest_artifact,
-    verify_release, encode_stdlib_upgrade, ol_create_reconfig_payload, ol_encode_rescue, ol_test_timestamp, ol_encode_force_boundary,
+    verify_release, encode_stdlib_upgrade, ol_create_reconfig_payload, ol_encode_rescue, ol_test_timestamp, ol_encode_force_boundary, ol_testnet,
 };
 use move_binary_format::CompiledModule;
 use std::path::PathBuf;
@@ -50,6 +50,8 @@ enum Command {
     Reconfig { },
     #[structopt(name = "time")]
     Timestamp { },
+    #[structopt(name = "testnet")]
+    Testnet { },
     /// Block the execution of any transaction in the network
     #[structopt(name = "halt-network")]
     HaltNetwork,
@@ -131,7 +133,7 @@ fn main() -> Result<()> {
         Command::Reconfig {} => ol_create_reconfig_payload(opt.db.unwrap()),
         Command::Rescue { addresses } => ol_encode_rescue(opt.db.unwrap(), addresses),
         Command::Timestamp {} => ol_test_timestamp(opt.db.unwrap()),
-
+        Command::Testnet {} => ol_testnet(opt.db.unwrap()),
         //////// end 0L ////////
         
         Command::HaltNetwork => encode_halt_network_payload(),
