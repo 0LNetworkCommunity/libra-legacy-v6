@@ -25,7 +25,7 @@ module EpochBoundary {
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
 
-    struct DebugMode has copy, key, store{
+    struct DebugMode has copy, key, drop, store{
       fixed_set: vector<address>
     }
 
@@ -36,6 +36,13 @@ module EpochBoundary {
         move_to<DebugMode>(vm, DebugMode {
           fixed_set: vals
         });
+      }
+    }
+
+    fun remove_debug(vm: &signer) acquires DebugMode {
+      CoreAddresses::assert_vm(vm);
+      if (is_debug()) {
+        _ = move_from<DebugMode>(CoreAddresses::VM_RESERVED_ADDRESS());
       }
     }
 
