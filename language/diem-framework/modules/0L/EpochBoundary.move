@@ -25,6 +25,33 @@ module EpochBoundary {
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
 
+    struct DebugMode has copy, key, store{
+      fixed_set: vector<address>
+    }
+
+    // private function so that it can only be called by vm session.
+    // should never be used in production.
+    fun init_debug(vm: &signer, vals: vector<address>) {
+      if (!is_debug()) {
+        move_to<DebugMode>(vm, DebugMode {
+          fixed_set: vals
+        });
+      }
+    }
+
+    fun is_debug(): bool {
+      exists<DebugMode>(CoreAddresses::VM_RESERVED_ADDRESS())
+    }
+
+    fun get_debug_vals(): vector<address> acquires DebugMode  {
+      if (is_debug()) {
+        let d = borrow_global<DebugMode>(CoreAddresses::VM_RESERVED_ADDRESS());
+        *&d.fixed_set
+      } else {
+        Vector::empty<address>()
+      }
+    }
+
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
