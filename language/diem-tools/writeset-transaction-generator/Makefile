@@ -40,7 +40,7 @@ check:
 	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${DATA_PATH}/restore/rescue.blob
 
 check-alt:
-	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${DATA_PATH}/restore/rescue.blob | grep -oP 'waypoint: \K\w+:\w+' ${DATA_PATH}/rescue_waypoint.txt 
+	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${DATA_PATH}/restore/rescue.blob | grep -oP 'waypoint: \K\w+:\w+' > ${DATA_PATH}/rescue_waypoint.txt 
 	@echo Waypoint: $(shell cat ${DATA_PATH}/rescue_waypoint.txt )
 
 commit:
