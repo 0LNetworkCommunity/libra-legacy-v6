@@ -52,6 +52,7 @@ module EpochBoundary {
             DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
             // update_validator_withdrawal_limit(vm);
         };
+        proof_of_burn(vm);
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
     }
 
