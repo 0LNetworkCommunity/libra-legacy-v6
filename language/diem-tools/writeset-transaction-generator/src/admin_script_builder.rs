@@ -293,7 +293,7 @@ fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
 }
 
 fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
-    println!("encode validators bulk update changeset")
+    println!("encode validators bulk update changeset");
     let db = DiemDebugger::db(path)?;
 
     let v = db.get_latest_version()?;
