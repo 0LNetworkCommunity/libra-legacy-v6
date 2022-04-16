@@ -136,8 +136,9 @@ script {
         let starting_balance = 1000000;
 
         let operator_refund = 4336 * 5; // BASELINE_TX_COST * proofs = 21680
+        let burn = 1000000;
 
-        let ending_balance = starting_balance + expected_subsidy - operator_refund;
+        let ending_balance = starting_balance + expected_subsidy - operator_refund - burn;
 
         assert(DiemAccount::balance<GAS>(@{{alice}}) == ending_balance, 7357000180113);  
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 5, 7357000180114);

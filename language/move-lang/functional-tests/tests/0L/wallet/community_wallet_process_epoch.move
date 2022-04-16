@@ -1,5 +1,5 @@
 // Todo: These GAS values have no effect, all accounts start with 1M GAS
-//! account: alice, 1000000GAS, 0, validator
+//! account: alice, 10000000GAS, 0, validator
 //! account: bob,   1000000GAS, 0
 
 
@@ -66,6 +66,7 @@ script {
     use 0x1::GAS::GAS;
     fun main(_vm: signer) {
       let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
+
       assert(bob_balance == 1000100, 7357005);
     }
 }
