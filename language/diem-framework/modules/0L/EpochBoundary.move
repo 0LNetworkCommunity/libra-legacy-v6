@@ -24,6 +24,7 @@ module EpochBoundary {
     use 0x1::DiemAccount;
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
+    use 0x1::ValidatorUniverse;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -117,17 +118,7 @@ module EpochBoundary {
 
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
 
-        Burn::reset_ratios(vm);
-        // LEAVE THIS CODE COMMENTED for future use
-        // TODO: Make the burn value dynamic.
-        // let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
-        // let burn_value = Subsidy::subsidy_curve(
-        //   Globals::get_subsidy_ceiling_gas(),
-        //   incoming_count,
-        //   Globals::get_max_node_density()
-        // )/4;
 
-        let burn_value = 1000000; // TODO: switch to a variable cost, as above.
 
         let i = 0;
         while (i < Vector::length<address>(&top_accounts)) {
@@ -140,10 +131,10 @@ module EpochBoundary {
                 Audit::val_audit_passing(addr)
             ) {
                 Vector::push_back(&mut proposed_set, addr);
-                Burn::epoch_start_burn(vm, addr, burn_value);
             };
             i = i+ 1;
         };
+
 
         // If the cardinality of validator_set in the next epoch is less than 4, 
         // we keep the same validator set. 
@@ -173,6 +164,32 @@ module EpochBoundary {
         // reset counters
         AutoPay::reconfig_reset_tick(vm);
         Epoch::reset_timer(vm, height_now);
+    }
+
+    // NOTE: this was previously in propose_new_set since it used the same loop.
+    // copied implementation from Teams proposal.
+    fun proof_of_burn(vm: &signer) {
+        CoreAddresses::assert_vm(vm);
+        Burn::reset_ratios(vm);
+
+        // LEAVE THIS CODE COMMENTED for future use
+        // TODO: Make the burn value dynamic.
+        // let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
+        // let burn_value = Subsidy::subsidy_curve(
+        //   Globals::get_subsidy_ceiling_gas(),
+        //   incoming_count,
+        //   Globals::get_max_node_density()
+        // )/4;
+
+        let burn_value = 1000000; // TODO: switch to a variable cost, as above.
+
+        let all_vals = ValidatorUniverse::get_eligible_validators(vm);
+        let i = 0;
+        while (i < Vector::length<address>(&all_vals)) {
+          let addr = *Vector::borrow(&all_vals, i);
+          Burn::epoch_start_burn(vm, addr, burn_value);
+          i = i + 1;
+        };
     }
 }
 }
