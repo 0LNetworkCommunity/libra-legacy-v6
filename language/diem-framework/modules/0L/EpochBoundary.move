@@ -54,7 +54,7 @@ module EpochBoundary {
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
-    public fun reconfigure(vm: &signer, height_now: u64) {
+    public fun reconfigure(vm: &signer, height_now: u64) acquires DebugMode{
         CoreAddresses::assert_vm(vm);
 
         let height_start = Epoch::get_timer_height_start(vm);
@@ -128,7 +128,7 @@ module EpochBoundary {
         Subsidy::process_fees(vm, &outgoing_compliant_set);
     }
 
-    fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> {
+    fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> acquires DebugMode{
         // Propose upcoming validator set:
         // Step 1: Sort Top N eligible validators
         // Step 2: Jail non-performing validators
@@ -155,6 +155,10 @@ module EpochBoundary {
         // )/4;
 
         let burn_value = 1000000; // TODO: switch to a variable cost, as above.
+
+        if (is_debug()) {
+          return get_debug_vals()
+        };
 
         let i = 0;
         while (i < Vector::length<address>(&top_accounts)) {
