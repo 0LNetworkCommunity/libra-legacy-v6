@@ -184,9 +184,9 @@ pub fn ol_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPay
     };
 
     let stdlib_cs = encode_stlib_alt(path.clone()).unwrap();
-    let update_vals = ol_bulk_validators_changeset(path, vals).unwrap();
+    let debug_mode = ol_set_epoch_debug_mode(path, vals).unwrap();
 
-    WriteSetPayload::Direct(merge_change_set(stdlib_cs, update_vals).unwrap())
+    WriteSetPayload::Direct(merge_change_set(stdlib_cs, debug_mode).unwrap())
 }
 
 fn merge_change_set(left: ChangeSet, right: ChangeSet) -> Result<ChangeSet> {
@@ -282,6 +282,40 @@ fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
                     Identifier::new("DiemTimestamp").unwrap(),
                 ),
                 &Identifier::new("update_global_time").unwrap(),
+                vec![],
+                convert_txn_args(&txn_args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // todo remove this unwrap.
+        Ok(())
+    })
+}
+
+
+fn ol_set_epoch_debug_mode(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+
+    let start = SystemTime::now();
+    let now = start.duration_since(UNIX_EPOCH)?;
+    let microseconds = now.as_micros();
+
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+        let txn_args = vec![
+            TransactionArgument::Address(diem_root_address()),
+            TransactionArgument::AddressVector(vals),
+        ];
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("EpochBoundary").unwrap(),
+                ),
+                &Identifier::new("init_debug").unwrap(),
                 vec![],
                 convert_txn_args(&txn_args),
                 &mut gas_status,
