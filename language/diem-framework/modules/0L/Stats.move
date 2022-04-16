@@ -167,7 +167,7 @@ module Stats{
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190010));
     let stats = borrow_global_mut<ValStats>(sender);
-    print(stats);
+    print(&stats.current);
 
     let (is_true, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
 
@@ -181,7 +181,7 @@ module Stats{
     };
     // update total vote count anyways even if we can't find this person.
     stats.current.total_votes = stats.current.total_votes + 1;
-    print(stats);
+    print(&stats.current);
   }
 
   //Permissions: Public, VM only.

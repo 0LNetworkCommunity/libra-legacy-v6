@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use anyhow::{Result};
+use anyhow::Result;
 use cli::client_proxy::encode_stdlib_upgrade_transaction;
 
+use diem_framework_releases::import_stdlib;
 use diem_transaction_replay::DiemDebugger;
 use diem_types::{
     account_address::AccountAddress,
@@ -16,7 +17,8 @@ use handlebars::Handlebars;
 use move_core_types::{
     identifier::Identifier,
     language_storage::ModuleId,
-    value::{serialize_values, MoveValue}, transaction_argument::convert_txn_args,
+    transaction_argument::convert_txn_args,
+    value::{serialize_values, MoveValue},
 };
 
 use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
@@ -121,6 +123,7 @@ pub fn encode_halt_network_payload() -> WriteSetPayload {
 
 //////// 0L ////////
 pub fn encode_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPayload {
+    println!("encode_bulk_update_vals_payload");
     let mut script = template_path();
     script.push("bulk_update.move");
 
@@ -135,10 +138,9 @@ pub fn encode_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPay
 }
 
 pub fn ol_encode_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
-  let cs = ol_force_boundary(path, vals).unwrap();
-  WriteSetPayload::Direct(cs)
+    let cs = ol_force_boundary(path, vals).unwrap();
+    WriteSetPayload::Direct(cs)
 }
-
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
 pub fn encode_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
@@ -161,10 +163,13 @@ pub fn ol_testnet(path: PathBuf) -> WriteSetPayload {
 }
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
-pub fn ol_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
-    if vals.len() == 0 { println!("need to provide list of addresses"); exit(1)};
+pub fn ol_encode_rescue_old(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+    if vals.len() == 0 {
+        println!("need to provide list of addresses");
+        exit(1)
+    };
 
-    let stdlib_cs = encode_stdlib_upgrade_transaction();
+    let stdlib_cs = encode_stlib_alt(path.clone()).unwrap();
 
     // Take the stdlib upgrade change set.
     let update_vals = ol_force_boundary(path, vals).unwrap();
@@ -172,33 +177,38 @@ pub fn ol_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPay
     WriteSetPayload::Direct(merge_change_set(stdlib_cs, update_vals).unwrap())
 }
 
-fn merge_change_set(left: ChangeSet, right: ChangeSet) -> Result<ChangeSet>{
+pub fn ol_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+    if vals.len() == 0 {
+        println!("need to provide list of addresses");
+        exit(1)
+    };
+
+    let stdlib_cs = encode_stlib_alt(path.clone()).unwrap();
+    let update_vals = ol_bulk_validators_changeset(path, vals).unwrap();
+
+    WriteSetPayload::Direct(merge_change_set(stdlib_cs, update_vals).unwrap())
+}
+
+fn merge_change_set(left: ChangeSet, right: ChangeSet) -> Result<ChangeSet> {
     // get stlib_cs writeset mut and apply reconfig changeset over it
     let mut stdlib_ws_mut = left.write_set().clone().into_mut();
 
     let r_ws = right.write_set().clone().into_mut();
-    
-    r_ws.get().into_iter()
-    .for_each(|item|{
-      stdlib_ws_mut.push(item)
-    });
+
+    r_ws.get()
+        .into_iter()
+        .for_each(|item| stdlib_ws_mut.push(item));
 
     let mut all_events = left.events().to_owned().clone();
     let mut reconfig_events = right.events().to_owned().clone();
     all_events.append(&mut reconfig_events);
 
-    let new_cs = ChangeSet::new(
-      stdlib_ws_mut.freeze()?, 
-      all_events
-    );
+    let new_cs = ChangeSet::new(stdlib_ws_mut.freeze()?, all_events);
 
     Ok(new_cs)
 }
 
-
 pub fn ol_test_timestamp(path: PathBuf) -> WriteSetPayload {
-    
-   
     let timestamp = ol_increment_timestamp(path.clone()).expect("could not get timestamp writeset");
 
     // Take the stdlib upgrade change set.
@@ -207,10 +217,40 @@ pub fn ol_test_timestamp(path: PathBuf) -> WriteSetPayload {
     WriteSetPayload::Direct(merge_change_set(timestamp, reconfig).unwrap())
 }
 
-
 pub fn ol_create_reconfig_payload(path: PathBuf) -> WriteSetPayload {
-    
-    WriteSetPayload::Direct(ol_reconfig_changeset(path).expect("could not create reconfig change set"))
+    WriteSetPayload::Direct(
+        ol_reconfig_changeset(path).expect("could not create reconfig change set"),
+    )
+}
+
+pub fn encode_stlib_alt(path: PathBuf) -> Result<ChangeSet> {
+    println!("encode stdlib changeset");
+
+    let db = DiemDebugger::db(path)?;
+
+    // publish the agreed stdlib
+    let new_stdlib = diem_framework::modules();
+
+    let v = db.get_latest_version()?;
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+        for module in new_stdlib {
+            let mut bytes = vec![];
+            module.serialize(&mut bytes);
+
+            session
+                .revise_module(
+                    bytes,
+                    account_config::CORE_CODE_ADDRESS,
+                    &mut gas_status,
+                    &log_context,
+                )
+                .unwrap()
+        }
+        Ok(())
+    })
 }
 
 // NOTE: all new "genesis" writesets to be applied on db-bootstrapper must emit a reconfig NewEpochEvent.
@@ -221,161 +261,162 @@ pub fn ol_create_reconfig_payload(path: PathBuf) -> WriteSetPayload {
 fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
-    
+
     let start = SystemTime::now();
-    let now = start
-        .duration_since(UNIX_EPOCH)?;
+    let now = start.duration_since(UNIX_EPOCH)?;
     let microseconds = now.as_micros();
 
-    db.run_session_at_version(
-      v, 
-      None, 
-      |session| {
-          let mut gas_status = GasStatus::new_unmetered();
-          let log_context = NoContextLog::new();
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
 
-          let txn_args = vec![
+        let txn_args = vec![
             TransactionArgument::Address(diem_root_address()),
             TransactionArgument::Address(AccountAddress::random()),
-
-            TransactionArgument::U64(microseconds as u64)
-          ];
-          session.execute_function(
-            &ModuleId::new(
-              account_config::CORE_CODE_ADDRESS, Identifier::new("DiemTimestamp").unwrap()
-              ),
-            &Identifier::new("update_global_time").unwrap(), 
-            vec![], 
-            convert_txn_args(&txn_args), 
-             &mut gas_status,
-             &log_context
-            ).unwrap(); // todo remove this unwrap.
-          Ok(())
-      })
+            TransactionArgument::U64(microseconds as u64),
+        ];
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("DiemTimestamp").unwrap(),
+                ),
+                &Identifier::new("update_global_time").unwrap(),
+                vec![],
+                convert_txn_args(&txn_args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // todo remove this unwrap.
+        Ok(())
+    })
 }
 
-fn _ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
+fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
+    println!("encode validators bulk update changeset")
     let db = DiemDebugger::db(path)?;
 
-    
     let v = db.get_latest_version()?;
-    db.run_session_at_version(
-      v, 
-      None, 
-      |session| {
-          let mut gas_status = GasStatus::new_unmetered();
-          let log_context = NoContextLog::new();
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
 
-          let txn_args = vec![
+        let txn_args = vec![
             TransactionArgument::Address(diem_root_address()),
-            TransactionArgument::AddressVector(vals)
-          ];
-          session.execute_function(
-            &ModuleId::new(
-              account_config::CORE_CODE_ADDRESS, Identifier::new("DiemSystem").unwrap()
-              ),
-            &Identifier::new("bulk_update_validators").unwrap(), 
-            vec![], 
-            convert_txn_args(&txn_args), 
-             &mut gas_status,
-             &log_context
-            ).unwrap(); // todo remove this unwrap.
-          Ok(())
-      })
+            TransactionArgument::AddressVector(vals),
+        ];
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("DiemSystem").unwrap(),
+                ),
+                &Identifier::new("bulk_update_validators").unwrap(),
+                vec![],
+                convert_txn_args(&txn_args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // todo remove this unwrap.
+        Ok(())
+    })
 }
-
 
 fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
-    
+
     let v = db.get_latest_version()?;
-    db.run_session_at_version(
-      v, 
-      None, 
-      |session| {
-          let mut gas_status = GasStatus::new_unmetered();
-          let log_context = NoContextLog::new();
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
 
-          let args = vec![MoveValue::Signer(diem_root_address())];
+        let args = vec![MoveValue::Signer(diem_root_address())];
 
-          session.execute_function(
-              &ModuleId::new(account_config::CORE_CODE_ADDRESS, Identifier::new("DiemConfig").unwrap()),
-              &Identifier::new("upgrade_reconfig").unwrap(),
-              vec![],
-              serialize_values(&args),
-              &mut gas_status,
-              &log_context,
-          ).unwrap(); // TODO: don't use unwraps.
-          Ok(())
-      })
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("DiemConfig").unwrap(),
+                ),
+                &Identifier::new("upgrade_reconfig").unwrap(),
+                vec![],
+                serialize_values(&args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // TODO: don't use unwraps.
+        Ok(())
+    })
 }
 
 fn ol_testnet_changeset(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
-    
+
     let v = db.get_latest_version()?;
-    db.run_session_at_version(
-      v, 
-      None, 
-      |session| {
-          let mut gas_status = GasStatus::new_unmetered();
-          let log_context = NoContextLog::new();
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
 
-          let args = vec![MoveValue::Signer(diem_root_address())];
+        let args = vec![MoveValue::Signer(diem_root_address())];
 
-          session.execute_function(
-              &ModuleId::new(account_config::CORE_CODE_ADDRESS, Identifier::new("Testnet").unwrap()),
-              &Identifier::new("initialize").unwrap(),
-              vec![],
-              serialize_values(&args),
-              &mut gas_status,
-              &log_context,
-          ).unwrap(); // TODO: don't use unwraps.
-          Ok(())
-      })
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("Testnet").unwrap(),
+                ),
+                &Identifier::new("initialize").unwrap(),
+                vec![],
+                serialize_values(&args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // TODO: don't use unwraps.
+        Ok(())
+    })
 }
 
 fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
-    
+
     let v = db.get_latest_version()?;
-    db.run_session_at_version(
-      v, 
-      None, 
-      |session| {
-          let mut gas_status = GasStatus::new_unmetered();
-          let log_context = NoContextLog::new();
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
 
-          // fun reset_counters(vm: &signer, proposed_set: vector<address>, outgoing_compliant: vector<address>, height_now: u64) {
+        // fun reset_counters(vm: &signer, proposed_set: vector<address>, outgoing_compliant: vector<address>, height_now: u64) {
 
-          let args = vec![
+        let args = vec![
             MoveValue::Signer(diem_root_address()),
-            MoveValue::vector_address(vals), // proposed_set
+            MoveValue::vector_address(vals),   // proposed_set
             MoveValue::vector_address(vec![]), // outgoing_compliant
-            MoveValue::U64(v), // height_now
-          ];
+            MoveValue::U64(v),                 // height_now
+        ];
 
-          session.execute_function(
-              &ModuleId::new(account_config::CORE_CODE_ADDRESS, Identifier::new("EpochBoundary").unwrap()),
-              &Identifier::new("reset_counters").unwrap(),
-              vec![],
-              serialize_values(&args),
-              &mut gas_status,
-              &log_context,
-          ).unwrap(); // TODO: don't use unwraps.
-          Ok(())
-      })
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("EpochBoundary").unwrap(),
+                ),
+                &Identifier::new("reset_counters").unwrap(),
+                vec![],
+                serialize_values(&args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // TODO: don't use unwraps.
+        Ok(())
+    })
 }
-
-
 
 // fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
 //     let db = DiemDebugger::db(path)?;
-    
+
 //     let v = db.get_latest_version()?;
 //     db.run_session_at_version(
-//       v, 
-//       None, 
+//       v,
+//       None,
 //       |session| {
 //           let mut gas_status = GasStatus::new_unmetered();
 //           let log_context = NoContextLog::new();
@@ -430,7 +471,6 @@ fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeS
 //           //     &log_context,
 //           // ).unwrap(); // TODO: don't use unwraps.
 
-
 //         // Reset Stats
 //         // Stats::reconfig(vm, &proposed_set);
 
@@ -442,7 +482,7 @@ fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeS
 
 //         // // process community wallets
 //         // DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
-        
+
 //         // // reset counters
 //         // AutoPay::reconfig_reset_tick(vm);
 //         // Epoch::reset_timer(vm, height_now);
@@ -450,4 +490,3 @@ fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeS
 //           Ok(())
 //       })
 // }
-
