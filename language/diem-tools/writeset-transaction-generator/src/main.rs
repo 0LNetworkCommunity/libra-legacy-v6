@@ -125,6 +125,8 @@ fn main() -> Result<()> {
         Command::RemoveValidators { addresses } => encode_remove_validators_payload(addresses),
         //////// 0L ////////
         Command::UpdateValidators { addresses } => ol_encode_force_boundary(opt.db.unwrap(), addresses),
+        // Command::UpdateValidators { addresses } => encode_bulk_update_vals_payload(addresses),
+        
         Command::UpdateStdlib {} => encode_stdlib_upgrade(opt.db.unwrap()),
         Command::Reconfig {} => ol_create_reconfig_payload(opt.db.unwrap()),
         Command::Rescue { addresses } => ol_encode_rescue(opt.db.unwrap(), addresses),

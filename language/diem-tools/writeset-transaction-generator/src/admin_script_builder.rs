@@ -332,3 +332,88 @@ fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeS
           Ok(())
       })
 }
+
+
+
+// fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
+//     let db = DiemDebugger::db(path)?;
+    
+//     let v = db.get_latest_version()?;
+//     db.run_session_at_version(
+//       v, 
+//       None, 
+//       |session| {
+//           let mut gas_status = GasStatus::new_unmetered();
+//           let log_context = NoContextLog::new();
+
+//           // fun reset_counters(vm: &signer, proposed_set: vector<address>, outgoing_compliant: vector<address>, height_now: u64) {
+
+//           // let args = vec![
+//           //   MoveValue::Signer(diem_root_address()),
+//           //   MoveValue::vector_address(vals.clone()), // proposed_set
+//           //   // MoveValue::vector_address(vec![]), // outgoing_compliant
+//           //   // MoveValue::U64(v), // height_now
+//           // ];
+
+//           // session.execute_function(
+//           //     &ModuleId::new(account_config::CORE_CODE_ADDRESS, Identifier::new("Stats").unwrap()),
+//           //     &Identifier::new("reconfig").unwrap(),
+//           //     vec![],
+//           //     serialize_values(&args),
+//           //     &mut gas_status,
+//           //     &log_context,
+//           // ).unwrap(); // TODO: don't use unwraps.
+
+//          let args = vec![
+//             MoveValue::Signer(diem_root_address()),
+//             MoveValue::vector_address(vals.clone()), // proposed_set
+//             // MoveValue::vector_address(vec![]), // outgoing_compliant
+//             // MoveValue::U64(v), // height_now
+//           ];
+
+//           session.execute_function(
+//               &ModuleId::new(account_config::CORE_CODE_ADDRESS, Identifier::new("DiemSystem").unwrap()),
+//               &Identifier::new("bulk_update_validators").unwrap(),
+//               vec![],
+//               serialize_values(&args),
+//               &mut gas_status,
+//               &log_context,
+//           ).unwrap(); // TODO: don't use unwraps.
+
+//           // let args = vec![
+//           //   MoveValue::Signer(diem_root_address()),
+//           //   // MoveValue::vector_address(vals), // proposed_set
+//           //   // MoveValue::vector_address(vec![]), // outgoing_compliant
+//           //   MoveValue::U64(v), // height_now
+//           // ];
+
+//           // session.execute_function(
+//           //     &ModuleId::new(account_config::CORE_CODE_ADDRESS, Identifier::new("Epoch").unwrap()),
+//           //     &Identifier::new("reset_timer").unwrap(),
+//           //     vec![],
+//           //     serialize_values(&args),
+//           //     &mut gas_status,
+//           //     &log_context,
+//           // ).unwrap(); // TODO: don't use unwraps.
+
+
+//         // Reset Stats
+//         // Stats::reconfig(vm, &proposed_set);
+
+//         // // Migrate TowerState list from elegible.
+//         // TowerState::reconfig(vm, &outgoing_compliant);
+
+//         // // Reconfigure the network
+//         // DiemSystem::bulk_update_validators(vm, proposed_set);
+
+//         // // process community wallets
+//         // DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
+        
+//         // // reset counters
+//         // AutoPay::reconfig_reset_tick(vm);
+//         // Epoch::reset_timer(vm, height_now);
+
+//           Ok(())
+//       })
+// }
+
