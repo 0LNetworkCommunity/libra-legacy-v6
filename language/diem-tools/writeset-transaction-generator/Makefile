@@ -64,7 +64,7 @@ init:
 	ol init --key-store --waypoint $(shell cat ${DATA_PATH}/rescue_waypoint.txt)
 
 start:
-	diem-node -f ${DATA_PATH}/validator.node.yaml 2>&1 | tee ${DATA_PATH}/logs/node.log
+	cd ${SOURCE_PATH} && cargo r -p diem-node -- -f ${DATA_PATH}/validator.node.yaml 2>&1 | tee ${DATA_PATH}/logs/node.log
 
 .PHONY:dump
 

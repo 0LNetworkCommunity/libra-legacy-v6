@@ -13,6 +13,8 @@ module Stats{
   use 0x1::Testnet;
   use 0x1::Vector;    
 
+  use 0x1::Debug::print;
+
   // TODO: yes we know this slows down block production. In "make it fast" mode this will be moved to Rust, in the vm execution block prologue. TBD.
   
   struct SetData has copy, drop, store {
@@ -165,11 +167,21 @@ module Stats{
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190010));
     let stats = borrow_global_mut<ValStats>(sender);
-    let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
-    let test = *Vector::borrow<u64>(&mut stats.current.vote_count, i);
-    Vector::push_back(&mut stats.current.vote_count, test + 1);
-    Vector::swap_remove(&mut stats.current.vote_count, i);
+    print(stats);
+
+    let (is_true, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+
+    if (is_true) {
+      let test = *Vector::borrow<u64>(&mut stats.current.vote_count, i);
+      Vector::push_back(&mut stats.current.vote_count, test + 1);
+      Vector::swap_remove(&mut stats.current.vote_count, i);
+    } else {
+      // something bad happened and we can't find this node in our list.
+      print(&666);
+    };
+    // update total vote count anyways even if we can't find this person.
     stats.current.total_votes = stats.current.total_votes + 1;
+    print(stats);
   }
 
   //Permissions: Public, VM only.
