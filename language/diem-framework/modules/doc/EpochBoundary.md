@@ -5,6 +5,11 @@
 
 
 
+-  [Resource `DebugMode`](#0x1_EpochBoundary_DebugMode)
+-  [Function `init_debug`](#0x1_EpochBoundary_init_debug)
+-  [Function `remove_debug`](#0x1_EpochBoundary_remove_debug)
+-  [Function `is_debug`](#0x1_EpochBoundary_is_debug)
+-  [Function `get_debug_vals`](#0x1_EpochBoundary_get_debug_vals)
 -  [Function `reconfigure`](#0x1_EpochBoundary_reconfigure)
 -  [Function `process_fullnodes`](#0x1_EpochBoundary_process_fullnodes)
 -  [Function `process_validators`](#0x1_EpochBoundary_process_validators)
@@ -32,6 +37,141 @@
 
 
 
+<a name="0x1_EpochBoundary_DebugMode"></a>
+
+## Resource `DebugMode`
+
+
+
+<pre><code><b>struct</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> has <b>copy</b>, drop, store, key
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>fixed_set: vector&lt;address&gt;</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a name="0x1_EpochBoundary_init_debug"></a>
+
+## Function `init_debug`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_init_debug">init_debug</a>(vm: &signer, vals: vector&lt;address&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_init_debug">init_debug</a>(vm: &signer, vals: vector&lt;address&gt;) {
+  <b>if</b> (!<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
+    move_to&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(vm, <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> {
+      fixed_set: vals
+    });
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_remove_debug"></a>
+
+## Function `remove_debug`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_remove_debug">remove_debug</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_remove_debug">remove_debug</a>(vm: &signer) <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>if</b> (<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
+    _ = move_from&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_is_debug"></a>
+
+## Function `is_debug`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>(): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>(): bool {
+  <b>exists</b>&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_get_debug_vals"></a>
+
+## Function `get_debug_vals`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_get_debug_vals">get_debug_vals</a>(): vector&lt;address&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_get_debug_vals">get_debug_vals</a>(): vector&lt;address&gt; <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>  {
+  <b>if</b> (<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
+    <b>let</b> d = borrow_global&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+    *&d.fixed_set
+  } <b>else</b> {
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;()
+  }
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_EpochBoundary_reconfigure"></a>
 
 ## Function `reconfigure`
@@ -47,7 +187,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
+<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>{
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm);
@@ -180,7 +320,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt; {
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt; <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>{
     // Propose upcoming validator set:
     // Step 1: Sort Top N eligible validators
     // Step 2: Jail non-performing validators
@@ -207,6 +347,10 @@
     // )/4;
 
     <b>let</b> burn_value = 1000000; // TODO: switch <b>to</b> a variable cost, <b>as</b> above.
+
+    <b>if</b> (<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
+      <b>return</b> <a href="EpochBoundary.md#0x1_EpochBoundary_get_debug_vals">get_debug_vals</a>()
+    };
 
     <b>let</b> i = 0;
     <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&top_accounts)) {

@@ -11,7 +11,7 @@ use diem_types::{
 use diem_writeset_generator::{
     create_release, encode_custom_script, encode_halt_network_payload,
     encode_remove_validators_payload, encode_bulk_update_vals_payload, release_flow::artifacts::load_latest_artifact,
-    verify_release, encode_stdlib_upgrade, ol_create_reconfig_payload, ol_encode_rescue, ol_test_timestamp, ol_encode_force_boundary, ol_testnet,
+    verify_release, encode_stdlib_upgrade, ol_create_reconfig_payload, ol_encode_rescue, ol_test_timestamp, ol_encode_force_boundary, ol_testnet, ol_debug_epoch
 };
 use move_binary_format::CompiledModule;
 use std::path::PathBuf;
@@ -46,6 +46,8 @@ enum Command {
     UpdateStdlib { },
     #[structopt(name = "rescue")]
     Rescue { addresses: Vec<AccountAddress> },
+    #[structopt(name = "debug-epoch")]
+    DebugEpoch { addresses: Vec<AccountAddress> },
     #[structopt(name = "reconfig")]
     Reconfig { },
     #[structopt(name = "time")]
@@ -126,14 +128,15 @@ fn main() -> Result<()> {
     let payload = match opt.cmd {
         Command::RemoveValidators { addresses } => encode_remove_validators_payload(addresses),
         //////// 0L ////////
-        Command::UpdateValidators { addresses } => ol_encode_force_boundary(opt.db.unwrap(), addresses),
-        // Command::UpdateValidators { addresses } => encode_bulk_update_vals_payload(addresses),
+        // Command::UpdateValidators { addresses } => ol_encode_force_boundary(opt.db.unwrap(), addresses),
+        Command::UpdateValidators { addresses } => encode_bulk_update_vals_payload(addresses),
         
         Command::UpdateStdlib {} => encode_stdlib_upgrade(opt.db.unwrap()),
         Command::Reconfig {} => ol_create_reconfig_payload(opt.db.unwrap()),
         Command::Rescue { addresses } => ol_encode_rescue(opt.db.unwrap(), addresses),
         Command::Timestamp {} => ol_test_timestamp(opt.db.unwrap()),
         Command::Testnet {} => ol_testnet(opt.db.unwrap()),
+        Command::DebugEpoch { addresses } => ol_debug_epoch(opt.db.unwrap(), addresses),
         //////// end 0L ////////
         
         Command::HaltNetwork => encode_halt_network_payload(),

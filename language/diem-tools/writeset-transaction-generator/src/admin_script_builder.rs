@@ -177,6 +177,18 @@ pub fn ol_encode_rescue_old(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSe
     WriteSetPayload::Direct(merge_change_set(stdlib_cs, update_vals).unwrap())
 }
 
+pub fn ol_debug_epoch(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+    if vals.len() == 0 {
+        println!("need to provide list of addresses");
+        exit(1)
+    };
+
+    let debug_mode = ol_set_epoch_debug_mode(path.clone(), vals).unwrap();
+    let reconfig = ol_reconfig_changeset(path).unwrap();
+
+    WriteSetPayload::Direct(merge_change_set(debug_mode, reconfig).unwrap())
+}
+
 pub fn ol_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
@@ -184,9 +196,13 @@ pub fn ol_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPay
     };
 
     let stdlib_cs = encode_stlib_alt(path.clone()).unwrap();
-    let debug_mode = ol_set_epoch_debug_mode(path, vals).unwrap();
+    let boundary = ol_force_boundary(path.clone(), vals).unwrap();
+    // let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
-    WriteSetPayload::Direct(merge_change_set(stdlib_cs, debug_mode).unwrap())
+    let time = ol_increment_timestamp_old(path).unwrap();
+    let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
+   
+    WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
 }
 
 fn merge_change_set(left: ChangeSet, right: ChangeSet) -> Result<ChangeSet> {
@@ -258,6 +274,42 @@ pub fn encode_stlib_alt(path: PathBuf) -> Result<ChangeSet> {
 // For db backups/snapshots using the backup-cli, the archives are generally made at an epoch boundary. And as such the timestamp will be identical to the last reconfiguration time, and ANY WRITESET USING DB-BOOTSTRAPPER WILL FAIL.
 // This function is used to force a new timestamp in those cases, so that writesets will trigger reconfigs (if that is what is expected/intended).
 
+fn ol_increment_timestamp_old(path: PathBuf) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+
+    let start = SystemTime::now();
+    let now = start.duration_since(UNIX_EPOCH)?;
+    let microseconds = now.as_micros();
+
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+        let txn_args = vec![
+            TransactionArgument::Address(diem_root_address()),
+            TransactionArgument::Address("46A7A744B5D33C47F6B20766F8088B10".parse().unwrap()),
+            TransactionArgument::U64(microseconds as u64),
+        ];
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("DiemTimestamp").unwrap(),
+                ),
+                &Identifier::new("update_global_time").unwrap(),
+                vec![],
+                convert_txn_args(&txn_args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // todo remove this unwrap.
+
+        Ok(())
+    })
+}
+
+
 fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
@@ -288,9 +340,26 @@ fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
                 &log_context,
             )
             .unwrap(); // todo remove this unwrap.
+        
+        let args = vec![MoveValue::Signer(diem_root_address())];
+
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("DiemConfig").unwrap(),
+                ),
+                &Identifier::new("upgrade_reconfig").unwrap(),
+                vec![],
+                serialize_values(&args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // TODO: don't use unwraps.
         Ok(())
     })
 }
+
 
 
 fn ol_set_epoch_debug_mode(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
