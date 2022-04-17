@@ -2,7 +2,7 @@
 
 use diem_types::{
     access_path::AccessPath,
-    account_config::constants:: CORE_CODE_ADDRESS, transaction::ChangeSet, write_set::{WriteSetMut, WriteOp},
+    account_config::constants:: CORE_CODE_ADDRESS, write_set::{WriteSetMut, WriteOp},
 };
 use anyhow::Result;
 use move_core_types::{

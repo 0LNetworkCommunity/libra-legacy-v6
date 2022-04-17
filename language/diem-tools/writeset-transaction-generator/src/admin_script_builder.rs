@@ -26,8 +26,7 @@ use ol_types::epoch_timer::EpochTimerResource;
 use serde::Serialize;
 use std::{collections::HashMap, io::Write, path::PathBuf, process::exit};
 use tempfile::NamedTempFile;
-
-use resource_viewer::{AnnotatedMoveStruct, AnnotatedMoveValue, MoveValueAnnotator};
+use resource_viewer::AnnotatedMoveValue;
 /// The relative path to the scripts templates
 pub const SCRIPTS_DIR_PATH: &str = "templates";
 
