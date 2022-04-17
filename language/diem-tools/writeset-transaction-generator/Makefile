@@ -85,19 +85,40 @@ dump:
 test: wipe tx check commit init start
 
 
-# NOTES
+# NOTES for testing
+
+# Step 0: change this makefile so that VALS= at top has your node address. Use a sanitized validator.node.yaml file.
 
 # STEP 1: Jailbreak the backup
-# new writset "rescue"
+# >make test
+
 # - Get a new STDLIB that doesn't have the DiemConfig::reconfigure_ timestamp checking.
 # - STDLIB also shouldn't advance if less than 10k blocks have been committed since last boundary.
 # - reset the validator set to one validator, so that blocks can make progress. NOTE: do not trigger epoch boundary since the state may not have all info needed.
+
+# Step 2: Run the node
+# make some progres in blocks.
+
+# Step 3: Submit a test net transaction writeset.
+# > make tx-testnet check commit init start
+
+# Step 4: Run node again
+
+# STEP 5: Trigger an epoch boundary
+# > make tx-boundary check commit init start
+
+
+# - makes sure theres only a validator set of 1
+# - resets the counters
+
+### deprecated.
 
 # Step 2: Start the node
 # make some progres in blocks.
 
 # STEP 3: Trigger a val set update WITHOUT triggering epoch counters reset.
-# Don't knwo why
+
+# Don't know why
 
 
 # Step 4: Start node again
