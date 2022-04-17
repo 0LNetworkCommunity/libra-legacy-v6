@@ -120,7 +120,7 @@ pub fn encode_halt_network_payload() -> WriteSetPayload {
 }
 
 //////// 0L ////////
-pub fn encode_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPayload {
+pub fn script_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPayload {
     println!("encode_bulk_update_vals_payload");
     let mut script = template_path();
     script.push("bulk_update.move");
@@ -134,14 +134,15 @@ pub fn encode_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPay
         execute_as: diem_root_address(),
     }
 }
-
-pub fn ol_encode_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+/// Force the ol epoch boundary and reset all the counters
+/// TODO: this creates some issue for block_prologue around epoch boundary because data disappears.
+pub fn ol_writeset_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
     let cs = ol_force_boundary(path, vals).unwrap();
     WriteSetPayload::Direct(cs)
 }
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
-pub fn encode_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
+pub fn ol_writeset_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
     let stdlib_cs = encode_stdlib_upgrade_transaction();
 
@@ -151,7 +152,7 @@ pub fn encode_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
 }
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
-pub fn ol_testnet(path: PathBuf) -> WriteSetPayload {
+pub fn ol_writeset_set_testnet(path: PathBuf) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
     let stdlib_cs = ol_testnet_changeset(path.clone()).unwrap();
 
@@ -160,30 +161,16 @@ pub fn ol_testnet(path: PathBuf) -> WriteSetPayload {
     WriteSetPayload::Direct(merge_change_set(stdlib_cs, reconfig).unwrap())
 }
 
-// /// create the upgrade payload INCLUDING the epoch reconfigure
-// pub fn ol_encode_rescue_old(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
-//     if vals.len() == 0 {
-//         println!("need to provide list of addresses");
-//         exit(1)
-//     };
-
-//     let stdlib_cs = encode_stlib_alt(path.clone()).unwrap();
-
-//     // Take the stdlib upgrade change set.
-//     let update_vals = ol_force_boundary(path, vals).unwrap();
-
-//     WriteSetPayload::Direct(merge_change_set(stdlib_cs, update_vals).unwrap())
-// }
 
 
 
-pub fn ol_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
         exit(1)
     };
 
-    let stdlib_cs = ol_encode_stlib_changeset(path.clone()).unwrap();
+    let stdlib_cs = ol_fresh_stlib_changeset(path.clone()).unwrap();
     // TODO: forcing the boundary causes an erorr on the epoch boundary.
     // let boundary = ol_force_boundary(path.clone(), vals).unwrap();
     let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
@@ -197,8 +184,8 @@ pub fn ol_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPay
 
 
 
-
-pub fn ol_debug_epoch(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+/// set the EpochBoundary debug mode.
+pub fn ol_writeset_debug_epoch(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
         exit(1)
@@ -210,7 +197,7 @@ pub fn ol_debug_epoch(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPaylo
     WriteSetPayload::Direct(merge_change_set(debug_mode, reconfig).unwrap())
 }
 
-pub fn ol_test_timestamp(path: PathBuf) -> WriteSetPayload {
+pub fn ol_writset_update_timestamp(path: PathBuf) -> WriteSetPayload {
     let timestamp = ol_increment_timestamp(path.clone()).expect("could not get timestamp writeset");
 
     // Take the stdlib upgrade change set.
@@ -225,29 +212,10 @@ pub fn ol_create_reconfig_payload(path: PathBuf) -> WriteSetPayload {
     )
 }
 
- ///////////// HELPERS ////////////
-  
-fn merge_change_set(left: ChangeSet, right: ChangeSet) -> Result<ChangeSet> {
-    // get stlib_cs writeset mut and apply reconfig changeset over it
-    let mut stdlib_ws_mut = left.write_set().clone().into_mut();
-
-    let r_ws = right.write_set().clone().into_mut();
-
-    r_ws.get()
-        .into_iter()
-        .for_each(|item| stdlib_ws_mut.push(item));
-
-    let mut all_events = left.events().to_owned().clone();
-    let mut reconfig_events = right.events().to_owned().clone();
-    all_events.append(&mut reconfig_events);
-
-    let new_cs = ChangeSet::new(stdlib_ws_mut.freeze()?, all_events);
-
-    Ok(new_cs)
-}
+///////////////// ENCODE CHANGESETS ///////////////////////////////
 
 
-pub fn ol_encode_stlib_changeset(path: PathBuf) -> Result<ChangeSet> {
+pub fn ol_fresh_stlib_changeset(path: PathBuf) -> Result<ChangeSet> {
     println!("encode stdlib changeset");
 
     let db = DiemDebugger::db(path)?;
@@ -517,83 +485,24 @@ fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeS
     })
 }
 
-// fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
-//     let db = DiemDebugger::db(path)?;
 
-//     let v = db.get_latest_version()?;
-//     db.run_session_at_version(
-//       v,
-//       None,
-//       |session| {
-//           let mut gas_status = GasStatus::new_unmetered();
-//           let log_context = NoContextLog::new();
+ ///////////// HELPERS ////////////
+  
+fn merge_change_set(left: ChangeSet, right: ChangeSet) -> Result<ChangeSet> {
+    // get stlib_cs writeset mut and apply reconfig changeset over it
+    let mut stdlib_ws_mut = left.write_set().clone().into_mut();
 
-//           // fun reset_counters(vm: &signer, proposed_set: vector<address>, outgoing_compliant: vector<address>, height_now: u64) {
+    let r_ws = right.write_set().clone().into_mut();
 
-//           // let args = vec![
-//           //   MoveValue::Signer(diem_root_address()),
-//           //   MoveValue::vector_address(vals.clone()), // proposed_set
-//           //   // MoveValue::vector_address(vec![]), // outgoing_compliant
-//           //   // MoveValue::U64(v), // height_now
-//           // ];
+    r_ws.get()
+        .into_iter()
+        .for_each(|item| stdlib_ws_mut.push(item));
 
-//           // session.execute_function(
-//           //     &ModuleId::new(account_config::CORE_CODE_ADDRESS, Identifier::new("Stats").unwrap()),
-//           //     &Identifier::new("reconfig").unwrap(),
-//           //     vec![],
-//           //     serialize_values(&args),
-//           //     &mut gas_status,
-//           //     &log_context,
-//           // ).unwrap(); // TODO: don't use unwraps.
+    let mut all_events = left.events().to_owned().clone();
+    let mut reconfig_events = right.events().to_owned().clone();
+    all_events.append(&mut reconfig_events);
 
-//          let args = vec![
-//             MoveValue::Signer(diem_root_address()),
-//             MoveValue::vector_address(vals.clone()), // proposed_set
-//             // MoveValue::vector_address(vec![]), // outgoing_compliant
-//             // MoveValue::U64(v), // height_now
-//           ];
+    let new_cs = ChangeSet::new(stdlib_ws_mut.freeze()?, all_events);
 
-//           session.execute_function(
-//               &ModuleId::new(account_config::CORE_CODE_ADDRESS, Identifier::new("DiemSystem").unwrap()),
-//               &Identifier::new("bulk_update_validators").unwrap(),
-//               vec![],
-//               serialize_values(&args),
-//               &mut gas_status,
-//               &log_context,
-//           ).unwrap(); // TODO: don't use unwraps.
-
-//           // let args = vec![
-//           //   MoveValue::Signer(diem_root_address()),
-//           //   // MoveValue::vector_address(vals), // proposed_set
-//           //   // MoveValue::vector_address(vec![]), // outgoing_compliant
-//           //   MoveValue::U64(v), // height_now
-//           // ];
-
-//           // session.execute_function(
-//           //     &ModuleId::new(account_config::CORE_CODE_ADDRESS, Identifier::new("Epoch").unwrap()),
-//           //     &Identifier::new("reset_timer").unwrap(),
-//           //     vec![],
-//           //     serialize_values(&args),
-//           //     &mut gas_status,
-//           //     &log_context,
-//           // ).unwrap(); // TODO: don't use unwraps.
-
-//         // Reset Stats
-//         // Stats::reconfig(vm, &proposed_set);
-
-//         // // Migrate TowerState list from elegible.
-//         // TowerState::reconfig(vm, &outgoing_compliant);
-
-//         // // Reconfigure the network
-//         // DiemSystem::bulk_update_validators(vm, proposed_set);
-
-//         // // process community wallets
-//         // DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
-
-//         // // reset counters
-//         // AutoPay::reconfig_reset_tick(vm);
-//         // Epoch::reset_timer(vm, height_now);
-
-//           Ok(())
-//       })
-// }
+    Ok(new_cs)
+}
