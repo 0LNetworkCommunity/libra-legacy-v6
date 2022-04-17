@@ -161,7 +161,22 @@ pub fn ol_writeset_set_testnet(path: PathBuf) -> WriteSetPayload {
 
     let reconfig = ol_reconfig_changeset(path).unwrap();
 
-    WriteSetPayload::Direct(merge_change_set(stdlib_cs, reconfig).unwrap())
+    let cs = ChangeSet::new(stdlib_cs.write_set().clone(), vec!(reconfig));
+
+    WriteSetPayload::Direct(cs)
+}
+
+
+/// create the upgrade payload INCLUDING the epoch reconfigure
+pub fn ol_writeset_mfg_epoch_event(path: PathBuf) -> WriteSetPayload {
+    // Take the stdlib upgrade change set.
+    let stdlib_cs = ol_testnet_changeset(path.clone()).unwrap();
+
+    let epoch_event = mfg_epoch_event(168, 168).unwrap();
+
+    let cs = ChangeSet::new(stdlib_cs.write_set().clone(), vec!(epoch_event));
+
+    WriteSetPayload::Direct(cs)
 }
 
 
