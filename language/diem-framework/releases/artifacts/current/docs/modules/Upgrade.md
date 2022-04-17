@@ -206,6 +206,7 @@ Structs for UpgradeHistory resource
     <b>let</b> new_epoch_height = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm) + 2; // This is janky, but there's no other way <b>to</b> get the current block height, unless the prologue gives it <b>to</b> us. The upgrade reconfigure happens on round 2, so we'll increment the new start by 2 from previous.
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, new_epoch_height);
 
+    // TODO: check <b>if</b> this has any impact.
     // Update <b>global</b> time by 1 <b>to</b> escape the timestamps check (for deduplication) of DiemConfig::reconfig_
     // that check prevents offline writsets from being written during emergency offline recovery.
     <b>let</b> timenow = <a href="DiemTimestamp.md#0x1_DiemTimestamp_now_microseconds">DiemTimestamp::now_microseconds</a>() + 100;

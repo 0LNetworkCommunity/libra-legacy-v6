@@ -191,10 +191,6 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> Wri
     // let boundary = ol_force_boundary(path.clone(), vals).unwrap();
     let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
-    // let time = ol_epoch_timestamp_update(path.clone()).unwrap();
-
-    // let time = ol_increment_timestamp_changeset(path).unwrap();
-
     let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
    
     // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())

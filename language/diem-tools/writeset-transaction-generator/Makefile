@@ -83,3 +83,11 @@ dump:
 	cd ${SOURCE_PATH} && cargo r -p diem-transaction-replay -- --db ${DATA_PATH}/db annotate-account 00000000000000000000000000000000 > ${RESCUE_PATH}/dump-${STEP}
 
 test: wipe tx check commit init start
+
+
+# NOTES
+
+# Jailbreak the backup
+# - Get a new STDLIB that doesn't have the DiemConfig::reconfigure_ timestamp checking.
+# - STDLIB also shouldn't advance if less than 10k blocks have been committed since last boundary.
+# - reset the validator set to one validator, so that blocks can make progress. NOTE: do not trigger epoch boundary since the state may not have all info needed.

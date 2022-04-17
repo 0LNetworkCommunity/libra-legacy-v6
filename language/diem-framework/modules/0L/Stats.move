@@ -153,10 +153,14 @@ module Stats{
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190009));
 
     let stats = borrow_global_mut<ValStats>(sender);
-    let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
-    let current_count = *Vector::borrow<u64>(&mut stats.current.prop_count, i);
-    Vector::push_back(&mut stats.current.prop_count, current_count + 1);
-    Vector::swap_remove(&mut stats.current.prop_count, i);
+    let (is_true, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+    // don't try to increment if no state. This has caused issues in the past in emergency recovery.
+    if (is_true) {
+      let current_count = *Vector::borrow<u64>(&mut stats.current.prop_count, i);
+      Vector::push_back(&mut stats.current.prop_count, current_count + 1);
+      Vector::swap_remove(&mut stats.current.prop_count, i);
+    };
+
     stats.current.total_props = stats.current.total_props + 1;
   }
   
@@ -176,8 +180,11 @@ module Stats{
       Vector::push_back(&mut stats.current.vote_count, test + 1);
       Vector::swap_remove(&mut stats.current.vote_count, i);
     } else {
+      // debugging rescue mission. Remove after network stabilizes Apr 2022.
       // something bad happened and we can't find this node in our list.
       print(&666);
+      print(&node_addr);
+
     };
     // update total vote count anyways even if we can't find this person.
     stats.current.total_votes = stats.current.total_votes + 1;

@@ -424,10 +424,14 @@
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190009));
 
   <b>let</b> stats = borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(sender);
-  <b>let</b> (_, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&<b>mut</b> stats.current.addr, &node_addr);
-  <b>let</b> current_count = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&<b>mut</b> stats.current.prop_count, i);
-  <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.current.prop_count, current_count + 1);
-  <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> stats.current.prop_count, i);
+  <b>let</b> (is_true, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&<b>mut</b> stats.current.addr, &node_addr);
+  // don't try <b>to</b> increment <b>if</b> no state. This has caused issues in the past in emergency recovery.
+  <b>if</b> (is_true) {
+    <b>let</b> current_count = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&<b>mut</b> stats.current.prop_count, i);
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.current.prop_count, current_count + 1);
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> stats.current.prop_count, i);
+  };
+
   stats.current.total_props = stats.current.total_props + 1;
 }
 </code></pre>
