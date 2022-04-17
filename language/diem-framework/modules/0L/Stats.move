@@ -194,20 +194,25 @@ module Stats{
   //Permissions: Public, VM only.
   //Function: 11
   public fun reconfig(vm: &signer, set: &vector<address>) acquires ValStats {
+    print(&300400);
+
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190011));
     let stats = borrow_global_mut<ValStats>(sender);
-    
+    // print(&300210);
     // Keep only the most recent epoch stats
     if (Vector::length(&stats.history) > 7) {
       Vector::pop_back<SetData>(&mut stats.history); // just drop last record
     };
-
+    // print(&300220);
     Vector::push_back(&mut stats.history, *&stats.current);
-
+    // print(&300230);
     stats.current = blank();
-    
+    // print(&300240);
+
     init_set(vm, set);
+    // print(&300250);
+
   }
 
   //Function: 12

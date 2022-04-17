@@ -501,20 +501,25 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_reconfig">reconfig</a>(vm: &signer, set: &vector&lt;address&gt;) <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
+  print(&300400);
+
   <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190011));
   <b>let</b> stats = borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(sender);
-
+  // print(&300210);
   // Keep only the most recent epoch stats
   <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&stats.history) &gt; 7) {
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_pop_back">Vector::pop_back</a>&lt;<a href="Stats.md#0x1_Stats_SetData">SetData</a>&gt;(&<b>mut</b> stats.history); // just drop last record
   };
-
+  // print(&300220);
   <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.history, *&stats.current);
-
+  // print(&300230);
   stats.current = <a href="Stats.md#0x1_Stats_blank">blank</a>();
+  // print(&300240);
 
   <a href="Stats.md#0x1_Stats_init_set">init_set</a>(vm, set);
+  // print(&300250);
+
 }
 </code></pre>
 

@@ -24,6 +24,7 @@ module EpochBoundary {
     use 0x1::DiemAccount;
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
+    use 0x1::Debug::print;
 
     struct DebugMode has copy, key, drop, store{
       fixed_set: vector<address>
@@ -62,10 +63,11 @@ module EpochBoundary {
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) acquires DebugMode{
-        CoreAddresses::assert_vm(vm);
+        print(&300300);
 
+        CoreAddresses::assert_vm(vm);
         let height_start = Epoch::get_timer_height_start(vm);
-        
+        print(&300310);
         let (outgoing_compliant_set, _) = 
             DiemSystem::get_fee_ratio(vm, height_start, height_now);
 
@@ -73,11 +75,13 @@ module EpochBoundary {
         let compliant_nodes_count = Vector::length(&outgoing_compliant_set);
         let (subsidy_units, nominal_subsidy_per) = 
             Subsidy::calculate_subsidy(vm, compliant_nodes_count);
-        
+        print(&300320);
         process_fullnodes(vm, nominal_subsidy_per);
-        
+        print(&300330);
+
         process_validators(vm, subsidy_units, *&outgoing_compliant_set);
-        
+        print(&300340);
+
         let proposed_set = propose_new_set(vm, height_start, height_now);
         
         // Update all slow wallet limits
@@ -85,7 +89,11 @@ module EpochBoundary {
             DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
             // update_validator_withdrawal_limit(vm);
         };
-        reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
+        print(&300350);
+
+        reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
+        print(&300360);
+
     }
 
     // process fullnode subsidy
