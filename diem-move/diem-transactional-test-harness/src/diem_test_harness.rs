@@ -697,8 +697,8 @@ impl<'a> DiemTestAdapter<'a> {
     /// Create a parent vasp account with the given credentials.
     ///
     /// Note: this does not add it to the named address or private key mappings.
-    /// That needs to be done separately.
-    fn create_parent_vasp_account(
+    /// That needs to be done separately.    
+    fn _create_parent_vasp_account( /////// 0L ///////// // Needs review
         &mut self,
         validator_name: Identifier,
         auth_key_prefix: Vec<u8>,
@@ -943,17 +943,18 @@ impl<'a> MoveTestAdapter<'a> for DiemTestAdapter<'a> {
             );
         }
 
-        // Create parent vasp accounts
-        for (parent_vasp_name, auth_key_prefix, account_addr, currency_type_name) in
-            parent_vasps_to_create
-        {
-            adapter.create_parent_vasp_account(
-                parent_vasp_name,
-                auth_key_prefix,
-                account_addr,
-                currency_type_name,
-            );
-        }
+        /////// 0L ///////// // Needs review
+        // // Create parent vasp accounts
+        // for (parent_vasp_name, auth_key_prefix, account_addr, currency_type_name) in
+        //     parent_vasps_to_create
+        // {
+        //     adapter.create_parent_vasp_account(
+        //         parent_vasp_name,
+        //         auth_key_prefix,
+        //         account_addr,
+        //         currency_type_name,
+        //     );
+        // }
 
         adapter
     }

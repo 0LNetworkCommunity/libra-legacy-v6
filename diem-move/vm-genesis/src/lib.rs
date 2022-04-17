@@ -5,7 +5,6 @@
 
 mod genesis_context;
 use anyhow::Error;
-use serde::Deserialize;
 use std::env;
 use crate::genesis_context::GenesisStateView;
 use diem_crypto::{
@@ -376,7 +375,6 @@ fn create_and_initialize_main_accounts(
 
 fn _create_and_initialize_testnet_minting( //////// 0L ////////
     session: &mut Session<StateViewCache<GenesisStateView>>,
-
     public_key: &Ed25519PublicKey,
 ) {
     let genesis_auth_key = AuthenticationKey::ed25519(public_key);

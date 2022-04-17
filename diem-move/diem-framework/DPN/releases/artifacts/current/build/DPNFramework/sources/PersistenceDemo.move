@@ -49,7 +49,7 @@ address DiemFramework{
         // To read or write to a Resource Struct an `acquires` tag is needed to 
         // permission a function. NOTE all downsteam functions will also need 
         // permission on that data struct, i.e. need the same `acquires` parameters.
-        public fun add_stuff(sender: &signer ) acquires State {
+        public fun add_stuff(sender: &signer) acquires State {
           assert!(is_testnet(), Errors::invalid_state(ETESTNET));
 
           // Resource Struct state is always "borrowed" and "moved" and generally 
