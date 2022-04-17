@@ -411,9 +411,9 @@ fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
             .execute_function(
                 &ModuleId::new(
                     account_config::CORE_CODE_ADDRESS,
-                    Identifier::new("DiemConfig").unwrap(),
+                    Identifier::new("Upgrade").unwrap(),
                 ),
-                &Identifier::new("upgrade_reconfig").unwrap(),
+                &Identifier::new("upgrade").unwrap(),
                 vec![],
                 serialize_values(&args),
                 &mut gas_status,
