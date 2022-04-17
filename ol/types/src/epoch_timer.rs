@@ -59,7 +59,7 @@ impl EpochTimerResource {
         bcs::from_bytes(bytes).map_err(Into::into)
     }
     /// make a writeset for this struct
-    pub fn to_changeset(&self) -> Result<WriteSetMut>{
+    pub fn to_writeset(&self) -> Result<WriteSetMut>{
       let op = WriteOp::Value(bcs::to_bytes(self)?);
       let unit = (EpochTimerResource::access_path(AccountAddress::ZERO), op);
       Ok(WriteSetMut::new(vec![unit]))
@@ -75,5 +75,5 @@ pub fn test_changeset() {
       height_start: 2,
       seconds_start: 3,
   };
-  let c = e.to_changeset().unwrap();
+  let c = e.to_writeset().unwrap();
 }
