@@ -161,9 +161,7 @@ pub fn ol_writeset_set_testnet(path: PathBuf) -> WriteSetPayload {
 
     let reconfig = ol_reconfig_changeset(path).unwrap();
 
-    let cs = ChangeSet::new(stdlib_cs.write_set().clone(), vec!(reconfig));
-
-    WriteSetPayload::Direct(cs)
+    WriteSetPayload::Direct(merge_change_set(stdlib_cs, reconfig).unwrap())
 }
 
 
