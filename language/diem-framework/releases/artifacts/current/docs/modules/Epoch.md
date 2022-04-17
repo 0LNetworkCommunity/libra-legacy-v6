@@ -114,7 +114,7 @@ Check to see if epoch is finished
 Simply checks if the elapsed time is greater than the epoch time
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_epoch_finished">epoch_finished</a>(height: u64): bool
+<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_epoch_finished">epoch_finished</a>(height_now: u64): bool
 </code></pre>
 
 
@@ -123,12 +123,15 @@ Simply checks if the elapsed time is greater than the epoch time
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_epoch_finished">epoch_finished</a>(height: u64): bool <b>acquires</b> <a href="Epoch.md#0x1_Epoch_Timer">Timer</a> {
-    <b>let</b> epoch_secs = <a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>();
+<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_epoch_finished">epoch_finished</a>(height_now: u64): bool <b>acquires</b> <a href="Epoch.md#0x1_Epoch_Timer">Timer</a> {
     <b>let</b> time = borrow_global&lt;<a href="Epoch.md#0x1_Epoch_Timer">Timer</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
+    <b>let</b> epoch_secs = <a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>();
+
+    // we targe 24hrs for block production.
+    // there are failuree cases when there is a halt, and nodes have been offline for all of the 24hrs, producing a new epoch upon restart leads <b>to</b> further failures. So we check that a meaninful amount of blocks have been created too.
     (<a href="DiemTimestamp.md#0x1_DiemTimestamp_now_seconds">DiemTimestamp::now_seconds</a>() &gt; (epoch_secs + time.seconds_start)) &&
     // adding the check that we need at least 10K blocks for an epoch <b>to</b> turn over.
-    (time.height_start &lt; height + 10000)
+    ( height_now &gt; time.height_start + 10000)
 }
 </code></pre>
 
