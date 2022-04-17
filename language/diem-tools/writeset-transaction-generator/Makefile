@@ -47,10 +47,6 @@ tx-testnet:
 # 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${DATA_PATH}/restore/rescue.blob build-custom-script set_testnet.move '{}'
 
 
-
-# check:
-# 	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${DATA_PATH}/restore/rescue.blob
-
 check:
 	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${DATA_PATH}/restore/rescue.blob | grep -oP 'waypoint: \K\w+:\w+' > ${DATA_PATH}/rescue_waypoint.txt 
 	@echo Waypoint: $(shell cat ${DATA_PATH}/rescue_waypoint.txt )
@@ -78,6 +74,3 @@ dump:
 	cd ${SOURCE_PATH} && cargo r -p diem-transaction-replay -- --db ${DATA_PATH}/db annotate-account 00000000000000000000000000000000 > ${DATA_PATH}/dump-${STEP}
 
 test: wipe tx check commit init start
-
-replay:
-	cd ${SOURCE_PATH} && cargo r -p diem-transaction-replay -- -s --db ${DATA_PATH}/db replay-writeset ${DATA_PATH}/restore/rescue.blob 28670915
