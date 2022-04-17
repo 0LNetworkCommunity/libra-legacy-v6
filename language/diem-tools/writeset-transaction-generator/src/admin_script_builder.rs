@@ -22,10 +22,12 @@ use move_core_types::{
 use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
 use move_vm_runtime::logging::NoContextLog;
 use move_vm_types::gas_schedule::GasStatus;
+use ol_types::epoch_timer::EpochTimerResource;
 use serde::Serialize;
 use std::{collections::HashMap, io::Write, path::PathBuf, process::exit};
 use tempfile::NamedTempFile;
 
+use resource_viewer::{AnnotatedMoveStruct, AnnotatedMoveValue, MoveValueAnnotator};
 /// The relative path to the scripts templates
 pub const SCRIPTS_DIR_PATH: &str = "templates";
 
@@ -336,7 +338,45 @@ fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
     })
 }
 
+fn ol_epoch_timestamp_update(path: PathBuf) -> Result<()>{
+  let db = DiemDebugger::db(path)?;
+  let v = db.get_latest_version()?;
 
+  if let Some(acc) = db.annotate_account_state_at_version(AccountAddress::ZERO, v, false)? {
+    let key = EpochTimerResource::struct_tag();
+    // confirm the field exists.
+    if let Some(v) = acc.0.get(&key) {
+      // dbg!(&v);
+      let mut e = EpochTimerResource {
+          epoch: 0,
+          height_start: 0,
+          seconds_start: 0,
+      };
+
+      v.value.iter()
+      .for_each(|item| {
+        if let AnnotatedMoveValue::U64(u) = item.1 {
+          match item.0.as_str() {
+            "epoch" => e.epoch = u,
+            "height_start" => e.height_start = u,
+            "seconds_start" => e.seconds_start = u,
+            _ => {}
+          }
+        };
+      });
+
+      dbg!(&e);
+
+    }
+  };
+
+  Ok(())
+}
+
+#[test]
+fn test_epoch() {
+  ol_epoch_timestamp_update("/home/node/.0L/db".parse().unwrap());
+}
 
 fn ol_set_epoch_debug_mode(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;

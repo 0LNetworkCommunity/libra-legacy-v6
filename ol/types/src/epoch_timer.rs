@@ -2,7 +2,7 @@
 
 use diem_types::{
     access_path::AccessPath,
-    account_config::constants:: CORE_CODE_ADDRESS,
+    account_config::constants:: CORE_CODE_ADDRESS, transaction::ChangeSet, write_set::{WriteSetMut, WriteOp},
 };
 use anyhow::Result;
 use move_core_types::{
@@ -13,15 +13,16 @@ use move_core_types::{
 };
 use serde::{Deserialize, Serialize};
 use move_core_types::account_address::AccountAddress;
-use num_format::{Locale, ToFormattedString};
 
 /// Struct that represents a AutoPay resource
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EpochTimerResource {
     ///
-    epoch: u64,
-    height_start: u64,
-    seconds_start: u64
+    pub epoch: u64,
+    ///
+    pub height_start: u64,
+    ///
+    pub seconds_start: u64
 }
 
 impl MoveStructType for EpochTimerResource {
@@ -57,4 +58,22 @@ impl EpochTimerResource {
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
         bcs::from_bytes(bytes).map_err(Into::into)
     }
+    /// make a writeset for this struct
+    pub fn to_changeset(&self) -> Result<WriteSetMut>{
+      let op = WriteOp::Value(bcs::to_bytes(self)?);
+      let unit = (EpochTimerResource::access_path(AccountAddress::ZERO), op);
+      Ok(WriteSetMut::new(vec![unit]))
+    }
+
+
+}
+
+#[test]
+pub fn test_changeset() {
+  let e = EpochTimerResource {
+      epoch: 1,
+      height_start: 2,
+      seconds_start: 3,
+  };
+  let c = e.to_changeset().unwrap();
 }
