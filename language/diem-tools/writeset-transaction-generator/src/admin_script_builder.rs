@@ -413,7 +413,7 @@ fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
                     account_config::CORE_CODE_ADDRESS,
                     Identifier::new("Upgrade").unwrap(),
                 ),
-                &Identifier::new("upgrade").unwrap(),
+                &Identifier::new("upgrade_reconfig").unwrap(),
                 vec![],
                 serialize_values(&args),
                 &mut gas_status,
