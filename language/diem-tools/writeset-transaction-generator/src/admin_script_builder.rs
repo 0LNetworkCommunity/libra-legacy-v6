@@ -214,6 +214,15 @@ pub fn ol_create_reconfig_payload(path: PathBuf) -> WriteSetPayload {
     )
 }
 
+
+pub fn ol_writeset_update_epoch_time(path: PathBuf) -> WriteSetPayload {
+
+    let epoch_time = ol_epoch_timestamp_update(path.clone()).unwrap();
+    let reconfig = ol_reconfig_changeset(path).unwrap();
+
+    WriteSetPayload::Direct(merge_change_set(epoch_time, reconfig).unwrap())
+}
+
 ///////////////// ENCODE CHANGESETS ///////////////////////////////
 
 
