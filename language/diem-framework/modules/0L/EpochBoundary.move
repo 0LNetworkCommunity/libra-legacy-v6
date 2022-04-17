@@ -182,8 +182,16 @@ module EpochBoundary {
             };
             i = i+ 1;
         };
-
+        
+        
         // If the cardinality of validator_set in the next epoch is less than 4, 
+
+        // if we are failing to qualify anyone. Pick top 1/2 of validator set by proposals. They are probably online.
+
+        if (Vector::length<address>(&proposed_set) <= 3) proposed_set = Stats::get_sorted_vals_by_props(vm, Vector::length<address>(&proposed_set) / 2);
+
+
+        // If still failing...in extreme case if we cannot qualify anyone. Don't change the validator set.
         // we keep the same validator set. 
         if (Vector::length<address>(&proposed_set) <= 3) proposed_set = DiemSystem::get_val_set_addr(); // Patch for april incident. Make no changes to validator set.
 

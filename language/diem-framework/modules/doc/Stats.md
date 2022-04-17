@@ -23,6 +23,7 @@
 -  [Function `get_total_props`](#0x1_Stats_get_total_props)
 -  [Function `get_history`](#0x1_Stats_get_history)
 -  [Function `test_helper_inc_vote_addr`](#0x1_Stats_test_helper_inc_vote_addr)
+-  [Function `get_sorted_vals_by_props`](#0x1_Stats_get_sorted_vals_by_props)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -620,6 +621,81 @@ TEST HELPERS
 
   <a href="Stats.md#0x1_Stats_inc_vote">inc_vote</a>(vm, node_addr);
 }
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Stats_get_sorted_vals_by_props"></a>
+
+## Function `get_sorted_vals_by_props`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_get_sorted_vals_by_props">get_sorted_vals_by_props</a>(account: &signer, n: u64): vector&lt;address&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_get_sorted_vals_by_props">get_sorted_vals_by_props</a>(account: &signer, n: u64): vector&lt;address&gt; <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
+    <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(140101));
+
+    //Get all validators from Validator Universe and then find the eligible validators
+    <b>let</b> eligible_validators =
+    *&borrow_global&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).current.addr;
+
+
+    <b>let</b> length = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&eligible_validators);
+
+    // Scenario: The universe of validators is under the limit of the BFT consensus.
+    // If n is greater than or equal <b>to</b> accounts vector length - <b>return</b> the vector.
+    <b>if</b>(length &lt;= n) <b>return</b> eligible_validators;
+
+    // <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">Vector</a> <b>to</b> store each address's node_weight
+    <b>let</b> weights = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;();
+    <b>let</b> k = 0;
+    <b>while</b> (k &lt; length) {
+
+      <b>let</b> cur_address = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&eligible_validators, k);
+      // Ensure that this address is an active validator
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;u64&gt;(&<b>mut</b> weights, <a href="Stats.md#0x1_Stats_node_current_props">node_current_props</a>(account, cur_address));
+      k = k + 1;
+    };
+
+    // Sorting the accounts vector based on value (weights).
+    // Bubble sort algorithm
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; length){
+      <b>let</b> j = 0;
+      <b>while</b>(j &lt; length-i-1){
+
+        <b>let</b> value_j = *(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&weights, j));
+        <b>let</b> value_jp1 = *(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&weights, j+1));
+        <b>if</b>(value_j &gt; value_jp1){
+          <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap">Vector::swap</a>&lt;u64&gt;(&<b>mut</b> weights, j, j+1);
+          <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap">Vector::swap</a>&lt;address&gt;(&<b>mut</b> eligible_validators, j, j+1);
+        };
+        j = j + 1;
+      };
+      i = i + 1;
+    };
+
+    // Reverse <b>to</b> have sorted order - high <b>to</b> low.
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_reverse">Vector::reverse</a>&lt;address&gt;(&<b>mut</b> eligible_validators);
+
+    <b>let</b> diff = length - n;
+    <b>while</b>(diff&gt;0){
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_pop_back">Vector::pop_back</a>(&<b>mut</b> eligible_validators);
+      diff =  diff - 1;
+    };
+
+    <b>return</b> eligible_validators
+  }
 </code></pre>
 
 

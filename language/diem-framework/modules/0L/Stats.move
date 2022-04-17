@@ -239,5 +239,61 @@ module Stats{
     inc_vote(vm, node_addr);
   }
 
+  // TODO: this code is duplicated with NodeWeight, opportunity to make sorting in to a module.
+  public fun get_sorted_vals_by_props(account: &signer, n: u64): vector<address> acquires ValStats {
+      assert(Signer::address_of(account) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(140101));
+
+      //Get all validators from Validator Universe and then find the eligible validators 
+      let eligible_validators = 
+      *&borrow_global<ValStats>(CoreAddresses::DIEM_ROOT_ADDRESS()).current.addr;
+
+
+      let length = Vector::length<address>(&eligible_validators);
+
+      // Scenario: The universe of validators is under the limit of the BFT consensus.
+      // If n is greater than or equal to accounts vector length - return the vector.
+      if(length <= n) return eligible_validators;
+
+      // Vector to store each address's node_weight
+      let weights = Vector::empty<u64>();
+      let k = 0;
+      while (k < length) {
+
+        let cur_address = *Vector::borrow<address>(&eligible_validators, k);
+        // Ensure that this address is an active validator
+        Vector::push_back<u64>(&mut weights, node_current_props(account, cur_address));
+        k = k + 1;
+      };
+
+      // Sorting the accounts vector based on value (weights).
+      // Bubble sort algorithm
+      let i = 0;
+      while (i < length){
+        let j = 0;
+        while(j < length-i-1){
+
+          let value_j = *(Vector::borrow<u64>(&weights, j));
+          let value_jp1 = *(Vector::borrow<u64>(&weights, j+1));
+          if(value_j > value_jp1){
+            Vector::swap<u64>(&mut weights, j, j+1);
+            Vector::swap<address>(&mut eligible_validators, j, j+1);
+          };
+          j = j + 1;
+        };
+        i = i + 1;
+      };
+
+      // Reverse to have sorted order - high to low.
+      Vector::reverse<address>(&mut eligible_validators);
+
+      let diff = length - n; 
+      while(diff>0){
+        Vector::pop_back(&mut eligible_validators);
+        diff =  diff - 1;
+      };
+
+      return eligible_validators
+    }
+
 }
 }

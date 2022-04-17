@@ -368,9 +368,18 @@
         i = i+ 1;
     };
 
+
     // If the cardinality of validator_set in the next epoch is less than 4,
+
+    // <b>if</b> we are failing <b>to</b> qualify anyone. Pick top 1/2 of validator set by proposals. They are probably online.
+
+    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&proposed_set) &lt;= 3) proposed_set = <a href="Stats.md#0x1_Stats_get_sorted_vals_by_props">Stats::get_sorted_vals_by_props</a>(vm, <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&proposed_set) / 2);
+
+
+    // If still failing...in extreme case <b>if</b> we cannot qualify anyone. Don't change the validator set.
     // we keep the same validator set.
-    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&proposed_set) &lt;= 3) proposed_set = *&top_accounts;
+    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&proposed_set) &lt;= 3) proposed_set = <a href="DiemSystem.md#0x1_DiemSystem_get_val_set_addr">DiemSystem::get_val_set_addr</a>(); // Patch for april incident. Make no changes <b>to</b> validator set.
+
     // Usually an issue in staging network for QA only.
     // This is very rare and theoretically impossible for network <b>with</b>
     // at least 6 nodes and 6 rounds. If we reach an epoch boundary <b>with</b>
