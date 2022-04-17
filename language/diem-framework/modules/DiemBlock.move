@@ -139,12 +139,13 @@ module DiemBlock {
 
         //////// 0L ////////
         // EPOCH BOUNDARY
-        if (Epoch::epoch_finished()) {
+        let height = get_current_block_height();
+        if (Epoch::epoch_finished(height)) {
 
           // TODO: We don't need to pass block height to EpochBoundaryOL. 
           // It should use the BlockMetadata. But there's a circular reference 
           // there when we try.
-          EpochBoundary::reconfigure(&vm, get_current_block_height());
+          EpochBoundary::reconfigure(&vm, height);
         };        
     }
     spec block_prologue {

@@ -286,12 +286,13 @@ The runtime always runs this before executing the transactions in a block.
 
     //////// 0L ////////
     // EPOCH BOUNDARY
-    <b>if</b> (<a href="Epoch.md#0x1_Epoch_epoch_finished">Epoch::epoch_finished</a>()) {
+    <b>let</b> height = <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">get_current_block_height</a>();
+    <b>if</b> (<a href="Epoch.md#0x1_Epoch_epoch_finished">Epoch::epoch_finished</a>(height)) {
 
       // TODO: We don't need <b>to</b> pass block height <b>to</b> EpochBoundaryOL.
       // It should <b>use</b> the <a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a>. But there's a circular reference
       // there when we try.
-      <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">EpochBoundary::reconfigure</a>(&vm, <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">get_current_block_height</a>());
+      <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">EpochBoundary::reconfigure</a>(&vm, height);
     };
 }
 </code></pre>
