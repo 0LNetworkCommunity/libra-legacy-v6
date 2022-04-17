@@ -18,7 +18,8 @@ endif
 
 wipe:
 	mkdir ${RESCUE_PATH} | true
-	mv -f ${DATA_PATH}/db ${DATA_PATH}/db.bak.${DATE} | true
+	rm -rf ${DATA_PATH}/db
+#	mv -f ${DATA_PATH}/db ${DATA_PATH}/db.bak.${DATE} | true
 	cp -r ${DATA_PATH}/db-reference ${DATA_PATH}/db
 	STEP=wipe make dump
 
@@ -38,8 +39,8 @@ tx-boundary:
 tx-reconfig:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob reconfig
 
-# tx-stdlib:
-# 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${DATA_PATH}/restore/rescue.blob reconfig 
+tx-stdlib:
+	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${DATA_PATH}/restore/rescue.blob reconfig 
 
 tx-time:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob time
@@ -47,12 +48,16 @@ tx-time:
 tx-testnet:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob testnet
 
+tx-epoch-time:
+	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob epoch-time 
+
+
 # tx-custom:
 # 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${DATA_PATH}/restore/rescue.blob build-custom-script set_testnet.move '{}'
 
 
 check:
-	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${DATA_PATH}/restore/rescue.blob | grep -oP 'waypoint: \K\w+:\w+' > ${RESCUE_PATH}/rescue_waypoint.txt 
+	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${RESCUE_PATH}/rescue.blob | grep -oP 'waypoint: \K\w+:\w+' > ${RESCUE_PATH}/rescue_waypoint.txt 
 	@echo Waypoint: $(shell cat ${DATA_PATH}/rescue_waypoint.txt )
 
 commit:

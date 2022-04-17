@@ -7,14 +7,14 @@ use cli::client_proxy::encode_stdlib_upgrade_transaction;
 use diem_transaction_replay::DiemDebugger;
 use diem_types::{
     account_address::AccountAddress,
-    account_config::{self, diem_root_address},
-    transaction::{ChangeSet, Script, TransactionArgument, WriteSetPayload},
+    account_config::{self, diem_root_address, NewEpochEvent},
+    transaction::{ChangeSet, Script, TransactionArgument, WriteSetPayload}, contract_event::ContractEvent,
 };
 
 use handlebars::Handlebars;
 use move_core_types::{
     identifier::Identifier,
-    language_storage::ModuleId,
+    language_storage::{ModuleId, TypeTag},
     transaction_argument::convert_txn_args,
     value::{serialize_values, MoveValue},
 };
@@ -27,6 +27,8 @@ use serde::Serialize;
 use std::{collections::HashMap, io::Write, path::PathBuf, process::exit};
 use tempfile::NamedTempFile;
 use resource_viewer::AnnotatedMoveValue;
+use move_core_types::move_resource::MoveStructType;
+
 /// The relative path to the scripts templates
 pub const SCRIPTS_DIR_PATH: &str = "templates";
 
@@ -175,6 +177,8 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> Wri
     // TODO: forcing the boundary causes an erorr on the epoch boundary.
     // let boundary = ol_force_boundary(path.clone(), vals).unwrap();
     let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
+
+    // let time = ol_epoch_timestamp_update(path.clone()).unwrap();
 
     let time = ol_increment_timestamp_changeset(path).unwrap();
 
@@ -455,7 +459,7 @@ fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
 
     let v = db.get_latest_version()?;
-    db.run_session_at_version(v, None, |session| {
+    let cs = db.run_session_at_version(v, None, |session| {
         let mut gas_status = GasStatus::new_unmetered();
         let log_context = NoContextLog::new();
 
@@ -475,7 +479,44 @@ fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
             )
             .unwrap(); // TODO: don't use unwraps.
         Ok(())
-    })
+    })?;
+    // dbg!(&cs.events().len());
+    
+    let old_event = cs.events().first().unwrap();
+    let epoch_change = read_epoch_event(&cs)?;
+
+    let new_ce = mfg_epoch_event(epoch_change.epoch(), old_event.sequence_number())?;
+
+    let new_change_set = ChangeSet::new(cs.write_set().to_owned(), vec![new_ce]);
+    
+    new_change_set.events().iter()
+    .for_each(|e|{
+      // dbg!(&e);
+      dbg!(&e.sequence_number());
+
+    });
+
+    Ok(cs)
+  }
+
+fn mfg_epoch_event(epoch: u64, seq: u64) -> Result<ContractEvent>{
+    let new_event = NewEpochEvent::new(epoch);
+    
+    dbg!(&new_event.epoch());
+
+    Ok( 
+      ContractEvent::new(
+        NewEpochEvent::event_key(),
+        seq,
+        TypeTag::Struct(NewEpochEvent::struct_tag()),
+        bcs::to_bytes(&new_event)?,
+      )
+    )
+}
+
+fn read_epoch_event(cs: &ChangeSet) -> Result<NewEpochEvent> {
+  let event = cs.events().first().unwrap();
+  NewEpochEvent::try_from_bytes(event.event_data())
 }
 
 fn ol_testnet_changeset(path: PathBuf) -> Result<ChangeSet> {
