@@ -4,8 +4,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::Result;
 use cli::client_proxy::encode_stdlib_upgrade_transaction;
-
-use diem_framework_releases::import_stdlib;
 use diem_transaction_replay::DiemDebugger;
 use diem_types::{
     account_address::AccountAddress,
@@ -162,20 +160,43 @@ pub fn ol_testnet(path: PathBuf) -> WriteSetPayload {
     WriteSetPayload::Direct(merge_change_set(stdlib_cs, reconfig).unwrap())
 }
 
-/// create the upgrade payload INCLUDING the epoch reconfigure
-pub fn ol_encode_rescue_old(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+// /// create the upgrade payload INCLUDING the epoch reconfigure
+// pub fn ol_encode_rescue_old(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+//     if vals.len() == 0 {
+//         println!("need to provide list of addresses");
+//         exit(1)
+//     };
+
+//     let stdlib_cs = encode_stlib_alt(path.clone()).unwrap();
+
+//     // Take the stdlib upgrade change set.
+//     let update_vals = ol_force_boundary(path, vals).unwrap();
+
+//     WriteSetPayload::Direct(merge_change_set(stdlib_cs, update_vals).unwrap())
+// }
+
+
+
+pub fn ol_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
         exit(1)
     };
 
-    let stdlib_cs = encode_stlib_alt(path.clone()).unwrap();
+    let stdlib_cs = ol_encode_stlib_changeset(path.clone()).unwrap();
+    // TODO: forcing the boundary causes an erorr on the epoch boundary.
+    // let boundary = ol_force_boundary(path.clone(), vals).unwrap();
+    let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
-    // Take the stdlib upgrade change set.
-    let update_vals = ol_force_boundary(path, vals).unwrap();
+    let time = ol_increment_timestamp_changeset(path).unwrap();
 
-    WriteSetPayload::Direct(merge_change_set(stdlib_cs, update_vals).unwrap())
+    let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
+   
+    WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
 }
+
+
+
 
 pub fn ol_debug_epoch(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
     if vals.len() == 0 {
@@ -189,22 +210,23 @@ pub fn ol_debug_epoch(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPaylo
     WriteSetPayload::Direct(merge_change_set(debug_mode, reconfig).unwrap())
 }
 
-pub fn ol_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
-    if vals.len() == 0 {
-        println!("need to provide list of addresses");
-        exit(1)
-    };
+pub fn ol_test_timestamp(path: PathBuf) -> WriteSetPayload {
+    let timestamp = ol_increment_timestamp(path.clone()).expect("could not get timestamp writeset");
 
-    let stdlib_cs = encode_stlib_alt(path.clone()).unwrap();
-    let boundary = ol_force_boundary(path.clone(), vals).unwrap();
-    // let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
+    // Take the stdlib upgrade change set.
+    let reconfig = ol_reconfig_changeset(path).expect("could not get reconfig writeset");
 
-    let time = ol_increment_timestamp_old(path).unwrap();
-    let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
-   
-    WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
+    WriteSetPayload::Direct(merge_change_set(timestamp, reconfig).unwrap())
 }
 
+pub fn ol_create_reconfig_payload(path: PathBuf) -> WriteSetPayload {
+    WriteSetPayload::Direct(
+        ol_reconfig_changeset(path).expect("could not create reconfig change set"),
+    )
+}
+
+ ///////////// HELPERS ////////////
+  
 fn merge_change_set(left: ChangeSet, right: ChangeSet) -> Result<ChangeSet> {
     // get stlib_cs writeset mut and apply reconfig changeset over it
     let mut stdlib_ws_mut = left.write_set().clone().into_mut();
@@ -224,22 +246,8 @@ fn merge_change_set(left: ChangeSet, right: ChangeSet) -> Result<ChangeSet> {
     Ok(new_cs)
 }
 
-pub fn ol_test_timestamp(path: PathBuf) -> WriteSetPayload {
-    let timestamp = ol_increment_timestamp(path.clone()).expect("could not get timestamp writeset");
 
-    // Take the stdlib upgrade change set.
-    let reconfig = ol_reconfig_changeset(path).expect("could not get reconfig writeset");
-
-    WriteSetPayload::Direct(merge_change_set(timestamp, reconfig).unwrap())
-}
-
-pub fn ol_create_reconfig_payload(path: PathBuf) -> WriteSetPayload {
-    WriteSetPayload::Direct(
-        ol_reconfig_changeset(path).expect("could not create reconfig change set"),
-    )
-}
-
-pub fn encode_stlib_alt(path: PathBuf) -> Result<ChangeSet> {
+pub fn ol_encode_stlib_changeset(path: PathBuf) -> Result<ChangeSet> {
     println!("encode stdlib changeset");
 
     let db = DiemDebugger::db(path)?;
@@ -254,7 +262,7 @@ pub fn encode_stlib_alt(path: PathBuf) -> Result<ChangeSet> {
 
         for module in new_stdlib {
             let mut bytes = vec![];
-            module.serialize(&mut bytes);
+            module.serialize(&mut bytes).unwrap();
 
             session
                 .revise_module(
@@ -274,7 +282,7 @@ pub fn encode_stlib_alt(path: PathBuf) -> Result<ChangeSet> {
 // For db backups/snapshots using the backup-cli, the archives are generally made at an epoch boundary. And as such the timestamp will be identical to the last reconfiguration time, and ANY WRITESET USING DB-BOOTSTRAPPER WILL FAIL.
 // This function is used to force a new timestamp in those cases, so that writesets will trigger reconfigs (if that is what is expected/intended).
 
-fn ol_increment_timestamp_old(path: PathBuf) -> Result<ChangeSet> {
+fn ol_increment_timestamp_changeset(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -365,10 +373,6 @@ fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
 fn ol_set_epoch_debug_mode(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
-
-    let start = SystemTime::now();
-    let now = start.duration_since(UNIX_EPOCH)?;
-    let microseconds = now.as_micros();
 
     db.run_session_at_version(v, None, |session| {
         let mut gas_status = GasStatus::new_unmetered();

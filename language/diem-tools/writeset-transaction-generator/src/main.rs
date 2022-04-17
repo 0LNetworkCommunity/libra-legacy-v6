@@ -48,6 +48,8 @@ enum Command {
     Rescue { addresses: Vec<AccountAddress> },
     #[structopt(name = "debug-epoch")]
     DebugEpoch { addresses: Vec<AccountAddress> },
+    #[structopt(name = "boundary")]
+    Boundary { addresses: Vec<AccountAddress> },
     #[structopt(name = "reconfig")]
     Reconfig { },
     #[structopt(name = "time")]
@@ -128,7 +130,7 @@ fn main() -> Result<()> {
     let payload = match opt.cmd {
         Command::RemoveValidators { addresses } => encode_remove_validators_payload(addresses),
         //////// 0L ////////
-        // Command::UpdateValidators { addresses } => ol_encode_force_boundary(opt.db.unwrap(), addresses),
+        Command::Boundary { addresses } => ol_encode_force_boundary(opt.db.unwrap(), addresses),
         Command::UpdateValidators { addresses } => encode_bulk_update_vals_payload(addresses),
         
         Command::UpdateStdlib {} => encode_stdlib_upgrade(opt.db.unwrap()),
