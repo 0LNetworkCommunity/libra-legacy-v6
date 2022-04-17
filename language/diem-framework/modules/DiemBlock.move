@@ -35,6 +35,7 @@ module DiemBlock {
     use 0x1::DiemAccount;
     use 0x1::Migrations;
     use 0x1::MigrateTowerCounter;
+    use 0x1::Debug::print;
 
     struct BlockMetadata has key {
         /// Height of the current block
@@ -105,7 +106,9 @@ module DiemBlock {
 
         //////// 0L ////////
         // increment stats        
+        print(&100100);
         Stats::process_set_votes(&vm, &previous_block_votes);
+        print(&200100);
         Stats::inc_prop(&vm, *&proposer);    
 
         if (AutoPay::tick(&vm)){
@@ -140,7 +143,9 @@ module DiemBlock {
         //////// 0L ////////
         // EPOCH BOUNDARY
         let height = get_current_block_height();
+        print(&300100);
         if (Epoch::epoch_finished(height)) {
+          print(&300200);
 
           // TODO: We don't need to pass block height to EpochBoundaryOL. 
           // It should use the BlockMetadata. But there's a circular reference 

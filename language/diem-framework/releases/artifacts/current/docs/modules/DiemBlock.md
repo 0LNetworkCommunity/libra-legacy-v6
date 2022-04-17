@@ -21,6 +21,7 @@ For 0L the following changes are applied to the block prologue
 
 <pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
@@ -252,7 +253,9 @@ The runtime always runs this before executing the transactions in a block.
 
     //////// 0L ////////
     // increment stats
+    print(&100100);
     <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(&vm, &previous_block_votes);
+    print(&200100);
     <a href="Stats.md#0x1_Stats_inc_prop">Stats::inc_prop</a>(&vm, *&proposer);
 
     <b>if</b> (<a href="AutoPay.md#0x1_AutoPay_tick">AutoPay::tick</a>(&vm)){
@@ -287,7 +290,9 @@ The runtime always runs this before executing the transactions in a block.
     //////// 0L ////////
     // EPOCH BOUNDARY
     <b>let</b> height = <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">get_current_block_height</a>();
+    print(&300100);
     <b>if</b> (<a href="Epoch.md#0x1_Epoch_epoch_finished">Epoch::epoch_finished</a>(height)) {
+      print(&300200);
 
       // TODO: We don't need <b>to</b> pass block height <b>to</b> EpochBoundaryOL.
       // It should <b>use</b> the <a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a>. But there's a circular reference
