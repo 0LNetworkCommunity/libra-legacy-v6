@@ -185,7 +185,8 @@ module EpochBoundary {
 
         // If the cardinality of validator_set in the next epoch is less than 4, 
         // we keep the same validator set. 
-        if (Vector::length<address>(&proposed_set) <= 3) proposed_set = *&top_accounts;
+        if (Vector::length<address>(&proposed_set) <= 3) proposed_set = DiemSystem::get_val_set_addr(); // Patch for april incident. Make no changes to validator set.
+
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with 
         // at least 6 nodes and 6 rounds. If we reach an epoch boundary with 
