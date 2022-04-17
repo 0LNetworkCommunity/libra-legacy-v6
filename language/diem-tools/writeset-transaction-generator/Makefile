@@ -87,7 +87,16 @@ test: wipe tx check commit init start
 
 # NOTES
 
-# Jailbreak the backup
+# STEP 1: Jailbreak the backup
+# new writset "rescue"
 # - Get a new STDLIB that doesn't have the DiemConfig::reconfigure_ timestamp checking.
 # - STDLIB also shouldn't advance if less than 10k blocks have been committed since last boundary.
 # - reset the validator set to one validator, so that blocks can make progress. NOTE: do not trigger epoch boundary since the state may not have all info needed.
+
+# Step 2: Start the node
+# make some progres in blocks.
+
+# STEP 3: Trigger an epoch boundary
+# new writeset "boundary"
+# - makes sure theres only a validator set of 1
+# - resets the counters
