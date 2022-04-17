@@ -96,7 +96,13 @@ test: wipe tx check commit init start
 # Step 2: Start the node
 # make some progres in blocks.
 
-# STEP 3: Trigger an epoch boundary
+# STEP 3: Trigger a val set update WITHOUT triggering epoch counters reset.
+# Don't knwo why
+
+
+# Step 4: Start node again
+
+# STEP 5: Trigger an epoch boundary
 # new writeset "boundary"
 # - makes sure theres only a validator set of 1
 # - resets the counters
