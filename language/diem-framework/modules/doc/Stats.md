@@ -468,8 +468,11 @@
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.current.vote_count, test + 1);
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> stats.current.vote_count, i);
   } <b>else</b> {
+    // debugging rescue mission. Remove after network stabilizes Apr 2022.
     // something bad happened and we can't find this node in our list.
     print(&666);
+    print(&node_addr);
+
   };
   // <b>update</b> total vote count anyways even <b>if</b> we can't find this person.
   stats.current.total_votes = stats.current.total_votes + 1;
