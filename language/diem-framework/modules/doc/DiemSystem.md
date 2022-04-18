@@ -1377,15 +1377,18 @@ Private function checks for membership of <code>addr</code> in validator set.
         print(&3003121);
 
         <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(validators, i).addr;
+        print(&3003122);
 
         <b>let</b> case = <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_end);
+       print(&3003123);
         <b>if</b> (case == 1) {
             <b>let</b> node_votes = <a href="Stats.md#0x1_Stats_node_current_votes">Stats::node_current_votes</a>(vm, addr);
             <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> compliant_nodes, addr);
             count_compliant_votes = count_compliant_votes + node_votes;
         };
+
         i = i + 1;
-        print(&3003122);
+        print(&3003124);
 
     };
     print(&300313);
