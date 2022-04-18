@@ -7,6 +7,20 @@
 //! block-time: 1
 //! round: 1
 
+//! new-transaction
+//! sender: diemroot
+
+// need to assign testnet since we don't know how to set block_height in tests.
+// and outside of testnet the epoch boundary also checks for height.
+script {
+    use 0x1::Testnet;    
+    fun main(vm: signer){
+      Testnet::initialize(&vm);
+    }
+}
+// check: EXECUTED
+
+
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
@@ -29,7 +43,7 @@ script {
     fun main(){
       // the new epoch has reset the timer.
       assert(DiemTimestamp::now_seconds() == 61, 7357008002001);
-      assert(!Epoch::epoch_finished(), 7357008002002);
+      assert(!Epoch::epoch_finished(100), 7357008002002);
     }
 }
 // check: EXECUTED
