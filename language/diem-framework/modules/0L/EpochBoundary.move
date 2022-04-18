@@ -70,17 +70,20 @@ module EpochBoundary {
         print(&300310);
         let (outgoing_compliant_set, _) = 
             DiemSystem::get_fee_ratio(vm, height_start, height_now);
+        print(&300320);
 
         // NOTE: This is "nominal" because it doesn't check
         let compliant_nodes_count = Vector::length(&outgoing_compliant_set);
-        let (subsidy_units, nominal_subsidy_per) = 
-            Subsidy::calculate_subsidy(vm, compliant_nodes_count);
-        print(&300320);
-        process_fullnodes(vm, nominal_subsidy_per);
         print(&300330);
 
-        process_validators(vm, subsidy_units, *&outgoing_compliant_set);
+        let (subsidy_units, nominal_subsidy_per) = 
+            Subsidy::calculate_subsidy(vm, compliant_nodes_count);
         print(&300340);
+        process_fullnodes(vm, nominal_subsidy_per);
+        print(&300350);
+
+        process_validators(vm, subsidy_units, *&outgoing_compliant_set);
+        print(&300360);
 
         let proposed_set = propose_new_set(vm, height_start, height_now);
         
@@ -89,10 +92,10 @@ module EpochBoundary {
             DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
             // update_validator_withdrawal_limit(vm);
         };
-        print(&300350);
+        print(&300370);
 
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
-        print(&300360);
+        print(&300380);
 
     }
 

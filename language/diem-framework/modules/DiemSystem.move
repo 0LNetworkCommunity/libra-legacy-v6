@@ -713,12 +713,19 @@ module DiemSystem {
     //get_compliant_val_votes
     //Function code:02
     public fun get_fee_ratio(vm: &signer, height_start: u64, height_end: u64): (vector<address>, vector<FixedPoint32::FixedPoint32>) {
+        print(&300310);
+
         let validators = &get_diem_system_config().validators;
+        print(&300311);
 
         let compliant_nodes = Vector::empty<address>();
         let count_compliant_votes = 0;
         let i = 0;
+        print(&300312);
+
         while (i < Vector::length(validators)) {
+            print(&3003121);
+
             let addr = Vector::borrow(validators, i).addr;
             
             let case = Cases::get_case(vm, addr, height_start, height_end);
@@ -728,19 +735,29 @@ module DiemSystem {
                 count_compliant_votes = count_compliant_votes + node_votes;
             };
             i = i + 1;
+            print(&3003122);
+
         };
+        print(&300313);
+
         // calculate the ratio of votes per node.
         let fee_ratios = Vector::empty<FixedPoint32::FixedPoint32>();
         let k = 0;
         while (k < Vector::length(&compliant_nodes)) {
+            print(&3003131);
+
             let addr = *Vector::borrow(&compliant_nodes, k);
             let node_votes = Stats::node_current_votes(vm, addr);
             let ratio = FixedPoint32::create_from_rational(node_votes, count_compliant_votes);
             Vector::push_back(&mut fee_ratios, ratio);
              k = k + 1;
-        };
+            print(&3003132);
 
-        assert(Vector::length(&compliant_nodes) == Vector::length(&fee_ratios),Errors::invalid_argument(120002) );
+        };
+            print(&300314);
+
+        if (Vector::length(&compliant_nodes) != Vector::length(&fee_ratios)) return (Vector::empty(), Vector::empty());
+            print(&300315);
 
         (compliant_nodes, fee_ratios)
     }

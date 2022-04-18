@@ -104,8 +104,9 @@ module Stats{
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190005));
     let stats = borrow_global_mut<ValStats>(sender);
-    let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
-    *Vector::borrow<u64>(&mut stats.current.vote_count, i)
+    let (is_found, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+    if (is_found) return *Vector::borrow<u64>(&mut stats.current.vote_count, i)
+    else 0
   }
 
   //Function: 06
@@ -142,8 +143,9 @@ module Stats{
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190008));
     let stats = borrow_global_mut<ValStats>(sender);
-    let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
-    *Vector::borrow<u64>(&mut stats.current.prop_count, i)
+    let (is_found, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+    if (is_found) return *Vector::borrow<u64>(&mut stats.current.prop_count, i);
+    else 0
   }
 
   //Permissions: Public, VM only.
