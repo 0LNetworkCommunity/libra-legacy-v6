@@ -496,6 +496,9 @@ module DiemAccount {
         add_currencies_for_account<GAS>(&new_signer, false);
         make_account(new_signer, new_account_authkey_prefix);
 
+        let new_signer = create_signer(new_account);
+        Ancestry::init(sender, &new_signer);
+
         // if the initial coin sent is the minimum amount, don't check transfer limits.
         if (value <= BOOTSTRAP_COIN_VALUE) {
             onboarding_gas_transfer<GAS>(sender, new_account, value);
@@ -619,6 +622,7 @@ module DiemAccount {
         onboarding_gas_transfer<GAS>(sender, op_address, BOOTSTRAP_COIN_VALUE);
 
         let new_signer = create_signer(new_account_address);
+        Ancestry::init(sender, &new_signer);
         set_slow(&new_signer);
 
         new_account_address
@@ -730,6 +734,9 @@ module DiemAccount {
         // Transfer for operator as well
         onboarding_gas_transfer<GAS>(sender, op_address, BOOTSTRAP_COIN_VALUE);
         let new_signer = create_signer(new_account_address);
+
+        Ancestry::init(sender, &new_signer);
+
         set_slow(&new_signer);
         new_account_address
     }
