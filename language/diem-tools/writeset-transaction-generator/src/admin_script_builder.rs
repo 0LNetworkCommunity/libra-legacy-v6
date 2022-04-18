@@ -188,8 +188,8 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> Wri
 
     let stdlib_cs = ol_fresh_stlib_changeset(path.clone()).unwrap();
     // TODO: forcing the boundary causes an erorr on the epoch boundary.
-    // let boundary = ol_force_boundary(path.clone(), vals).unwrap();
-    let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
+    let boundary = ol_force_boundary(path.clone(), vals).unwrap();
+    // let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
     let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
    
