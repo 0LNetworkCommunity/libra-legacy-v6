@@ -60,6 +60,26 @@ address 0x1 {
       *&borrow_global<Ancestry>(addr).tree
     }
 
+    public fun is_family(left: address, right: address): (bool, address) acquires Ancestry {
+      let left_tree = *&borrow_global<Ancestry>(left).tree;
+      let right_tree = *&borrow_global<Ancestry>(right).tree;
+      
+      let is_family = false;
+      let common_ancestor = @0x0;
+
+      let i = 0;
+      while (i < Vector::length<address>(&left_tree)) {
+        let family_addr = Vector::borrow(&left_tree, i);
+        if (Vector::contains(&right_tree, family_addr)) {
+          is_family = true;
+          common_ancestor = *family_addr;
+          break
+        }
+      };
+
+      (is_family, common_ancestor)
+    }
+
     // admin migration. Needs the signer object for both VM and child to prevent changes.
     // us also a private function so that it cannot be called by scripts, only by VM in a writeset mode.
     fun migrate(vm: &signer, child_sig: &signer, parent: address) acquires Ancestry {
