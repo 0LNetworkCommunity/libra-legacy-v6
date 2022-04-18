@@ -45,6 +45,7 @@ module DiemAccount {
     use 0x1::Wallet;
     use 0x1::Receipts;
     use 0x1::Ancestry;
+    use 0x1::Vouch;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -623,6 +624,7 @@ module DiemAccount {
 
         let new_signer = create_signer(new_account_address);
         Ancestry::init(sender, &new_signer);
+        Vouch::init(&new_signer);
         set_slow(&new_signer);
 
         new_account_address
@@ -736,6 +738,7 @@ module DiemAccount {
         let new_signer = create_signer(new_account_address);
 
         Ancestry::init(sender, &new_signer);
+        Vouch::init(&new_signer);
 
         set_slow(&new_signer);
         new_account_address
@@ -2879,6 +2882,7 @@ module DiemAccount {
         make_account(new_account, auth_key_prefix);
 
         let new_account = create_signer(new_account_address);
+        
         set_slow(&new_account);
     }
 

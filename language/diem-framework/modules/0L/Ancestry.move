@@ -95,10 +95,10 @@ address 0x1 {
         if (Vector::contains(&left_tree, &right)) return (true, right);
         if (Vector::contains(&right_tree, &left)) return (true, left);
 
-        let i = 0;
+        
         
         print(&100330);
-
+        let i = 0;
         // check every address on the list if there are overlaps.
         while (i < Vector::length<address>(&left_tree)) {
           print(&100341);
@@ -108,7 +108,8 @@ address 0x1 {
             common_ancestor = *family_addr;
             print(&100342);
             break
-          }
+          };
+          i = i + 1;
         };
         print(&100350);
       // };

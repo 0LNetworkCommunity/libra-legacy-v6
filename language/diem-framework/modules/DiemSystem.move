@@ -770,7 +770,7 @@ module DiemSystem {
             Vector::push_back(&mut nodes, Vector::borrow(validators, i).addr);
             i = i + 1;
         };
-        nodes 
+        nodes
     }
 
 }
