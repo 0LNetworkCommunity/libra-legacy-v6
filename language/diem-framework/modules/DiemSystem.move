@@ -727,15 +727,18 @@ module DiemSystem {
             print(&3003121);
 
             let addr = Vector::borrow(validators, i).addr;
-            
+            print(&3003122);
+
             let case = Cases::get_case(vm, addr, height_start, height_end);
+           print(&3003123);
             if (case == 1) {
                 let node_votes = Stats::node_current_votes(vm, addr);
                 Vector::push_back(&mut compliant_nodes, addr);
                 count_compliant_votes = count_compliant_votes + node_votes;
             };
+
             i = i + 1;
-            print(&3003122);
+            print(&3003124);
 
         };
         print(&300313);

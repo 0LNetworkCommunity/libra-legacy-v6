@@ -13,6 +13,7 @@ address 0x1{
         use 0x1::TowerState;
         use 0x1::Stats;
         use 0x1::Roles;
+        use 0x1::Debug::print;
 
         const VALIDATOR_COMPLIANT: u64 = 1;
         const VALIDATOR_HALF_COMPLIANT: u64 = 2;
@@ -29,10 +30,21 @@ address 0x1{
         public fun get_case(
             vm: &signer, node_addr: address, height_start: u64, height_end: u64
         ): u64 {
+            print(&3003122);
+            print(&height_start);
+            print(&height_end);
+            // this is a failure mode. Only usually seen in rescue missions, where epoch counters are reconfigured by writeset offline.
+            if (height_end < height_start) return VALIDATOR_DOUBLY_NOT_COMPLIANT;
+
             Roles::assert_diem_root(vm);
             // did the validator sign blocks above threshold?
+            print(&30031221);
+
             let signs = Stats::node_above_thresh(vm, node_addr, height_start, height_end);
+            print(&30031222);
+
             let mines = TowerState::node_above_thresh(node_addr);
+            print(&30031223);
 
             if (signs && mines) {
                 // compliant: in next set, gets paid, weight increments
