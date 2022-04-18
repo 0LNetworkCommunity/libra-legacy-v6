@@ -94,6 +94,7 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::AccountFreezing`](AccountFreezing.md#0x1_AccountFreezing)
 -  [`0x1::AccountLimits`](AccountLimits.md#0x1_AccountLimits)
 -  [`0x1::AccountScripts`](ol_account.md#0x1_AccountScripts)
+-  [`0x1::Ancestry`](Ancestry.md#0x1_Ancestry)
 -  [`0x1::Audit`](Audit.md#0x1_Audit)
 -  [`0x1::Authenticator`](Authenticator.md#0x1_Authenticator)
 -  [`0x1::AutoPay`](AutoPay.md#0x1_AutoPay)

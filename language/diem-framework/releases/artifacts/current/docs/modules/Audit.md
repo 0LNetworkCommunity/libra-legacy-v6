@@ -40,7 +40,6 @@
   <b>let</b> oper = <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(val);
   <b>if</b> (oper == val) <b>return</b> <b>false</b>;
   // operator account has balance
-  // <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(oper) &lt; 50000 && !<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) <b>return</b> <b>false</b>;
   // has autopay enabled
   <b>if</b> (!<a href="AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(val)) <b>return</b> <b>false</b>;
   // has mining state

@@ -12,6 +12,7 @@
 -  [Function `vm_init`](#0x1_Teams_vm_init)
 -  [Function `team_init`](#0x1_Teams_team_init)
 -  [Function `join_team`](#0x1_Teams_join_team)
+-  [Function `maybe_switch_team`](#0x1_Teams_maybe_switch_team)
 -  [Function `maybe_activate_member_to_team`](#0x1_Teams_maybe_activate_member_to_team)
 -  [Function `find_rms_of_towers`](#0x1_Teams_find_rms_of_towers)
 -  [Function `set_threshold_as_pct_rms`](#0x1_Teams_set_threshold_as_pct_rms)
@@ -252,6 +253,9 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_team_init">team_init</a>(sender: &signer, team_name: vector&lt;u8&gt;, operator_pct_reward: u64) {
+  <b>if</b> (operator_pct_reward &lt; 10 || operator_pct_reward &gt; 100 ) {
+    <b>return</b>
+  };
 
   <b>assert</b>(<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender)), 201301001);
   // An "captain", who is already a validator account, stores the <a href="Teams.md#0x1_Teams_Team">Team</a> <b>struct</b> on their account.
@@ -290,7 +294,7 @@ move_to&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_join_team">join_team</a>(sender: &signer, captain_address: address)
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_join_team">join_team</a>(sender: &signer, new_captain: address)
 </code></pre>
 
 
@@ -299,25 +303,66 @@ move_to&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_join_team">join_team</a>(sender: &signer, captain_address: address) <b>acquires</b> <a href="Teams.md#0x1_Teams_Member">Member</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="Teams.md#0x1_Teams_join_team">join_team</a>(sender: &signer, new_captain: address) <b>acquires</b> <a href="Teams.md#0x1_Teams_Member">Member</a>, <a href="Teams.md#0x1_Teams_Team">Team</a> {
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   // needs <b>to</b> check <b>if</b> this is a slow wallet.
   // ask user <b>to</b> resubmit <b>if</b> not a slow wallet, so they are explicitly setting it, no surprises, no tears.
 
   <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(addr), <a href="Teams.md#0x1_Teams_ENOT_SLOW_WALLET">ENOT_SLOW_WALLET</a>);
 
-
   // bob wants <b>to</b> switch <b>to</b> a different <a href="Teams.md#0x1_Teams_Team">Team</a>.
   <b>if</b> (<b>exists</b>&lt;<a href="Teams.md#0x1_Teams_Member">Member</a>&gt;(addr)) {
     <b>let</b> member_state = borrow_global_mut&lt;<a href="Teams.md#0x1_Teams_Member">Member</a>&gt;(addr);
+    <b>let</b> old_captain = member_state.captain_address;
+    <a href="Teams.md#0x1_Teams_maybe_switch_team">maybe_switch_team</a>(&addr, &new_captain, &old_captain);
+
     // <b>update</b> the membership list of the former captain
-    member_state.captain_address = captain_address;
-    // TODO: Do we need <b>to</b> reset mining_above_threshold <b>if</b> they are switching?
+    member_state.captain_address = new_captain;
+
+
+// TODO: Do we need <b>to</b> reset mining_above_threshold <b>if</b> they are switching?
   } <b>else</b> { // first time joining a <a href="Teams.md#0x1_Teams_Team">Team</a>.
     move_to&lt;<a href="Teams.md#0x1_Teams_Member">Member</a>&gt;(sender, <a href="Teams.md#0x1_Teams_Member">Member</a> {
-      captain_address,
+      captain_address: new_captain,
       mining_above_threshold: <b>false</b>,
     });
+  };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Teams_maybe_switch_team"></a>
+
+## Function `maybe_switch_team`
+
+
+
+<pre><code><b>fun</b> <a href="Teams.md#0x1_Teams_maybe_switch_team">maybe_switch_team</a>(miner_addr: &address, new_captain: &address, old_captain: &address)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="Teams.md#0x1_Teams_maybe_switch_team">maybe_switch_team</a>(miner_addr: &address, new_captain: &address, old_captain: &address) <b>acquires</b> <a href="Teams.md#0x1_Teams_Team">Team</a> {
+
+  // search for member, and drop
+  <b>let</b> old_team = borrow_global_mut&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(*old_captain);
+  <b>let</b> (found, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&old_team.members, miner_addr);
+  <b>if</b> (found) {
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> old_team.members, i);
+  };
+
+  // join new team
+  <b>let</b> new_team = borrow_global_mut&lt;<a href="Teams.md#0x1_Teams_Team">Team</a>&gt;(*new_captain);
+  <b>let</b> (found, _) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&new_team.members, miner_addr);
+  <b>if</b> (!found) {
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> new_team.members, *miner_addr);
   };
 }
 </code></pre>

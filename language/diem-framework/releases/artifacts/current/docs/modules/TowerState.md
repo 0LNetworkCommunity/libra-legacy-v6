@@ -365,11 +365,11 @@ the miner last created a new account
 
 
 
-<a name="0x1_TowerState_TEAM_MEMBER_TOWER_MIN"></a>
+<a name="0x1_TowerState_TEAM_MEMBER_TOWER_MIN_THRESH"></a>
 
 
 
-<pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_TEAM_MEMBER_TOWER_MIN">TEAM_MEMBER_TOWER_MIN</a>: u64 = 336;
+<pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_TEAM_MEMBER_TOWER_MIN_THRESH">TEAM_MEMBER_TOWER_MIN_THRESH</a>: u64 = 336;
 </code></pre>
 
 
@@ -1372,7 +1372,7 @@ Public Getters ///
     <b>let</b> s = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(node_addr);
     <b>if</b> (
       s.count_proofs_in_epoch &gt; <a href="Globals.md#0x1_Globals_get_epoch_mining_thres_lower">Globals::get_epoch_mining_thres_lower</a>()
-      && s.verified_tower_height &gt; <a href="TowerState.md#0x1_TowerState_TEAM_MEMBER_TOWER_MIN">TEAM_MEMBER_TOWER_MIN</a>
+      && s.verified_tower_height &gt; <a href="TowerState.md#0x1_TowerState_TEAM_MEMBER_TOWER_MIN_THRESH">TEAM_MEMBER_TOWER_MIN_THRESH</a>
     ) {
       <b>return</b> s.verified_tower_height
     };

@@ -116,6 +116,7 @@
   <b>if</b> (<a href="Teams.md#0x1_Teams_team_is_init">Teams::team_is_init</a>(*captain_address)) {
     // split captain reward and send <b>to</b> captain.
     <b>let</b> captain_pct = <a href="Teams.md#0x1_Teams_get_operator_reward">Teams::get_operator_reward</a>(*captain_address);
+    <b>if</b> (captain_pct == 0 || captain_pct &gt; 100) <b>return</b>;
     // split off the captain value
     captain_value = <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(
       subsidy_granted,
@@ -150,7 +151,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_split_subsidy_to_team">split_subsidy_to_team</a>(vm: &signer, members: &vector&lt;address&gt;, value_to_members: u64)
+<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_split_subsidy_to_team">split_subsidy_to_team</a>(vm: &signer, members: &vector&lt;address&gt;, value_to_members: u64)
 </code></pre>
 
 
@@ -159,7 +160,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Subsidy.md#0x1_Subsidy_split_subsidy_to_team">split_subsidy_to_team</a>(vm: &signer, members: &vector&lt;address&gt;, value_to_members: u64) {
+<pre><code><b>fun</b> <a href="Subsidy.md#0x1_Subsidy_split_subsidy_to_team">split_subsidy_to_team</a>(vm: &signer, members: &vector&lt;address&gt;, value_to_members: u64) {
   <b>let</b> collective_height = <a href="TowerState.md#0x1_TowerState_collective_tower_height">TowerState::collective_tower_height</a>(members);
   <b>let</b> i = 0;
   <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(members)) {
