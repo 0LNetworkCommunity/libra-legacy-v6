@@ -144,7 +144,7 @@ module Stats{
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190008));
     let stats = borrow_global_mut<ValStats>(sender);
     let (is_found, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
-    if (is_found) return *Vector::borrow<u64>(&mut stats.current.prop_count, i);
+    if (is_found) return *Vector::borrow<u64>(&mut stats.current.prop_count, i)
     else 0
   }
 
