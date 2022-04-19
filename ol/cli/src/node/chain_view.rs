@@ -11,7 +11,13 @@ use ol_types::{autopay::AutoPayView, validator_config::ValidatorConfigView};
 
 use super::{node::Node, dictionary::AccountDictionary, autopay_view::PayeeStats};
 use serde::{Deserialize, Serialize};
-use std::{convert::TryFrom};
+use std::{
+    convert::TryFrom, 
+    collections::HashMap,
+    net::{IpAddr, SocketAddr, TcpStream},
+    time::Duration,
+    str::FromStr
+};
 
 /// name of chain info key for db
 pub const CHAIN_INFO_DB_KEY: &str = "chain_info";
@@ -56,10 +62,16 @@ pub struct ValidatorView {
     pub pub_key: String,
     /// voting power
     pub voting_power: u64,
+    /// full node full ip
+    pub vfn_full_ip: String,
     /// full node ip
-    pub full_node_ip: String,
+    pub vfn_ip: String,
+    /// validator full ip
+    pub validator_full_ip: String,
     /// validator ip
     pub validator_ip: String,
+    /// ports status
+    pub ports_status: HashMap<String, bool>,
     /// tower height
     pub tower_height: u64,
     /// tower epoch
@@ -192,63 +204,75 @@ impl Node {
     }
 
     fn format_validator_info(
-      &self,
-      v: &ValidatorInfo,
-      dict: &AccountDictionary,
-      stats: &ValidatorsStatsResource
+        &self,
+        v: &ValidatorInfo,
+        dict: &AccountDictionary,
+        stats: &ValidatorsStatsResource
     ) -> Result<ValidatorView, Error> {
-    let full_node_ip = match v.config().fullnode_network_addresses() {
-        Ok(ips) => {
-            if ips.len() > 0 {
-                ips.last().unwrap().to_string()
-            } else {
-                "--".to_string()
-            }
-        }
-        Err(_) => "--".to_string(),
-    };
-    let validator_ip = match v.config().validator_network_addresses() {
-        Ok(ips) => {
-            if ips.len() > 0 {
-                match ips.get(0) {
-                    Some(i) => i.seq_num().to_string(),
-                    None => "--".to_string(),
+        let vfn_full_ip = match v.config().fullnode_network_addresses() {
+            Ok(ips) => {
+                if ips.len() > 0 {
+                    ips.last().unwrap().to_string()
+                } else {
+                    "--".to_string()
                 }
-            } else {
-                "--".to_string()
             }
-        }
-        Err(_) => "--".to_string(),
-    };
-    let ms  = self.client.get_miner_state(&v.account_address().clone())?.unwrap();
+            Err(_) => "--".to_string(),
+        };
 
-    let one_val_stat = stats.get_validator_current_stats(v.account_address().clone())?;
+        let vfn_ip = extract_ip(&vfn_full_ip);
 
-    let val_config = self.get_validator_config(v.account_address().clone())?;
+        let validator_full_ip = match v.config().validator_network_addresses() {
+            Ok(ips) => {
+                ips.first()
+                    .unwrap()
+                    .clone()
+                    .decrypt(
+                        &diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
+                        &v.account_address().clone(), 
+                        0
+                    )?
+                    .to_string()
+            },
+            Err(_) => "--".to_string(),
+        };
 
-    let autopay = self.get_autopay_view(v.account_address().clone())?;
+        let validator_ip = extract_ip(&validator_full_ip);
 
-    Ok(ValidatorView {
-        account_address: v.account_address().to_string(),
-        voting_power: v.consensus_voting_power(),
-        full_node_ip,
-        pub_key: v.consensus_public_key().to_string(),
-        validator_ip,
+        let ms  = self.client.get_miner_state(&v.account_address().clone())?.unwrap();
 
-        tower_height: ms.verified_tower_height,
-        tower_epoch: ms.latest_epoch_mining,
-        count_proofs_in_epoch: ms.count_proofs_in_epoch,
-        epochs_validating_and_mining: ms.epochs_validating_and_mining,
-        contiguous_epochs_validating_and_mining: ms.contiguous_epochs_validating_and_mining,
-        epochs_since_last_account_creation: ms.epochs_since_last_account_creation,
-        
-        vote_count_in_epoch: one_val_stat.vote_count,
-        prop_count_in_epoch: one_val_stat.prop_count,
-        validator_config: Some(val_config),
-        autopay: Some(autopay),
-        note: dict.get_note_for_address(*v.account_address()),
-    })
-  }
+        let one_val_stat = stats.get_validator_current_stats(v.account_address().clone())?;
+
+        let val_config = self.get_validator_config(v.account_address().clone())?;
+
+        let autopay = self.get_autopay_view(v.account_address().clone())?;
+
+        let ports = get_ports_status(&validator_ip);
+
+        Ok(ValidatorView {
+            account_address: v.account_address().to_string(),
+            voting_power: v.consensus_voting_power(),
+            vfn_full_ip,
+            vfn_ip,
+            pub_key: v.consensus_public_key().to_string(),
+            validator_full_ip,
+            validator_ip,
+            ports_status: ports,
+
+            tower_height: ms.verified_tower_height,
+            tower_epoch: ms.latest_epoch_mining,
+            count_proofs_in_epoch: ms.actual_count_proofs_in_epoch,
+            epochs_validating_and_mining: ms.epochs_validating_and_mining,
+            contiguous_epochs_validating_and_mining: ms.contiguous_epochs_validating_and_mining,
+            epochs_since_last_account_creation: ms.epochs_since_last_account_creation,
+            
+            vote_count_in_epoch: one_val_stat.vote_count,
+            prop_count_in_epoch: one_val_stat.prop_count,
+            validator_config: Some(val_config),
+            autopay: Some(autopay),
+            note: dict.get_note_for_address(*v.account_address()),
+        })
+    }
 
 }
 
@@ -284,3 +308,38 @@ fn calc_config_stats(vals: Vec<ValidatorView>) -> Result<ValsConfigStats, Error>
     })
 }
 
+fn get_ports_status(ip: &String) -> HashMap<String, bool> {
+    let mut result: HashMap<String, bool> = HashMap::new();
+    let ports = get_ports_to_test();     
+    for port in ports.iter() {
+        result.insert(port.to_string(), scan_port(&ip, port));
+    }
+    result
+}
+
+fn scan_port(ip: &String, port: &u16) -> bool {
+    let timeout = Duration::from_millis(200);
+    match IpAddr::from_str(ip) {
+        Ok(address) => {
+            let socket_address = SocketAddr::new(address, port.clone());
+            match TcpStream::connect_timeout(&socket_address, timeout) {
+                Ok(_) => true,
+                _ => false
+            }
+        },
+        Err(_) => false
+    }
+}
+
+fn get_ports_to_test() -> Vec<u16> {
+    // TODO: default OR read from local file
+    vec![6180u16]
+}
+
+fn extract_ip(full_ip: &String) -> String {
+    let split_str: Vec<&str> = full_ip.split('/').collect();
+    match split_str.get(2) {
+        Some(ip) => ip.to_string(),
+        None => full_ip.to_string()
+    }
+}

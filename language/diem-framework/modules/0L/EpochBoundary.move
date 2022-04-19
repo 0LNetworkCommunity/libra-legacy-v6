@@ -124,8 +124,6 @@ module EpochBoundary {
 
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
 
-
-
         let i = 0;
         while (i < Vector::length<address>(&top_accounts)) {
             let addr = *Vector::borrow(&top_accounts, i);
@@ -178,16 +176,13 @@ module EpochBoundary {
         CoreAddresses::assert_vm(vm);
         Burn::reset_ratios(vm);
 
-        // LEAVE THIS CODE COMMENTED for future use
-        // TODO: Make the burn value dynamic.
-        // let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
-        // let burn_value = Subsidy::subsidy_curve(
-        //   Globals::get_subsidy_ceiling_gas(),
-        //   incoming_count,
-        //   Globals::get_max_node_density()
-        // )/2;
-
-        let burn_value = 1000000; // TODO: switch to a variable cost, as above.
+        let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
+        
+        let burn_value = Subsidy::subsidy_curve(
+          Globals::get_subsidy_ceiling_gas(),
+          incoming_count,
+          Globals::get_max_node_density()
+        )/2;
 
         let all_vals = ValidatorUniverse::get_eligible_validators(vm);
         let i = 0;
