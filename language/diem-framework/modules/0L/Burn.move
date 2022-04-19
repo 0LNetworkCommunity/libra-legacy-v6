@@ -82,9 +82,9 @@ module Burn {
       if (borrow_global<BurnPreference>(payer).send_community) {
         return send(vm, payer, value)
       }
-    } else {
-      burn(vm, payer, value)
-    }
+    };
+    
+    burn(vm, payer, value)
   }
 
   fun burn(vm: &signer, addr: address, value: u64) {
@@ -119,14 +119,14 @@ module Burn {
     };
   }
 
-  public fun set_send_community(sender: &signer) acquires BurnPreference {
+  public fun set_send_community(sender: &signer, community: bool) acquires BurnPreference {
     let addr = Signer::address_of(sender);
     if (exists<BurnPreference>(addr)) {
       let b = borrow_global_mut<BurnPreference>(addr);
-      b.send_community = true;
+      b.send_community = community;
     } else {
       move_to<BurnPreference>(sender, BurnPreference {
-        send_community: true
+        send_community: community
       });
     }
   }
