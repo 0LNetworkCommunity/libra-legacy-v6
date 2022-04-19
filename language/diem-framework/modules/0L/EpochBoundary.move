@@ -125,7 +125,7 @@ module EpochBoundary {
           Globals::get_subsidy_ceiling_gas(),
           incoming_count,
           Globals::get_max_validators_per_set()
-        )/4;
+        )/2;
 
         // let burn_value = 1000000; // TODO: switch to a variable cost, as above.
 
