@@ -199,14 +199,14 @@
     <a href="Burn.md#0x1_Burn_reset_ratios">Burn::reset_ratios</a>(vm);
     // LEAVE THIS CODE COMMENTED for future <b>use</b>
     // TODO: Make the burn value dynamic.
-    // <b>let</b> incoming_count = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&top_accounts) - <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&jailed_set);
-    // <b>let</b> burn_value = <a href="Subsidy.md#0x1_Subsidy_subsidy_curve">Subsidy::subsidy_curve</a>(
-    //   <a href="Globals.md#0x1_Globals_get_subsidy_ceiling_gas">Globals::get_subsidy_ceiling_gas</a>(),
-    //   incoming_count,
-    //   Globals::get_max_node_density()
-    // )/4;
+    <b>let</b> incoming_count = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&top_accounts) - <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&jailed_set);
+    <b>let</b> burn_value = <a href="Subsidy.md#0x1_Subsidy_subsidy_curve">Subsidy::subsidy_curve</a>(
+      <a href="Globals.md#0x1_Globals_get_subsidy_ceiling_gas">Globals::get_subsidy_ceiling_gas</a>(),
+      incoming_count,
+      <a href="Globals.md#0x1_Globals_get_max_validators_per_set">Globals::get_max_validators_per_set</a>()
+    )/2;
 
-    <b>let</b> burn_value = 1000000; // TODO: switch <b>to</b> a variable cost, <b>as</b> above.
+    // <b>let</b> burn_value = 1000000; // TODO: switch <b>to</b> a variable cost, <b>as</b> above.
 
     <b>let</b> i = 0;
     <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&top_accounts)) {
