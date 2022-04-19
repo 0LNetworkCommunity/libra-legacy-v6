@@ -218,6 +218,8 @@ script {
     use 0x1::Cases;
     use 0x1::Vector;
     use 0x1::Stats;
+    use 0x1::TowerState;
+    use 0x1::Debug::print;
 
     fun main(vm: signer) {
         let vm = &vm;
@@ -239,7 +241,13 @@ script {
 
         // Even though Eve will be considered a case 2, it was because she 
         // was jailed. She will rejoin next epoch.
+        print(&777777777777777);
+
+        TowerState::test_helper_mock_mining_vm(vm, @{{eve}}, 5);
+
+        print(&Cases::get_case(vm, @{{eve}}, 0, 15));
         assert(Cases::get_case(vm, @{{eve}}, 0, 15) == 2, 7357008006013);
+
         // EpochBoundary::reconfigure(vm, 30);
     }
 }
