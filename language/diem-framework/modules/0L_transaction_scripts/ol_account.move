@@ -12,6 +12,7 @@ module AccountScripts {
     use 0x1::Globals;
     use 0x1::VDF;
     use 0x1::Errors;
+    use 0x1::MakeWhole;
 
     const ACCOUNT_ALREADY_EXISTS: u64 = 0;
 
@@ -96,6 +97,16 @@ module AccountScripts {
         
         // Check the account exists and the balance is greater than 0
         assert(DiemAccount::balance<GAS>(new_account_address) > 0, 04);
+    }
+    /// claim a make whole payment, requires the index of the payment 
+    /// in the MakeWhole module, which can be found using the 
+    /// query_make_whole_payment, which should not be run as part of 
+    /// the tx as it is relatively resource intensive (linear search)
+    public(script) fun claim_make_whole(
+        sender: signer,
+        index: u64
+    ) {
+        let _ = MakeWhole::claim_make_whole_payment(&sender, index);
     }
 
 }
