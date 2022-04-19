@@ -44,6 +44,7 @@ module DiemAccount {
     use 0x1::ValidatorUniverse;
     use 0x1::Wallet;
     use 0x1::Receipts;
+    friend 0x1::MakeWhole;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -779,7 +780,7 @@ module DiemAccount {
     }
 
     /// Record a payment of `to_deposit` from `payer` to `payee` with the attached `metadata`
-    fun deposit<Token: store>(
+    public(friend) fun deposit<Token: store>(
         payer: address,
         payee: address,
         to_deposit: Diem<Token>,
@@ -3329,6 +3330,7 @@ module DiemAccount {
         return Vector::empty<address>()
       }
     }
+
 
     /////// TEST HELPERS //////
 
