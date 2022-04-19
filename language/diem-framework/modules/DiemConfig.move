@@ -496,13 +496,13 @@ module DiemConfig {
         
     }
 
-    public fun check_transfer_enabled(): bool acquires Configuration {
-        if(Testnet::is_testnet()){
-            true
-        } else {
-            get_current_epoch() > TRANSFER_ENABLED_EPOCH
-        }
-    }    
+    // public fun check_transfer_enabled(): bool acquires Configuration {
+    //     if(Testnet::is_testnet()){
+    //         true
+    //     } else {
+    //         get_current_epoch() > TRANSFER_ENABLED_EPOCH
+    //     }
+    // }    
     //////// 0L end ////////
 
 }
