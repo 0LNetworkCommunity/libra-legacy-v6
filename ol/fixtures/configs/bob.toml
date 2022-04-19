@@ -8,7 +8,7 @@ db_path = "/root/.0L/db"
 [profile]
 account = "88e74dfed34420f2ad8032148280a84b"
 auth_key = "74ea911c261e07ba0198baf4d9ac852e88e74dfed34420f2ad8032148280a84b"
-ip = "167.71.191.162"
+ip = "137.184.191.201"
 statement = "Protests rage across the nation"
 
 default_node = "http://localhost:8080/"
