@@ -101,6 +101,7 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::BCS`](../../../../../../move-stdlib/docs/BCS.md#0x1_BCS)
 -  [`0x1::Bonding`](Demo_Bonding.md#0x1_Bonding)
 -  [`0x1::Burn`](Burn.md#0x1_Burn)
+-  [`0x1::BurnScript`](ol_burn_pref.md#0x1_BurnScript)
 -  [`0x1::Cases`](Cases.md#0x1_Cases)
 -  [`0x1::ChainId`](ChainId.md#0x1_ChainId)
 -  [`0x1::CoreAddresses`](CoreAddresses.md#0x1_CoreAddresses)
