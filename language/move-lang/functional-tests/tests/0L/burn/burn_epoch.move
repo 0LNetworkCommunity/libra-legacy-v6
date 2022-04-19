@@ -109,7 +109,7 @@ script {
   fun main(_vm: signer) {
     let new_cap = Diem::market_cap<GAS>();
     let val_plus_oper_start = 11000000u128; //10M + 1M
-    let burn = 1000000u128; //1M
+    let burn = 148000000u128; //1M
     let subsidy = 296000000u128;
     print(&new_cap);
 

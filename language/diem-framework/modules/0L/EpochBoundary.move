@@ -26,9 +26,12 @@ module EpochBoundary {
     use 0x1::FullnodeSubsidy;
     use 0x1::ValidatorUniverse;
 
+    use 0x1::Debug::print;
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
+        print(&111111);
+
         CoreAddresses::assert_vm(vm);
 
         let height_start = Epoch::get_timer_height_start(vm);
@@ -41,8 +44,12 @@ module EpochBoundary {
         let (subsidy_units, nominal_subsidy_per) = 
             Subsidy::calculate_subsidy(vm, compliant_nodes_count);
         
+        print(&subsidy_units);
+        print(&nominal_subsidy_per);
+
         process_fullnodes(vm, nominal_subsidy_per);
         
+
         process_validators(vm, subsidy_units, *&outgoing_compliant_set);
         
         let proposed_set = propose_new_set(vm, height_start, height_now);
@@ -53,10 +60,8 @@ module EpochBoundary {
             // update_validator_withdrawal_limit(vm);
         };
 
-        // Temporary timer to start in the future.
-        if (DiemConfig::get_current_epoch() > 185) {
-          proof_of_burn(vm, subsidy_units);
-        };
+        // TODO: Temporary timer to start in the future.
+        proof_of_burn(vm, subsidy_units, &proposed_set);
         
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
     }
@@ -94,15 +99,15 @@ module EpochBoundary {
     }
 
     fun process_validators(
-        vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector<address>
+        vm: &signer, nominal_subsidy_per: u64, outgoing_compliant_set: vector<address>
     ) {
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         
         if (Vector::is_empty<address>(&outgoing_compliant_set)) return;
 
-        if (subsidy_units > 0) {
-            Subsidy::process_subsidy(vm, subsidy_units, &outgoing_compliant_set);
+        if (nominal_subsidy_per > 0) {
+            Subsidy::process_subsidy(vm, nominal_subsidy_per, &outgoing_compliant_set);
         };
 
         Subsidy::process_fees(vm, &outgoing_compliant_set);
@@ -170,19 +175,28 @@ module EpochBoundary {
         Epoch::reset_timer(vm, height_now);
     }
 
+
+    
     // NOTE: this was previously in propose_new_set since it used the same loop.
     // copied implementation from Teams proposal.
-    fun proof_of_burn(vm: &signer, subsidy_units: u64) {
+    fun proof_of_burn(vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector<address>) {
+        print(&2222);
         CoreAddresses::assert_vm(vm);
 
         // recaulculate the ratios of the community index.
         Burn::reset_ratios(vm);
-
+        
         // get the burn value for next epoch. 50% of this epoch's reward.
-        let burn_value = subsidy_units/2;
-
+        let burn_value = nominal_subsidy_per/2;
+        print(&burn_value);
         // apply the cost-to-exist to all validator candidates
-        let all_vals = ValidatorUniverse::get_eligible_validators(vm);
+        // TODO: remove proposed_set implementation until after epoch 185
+        let all_vals = if (DiemConfig::get_current_epoch() > 185) {
+         ValidatorUniverse::get_eligible_validators(vm)
+        } else {
+          *proposed_set
+        };
+
         let i = 0;
         while (i < Vector::length<address>(&all_vals)) {
           let addr = *Vector::borrow(&all_vals, i);

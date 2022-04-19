@@ -50,7 +50,7 @@ script {
   fun main(_vm: signer) {
     let new_cap = Diem::market_cap<GAS>();
     let val_plus_oper_start = 10000000u128 + 1000000u128; //10M + 1M
-    let burn = 1000000u128; //1M
+    let burn = 148000000u128; // 50% of validator subsidy
     let subsidy = 0u128;
     print(&new_cap);
 
