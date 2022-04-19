@@ -11,6 +11,8 @@ address 0x1 {
     use 0x1::ValidatorUniverse;
     use 0x1::DiemSystem;
     use 0x1::Ancestry;
+    use 0x1::Testnet;
+    use 0x1::StagingNet;
 
     // triggered once per epoch
     struct Vouch has key {
@@ -41,8 +43,14 @@ address 0x1 {
       Vector::push_back<address>(&mut v.vals, buddy_acc);
 
     }
+    public fun get_buddies(val: address): vector<address> acquires Vouch{
+      if (is_init(val)) {
+        return *&borrow_global<Vouch>(val).vals
+      };
+      Vector::empty<address>()
+    }
 
-    fun buddies_in_set(val: address): vector<address> acquires Vouch {
+    public fun buddies_in_set(val: address): vector<address> acquires Vouch {
       let current_set = DiemSystem::get_val_set_addr();
       if (!exists<Vouch>(val)) return Vector::empty<address>();
 
@@ -62,7 +70,7 @@ address 0x1 {
     }
 
 
-    fun unrelated_buddies(val: address): vector<address> acquires Vouch {
+    public fun unrelated_buddies(val: address): vector<address> acquires Vouch {
       // start our list empty
       let unrelated_buddies = Vector::empty<address>();
 
@@ -83,7 +91,9 @@ address 0x1 {
             // check ancestry algo
             let (is_fam, _) = Ancestry::is_family(*comparison_acc, *target_acc);
             if (!is_fam) {
-              Vector::push_back<address>(&mut unrelated_buddies, *target_acc)
+              if (!Vector::contains(&unrelated_buddies, target_acc)) {
+                Vector::push_back<address>(&mut unrelated_buddies, *target_acc)
+              }
             }
           };
           k = k + 1;
@@ -96,6 +106,15 @@ address 0x1 {
       };
 
       unrelated_buddies
+    }
+
+    public fun unrelated_buddies_above_thresh(val: address): bool acquires Vouch{
+      if (Testnet::is_testnet() || StagingNet::is_staging_net()) {
+        return true
+      };
+
+      let len = Vector::length(&unrelated_buddies(val));
+      (len > 3) // TODO: move to Globals
     }
   }
 }

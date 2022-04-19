@@ -11,7 +11,7 @@ script {
   use 0x1::Ancestry;
   use 0x1::Vector;
   use 0x1::Signer;
-  use 0x1::Debug::print;
+
   fun main(alice: signer, bob: signer) {
 
     Ancestry::init(&alice, &bob);

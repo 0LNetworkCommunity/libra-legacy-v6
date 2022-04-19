@@ -11,6 +11,7 @@ address 0x1 {
     use 0x1::AutoPay;
     use 0x1::TowerState;
     use 0x1::Testnet;
+    use 0x1::Vouch;
 
     public fun val_audit_passing(val: address): bool {
       // has valid configs
@@ -25,6 +26,9 @@ address 0x1 {
       if (!TowerState::is_init(val)) return false;
       // is a slow wallet
       if (!DiemAccount::is_slow(val)) return false;
+
+      // had a few unrelated validator buddies vouching for them
+      if (!Vouch::unrelated_buddies_above_thresh(val)) return false;
 
       // TODO: has network settings for validator
 
