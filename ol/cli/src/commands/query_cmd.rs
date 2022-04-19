@@ -76,7 +76,6 @@ impl Runnable for QueryCmd {
         let account = 
             if args.account.is_some() { args.account.unwrap() }
             else { cfg.profile.account };
-            
         let client = client::pick_client(
             args.swarm_path.clone(), &mut cfg
         ).unwrap_or_else(|e| {
@@ -156,3 +155,19 @@ impl Runnable for QueryCmd {
         };
     }
 }
+
+// 0L todo: Unused fn
+// pub fn get_wallet_type(account: AccountAddress, mut node: Node) -> WalletType {
+//     match node.get_annotate_account_blob(account) {
+//         Ok((Some(r), _)) => {
+//             if is_slow_wallet(&r) {
+//                 return WalletType::Slow;
+//             }
+//             if is_community_wallet(&r) {
+//                 return WalletType::Community;
+//             }
+//             WalletType::None
+//         }
+//         _ => WalletType::None,
+//     }
+// }

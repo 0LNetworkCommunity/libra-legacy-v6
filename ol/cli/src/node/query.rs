@@ -13,6 +13,7 @@ use move_core_types::{
 };
 use num_format::{Locale, ToFormattedString};
 use diem_resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
+use serde::{Deserialize, Serialize};
 
 const SCALING_FACTOR: u64 = 1_000_000;
 
@@ -71,6 +72,17 @@ pub enum QueryType {
       /// the account of the validator
       account: AccountAddress 
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+///
+pub enum WalletType {
+    ///
+    None,
+    ///
+    Slow,
+    ///
+    Community,
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
@@ -335,6 +347,64 @@ pub fn find_value_from_state(
     }
 }
 
+///
+pub fn is_slow_wallet(r: &AnnotatedAccountStateBlob) -> bool {
+    let slow_module_name = "DiemAccount";
+    let slow_struct_name = "SlowWallet";
+    let unlocked = find_value_from_state(
+        &r,
+        slow_module_name.to_string(),
+        slow_struct_name.to_string(),
+        "unlocked".to_string(),
+    );
+    if let Some(AnnotatedMoveValue::U64(0)) = unlocked {
+        let transferred = find_value_from_state(
+            &r,
+            slow_module_name.to_string(),
+            slow_struct_name.to_string(),
+            "transferred".to_string(),
+        );
+        if let Some(AnnotatedMoveValue::U64(0)) = transferred {
+            return true;
+        }
+    }
+    false
+}
+
+///
+pub fn is_community_wallet(r: &AnnotatedAccountStateBlob) -> bool {
+    let community_module_name = "Wallet";
+    let community_struct_name = "CommunityFreeze";
+    let is_frozen = find_value_from_state(
+        &r,
+        community_module_name.to_string(),
+        community_struct_name.to_string(),
+        "is_frozen".to_string(),
+    );
+    if let Some(AnnotatedMoveValue::Bool(false)) = is_frozen {
+        let consecutive_rejections = find_value_from_state(
+            &r,
+            community_module_name.to_string(),
+            community_struct_name.to_string(),
+            "consecutive_rejections".to_string(),
+        );
+        if let Some(AnnotatedMoveValue::U64(0)) = consecutive_rejections {
+            let unfreeze_votes = find_value_from_state(
+                &r,
+                community_module_name.to_string(),
+                community_struct_name.to_string(),
+                "unfreeze_votes".to_string(),
+            );
+            if let Some(AnnotatedMoveValue::Vector(TypeTag::Address, vec)) = unfreeze_votes {
+                if vec.len() == 0 {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
 /// test fixtures
 pub fn test_fixture_blob() -> AnnotatedAccountStateBlob {
     let mut s = BTreeMap::new();
@@ -362,6 +432,29 @@ pub fn test_fixture_struct() -> AnnotatedMoveStruct {
     }
 }
 
+///
+pub fn test_fixture_wallet_type(
+    module_name: &str,
+    struct_name: &str,
+    value: Vec<(Identifier, AnnotatedMoveValue)>
+) -> AnnotatedAccountStateBlob {
+    let mut s = BTreeMap::new();
+    let module_tag = StructTag {
+        address: AccountAddress::random(),
+        module: Identifier::new(module_name).unwrap(),
+        name: Identifier::new(struct_name).unwrap(),
+        type_params: vec![],
+    };
+
+    let move_struct = AnnotatedMoveStruct {
+        abilities: AbilitySet::EMPTY | Ability::Key,
+        type_: module_tag.clone(),
+        value,
+    };
+    s.insert(move_struct.type_.clone(), move_struct);
+    AnnotatedAccountStateBlob(s)
+}
+
 #[test]
 fn test_find_annotated_move_value() {
     let s = test_fixture_blob();
@@ -381,4 +474,206 @@ fn test_find_annotated_move_value() {
         }
         None => panic!("not the right value"),
     }
+}
+
+#[test]
+fn test_is_slow_wallet_should_return_true() {
+    let value = vec![
+        (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0)),
+        (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(0))
+    ];
+    let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
+    assert_eq!(true, is_slow_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_slow_wallet_should_return_false_with_wrong_unlocked() {
+    let value = vec![
+        (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(1)),
+        (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(0))
+    ];
+    let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
+    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_slow_wallet_should_return_false_with_wrong_transferred() {
+    let value = vec![
+        (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0)),
+        (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(1))
+    ];
+    let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
+    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_slow_wallet_should_return_false_if_missing_transferred() {
+    let value = vec![
+        (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0))
+    ];
+    let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
+    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_slow_wallet_should_return_false_if_missing_unlocked() {
+    let value = vec![
+        (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(0))
+    ];
+    let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
+    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_slow_wallet_should_return_false_with_wrong_module_name() {
+    let value = vec![
+        (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0)),
+        (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(1))
+    ];
+    let s = test_fixture_wallet_type("IncorrectModuleName", "SlowWallet", value);
+    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_slow_wallet_should_return_false_with_wrong_struct_name() {
+    let value = vec![
+        (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0)),
+        (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(1))
+    ];
+    let s = test_fixture_wallet_type("DiemAccount", "IncorrectStructName", value);
+    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_true() {
+    let value = vec![
+        (Identifier::new("is_frozen").unwrap(), AnnotatedMoveValue::Bool(false)),
+        (Identifier::new("consecutive_rejections").unwrap(), AnnotatedMoveValue::U64(0)),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(
+            TypeTag::Address,
+            vec![]
+            )
+        )
+    ];
+    let s = test_fixture_wallet_type("Wallet", "CommunityFreeze", value);
+    assert_eq!(true, is_community_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_false_with_wrong_is_frozen() {
+    let value = vec![
+        (Identifier::new("is_frozen").unwrap(), AnnotatedMoveValue::Bool(true)),
+        (Identifier::new("consecutive_rejections").unwrap(), AnnotatedMoveValue::U64(0)),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(
+                TypeTag::Address,
+                vec![]
+            )
+        )
+    ];
+    let s = test_fixture_wallet_type("Wallet", "CommunityFreeze", value);
+    assert_eq!(false, is_community_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_false_with_wrong_consecutive_rejections() {
+    let value = vec![
+        (Identifier::new("is_frozen").unwrap(), AnnotatedMoveValue::Bool(false)),
+        (Identifier::new("consecutive_rejections").unwrap(), AnnotatedMoveValue::U64(1)),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(
+                TypeTag::Address,
+                vec![]
+            )
+        )
+    ];
+    let s = test_fixture_wallet_type("Wallet", "CommunityFreeze", value);
+    assert_eq!(false, is_community_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_false_with_wrong_unfreeze_votes() {
+    let value = vec![
+        (Identifier::new("is_frozen").unwrap(), AnnotatedMoveValue::Bool(false)),
+        (Identifier::new("consecutive_rejections").unwrap(), AnnotatedMoveValue::U64(0)),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(
+                TypeTag::Address,
+                vec![AnnotatedMoveValue::Bool(false)]
+            )
+        )
+    ];
+    let s = test_fixture_wallet_type("Wallet", "CommunityFreeze", value);
+    assert_eq!(false, is_community_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_false_if_missing_unfreeze_votes() {
+    let value = vec![
+        (Identifier::new("consecutive_rejections").unwrap(), AnnotatedMoveValue::U64(0)),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(
+                TypeTag::Address,
+                vec![]
+            )
+        )
+    ];
+    let s = test_fixture_wallet_type("Wallet", "CommunityFreeze", value);
+    assert_eq!(false, is_community_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_false_if_missing_consecutive_rejections() {
+    let value = vec![
+        (Identifier::new("is_frozen").unwrap(), AnnotatedMoveValue::Bool(false)),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(
+                TypeTag::Address,
+                vec![]
+            )
+        )
+    ];
+    let s = test_fixture_wallet_type("Wallet", "CommunityFreeze", value);
+    assert_eq!(false, is_community_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_false_with_wrong_module_name() {
+    let value = vec![
+        (Identifier::new("is_frozen").unwrap(), AnnotatedMoveValue::Bool(false)),
+        (Identifier::new("consecutive_rejections").unwrap(), AnnotatedMoveValue::U64(0)),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(
+                TypeTag::Address,
+                vec![]
+            )
+        )
+    ];
+    let s = test_fixture_wallet_type("IncorrectModuleName", "CommunityFreeze", value);
+    assert_eq!(false, is_community_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_false_with_wrong_struct_name() {
+    let value = vec![
+        (Identifier::new("is_frozen").unwrap(), AnnotatedMoveValue::Bool(false)),
+        (Identifier::new("consecutive_rejections").unwrap(), AnnotatedMoveValue::U64(0)),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(
+                TypeTag::Address,
+                vec![]
+            )
+        )
+    ];
+    let s = test_fixture_wallet_type("Wallet", "IncorrectStructName", value);
+    assert_eq!(false, is_community_wallet(&s), "{}", s.to_string());
 }
