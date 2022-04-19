@@ -2696,14 +2696,14 @@ the sender's account balance.
     /////// 0L /////////
     // Slow wallet transfers disabled by default, enabled when epoch is 1000
     // At that point slow wallets receive 1,000 coins unlocked per day.
-    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(sender_addr) && !<a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">DiemConfig::check_transfer_enabled</a>() ) {
-      // <b>if</b> transfers are not enabled for slow wallets
-      // then the tx should fail
-        <b>assert</b>(
-            <b>false</b>,
-            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE">ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE</a>)
-        );
-    };
+    // <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(sender_addr) && !DiemConfig::check_transfer_enabled() ) {
+    //   // <b>if</b> transfers are not enabled for slow wallets
+    //   // then the tx should fail
+    //     <b>assert</b>(
+    //         <b>false</b>,
+    //         <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE">ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE</a>)
+    //     );
+    // };
     // Abort <b>if</b> we already extracted the unique withdraw capability for this account.
     <b>assert</b>(
         !<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(sender_addr),

@@ -12,7 +12,7 @@ module DiemConfig {
     use 0x1::DiemTimestamp;
     use 0x1::Signer;
     use 0x1::Roles;
-    use 0x1::Testnet;
+    // use 0x1::Testnet;
 
     /// A generic singleton resource that holds a value of a specific type.
     struct DiemConfig<Config: copy + drop + store> has key, store {
