@@ -44,6 +44,8 @@ module DiemAccount {
     use 0x1::ValidatorUniverse;
     use 0x1::Wallet;
     use 0x1::Receipts;
+    use 0x1::Ancestry;
+    use 0x1::Vouch;
     friend 0x1::MakeWhole;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
@@ -473,7 +475,7 @@ module DiemAccount {
         // account will not be created if this step fails.
         let new_signer = create_signer(new_account_address);
         TowerState::init_miner_state(&new_signer, challenge, solution, difficulty, security);
-        // set_slow(&new_signer);
+        Ancestry::init(sender, &new_signer);
         new_account_address
     }
 
@@ -490,6 +492,9 @@ module DiemAccount {
         Event::publish_generator(&new_signer);
         add_currencies_for_account<GAS>(&new_signer, false);
         make_account(new_signer, new_account_authkey_prefix);
+
+        let new_signer = create_signer(new_account);
+        Ancestry::init(sender, &new_signer);
 
         // if the initial coin sent is the minimum amount, don't check transfer limits.
         if (value <= BOOTSTRAP_COIN_VALUE) {
@@ -614,6 +619,9 @@ module DiemAccount {
         onboarding_gas_transfer<GAS>(sender, op_address, BOOTSTRAP_COIN_VALUE);
 
         let new_signer = create_signer(new_account_address);
+        
+        Ancestry::init(sender, &new_signer);
+        Vouch::init(&new_signer);
         set_slow(&new_signer);
 
         new_account_address
@@ -725,6 +733,9 @@ module DiemAccount {
         // Transfer for operator as well
         onboarding_gas_transfer<GAS>(sender, op_address, BOOTSTRAP_COIN_VALUE);
         let new_signer = create_signer(new_account_address);
+
+        Ancestry::init(sender, &new_signer);
+        Vouch::init(&new_signer);
         set_slow(&new_signer);
         new_account_address
     }
