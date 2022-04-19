@@ -1,10 +1,11 @@
 <script lang="ts">
   import AddressNoteTip from '../address/AddressNoteTip.svelte';
+  import Network from './Network.svelte';
   import ValidatorModal from "./ValidatorModal.svelte";
   export let data;
 
   const modal_id = "vals-tab-val-modal";
-
+  let view = "Chain";
   interface ValInfo {
     note: String;
     account_address: string;
@@ -38,7 +39,10 @@
   $: if (data.chain_view && data.chain_view.validator_view) {
     set = data.chain_view.validator_view;
     has_notes = set.some(e => e.note != "");
-    selectedVal = set[0];
+    if (selectedVal == null) {
+      // initial selection
+      selectedVal = set[0];
+    }
   }
   $: set = set.sort((a, b) => (a[sortOption] > b[sortOption]) ? sortOrder : -sortOrder);
   
@@ -60,50 +64,62 @@
   <h2 class="uk-text-center uk-text-uppercase uk-text-muted uk-text-light uk-margin-medium-bottom">
     <span>{set.length} Validators {#if !has_notes}<AddressNoteTip />{/if}</span>
   </h2>
- 
-  <div class="uk-overflow-auto">
-    <table class="uk-table uk-table-hover uk-text-muted">
-      <thead>
-        <tr>
-            {#if has_notes}
-              <th class="uk-text-center">note</th>
-            {/if}
-            <th class="uk-text-center">account</th>
-            {#each sortableColumns as col}
-              <th class="uk-text-right" on:click={() => thOnClick(col.sortKey)}>
-                <span class="disable-select">{col.label}</span>
-                {#if sortOption == col.sortKey}
-                  {#if sortOrder == 1}
-                    <span uk-icon="icon: triangle-up"></span>
-                  {:else}
-                    <span uk-icon="icon: triangle-down"></span>
-                  {/if}
-                {/if}
-              </th>
-            {/each}
-            <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {#each set as val, i}
-        <tr class="{val.account_address === data.account_view.address ? 'owner' : ''}" on:click={() => selectedVal = val}>        
-            {#if has_notes}
-              <td class="uk-text-center">{val.note}</td>
-            {/if}
-            <td class="uk-visible@s uk-text-center">{val.account_address}</td>
-            <td class="uk-hidden@s uk-text-truncate">{val.account_address}</td>
-            <td class="uk-text-right">{val.voting_power}</td>
-            <td class="uk-text-right">{val.count_proofs_in_epoch}</td>
-            <td class="uk-text-right">{val.tower_height}</td>
-            <td class="uk-text-right">{val.vote_count_in_epoch}</td>
-            <td class="uk-text-right">{val.prop_count_in_epoch}</td>
-            <td>
-              <span uk-icon="icon: info" uk-toggle="target: #{modal_id}"></span>
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+
+  <div id="radio2" on:click={() => { view = document.querySelector('input[name="radio2"]:checked').value }} class="uk-margin uk-grid-small uk-child-width-auto uk-align-center uk-text-center" uk-grid>
+    <label><input class="uk-radio" type="radio" name="radio2" value="Chain" checked> Chain</label>
+    <label><input class="uk-radio" type="radio" name="radio2" value="Network"> Network</label>
   </div>
+  
+  {#if view == "Chain"}
+
+    <div class="uk-overflow-auto">
+      <table class="uk-table uk-table-hover uk-text-muted">
+        <thead>
+          <tr>
+              {#if has_notes}
+                <th class="uk-text-center">note</th>
+              {/if}
+              <th class="uk-text-center">account</th>
+              {#each sortableColumns as col}
+                <th class="uk-text-right" on:click={() => thOnClick(col.sortKey)}>
+                  <span class="disable-select">{col.label}</span>
+                  {#if sortOption == col.sortKey}
+                    {#if sortOrder == 1}
+                      <span uk-icon="icon: triangle-up"></span>
+                    {:else}
+                      <span uk-icon="icon: triangle-down"></span>
+                    {/if}
+                  {/if}
+                </th>
+              {/each}
+              <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each set as val, i}
+          <tr class="{val.account_address === data.account_view.address ? 'owner' : ''}" on:click={() => selectedVal = val}>        
+              {#if has_notes}
+                <td class="uk-text-center">{val.note}</td>
+              {/if}
+              <td class="uk-visible@s uk-text-center">{val.account_address}</td>
+              <td class="uk-hidden@s uk-text-truncate">{val.account_address}</td>
+              <td class="uk-text-right">{val.voting_power}</td>
+              <td class="uk-text-right">{val.count_proofs_in_epoch}</td>
+              <td class="uk-text-right">{val.tower_height}</td>
+              <td class="uk-text-right">{val.vote_count_in_epoch}</td>
+              <td class="uk-text-right">{val.prop_count_in_epoch}</td>
+              <td>
+                <span uk-icon="icon: info" uk-toggle="target: #{modal_id}"></span>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+  {:else} 
+    <!--Network-->
+    <Network {data}/>
+
+  {/if}
   <ValidatorModal validator={selectedVal} id={modal_id}></ValidatorModal>
 </main>
