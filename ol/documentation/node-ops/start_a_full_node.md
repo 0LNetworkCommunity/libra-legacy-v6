@@ -4,6 +4,10 @@
 
 - A unix host machine, with a fixed IP address
 - The fixed IP address of the machine
+- Recommended minimum specs: 
+  - 256G storage, 2 core CPU, 8G RAM
+- Firewall rules:
+  - Open the ports: 8080
 
 ## 1. Set up a host
 These instructions target Ubuntu.

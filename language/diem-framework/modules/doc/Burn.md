@@ -233,9 +233,9 @@
     <b>if</b> (borrow_global&lt;<a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a>&gt;(payer).send_community) {
       <b>return</b> <a href="Burn.md#0x1_Burn_send">send</a>(vm, payer, value)
     }
-  } <b>else</b> {
-    <a href="Burn.md#0x1_Burn_burn">burn</a>(vm, payer, value)
-  }
+  };
+
+  <a href="Burn.md#0x1_Burn_burn">burn</a>(vm, payer, value)
 }
 </code></pre>
 
@@ -320,7 +320,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_set_send_community">set_send_community</a>(sender: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_set_send_community">set_send_community</a>(sender: &signer, community: bool)
 </code></pre>
 
 
@@ -329,14 +329,14 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_set_send_community">set_send_community</a>(sender: &signer) <b>acquires</b> <a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_set_send_community">set_send_community</a>(sender: &signer, community: bool) <b>acquires</b> <a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a> {
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   <b>if</b> (<b>exists</b>&lt;<a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a>&gt;(addr)) {
     <b>let</b> b = borrow_global_mut&lt;<a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a>&gt;(addr);
-    b.send_community = <b>true</b>;
+    b.send_community = community;
   } <b>else</b> {
     move_to&lt;<a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a>&gt;(sender, <a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a> {
-      send_community: <b>true</b>
+      send_community: community
     });
   }
 }

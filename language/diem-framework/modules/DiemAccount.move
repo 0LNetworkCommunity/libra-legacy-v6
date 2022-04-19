@@ -8,6 +8,8 @@ address 0x1 {
 // File Prefix for errors: 1201 used for OL errors
 
 module DiemAccount {
+    friend 0x1::MigrateAutoPayBal;
+
     use 0x1::AccountFreezing;
     use 0x1::CoreAddresses;
     use 0x1::ChainId;
@@ -44,6 +46,7 @@ module DiemAccount {
     use 0x1::ValidatorUniverse;
     use 0x1::Wallet;
     use 0x1::Receipts;
+    friend 0x1::MakeWhole;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -248,6 +251,18 @@ module DiemAccount {
         //what percent of your available account limit should be dedicated to autopay?
         share: u64,
     }
+
+
+    //////// 0L ////////
+    // A helper function for the VM to MOCK THE SIGNATURE OF ANY ADDRESS.
+    // This is necessary for migrating user state, when a new struct needs to be created.
+    // This is restricted by `friend` visibility, which is defined above as the 0x1::MigrateAutoPayBal module for a one-time use.
+    // language/changes/1-friend-visibility.md
+    public(friend) fun scary_wtf_create_signer(vm: &signer, addr: address): signer {
+        CoreAddresses::assert_diem_root(vm);
+        create_signer(addr)
+    }
+
 
     //////// 0L ////////
     fun new_escrow<Token: store>(
@@ -779,7 +794,7 @@ module DiemAccount {
     }
 
     /// Record a payment of `to_deposit` from `payer` to `payee` with the attached `metadata`
-    fun deposit<Token: store>(
+    public(friend) fun deposit<Token: store>(
         payer: address,
         payee: address,
         to_deposit: Diem<Token>,

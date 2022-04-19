@@ -26,6 +26,7 @@ before and after every transaction.
 -  [Resource `SlowWallet`](#0x1_DiemAccount_SlowWallet)
 -  [Resource `SlowWalletList`](#0x1_DiemAccount_SlowWalletList)
 -  [Constants](#@Constants_0)
+-  [Function `scary_wtf_create_signer`](#0x1_DiemAccount_scary_wtf_create_signer)
 -  [Function `new_escrow`](#0x1_DiemAccount_new_escrow)
 -  [Function `process_escrow`](#0x1_DiemAccount_process_escrow)
 -  [Function `initialize_escrow`](#0x1_DiemAccount_initialize_escrow)
@@ -1131,6 +1132,31 @@ important to the semantics of the system.
 
 
 
+<a name="0x1_DiemAccount_scary_wtf_create_signer"></a>
+
+## Function `scary_wtf_create_signer`
+
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_scary_wtf_create_signer">scary_wtf_create_signer</a>(vm: &signer, addr: address): signer
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_scary_wtf_create_signer">scary_wtf_create_signer</a>(vm: &signer, addr: address): signer {
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+    <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(addr)
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_DiemAccount_new_escrow"></a>
 
 ## Function `new_escrow`
@@ -1846,7 +1872,7 @@ Depending on the <code>is_withdrawal</code> flag passed in we determine whether 
 Record a payment of <code>to_deposit</code> from <code>payer</code> to <code>payee</code> with the attached <code>metadata</code>
 
 
-<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_deposit">deposit</a>&lt;Token: store&gt;(payer: address, payee: address, to_deposit: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;)
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_deposit">deposit</a>&lt;Token: store&gt;(payer: address, payee: address, to_deposit: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -1855,7 +1881,7 @@ Record a payment of <code>to_deposit</code> from <code>payer</code> to <code>pay
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_deposit">deposit</a>&lt;Token: store&gt;(
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_deposit">deposit</a>&lt;Token: store&gt;(
     payer: address,
     payee: address,
     to_deposit: <a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&gt;,
