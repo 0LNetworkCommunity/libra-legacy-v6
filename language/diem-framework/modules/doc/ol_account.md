@@ -9,12 +9,14 @@
 -  [Function `create_user_by_coin_tx`](#0x1_AccountScripts_create_user_by_coin_tx)
 -  [Function `create_acc_user`](#0x1_AccountScripts_create_acc_user)
 -  [Function `create_acc_val`](#0x1_AccountScripts_create_acc_val)
+-  [Function `claim_make_whole`](#0x1_AccountScripts_claim_make_whole)
 
 
 <pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
+<b>use</b> <a href="MakeWhole.md#0x1_MakeWhole">0x1::MakeWhole</a>;
 <b>use</b> <a href="VDF.md#0x1_VDF">0x1::VDF</a>;
 <b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
 </code></pre>
@@ -171,6 +173,37 @@
 
     // Check the account <b>exists</b> and the balance is greater than 0
     <b>assert</b>(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(new_account_address) &gt; 0, 04);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_AccountScripts_claim_make_whole"></a>
+
+## Function `claim_make_whole`
+
+claim a make whole payment, requires the index of the payment
+in the MakeWhole module, which can be found using the
+query_make_whole_payment, which should not be run as part of
+the tx as it is relatively resource intensive (linear search)
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_account.md#0x1_AccountScripts_claim_make_whole">claim_make_whole</a>(sender: signer, index: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_account.md#0x1_AccountScripts_claim_make_whole">claim_make_whole</a>(
+    sender: signer,
+    index: u64
+) {
+    <b>let</b> _ = <a href="MakeWhole.md#0x1_MakeWhole_claim_make_whole_payment">MakeWhole::claim_make_whole_payment</a>(&sender, index);
 }
 </code></pre>
 
