@@ -52,7 +52,12 @@ module EpochBoundary {
             DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
             // update_validator_withdrawal_limit(vm);
         };
-        proof_of_burn(vm);
+
+        // Temporary timer to start in the future.
+        if (DiemConfig::get_current_epoch() > 185) {
+          proof_of_burn(vm);
+        };
+        
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
     }
 
@@ -180,7 +185,7 @@ module EpochBoundary {
         //   Globals::get_subsidy_ceiling_gas(),
         //   incoming_count,
         //   Globals::get_max_node_density()
-        // )/4;
+        // )/2;
 
         let burn_value = 1000000; // TODO: switch to a variable cost, as above.
 
