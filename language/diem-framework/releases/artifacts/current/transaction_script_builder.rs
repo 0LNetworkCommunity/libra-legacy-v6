@@ -1769,6 +1769,14 @@ pub enum ScriptFunctionCall {
         amount: u64,
     },
 
+    /// claim a make whole payment, requires the index of the payment
+    /// in the MakeWhole module, which can be found using the
+    /// query_make_whole_payment, which should not be run as part of
+    /// the tx as it is relatively resource intensive (linear search)
+    ClaimMakeWhole {
+        index: u64,
+    },
+
     CommunityTransfer {
         destination: AccountAddress,
         unscaled_value: u64,
@@ -2743,6 +2751,10 @@ pub enum ScriptFunctionCall {
         public_key: Bytes,
     },
 
+    SetBurnPref {
+        to_community: bool,
+    },
+
     /// # Summary
     /// Updates the gas constants stored on chain and used by the VM for gas
     /// metering. This transaction can only be sent from the Diem Root account.
@@ -3535,6 +3547,7 @@ impl ScriptFunctionCall {
                 preburn_address,
                 amount,
             } => encode_cancel_burn_with_amount_script_function(token, preburn_address, amount),
+            ClaimMakeWhole { index } => encode_claim_make_whole_script_function(index),
             CommunityTransfer {
                 destination,
                 unscaled_value,
@@ -3761,6 +3774,7 @@ impl ScriptFunctionCall {
             RotateSharedEd25519PublicKey { public_key } => {
                 encode_rotate_shared_ed25519_public_key_script_function(public_key)
             }
+            SetBurnPref { to_community } => encode_set_burn_pref_script_function(to_community),
             SetGasConstants {
                 sliding_nonce,
                 global_memory_per_byte_cost,
@@ -4335,6 +4349,22 @@ pub fn encode_cancel_burn_with_amount_script_function(
             bcs::to_bytes(&preburn_address).unwrap(),
             bcs::to_bytes(&amount).unwrap(),
         ],
+    ))
+}
+
+/// claim a make whole payment, requires the index of the payment
+/// in the MakeWhole module, which can be found using the
+/// query_make_whole_payment, which should not be run as part of
+/// the tx as it is relatively resource intensive (linear search)
+pub fn encode_claim_make_whole_script_function(index: u64) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("AccountScripts").to_owned(),
+        ),
+        ident_str!("claim_make_whole").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&index).unwrap()],
     ))
 }
 
@@ -5759,6 +5789,18 @@ pub fn encode_rotate_shared_ed25519_public_key_script_function(
         ident_str!("rotate_shared_ed25519_public_key").to_owned(),
         vec![],
         vec![bcs::to_bytes(&public_key).unwrap()],
+    ))
+}
+
+pub fn encode_set_burn_pref_script_function(to_community: bool) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("BurnScript").to_owned(),
+        ),
+        ident_str!("set_burn_pref").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&to_community).unwrap()],
     ))
 }
 
@@ -8212,6 +8254,18 @@ fn decode_cancel_burn_with_amount_script_function(
     }
 }
 
+fn decode_claim_make_whole_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::ClaimMakeWhole {
+            index: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_community_transfer_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -8682,6 +8736,18 @@ fn decode_rotate_shared_ed25519_public_key_script_function(
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::RotateSharedEd25519PublicKey {
             public_key: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_set_burn_pref_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::SetBurnPref {
+            to_community: bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
@@ -9317,6 +9383,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_cancel_burn_with_amount_script_function),
         );
         map.insert(
+            "AccountScriptsclaim_make_whole".to_string(),
+            Box::new(decode_claim_make_whole_script_function),
+        );
+        map.insert(
             "TransferScriptscommunity_transfer".to_string(),
             Box::new(decode_community_transfer_script_function),
         );
@@ -9460,6 +9530,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "AccountAdministrationScriptsrotate_shared_ed25519_public_key".to_string(),
             Box::new(decode_rotate_shared_ed25519_public_key_script_function),
+        );
+        map.insert(
+            "BurnScriptset_burn_pref".to_string(),
+            Box::new(decode_set_burn_pref_script_function),
         );
         map.insert(
             "SystemAdministrationScriptsset_gas_constants".to_string(),

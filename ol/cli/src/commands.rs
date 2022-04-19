@@ -11,11 +11,11 @@
 //! application's configuration file.
 
 pub mod init_cmd;
+pub mod query_cmd;
 mod version;
 mod mgmt_cmd;
 mod serve_cmd;
 mod restore_cmd;
-mod query_cmd;
 mod health_cmd;
 mod pilot_cmd;
 mod start_cmd;
