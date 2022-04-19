@@ -2,26 +2,6 @@
 
 // Tests the prologue reconfigures based on wall clock
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
-//! round: 1
-
-//! new-transaction
-//! sender: diemroot
-
-// need to assign testnet since we don't know how to set block_height in tests.
-// and outside of testnet the epoch boundary also checks for height.
-script {
-    use 0x1::Testnet;    
-    fun main(vm: signer){
-      Testnet::initialize(&vm);
-    }
-}
-// check: EXECUTED
-
-
-
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
 //! block-prologue
