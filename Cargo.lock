@@ -2702,6 +2702,7 @@ dependencies = [
  "move-core-types",
  "move-transactional-test-runner",
  "once_cell",
+ "rand 0.8.4",
  "structopt",
  "vm-genesis",
 ]

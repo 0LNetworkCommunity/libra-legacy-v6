@@ -852,22 +852,28 @@ pub struct TestValidator {
 impl TestValidator {
     pub fn new_test_set(count: Option<usize>) -> Vec<TestValidator> {
         let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([1u8; 32]);
-        (0..count.unwrap_or(10))
+        (0..count.unwrap_or(4)) //////// 0L ////////
             .map(|idx| TestValidator::gen(idx, &mut rng))
             .collect()
     }
 
     fn gen(index: usize, rng: &mut rand::rngs::StdRng) -> TestValidator {
         let name = index.to_string().as_bytes().to_vec();
-        let address = diem_config::utils::validator_owner_account_from_name(&name);
+        // let address = diem_config::utils::validator_owner_account_from_name(&name); /////// 0L /////////
         let key = Ed25519PrivateKey::generate(rng);
         let auth_key = AuthenticationKey::ed25519(&key.public_key());
         let consensus_pubkey = key.public_key().to_bytes().to_vec();
-        let operator_auth_key = auth_key;
-        let operator_address = operator_auth_key.derived_address();
+        // let operator_auth_key = auth_key; /////// 0L /////////
+        // let operator_address = operator_auth_key.derived_address(); /////// 0L /////////
         let operator_name = name.clone();
         let network_address = [0u8; 0].to_vec();
         let full_node_network_address = [0u8; 0].to_vec();
+        /////// 0L /////////
+        let oper_key = Ed25519PrivateKey::generate(rng);
+        let operator_auth_key = AuthenticationKey::ed25519(&oper_key.public_key());
+        let operator_address = 
+            diem_types::account_address::from_public_key(&oper_key.public_key());
+        let address = diem_types::account_address::from_public_key(&key.public_key());
 
         let data = Validator {
             address,

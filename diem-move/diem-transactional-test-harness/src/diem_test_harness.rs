@@ -571,6 +571,29 @@ impl<'a> DiemTestAdapter<'a> {
         operator_account_addr: AccountAddress,
         operator_auth_key_prefix: Vec<u8>,
     ) {
+        /////// 0L /////////
+        // We do not want to create a validator, if it has already been created
+        let parameters = self
+            .fetch_transaction_parameters(&diem_root_address(), None, None, None, None, None)
+            .unwrap(); 
+        let txn = RawTransaction::new(
+            diem_root_address(),
+            parameters.sequence_number,
+            diem_transaction_builder::stdlib::encode_is_validator_scr_script_function(
+                validator_account_addr,
+            ),
+            parameters.max_gas_amount,
+            parameters.gas_unit_price,
+            parameters.gas_currency_code,
+            parameters.expiration_timestamp_secs,
+            ChainId::test(),
+        )
+        .sign(&GENESIS_KEYPAIR.0, GENESIS_KEYPAIR.1.clone())
+        .unwrap()
+        .into_inner();
+        let is_validator = self.run_transaction(Transaction::UserTransaction(txn)).is_ok();
+        if is_validator { return };
+        
         // Step 1. Create validator account.
         let parameters = self
             .fetch_transaction_parameters(&diem_root_address(), None, None, None, None, None)
@@ -830,6 +853,9 @@ impl<'a> MoveTestAdapter<'a> for DiemTestAdapter<'a> {
             }
 
             // Validators
+            /////// 0L /////////
+            let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([1u8; 32]);
+
             if let Some(validators) = init_args.validators {
                 for validator_name in validators {
                     if named_address_mapping.contains_key(validator_name.as_str()) {
@@ -846,10 +872,10 @@ impl<'a> MoveTestAdapter<'a> for DiemTestAdapter<'a> {
                     }
 
                     let (validator_private_key, validator_auth_key_prefix, validator_account_addr) =
-                        keygen.generate_credentials_for_account_creation();
+                        keygen.generate_credentials_for_account_creation(&mut rng); /////// 0L /////////
 
                     let (operator_private_key, operator_auth_key_prefix, operator_account_addr) =
-                        keygen.generate_credentials_for_account_creation();
+                        keygen.generate_credentials_for_account_creation(&mut rng); /////// 0L /////////
 
                     named_address_mapping.insert(
                         validator_name.to_string(),
@@ -894,7 +920,7 @@ impl<'a> MoveTestAdapter<'a> for DiemTestAdapter<'a> {
                     }
 
                     let (private_key, auth_key_prefix, account_addr) =
-                        keygen.generate_credentials_for_account_creation();
+                        keygen.generate_credentials_for_account_creation(&mut rng); /////// 0L /////////
                     named_address_mapping.insert(
                         parent_vasp_name.to_string(),
                         NumericalAddress::new(account_addr.into_bytes(), NumberFormat::Hex),
