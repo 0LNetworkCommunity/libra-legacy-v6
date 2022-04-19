@@ -259,8 +259,6 @@
 
     // Reset <a href="Stats.md#0x1_Stats">Stats</a>
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
-
-    // Migrate <a href="TowerState.md#0x1_TowerState">TowerState</a> list from elegible.
     <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &outgoing_compliant);
 
     // Reconfigure the network

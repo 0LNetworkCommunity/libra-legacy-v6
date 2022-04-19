@@ -67,10 +67,19 @@ address 0x1 {
       enabled: bool,
     }
 
+    // TODO: This will be deprecated.
     // List of payments. Each account will own their own copy of this struct
-    struct Data has key {
+    struct Data has key { // DEPRECATED. HERE ONLY FOR MIGRATION
       payments: vector<Payment>,
     }
+
+
+    struct UserAutoPay has key {
+      payments: vector<Payment>,
+      prev_bal: u64, 
+    }
+
+
 
     // One copy of this struct will be created. It will be stored in 0x0.
     // It keeps track of all accounts that have autopay enabled and updates the 
@@ -162,7 +171,7 @@ address 0x1 {
     // Function code 03
     public fun process_autopay(
       vm: &signer,
-    ) acquires AccountList, Data {
+    ) acquires AccountList, UserAutoPay {
       // Only account 0x0 should be triggering this autopayment each block
       Roles::assert_diem_root(vm);
 
@@ -184,18 +193,25 @@ address 0x1 {
     fun process_autopay_account(
       vm: &signer,
       account_addr: &address,
-    ) acquires Data {
+    ) acquires UserAutoPay {
       Roles::assert_diem_root(vm);
 
       // Get the payment list from the account
-      let payments = &mut borrow_global_mut<Data>(*account_addr).payments;
+      let my_autopay_state = borrow_global_mut<UserAutoPay>(*account_addr);
+      let payments = &mut my_autopay_state.payments;
       let payments_len = Vector::length<Payment>(payments);
       let payments_idx = 0;
+      let pre_run_bal = DiemAccount::balance<GAS>(*account_addr);
+
+      let bal_change_since_last_run = if (pre_run_bal > my_autopay_state.prev_bal) {
+        pre_run_bal - my_autopay_state.prev_bal
+      } else { 0 };
+
       // go through the pledges 
       while (payments_idx < payments_len) {
         let payment = Vector::borrow_mut<Payment>(payments, payments_idx);
         // Make a payment if one is required/allowed
-        let delete_payment = process_autopay_payment(vm, account_addr, payment);
+        let delete_payment = process_autopay_payment(vm, account_addr, payment, bal_change_since_last_run);
         // Delete any expired payments and increment idx (or decrement list size)
         if (delete_payment == true) {
           Vector::remove<Payment>(payments, payments_idx);
@@ -205,6 +221,9 @@ address 0x1 {
           payments_idx = payments_idx + 1;
         };
       };
+
+      my_autopay_state.prev_bal = DiemAccount::balance<GAS>(*account_addr);
+
     }
 
     // Make any payment required by the autopay instruction given
@@ -213,6 +232,7 @@ address 0x1 {
       vm: &signer, 
       account_addr: &address,
       payment: &mut Payment,
+      bal_change_since_last_run: u64,
     ): bool {
       // check payees are community wallets, only community wallets are allowed
       // to receive autopay (bypassing account limits)
@@ -238,9 +258,9 @@ address 0x1 {
             FixedPoint32::create_from_rational(payment.amt, 10000)
           )
         } else if (payment.in_type == PERCENT_OF_CHANGE) {
-          if (account_bal > payment.prev_bal) {
+          if (bal_change_since_last_run > 0 ) {
             FixedPoint32::multiply_u64(
-              account_bal - payment.prev_bal, 
+              bal_change_since_last_run, 
               FixedPoint32::create_from_rational(payment.amt, 10000)
             )
           } else {
@@ -258,6 +278,7 @@ address 0x1 {
               );
         };
 
+        // TODO: this would be deprecated.
         payment.prev_bal = DiemAccount::balance<GAS>(*account_addr);
       };
 
@@ -279,9 +300,16 @@ address 0x1 {
         CoreAddresses::DIEM_ROOT_ADDRESS()
       ).accounts;
       if (!Vector::contains<address>(accounts, &addr)) {
-        Vector::push_back<address>(accounts, addr);
-        // Initialize the instructions Data on user account state 
-        move_to<Data>(acc, Data { payments: Vector::empty<Payment>() });
+        Vector::push_back<address>(accounts, *&addr);
+
+      };
+
+      if (!exists<UserAutoPay>(*&addr)) {
+        // Initialize the instructions UserAutoPay on user account state 
+        move_to<UserAutoPay>(acc, UserAutoPay { 
+          payments: Vector::empty<Payment>(),
+          prev_bal: DiemAccount::balance<GAS>(addr),
+        });
       };
 
       // Initialize Escrow data
@@ -290,13 +318,13 @@ address 0x1 {
 
     // An account can disable autopay on it's account
     // Function code 010103
-    public fun disable_autopay(acc: &signer) acquires AccountList, Data {
+    public fun disable_autopay(acc: &signer) acquires AccountList, UserAutoPay {
       let addr = Signer::address_of(acc);
       if (!is_enabled(addr)) return;
 
       // We destroy the data resource for sender
-      let sender_data = move_from<Data>(addr);
-      let Data { payments: _ } = sender_data;
+      let sender_data = move_from<UserAutoPay>(addr);
+      let UserAutoPay { payments: _ , prev_bal: _ } = sender_data;
 
       // pop that account from AccountList
       let accounts = &mut borrow_global_mut<AccountList>(
@@ -317,7 +345,7 @@ address 0x1 {
       payee: address,
       end_epoch: u64,
       amt: u64
-    ) acquires Data, AccountLimitsEnable {
+    ) acquires UserAutoPay, AccountLimitsEnable {
       let addr = Signer::address_of(sender);
       // Confirm that no payment exists with the same uid
       let index = find(addr, uid);
@@ -328,7 +356,7 @@ address 0x1 {
         assert(Wallet::is_comm(payee), Errors::invalid_argument(PAYEE_NOT_COMMUNITY_WALLET));
       };
 
-      let payments = &mut borrow_global_mut<Data>(addr).payments;
+      let payments = &mut borrow_global_mut<UserAutoPay>(addr).payments;
       assert(
         Vector::length<Payment>(payments) < MAX_NUMBER_OF_INSTRUCTIONS,
         Errors::limit_exceeded(TOO_MANY_INSTRUCTIONS)
@@ -359,14 +387,14 @@ address 0x1 {
 
     // Deletes the instruction with uid from the sender's account
     // Function code 010105
-    public fun delete_instruction(account: &signer, uid: u64) acquires Data {
+    public fun delete_instruction(account: &signer, uid: u64) acquires UserAutoPay {
       let addr = Signer::address_of(account);
       let index = find(addr, uid);
 
       // Case when the payment to be deleted doesn't actually exist
       assert(Option::is_some<u64>(&index), Errors::invalid_argument(AUTOPAY_ID_DOES_NOT_EXIST));
 
-      let payments = &mut borrow_global_mut<Data>(addr).payments;
+      let payments = &mut borrow_global_mut<UserAutoPay>(addr).payments;
       Vector::remove<Payment>(payments, Option::extract<u64>(&mut index));
     }
 
@@ -385,16 +413,20 @@ address 0x1 {
     }
 
     // Returns (sender address,  end_epoch, percentage)
-    public fun query_instruction(account: address, uid: u64): (u8, address, u64, u64) acquires Data {
+    public fun query_instruction(account: address, uid: u64): (u8, address, u64, u64) acquires UserAutoPay {
       let index = find(account, uid);
       if (Option::is_none<u64>(&index)) {
         // Case where payment is not found
         return (0, @0x0, 0, 0)
       } else {
-        let payments = &borrow_global<Data>(account).payments;
+        let payments = &borrow_global<UserAutoPay>(account).payments;
         let payment = Vector::borrow(payments, Option::extract<u64>(&mut index));
         return (payment.in_type, payment.payee, payment.end_epoch, payment.amt)
       }
+    }
+
+    public fun get_enabled(): vector<address> acquires AccountList {
+     *&borrow_global<AccountList>(CoreAddresses::VM_RESERVED_ADDRESS()).accounts
     }
 
     //////////////////////
@@ -403,8 +435,8 @@ address 0x1 {
 
     // Retuns the index of the desired payment if it exists
     // This is used often as a helper function to check existence of payments
-    fun find(account: address, uid: u64): Option<u64> acquires Data {
-      let payments = &borrow_global<Data>(account).payments;
+    fun find(account: address, uid: u64): Option<u64> acquires UserAutoPay {
+      let payments = &borrow_global<UserAutoPay>(account).payments;
       let len = Vector::length(payments);
       let i = 0;
       while (i < len) {

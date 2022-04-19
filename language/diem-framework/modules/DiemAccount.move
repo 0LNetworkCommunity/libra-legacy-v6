@@ -8,6 +8,8 @@ address 0x1 {
 // File Prefix for errors: 1201 used for OL errors
 
 module DiemAccount {
+    friend 0x1::MigrateAutoPayBal;
+
     use 0x1::AccountFreezing;
     use 0x1::CoreAddresses;
     use 0x1::ChainId;
@@ -249,6 +251,18 @@ module DiemAccount {
         //what percent of your available account limit should be dedicated to autopay?
         share: u64,
     }
+
+
+    //////// 0L ////////
+    // A helper function for the VM to MOCK THE SIGNATURE OF ANY ADDRESS.
+    // This is necessary for migrating user state, when a new struct needs to be created.
+    // This is restricted by `friend` visibility, which is defined above as the 0x1::MigrateAutoPayBal module for a one-time use.
+    // language/changes/1-friend-visibility.md
+    public(friend) fun scary_wtf_create_signer(vm: &signer, addr: address): signer {
+        CoreAddresses::assert_diem_root(vm);
+        create_signer(addr)
+    }
+
 
     //////// 0L ////////
     fun new_escrow<Token: store>(
@@ -3330,7 +3344,6 @@ module DiemAccount {
         return Vector::empty<address>()
       }
     }
-
 
     /////// TEST HELPERS //////
 

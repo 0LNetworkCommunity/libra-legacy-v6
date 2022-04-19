@@ -160,8 +160,6 @@ module EpochBoundary {
 
         // Reset Stats
         Stats::reconfig(vm, &proposed_set);
-
-        // Migrate TowerState list from elegible.
         TowerState::reconfig(vm, &outgoing_compliant);
 
         // Reconfigure the network
