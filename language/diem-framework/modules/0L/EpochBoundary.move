@@ -55,7 +55,7 @@ module EpochBoundary {
 
         // Temporary timer to start in the future.
         if (DiemConfig::get_current_epoch() > 185) {
-          proof_of_burn(vm);
+          proof_of_burn(vm, subsidy_units);
         };
         
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
@@ -172,18 +172,16 @@ module EpochBoundary {
 
     // NOTE: this was previously in propose_new_set since it used the same loop.
     // copied implementation from Teams proposal.
-    fun proof_of_burn(vm: &signer) {
+    fun proof_of_burn(vm: &signer, subsidy_units: u64) {
         CoreAddresses::assert_vm(vm);
+
+        // recaulculate the ratios of the community index.
         Burn::reset_ratios(vm);
 
-        let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
-        
-        let burn_value = Subsidy::subsidy_curve(
-          Globals::get_subsidy_ceiling_gas(),
-          incoming_count,
-          Globals::get_max_node_density()
-        )/2;
+        // get the burn value for next epoch. 50% of this epoch's reward.
+        let burn_value = subsidy_units/2;
 
+        // apply the cost-to-exist to all validator candidates
         let all_vals = ValidatorUniverse::get_eligible_validators(vm);
         let i = 0;
         while (i < Vector::length<address>(&all_vals)) {
