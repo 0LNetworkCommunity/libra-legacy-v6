@@ -18,7 +18,7 @@ script {
 
         TowerState::test_helper_mock_mining(&sender, 5);
         // set alice burn preferences as sending to community wallets.
-        Burn::set_send_community(&sender);
+        Burn::set_send_community(&sender, true);
         // validator needs to qualify for next epoch for the burn to register
         Audit::test_helper_make_passing(&sender);
 

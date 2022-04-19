@@ -98,7 +98,7 @@ script {
 
   fun main(alice: signer) {
 
-    Burn::set_send_community(&alice);
+    Burn::set_send_community(&alice, true);
   }
 }
 //////// SETS community send
