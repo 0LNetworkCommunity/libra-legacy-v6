@@ -60,7 +60,7 @@ tx-migrate:
 
 check:
 	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${RESCUE_PATH}/rescue.blob | grep -oP 'waypoint: \K\w+:\w+' > ${RESCUE_PATH}/rescue_waypoint.txt 
-	@echo Waypoint: $(shell cat ${DATA_PATH}/rescue_waypoint.txt )
+	@echo Waypoint: $(shell cat ${RESCUE_PATH}/rescue_waypoint.txt )
 
 commit:
 	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${RESCUE_PATH}/rescue.blob --commit --waypoint-to-verify $(shell cat ${RESCUE_PATH}/rescue_waypoint.txt)
@@ -83,6 +83,10 @@ start:
 dump:
 	mkdir ${RESCUE_PATH} | true
 	cd ${SOURCE_PATH} && cargo r -p diem-transaction-replay -- --db ${DATA_PATH}/db annotate-account 00000000000000000000000000000000 > ${RESCUE_PATH}/dump-${STEP}
+
+dump-self:
+	mkdir ${RESCUE_PATH} | true
+	cd ${SOURCE_PATH} && cargo r -p diem-transaction-replay -- --db ${DATA_PATH}/db annotate-account ${VALS} > ${RESCUE_PATH}/dump-self
 
 test: wipe tx check commit init start
 
