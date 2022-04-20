@@ -264,7 +264,6 @@ pub fn ol_writeset_update_epoch_time(path: PathBuf) -> WriteSetPayload {
     WriteSetPayload::Direct(merge_change_set(epoch_time, reconfig).unwrap())
 }
 
-
 ///////////////// ENCODE CHANGESETS ///////////////////////////////
 
 
