@@ -36,6 +36,7 @@ address 0x1 {
 
     public fun vouch_for(buddy: &signer, val: address) acquires Vouch {
       let buddy_acc = Signer::address_of(buddy);
+      assert(buddy_acc!=val, 12345); // TODO: Error code.
 
       if (!ValidatorUniverse::is_in_universe(buddy_acc)) return;
       if (!exists<Vouch>(val)) return;
@@ -51,7 +52,18 @@ address 0x1 {
       if (!ValidatorUniverse::is_in_universe(val)) return;
       if (!exists<Vouch>(val)) return;
 
+
+      
+
       let v = borrow_global_mut<Vouch>(val);
+
+      // take self out of list
+      let (is_found, i) = Vector::index_of(&buddy_list, &val);
+
+      if (is_found) {
+        Vector::swap_remove<address>(&mut buddy_list, i);
+      };
+      
       v.vals = buddy_list;
 
     }
