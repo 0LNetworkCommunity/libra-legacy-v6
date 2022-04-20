@@ -310,9 +310,9 @@ module DiemConfig {
         //
         // Thus, this check ensures that a transaction that does multiple "reconfiguration required" actions emits only
         // one reconfiguration event.
-        //
+        
         if (current_time == config_ref.last_reconfiguration_time) {
-            return
+           return
         };
 
         assert(current_time > config_ref.last_reconfiguration_time, Errors::invalid_state(EINVALID_BLOCK_TIME));

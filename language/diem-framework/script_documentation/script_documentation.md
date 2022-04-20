@@ -5286,6 +5286,7 @@ a reconfiguration of the system.
 -  [`0x1::Globals`](../../../../../releases/artifacts/current/docs/modules/Globals.md#0x1_Globals)
 -  [`0x1::MakeWhole`](../../../../../releases/artifacts/current/docs/modules/MakeWhole.md#0x1_MakeWhole)
 -  [`0x1::MigrateAutoPayBal`](../../../../../releases/artifacts/current/docs/modules/Migrations.md#0x1_MigrateAutoPayBal)
+-  [`0x1::MigrateVouch`](../../../../../releases/artifacts/current/docs/modules/Migrations.md#0x1_MigrateVouch)
 -  [`0x1::Migrations`](../../../../../releases/artifacts/current/docs/modules/Migrations.md#0x1_Migrations)
 -  [`0x1::NodeWeight`](../../../../../releases/artifacts/current/docs/modules/NodeWeight.md#0x1_NodeWeight)
 -  [`0x1::Oracle`](../../../../../releases/artifacts/current/docs/modules/Oracle.md#0x1_Oracle)

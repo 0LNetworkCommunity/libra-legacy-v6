@@ -1,6 +1,6 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{time::{SystemTime, UNIX_EPOCH}, fs};
 
 use anyhow::{Result, bail};
 use cli::client_proxy::encode_stdlib_upgrade_transaction;
@@ -23,7 +23,7 @@ use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
 use move_vm_runtime::logging::NoContextLog;
 use move_vm_types::gas_schedule::GasStatus;
 use ol_types::epoch_timer::EpochTimerResource;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use std::{collections::HashMap, io::Write, path::PathBuf, process::exit};
 use tempfile::NamedTempFile;
 use resource_viewer::AnnotatedMoveValue;
@@ -157,11 +157,11 @@ pub fn ol_writeset_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
 /// create the upgrade payload INCLUDING the epoch reconfigure
 pub fn ol_writeset_set_testnet(path: PathBuf) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
-    let stdlib_cs = ol_testnet_changeset(path.clone()).unwrap();
+    let testnet = ol_testnet_changeset(path.clone()).unwrap();
 
     let reconfig = ol_reconfig_changeset(path).unwrap();
 
-    WriteSetPayload::Direct(merge_change_set(stdlib_cs, reconfig).unwrap())
+    WriteSetPayload::Direct(merge_change_set(testnet, reconfig).unwrap())
 }
 
 
@@ -178,7 +178,25 @@ pub fn ol_writeset_mfg_epoch_event(path: PathBuf) -> WriteSetPayload {
 }
 
 
+/// create the upgrade payload INCLUDING the epoch reconfigure
+pub fn ol_writeset_ancestry(path: PathBuf, ancestry_file: PathBuf) -> WriteSetPayload {
+    // Take the stdlib upgrade change set.
+    let cs = ol_ancestry_migrate(
+      path.clone(), 
+      parse_ancestry_file(ancestry_file).unwrap()
+    ).unwrap();
+    WriteSetPayload::Direct(cs)
 
+}
+
+
+fn parse_ancestry_file(ancestry_file: PathBuf) -> Result<Vec<AncestrysUnit>>{
+  dbg!(&ancestry_file);
+      let file = fs::File::open(ancestry_file).expect("file should open read only");
+
+    let ancestry_vec: Vec<AncestrysUnit> = serde_json::from_reader(file).expect("file should be proper JSON");
+    Ok(ancestry_vec)
+}
 
 pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
     if vals.len() == 0 {
@@ -187,16 +205,35 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> Wri
     };
 
     let stdlib_cs = ol_fresh_stlib_changeset(path.clone()).unwrap();
-    // TODO: forcing the boundary causes an erorr on the epoch boundary.
+    // TODO: forcing the boundary causes an error on the epoch boundary.
     let boundary = ol_force_boundary(path.clone(), vals).unwrap();
     // let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
-    let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
-   
+    // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
+    let new_cs = merge_vec_changeset(vec![stdlib_cs, boundary]).unwrap();
     // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
     WriteSetPayload::Direct(new_cs)
 }
 
+pub fn ol_writset_encode_migrations(path: PathBuf, ancestry_file: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+    if vals.len() == 0 {
+        println!("need to provide list of addresses");
+        exit(1)
+    };
+
+
+    let ancestry = ol_ancestry_migrate(
+      path.clone(), 
+      parse_ancestry_file(ancestry_file).unwrap()
+    ).unwrap();
+
+    let boundary = ol_force_boundary(path.clone(), vals.clone()).unwrap();
+    let vouch = ol_vouch_migrate(path.clone(), vals).unwrap();
+    // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
+    let new_cs = merge_vec_changeset(vec![ancestry, vouch, boundary]).unwrap();
+    // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
+    WriteSetPayload::Direct(new_cs)
+}
 
 
 /// set the EpochBoundary debug mode.
@@ -359,6 +396,178 @@ fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
         Ok(())
     })
 }
+
+
+
+fn ol_autopay_migrate(path: PathBuf) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+
+    let start = SystemTime::now();
+    let now = start.duration_since(UNIX_EPOCH)?;
+    let _microseconds = now.as_micros();
+
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+        let args = vec![MoveValue::Signer(diem_root_address())];
+
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("MigrateAutoPayBal").unwrap(),
+                ),
+                &Identifier::new("do_it").unwrap(),
+                vec![],
+                serialize_values(&args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // TODO: don't use unwraps.
+        Ok(())
+    })
+}
+
+fn ol_vouch_migrate(path: PathBuf, val_set: Vec<AccountAddress>) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+
+    let start = SystemTime::now();
+    let now = start.duration_since(UNIX_EPOCH)?;
+    let _microseconds = now.as_micros();
+
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+        val_set.clone().iter()
+        .for_each(|addr| {
+          let args = vec![MoveValue::Signer(addr.to_owned())];
+
+          session
+              .execute_function(
+                  &ModuleId::new(
+                      account_config::CORE_CODE_ADDRESS,
+                      Identifier::new("Vouch").unwrap(),
+                  ),
+                  &Identifier::new("init").unwrap(),
+                  vec![],
+                  serialize_values(&args),
+                  &mut gas_status,
+                  &log_context,
+              )
+              .unwrap(); // TODO: don't use unwraps.
+
+          let args = vec![
+            MoveValue::Signer(diem_root_address()),
+            MoveValue::Address(addr.to_owned()),
+            MoveValue::vector_address(val_set.clone()),
+
+          ];
+
+          session
+              .execute_function(
+                  &ModuleId::new(
+                      account_config::CORE_CODE_ADDRESS,
+                      Identifier::new("Vouch").unwrap(),
+                  ),
+                  &Identifier::new("vm_migrate").unwrap(),
+                  vec![],
+                  serialize_values(&args),
+                  &mut gas_status,
+                  &log_context,
+              )
+              .unwrap(); // TODO: don't use unwraps.
+
+          });
+
+          
+        Ok(())
+    })
+}
+
+fn ol_makewhole_migrate(path: PathBuf) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+
+    let start = SystemTime::now();
+    let now = start.duration_since(UNIX_EPOCH)?;
+    let _microseconds = now.as_micros();
+
+
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+        let args = vec![MoveValue::Signer(diem_root_address())];
+          session
+              .execute_function(
+                  &ModuleId::new(
+                      account_config::CORE_CODE_ADDRESS,
+                      Identifier::new("MakeWhole").unwrap(),
+                  ),
+                  &Identifier::new("make_whole_init").unwrap(),
+                  vec![],
+                  serialize_values(&args),
+                  &mut gas_status,
+                  &log_context,
+              )
+              .unwrap(); // TODO: don't use unwraps.
+
+        Ok(())
+    })
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct AncestrysUnit {
+  account: AccountAddress,
+  ancestry: Vec<AccountAddress>,
+}
+fn ol_ancestry_migrate(path: PathBuf, ancestry_vec: Vec<AncestrysUnit> ) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+
+    let start = SystemTime::now();
+    let now = start.duration_since(UNIX_EPOCH)?;
+    let _microseconds = now.as_micros();
+
+
+
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+        ancestry_vec.into_iter()
+        .for_each(|a| {
+        let args = vec![
+          MoveValue::Signer(diem_root_address()),
+          MoveValue::Address(a.account),
+          MoveValue::vector_address(a.ancestry),
+        ];
+
+        session
+        .execute_function(
+            &ModuleId::new(
+                account_config::CORE_CODE_ADDRESS,
+                Identifier::new("Ancestry").unwrap(),
+            ),
+            &Identifier::new("migrate").unwrap(),
+            vec![],
+            serialize_values(&args),
+            &mut gas_status,
+            &log_context,
+        )
+        .unwrap(); // TODO: don't use unwraps.
+        });
+
+
+
+        Ok(())
+    })
+}
+
 
 fn ol_epoch_timestamp_update(path: PathBuf) -> Result<ChangeSet>{
   let db = DiemDebugger::db(path)?;
@@ -593,6 +802,16 @@ fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeS
 
  ///////////// HELPERS ////////////
   
+fn merge_vec_changeset(mut vec_cs: Vec<ChangeSet>) -> Result<ChangeSet> {
+  let mut new_cs= vec_cs.pop().unwrap();
+
+  vec_cs.into_iter()
+    .for_each(|c| {
+      new_cs = merge_change_set(new_cs.clone(), c).unwrap();
+    });
+  
+  Ok(new_cs)
+}
 fn merge_change_set(left: ChangeSet, right: ChangeSet) -> Result<ChangeSet> {
     // get stlib_cs writeset mut and apply reconfig changeset over it
     let mut stdlib_ws_mut = left.write_set().clone().into_mut();

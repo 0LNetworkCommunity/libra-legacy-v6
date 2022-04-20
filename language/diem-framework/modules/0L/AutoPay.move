@@ -174,7 +174,7 @@ address 0x1 {
     ) acquires AccountList, UserAutoPay {
       // Only account 0x0 should be triggering this autopayment each block
       Roles::assert_diem_root(vm);
-
+      
       // Go through all accounts in AccountList
       // This is the list of accounts which currently have autopay enabled
       let account_list = &borrow_global<AccountList>(
@@ -195,6 +195,7 @@ address 0x1 {
       account_addr: &address,
     ) acquires UserAutoPay {
       Roles::assert_diem_root(vm);
+      if (!exists<UserAutoPay>(*account_addr)) return;
 
       // Get the payment list from the account
       let my_autopay_state = borrow_global_mut<UserAutoPay>(*account_addr);
