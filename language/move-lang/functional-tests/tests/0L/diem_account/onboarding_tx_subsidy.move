@@ -113,7 +113,7 @@ script {
       // eve did not mine or validator in last epoch, case != 1. So there wont be a reward 
       // there is also a 1 coin burn
       assert(Cases::get_case(&vm, @{{bob}}, 0, 100) != 1, 7357002);
-      assert(new_account_bal == 0, 7357003);
+      assert(new_account_bal == 1000000, 7357003);
 
       // Operator account should not increase after epoch change
       assert(
