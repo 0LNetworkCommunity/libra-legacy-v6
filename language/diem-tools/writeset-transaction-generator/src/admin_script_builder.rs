@@ -484,6 +484,54 @@ fn ol_makewhole_migrate(path: PathBuf) -> Result<ChangeSet> {
     })
 }
 
+struct AncestrysUnit {
+  address: AccountAddress,
+  tree: Vec<AccountAddress>,
+}
+fn ol_ancestry_migrate(path: PathBuf, ancestry_vec: Vec<AncestrysUnit> ) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+
+    let start = SystemTime::now();
+    let now = start.duration_since(UNIX_EPOCH)?;
+    let microseconds = now.as_micros();
+
+
+
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+        ancestry_vec.into_iter()
+        .for_each(|a| {
+        let args = vec![
+          MoveValue::Signer(diem_root_address()),
+          MoveValue::Address(a.address),
+          MoveValue::vector_address(a.tree),
+        ];
+
+        session
+        .execute_function(
+            &ModuleId::new(
+                account_config::CORE_CODE_ADDRESS,
+                Identifier::new("Ancestry").unwrap(),
+            ),
+            &Identifier::new("migrate").unwrap(),
+            vec![],
+            serialize_values(&args),
+            &mut gas_status,
+            &log_context,
+        )
+        .unwrap(); // TODO: don't use unwraps.
+        });
+
+
+
+        Ok(())
+    })
+}
+
+
 fn ol_epoch_timestamp_update(path: PathBuf) -> Result<ChangeSet>{
   let db = DiemDebugger::db(path)?;
   let v = db.get_latest_version()?;
