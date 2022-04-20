@@ -514,7 +514,7 @@ fn ol_makewhole_migrate(path: PathBuf) -> Result<ChangeSet> {
 #[derive(Debug, Serialize, Deserialize)]
 struct AncestrysUnit {
   address: AccountAddress,
-  tree: Vec<AccountAddress>,
+  ancestry: Vec<AccountAddress>,
 }
 fn ol_ancestry_migrate(path: PathBuf, ancestry_vec: Vec<AncestrysUnit> ) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
@@ -535,7 +535,7 @@ fn ol_ancestry_migrate(path: PathBuf, ancestry_vec: Vec<AncestrysUnit> ) -> Resu
         let args = vec![
           MoveValue::Signer(diem_root_address()),
           MoveValue::Address(a.address),
-          MoveValue::vector_address(a.tree),
+          MoveValue::vector_address(a.ancestry),
         ];
 
         session
