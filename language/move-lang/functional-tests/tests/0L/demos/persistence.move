@@ -17,6 +17,7 @@
 //! gas-currency: GAS
 script {
     use 0x1::PersistenceDemo;
+    use 0x1::Debug::print;
 
     // This sender argument was populated by the test harness with a random 
     // address for `alice`, which can be accessed with sender variable or 
@@ -29,6 +30,7 @@ script {
     // our checks
       assert(PersistenceDemo::length(&alice) == 3, 0);
       assert(PersistenceDemo::contains(&alice, 1), 1);
+      print(&111);
     }
 }
 

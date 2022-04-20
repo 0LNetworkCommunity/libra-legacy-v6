@@ -124,6 +124,7 @@ script {
     use 0x1::Globals;
     use 0x1::TowerState;
 
+    use 0x1::Debug::print;
     fun main(_vm: signer) {
         // We are in a new epoch.
 
@@ -136,8 +137,14 @@ script {
         let starting_balance = 1000000;
 
         let operator_refund = 4336 * 5; // BASELINE_TX_COST * proofs = 21680
+        
+        // Note since there's only 1 validator and the reward to alice was the entirety of subsidy available.
+        let burn = expected_subsidy/2; // 50% of the rewrd to validator. 
 
-        let ending_balance = starting_balance + expected_subsidy - operator_refund;
+
+        let ending_balance = starting_balance + expected_subsidy - operator_refund - burn;
+
+        print(&DiemAccount::balance<GAS>(@{{alice}}));
 
         assert(DiemAccount::balance<GAS>(@{{alice}}) == ending_balance, 7357000180113);  
         assert(NodeWeight::proof_of_weight(@{{alice}}) == 5, 7357000180114);

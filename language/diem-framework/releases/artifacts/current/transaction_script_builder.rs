@@ -2234,8 +2234,6 @@ pub enum ScriptFunctionCall {
 
     Join {},
 
-    Leave {},
-
     MinerstateCommit {
         challenge: Bytes,
         solution: Bytes,
@@ -3669,7 +3667,6 @@ impl ScriptFunctionCall {
                 encode_initialize_diem_consensus_config_script_function(sliding_nonce)
             }
             Join {} => encode_join_script_function(),
-            Leave {} => encode_leave_script_function(),
             MinerstateCommit {
                 challenge,
                 solution,
@@ -5023,18 +5020,6 @@ pub fn encode_join_script_function() -> TransactionPayload {
             ident_str!("ValidatorScripts").to_owned(),
         ),
         ident_str!("join").to_owned(),
-        vec![],
-        vec![],
-    ))
-}
-
-pub fn encode_leave_script_function() -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorScripts").to_owned(),
-        ),
-        ident_str!("leave").to_owned(),
         vec![],
         vec![],
     ))
@@ -8474,14 +8459,6 @@ fn decode_join_script_function(payload: &TransactionPayload) -> Option<ScriptFun
     }
 }
 
-fn decode_leave_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::Leave {})
-    } else {
-        None
-    }
-}
-
 fn decode_minerstate_commit_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9445,10 +9422,6 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "ValidatorScriptsjoin".to_string(),
             Box::new(decode_join_script_function),
-        );
-        map.insert(
-            "ValidatorScriptsleave".to_string(),
-            Box::new(decode_leave_script_function),
         );
         map.insert(
             "TowerStateScriptsminerstate_commit".to_string(),

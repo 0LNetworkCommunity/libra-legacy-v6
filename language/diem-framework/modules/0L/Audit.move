@@ -8,10 +8,11 @@ address 0x1 {
   module Audit {
     use 0x1::ValidatorConfig;
     use 0x1::DiemAccount;
-    // use 0x1::GAS::GAS;
     use 0x1::AutoPay;
     use 0x1::TowerState;
     use 0x1::Testnet;
+    use 0x1::Vouch;
+
 
     public fun val_audit_passing(val: address): bool {
       // has valid configs
@@ -28,7 +29,7 @@ address 0x1 {
       // is a slow wallet
       if (!DiemAccount::is_slow(val)) return false;
 
-      // TODO: has network settings for validator
+      if (!Vouch::unrelated_buddies_above_thresh(val)) return false;
 
       true
     }
