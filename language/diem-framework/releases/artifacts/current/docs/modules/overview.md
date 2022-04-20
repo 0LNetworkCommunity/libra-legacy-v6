@@ -136,6 +136,7 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::MakeWhole`](MakeWhole.md#0x1_MakeWhole)
 -  [`0x1::MigrateAutoPayBal`](Migrations.md#0x1_MigrateAutoPayBal)
 -  [`0x1::MigrateTowerCounter`](Migrations.md#0x1_MigrateTowerCounter)
+-  [`0x1::MigrateVouch`](Migrations.md#0x1_MigrateVouch)
 -  [`0x1::Migrations`](Migrations.md#0x1_Migrations)
 -  [`0x1::Mock`](Mock.md#0x1_Mock)
 -  [`0x1::NodeWeight`](NodeWeight.md#0x1_NodeWeight)

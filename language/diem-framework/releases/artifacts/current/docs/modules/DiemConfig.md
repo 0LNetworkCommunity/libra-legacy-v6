@@ -868,11 +868,11 @@ Private function to do reconfiguration.  Updates reconfiguration status resource
     // Thus, this check <b>ensures</b> that a transaction that does multiple "reconfiguration required" actions emits only
     // one reconfiguration event.
     //
-    <b>if</b> (current_time == config_ref.last_reconfiguration_time) {
-        <b>return</b>
-    };
+    //<b>if</b> (current_time == config_ref.last_reconfiguration_time) {
+    //    <b>return</b>
+    //};
 
-    <b>assert</b>(current_time &gt; config_ref.last_reconfiguration_time, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="DiemConfig.md#0x1_DiemConfig_EINVALID_BLOCK_TIME">EINVALID_BLOCK_TIME</a>));
+    //<b>assert</b>(current_time &gt; config_ref.last_reconfiguration_time, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="DiemConfig.md#0x1_DiemConfig_EINVALID_BLOCK_TIME">EINVALID_BLOCK_TIME</a>));
     config_ref.last_reconfiguration_time = current_time;
     config_ref.epoch = config_ref.epoch + 1;
 

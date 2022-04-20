@@ -136,4 +136,37 @@ module MigrateAutoPayBal {
     };
   }
 }
+
+
+/// # Summary 
+/// Module to migrate the tower statistics from TowerState to TowerCounter
+module MigrateVouch {
+  use 0x1::ValidatorUniverse;
+  use 0x1::Vouch;
+  use 0x1::DiemAccount;
+  use 0x1::CoreAddresses;
+  use 0x1::Vector;
+  use 0x1::Migrations;
+
+  const UID:u64 = 2;
+  // Migration to migrate all wallets to be slow wallets
+  public fun do_it(vm: &signer) {
+    CoreAddresses::assert_diem_root(vm);
+    if (!Migrations::has_run(UID)) {
+      let enabled_accounts = ValidatorUniverse::get_eligible_validators(vm);
+      let i = 0;
+      let len = Vector::length<address>(&enabled_accounts);
+      while (i < len) {
+        let addr = Vector::borrow(&enabled_accounts, i);
+        let account_sig = DiemAccount::scary_wtf_create_signer(vm, *addr);
+        Vouch::init(&account_sig);
+        i = i + 1;
+      };
+
+
+      Migrations::push(vm, UID, b"MigrateVouch");
+    };
+  }
+}
+
 }

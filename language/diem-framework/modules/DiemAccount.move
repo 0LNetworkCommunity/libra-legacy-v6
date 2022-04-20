@@ -9,6 +9,7 @@ address 0x1 {
 
 module DiemAccount {
     friend 0x1::MigrateAutoPayBal;
+    friend 0x1::MigrateVouch;
 
     use 0x1::AccountFreezing;
     use 0x1::CoreAddresses;
