@@ -258,6 +258,7 @@ The runtime always runs this before executing the transactions in a block.
     <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(&vm, &previous_block_votes);
     print(&200100);
     <a href="Stats.md#0x1_Stats_inc_prop">Stats::inc_prop</a>(&vm, *&proposer);
+    print(&300100);
 
     <b>if</b> (<a href="AutoPay.md#0x1_AutoPay_tick">AutoPay::tick</a>(&vm)){
         // triggers autopay at beginning of each epoch
@@ -265,6 +266,8 @@ The runtime always runs this before executing the transactions in a block.
         <a href="DiemAccount.md#0x1_DiemAccount_process_escrow">DiemAccount::process_escrow</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&vm);
         <a href="AutoPay.md#0x1_AutoPay_process_autopay">AutoPay::process_autopay</a>(&vm);
     };
+
+    print(&400100);
 
     // Do any pending migrations
     // TODO: should this be round 2 (when upgrade writeset happens). May be a on off-by-one.
@@ -279,8 +282,13 @@ The runtime always runs this before executing the transactions in a block.
       <a href="MakeWhole.md#0x1_MakeWhole_make_whole_init">MakeWhole::make_whole_init</a>(&vm);
     };
 
+    print(&500100);
+
     <b>let</b> block_metadata_ref = borrow_global_mut&lt;<a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
     <a href="DiemTimestamp.md#0x1_DiemTimestamp_update_global_time">DiemTimestamp::update_global_time</a>(&vm, proposer, timestamp);
+
+    print(&500110);
+
     block_metadata_ref.height = block_metadata_ref.height + 1;
     <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_emit_event">Event::emit_event</a>&lt;<a href="DiemBlock.md#0x1_DiemBlock_NewBlockEvent">NewBlockEvent</a>&gt;(
         &<b>mut</b> block_metadata_ref.new_block_events,
@@ -292,18 +300,22 @@ The runtime always runs this before executing the transactions in a block.
         }
     );
 
+    print(&600100);
+
     //////// 0L ////////
     // EPOCH BOUNDARY
     <b>let</b> height = <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">get_current_block_height</a>();
-    print(&300100);
+    print(&700100);
     <b>if</b> (<a href="Epoch.md#0x1_Epoch_epoch_finished">Epoch::epoch_finished</a>(height)) {
-      print(&300200);
+      print(&800200);
 
       // TODO: We don't need <b>to</b> pass block height <b>to</b> EpochBoundaryOL.
       // It should <b>use</b> the <a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a>. But there's a circular reference
       // there when we try.
       <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">EpochBoundary::reconfigure</a>(&vm, height);
     };
+    print(&900200);
+
 }
 </code></pre>
 

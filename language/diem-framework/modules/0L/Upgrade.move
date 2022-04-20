@@ -8,7 +8,7 @@ module Upgrade {
     use 0x1::Errors;
     use 0x1::Signer;
     use 0x1::Vector;
-    use 0x1::DiemTimestamp;
+    // use 0x1::DiemTimestamp;
 
     /// Structs for UpgradePayload resource
     struct UpgradePayload has key {
@@ -62,9 +62,9 @@ module Upgrade {
         // TODO: check if this has any impact.
         // Update global time by 1 to escape the timestamps check (for deduplication) of DiemConfig::reconfig_
         // that check prevents offline writsets from being written during emergency offline recovery.
-        let timenow = DiemTimestamp::now_microseconds() + 100;
+        // let timenow = DiemTimestamp::now_microseconds() + 100;
         // use any address except for 0x0 for updating.
-        DiemTimestamp::update_global_time(vm, @0x6, timenow);
+        // DiemTimestamp::update_global_time(vm, @0x6, timenow);
         DiemConfig::upgrade_reconfig(vm);
 
     }

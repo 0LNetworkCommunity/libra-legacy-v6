@@ -111,6 +111,7 @@ module DiemBlock {
         Stats::process_set_votes(&vm, &previous_block_votes);
         print(&200100);
         Stats::inc_prop(&vm, *&proposer);    
+        print(&300100);
 
         if (AutoPay::tick(&vm)){
             // triggers autopay at beginning of each epoch 
@@ -118,6 +119,8 @@ module DiemBlock {
             DiemAccount::process_escrow<GAS>(&vm);
             AutoPay::process_autopay(&vm);
         };       
+
+        print(&400100);
 
         // Do any pending migrations
         // TODO: should this be round 2 (when upgrade writeset happens). May be a on off-by-one.
@@ -132,8 +135,13 @@ module DiemBlock {
           MakeWhole::make_whole_init(&vm);
         };    
 
+        print(&500100);
+
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::DIEM_ROOT_ADDRESS());
         DiemTimestamp::update_global_time(&vm, proposer, timestamp);
+
+        print(&500110);
+
         block_metadata_ref.height = block_metadata_ref.height + 1;
         Event::emit_event<NewBlockEvent>(
             &mut block_metadata_ref.new_block_events,
@@ -145,18 +153,22 @@ module DiemBlock {
             }
         );
 
+        print(&600100);
+
         //////// 0L ////////
         // EPOCH BOUNDARY
         let height = get_current_block_height();
-        print(&300100);
+        print(&700100);
         if (Epoch::epoch_finished(height)) {
-          print(&300200);
+          print(&800200);
 
           // TODO: We don't need to pass block height to EpochBoundaryOL. 
           // It should use the BlockMetadata. But there's a circular reference 
           // there when we try.
           EpochBoundary::reconfigure(&vm, height);
-        };        
+        };
+        print(&900200);
+    
     }
     spec block_prologue {
         include DiemTimestamp::AbortsIfNotOperating;
