@@ -1,6 +1,6 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{time::{SystemTime, UNIX_EPOCH}, fs};
 
 use anyhow::{Result, bail};
 use cli::client_proxy::encode_stdlib_upgrade_transaction;
@@ -23,7 +23,7 @@ use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
 use move_vm_runtime::logging::NoContextLog;
 use move_vm_types::gas_schedule::GasStatus;
 use ol_types::epoch_timer::EpochTimerResource;
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use std::{collections::HashMap, io::Write, path::PathBuf, process::exit};
 use tempfile::NamedTempFile;
 use resource_viewer::AnnotatedMoveValue;
@@ -177,6 +177,18 @@ pub fn ol_writeset_mfg_epoch_event(path: PathBuf) -> WriteSetPayload {
     WriteSetPayload::Direct(cs)
 }
 
+
+/// create the upgrade payload INCLUDING the epoch reconfigure
+pub fn ol_writeset_ancestry(path: PathBuf, ancestry_file: PathBuf) -> WriteSetPayload {
+    let file = fs::File::open(ancestry_file).expect("file should open read only");
+
+    let ancestry_vec: Vec<AncestrysUnit> = serde_json::from_reader(file).expect("file should be proper JSON");
+
+    // Take the stdlib upgrade change set.
+    let cs = ol_ancestry_migrate(path.clone(), ancestry_vec).unwrap();
+    WriteSetPayload::Direct(cs)
+
+}
 
 
 
@@ -484,6 +496,7 @@ fn ol_makewhole_migrate(path: PathBuf) -> Result<ChangeSet> {
     })
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 struct AncestrysUnit {
   address: AccountAddress,
   tree: Vec<AccountAddress>,
