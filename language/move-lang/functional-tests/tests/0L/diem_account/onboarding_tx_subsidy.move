@@ -112,9 +112,11 @@ script {
       let new_account_bal = DiemAccount::balance<GAS>(eve);
       print(&new_account_bal);
 
-      // eve did not mine or validator in last epoch, case != 1. So there wont be a reward. There is a also a cost-to-exist which depletes funds.
-      assert(old_account_bal == 1000000, 7357001);
-      assert(new_account_bal == 0, 7357003);
+      // we expect 1 gas (1,000,000 microgas) from bob's transfer
+      assert(old_account_bal == 1000000, 7357003);
+      // eve did not mine or validator in last epoch, case != 1. So there wont be a reward.
+      // There is a cost-to-exist but since Eve's balance is below the cost, it will not be deducted.
+      assert(new_account_bal == 1000000, 7357004);
 
 
       // Operator account should not increase after epoch change, since eve did not get a reward.
