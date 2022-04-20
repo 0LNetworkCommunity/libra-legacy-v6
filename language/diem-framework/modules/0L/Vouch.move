@@ -43,6 +43,18 @@ address 0x1 {
       Vector::push_back<address>(&mut v.vals, buddy_acc);
 
     }
+
+    public fun vm_migrate(vm: signer, val: address, buddy_list: vector<address>) acquires Vouch {
+      CoreAddresses::assert_vm(vm);
+
+      if (!ValidatorUniverse::is_in_universe(val)) return;
+      if (!exists<Vouch>(val)) return;
+
+      let v = borrow_global_mut<Vouch>(val);
+      v.vals = buddy_list;
+
+    }
+
     public fun get_buddies(val: address): vector<address> acquires Vouch{
       if (is_init(val)) {
         return *&borrow_global<Vouch>(val).vals

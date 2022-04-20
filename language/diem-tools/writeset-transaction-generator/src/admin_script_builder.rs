@@ -394,6 +394,95 @@ fn ol_autopay_migrate(path: PathBuf) -> Result<ChangeSet> {
     })
 }
 
+fn ol_vouch_migrate(path: PathBuf, val_set: Vec<AccountAddress>) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+
+    let start = SystemTime::now();
+    let now = start.duration_since(UNIX_EPOCH)?;
+    let microseconds = now.as_micros();
+
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+        val_set.clone().iter()
+        .for_each(|addr| {
+          let args = vec![MoveValue::Signer(addr.to_owned())];
+
+          session
+              .execute_function(
+                  &ModuleId::new(
+                      account_config::CORE_CODE_ADDRESS,
+                      Identifier::new("Vouch").unwrap(),
+                  ),
+                  &Identifier::new("init").unwrap(),
+                  vec![],
+                  serialize_values(&args),
+                  &mut gas_status,
+                  &log_context,
+              )
+              .unwrap(); // TODO: don't use unwraps.
+
+          let args = vec![
+            MoveValue::Signer(diem_root_address()),
+            MoveValue::Address(addr.to_owned()),
+            MoveValue::vector_address(val_set.clone()),
+
+          ];
+
+          session
+              .execute_function(
+                  &ModuleId::new(
+                      account_config::CORE_CODE_ADDRESS,
+                      Identifier::new("Vouch").unwrap(),
+                  ),
+                  &Identifier::new("vm_migrate").unwrap(),
+                  vec![],
+                  serialize_values(&args),
+                  &mut gas_status,
+                  &log_context,
+              )
+              .unwrap(); // TODO: don't use unwraps.
+
+          });
+
+          
+        Ok(())
+    })
+}
+
+fn ol_makewhole_migrate(path: PathBuf) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+
+    let start = SystemTime::now();
+    let now = start.duration_since(UNIX_EPOCH)?;
+    let microseconds = now.as_micros();
+
+
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+        let args = vec![MoveValue::Signer(diem_root_address())];
+          session
+              .execute_function(
+                  &ModuleId::new(
+                      account_config::CORE_CODE_ADDRESS,
+                      Identifier::new("MakeWhole").unwrap(),
+                  ),
+                  &Identifier::new("make_whole_init").unwrap(),
+                  vec![],
+                  serialize_values(&args),
+                  &mut gas_status,
+                  &log_context,
+              )
+              .unwrap(); // TODO: don't use unwraps.
+
+        Ok(())
+    })
+}
 
 fn ol_epoch_timestamp_update(path: PathBuf) -> Result<ChangeSet>{
   let db = DiemDebugger::db(path)?;
