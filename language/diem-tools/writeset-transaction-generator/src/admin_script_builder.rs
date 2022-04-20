@@ -180,17 +180,23 @@ pub fn ol_writeset_mfg_epoch_event(path: PathBuf) -> WriteSetPayload {
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
 pub fn ol_writeset_ancestry(path: PathBuf, ancestry_file: PathBuf) -> WriteSetPayload {
-    let file = fs::File::open(ancestry_file).expect("file should open read only");
-
-    let ancestry_vec: Vec<AncestrysUnit> = serde_json::from_reader(file).expect("file should be proper JSON");
-
     // Take the stdlib upgrade change set.
-    let cs = ol_ancestry_migrate(path.clone(), ancestry_vec).unwrap();
+    let cs = ol_ancestry_migrate(
+      path.clone(), 
+      parse_ancestry_file(ancestry_file).unwrap()
+    ).unwrap();
     WriteSetPayload::Direct(cs)
 
 }
 
 
+fn parse_ancestry_file(ancestry_file: PathBuf) -> Result<Vec<AncestrysUnit>>{
+  dbg!(&ancestry_file);
+      let file = fs::File::open(ancestry_file).expect("file should open read only");
+
+    let ancestry_vec: Vec<AncestrysUnit> = serde_json::from_reader(file).expect("file should be proper JSON");
+    Ok(ancestry_vec)
+}
 
 pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
     if vals.len() == 0 {
@@ -209,19 +215,22 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> Wri
     WriteSetPayload::Direct(new_cs)
 }
 
-pub fn ol_writset_encode_migrations(path: PathBuf, _ancestry_file: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+pub fn ol_writset_encode_migrations(path: PathBuf, ancestry_file: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
         exit(1)
     };
 
 
-    let autopay = ol_autopay_migrate(path.clone()).unwrap();
+    let ancestry = ol_ancestry_migrate(
+      path.clone(), 
+      parse_ancestry_file(ancestry_file).unwrap()
+    ).unwrap();
 
     let boundary = ol_force_boundary(path.clone(), vals).unwrap();
 
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
-    let new_cs = merge_vec_changeset(vec![autopay, boundary]).unwrap();
+    let new_cs = merge_vec_changeset(vec![ancestry, boundary]).unwrap();
     // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
     WriteSetPayload::Direct(new_cs)
 }
@@ -513,7 +522,7 @@ fn ol_makewhole_migrate(path: PathBuf) -> Result<ChangeSet> {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct AncestrysUnit {
-  address: AccountAddress,
+  account: AccountAddress,
   ancestry: Vec<AccountAddress>,
 }
 fn ol_ancestry_migrate(path: PathBuf, ancestry_vec: Vec<AncestrysUnit> ) -> Result<ChangeSet> {
@@ -534,7 +543,7 @@ fn ol_ancestry_migrate(path: PathBuf, ancestry_vec: Vec<AncestrysUnit> ) -> Resu
         .for_each(|a| {
         let args = vec![
           MoveValue::Signer(diem_root_address()),
-          MoveValue::Address(a.address),
+          MoveValue::Address(a.account),
           MoveValue::vector_address(a.ancestry),
         ];
 
