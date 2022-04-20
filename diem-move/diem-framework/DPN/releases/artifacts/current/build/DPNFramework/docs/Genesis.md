@@ -18,7 +18,6 @@ when executing from a fresh state.
 <pre><code><b>use</b> <a href="AccountFreezing.md#0x1_AccountFreezing">0x1::AccountFreezing</a>;
 <b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="ChainId.md#0x1_ChainId">0x1::ChainId</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemBlock.md#0x1_DiemBlock">0x1::DiemBlock</a>;
@@ -78,9 +77,6 @@ Initializes the Diem framework.
     initial_diem_version: u64,
     consensus_config: vector&lt;u8&gt;,
 ) {
-    <b>use</b> DiemFramework::Debug::print;
-    print(&42);
-
     <a href="Genesis.md#0x1_Genesis_initialize_internal">initialize_internal</a>(
         &dr_account,
         // &tc_account, /////// 0L /////////

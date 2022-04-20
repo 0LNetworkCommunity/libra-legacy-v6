@@ -397,6 +397,10 @@ module TowerState {
       difficulty: u64,
       security: u64
     ) acquires TowerProofHistory, TowerList, TowerCounter {
+
+      use DiemFramework::Debug::print;
+      print(&11);
+      print(&Signer::address_of(miner_sig));
       
       // NOTE Only Signer can update own state.
       // Should only happen once.

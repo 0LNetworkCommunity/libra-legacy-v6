@@ -21,6 +21,7 @@ and "configuration" are used for several distinct concepts.
 -  [Function `remove_validator`](#0x1_DiemSystem_remove_validator)
 -  [Function `update_config_and_reconfigure`](#0x1_DiemSystem_update_config_and_reconfigure)
 -  [Function `get_diem_system_config`](#0x1_DiemSystem_get_diem_system_config)
+-  [Function `is_validator_scr`](#0x1_DiemSystem_is_validator_scr)
 -  [Function `is_validator`](#0x1_DiemSystem_is_validator)
 -  [Function `get_validator_config`](#0x1_DiemSystem_get_validator_config)
 -  [Function `validator_set_size`](#0x1_DiemSystem_validator_set_size)
@@ -885,6 +886,30 @@ Get the DiemSystem configuration from DiemConfig
 <pre><code><b>pragma</b> opaque;
 <b>include</b> <a href="DiemConfig.md#0x1_DiemConfig_AbortsIfNotPublished">DiemConfig::AbortsIfNotPublished</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;;
 <b>ensures</b> result == <a href="DiemConfig.md#0x1_DiemConfig_get">DiemConfig::get</a>&lt;<a href="DiemSystem.md#0x1_DiemSystem">DiemSystem</a>&gt;();
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemSystem_is_validator_scr"></a>
+
+## Function `is_validator_scr`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_is_validator_scr">is_validator_scr</a>(addr: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_is_validator_scr">is_validator_scr</a>(addr: <b>address</b>) {
+    <b>assert</b>!(<a href="DiemSystem.md#0x1_DiemSystem_is_validator_">is_validator_</a>(addr, &<a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>().validators), 667788);
+}
 </code></pre>
 
 

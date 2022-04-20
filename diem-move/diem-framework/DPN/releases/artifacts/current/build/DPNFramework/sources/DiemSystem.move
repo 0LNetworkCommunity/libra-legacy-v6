@@ -409,6 +409,11 @@ module DiemFramework::DiemSystem {
         ensures result == DiemConfig::get<DiemSystem>();
     }
 
+    /////// 0L /////////
+    public(script) fun is_validator_scr(addr: address) {
+        assert!(is_validator_(addr, &get_diem_system_config().validators), 667788);
+    }
+
     /// Return true if `addr` is in the current validator set
     public fun is_validator(addr: address): bool {
         is_validator_(addr, &get_diem_system_config().validators)

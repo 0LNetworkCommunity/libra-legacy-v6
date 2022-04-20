@@ -42,7 +42,9 @@
     -  [Related Scripts](#@Related_Scripts_29)
 
 
-<pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<pre><code><b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
+<b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="SlidingNonce.md#0x1_SlidingNonce">0x1::SlidingNonce</a>;
 </code></pre>
 
@@ -320,6 +322,13 @@ and the <code>rold_id</code> field being <code><a href="Roles.md#0x1_Roles_VALID
     auth_key_prefix: vector&lt;u8&gt;,
     human_name: vector&lt;u8&gt;
 ) {
+    // <b>use</b> DiemFramework::DiemSystem;
+    // <b>use</b> DiemFramework::ValidatorConfig;
+    // <b>use</b> DiemFramework::Debug::print;
+    // print(&100);
+    // <b>if</b>(<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(new_account_address)) <b>return</b>; // 0L
+    // <b>let</b> config = <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_config">ValidatorConfig::get_config</a>(new_account_address);
+
     <a href="SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(&dr_account, sliding_nonce);
     <a href="DiemAccount.md#0x1_DiemAccount_create_validator_operator_account">DiemAccount::create_validator_operator_account</a>(
         &dr_account,
@@ -466,7 +475,12 @@ and the <code>rold_id</code> field being <code><a href="Roles.md#0x1_Roles_VALID
     auth_key_prefix: vector&lt;u8&gt;,
     human_name: vector&lt;u8&gt;,
 ) {
+    <b>use</b> DiemFramework::DiemSystem;
+    <b>use</b> DiemFramework::Debug::print;
+    print(&100);
+    <b>if</b>(<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(new_account_address)) <b>return</b>; // 0L
     <a href="SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(&dr_account, sliding_nonce);
+    print(&101);
     <a href="DiemAccount.md#0x1_DiemAccount_create_validator_account">DiemAccount::create_validator_account</a>(
         &dr_account,
         new_account_address,
