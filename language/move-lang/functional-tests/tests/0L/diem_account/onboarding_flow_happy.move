@@ -57,7 +57,7 @@ use 0x1::ValidatorUniverse;
 fun main(vm: signer) {
   let eve_addr = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
 
-  let bal = DiemAccount::balance<GAS>(eve_addr);
+  let old_account_bal = DiemAccount::balance<GAS>(eve_addr);
 
 
   /// set the fullnode proof price to 0, to check if onboarding subsidy is given.
@@ -65,10 +65,10 @@ fun main(vm: signer) {
     // need to remove testnet for this test, since testnet does not ratelimit 
     // account creation.
   
-  let bal = DiemAccount::balance<GAS>(eve_addr);
+  let new_account_bal = DiemAccount::balance<GAS>(eve_addr);
   
     // we expect 1 gas (1,000,000 microgas) from bob's transfer
-  assert(bal == 1000000, 7357401003);
+  assert(old_account_bal == 1000000, 7357401003);
   // eve did not mine or validator in last epoch, case != 1. So there wont be a reward.
   // There is a cost-to-exist but since Eve's balance is below the cost, it will not be deducted.
   assert(new_account_bal == 1000000, 7357003);
