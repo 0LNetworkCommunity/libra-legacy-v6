@@ -485,8 +485,3 @@ fn encode_validator_seed_for_vfn_discovery(
     seeds.insert(validator_account, val_peer_data);
     Ok(seeds)
 }
-
-#[test]
-fn test() {
-    default_for_public_full_node();
-}
