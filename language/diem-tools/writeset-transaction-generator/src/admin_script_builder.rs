@@ -187,7 +187,7 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> Wri
     };
 
     let stdlib_cs = ol_fresh_stlib_changeset(path.clone()).unwrap();
-    // TODO: forcing the boundary causes an erorr on the epoch boundary.
+    // TODO: forcing the boundary causes an error on the epoch boundary.
     let boundary = ol_force_boundary(path.clone(), vals).unwrap();
     // let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
@@ -235,6 +235,7 @@ pub fn ol_writeset_update_epoch_time(path: PathBuf) -> WriteSetPayload {
 
     WriteSetPayload::Direct(merge_change_set(epoch_time, reconfig).unwrap())
 }
+
 
 ///////////////// ENCODE CHANGESETS ///////////////////////////////
 
@@ -359,6 +360,40 @@ fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
         Ok(())
     })
 }
+
+
+
+fn ol_autopay_migrate(path: PathBuf) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+
+    let start = SystemTime::now();
+    let now = start.duration_since(UNIX_EPOCH)?;
+    let microseconds = now.as_micros();
+
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+        let args = vec![MoveValue::Signer(diem_root_address())];
+
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("MigrateAutoPayBal").unwrap(),
+                ),
+                &Identifier::new("do_it").unwrap(),
+                vec![],
+                serialize_values(&args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // TODO: don't use unwraps.
+        Ok(())
+    })
+}
+
 
 fn ol_epoch_timestamp_update(path: PathBuf) -> Result<ChangeSet>{
   let db = DiemDebugger::db(path)?;
