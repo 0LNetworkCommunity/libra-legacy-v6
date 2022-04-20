@@ -26,12 +26,10 @@ module EpochBoundary {
     use 0x1::FullnodeSubsidy;
     use 0x1::ValidatorUniverse;
 
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
-        print(&111111);
-
         CoreAddresses::assert_vm(vm);
 
         let height_start = Epoch::get_timer_height_start(vm);
@@ -44,8 +42,8 @@ module EpochBoundary {
         let (subsidy_units, nominal_subsidy_per) = 
             Subsidy::calculate_subsidy(vm, compliant_nodes_count);
         
-        print(&subsidy_units);
-        print(&nominal_subsidy_per);
+        // print(&subsidy_units);
+        // print(&nominal_subsidy_per);
 
         process_fullnodes(vm, nominal_subsidy_per);
         
@@ -175,7 +173,7 @@ module EpochBoundary {
     // NOTE: this was previously in propose_new_set since it used the same loop.
     // copied implementation from Teams proposal.
     fun proof_of_burn(vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector<address>) {
-        print(&222201);
+        // print(&222201);
         CoreAddresses::assert_vm(vm);
 
         // recaulculate the ratios of the community index.
@@ -183,7 +181,7 @@ module EpochBoundary {
         
         // get the burn value for next epoch. 50% of this epoch's reward.
         let burn_value = nominal_subsidy_per/2;
-        print(&burn_value);
+        // print(&burn_value);
         // apply the cost-to-exist to all validator candidates
         // TODO: remove proposed_set implementation until after epoch 185
         let all_vals = if (DiemConfig::get_current_epoch() > 185) {
@@ -199,7 +197,7 @@ module EpochBoundary {
           i = i + 1;
         };
 
-       print(&222202);
+      //  print(&222202);
 
     }
 }

@@ -17,7 +17,6 @@
 <b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="Burn.md#0x1_Burn">0x1::Burn</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
@@ -51,8 +50,6 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
-    print(&111111);
-
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm);
@@ -65,8 +62,8 @@
     <b>let</b> (subsidy_units, nominal_subsidy_per) =
         <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
 
-    print(&subsidy_units);
-    print(&nominal_subsidy_per);
+    // print(&subsidy_units);
+    // print(&nominal_subsidy_per);
 
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
 
@@ -291,7 +288,7 @@
 
 
 <pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector&lt;address&gt;) {
-    print(&222201);
+    // print(&222201);
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
     // recaulculate the ratios of the community index.
@@ -299,7 +296,7 @@
 
     // get the burn value for next epoch. 50% of this epoch's reward.
     <b>let</b> burn_value = nominal_subsidy_per/2;
-    print(&burn_value);
+    // print(&burn_value);
     // <b>apply</b> the cost-<b>to</b>-exist <b>to</b> all validator candidates
     // TODO: remove proposed_set implementation until after epoch 185
     <b>let</b> all_vals = <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() &gt; 185) {
@@ -315,7 +312,7 @@
       i = i + 1;
     };
 
-   print(&222202);
+  //  print(&222202);
 
 }
 </code></pre>
