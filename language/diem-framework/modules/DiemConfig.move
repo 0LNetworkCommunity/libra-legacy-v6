@@ -12,7 +12,7 @@ module DiemConfig {
     use 0x1::DiemTimestamp;
     use 0x1::Signer;
     use 0x1::Roles;
-    use 0x1::Testnet;
+    // use 0x1::Testnet;
 
     /// A generic singleton resource that holds a value of a specific type.
     struct DiemConfig<Config: copy + drop + store> has key, store {
@@ -496,13 +496,13 @@ module DiemConfig {
         
     }
 
-    public fun check_transfer_enabled(): bool acquires Configuration {
-        if(Testnet::is_testnet()){
-            true
-        } else {
-            get_current_epoch() > TRANSFER_ENABLED_EPOCH
-        }
-    }    
+    // public fun check_transfer_enabled(): bool acquires Configuration {
+    //     if(Testnet::is_testnet()){
+    //         true
+    //     } else {
+    //         get_current_epoch() > TRANSFER_ENABLED_EPOCH
+    //     }
+    // }    
     //////// 0L end ////////
 
 }

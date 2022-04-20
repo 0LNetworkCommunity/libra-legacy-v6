@@ -54,15 +54,12 @@ module EpochBoundary {
         
         let proposed_set = propose_new_set(vm, height_start, height_now);
         
-        // Update all slow wallet limits
-        if (DiemConfig::check_transfer_enabled()) {
-            DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
-            // update_validator_withdrawal_limit(vm);
-        };
 
-        // TODO: Temporary timer to start in the future.
         proof_of_burn(vm, subsidy_units, &proposed_set);
         
+        // release funds to slow wallets
+        DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
+
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
     }
 
@@ -160,8 +157,6 @@ module EpochBoundary {
 
         // Reset Stats
         Stats::reconfig(vm, &proposed_set);
-
-        // Migrate TowerState list from elegible.
         TowerState::reconfig(vm, &outgoing_compliant);
 
         // Reconfigure the network
