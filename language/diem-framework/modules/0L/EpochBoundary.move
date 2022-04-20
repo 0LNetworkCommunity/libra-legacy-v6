@@ -24,7 +24,9 @@ module EpochBoundary {
     use 0x1::DiemAccount;
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
+    use 0x1::ValidatorUniverse;
 
+    // use 0x1::Debug::print;
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
@@ -40,17 +42,20 @@ module EpochBoundary {
         let (subsidy_units, nominal_subsidy_per) = 
             Subsidy::calculate_subsidy(vm, compliant_nodes_count);
         
+        // print(&subsidy_units);
+        // print(&nominal_subsidy_per);
+
         process_fullnodes(vm, nominal_subsidy_per);
         
+
         process_validators(vm, subsidy_units, *&outgoing_compliant_set);
         
         let proposed_set = propose_new_set(vm, height_start, height_now);
         
-        // // Update all slow wallet limits
-        // if (DiemConfig::check_transfer_enabled()) {
-        //     DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
-        //     // update_validator_withdrawal_limit(vm);
-        // };
+
+        proof_of_burn(vm, subsidy_units, &proposed_set);
+        
+        // release funds to slow wallets
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
 
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
@@ -89,15 +94,15 @@ module EpochBoundary {
     }
 
     fun process_validators(
-        vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector<address>
+        vm: &signer, nominal_subsidy_per: u64, outgoing_compliant_set: vector<address>
     ) {
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         
         if (Vector::is_empty<address>(&outgoing_compliant_set)) return;
 
-        if (subsidy_units > 0) {
-            Subsidy::process_subsidy(vm, subsidy_units, &outgoing_compliant_set);
+        if (nominal_subsidy_per > 0) {
+            Subsidy::process_subsidy(vm, nominal_subsidy_per, &outgoing_compliant_set);
         };
 
         Subsidy::process_fees(vm, &outgoing_compliant_set);
@@ -119,18 +124,6 @@ module EpochBoundary {
 
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
 
-        Burn::reset_ratios(vm);
-        // LEAVE THIS CODE COMMENTED for future use
-        // TODO: Make the burn value dynamic.
-        let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
-        let burn_value = Subsidy::subsidy_curve(
-          Globals::get_subsidy_ceiling_gas(),
-          incoming_count,
-          Globals::get_max_validators_per_set()
-        )/2;
-
-        // let burn_value = 1000000; // TODO: switch to a variable cost, as above.
-
         let i = 0;
         while (i < Vector::length<address>(&top_accounts)) {
             let addr = *Vector::borrow(&top_accounts, i);
@@ -142,10 +135,10 @@ module EpochBoundary {
                 Audit::val_audit_passing(addr)
             ) {
                 Vector::push_back(&mut proposed_set, addr);
-                Burn::epoch_start_burn(vm, addr, burn_value);
             };
             i = i+ 1;
         };
+
 
         // If the cardinality of validator_set in the next epoch is less than 4, 
         // we keep the same validator set. 
@@ -173,6 +166,39 @@ module EpochBoundary {
         // reset counters
         AutoPay::reconfig_reset_tick(vm);
         Epoch::reset_timer(vm, height_now);
+    }
+
+
+    
+    // NOTE: this was previously in propose_new_set since it used the same loop.
+    // copied implementation from Teams proposal.
+    fun proof_of_burn(vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector<address>) {
+        // print(&222201);
+        CoreAddresses::assert_vm(vm);
+
+        // recaulculate the ratios of the community index.
+        Burn::reset_ratios(vm);
+        
+        // get the burn value for next epoch. 50% of this epoch's reward.
+        let burn_value = nominal_subsidy_per/2;
+        // print(&burn_value);
+        // apply the cost-to-exist to all validator candidates
+        // TODO: remove proposed_set implementation until after epoch 185
+        let all_vals = if (DiemConfig::get_current_epoch() > 185) {
+         ValidatorUniverse::get_eligible_validators(vm)
+        } else {
+          *proposed_set
+        };
+
+        let i = 0;
+        while (i < Vector::length<address>(&all_vals)) {
+          let addr = *Vector::borrow(&all_vals, i);
+          Burn::epoch_start_burn(vm, addr, burn_value);
+          i = i + 1;
+        };
+
+      //  print(&222202);
+
     }
 }
 }
