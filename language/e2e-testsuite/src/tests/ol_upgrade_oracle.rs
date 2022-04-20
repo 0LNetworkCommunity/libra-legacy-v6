@@ -278,12 +278,13 @@ fn test_no_quorum_on_upgrade_tx() {
 fn test_successful_upgrade_txs() {
   let mut executor = FakeExecutor::from_genesis_file();
 
+  dbg!(&"1");
   // create an association account and validator accounts
   let diem_root = Account::new_diem_root();
   let accounts = set_up_validators(&mut executor, diem_root);
 
   executor.new_custom_block(2);
-
+dbg!(&"2");
   // Construct a valid and signed tx script.
   let txn_0 = oracle_helper_tx(&accounts.get(0).unwrap(), 3);
   let output = executor.execute_and_apply(txn_0);
@@ -291,7 +292,7 @@ fn test_successful_upgrade_txs() {
     output.status().status(),
     Ok(KeptVMStatus::Executed)
   );
-
+dbg!(&"3");
   executor.new_custom_block(2);
   let txn_1 = oracle_helper_tx(&accounts.get(1).unwrap(), 3);
   let output = executor.execute_and_apply(txn_1);
@@ -299,10 +300,13 @@ fn test_successful_upgrade_txs() {
     output.status().status(),
     Ok(KeptVMStatus::Executed)
   );
+dbg!(&"4");
 
   executor.new_custom_block(2);
   let txn_2 = oracle_helper_tx(&accounts.get(2).unwrap(), 3);
   let output = executor.execute_and_apply(txn_2);
+  dbg!(&"5");
+
   assert_eq!(
     output.status().status(),
     Ok(KeptVMStatus::Executed)
@@ -311,14 +315,21 @@ fn test_successful_upgrade_txs() {
 
   // verify that the foo transaction should fail w/o the updated stdlib
   test_foo(&accounts.get(3).unwrap(), &mut executor, false);
+dbg!(&"6");
 
   // The creation of these blocks update the stdlib
   executor.new_custom_block(2);
+dbg!(&"7");
+
   executor.new_custom_block(2);
+dbg!(&"8");
 
   // verify that the foo transaction should pass with the updated stdlib
   test_foo(&accounts.get(4).unwrap(), &mut executor, true);
+dbg!(&"9");
 
   // Checks update doesn't happen again
   executor.new_custom_block(2);
+dbg!(&"9");
+
 }
