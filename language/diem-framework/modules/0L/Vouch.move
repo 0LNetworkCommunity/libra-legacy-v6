@@ -126,6 +126,8 @@ address 0x1 {
         return true
       };
 
+      if (!exists<Vouch>(val)) return false;
+
       let len = Vector::length(&unrelated_buddies(val));
       (len > 3) // TODO: move to Globals
     }

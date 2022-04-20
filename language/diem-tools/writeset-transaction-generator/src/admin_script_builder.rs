@@ -227,10 +227,10 @@ pub fn ol_writset_encode_migrations(path: PathBuf, ancestry_file: PathBuf, vals:
       parse_ancestry_file(ancestry_file).unwrap()
     ).unwrap();
 
-    let boundary = ol_force_boundary(path.clone(), vals).unwrap();
-
+    let boundary = ol_force_boundary(path.clone(), vals.clone()).unwrap();
+    let vouch = ol_vouch_migrate(path.clone(), vals).unwrap();
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
-    let new_cs = merge_vec_changeset(vec![ancestry, boundary]).unwrap();
+    let new_cs = merge_vec_changeset(vec![ancestry, vouch, boundary]).unwrap();
     // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
     WriteSetPayload::Direct(new_cs)
 }
