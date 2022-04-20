@@ -25,7 +25,11 @@ address 0x1 {
             if (!exists<Payments>(CoreAddresses::DIEM_ROOT_ADDRESS())) {
                 let payees: vector<address> = Vector::empty<address>();
                 let amounts: vector<u64> = Vector::empty<u64>();
-     
+
+                // TODO: A new address and amount must be pushed back for each miner that needs to be repaid
+                // // This can be done more easily in more recent version of move,                Vector::push_back<address>(&mut payees, @0x3f9fb9373492a3ec10714214ab53f071);
+                // Vector::push_back<u64>(&mut amounts, 874041484);
+      
                 Vector::push_back<address>(&mut payees, @0xb2e86a1bee0e63602920eaa90a37c91e);
                 Vector::push_back<u64>(&mut amounts, 582694323);
       

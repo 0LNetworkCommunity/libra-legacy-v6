@@ -385,8 +385,8 @@ module DiemConfig {
         emits msg to handle if (!spec_reconfigure_omitted() && now != config.last_reconfiguration_time);
     }
 
-    /// Emit a `NewEpochEvent` event but DO NOT increment the EPOCH.
-    /// this is used only in upgrade scenarios.
+    /// Emit a `NewEpochEvent` 
+    /// this is used only in upgrade scenarios or offline recovery writesets
     public(friend) fun upgrade_reconfig(vm: &signer) acquires Configuration {
         CoreAddresses::assert_vm(vm);
         assert(exists<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS()), Errors::not_published(ECONFIGURATION));

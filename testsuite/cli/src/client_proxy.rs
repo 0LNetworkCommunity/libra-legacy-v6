@@ -2106,7 +2106,7 @@ impl ClientProxy {
 }
 
 // Update WriteSet
-fn encode_stdlib_upgrade_transaction() -> ChangeSet {
+pub fn encode_stdlib_upgrade_transaction() -> ChangeSet {
     let mut write_set = WriteSetMut::new(vec![]);
     for module in diem_framework::modules() {
         let mut bytes = vec![];
