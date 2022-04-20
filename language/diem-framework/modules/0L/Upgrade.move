@@ -8,6 +8,7 @@ module Upgrade {
     use 0x1::Errors;
     use 0x1::Signer;
     use 0x1::Vector;
+    // use 0x1::DiemTimestamp;
 
     /// Structs for UpgradePayload resource
     struct UpgradePayload has key {
@@ -46,12 +47,24 @@ module Upgrade {
     use 0x1::Epoch;
     use 0x1::DiemConfig;
 
-    // private. Can only be called by the VM
-    fun upgrade_reconfig(vm: &signer) acquires UpgradePayload {
+    // Can only be called by the VM
+    // making public so that we can use in admin scripts of writeset-transaction-generator.
+
+    use 0x1::Debug::print;
+
+    public fun upgrade_reconfig(vm: &signer) acquires UpgradePayload {
+      print(&1111111);
         CoreAddresses::assert_vm(vm);
         reset_payload(vm);
         let new_epoch_height = Epoch::get_timer_height_start(vm) + 2; // This is janky, but there's no other way to get the current block height, unless the prologue gives it to us. The upgrade reconfigure happens on round 2, so we'll increment the new start by 2 from previous.
         Epoch::reset_timer(vm, new_epoch_height);
+
+        // TODO: check if this has any impact.
+        // Update global time by 1 to escape the timestamps check (for deduplication) of DiemConfig::reconfig_
+        // that check prevents offline writsets from being written during emergency offline recovery.
+        // let timenow = DiemTimestamp::now_microseconds() + 100;
+        // use any address except for 0x0 for updating.
+        // DiemTimestamp::update_global_time(vm, @0x6, timenow);
         DiemConfig::upgrade_reconfig(vm);
 
     }

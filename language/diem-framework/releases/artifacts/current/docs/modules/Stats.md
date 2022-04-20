@@ -23,9 +23,11 @@
 -  [Function `get_total_props`](#0x1_Stats_get_total_props)
 -  [Function `get_history`](#0x1_Stats_get_history)
 -  [Function `test_helper_inc_vote_addr`](#0x1_Stats_test_helper_inc_vote_addr)
+-  [Function `get_sorted_vals_by_props`](#0x1_Stats_get_sorted_vals_by_props)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -300,8 +302,9 @@
   <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190005));
   <b>let</b> stats = borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(sender);
-  <b>let</b> (_, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&<b>mut</b> stats.current.addr, &node_addr);
-  *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&<b>mut</b> stats.current.vote_count, i)
+  <b>let</b> (is_found, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&<b>mut</b> stats.current.addr, &node_addr);
+  <b>if</b> (is_found) <b>return</b> *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&<b>mut</b> stats.current.vote_count, i)
+  <b>else</b> 0
 }
 </code></pre>
 
@@ -394,8 +397,9 @@
   <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190008));
   <b>let</b> stats = borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(sender);
-  <b>let</b> (_, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&<b>mut</b> stats.current.addr, &node_addr);
-  *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&<b>mut</b> stats.current.prop_count, i)
+  <b>let</b> (is_found, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&<b>mut</b> stats.current.addr, &node_addr);
+  <b>if</b> (is_found) <b>return</b> *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&<b>mut</b> stats.current.prop_count, i)
+  <b>else</b> 0
 }
 </code></pre>
 
@@ -421,13 +425,32 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_inc_prop">inc_prop</a>(vm: &signer, node_addr: address) <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
   <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190009));
+   print(&200110);
 
-  <b>let</b> stats = borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(sender);
-  <b>let</b> (_, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&<b>mut</b> stats.current.addr, &node_addr);
-  <b>let</b> current_count = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&<b>mut</b> stats.current.prop_count, i);
-  <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.current.prop_count, current_count + 1);
-  <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> stats.current.prop_count, i);
+  <b>let</b> stats = borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
+   print(&200120);
+  <b>let</b> (is_true, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&<b>mut</b> stats.current.addr, &node_addr);
+  // don't try <b>to</b> increment <b>if</b> no state. This has caused issues in the past in emergency recovery.
+   print(&200130);
+
+  <b>if</b> (is_true) {
+         print(&200131);
+
+    <b>let</b> current_count = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&<b>mut</b> stats.current.prop_count, i);
+               print(&200132);
+
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.current.prop_count, current_count + 1);
+               print(&200133);
+
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> stats.current.prop_count, i);
+                     print(&200134);
+
+  };
+   print(&200140);
+
   stats.current.total_props = stats.current.total_props + 1;
+       print(&200150);
+
 }
 </code></pre>
 
@@ -454,11 +477,23 @@
   <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190010));
   <b>let</b> stats = borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(sender);
-  <b>let</b> (_, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&<b>mut</b> stats.current.addr, &node_addr);
-  <b>let</b> test = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&<b>mut</b> stats.current.vote_count, i);
-  <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.current.vote_count, test + 1);
-  <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> stats.current.vote_count, i);
+
+  <b>let</b> (is_true, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;address&gt;(&<b>mut</b> stats.current.addr, &node_addr);
+
+  <b>if</b> (is_true) {
+    <b>let</b> test = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&<b>mut</b> stats.current.vote_count, i);
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.current.vote_count, test + 1);
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> stats.current.vote_count, i);
+  } <b>else</b> {
+    // debugging rescue mission. Remove after network stabilizes Apr 2022.
+    // something bad happened and we can't find this node in our list.
+    // print(&666);
+    // print(&node_addr);
+
+  };
+  // <b>update</b> total vote count anyways even <b>if</b> we can't find this person.
   stats.current.total_votes = stats.current.total_votes + 1;
+  // print(&stats.current);
 }
 </code></pre>
 
@@ -482,20 +517,24 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_reconfig">reconfig</a>(vm: &signer, set: &vector&lt;address&gt;) <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
+
   <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190011));
   <b>let</b> stats = borrow_global_mut&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(sender);
-
+  // print(&300210);
   // Keep only the most recent epoch stats
   <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&stats.history) &gt; 7) {
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_pop_back">Vector::pop_back</a>&lt;<a href="Stats.md#0x1_Stats_SetData">SetData</a>&gt;(&<b>mut</b> stats.history); // just drop last record
   };
-
+  // print(&300220);
   <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.history, *&stats.current);
-
+  // print(&300230);
   stats.current = <a href="Stats.md#0x1_Stats_blank">blank</a>();
+  // print(&300240);
 
   <a href="Stats.md#0x1_Stats_init_set">init_set</a>(vm, set);
+  // print(&300250);
+
 }
 </code></pre>
 
@@ -602,6 +641,81 @@ TEST HELPERS
 
   <a href="Stats.md#0x1_Stats_inc_vote">inc_vote</a>(vm, node_addr);
 }
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Stats_get_sorted_vals_by_props"></a>
+
+## Function `get_sorted_vals_by_props`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_get_sorted_vals_by_props">get_sorted_vals_by_props</a>(account: &signer, n: u64): vector&lt;address&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_get_sorted_vals_by_props">get_sorted_vals_by_props</a>(account: &signer, n: u64): vector&lt;address&gt; <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
+    <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account) == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(140101));
+
+    //Get all validators from Validator Universe and then find the eligible validators
+    <b>let</b> eligible_validators =
+    *&borrow_global&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()).current.addr;
+
+
+    <b>let</b> length = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&eligible_validators);
+
+    // Scenario: The universe of validators is under the limit of the BFT consensus.
+    // If n is greater than or equal <b>to</b> accounts vector length - <b>return</b> the vector.
+    <b>if</b>(length &lt;= n) <b>return</b> eligible_validators;
+
+    // <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">Vector</a> <b>to</b> store each address's node_weight
+    <b>let</b> weights = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;();
+    <b>let</b> k = 0;
+    <b>while</b> (k &lt; length) {
+
+      <b>let</b> cur_address = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&eligible_validators, k);
+      // Ensure that this address is an active validator
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;u64&gt;(&<b>mut</b> weights, <a href="Stats.md#0x1_Stats_node_current_props">node_current_props</a>(account, cur_address));
+      k = k + 1;
+    };
+
+    // Sorting the accounts vector based on value (weights).
+    // Bubble sort algorithm
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; length){
+      <b>let</b> j = 0;
+      <b>while</b>(j &lt; length-i-1){
+
+        <b>let</b> value_j = *(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&weights, j));
+        <b>let</b> value_jp1 = *(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&weights, j+1));
+        <b>if</b>(value_j &gt; value_jp1){
+          <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap">Vector::swap</a>&lt;u64&gt;(&<b>mut</b> weights, j, j+1);
+          <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_swap">Vector::swap</a>&lt;address&gt;(&<b>mut</b> eligible_validators, j, j+1);
+        };
+        j = j + 1;
+      };
+      i = i + 1;
+    };
+
+    // Reverse <b>to</b> have sorted order - high <b>to</b> low.
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_reverse">Vector::reverse</a>&lt;address&gt;(&<b>mut</b> eligible_validators);
+
+    <b>let</b> diff = length - n;
+    <b>while</b>(diff&gt;0){
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_pop_back">Vector::pop_back</a>(&<b>mut</b> eligible_validators);
+      diff =  diff - 1;
+    };
+
+    <b>return</b> eligible_validators
+  }
 </code></pre>
 
 

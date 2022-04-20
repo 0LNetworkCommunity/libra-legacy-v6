@@ -1,6 +1,17 @@
-//! account: alice, 1000000GAS, 0, validator
+//! account: alice, 1000000GAS 
 //! account: bob, 10GAS,
-//! account: carol, 10GAS,
+//! account: carol, 10GAS, 0 , validator
+
+//! sender: alice
+script {
+use 0x1::DiemAccount;
+
+fun main(account: signer) {
+    // before epoch change, need to mock alice's end-user address as a slow wallet
+    DiemAccount::set_slow(&account);
+}
+}
+// check: EXECUTED
 
 
 //! new-transaction

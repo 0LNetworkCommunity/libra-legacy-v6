@@ -38,3 +38,10 @@ move-vm-types = { path = "../../move-vm/types" }
 move-core-types = { path = "../../move-core/types" }
 move-vm-runtime = { path = "../../move-vm/runtime" }
 move-vm-test-utils = { path = "../../move-vm/test-utils" }
+
+#//////// 0L ///////
+cli = { path = "../../../testsuite/cli" }
+diem-transaction-builder = { path = "../../../sdk/transaction-builder" }
+ol-types = { path = "../../../ol/types" }
+
+resource-viewer = { path = "../../tools/resource-viewer" }
