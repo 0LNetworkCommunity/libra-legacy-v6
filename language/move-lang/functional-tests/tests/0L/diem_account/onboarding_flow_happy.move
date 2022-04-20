@@ -69,7 +69,7 @@ fun main(vm: signer) {
   
   let bal = DiemAccount::balance<GAS>(eve_addr);
   // After the epoch turned over Eve paid the epoch Burn of 1 coin.
-  assert(bal == 0, 7357401004);
+  assert(bal == 1000000, 7357401004);
 
   // validator should have jailedbit
   assert(ValidatorUniverse::exists_jailedbit(eve_addr), 7357401005);
