@@ -209,7 +209,7 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> Wri
     WriteSetPayload::Direct(new_cs)
 }
 
-pub fn ol_writset_encode_migrations(path: PathBuf, ancestry_file: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+pub fn ol_writset_encode_migrations(path: PathBuf, _ancestry_file: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
         exit(1)
@@ -397,7 +397,7 @@ fn ol_autopay_migrate(path: PathBuf) -> Result<ChangeSet> {
 
     let start = SystemTime::now();
     let now = start.duration_since(UNIX_EPOCH)?;
-    let microseconds = now.as_micros();
+    let _microseconds = now.as_micros();
 
     db.run_session_at_version(v, None, |session| {
         let mut gas_status = GasStatus::new_unmetered();
@@ -428,7 +428,7 @@ fn ol_vouch_migrate(path: PathBuf, val_set: Vec<AccountAddress>) -> Result<Chang
 
     let start = SystemTime::now();
     let now = start.duration_since(UNIX_EPOCH)?;
-    let microseconds = now.as_micros();
+    let _microseconds = now.as_micros();
 
     db.run_session_at_version(v, None, |session| {
         let mut gas_status = GasStatus::new_unmetered();
@@ -486,7 +486,7 @@ fn ol_makewhole_migrate(path: PathBuf) -> Result<ChangeSet> {
 
     let start = SystemTime::now();
     let now = start.duration_since(UNIX_EPOCH)?;
-    let microseconds = now.as_micros();
+    let _microseconds = now.as_micros();
 
 
     db.run_session_at_version(v, None, |session| {
@@ -523,7 +523,7 @@ fn ol_ancestry_migrate(path: PathBuf, ancestry_vec: Vec<AncestrysUnit> ) -> Resu
 
     let start = SystemTime::now();
     let now = start.duration_since(UNIX_EPOCH)?;
-    let microseconds = now.as_micros();
+    let _microseconds = now.as_micros();
 
 
 
