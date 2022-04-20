@@ -1,10 +1,12 @@
 // Todo: These GAS values have no effect, all accounts start with 1M GAS
 //! account: alice, 10000000GAS, 0, validator
 //! account: bob,   1000000GAS, 0
+//! account: carol,   1000000GAS, 0
+
 
 
 //! new-transaction
-//! sender: alice
+//! sender: carol
 script {
     use 0x1::Wallet;
     use 0x1::Vector;
@@ -14,7 +16,7 @@ script {
       let list = Wallet::get_comm_list();
 
       assert(Vector::length(&list) == 1, 7357001);
-      assert(Wallet::is_comm(@{{alice}}), 7357002);
+      assert(Wallet::is_comm(@{{carol}}), 7357002);
 
       let uid = Wallet::new_timed_transfer(&sender, @{{bob}}, 100, b"thanks bob");
       assert(Wallet::transfer_is_proposed(uid), 7357003);
