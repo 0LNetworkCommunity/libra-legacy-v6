@@ -218,7 +218,7 @@ script {
     use 0x1::Cases;
     use 0x1::Vector;
     use 0x1::Stats;
-    use 0x1::TowerState;
+    // use 0x1::TowerState;
     use 0x1::Debug::print;
 
     fun main(vm: signer) {
@@ -243,10 +243,10 @@ script {
         // was jailed. She will rejoin next epoch.
         print(&777777777777777);
 
-        TowerState::test_helper_mock_mining_vm(vm, @{{eve}}, 5);
+        // TowerState::test_helper_mock_mining_vm(vm, @{{eve}}, 5);
 
         print(&Cases::get_case(vm, @{{eve}}, 0, 15));
-        assert(Cases::get_case(vm, @{{eve}}, 0, 15) == 2, 7357008006013);
+        assert(Cases::get_case(vm, @{{eve}}, 0, 15) == 4, 7357008006013);
 
         // EpochBoundary::reconfigure(vm, 30);
     }
@@ -319,15 +319,25 @@ script {
 script {
     use 0x1::TowerState;
 
+    // use 0x1::Cases;
+    // use 0x1::Debug::print;
+
     fun main(sender: signer) {
         // Miner is the only one that can update her mining stats. 
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
+
+        // print(&Cases::get_case(vm, @{{eve}}, 15, 30));
+        
+        
         assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006018);
     }
 }
 //check: EXECUTED
+
+
+
 
 //! new-transaction
 //! sender: frank
@@ -340,6 +350,35 @@ script {
 
         TowerState::test_helper_mock_mining(&sender, 5);
         assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006019);
+    }
+}
+//check: EXECUTED
+
+
+//! new-transaction
+//! sender: diemroot
+script {
+    // use 0x1::TowerState;
+
+    use 0x1::Cases;
+    use 0x1::Debug::print;
+
+    fun main(sender: signer) {
+        // Miner is the only one that can update her mining stats. 
+        // Hence this first transaction.
+
+        // TowerState::test_helper_mock_mining(&sender, 5);
+        print(&99999999);
+        print(&Cases::get_case(&sender, @{{alice}}, 15, 30));
+        print(&Cases::get_case(&sender, @{{bob}}, 15, 30));
+        print(&Cases::get_case(&sender, @{{carol}}, 15, 30));
+        print(&Cases::get_case(&sender, @{{dave}}, 15, 30));
+
+        print(&Cases::get_case(&sender, @{{eve}}, 15, 30));
+        print(&Cases::get_case(&sender, @{{frank}}, 15, 30));
+        
+        
+        // assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006018);
     }
 }
 //check: EXECUTED
@@ -360,9 +399,13 @@ script {
 script {
     use 0x1::DiemSystem;
     use 0x1::DiemConfig;
+    use 0x1::Debug::print;
 
     fun main(_account: signer) {
         assert(DiemConfig::get_current_epoch() == 3, 7357008006020);
+        print(&888888888888);
+
+        print(&DiemSystem::validator_set_size());
         assert(DiemSystem::validator_set_size() == 6, 7357008006021);
         assert(DiemSystem::is_validator(@{{frank}}), 7357008006022);
     }

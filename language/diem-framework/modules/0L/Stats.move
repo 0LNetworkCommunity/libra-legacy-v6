@@ -13,7 +13,7 @@ module Stats{
   use 0x1::Testnet;
   use 0x1::Vector;    
 
-  use 0x1::Debug::print;
+  // use 0x1::Debug::print;
 
   // TODO: yes we know this slows down block production. In "make it fast" mode this will be moved to Rust, in the vm execution block prologue. TBD.
   
@@ -173,7 +173,6 @@ module Stats{
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190010));
     let stats = borrow_global_mut<ValStats>(sender);
-    print(&stats.current);
 
     let (is_true, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
 
@@ -184,19 +183,18 @@ module Stats{
     } else {
       // debugging rescue mission. Remove after network stabilizes Apr 2022.
       // something bad happened and we can't find this node in our list.
-      print(&666);
-      print(&node_addr);
+      // print(&666);
+      // print(&node_addr);
 
     };
     // update total vote count anyways even if we can't find this person.
     stats.current.total_votes = stats.current.total_votes + 1;
-    print(&stats.current);
+    // print(&stats.current);
   }
 
   //Permissions: Public, VM only.
   //Function: 11
   public fun reconfig(vm: &signer, set: &vector<address>) acquires ValStats {
-    print(&300400);
 
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190011));
