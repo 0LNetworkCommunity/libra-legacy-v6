@@ -18,6 +18,7 @@ anyhow = "1.0.52"
 structopt = "0.3.21"
 bcs = "0.1.2"
 hex = "0.4.3"
+rand = "0.8.3" #/////// 0L /////////
 
 # Move dependencies
 move-transactional-test-runner = { git = "https://github.com/OLSF/move-0L", branch = "v6" }

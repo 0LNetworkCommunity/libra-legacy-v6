@@ -809,7 +809,7 @@ module TowerState {
     public fun test_helper_previous_proof_hash(
       account: &signer
     ): vector<u8> acquires TowerProofHistory {
-      assert!(Testnet::is_testnet()== true, Errors::invalid_state(130128));
+      assert!(Testnet::is_testnet(), Errors::invalid_state(130128));
       let addr = Signer::address_of(account);
       *&borrow_global<TowerProofHistory>(addr).previous_proof_hash
     }

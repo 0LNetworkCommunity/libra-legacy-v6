@@ -428,7 +428,7 @@ fn create_and_initialize_owners_operators(
 ) {
     let diem_root_address = account_config::diem_root_address();
 
-    println!("0 ======== Create Owner and Operator Accounts"); //////// 0L ////////
+    println!("0 ======== Create Validator Owner and Operator Accounts"); //////// 0L ////////
 
     let mut owners = vec![];
     let mut owner_names = vec![];
@@ -441,6 +441,7 @@ fn create_and_initialize_owners_operators(
     let mut full_node_network_addresses = vec![];
 
     for v in validators {
+        println!("Address: {:?}", &v.address);
         owners.push(MoveValue::Signer(v.address));
         owner_names.push(MoveValue::vector_u8(v.name.clone()));
         owner_auth_keys.push(MoveValue::vector_u8(v.auth_key.to_vec()));
