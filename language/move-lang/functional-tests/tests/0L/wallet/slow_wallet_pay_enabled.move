@@ -7,7 +7,7 @@
 //! sender: diemroot
 script {
 use 0x1::DiemAccount;
-use 0x1::DiemConfig;
+// use 0x1::DiemConfig;
 use 0x1::Testnet;
 use 0x1::EpochBoundary;
 fun main(vm: signer) {
@@ -28,8 +28,11 @@ fun main(vm: signer) {
 script {
 use 0x1::GAS::GAS;
 use 0x1::DiemAccount;
+use 0x1::Debug::print;
 fun main(_account: signer) {
-    assert(DiemAccount::unlocked_amount(@{{alice}}) == 0, 735703);
+    print(&777);
+    print(&DiemAccount::unlocked_amount(@{{alice}}));
+    assert(DiemAccount::unlocked_amount(@{{alice}}) == 1000000000, 735703);
     assert(DiemAccount::balance<GAS>(@{{bob}}) == 10, 735704);
 }
 }
@@ -52,4 +55,4 @@ fun main(account: signer) {
 }
 
 
-// check: ABORTED
+// check: EXECUTED
