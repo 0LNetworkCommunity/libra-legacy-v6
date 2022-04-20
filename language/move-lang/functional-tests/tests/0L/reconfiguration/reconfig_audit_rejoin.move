@@ -286,6 +286,10 @@ script {
 //! block-time: 122000000
 //! round: 30
 
+///// TEST RECONFIGURATION IS HAPPENING ////
+// check: NewEpochEvent
+//////////////////////////////////////////////
+
 //! new-transaction
 //! sender: diemroot
 script {
