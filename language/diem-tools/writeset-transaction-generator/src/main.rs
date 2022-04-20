@@ -51,7 +51,9 @@ enum Command {
     #[structopt(name = "boundary")]
     Boundary { addresses: Vec<AccountAddress> },
     #[structopt(name = "ancestry")]
-    Ancestry { ancestry_file: PathBuf },
+    Ancestry { ancestry_file: PathBuf,},
+    #[structopt(name = "ancestry")]
+    Migrate { ancestry_file: PathBuf, addresses: Vec<AccountAddress>},
     #[structopt(name = "reconfig")]
     Reconfig { },
     #[structopt(name = "time")]
