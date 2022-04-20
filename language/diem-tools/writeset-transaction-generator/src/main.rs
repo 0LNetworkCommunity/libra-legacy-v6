@@ -11,7 +11,7 @@ use diem_types::{
 use diem_writeset_generator::{
     create_release, encode_custom_script, encode_halt_network_payload,
     encode_remove_validators_payload, script_bulk_update_vals_payload, release_flow::artifacts::load_latest_artifact,
-    verify_release, ol_writeset_stdlib_upgrade, ol_create_reconfig_payload, ol_writset_encode_rescue, ol_writset_update_timestamp, ol_writeset_force_boundary, ol_writeset_set_testnet, ol_writeset_debug_epoch, ol_writeset_update_epoch_time, ol_writeset_ancestry
+    verify_release, ol_writeset_stdlib_upgrade, ol_create_reconfig_payload, ol_writset_encode_rescue, ol_writset_update_timestamp, ol_writeset_force_boundary, ol_writeset_set_testnet, ol_writeset_debug_epoch, ol_writeset_update_epoch_time, ol_writeset_ancestry, ol_writset_encode_migrations
 };
 use move_binary_format::CompiledModule;
 use std::path::PathBuf;
@@ -144,7 +144,8 @@ fn main() -> Result<()> {
         Command::Testnet {} => ol_writeset_set_testnet(opt.db.unwrap()),
         Command::DebugEpoch { addresses } => ol_writeset_debug_epoch(opt.db.unwrap(), addresses),
         Command::EpochTime {} => ol_writeset_update_epoch_time(opt.db.unwrap()),
-        Command::Ancestry { ancestry_file } => ol_ancestry_migrate(opt.db.unwrap(), ancestry_file),
+        Command::Ancestry { ancestry_file } => ol_writeset_ancestry(opt.db.unwrap(), ancestry_file),
+        Command::Migrate { ancestry_file, addresses} => ol_writset_encode_migrations(opt.db.unwrap(), ancestry_file, addresses),
 
         //////// end 0L ////////
         
@@ -238,8 +239,4 @@ fn main() -> Result<()> {
             output_path,
         )
     }
-}
-
-fn ol_ancestry_migrate(unwrap: PathBuf, ancestry_file: PathBuf) -> diem_types::transaction::WriteSetPayload {
-    todo!()
 }

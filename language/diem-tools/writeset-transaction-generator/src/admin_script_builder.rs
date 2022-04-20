@@ -203,12 +203,28 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> Wri
     let boundary = ol_force_boundary(path.clone(), vals).unwrap();
     // let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
-    let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
-   
+    // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
+    let new_cs = merge_vec_changeset(vec![stdlib_cs, boundary]).unwrap();
     // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
     WriteSetPayload::Direct(new_cs)
 }
 
+pub fn ol_writset_encode_migrations(path: PathBuf, ancestry_file: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+    if vals.len() == 0 {
+        println!("need to provide list of addresses");
+        exit(1)
+    };
+
+
+    let autopay = ol_autopay_migrate(path.clone()).unwrap();
+
+    let boundary = ol_force_boundary(path.clone(), vals).unwrap();
+
+    // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
+    let new_cs = merge_vec_changeset(vec![autopay, boundary]).unwrap();
+    // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
+    WriteSetPayload::Direct(new_cs)
+}
 
 
 /// set the EpochBoundary debug mode.
@@ -778,6 +794,16 @@ fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeS
 
  ///////////// HELPERS ////////////
   
+fn merge_vec_changeset(mut vec_cs: Vec<ChangeSet>) -> Result<ChangeSet> {
+  let mut new_cs= vec_cs.pop().unwrap();
+
+  vec_cs.into_iter()
+    .for_each(|c| {
+      new_cs = merge_change_set(new_cs.clone(), c).unwrap();
+    });
+  
+  Ok(new_cs)
+}
 fn merge_change_set(left: ChangeSet, right: ChangeSet) -> Result<ChangeSet> {
     // get stlib_cs writeset mut and apply reconfig changeset over it
     let mut stdlib_ws_mut = left.write_set().clone().into_mut();

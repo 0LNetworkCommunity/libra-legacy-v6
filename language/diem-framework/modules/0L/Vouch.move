@@ -13,6 +13,7 @@ address 0x1 {
     use 0x1::Ancestry;
     use 0x1::Testnet;
     use 0x1::StagingNet;
+    use 0x1::CoreAddresses;
 
     // triggered once per epoch
     struct Vouch has key {
@@ -44,7 +45,7 @@ address 0x1 {
 
     }
 
-    public fun vm_migrate(vm: signer, val: address, buddy_list: vector<address>) acquires Vouch {
+    public fun vm_migrate(vm: &signer, val: address, buddy_list: vector<address>) acquires Vouch {
       CoreAddresses::assert_vm(vm);
 
       if (!ValidatorUniverse::is_in_universe(val)) return;

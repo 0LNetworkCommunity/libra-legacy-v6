@@ -18,8 +18,8 @@ endif
 
 wipe:
 	mkdir ${RESCUE_PATH} | true
-	rm -rf ${DATA_PATH}/db
-#	mv -f ${DATA_PATH}/db ${DATA_PATH}/db.bak.${DATE} | true
+# rm -rf ${DATA_PATH}/db
+	mv -f ${DATA_PATH}/db ${DATA_PATH}/db.bak.${DATE} | true
 	cp -r ${DATA_PATH}/db-reference ${DATA_PATH}/db
 	STEP=wipe make dump
 
@@ -51,6 +51,8 @@ tx-testnet:
 tx-epoch-time:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob epoch-time 
 
+tx-ancestry:
+	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob ancestry ${RESCUE_PATH}/ancestry.json
 
 # tx-custom:
 # 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${DATA_PATH}/restore/rescue.blob build-custom-script set_testnet.move '{}'
