@@ -224,12 +224,12 @@ script {
     fun main(vm: signer) {
         let vm = &vm;
         // start a new epoch.
-        // Everyone except EVE validates, because she was jailed, not in validator set.
+        // Everyone Validates. Frank later doesn't mine.
         let voters = Vector::singleton<address>(@{{alice}});
         Vector::push_back<address>(&mut voters, @{{bob}});
         Vector::push_back<address>(&mut voters, @{{carol}});
         Vector::push_back<address>(&mut voters, @{{dave}});
-        // Vector::push_back<address>(&mut voters, @{{eve}});
+        Vector::push_back<address>(&mut voters, @{{eve}});
         Vector::push_back<address>(&mut voters, @{{frank}});
 
         let i = 1;
@@ -246,7 +246,7 @@ script {
         // TowerState::test_helper_mock_mining_vm(vm, @{{eve}}, 5);
 
         print(&Cases::get_case(vm, @{{eve}}, 0, 15));
-        assert(Cases::get_case(vm, @{{eve}}, 0, 15) == 4, 7357008006013);
+        assert(Cases::get_case(vm, @{{eve}}, 0, 15) == 2, 7357008006013);
 
         // EpochBoundary::reconfigure(vm, 30);
     }
@@ -326,18 +326,12 @@ script {
         // Miner is the only one that can update her mining stats. 
         // Hence this first transaction.
 
-        TowerState::test_helper_mock_mining(&sender, 5);
-
-        // print(&Cases::get_case(vm, @{{eve}}, 15, 30));
-        
+        TowerState::test_helper_mock_mining(&sender, 5);        
         
         assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006018);
     }
 }
 //check: EXECUTED
-
-
-
 
 //! new-transaction
 //! sender: frank
@@ -358,27 +352,13 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    // use 0x1::TowerState;
 
     use 0x1::Cases;
-    use 0x1::Debug::print;
 
     fun main(sender: signer) {
-        // Miner is the only one that can update her mining stats. 
-        // Hence this first transaction.
+        // Frank can rejoin as he did mining
+        assert(Cases::get_case(&sender, @{{frank}}, 15, 30) == 3, 7357008006019);
 
-        // TowerState::test_helper_mock_mining(&sender, 5);
-        print(&99999999);
-        print(&Cases::get_case(&sender, @{{alice}}, 15, 30));
-        print(&Cases::get_case(&sender, @{{bob}}, 15, 30));
-        print(&Cases::get_case(&sender, @{{carol}}, 15, 30));
-        print(&Cases::get_case(&sender, @{{dave}}, 15, 30));
-
-        print(&Cases::get_case(&sender, @{{eve}}, 15, 30));
-        print(&Cases::get_case(&sender, @{{frank}}, 15, 30));
-        
-        
-        // assert(TowerState::test_helper_get_count(&sender) == 5, 7357008006018);
     }
 }
 //check: EXECUTED
