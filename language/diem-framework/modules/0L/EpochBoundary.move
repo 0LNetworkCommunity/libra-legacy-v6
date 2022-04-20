@@ -180,7 +180,7 @@ module EpochBoundary {
     // NOTE: this was previously in propose_new_set since it used the same loop.
     // copied implementation from Teams proposal.
     fun proof_of_burn(vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector<address>) {
-        print(&2222);
+        print(&222201);
         CoreAddresses::assert_vm(vm);
 
         // recaulculate the ratios of the community index.
@@ -203,6 +203,9 @@ module EpochBoundary {
           Burn::epoch_start_burn(vm, addr, burn_value);
           i = i + 1;
         };
+
+       print(&222202);
+
     }
 }
 }
