@@ -862,7 +862,7 @@ dependencies = [
 [[package]]
 name = "classgroup"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?branch=v6#e820dd28fe95763fc81b57e6d74c9c0c0d0bdc8a"
+source = "git+https://github.com/OLSF/libra?branch=v6#507e69124419344b75f45facc43c92604ac72319"
 dependencies = [
  "libc",
  "num-traits 0.2.14",
@@ -1726,7 +1726,7 @@ dependencies = [
 [[package]]
 name = "diem-crypto"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/libra?branch=v6#e820dd28fe95763fc81b57e6d74c9c0c0d0bdc8a"
+source = "git+https://github.com/OLSF/libra?branch=v6#507e69124419344b75f45facc43c92604ac72319"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -1767,7 +1767,7 @@ dependencies = [
 [[package]]
 name = "diem-crypto-derive"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/libra?branch=v6#e820dd28fe95763fc81b57e6d74c9c0c0d0bdc8a"
+source = "git+https://github.com/OLSF/libra?branch=v6#507e69124419344b75f45facc43c92604ac72319"
 dependencies = [
  "diem-workspace-hack 0.1.0 (git+https://github.com/OLSF/libra?branch=v6)",
  "proc-macro2 1.0.37",
@@ -2048,7 +2048,7 @@ version = "0.1.0"
 [[package]]
 name = "diem-global-constants"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?branch=v6#e820dd28fe95763fc81b57e6d74c9c0c0d0bdc8a"
+source = "git+https://github.com/OLSF/libra?branch=v6#507e69124419344b75f45facc43c92604ac72319"
 
 [[package]]
 name = "diem-id-generator"
@@ -2740,7 +2740,7 @@ dependencies = [
 [[package]]
 name = "diem-types"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/libra?branch=v6#e820dd28fe95763fc81b57e6d74c9c0c0d0bdc8a"
+source = "git+https://github.com/OLSF/libra?branch=v6#507e69124419344b75f45facc43c92604ac72319"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -2910,7 +2910,7 @@ dependencies = [
 [[package]]
 name = "diem-workspace-hack"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?branch=v6#e820dd28fe95763fc81b57e6d74c9c0c0d0bdc8a"
+source = "git+https://github.com/OLSF/libra?branch=v6#507e69124419344b75f45facc43c92604ac72319"
 dependencies = [
  "Inflector",
  "anyhow",
@@ -4469,9 +4469,9 @@ dependencies = [
 
 [[package]]
 name = "ipnet"
-version = "2.4.0"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35e70ee094dc02fd9c13fdad4940090f22dbd6ac7c9e7094a46cf0232a50bc7c"
+checksum = "879d54834c8c76457ef4293a689b2a8c59b076067ad77b15efafbb05f92a592b"
 
 [[package]]
 name = "is_ci"
@@ -4714,9 +4714,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.122"
+version = "0.2.124"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec647867e2bf0772e28c8bcde4f0d19a9216916e890543b5a03ed8ef27b8f259"
+checksum = "21a41fed9d98f27ab1c6d161da622a4fa35e8a54a8adc24bbf3ddd0ef70b0e50"
 
 [[package]]
 name = "libfuzzer-sys"
@@ -4964,7 +4964,7 @@ dependencies = [
 [[package]]
 name = "move-binary-format"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#087148a083076ddbb8b55ed0db343d235ab27cce"
 dependencies = [
  "anyhow",
  "mirai-annotations",
@@ -5136,7 +5136,7 @@ dependencies = [
 [[package]]
 name = "move-core-types"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#087148a083076ddbb8b55ed0db343d235ab27cce"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5428,7 +5428,7 @@ dependencies = [
 [[package]]
 name = "move-read-write-set-types"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#087148a083076ddbb8b55ed0db343d235ab27cce"
 dependencies = [
  "anyhow",
  "move-binary-format",
@@ -5894,6 +5894,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "nix"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f6d99b651ff9697d6710f9613a07c5b4e0d655040faf56b3b471af108d55597"
+dependencies = [
+ "bitflags",
+ "cfg-if 1.0.0",
+ "libc",
+ "memoffset",
+]
+
+[[package]]
 name = "nodrop"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6135,7 +6147,7 @@ dependencies = [
  "move-core-types",
  "move-resource-viewer",
  "move-vm-types",
- "nix 0.23.1",
+ "nix 0.24.0",
  "num-format",
  "ol-keys",
  "ol-types",
@@ -7000,9 +7012,9 @@ dependencies = [
 
 [[package]]
 name = "rayon"
-version = "1.5.1"
+version = "1.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c06aca804d41dbc8ba42dfd964f0d01334eceb64314b9ecf7c5fad5188a06d90"
+checksum = "fd249e82c21598a9a426a4e00dd7adc1d640b22445ec8545feef801d1a74c221"
 dependencies = [
  "autocfg",
  "crossbeam-deque",
@@ -7012,14 +7024,13 @@ dependencies = [
 
 [[package]]
 name = "rayon-core"
-version = "1.9.1"
+version = "1.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d78120e2c850279833f1dd3582f730c4ab53ed95aeaaaa862a2a5c71b1656d8e"
+checksum = "9f51245e1e62e1f1629cbfec37b5793bbabcaeb90f30e94d2ba03564687353e4"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-deque",
  "crossbeam-utils",
- "lazy_static 1.4.0",
  "num_cpus",
 ]
 
@@ -9116,9 +9127,9 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.5.8"
+version = "0.5.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a31142970826733df8241ef35dc040ef98c679ab14d7c3e54d827099b3acecaa"
+checksum = "8d82e1a7758622a465f8cee077614c73484dac5b836c02ff6a40d5d1010324d7"
 dependencies = [
  "indexmap",
  "serde 1.0.136",
@@ -9218,9 +9229,9 @@ checksum = "360dfd1d6d30e05fda32ace2c8c70e9c0a9da713275777f5a4dbb8a1893930c6"
 
 [[package]]
 name = "tracing"
-version = "0.1.33"
+version = "0.1.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80b9fa4360528139bc96100c160b7ae879f5567f49f1782b0b02035b0358ebf3"
+checksum = "5d0ecdcb44a79f0fe9844f0c4f33a342cbcbb5117de8001e6ba0dc2351327d09"
 dependencies = [
  "cfg-if 1.0.0",
  "log",
@@ -9242,9 +9253,9 @@ dependencies = [
 
 [[package]]
 name = "tracing-core"
-version = "0.1.24"
+version = "0.1.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90442985ee2f57c9e1b548ee72ae842f4a9a20e3f417cc38dbc5dc684d9bb4ee"
+checksum = "f54c8ca710e81886d498c2fd3331b56c93aa248d49de2222ad2742247c60072f"
 dependencies = [
  "lazy_static 1.4.0",
  "valuable",
@@ -9345,9 +9356,9 @@ checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
 
 [[package]]
 name = "trybuild"
-version = "1.0.59"
+version = "1.0.60"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "606ab3fe0065741fdbb51f64bcb6ba76f13fad49f1723030041826c631782764"
+checksum = "0da18123d1316f5a65fc9b94e30a0fcf58afb1daff1b8e18f41dc30f5bfc38c8"
 dependencies = [
  "glob",
  "once_cell",
@@ -9695,7 +9706,7 @@ dependencies = [
 [[package]]
 name = "vdf"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?branch=v6#e820dd28fe95763fc81b57e6d74c9c0c0d0bdc8a"
+source = "git+https://github.com/OLSF/libra?branch=v6#507e69124419344b75f45facc43c92604ac72319"
 dependencies = [
  "bit-vec 0.5.1",
  "classgroup 0.1.0 (git+https://github.com/OLSF/libra?branch=v6)",
@@ -10072,7 +10083,7 @@ dependencies = [
 [[package]]
 name = "workspace-hack"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?branch=v6#ce350934a934a263659b3c12d1c00f8bd7b01250"
+source = "git+https://github.com/OLSF/move-0L?branch=v6#087148a083076ddbb8b55ed0db343d235ab27cce"
 dependencies = [
  "arrayvec 0.5.2",
  "block-buffer 0.9.0",
