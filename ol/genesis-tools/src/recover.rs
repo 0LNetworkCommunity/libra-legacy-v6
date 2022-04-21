@@ -34,11 +34,12 @@ pub enum AccountRole {
     EndUser,
 }
 
+
 /// Wallet type
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WalletType {
     ///
-    None,
+    Normal,
     ///
     Slow,
     ///

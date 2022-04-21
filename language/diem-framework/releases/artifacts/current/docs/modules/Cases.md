@@ -84,9 +84,15 @@ set and/or jailed. To be compliant, validators must be BOTH validating and minin
 <pre><code><b>public</b> <b>fun</b> <a href="Cases.md#0x1_Cases_get_case">get_case</a>(
     vm: &signer, node_addr: address, height_start: u64, height_end: u64
 ): u64 {
+
+    // this is a failure mode. Only usually seen in rescue missions, <b>where</b> epoch counters are reconfigured by writeset offline.
+    <b>if</b> (height_end &lt; height_start) <b>return</b> <a href="Cases.md#0x1_Cases_VALIDATOR_DOUBLY_NOT_COMPLIANT">VALIDATOR_DOUBLY_NOT_COMPLIANT</a>;
+
     <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
     // did the validator sign blocks above threshold?
+
     <b>let</b> signs = <a href="Stats.md#0x1_Stats_node_above_thresh">Stats::node_above_thresh</a>(vm, node_addr, height_start, height_end);
+
     <b>let</b> mines = <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(node_addr);
 
     <b>if</b> (signs && mines) {

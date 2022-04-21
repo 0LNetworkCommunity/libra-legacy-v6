@@ -13,6 +13,8 @@ module Epoch {
   use 0x1::Globals;
   use 0x1::DiemConfig;
   use 0x1::Roles;
+  use 0x1::Testnet;
+  use 0x1::StagingNet;
 
   /// Contains timing info for the current epoch
   /// epoch: the epoch number
@@ -40,10 +42,22 @@ module Epoch {
 
   /// Check to see if epoch is finished 
   /// Simply checks if the elapsed time is greater than the epoch time 
-  public fun epoch_finished(): bool acquires Timer {
-      let epoch_secs = Globals::get_epoch_length();
+  public fun epoch_finished(height_now: u64): bool acquires Timer {
       let time = borrow_global<Timer>(CoreAddresses::DIEM_ROOT_ADDRESS());
-      DiemTimestamp::now_seconds() > (epoch_secs + time.seconds_start)
+      let epoch_secs = Globals::get_epoch_length();
+
+      // we targe 24hrs for block production.
+      // there are failure cases when there is a halt, and nodes have been offline for all of the 24hrs, producing a new epoch upon restart leads to further failures. So we check that a meaninful amount of blocks have been created too.
+      let enough_blocks = if (Testnet::is_testnet() || StagingNet::is_staging_net()) {
+        true
+      } else {
+        // adding the check that we need at least 10K blocks for an epoch to turn over.
+        (height_now > time.height_start + 10000)
+      };
+
+      (DiemTimestamp::now_seconds() > (epoch_secs + time.seconds_start)) &&
+      enough_blocks
+      
   }
 
   // Function code:02

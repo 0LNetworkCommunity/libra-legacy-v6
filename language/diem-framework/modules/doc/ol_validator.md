@@ -8,7 +8,6 @@
 -  [Constants](#@Constants_0)
 -  [Function `ol_reconfig_bulk_update_setup`](#0x1_ValidatorScripts_ol_reconfig_bulk_update_setup)
 -  [Function `join`](#0x1_ValidatorScripts_join)
--  [Function `leave`](#0x1_ValidatorScripts_leave)
 -  [Function `val_add_self`](#0x1_ValidatorScripts_val_add_self)
 
 
@@ -124,33 +123,6 @@
     // <b>if</b> is jailed, try <b>to</b> unjail
     <b>if</b> (<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_jailed">ValidatorUniverse::is_jailed</a>(addr)) {
         <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_unjail_self">ValidatorUniverse::unjail_self</a>(&validator);
-    };
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_ValidatorScripts_leave"></a>
-
-## Function `leave`
-
-
-
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_leave">leave</a>(validator: signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_leave">leave</a>(validator: signer) {
-    <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&validator);
-    <b>if</b> (<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(addr)) {
-        <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_remove_self">ValidatorUniverse::remove_self</a>(&validator);
     };
 }
 </code></pre>
