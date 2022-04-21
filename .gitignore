@@ -60,3 +60,5 @@ key_store.json
 
 #vs code
 .vscode/
+
+*.swp

@@ -319,4 +319,7 @@ pub enum NativeCostIndex {
     VDF_VERIFY = 18,
     VDF_PARSE = 19,
     DECIMAL = 20,
+    KECCAK_256 = 21,
+    ETH_SIGNATURE_RECOVER = 22,
+    ETH_SIGNATURE_VERIFY = 23,
 }
