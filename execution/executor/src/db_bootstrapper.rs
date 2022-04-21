@@ -134,10 +134,7 @@ pub fn calculate_genesis<V: VMExecutor>(
         let next_epoch = epoch
             .checked_add(1)
             .ok_or_else(|| format_err!("integer overflow occurred"))?;
-        
-        dbg!(&next_epoch);
-        dbg!("epoch", &get_state_epoch(&state_view)?);
-
+            
         ensure!(
             next_epoch == get_state_epoch(&state_view)?,
             "Genesis txn didn't bump epoch."

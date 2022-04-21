@@ -25,6 +25,9 @@ module EpochBoundary {
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
     use 0x1::ValidatorUniverse;
+    use 0x1::Testnet;
+    use 0x1::StagingNet;
+
     use 0x1::Debug::print;
 
     struct DebugMode has copy, key, drop, store{
@@ -61,7 +64,6 @@ module EpochBoundary {
       }
     }
 
-    // use 0x1::Debug::print;
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) acquires DebugMode{
@@ -88,13 +90,18 @@ module EpochBoundary {
         print(&300360);
 
         let proposed_set = propose_new_set(vm, height_start, height_now);
-        
+        print(&300370);
+
         // Update all slow wallet limits
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
+        print(&300380);
 
-        proof_of_burn(vm,nominal_subsidy_per);
-        
-        reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
+        proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
+        print(&300390);
+
+        reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
+        print(&300391);
+
     }
 
     // process fullnode subsidy
@@ -206,34 +213,67 @@ module EpochBoundary {
         // Migrate TowerState list from elegible.
         TowerState::reconfig(vm, &outgoing_compliant);
 
-        // Reconfigure the network
-        DiemSystem::bulk_update_validators(vm, proposed_set);
-
         // process community wallets
         DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
         
         // reset counters
         AutoPay::reconfig_reset_tick(vm);
+
         Epoch::reset_timer(vm, height_now);
+
+        // Reconfig should be the last event.
+
+        // Reconfigure the network
+        DiemSystem::bulk_update_validators(vm, proposed_set);
+
+
     }
 
     // NOTE: this was previously in propose_new_set since it used the same loop.
     // copied implementation from Teams proposal.
-    fun proof_of_burn(vm: &signer, nominal_subsidy_per: u64) {
+    fun proof_of_burn(vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector<address>) {
+        print(&300400);
         CoreAddresses::assert_vm(vm);
+        DiemAccount::migrate_cumu_deposits(vm); // may need to populate data on a migration.
+
         Burn::reset_ratios(vm);
+        print(&300410);
 
         let burn_value = nominal_subsidy_per / 2; // 50% of the current per validator reward
-        let all_vals = ValidatorUniverse::get_eligible_validators(vm);
-        print(&all_vals);
+        print(&300420);
+
+        let vals_to_burn = if (
+          !Testnet::is_testnet() &&
+          !StagingNet::is_staging_net() &&
+          DiemConfig::get_current_epoch() > 185
+        ) {
+          print(&300421);
+
+          &ValidatorUniverse::get_eligible_validators(vm)
+        } else {
+          print(&300422);
+
+          proposed_set
+        };
+        print(&300430);
+
+        // print(vals_to_burn);
         let i = 0;
-        while (i < Vector::length<address>(&all_vals)) {
-          let addr = *Vector::borrow(&all_vals, i);
-          print(&addr);
+        while (i < Vector::length<address>(vals_to_burn)) {
+          print(&300431);
+          let addr = *Vector::borrow(vals_to_burn, i);
+          // print(&addr);
+          print(&300432);
 
           Burn::epoch_start_burn(vm, addr, burn_value);
+          print(&300433);
+
           i = i + 1;
         };
+        
+        print(&300440);
+
     }
+
 }
 }

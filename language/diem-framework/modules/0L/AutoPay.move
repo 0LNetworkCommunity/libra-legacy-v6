@@ -19,7 +19,7 @@ address 0x1 {
     use 0x1::Errors;
     use 0x1::Wallet;
     use 0x1::Roles;
-    // use 0x1::DiemTimestamp;
+    use 0x1::Debug::print;
 
     /// Attempted to send funds to an account that does not exist
     /// Maximum value for the Payment type selection
@@ -97,7 +97,7 @@ address 0x1 {
     // 1: amt% of inflow until end_epoch 
     // 2: amt gas until end_epoch
     // 3: amt gas, one time payment
-    struct Payment has drop, store {
+    struct Payment has drop, store, copy {
       uid: u64,
       in_type: u8,
       payee: address,
@@ -180,6 +180,7 @@ address 0x1 {
       let account_list = &borrow_global<AccountList>(
         CoreAddresses::DIEM_ROOT_ADDRESS()
       ).accounts;
+      print(account_list);
       let accounts_length = Vector::length<address>(account_list);
       let account_idx = 0;
       while (account_idx < accounts_length) {
@@ -196,7 +197,6 @@ address 0x1 {
     ) acquires UserAutoPay {
       Roles::assert_diem_root(vm);
       if (!exists<UserAutoPay>(*account_addr)) return;
-
       // Get the payment list from the account
       let my_autopay_state = borrow_global_mut<UserAutoPay>(*account_addr);
       let payments = &mut my_autopay_state.payments;
@@ -214,6 +214,7 @@ address 0x1 {
         // Make a payment if one is required/allowed
         let delete_payment = process_autopay_payment(vm, account_addr, payment, bal_change_since_last_run);
         // Delete any expired payments and increment idx (or decrement list size)
+
         if (delete_payment == true) {
           Vector::remove<Payment>(payments, payments_idx);
           payments_len = payments_len - 1;
@@ -397,6 +398,19 @@ address 0x1 {
 
       let payments = &mut borrow_global_mut<UserAutoPay>(addr).payments;
       Vector::remove<Payment>(payments, Option::extract<u64>(&mut index));
+    }
+
+    // Deletes the instruction with uid from the sender's account
+    // Function code 010105
+    public fun migrate_instructions(account: &signer) acquires UserAutoPay, Data {
+      let addr = Signer::address_of(account);
+      if (!exists<Data>(addr) || !exists<UserAutoPay>(addr)) return;
+
+      let old = borrow_global_mut<Data>(addr);
+      let new = borrow_global_mut<UserAutoPay>(addr);
+      new.payments = *&old.payments;
+
+      old.payments = Vector::empty();
     }
 
     ///////////////////////////////

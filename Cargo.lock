@@ -1764,7 +1764,7 @@ dependencies = [
 
 [[package]]
 name = "diem-config"
-version = "5.0.11"
+version = "5.1.0"
 dependencies = [
  "bcs",
  "diem-crypto",
@@ -1881,7 +1881,7 @@ dependencies = [
  "generate-key",
  "hex 0.4.3",
  "rand 0.8.4",
- "reqwest",
+ "reqwest 0.11.2",
  "serde",
  "serde_json",
  "structopt 0.3.21",
@@ -2221,7 +2221,7 @@ dependencies = [
 
 [[package]]
 name = "diem-management"
-version = "5.0.11"
+version = "5.1.0"
 dependencies = [
  "anyhow",
  "bcs",
@@ -2340,7 +2340,7 @@ dependencies = [
 
 [[package]]
 name = "diem-node"
-version = "5.0.11"
+version = "5.1.0"
 dependencies = [
  "backup-service",
  "consensus",
@@ -6021,7 +6021,7 @@ dependencies = [
 
 [[package]]
 name = "ol"
-version = "5.0.11"
+version = "5.1.0"
 dependencies = [
  "abscissa_core",
  "abscissa_tokio",
@@ -6059,7 +6059,7 @@ dependencies = [
  "move-binary-format",
  "move-core-types",
  "move-vm-types",
- "nix 0.20.0",
+ "nix 0.18.0",
  "num-format",
  "ol-keys",
  "ol-types",
@@ -6146,7 +6146,7 @@ dependencies = [
  "ol-keys",
  "once_cell",
  "rand 0.8.4",
- "reqwest",
+ "reqwest 0.11.2",
  "rustyline 6.3.0",
  "serde",
  "serde_json",
@@ -6168,7 +6168,7 @@ dependencies = [
 
 [[package]]
 name = "onboard"
-version = "5.0.11"
+version = "5.1.0"
 dependencies = [
  "abscissa_core",
  "anyhow",
@@ -6182,7 +6182,7 @@ dependencies = [
  "diem-wallet",
  "dirs 2.0.2",
  "gumdrop 0.7.0",
- "hex 0.4.3",
+ "hex 0.3.2",
  "ol",
  "ol-keys",
  "ol-types",
@@ -6193,7 +6193,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "toml",
- "tower 5.0.11",
+ "tower 5.1.0",
  "txs",
  "wait-timeout",
  "zip",
@@ -8994,7 +8994,7 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f57eb36ecbe0fc510036adff84824dd3c24bb781e21bfa67b69d556aa85214f"
 dependencies = [
- "pin-project",
+ "pin-project 1.0.5",
  "rand 0.8.4",
  "tokio 1.11.0",
 ]
@@ -9105,9 +9105,9 @@ checksum = "f715efe02c0862926eb463e49368d38ddb119383475686178e32e26d15d06a66"
 dependencies = [
  "futures-core",
  "futures-util",
- "pin-project",
+ "pin-project 1.0.5",
  "tokio 1.11.0",
- "tokio-util",
+ "tokio-util 0.6.4",
  "tower-layer",
  "tower-service",
  "tracing",
@@ -9115,7 +9115,7 @@ dependencies = [
 
 [[package]]
 name = "tower"
-version = "5.0.11"
+version = "5.1.0"
 dependencies = [
  "abscissa_core",
  "ajson",
@@ -9339,7 +9339,7 @@ dependencies = [
 
 [[package]]
 name = "txs"
-version = "5.0.11"
+version = "5.1.0"
 dependencies = [
  "abscissa_core",
  "ajson",

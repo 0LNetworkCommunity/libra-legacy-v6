@@ -3272,6 +3272,23 @@ module DiemAccount {
       exists<CumulativeDeposits>(addr)
     }
 
+    public fun migrate_cumu_deposits(vm: &signer) acquires Balance {
+      CoreAddresses::assert_vm(vm);
+      let list = Wallet::get_comm_list();
+      let i = 0;
+      while (i < Vector::length<address>(&list)) {
+        let addr = Vector::borrow(&list, i);
+        if (!exists<CumulativeDeposits>(*addr)) {
+          let sig = create_signer(*addr);
+          let current_bal = balance<GAS>(*addr);
+
+          init_cumulative_deposits(&sig, current_bal);
+        };
+        i = i + 1;
+      }
+      
+    }
+
 
     //////// SLOW WALLETS ////////
     // Slow wallets have a limited amount available to spend at every epoch.

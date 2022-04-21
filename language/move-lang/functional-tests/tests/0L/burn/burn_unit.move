@@ -2,6 +2,24 @@
 //! account: bob, 1000000GAS
 //! account: carol, 1000000GAS
 
+
+//! new-transaction
+//! sender: alice
+script {
+    use 0x1::Burn;
+
+
+    fun main(sender: signer) {
+      // alice chooses a pure burn for all burns.
+      Burn::set_send_community(&sender, false);
+    }
+}
+
+// check: EXECUTED
+
+
+
+
 //! new-transaction
 //! sender: bob
 script {
@@ -42,6 +60,8 @@ script {
 
 // // check: EXECUTED
 
+
+
 //! new-transaction
 //! sender: diemroot
 script {
@@ -50,6 +70,8 @@ script {
   use 0x1::Burn;
   use 0x1::Vector;
   use 0x1::FixedPoint32;
+
+  use 0x1::Debug::print;
 
   fun main(vm: signer) {
     // send to community wallet Bob
@@ -76,10 +98,16 @@ script {
     Burn::epoch_start_burn(&vm, @{{alice}}, 100000);
 
     let bal_alice = DiemAccount::balance<GAS>(@{{alice}});
-    assert(bal_alice == 1200000, 7357007); // rounding issues
+    print(&bal_alice);
+    assert(
+      (bal_alice >= 1199999 &&
+      bal_alice <= 1200001)
+      , 7357007); // rounding issues
     
     // unchanged balance
     let bal_bob = DiemAccount::balance<GAS>(@{{bob}});
+    print(&bal_bob);
+
     assert(bal_bob == bal_bob_old, 7357008);
 
     // unchanged balance
