@@ -157,6 +157,16 @@ pub fn ol_writeset_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
 /// create the upgrade payload INCLUDING the epoch reconfigure
 pub fn ol_writeset_set_testnet(path: PathBuf) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
+    let testnet = ol_staging_net_changeset(path.clone()).unwrap();
+
+    let reconfig = ol_reconfig_changeset(path).unwrap();
+
+    WriteSetPayload::Direct(merge_change_set(testnet, reconfig).unwrap())
+}
+
+/// create the upgrade payload INCLUDING the epoch reconfigure
+pub fn ol_writeset_set_testnet_orig(path: PathBuf) -> WriteSetPayload {
+    // Take the stdlib upgrade change set.
     let testnet = ol_testnet_changeset(path.clone()).unwrap();
 
     let reconfig = ol_reconfig_changeset(path).unwrap();
@@ -780,6 +790,33 @@ fn ol_testnet_changeset(path: PathBuf) -> Result<ChangeSet> {
                 &ModuleId::new(
                     account_config::CORE_CODE_ADDRESS,
                     Identifier::new("Testnet").unwrap(),
+                ),
+                &Identifier::new("initialize").unwrap(),
+                vec![],
+                serialize_values(&args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // TODO: don't use unwraps.
+        Ok(())
+    })
+}
+
+fn ol_staging_net_changeset(path: PathBuf) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+
+    let v = db.get_latest_version()?;
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+        let args = vec![MoveValue::Signer(diem_root_address())];
+
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("StagingNet").unwrap(),
                 ),
                 &Identifier::new("initialize").unwrap(),
                 vec![],

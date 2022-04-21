@@ -197,25 +197,24 @@ address 0x1 {
     ) acquires UserAutoPay {
       Roles::assert_diem_root(vm);
       if (!exists<UserAutoPay>(*account_addr)) return;
-      print(&1);
       // Get the payment list from the account
       let my_autopay_state = borrow_global_mut<UserAutoPay>(*account_addr);
       let payments = &mut my_autopay_state.payments;
       let payments_len = Vector::length<Payment>(payments);
       let payments_idx = 0;
       let pre_run_bal = DiemAccount::balance<GAS>(*account_addr);
-print(&2);
+
       let bal_change_since_last_run = if (pre_run_bal > my_autopay_state.prev_bal) {
         pre_run_bal - my_autopay_state.prev_bal
       } else { 0 };
-print(&3);
+
       // go through the pledges 
       while (payments_idx < payments_len) {
         let payment = Vector::borrow_mut<Payment>(payments, payments_idx);
         // Make a payment if one is required/allowed
         let delete_payment = process_autopay_payment(vm, account_addr, payment, bal_change_since_last_run);
         // Delete any expired payments and increment idx (or decrement list size)
-        print(&4);
+
         if (delete_payment == true) {
           Vector::remove<Payment>(payments, payments_idx);
           payments_len = payments_len - 1;
@@ -224,7 +223,7 @@ print(&3);
           payments_idx = payments_idx + 1;
         };
       };
-print(&5);
+
       my_autopay_state.prev_bal = DiemAccount::balance<GAS>(*account_addr);
 
     }

@@ -44,19 +44,15 @@ module Epoch {
   /// Simply checks if the elapsed time is greater than the epoch time 
   public fun epoch_finished(height_now: u64): bool acquires Timer {
       let time = borrow_global<Timer>(CoreAddresses::DIEM_ROOT_ADDRESS());
-      let epoch_secs = Globals::get_epoch_length();
+      let epoch_secs = 
 
-      // we targe 24hrs for block production.
+      // we target 24hrs for block production.
       // there are failure cases when there is a halt, and nodes have been offline for all of the 24hrs, producing a new epoch upon restart leads to further failures. So we check that a meaninful amount of blocks have been created too.
-      let enough_blocks = if (Testnet::is_testnet() || StagingNet::is_staging_net()) {
-        true
-      } else {
-        // adding the check that we need at least 10K blocks for an epoch to turn over.
-        (height_now > time.height_start + 10000)
-      };
+      let enough_blocks = height_now > (time.height_start + Globals::get_min_blocks_epoch())
 
-      (DiemTimestamp::now_seconds() > (epoch_secs + time.seconds_start)) &&
-      enough_blocks
+      let enough_time = DiemTimestamp::now_seconds() > (time.seconds_start + Globals::get_epoch_length());
+
+      (enough_blocks && enough_time)
       
   }
 
