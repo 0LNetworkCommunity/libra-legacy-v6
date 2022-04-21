@@ -6,6 +6,7 @@ address 0x1 {
         use 0x1::Diem;
         use 0x1::GAS::GAS;
         use 0x1::DiemAccount;
+        use 0x1::Testnet;
 
         struct Balance has key {
             credits: vector<Credit>,
@@ -22,7 +23,9 @@ address 0x1 {
         const EALREADY_PAID: u64 = 22017;
 
 
-        public fun vm_offer_credit(
+        // THIS IS A PRIVATE FUNCTION, which can only be called by testnet, or by the VM.
+        // The intended use is to apply a writeset from a database at rest during a maintenance halt.
+        fun vm_offer_credit(
           vm: &signer,
           account: &signer,
           value: u64,
@@ -53,11 +56,14 @@ address 0x1 {
             let addr = Signer::address_of(account);
             if (!exists<Balance>(addr)) return 0;
 
+            let total_amount = 0;
             let b = borrow_global_mut<Balance>(addr);
             let i = 0;
             while (i < Vector::length(&b.credits)){
               let cred = Vector::borrow_mut(&mut b.credits, i);
-              amount = Diem::value<GAS>(&cred.coins);
+
+              let amount = Diem::value<GAS>(&cred.coins);
+              total_amount = total_amount + amount;
               if (amount > 0 && !cred.claimed) {
                 let to_pay = Diem::withdraw<GAS>(&mut cred.coins, amount);
 
@@ -74,7 +80,7 @@ address 0x1 {
               
               i = i + 1;
             };
-            amount
+            total_amount
         }
 
         public fun claim_one(account: &signer, i: u64): u64 acquires Balance {
@@ -117,6 +123,18 @@ address 0x1 {
           };
 
           val
+        }
+
+        ///////////////////// TEST HELPERS ///////////////////
+
+        public fun test_helper_vm_offer(
+          vm: &signer,
+          account: &signer,
+          value: u64,
+          incident_name: vector<u8>
+        ) acquires Balance {
+          assert(Testnet::is_testnet(), 7357000);
+          vm_offer_credit(vm, account, value, incident_name);
         }
     }
 }
