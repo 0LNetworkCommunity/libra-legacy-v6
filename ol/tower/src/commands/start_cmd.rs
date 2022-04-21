@@ -5,8 +5,9 @@ use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use ol_types::config::AppCfg;
 use ol_types::config::TxType;
+use txs::tx_params::TxParams;
 use std::process::exit;
-use txs::submit_tx::tx_params;
+use diem_logger::{Level, Logger};
 
 /// `start` subcommand
 #[derive(Command, Default, Debug, Options)]
@@ -32,9 +33,18 @@ impl Runnable for StartCmd {
             swarm_path,
             swarm_persona,
             is_operator,
-            use_upstream_url,
+            use_first_url,
             ..
         } = entrypoint::get_args();
+
+        // Setup logger
+        let mut logger = Logger::new();
+        logger
+            .channel_size(1024)
+            .is_async(true)
+            .level(Level::Info)
+            .read_env();
+        logger.build();
 
         // config reading respects swarm setup
         // so also cfg.get_waypoint will return correct data
@@ -52,7 +62,7 @@ impl Runnable for StartCmd {
             waypoint
         };
 
-        let tx_params = tx_params(
+        let tx_params = TxParams::new(
             cfg.clone(),
             url,
             waypoint,
@@ -60,7 +70,7 @@ impl Runnable for StartCmd {
             swarm_persona,
             TxType::Miner,
             is_operator,
-            use_upstream_url,
+            use_first_url,
             None,
         )
         .expect("could not get tx parameters");
@@ -71,7 +81,7 @@ impl Runnable for StartCmd {
             match backlog::process_backlog(&cfg, &tx_params, is_operator) {
                 Ok(()) => status_ok!("Backlog:", "backlog committed to chain"),
                 Err(e) => {
-                    println!("WARN: Failed fetching remote state: {}", e);
+                    println!("WARN: Failed processing backlog: {:?}", e);
                 }
             }
         }

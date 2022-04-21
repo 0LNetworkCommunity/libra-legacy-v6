@@ -73,21 +73,20 @@ pub fn set_operator_key(path: &PathBuf, namespace: &str) {
         OnDiskStorage::new(path.join("key_store.json").to_owned())
     );
     // TODO: Remove hard coded field
-    let field = format!("{}-oper/operator", namespace);
+    let field = format!("{}/operator", namespace);
     let key = storage.get_public_key(&field).unwrap().public_key;
     let peer_id = diem_types::account_address::from_public_key(&key);
     storage.set(OPERATOR_ACCOUNT, peer_id).unwrap();
 }
 
 //////// 0L /////////
-pub fn set_owner_key(path: &PathBuf, namespace: &str) {
+pub fn set_owner_key(path: &PathBuf, namespace: &str, account: AccountAddress) {
     let mut storage = diem_secure_storage::Storage::OnDiskStorage(
         OnDiskStorage::new(path.join("key_store.json").to_owned())
     );
     // let authkey: AuthenticationKey = namespace.parse().unwrap();
     // let account = authkey.derived_address();
-    let account = namespace.parse::<AccountAddress>().unwrap();
-    storage.set(&format!("{}-oper/{}", namespace, OWNER_ACCOUNT), account).unwrap();
+    storage.set(&format!("{}/{}", namespace, OWNER_ACCOUNT), account).unwrap();
     // storage.set(&format!("{}/{}", namespace, OWNER_ACCOUNT), account).unwrap();
 
 }
@@ -98,7 +97,7 @@ pub fn set_waypoint(path: &PathBuf, namespace: &str, waypoint: Waypoint) {
     let mut storage = diem_secure_storage::Storage::OnDiskStorage(
         OnDiskStorage::new(path.join("key_store.json").to_owned())
     );
-    storage.set(&format!("{}-oper/{}", namespace, WAYPOINT), waypoint).unwrap();
+    storage.set(&format!("{}/{}", namespace, WAYPOINT), waypoint).unwrap();
 }
 
 //////// 0L /////////
@@ -106,7 +105,7 @@ pub fn set_genesis_waypoint(path: &PathBuf, namespace: &str, waypoint: Waypoint)
     let mut storage = diem_secure_storage::Storage::OnDiskStorage(
         OnDiskStorage::new(path.join("key_store.json").to_owned())
     );
-    storage.set(&format!("{}-oper/{}", namespace, GENESIS_WAYPOINT), waypoint).unwrap();
+    storage.set(&format!("{}/{}", namespace, GENESIS_WAYPOINT), waypoint).unwrap();
 }
 
 #[derive(Debug, StructOpt)]

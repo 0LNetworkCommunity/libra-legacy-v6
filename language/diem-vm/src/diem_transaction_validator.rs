@@ -88,7 +88,9 @@ impl VMValidator for DiemVMValidator {
             &mut session,
             &txn,
             &remote_cache,
-            true,
+            false, //////// 0L //////// 
+            // possible fix for Dec 15 2021 incident: https://hackmd.io/KY7VklgAR72Bg7ETTQZAxA
+            // hat tip @shb https://discord.com/channels/903339070925721652/916100220855648296/921932021884928030
             &log_context,
         ) {
             Ok((price, _)) => (None, price),

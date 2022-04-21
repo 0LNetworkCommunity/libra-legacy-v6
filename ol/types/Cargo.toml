@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 bcs = "0.1.2"
-diem-config = { path = "../../config/", version = "0.1.0" }
+diem-config = { path = "../../config/"}
 reqwest = { version = "0.11.2", features = ["blocking", "json"], default_features = false }
 diem-types = { path = "../../types/" }
 serde = { version = "1", features = ["serde_derive"] }
@@ -29,3 +29,4 @@ move-core-types = { path = "../../language/move-core/types" }
 sha2 = "0.9.1"
 num-format = "0.4.0"
 glob = "0.3"
+rand = "0.8.4"

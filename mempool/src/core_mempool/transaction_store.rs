@@ -319,6 +319,7 @@ impl TransactionStore {
     }
 
     pub(crate) fn reject_transaction(&mut self, account: &AccountAddress, _sequence_number: u64) {
+        info!("Rejecting transactions for account {}", account);
         if let Some(txns) = self.transactions.remove(&account) {
             let mut txns_log = TxnsLog::new();
             for transaction in txns.values() {

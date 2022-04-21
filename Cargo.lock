@@ -95,7 +95,7 @@ dependencies = [
  "diem-workspace-hack",
  "mirai-annotations",
  "proptest",
- "rand 0.8.3",
+ "rand 0.8.4",
 ]
 
 [[package]]
@@ -385,7 +385,7 @@ dependencies = [
  "once_cell",
  "pin-project 1.0.5",
  "proptest",
- "rand 0.8.3",
+ "rand 0.8.4",
  "regex",
  "reqwest 0.11.2",
  "serde",
@@ -618,7 +618,7 @@ dependencies = [
  "num 0.4.0",
  "once_cell",
  "pretty",
- "rand 0.8.3",
+ "rand 0.8.4",
  "regex",
  "serde",
  "serde_json",
@@ -1107,7 +1107,7 @@ dependencies = [
  "network-builder",
  "num_cpus",
  "once_cell",
- "rand 0.8.3",
+ "rand 0.8.4",
  "regex",
  "reqwest 0.11.2",
  "rusoto_autoscaling",
@@ -1234,7 +1234,7 @@ dependencies = [
  "num-traits",
  "once_cell",
  "proptest",
- "rand 0.8.3",
+ "rand 0.8.4",
  "safety-rules",
  "schemadb",
  "serde",
@@ -1764,7 +1764,7 @@ dependencies = [
 
 [[package]]
 name = "diem-config"
-version = "0.1.0"
+version = "5.0.11"
 dependencies = [
  "bcs",
  "diem-crypto",
@@ -1779,7 +1779,7 @@ dependencies = [
  "get_if_addrs",
  "log",
  "mirai-annotations",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "serde_yaml",
  "short-hex-str",
@@ -1808,7 +1808,7 @@ dependencies = [
  "once_cell",
  "proptest",
  "proptest-derive",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rand_core 0.6.2",
  "ripemd160",
  "serde",
@@ -1880,8 +1880,8 @@ dependencies = [
  "diem-workspace-hack",
  "generate-key",
  "hex 0.4.3",
- "rand 0.8.3",
- "reqwest 0.11.2",
+ "rand 0.8.4",
+ "reqwest",
  "serde",
  "serde_json",
  "structopt 0.3.21",
@@ -1977,7 +1977,7 @@ dependencies = [
  "once_cell",
  "proptest",
  "proptest-derive",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rusty-fork",
  "safety-rules",
  "scratchpad",
@@ -2017,7 +2017,7 @@ dependencies = [
  "hex 0.4.3",
  "ol-keys",
  "ol-types",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rustyline 6.3.0",
  "serde",
  "serde_json",
@@ -2073,7 +2073,7 @@ dependencies = [
  "once_cell",
  "proptest",
  "proptest-derive",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "thiserror",
 ]
@@ -2114,7 +2114,7 @@ dependencies = [
  "ol-types",
  "once_cell",
  "proptest",
- "rand 0.8.3",
+ "rand 0.8.4",
  "regex",
  "reqwest 0.11.2",
  "scratchpad",
@@ -2137,7 +2137,7 @@ dependencies = [
  "diem-types",
  "diem-workspace-hack",
  "futures",
- "rand 0.8.3",
+ "rand 0.8.4",
 ]
 
 [[package]]
@@ -2184,7 +2184,7 @@ dependencies = [
  "executor-types",
  "futures",
  "once_cell",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "storage-interface",
  "thiserror",
@@ -2221,7 +2221,7 @@ dependencies = [
 
 [[package]]
 name = "diem-management"
-version = "0.1.0"
+version = "5.0.11"
 dependencies = [
  "anyhow",
  "bcs",
@@ -2273,7 +2273,7 @@ dependencies = [
  "network",
  "once_cell",
  "proptest",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rayon",
  "serde",
  "serde_json",
@@ -2324,7 +2324,7 @@ dependencies = [
  "diem-secure-storage",
  "diem-types",
  "diem-workspace-hack",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "thiserror",
 ]
@@ -2340,7 +2340,7 @@ dependencies = [
 
 [[package]]
 name = "diem-node"
-version = "0.1.0"
+version = "5.0.11"
 dependencies = [
  "backup-service",
  "consensus",
@@ -2401,7 +2401,7 @@ dependencies = [
  "itertools 0.10.0",
  "netcore",
  "network",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -2513,7 +2513,7 @@ dependencies = [
  "diem-vault-client",
  "diem-workspace-hack",
  "enum_dispatch",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "serde_json",
  "thiserror",
@@ -2579,7 +2579,7 @@ version = "0.1.0"
 dependencies = [
  "diem-workspace-hack",
  "hex 0.4.3",
- "rand 0.8.3",
+ "rand 0.8.4",
 ]
 
 [[package]]
@@ -2658,7 +2658,7 @@ dependencies = [
  "once_cell",
  "proptest",
  "proptest-derive",
- "rand 0.8.3",
+ "rand 0.8.4",
  "regex",
  "serde",
  "serde_bytes",
@@ -2746,7 +2746,7 @@ dependencies = [
  "hmac 0.10.1",
  "mirai-annotations",
  "pbkdf2",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "sha2 0.9.3",
  "thiserror",
@@ -2793,7 +2793,7 @@ dependencies = [
  "proc-macro2 0.4.30",
  "prost",
  "quote 0.6.13",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rand_core 0.5.1",
  "regex",
  "regex-syntax",
@@ -2820,11 +2820,13 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
+ "cli",
  "diem-crypto",
  "diem-crypto-derive",
  "diem-framework",
  "diem-framework-releases",
  "diem-state-view",
+ "diem-transaction-builder",
  "diem-transaction-replay",
  "diem-types",
  "diem-validator-interface",
@@ -2838,7 +2840,9 @@ dependencies = [
  "move-vm-runtime",
  "move-vm-test-utils",
  "move-vm-types",
+ "ol-types",
  "once_cell",
+ "resource-viewer",
  "serde",
  "serde_json",
  "structopt 0.3.21",
@@ -2872,7 +2876,7 @@ dependencies = [
  "once_cell",
  "proptest",
  "proptest-derive",
- "rand 0.8.3",
+ "rand 0.8.4",
  "schemadb",
  "serde",
  "storage-interface",
@@ -2893,7 +2897,7 @@ dependencies = [
  "diemdb",
  "indicatif",
  "itertools 0.10.0",
- "rand 0.8.3",
+ "rand 0.8.4",
  "storage-interface",
  "structopt 0.3.21",
 ]
@@ -3113,7 +3117,7 @@ checksum = "97c6ac152eba578c1c53d2cefe8ad02e239e3d6f971b0f1ef3cb54cd66037fa0"
 dependencies = [
  "curve25519-dalek-fiat",
  "ed25519",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "serde_bytes",
  "sha2 0.9.3",
@@ -3354,7 +3358,7 @@ dependencies = [
  "executor",
  "executor-test-helpers",
  "executor-types",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "storage-client",
  "thiserror",
@@ -3390,7 +3394,7 @@ dependencies = [
  "move-core-types",
  "once_cell",
  "proptest",
- "rand 0.8.3",
+ "rand 0.8.4",
  "scratchpad",
  "serde",
  "serde_json",
@@ -3416,7 +3420,7 @@ dependencies = [
  "executor",
  "executor-types",
  "itertools 0.10.0",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rayon",
  "storage-client",
  "storage-interface",
@@ -3440,7 +3444,7 @@ dependencies = [
  "diemdb",
  "executor",
  "executor-types",
- "rand 0.8.3",
+ "rand 0.8.4",
  "storage-interface",
  "storage-service",
  "tempfile",
@@ -3564,7 +3568,7 @@ dependencies = [
  "futures",
  "generate-key",
  "itertools 0.10.0",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rand_core 0.6.2",
  "reqwest 0.11.2",
  "serde_json",
@@ -3783,7 +3787,7 @@ dependencies = [
  "diem-workspace-hack",
  "move-core-types",
  "network",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "serde-reflection",
  "serde_yaml",
@@ -3798,7 +3802,7 @@ dependencies = [
  "diem-crypto",
  "diem-temppath",
  "diem-workspace-hack",
- "rand 0.8.3",
+ "rand 0.8.4",
 ]
 
 [[package]]
@@ -4829,7 +4833,7 @@ dependencies = [
  "once_cell",
  "proptest",
  "proptest-derive",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "structopt 0.3.21",
  "vm-genesis",
@@ -5137,7 +5141,7 @@ dependencies = [
  "move-binary-format",
  "move-core-types",
  "move-ir-types",
- "rand 0.8.3",
+ "rand 0.8.4",
 ]
 
 [[package]]
@@ -5215,7 +5219,7 @@ dependencies = [
  "once_cell",
  "proptest",
  "proptest-derive",
- "rand 0.8.3",
+ "rand 0.8.4",
  "ref-cast",
  "regex",
  "serde",
@@ -5410,7 +5414,7 @@ dependencies = [
  "num 0.4.0",
  "once_cell",
  "pretty",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "serde_json",
  "shell-words",
@@ -5667,7 +5671,7 @@ dependencies = [
  "pin-project 1.0.5",
  "proptest",
  "proptest-derive",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rand_core 0.6.2",
  "serde",
  "serde_bytes",
@@ -5701,7 +5705,7 @@ dependencies = [
  "netcore",
  "network",
  "network-simple-onchain-discovery",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "subscription-service",
  "tokio 1.11.0",
@@ -5726,7 +5730,7 @@ dependencies = [
  "netcore",
  "network",
  "once_cell",
- "rand 0.8.3",
+ "rand 0.8.4",
  "short-hex-str",
  "subscription-service",
  "tokio 1.11.0",
@@ -6004,7 +6008,7 @@ dependencies = [
  "diem-sdk",
  "diem-workspace-hack",
  "hex 0.4.3",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rand_core 0.6.2",
  "rstest",
  "serde",
@@ -6017,7 +6021,7 @@ dependencies = [
 
 [[package]]
 name = "ol"
-version = "0.1.0"
+version = "5.0.11"
 dependencies = [
  "abscissa_core",
  "abscissa_tokio",
@@ -6033,7 +6037,9 @@ dependencies = [
  "cli",
  "clokwerk",
  "crossterm",
+ "dialoguer",
  "diem-config",
+ "diem-crypto",
  "diem-genesis-tool",
  "diem-global-constants",
  "diem-json-rpc-client",
@@ -6059,7 +6065,7 @@ dependencies = [
  "ol-types",
  "once_cell",
  "port_scanner",
- "rand 0.8.3",
+ "rand 0.8.4",
  "regex",
  "reqwest 0.11.2",
  "resource-viewer",
@@ -6067,6 +6073,7 @@ dependencies = [
  "rustyline 6.3.0",
  "serde",
  "serde_json",
+ "serde_yaml",
  "sm",
  "storage-interface",
  "sysinfo",
@@ -6138,7 +6145,8 @@ dependencies = [
  "num-format",
  "ol-keys",
  "once_cell",
- "reqwest 0.11.2",
+ "rand 0.8.4",
+ "reqwest",
  "rustyline 6.3.0",
  "serde",
  "serde_json",
@@ -6160,19 +6168,21 @@ dependencies = [
 
 [[package]]
 name = "onboard"
-version = "0.1.0"
+version = "5.0.11"
 dependencies = [
  "abscissa_core",
  "anyhow",
  "bcs",
  "criterion",
  "dialoguer",
+ "diem-crypto",
  "diem-genesis-tool",
  "diem-global-constants",
  "diem-types",
  "diem-wallet",
  "dirs 2.0.2",
  "gumdrop 0.7.0",
+ "hex 0.4.3",
  "ol",
  "ol-keys",
  "ol-types",
@@ -6183,7 +6193,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "toml",
- "tower 0.1.0",
+ "tower 5.0.11",
  "txs",
  "wait-timeout",
  "zip",
@@ -6711,7 +6721,7 @@ dependencies = [
  "lazy_static",
  "num-traits",
  "quick-error 2.0.0",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rand_chacha 0.3.0",
  "rand_xorshift",
  "regex-syntax",
@@ -6910,9 +6920,9 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.8.3"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ef9e7e66b4468674bfcb0c81af8b7fa0bb154fa9f28eb840da5c447baeb8d7e"
+checksum = "2e7573632e6454cf6b99d7aac4ccca54be06da05aca2ef7423d22d27d4d4bcd8"
 dependencies = [
  "libc",
  "rand_chacha 0.3.0",
@@ -7589,7 +7599,7 @@ dependencies = [
  "diem-workspace-hack",
  "once_cell",
  "proptest",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rand_core 0.6.2",
  "serde",
  "tempfile",
@@ -7656,7 +7666,7 @@ dependencies = [
  "diem-workspace-hack",
  "itertools 0.10.0",
  "proptest",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rayon",
  "storage-interface",
 ]
@@ -7677,7 +7687,7 @@ dependencies = [
  "diemdb-benchmark",
  "executor-types",
  "itertools 0.10.0",
- "rand 0.8.3",
+ "rand 0.8.4",
  "rayon",
  "scratchpad",
  "storage-interface",
@@ -7702,7 +7712,7 @@ dependencies = [
  "diem-sdk",
  "diem-workspace-hack",
  "once_cell",
- "rand 0.8.3",
+ "rand 0.8.4",
 ]
 
 [[package]]
@@ -7752,7 +7762,7 @@ dependencies = [
  "diem-types",
  "diem-workspace-hack",
  "hex 0.4.3",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde_yaml",
  "structopt 0.3.21",
  "thiserror",
@@ -8250,7 +8260,7 @@ dependencies = [
  "num-traits",
  "once_cell",
  "proptest",
- "rand 0.8.3",
+ "rand 0.8.4",
  "regex",
  "rust_decimal",
  "rusty-fork",
@@ -8283,7 +8293,7 @@ dependencies = [
  "netcore",
  "network",
  "network-builder",
- "rand 0.8.3",
+ "rand 0.8.4",
  "tokio 1.11.0",
  "tokio-util 0.6.4",
 ]
@@ -8355,7 +8365,7 @@ dependencies = [
  "network-builder",
  "once_cell",
  "proptest",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "storage-interface",
  "storage-service",
@@ -8480,7 +8490,7 @@ dependencies = [
  "futures",
  "itertools 0.10.0",
  "proptest",
- "rand 0.8.3",
+ "rand 0.8.4",
  "storage-client",
  "storage-interface",
  "tokio 1.11.0",
@@ -8583,7 +8593,7 @@ dependencies = [
  "diem-workspace-hack",
  "hex 0.4.3",
  "move-core-types",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
  "serde_json",
  "structopt 0.3.21",
@@ -8663,7 +8673,7 @@ checksum = "dac1c663cfc93810f88aed9b8941d48cabf856a1b111c29a40439018d870eb22"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
- "rand 0.8.3",
+ "rand 0.8.4",
  "redox_syscall 0.2.5",
  "remove_dir_all",
  "winapi 0.3.9",
@@ -8683,7 +8693,7 @@ dependencies = [
  "percent-encoding",
  "pest",
  "pest_derive",
- "rand 0.8.3",
+ "rand 0.8.4",
  "regex",
  "serde",
  "serde_json",
@@ -8766,7 +8776,7 @@ dependencies = [
  "move-vm-runtime",
  "move-vm-types",
  "num_cpus",
- "rand 0.8.3",
+ "rand 0.8.4",
  "structopt 0.3.21",
 ]
 
@@ -8984,8 +8994,8 @@ version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f57eb36ecbe0fc510036adff84824dd3c24bb781e21bfa67b69d556aa85214f"
 dependencies = [
- "pin-project 1.0.5",
- "rand 0.8.3",
+ "pin-project",
+ "rand 0.8.4",
  "tokio 1.11.0",
 ]
 
@@ -9089,7 +9099,23 @@ dependencies = [
 
 [[package]]
 name = "tower"
-version = "0.1.0"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f715efe02c0862926eb463e49368d38ddb119383475686178e32e26d15d06a66"
+dependencies = [
+ "futures-core",
+ "futures-util",
+ "pin-project",
+ "tokio 1.11.0",
+ "tokio-util",
+ "tower-layer",
+ "tower-service",
+ "tracing",
+]
+
+[[package]]
+name = "tower"
+version = "5.0.11"
 dependencies = [
  "abscissa_core",
  "ajson",
@@ -9135,22 +9161,6 @@ dependencies = [
  "vdf",
  "vm-genesis",
  "wait-timeout",
-]
-
-[[package]]
-name = "tower"
-version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f715efe02c0862926eb463e49368d38ddb119383475686178e32e26d15d06a66"
-dependencies = [
- "futures-core",
- "futures-util",
- "pin-project 1.0.5",
- "tokio 1.11.0",
- "tokio-util 0.6.4",
- "tower-layer",
- "tower-service",
- "tracing",
 ]
 
 [[package]]
@@ -9302,7 +9312,7 @@ dependencies = [
  "httparse",
  "input_buffer",
  "log",
- "rand 0.8.3",
+ "rand 0.8.4",
  "sha-1 0.9.4",
  "url",
  "utf-8",
@@ -9329,7 +9339,7 @@ dependencies = [
 
 [[package]]
 name = "txs"
-version = "0.1.0"
+version = "5.0.11"
 dependencies = [
  "abscissa_core",
  "ajson",
@@ -9648,7 +9658,7 @@ dependencies = [
  "once_cell",
  "proptest",
  "proptest-derive",
- "rand 0.8.3",
+ "rand 0.8.4",
  "serde",
 ]
 
@@ -9669,7 +9679,7 @@ dependencies = [
  "executor-test-helpers",
  "fail",
  "move-core-types",
- "rand 0.8.3",
+ "rand 0.8.4",
  "scratchpad",
  "storage-interface",
  "storage-service",

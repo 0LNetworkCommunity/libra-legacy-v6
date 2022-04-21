@@ -179,7 +179,7 @@ impl OnDiskStateView {
     /// Returns Err if the path does not hold a resource value or the resource cannot be deserialized
     pub fn view_resource(&self, resource_path: &Path) -> Result<Option<AnnotatedMoveStruct>> {
         if resource_path.is_dir() {
-            bail!("Bad resource path {:?}. Needed file, found directory")
+            bail!("Bad resource path {:?}. Needed file, found directory", resource_path)
         }
         match resource_path.file_stem() {
             None => bail!(
@@ -224,7 +224,7 @@ impl OnDiskStateView {
     fn view_bytecode(path: &Path, is_module: bool) -> Result<Option<String>> {
         type Loc = u64;
         if path.is_dir() {
-            bail!("Bad bytecode path {:?}. Needed file, found directory")
+            bail!("Bad bytecode path {:?}. Needed file, found directory", path)
         }
 
         Ok(match Self::get_bytes(path)? {

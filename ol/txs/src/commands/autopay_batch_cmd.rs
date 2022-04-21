@@ -11,7 +11,8 @@ use crate::{
     entrypoint, 
     prelude::app_config, 
     sign_tx::sign_tx, 
-    submit_tx::{tx_params_wrapper, batch_wrapper, TxParams}
+    submit_tx::{tx_params_wrapper, batch_wrapper},
+    tx_params::TxParams,
 };
 use dialoguer::Confirm;
 use std::{path::PathBuf, process::exit};
@@ -49,7 +50,7 @@ impl Runnable for AutopayBatchCmd {
             },
         };
         println!("Latest Autopay id: {:?}", &start_id);
-        node.refresh_chain_info();
+        node.refresh_chain_info().unwrap();
         let epoch = node.vitals.chain_view.unwrap().epoch;
         println!("The current epoch is: {}\n", epoch);
         

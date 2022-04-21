@@ -24,10 +24,10 @@ to synchronize configuration changes for the validators.
 -  [Function `publish_new_config`](#0x1_DiemConfig_publish_new_config)
 -  [Function `reconfigure`](#0x1_DiemConfig_reconfigure)
 -  [Function `reconfigure_`](#0x1_DiemConfig_reconfigure_)
+-  [Function `upgrade_reconfig`](#0x1_DiemConfig_upgrade_reconfig)
 -  [Function `emit_genesis_reconfiguration_event`](#0x1_DiemConfig_emit_genesis_reconfiguration_event)
 -  [Function `get_current_epoch`](#0x1_DiemConfig_get_current_epoch)
 -  [Function `get_epoch_transfer_limit`](#0x1_DiemConfig_get_epoch_transfer_limit)
--  [Function `check_transfer_enabled`](#0x1_DiemConfig_check_transfer_enabled)
 -  [Module Specification](#@Module_Specification_1)
     -  [Initialization](#@Initialization_2)
     -  [Invariants](#@Invariants_3)
@@ -40,7 +40,6 @@ to synchronize configuration changes for the validators.
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
-<b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 </code></pre>
 
 
@@ -868,9 +867,9 @@ Private function to do reconfiguration.  Updates reconfiguration status resource
     //
     // Thus, this check <b>ensures</b> that a transaction that does multiple "reconfiguration required" actions emits only
     // one reconfiguration event.
-    //
+
     <b>if</b> (current_time == config_ref.last_reconfiguration_time) {
-        <b>return</b>
+       <b>return</b>
     };
 
     <b>assert</b>(current_time &gt; config_ref.last_reconfiguration_time, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="DiemConfig.md#0x1_DiemConfig_EINVALID_BLOCK_TIME">EINVALID_BLOCK_TIME</a>));
@@ -967,6 +966,44 @@ This schema is to be used by callers of <code>reconfigure</code>
     };
     <b>let</b> handle = config.events;
     emits msg <b>to</b> handle <b>if</b> (!<a href="DiemConfig.md#0x1_DiemConfig_spec_reconfigure_omitted">spec_reconfigure_omitted</a>() && now != config.last_reconfiguration_time);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemConfig_upgrade_reconfig"></a>
+
+## Function `upgrade_reconfig`
+
+Emit a <code><a href="DiemConfig.md#0x1_DiemConfig_NewEpochEvent">NewEpochEvent</a></code>
+this is used only in upgrade scenarios or offline recovery writesets
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_upgrade_reconfig">upgrade_reconfig</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_upgrade_reconfig">upgrade_reconfig</a>(vm: &signer) <b>acquires</b> <a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a> {
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+    <b>assert</b>(<b>exists</b>&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemConfig.md#0x1_DiemConfig_ECONFIGURATION">ECONFIGURATION</a>));
+    <b>let</b> config_ref = borrow_global_mut&lt;<a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
+
+    // Must increment otherwise the diem-nodes lose track due <b>to</b> safety-rules.
+    config_ref.epoch = config_ref.epoch + 1;
+
+    <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_emit_event">Event::emit_event</a>&lt;<a href="DiemConfig.md#0x1_DiemConfig_NewEpochEvent">NewEpochEvent</a>&gt;(
+        &<b>mut</b> config_ref.events,
+        <a href="DiemConfig.md#0x1_DiemConfig_NewEpochEvent">NewEpochEvent</a> {
+            epoch: config_ref.epoch,
+        },
+    );
 }
 </code></pre>
 
@@ -1079,34 +1116,6 @@ emits msg <b>to</b> handle;
       0
     }
 
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_DiemConfig_check_transfer_enabled"></a>
-
-## Function `check_transfer_enabled`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">check_transfer_enabled</a>(): bool
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">check_transfer_enabled</a>(): bool <b>acquires</b> <a href="DiemConfig.md#0x1_DiemConfig_Configuration">Configuration</a> {
-    <b>if</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
-        <b>true</b>
-    } <b>else</b> {
-        <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">get_current_epoch</a>() &gt; <a href="DiemConfig.md#0x1_DiemConfig_TRANSFER_ENABLED_EPOCH">TRANSFER_ENABLED_EPOCH</a>
-    }
 }
 </code></pre>
 

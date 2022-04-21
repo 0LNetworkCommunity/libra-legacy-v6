@@ -2,6 +2,7 @@
 //! account: bob,   1000000GAS, 0, validator
 //! account: alice, 1000000GAS, 0 
 //! account: carol, 1000000GAS, 0 
+//! account: eve,   1000000GAS, 0
 
 // test runs various autopay instruction types to ensure they are being executed as expected
 
@@ -18,6 +19,19 @@ script {
   }
 }
 
+//! new-transaction
+//! sender: eve
+script {
+  use 0x1::Wallet;
+  use 0x1::Vector;
+
+  fun main(sender: signer) {
+    Wallet::set_comm(&sender);
+    let list = Wallet::get_comm_list();
+    assert(Vector::length(&list) == 2, 7357007);
+  }
+}
+
 // check: EXECUTED
 
 // alice commits to paying carol 5% of her inflow each epoch
@@ -31,7 +45,8 @@ script {
     AutoPay::enable_autopay(sender);
     assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
     
-    AutoPay::create_instruction(sender, 1, 1, @{{carol}}, 2, 500);
+    AutoPay::create_instruction(sender, 1, 1, @{{carol}}, 2, 500); //5%
+    AutoPay::create_instruction(sender, 2, 1, @{{eve}}, 2, 1000);  //10%
 
     let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
@@ -40,6 +55,14 @@ script {
     assert(payee == @{{carol}}, 1);
     assert(end_epoch == 2, 1);
     assert(percentage == 500, 1);
+
+    let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
+      Signer::address_of(sender), 2
+    );
+    assert(type == 1, 2);
+    assert(payee == @{{eve}}, 2);
+    assert(end_epoch == 2, 2);
+    assert(percentage == 1000, 2);
   }
 }
 // check: EXECUTED
@@ -124,13 +147,16 @@ script {
   use 0x1::DiemAccount;
   use 0x1::GAS::GAS;
   fun main(_vm: signer) {
-    // alice will have paid 5% on the 10000 she received last epoch
+    // alice will have paid 15% on the 10000 she received last epoch
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    assert(ending_balance == 1009501, 7357004);
+    assert(ending_balance == 1008502, 7357004);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@{{carol}});
     assert(ending_balance == 1000499, 7357005);
+
+    let ending_balance = DiemAccount::balance<GAS>(@{{eve}});
+    assert(ending_balance == 1000999, 7357006);
   }
 }
 // check: EXECUTED

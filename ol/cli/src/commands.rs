@@ -11,15 +11,15 @@
 //! application's configuration file.
 
 pub mod init_cmd;
+pub mod query_cmd;
 mod version;
 mod mgmt_cmd;
 mod serve_cmd;
 mod restore_cmd;
-mod onboard_cmd;
-mod query_cmd;
 mod health_cmd;
 mod pilot_cmd;
 mod start_cmd;
+mod whoami_cmd;
 
 use self::{
     init_cmd::InitCmd,
@@ -27,11 +27,11 @@ use self::{
     mgmt_cmd::MgmtCmd,
     serve_cmd::ServeCmd,
     restore_cmd::RestoreCmd,
-    onboard_cmd::OnboardCmd,
     query_cmd::QueryCmd,
     health_cmd::HealthCmd,
     pilot_cmd::PilotCmd,
     start_cmd::StartCmd,
+    whoami_cmd::WhoamiCmd,
 };
 
 use crate::entrypoint;
@@ -70,11 +70,7 @@ pub enum OlCliCmd {
     /// The `restore` subcommand
     #[options(help = "restore the database from the epoch-archive repository")]
     Restore(RestoreCmd), 
-
-    /// The `onboard` subcommand
-    #[options(help = "onboarding validator actions")]
-    Onboard(OnboardCmd),        
-
+     
     /// The `query` subcommand
     #[options(help = "run simple queries through subcommands, prints the value to stdout")]
     Query(QueryCmd), 
@@ -90,6 +86,10 @@ pub enum OlCliCmd {
     /// The `start` subcommand
     #[options(help = "start 0L services")]
     Start(StartCmd),
+    
+    /// The `whoami` subcommand
+    #[options(help = "show public keys and network protocols")]
+    Whoami(WhoamiCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

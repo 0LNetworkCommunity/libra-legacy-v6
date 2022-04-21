@@ -26,6 +26,7 @@ before and after every transaction.
 -  [Resource `SlowWallet`](#0x1_DiemAccount_SlowWallet)
 -  [Resource `SlowWalletList`](#0x1_DiemAccount_SlowWalletList)
 -  [Constants](#@Constants_0)
+-  [Function `scary_wtf_create_signer`](#0x1_DiemAccount_scary_wtf_create_signer)
 -  [Function `new_escrow`](#0x1_DiemAccount_new_escrow)
 -  [Function `process_escrow`](#0x1_DiemAccount_process_escrow)
 -  [Function `initialize_escrow`](#0x1_DiemAccount_initialize_escrow)
@@ -119,6 +120,7 @@ before and after every transaction.
 
 <pre><code><b>use</b> <a href="AccountFreezing.md#0x1_AccountFreezing">0x1::AccountFreezing</a>;
 <b>use</b> <a href="AccountLimits.md#0x1_AccountLimits">0x1::AccountLimits</a>;
+<b>use</b> <a href="Ancestry.md#0x1_Ancestry">0x1::Ancestry</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/BCS.md#0x1_BCS">0x1::BCS</a>;
 <b>use</b> <a href="ChainId.md#0x1_ChainId">0x1::ChainId</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -150,6 +152,7 @@ before and after every transaction.
 <b>use</b> <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig">0x1::ValidatorOperatorConfig</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
+<b>use</b> <a href="Vouch.md#0x1_Vouch">0x1::Vouch</a>;
 <b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
 <b>use</b> <a href="XUS.md#0x1_XUS">0x1::XUS</a>;
 </code></pre>
@@ -935,6 +938,15 @@ Tried to create a balance for an account whose role does not allow holding balan
 
 
 
+<a name="0x1_DiemAccount_ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE"></a>
+
+
+
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE">ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE</a>: u64 = 120127;
+</code></pre>
+
+
+
 <a name="0x1_DiemAccount_EWITHDRAWAL_EXCEEDS_LIMITS"></a>
 
 The withdrawal of funds would have exceeded the the account's limits
@@ -959,15 +971,6 @@ The withdrawal of funds would have exceeded the the account's limits
 
 
 <pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT">EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT</a>: u64 = 120128;
-</code></pre>
-
-
-
-<a name="0x1_DiemAccount_EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE"></a>
-
-
-
-<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE">EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE</a>: u64 = 120127;
 </code></pre>
 
 
@@ -1130,6 +1133,31 @@ important to the semantics of the system.
 </code></pre>
 
 
+
+<a name="0x1_DiemAccount_scary_wtf_create_signer"></a>
+
+## Function `scary_wtf_create_signer`
+
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_scary_wtf_create_signer">scary_wtf_create_signer</a>(vm: &signer, addr: address): signer
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_scary_wtf_create_signer">scary_wtf_create_signer</a>(vm: &signer, addr: address): signer {
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+    <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(addr)
+}
+</code></pre>
+
+
+
+</details>
 
 <a name="0x1_DiemAccount_new_escrow"></a>
 
@@ -1435,7 +1463,7 @@ Initialize this module. This is only callable from genesis.
     // account will not be created <b>if</b> this step fails.
     <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
     <a href="TowerState.md#0x1_TowerState_init_miner_state">TowerState::init_miner_state</a>(&new_signer, challenge, solution, difficulty, security);
-    // <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_signer);
+    <a href="Ancestry.md#0x1_Ancestry_init">Ancestry::init</a>(sender, &new_signer);
     new_account_address
 }
 </code></pre>
@@ -1470,6 +1498,9 @@ Initialize this module. This is only callable from genesis.
     <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_signer);
     <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_signer, new_account_authkey_prefix);
+
+    <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account);
+    <a href="Ancestry.md#0x1_Ancestry_init">Ancestry::init</a>(sender, &new_signer);
 
     // <b>if</b> the initial coin sent is the minimum amount, don't check transfer limits.
     <b>if</b> (value &lt;= <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>) {
@@ -1603,6 +1634,9 @@ Initialize this module. This is only callable from genesis.
     <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, op_address, <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>);
 
     <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
+
+    <a href="Ancestry.md#0x1_Ancestry_init">Ancestry::init</a>(sender, &new_signer);
+    <a href="Vouch.md#0x1_Vouch_init">Vouch::init</a>(&new_signer);
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_signer);
 
     new_account_address
@@ -1727,6 +1761,9 @@ Initialize this module. This is only callable from genesis.
     // Transfer for operator <b>as</b> well
     <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, op_address, <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>);
     <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
+
+    <a href="Ancestry.md#0x1_Ancestry_init">Ancestry::init</a>(sender, &new_signer);
+    <a href="Vouch.md#0x1_Vouch_init">Vouch::init</a>(&new_signer);
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_signer);
     new_account_address
 }
@@ -1846,7 +1883,7 @@ Depending on the <code>is_withdrawal</code> flag passed in we determine whether 
 Record a payment of <code>to_deposit</code> from <code>payer</code> to <code>payee</code> with the attached <code>metadata</code>
 
 
-<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_deposit">deposit</a>&lt;Token: store&gt;(payer: address, payee: address, to_deposit: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;)
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_deposit">deposit</a>&lt;Token: store&gt;(payer: address, payee: address, to_deposit: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -1855,7 +1892,7 @@ Record a payment of <code>to_deposit</code> from <code>payer</code> to <code>pay
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_deposit">deposit</a>&lt;Token: store&gt;(
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_deposit">deposit</a>&lt;Token: store&gt;(
     payer: address,
     payee: address,
     to_deposit: <a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&gt;,
@@ -2657,9 +2694,7 @@ the sender's account balance.
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">extract_withdraw_capability</a>(
     sender: &signer
 ): <a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCapability</a> <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> {
-    //////// 0L //////// Transfers disabled by default
-    //////// 0L //////// Transfers of 10 <a href="GAS.md#0x1_GAS">GAS</a>
-    //////// 0L //////// enabled when epoch is 1000
+
     <b>let</b> sender_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
 
     /////// 0L /////////
@@ -2670,13 +2705,16 @@ the sender's account balance.
         <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)
     );
     /////// 0L /////////
-    <b>if</b> (!<a href="DiemConfig.md#0x1_DiemConfig_check_transfer_enabled">DiemConfig::check_transfer_enabled</a>()) {
-        // only VM can make TXs <b>if</b> transfers are not enabled.
-        <b>assert</b>(
-            sender_addr == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(),
-            <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE">EWITHDRAWAL_TRANSFERS_DISABLED_SYSTEMWIDE</a>)
-        );
-    };
+    // Slow wallet transfers disabled by default, enabled when epoch is 1000
+    // At that point slow wallets receive 1,000 coins unlocked per day.
+    // <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(sender_addr) && !DiemConfig::check_transfer_enabled() ) {
+    //   // <b>if</b> transfers are not enabled for slow wallets
+    //   // then the tx should fail
+    //     <b>assert</b>(
+    //         <b>false</b>,
+    //         <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE">ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE</a>)
+    //     );
+    // };
     // Abort <b>if</b> we already extracted the unique withdraw capability for this account.
     <b>assert</b>(
         !<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(sender_addr),

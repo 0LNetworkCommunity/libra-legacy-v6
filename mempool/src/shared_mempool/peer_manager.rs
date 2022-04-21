@@ -61,6 +61,7 @@ pub(crate) struct PeerManager {
     peer_states: Mutex<PeerSyncStates>,
     prioritized_peers: Mutex<Vec<PeerNetworkId>>,
 }
+
 /// Identifier for a broadcasted batch of txns.
 /// For BatchId(`start_id`, `end_id`), (`start_id`, `end_id`) is the range of timeline IDs read from
 /// the core mempool timeline index that produced the txns in this batch.
@@ -139,20 +140,9 @@ impl PeerManager {
 
     /// Disables a peer if it can be restarted, otherwise removes it
     pub fn disable_peer(&self, peer: PeerNetworkId) {
-        // Validators can be restarted ata  later time
-        // TODO: Determine why there's this optimization
-        // TODO: What about garbage collection of validators
-        if peer.raw_network_id().is_validator_network() {
-            if let Some(state) = self.peer_states.lock().get_mut(&peer) {
-                counters::active_upstream_peers(&peer.raw_network_id()).dec();
-                state.is_alive = false;
-            }
-        } else {
-            // All other nodes have their state immediately restarted anyways, so let's free them
-            // TODO: Why is the Validator optimization not applied here
-            self.peer_states.lock().remove(&peer);
-            counters::active_upstream_peers(&peer.raw_network_id()).dec();
-        }
+        // Remove all state on the peer, and start over
+        self.peer_states.lock().remove(&peer);
+        counters::active_upstream_peers(&peer.raw_network_id()).dec();
 
         // Always update prioritized peers to be in line with peer states
         self.update_prioritized_peers();

@@ -9,10 +9,14 @@ assignees: ''
 
 # 🐛 Bug
 
-<!-- A clear and concise description of what the bug is.
-To report a security issue, please email security@diem.com. -->
+<!-- A clear and concise description of what the bug is. -->
 
-## To reproduce
+
+## Expected Behavior
+
+<!-- A clear and concise description of what you expected to happen. -->
+
+## Steps To reproduce
 
 **Code snippet to reproduce**
 ```rust
@@ -24,19 +28,3 @@ To report a security issue, please email security@diem.com. -->
 ```
 // Paste the output here
 ```
-
-## Expected Behavior
-
-<!-- A clear and concise description of what you expected to happen. -->
-
-## System information
-
-**Please complete the following information:**
-- <!-- Diem Version -->
-- <!-- Rust Version -->
-- <!-- Computer OS -->
-
-
-## Additional context
-
-Add any other context about the problem here.
