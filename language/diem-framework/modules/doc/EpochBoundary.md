@@ -443,21 +443,10 @@
 
 
 <pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm: &signer, nominal_subsidy_per: u64) {
-    // print(&222201);
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
     <a href="Burn.md#0x1_Burn_reset_ratios">Burn::reset_ratios</a>(vm);
 
-    // LEAVE THIS CODE COMMENTED for future <b>use</b>
-    // TODO: Make the burn value dynamic.
-    // <b>let</b> incoming_count = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&top_accounts) - <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&jailed_set);
-    // <b>let</b> burn_value = <a href="Subsidy.md#0x1_Subsidy_subsidy_curve">Subsidy::subsidy_curve</a>(
-    //   <a href="Globals.md#0x1_Globals_get_subsidy_ceiling_gas">Globals::get_subsidy_ceiling_gas</a>(),
-    //   incoming_count,
-    //   Globals::get_max_node_density()
-    // )/2;
-
-    <b>let</b> burn_value = nominal_subsidy_per/2; // TODO: switch <b>to</b> a variable cost, <b>as</b> above.
-
+    <b>let</b> burn_value = nominal_subsidy_per / 2; // 50% of the current per validator reward
     <b>let</b> all_vals = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
     print(&all_vals);
     <b>let</b> i = 0;

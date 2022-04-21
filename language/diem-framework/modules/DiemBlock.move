@@ -36,7 +36,7 @@ module DiemBlock {
     use 0x1::Migrations;
     use 0x1::Debug::print;
     use 0x1::MigrateAutoPayBal;
-    use 0x1::MakeWhole;
+    // use 0x1::MakeWhole;
     use 0x1::MigrateVouch;
 
     struct BlockMetadata has key {
@@ -134,7 +134,7 @@ module DiemBlock {
           MigrateAutoPayBal::do_it(&vm);
           MigrateVouch::do_it(&vm);
           // Initialize the make whole payment info
-          MakeWhole::make_whole_init(&vm);
+          // MakeWhole::make_whole_init(&vm);
         };    
 
         print(&500100);

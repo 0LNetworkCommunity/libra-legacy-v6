@@ -198,6 +198,13 @@ fn parse_ancestry_file(ancestry_file: PathBuf) -> Result<Vec<AncestrysUnit>>{
     Ok(ancestry_vec)
 }
 
+fn parse_makewhole_file(makewhole_file: PathBuf) -> Result<Vec<MakeWholeUnit>>{
+    let file = fs::File::open(makewhole_file).expect("file should open read only");
+
+    let makewhole_vec: Vec<MakeWholeUnit> = serde_json::from_reader(file).expect("file should be proper JSON");
+    Ok(makewhole_vec)
+}
+
 pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
@@ -215,22 +222,33 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> Wri
     WriteSetPayload::Direct(new_cs)
 }
 
-pub fn ol_writset_encode_migrations(path: PathBuf, ancestry_file: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+pub fn ol_writset_encode_migrations(
+  path: PathBuf,
+  ancestry_file: PathBuf,
+  makewhole_file: PathBuf,
+  vals: Vec<AccountAddress>
+) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
         exit(1)
     };
-
 
     let ancestry = ol_ancestry_migrate(
       path.clone(), 
       parse_ancestry_file(ancestry_file).unwrap()
     ).unwrap();
 
+    let makewhole = ol_makewhole_migrate(
+      path.clone(), 
+      parse_makewhole_file(makewhole_file).unwrap()
+    ).unwrap();
+
+    let vouch = ol_vouch_migrate(path.clone(), vals.clone()).unwrap();
+
     let boundary = ol_force_boundary(path.clone(), vals.clone()).unwrap();
-    let vouch = ol_vouch_migrate(path.clone(), vals).unwrap();
+
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
-    let new_cs = merge_vec_changeset(vec![ancestry, vouch, boundary]).unwrap();
+    let new_cs = merge_vec_changeset(vec![ancestry, makewhole, vouch, boundary]).unwrap();
     // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
     WriteSetPayload::Direct(new_cs)
 }
@@ -311,7 +329,7 @@ pub fn ol_fresh_stlib_changeset(path: PathBuf) -> Result<ChangeSet> {
 // For db backups/snapshots using the backup-cli, the archives are generally made at an epoch boundary. And as such the timestamp will be identical to the last reconfiguration time, and ANY WRITESET USING DB-BOOTSTRAPPER WILL FAIL.
 // This function is used to force a new timestamp in those cases, so that writesets will trigger reconfigs (if that is what is expected/intended).
 
-fn ol_increment_timestamp_changeset(path: PathBuf) -> Result<ChangeSet> {
+fn _ol_increment_timestamp_changeset(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -399,7 +417,7 @@ fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
 
 
 
-fn ol_autopay_migrate(path: PathBuf) -> Result<ChangeSet> {
+fn _ol_autopay_migrate(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -431,6 +449,7 @@ fn ol_autopay_migrate(path: PathBuf) -> Result<ChangeSet> {
 }
 
 fn ol_vouch_migrate(path: PathBuf, val_set: Vec<AccountAddress>) -> Result<ChangeSet> {
+    println!("migrating validator vouch data");
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -482,39 +501,52 @@ fn ol_vouch_migrate(path: PathBuf, val_set: Vec<AccountAddress>) -> Result<Chang
               .unwrap(); // TODO: don't use unwraps.
 
           });
-
           
         Ok(())
     })
 }
 
-fn ol_makewhole_migrate(path: PathBuf) -> Result<ChangeSet> {
+#[derive(Debug, Serialize, Deserialize)]
+struct MakeWholeUnit {
+  address: AccountAddress,
+  value: f64,
+}
+
+fn ol_makewhole_migrate(path: PathBuf, payments: Vec<MakeWholeUnit>) -> Result<ChangeSet> {
+    println!("migrating make whole data");
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
-
-    let start = SystemTime::now();
-    let now = start.duration_since(UNIX_EPOCH)?;
-    let _microseconds = now.as_micros();
-
 
     db.run_session_at_version(v, None, |session| {
         let mut gas_status = GasStatus::new_unmetered();
         let log_context = NoContextLog::new();
 
-        let args = vec![MoveValue::Signer(diem_root_address())];
-          session
-              .execute_function(
-                  &ModuleId::new(
-                      account_config::CORE_CODE_ADDRESS,
-                      Identifier::new("MakeWhole").unwrap(),
-                  ),
-                  &Identifier::new("make_whole_init").unwrap(),
-                  vec![],
-                  serialize_values(&args),
-                  &mut gas_status,
-                  &log_context,
-              )
-              .unwrap(); // TODO: don't use unwraps.
+        payments.iter()
+        .for_each(|p| {
+
+        let scaled = f64::trunc(p.value * 1000000f64) as u64;
+
+        let args = vec![
+          MoveValue::Signer(diem_root_address()),
+          MoveValue::Signer(p.address),
+          MoveValue::U64(scaled),
+          MoveValue::vector_u8("carpe underpayment".as_bytes().to_vec()),
+        ];
+        
+        session
+          .execute_function(
+              &ModuleId::new(
+                  account_config::CORE_CODE_ADDRESS,
+                  Identifier::new("MakeWhole").unwrap(),
+              ),
+              &Identifier::new("vm_offer_credit").unwrap(),
+              vec![],
+              serialize_values(&args),
+              &mut gas_status,
+              &log_context,
+          )
+          .unwrap(); // TODO: don't use unwraps.
+        });
 
         Ok(())
     })
@@ -526,14 +558,10 @@ struct AncestrysUnit {
   ancestry: Vec<AccountAddress>,
 }
 fn ol_ancestry_migrate(path: PathBuf, ancestry_vec: Vec<AncestrysUnit> ) -> Result<ChangeSet> {
+    println!("migrating ancestry data");
+
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
-
-    let start = SystemTime::now();
-    let now = start.duration_since(UNIX_EPOCH)?;
-    let _microseconds = now.as_micros();
-
-
 
     db.run_session_at_version(v, None, |session| {
         let mut gas_status = GasStatus::new_unmetered();
@@ -644,7 +672,7 @@ fn ol_set_epoch_debug_mode(path: PathBuf, vals: Vec<AccountAddress>) -> Result<C
     })
 }
 
-fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
+fn _ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
     println!("encode validators bulk update changeset");
     let db = DiemDebugger::db(path)?;
 

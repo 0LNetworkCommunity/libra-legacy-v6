@@ -12,7 +12,7 @@ DATE = $(shell date "+%Y-%m-%d-%T")
 
 ifndef VALS
 # FOR TEST PURPOSES
-VALS = 46A7A744B5D33C47F6B20766F8088B10
+VALS = ECAF65ADD1B785B0495E3099F4045EC0
 # VALS = ECAF65ADD1B785B0495E3099F4045EC0 46A7A744B5D33C47F6B20766F8088B10 7EC16859C24200D8E074809D252AC740
 endif
 
@@ -52,7 +52,7 @@ tx-epoch-time:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob epoch-time 
 
 tx-migrate:
-	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob migrate ${SOURCE_PATH}/ol/fixtures/rescue/ancestry.json ${VALS}
+	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob migrate ${SOURCE_PATH}/ol/fixtures/rescue/ancestry.json ${SOURCE_PATH}/ol/fixtures/rescue/make_whole.json ${VALS}
 
 # tx-custom:
 # 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${DATA_PATH}/restore/rescue.blob build-custom-script set_testnet.move '{}'

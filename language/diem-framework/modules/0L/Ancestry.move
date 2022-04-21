@@ -29,7 +29,6 @@ address 0x1 {
 
     fun set_tree(new_account_sig: &signer, parent: address ) acquires Ancestry {
       let child = Signer::address_of(new_account_sig);
-        print(&100200);
       let new_tree = Vector::empty<address>(); 
 
       // get the parent's ancestry if initialized.
@@ -37,31 +36,25 @@ address 0x1 {
       if (exists<Ancestry>(parent)) {
         let parent_state = borrow_global_mut<Ancestry>(parent);
         let parent_tree = *&parent_state.tree;
-        print(&100210);
         if (Vector::length<address>(&parent_tree) > 0) {
           Vector::append(&mut new_tree, parent_tree);
         };
-        print(&100220);
       };
 
       // add the parent to the tree
       Vector::push_back(&mut new_tree, parent);
-        print(&100230);
 
       if (!exists<Ancestry>(child)) {
         move_to<Ancestry>(new_account_sig, Ancestry {
           tree: new_tree, 
         });
-        print(&100240);
 
       } else {
         // this is only for migration cases.
         let child_ancestry = borrow_global_mut<Ancestry>(child);
         child_ancestry.tree = new_tree;
-        print(&100250);
 
       };
-      print(&100260);
 
     }
 
@@ -77,43 +70,25 @@ address 0x1 {
     public fun is_family(left: address, right: address): (bool, address) acquires Ancestry {
       let is_family = false;
       let common_ancestor = @0x0;
-      print(&100300);
-      print(&exists<Ancestry>(left));
-      print(&exists<Ancestry>(right));
-
       // if (exists<Ancestry>(left) && exists<Ancestry>(right)) {
         // if tree is empty it will still work.
-        print(&100310);
         let left_tree = get_tree(left);
-        print(&100311);
         let right_tree = get_tree(right);
-
-        
-        print(&100320);
 
         // check for direct relationship.
         if (Vector::contains(&left_tree, &right)) return (true, right);
         if (Vector::contains(&right_tree, &left)) return (true, left);
-
-        
-        
-        print(&100330);
         let i = 0;
         // check every address on the list if there are overlaps.
         while (i < Vector::length<address>(&left_tree)) {
-          print(&100341);
           let family_addr = Vector::borrow(&left_tree, i);
           if (Vector::contains(&right_tree, family_addr)) {
             is_family = true;
             common_ancestor = *family_addr;
-            print(&100342);
             break
           };
           i = i + 1;
         };
-        print(&100350);
-      // };
-      print(&100360);
       (is_family, common_ancestor)
     }
 
@@ -126,13 +101,11 @@ address 0x1 {
         move_to<Ancestry>(child_sig, Ancestry {
           tree: migrate_tree, 
         });
-        print(&100240);
 
       } else {
         // this is only for migration cases.
         let child_ancestry = borrow_global_mut<Ancestry>(child);
         child_ancestry.tree = migrate_tree;
-        print(&100250);
 
       };
     }

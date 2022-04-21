@@ -19,7 +19,6 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
@@ -201,7 +200,6 @@ Structs for UpgradeHistory resource
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Upgrade.md#0x1_Upgrade_upgrade_reconfig">upgrade_reconfig</a>(vm: &signer) <b>acquires</b> <a href="Upgrade.md#0x1_Upgrade_UpgradePayload">UpgradePayload</a> {
-  print(&1111111);
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
     <a href="Upgrade.md#0x1_Upgrade_reset_payload">reset_payload</a>(vm);
     <b>let</b> new_epoch_height = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm) + 2; // This is janky, but there's no other way <b>to</b> get the current block height, unless the prologue gives it <b>to</b> us. The upgrade reconfigure happens on round 2, so we'll increment the new start by 2 from previous.
