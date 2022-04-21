@@ -25,6 +25,9 @@ module EpochBoundary {
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
     use 0x1::ValidatorUniverse;
+    use 0x1::Testnet;
+    use 0x1::StagingNet;
+
     use 0x1::Debug::print;
 
     struct DebugMode has copy, key, drop, store{
@@ -61,7 +64,6 @@ module EpochBoundary {
       }
     }
 
-    // use 0x1::Debug::print;
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) acquires DebugMode{
@@ -92,7 +94,7 @@ module EpochBoundary {
         // Update all slow wallet limits
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
 
-        proof_of_burn(vm,nominal_subsidy_per);
+        proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
         
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
     }
@@ -219,21 +221,31 @@ module EpochBoundary {
 
     // NOTE: this was previously in propose_new_set since it used the same loop.
     // copied implementation from Teams proposal.
-    fun proof_of_burn(vm: &signer, nominal_subsidy_per: u64) {
+    fun proof_of_burn(vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector<address>) {
         CoreAddresses::assert_vm(vm);
         Burn::reset_ratios(vm);
 
         let burn_value = nominal_subsidy_per / 2; // 50% of the current per validator reward
-        let all_vals = ValidatorUniverse::get_eligible_validators(vm);
-        print(&all_vals);
+        let vals_to_burn = if (
+          !Testnet::is_testnet() &&
+          !StagingNet::is_staging_net() &&
+          DiemConfig::get_current_epoch() > 185
+        ) {
+          &ValidatorUniverse::get_eligible_validators(vm)
+        } else {
+          proposed_set
+        };
+        
+        print(vals_to_burn);
         let i = 0;
-        while (i < Vector::length<address>(&all_vals)) {
-          let addr = *Vector::borrow(&all_vals, i);
+        while (i < Vector::length<address>(vals_to_burn)) {
+          let addr = *Vector::borrow(vals_to_burn, i);
           print(&addr);
 
           Burn::epoch_start_burn(vm, addr, burn_value);
           i = i + 1;
         };
     }
+
 }
 }

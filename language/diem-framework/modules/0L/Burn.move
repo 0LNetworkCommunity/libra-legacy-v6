@@ -77,14 +77,18 @@ module Burn {
     FixedPoint32::multiply_u64(value, ratio)
   }
 
+
   public fun epoch_start_burn(vm: &signer, payer: address, value: u64) acquires DepositInfo, BurnPreference {
+    CoreAddresses::assert_vm(vm);
     if (exists<BurnPreference>(payer)) {
       if (borrow_global<BurnPreference>(payer).send_community) {
         return send(vm, payer, value)
+      } else {
+        return burn(vm, payer, value);
       }
-    };
-    
-    burn(vm, payer, value)
+    } else {
+      send(vm, payer, value);
+    }
   }
 
   fun burn(vm: &signer, addr: address, value: u64) {

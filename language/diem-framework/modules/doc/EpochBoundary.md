@@ -218,7 +218,7 @@
     // Update all slow wallet limits
     <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>());
 
-    <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm,nominal_subsidy_per);
+    <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm,nominal_subsidy_per, &proposed_set);
 
     <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, outgoing_compliant_set, height_now)
 }
@@ -433,7 +433,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm: &signer, nominal_subsidy_per: u64)
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector&lt;address&gt;)
 </code></pre>
 
 
@@ -442,16 +442,22 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm: &signer, nominal_subsidy_per: u64) {
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector&lt;address&gt;) {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
     <a href="Burn.md#0x1_Burn_reset_ratios">Burn::reset_ratios</a>(vm);
 
     <b>let</b> burn_value = nominal_subsidy_per / 2; // 50% of the current per validator reward
-    <b>let</b> all_vals = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
-    print(&all_vals);
+    <b>let</b> vals_to_burn = <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() &gt; 185) {
+      &<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm)
+    } <b>else</b> {
+      proposed_set
+    };
+
+
+    print(vals_to_burn);
     <b>let</b> i = 0;
-    <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&all_vals)) {
-      <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&all_vals, i);
+    <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(vals_to_burn)) {
+      <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(vals_to_burn, i);
       print(&addr);
 
       <a href="Burn.md#0x1_Burn_epoch_start_burn">Burn::epoch_start_burn</a>(vm, addr, burn_value);

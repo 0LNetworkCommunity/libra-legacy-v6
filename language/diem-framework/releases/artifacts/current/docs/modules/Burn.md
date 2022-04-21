@@ -229,6 +229,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_epoch_start_burn">epoch_start_burn</a>(vm: &signer, payer: address, value: u64) <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>, <a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
   <b>if</b> (<b>exists</b>&lt;<a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a>&gt;(payer)) {
     <b>if</b> (borrow_global&lt;<a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a>&gt;(payer).send_community) {
       <b>return</b> <a href="Burn.md#0x1_Burn_send">send</a>(vm, payer, value)
