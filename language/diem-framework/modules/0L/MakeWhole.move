@@ -6,7 +6,8 @@ address 0x1 {
         use 0x1::Diem;
         use 0x1::GAS::GAS;
         use 0x1::DiemAccount;
-        // use 0x1::Errors;
+
+        use 0x1::Debug::print;
 
         struct Balance has key {
             credits: vector<Credit>,
@@ -23,22 +24,29 @@ address 0x1 {
         const EALREADY_PAID: u64 = 22017;
 
 
-        public fun vm_offer_credit(vm: &signer, account: &signer, value: u64, incident_name: vector<u8>) acquires Balance {
+        public fun vm_offer_credit(
+          vm: &signer,
+          account: &signer,
+          value: u64,
+          incident_name: vector<u8>
+        ) acquires Balance {
             CoreAddresses::assert_diem_root(vm);
             let addr = Signer::address_of(account);
-
+            print(&addr);
             let cred = Credit {
               incident_name,
               claimed: false,
               coins: Diem::mint<GAS>(vm, value),
             };
 
-            
+            print(&cred);
 
-            if (exists<Balance>(addr)) {
+            if (!exists<Balance>(addr)) {
                 move_to<Balance>(account, Balance {
                   credits: Vector::singleton(cred),
-                })
+                });
+                print(&111111);
+
             } else {
               let c = borrow_global_mut<Balance>(addr);
               Vector::push_back<Credit>(&mut c.credits, cred);
@@ -50,6 +58,8 @@ address 0x1 {
         /// ensures that the caller is the one owed the payment at index i
         public fun claim_make_whole_payment(account: &signer): u64 acquires Balance {
             let addr = Signer::address_of(account);
+            if (!exists<Balance>(addr)) return 0;
+
             let b = borrow_global_mut<Balance>(addr);
             let amount = 0;
             let i = 0;
@@ -77,6 +87,8 @@ address 0x1 {
 
         public fun claim_one(account: &signer, i: u64): u64 acquires Balance {
           let addr = Signer::address_of(account);
+          if (!exists<Balance>(addr)) return 0;
+
           let b = borrow_global_mut<Balance>(addr);
           let cred = Vector::borrow_mut(&mut b.credits, i);
           let value = Diem::value<GAS>(&cred.coins);
@@ -100,6 +112,8 @@ address 0x1 {
         /// queries whether or not a make whole payment is available for addr
         /// returns (amount, index) if a payment exists, else (0, 0)
         public fun query_make_whole_payment(addr: address): u64 acquires Balance {
+          if (!exists<Balance>(addr)) return 0;
+
           let b = borrow_global<Balance>(addr);
           let val = 0;
           let i = 0;
@@ -112,21 +126,5 @@ address 0x1 {
 
           val
         }
-
-
-        // /// marks the payment at index i as paid after confirming the signer is the one owed funds
-        // fun mark_paid(account: &signer, i: u64) acquires Payments {
-        //     let addr = Signer::address_of(account);
-
-        //     let payments = borrow_global_mut<Payments>(
-        //         CoreAddresses::DIEM_ROOT_ADDRESS()
-        //     );
-
-        //     assert (addr == *Vector::borrow<address>(&payments.payees, i), Errors::internal(EPAYEE_NOT_DELETED));
-
-        //     let p = Vector::borrow_mut<bool>(&mut payments.paid, i);
-        //     *p = true;
-        // }
-
     }
 }
