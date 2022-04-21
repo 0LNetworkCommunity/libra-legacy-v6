@@ -66,7 +66,7 @@ address 0x1 {
             while (i < Vector::length(&b.credits)){
               let cred = Vector::borrow_mut(&mut b.credits, i);
               amount = amount + Diem::value<GAS>(&cred.coins);
-              if (amount > 0) {
+              if (amount > 0 && !cred.claimed) {
                 let to_pay = Diem::withdraw<GAS>(&mut cred.coins, amount);
 
                 DiemAccount::deposit<GAS>(
@@ -93,7 +93,7 @@ address 0x1 {
           let cred = Vector::borrow_mut(&mut b.credits, i);
           let value = Diem::value<GAS>(&cred.coins);
           
-          if (value > 0) {
+          if (value > 0 && !cred.claimed) {
             let to_pay = Diem::withdraw<GAS>(&mut cred.coins, value);
 
             DiemAccount::deposit<GAS>(

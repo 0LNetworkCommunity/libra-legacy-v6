@@ -64,6 +64,11 @@
 
         assert(current - initial == expected_amount, 7357002);
 
+        // tries to claim again, and is 0;
+        let claimed_again = MakeWhole::claim_make_whole_payment(&sig);
+        assert(claimed_again == 0, 7357003);
+
+
      }
  }
   // check: EXECUTED
