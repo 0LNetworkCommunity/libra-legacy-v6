@@ -191,8 +191,7 @@ pub fn ol_writeset_ancestry(path: PathBuf, ancestry_file: PathBuf) -> WriteSetPa
 
 
 fn parse_ancestry_file(ancestry_file: PathBuf) -> Result<Vec<AncestrysUnit>>{
-  dbg!(&ancestry_file);
-      let file = fs::File::open(ancestry_file).expect("file should open read only");
+    let file = fs::File::open(ancestry_file).expect("file should open read only");
 
     let ancestry_vec: Vec<AncestrysUnit> = serde_json::from_reader(file).expect("file should be proper JSON");
     Ok(ancestry_vec)
@@ -449,7 +448,7 @@ fn _ol_autopay_migrate(path: PathBuf) -> Result<ChangeSet> {
 }
 
 fn ol_vouch_migrate(path: PathBuf, val_set: Vec<AccountAddress>) -> Result<ChangeSet> {
-    println!("migrating validator vouch data");
+    println!("\nmigrating validator vouch data");
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -513,7 +512,7 @@ struct MakeWholeUnit {
 }
 
 fn ol_makewhole_migrate(path: PathBuf, payments: Vec<MakeWholeUnit>) -> Result<ChangeSet> {
-    println!("migrating make whole data");
+    println!("\nmigrating make whole data");
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -558,7 +557,7 @@ struct AncestrysUnit {
   ancestry: Vec<AccountAddress>,
 }
 fn ol_ancestry_migrate(path: PathBuf, ancestry_vec: Vec<AncestrysUnit> ) -> Result<ChangeSet> {
-    println!("migrating ancestry data");
+    println!("\nmigrating ancestry data");
 
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
@@ -673,7 +672,7 @@ fn ol_set_epoch_debug_mode(path: PathBuf, vals: Vec<AccountAddress>) -> Result<C
 }
 
 fn _ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
-    println!("encode validators bulk update changeset");
+    println!("\nencode validators bulk update changeset");
     let db = DiemDebugger::db(path)?;
 
     let v = db.get_latest_version()?;
