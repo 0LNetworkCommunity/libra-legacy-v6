@@ -155,7 +155,7 @@ pub fn ol_writeset_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
 }
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
-pub fn ol_writeset_set_testnet(path: PathBuf) -> WriteSetPayload {
+pub fn ol_writeset_set_stagingnet(path: PathBuf) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
     let testnet = ol_staging_net_changeset(path.clone()).unwrap();
 
@@ -165,7 +165,7 @@ pub fn ol_writeset_set_testnet(path: PathBuf) -> WriteSetPayload {
 }
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
-pub fn ol_writeset_set_testnet_orig(path: PathBuf) -> WriteSetPayload {
+pub fn ol_writeset_set_testnet(path: PathBuf) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
     let testnet = ol_testnet_changeset(path.clone()).unwrap();
 
@@ -222,7 +222,7 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> Wri
 
     let stdlib_cs = ol_fresh_stlib_changeset(path.clone()).unwrap();
     // TODO: forcing the boundary causes an error on the epoch boundary.
-    let boundary = ol_force_boundary(path.clone(), vals).unwrap();
+    let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
     // let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
@@ -681,7 +681,7 @@ fn ol_set_epoch_debug_mode(path: PathBuf, vals: Vec<AccountAddress>) -> Result<C
     })
 }
 
-fn _ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
+fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
     println!("\nencode validators bulk update changeset");
     let db = DiemDebugger::db(path)?;
 
@@ -829,10 +829,13 @@ fn ol_staging_net_changeset(path: PathBuf) -> Result<ChangeSet> {
     })
 }
 
+// TODO this doesn't work.
 fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
 
+    // TODO: This is not producing the same version height after appling to database.
     let v = db.get_latest_version()?;
+
     db.run_session_at_version(v, None, |session| {
         let mut gas_status = GasStatus::new_unmetered();
         let log_context = NoContextLog::new();
