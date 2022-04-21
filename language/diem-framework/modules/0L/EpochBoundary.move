@@ -90,13 +90,18 @@ module EpochBoundary {
         print(&300360);
 
         let proposed_set = propose_new_set(vm, height_start, height_now);
-        
+        print(&300370);
+
         // Update all slow wallet limits
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
+        print(&300380);
 
         proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
-        
-        reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
+        print(&300390);
+
+        reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
+        print(&300391);
+
     }
 
     // process fullnode subsidy
@@ -222,29 +227,47 @@ module EpochBoundary {
     // NOTE: this was previously in propose_new_set since it used the same loop.
     // copied implementation from Teams proposal.
     fun proof_of_burn(vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector<address>) {
+        print(&300400);
         CoreAddresses::assert_vm(vm);
+        DiemAccount::migrate_cumu_deposits(vm); // may need to populate data on a migration.
+
         Burn::reset_ratios(vm);
+        print(&300410);
 
         let burn_value = nominal_subsidy_per / 2; // 50% of the current per validator reward
+        print(&300420);
+
         let vals_to_burn = if (
           !Testnet::is_testnet() &&
           !StagingNet::is_staging_net() &&
           DiemConfig::get_current_epoch() > 185
         ) {
+          print(&300421);
+
           &ValidatorUniverse::get_eligible_validators(vm)
         } else {
+          print(&300422);
+
           proposed_set
         };
-        
+        print(&300430);
+
         print(vals_to_burn);
         let i = 0;
         while (i < Vector::length<address>(vals_to_burn)) {
+          print(&300431);
           let addr = *Vector::borrow(vals_to_burn, i);
           print(&addr);
+          print(&300432);
 
           Burn::epoch_start_burn(vm, addr, burn_value);
+          print(&300433);
+
           i = i + 1;
         };
+        
+        print(&300440);
+
     }
 
 }
