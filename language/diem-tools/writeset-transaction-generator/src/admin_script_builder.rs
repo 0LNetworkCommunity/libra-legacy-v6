@@ -234,7 +234,6 @@ pub fn ol_writset_encode_migrations(
         exit(1)
     };
 
-
     let ancestry = ol_ancestry_migrate(
       path.clone(), 
       parse_ancestry_file(ancestry_file).unwrap()
@@ -245,9 +244,10 @@ pub fn ol_writset_encode_migrations(
       parse_makewhole_file(makewhole_file).unwrap()
     ).unwrap();
 
+    let vouch = ol_vouch_migrate(path.clone(), vals.clone()).unwrap();
+
     let boundary = ol_force_boundary(path.clone(), vals.clone()).unwrap();
 
-    let vouch = ol_vouch_migrate(path.clone(), vals).unwrap();
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
     let new_cs = merge_vec_changeset(vec![ancestry, makewhole, vouch, boundary]).unwrap();
     // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
@@ -450,6 +450,7 @@ fn _ol_autopay_migrate(path: PathBuf) -> Result<ChangeSet> {
 }
 
 fn ol_vouch_migrate(path: PathBuf, val_set: Vec<AccountAddress>) -> Result<ChangeSet> {
+    println!("migrating validator vouch data");
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -513,6 +514,7 @@ struct MakeWholeUnit {
 }
 
 fn ol_makewhole_migrate(path: PathBuf, payments: Vec<MakeWholeUnit>) -> Result<ChangeSet> {
+    println!("migrating make whole data");
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -554,6 +556,8 @@ struct AncestrysUnit {
   ancestry: Vec<AccountAddress>,
 }
 fn ol_ancestry_migrate(path: PathBuf, ancestry_vec: Vec<AncestrysUnit> ) -> Result<ChangeSet> {
+    println!("migrating ancestry data");
+
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
