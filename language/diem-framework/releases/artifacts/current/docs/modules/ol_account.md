@@ -190,7 +190,7 @@ query_make_whole_payment, which should not be run as part of
 the tx as it is relatively resource intensive (linear search)
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_account.md#0x1_AccountScripts_claim_make_whole">claim_make_whole</a>(sender: signer, index: u64)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_account.md#0x1_AccountScripts_claim_make_whole">claim_make_whole</a>(sender: signer)
 </code></pre>
 
 
@@ -201,9 +201,8 @@ the tx as it is relatively resource intensive (linear search)
 
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_account.md#0x1_AccountScripts_claim_make_whole">claim_make_whole</a>(
     sender: signer,
-    index: u64
 ) {
-    <b>let</b> _ = <a href="MakeWhole.md#0x1_MakeWhole_claim_make_whole_payment">MakeWhole::claim_make_whole_payment</a>(&sender, index);
+    <b>let</b> _ = <a href="MakeWhole.md#0x1_MakeWhole_claim_make_whole_payment">MakeWhole::claim_make_whole_payment</a>(&sender);
 }
 </code></pre>
 

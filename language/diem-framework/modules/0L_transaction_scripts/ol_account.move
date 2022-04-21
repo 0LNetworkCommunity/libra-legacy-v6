@@ -104,9 +104,8 @@ module AccountScripts {
     /// the tx as it is relatively resource intensive (linear search)
     public(script) fun claim_make_whole(
         sender: signer,
-        index: u64
     ) {
-        let _ = MakeWhole::claim_make_whole_payment(&sender, index);
+        let _ = MakeWhole::claim_make_whole_payment(&sender);
     }
 
 }
