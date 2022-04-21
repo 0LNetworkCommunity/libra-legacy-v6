@@ -330,7 +330,7 @@ pub fn ol_fresh_stlib_changeset(path: PathBuf) -> Result<ChangeSet> {
 // For db backups/snapshots using the backup-cli, the archives are generally made at an epoch boundary. And as such the timestamp will be identical to the last reconfiguration time, and ANY WRITESET USING DB-BOOTSTRAPPER WILL FAIL.
 // This function is used to force a new timestamp in those cases, so that writesets will trigger reconfigs (if that is what is expected/intended).
 
-fn ol_increment_timestamp_changeset(path: PathBuf) -> Result<ChangeSet> {
+fn _ol_increment_timestamp_changeset(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -418,7 +418,7 @@ fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
 
 
 
-fn ol_autopay_migrate(path: PathBuf) -> Result<ChangeSet> {
+fn _ol_autopay_migrate(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -666,7 +666,7 @@ fn ol_set_epoch_debug_mode(path: PathBuf, vals: Vec<AccountAddress>) -> Result<C
     })
 }
 
-fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
+fn _ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
     println!("encode validators bulk update changeset");
     let db = DiemDebugger::db(path)?;
 
