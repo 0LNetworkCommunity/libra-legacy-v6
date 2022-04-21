@@ -54,11 +54,10 @@ address 0x1 {
             if (!exists<Balance>(addr)) return 0;
 
             let b = borrow_global_mut<Balance>(addr);
-            let amount = 0;
             let i = 0;
             while (i < Vector::length(&b.credits)){
               let cred = Vector::borrow_mut(&mut b.credits, i);
-              amount = amount + Diem::value<GAS>(&cred.coins);
+              amount = Diem::value<GAS>(&cred.coins);
               if (amount > 0 && !cred.claimed) {
                 let to_pay = Diem::withdraw<GAS>(&mut cred.coins, amount);
 
