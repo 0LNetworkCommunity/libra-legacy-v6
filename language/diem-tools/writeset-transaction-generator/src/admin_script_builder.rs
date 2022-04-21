@@ -198,6 +198,14 @@ fn parse_ancestry_file(ancestry_file: PathBuf) -> Result<Vec<AncestrysUnit>>{
     Ok(ancestry_vec)
 }
 
+fn parse_makewhole_file(makewhole_file: PathBuf) -> Result<Vec<MakeWholeUnit>>{
+  dbg!(&makewhole_file);
+      let file = fs::File::open(makewhole_file).expect("file should open read only");
+
+    let makewhole_vec: Vec<MakeWholeUnit> = serde_json::from_reader(file).expect("file should be proper JSON");
+    Ok(makewhole_vec)
+}
+
 pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
@@ -215,7 +223,12 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> Wri
     WriteSetPayload::Direct(new_cs)
 }
 
-pub fn ol_writset_encode_migrations(path: PathBuf, ancestry_file: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+pub fn ol_writset_encode_migrations(
+  path: PathBuf,
+  ancestry_file: PathBuf,
+  makewhole_file: PathBuf,
+  vals: Vec<AccountAddress>
+) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
         exit(1)
@@ -227,10 +240,16 @@ pub fn ol_writset_encode_migrations(path: PathBuf, ancestry_file: PathBuf, vals:
       parse_ancestry_file(ancestry_file).unwrap()
     ).unwrap();
 
+    let makewhole = ol_makewhole_migrate(
+      path.clone(), 
+      parse_makewhole_file(makewhole_file).unwrap()
+    ).unwrap();
+
     let boundary = ol_force_boundary(path.clone(), vals.clone()).unwrap();
+
     let vouch = ol_vouch_migrate(path.clone(), vals).unwrap();
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
-    let new_cs = merge_vec_changeset(vec![ancestry, vouch, boundary]).unwrap();
+    let new_cs = merge_vec_changeset(vec![ancestry, makewhole, vouch, boundary]).unwrap();
     // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
     WriteSetPayload::Direct(new_cs)
 }
@@ -482,39 +501,48 @@ fn ol_vouch_migrate(path: PathBuf, val_set: Vec<AccountAddress>) -> Result<Chang
               .unwrap(); // TODO: don't use unwraps.
 
           });
-
           
         Ok(())
     })
 }
 
-fn ol_makewhole_migrate(path: PathBuf) -> Result<ChangeSet> {
+#[derive(Debug, Serialize, Deserialize)]
+struct MakeWholeUnit {
+  address: AccountAddress,
+  value: u64,
+}
+
+fn ol_makewhole_migrate(path: PathBuf, payments: Vec<MakeWholeUnit>) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
-
-    let start = SystemTime::now();
-    let now = start.duration_since(UNIX_EPOCH)?;
-    let _microseconds = now.as_micros();
-
 
     db.run_session_at_version(v, None, |session| {
         let mut gas_status = GasStatus::new_unmetered();
         let log_context = NoContextLog::new();
 
-        let args = vec![MoveValue::Signer(diem_root_address())];
-          session
-              .execute_function(
-                  &ModuleId::new(
-                      account_config::CORE_CODE_ADDRESS,
-                      Identifier::new("MakeWhole").unwrap(),
-                  ),
-                  &Identifier::new("make_whole_init").unwrap(),
-                  vec![],
-                  serialize_values(&args),
-                  &mut gas_status,
-                  &log_context,
-              )
-              .unwrap(); // TODO: don't use unwraps.
+        payments.iter()
+        .for_each(|p| {
+        let args = vec![
+          MoveValue::Signer(diem_root_address()),
+          MoveValue::Signer(p.address),
+          MoveValue::U64(p.value),
+          MoveValue::vector_u8("carpe underpayment".as_bytes().to_vec()),
+        ];
+        
+        session
+          .execute_function(
+              &ModuleId::new(
+                  account_config::CORE_CODE_ADDRESS,
+                  Identifier::new("MakeWhole").unwrap(),
+              ),
+              &Identifier::new("vm_offer_credit").unwrap(),
+              vec![],
+              serialize_values(&args),
+              &mut gas_status,
+              &log_context,
+          )
+          .unwrap(); // TODO: don't use unwraps.
+        });
 
         Ok(())
     })
@@ -528,12 +556,6 @@ struct AncestrysUnit {
 fn ol_ancestry_migrate(path: PathBuf, ancestry_vec: Vec<AncestrysUnit> ) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
-
-    let start = SystemTime::now();
-    let now = start.duration_since(UNIX_EPOCH)?;
-    let _microseconds = now.as_micros();
-
-
 
     db.run_session_at_version(v, None, |session| {
         let mut gas_status = GasStatus::new_unmetered();

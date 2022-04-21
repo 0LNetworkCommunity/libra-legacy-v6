@@ -53,7 +53,7 @@ enum Command {
     #[structopt(name = "ancestry")]
     Ancestry { ancestry_file: PathBuf,},
     #[structopt(name = "migrate")]
-    Migrate { ancestry_file: PathBuf, addresses: Vec<AccountAddress>},
+    Migrate { ancestry_file: PathBuf, makewhole_file: PathBuf, addresses: Vec<AccountAddress>},
     #[structopt(name = "reconfig")]
     Reconfig { },
     #[structopt(name = "time")]
@@ -147,7 +147,7 @@ fn main() -> Result<()> {
         Command::DebugEpoch { addresses } => ol_writeset_debug_epoch(opt.db.unwrap(), addresses),
         Command::EpochTime {} => ol_writeset_update_epoch_time(opt.db.unwrap()),
         Command::Ancestry { ancestry_file } => ol_writeset_ancestry(opt.db.unwrap(), ancestry_file),
-        Command::Migrate { ancestry_file, addresses} => ol_writset_encode_migrations(opt.db.unwrap(), ancestry_file, addresses),
+        Command::Migrate { ancestry_file, makewhole_file, addresses} => ol_writset_encode_migrations(opt.db.unwrap(), ancestry_file, makewhole_file, addresses),
 
         //////// end 0L ////////
         
