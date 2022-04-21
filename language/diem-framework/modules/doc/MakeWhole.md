@@ -137,22 +137,24 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MakeWhole.md#0x1_MakeWhole_vm_offer_credit">vm_offer_credit</a>(vm: &signer, account: &signer, value: u64, incident_name: vector&lt;u8&gt;) <b>acquires</b> <a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="MakeWhole.md#0x1_MakeWhole_vm_offer_credit">vm_offer_credit</a>(
+  vm: &signer,
+  account: &signer,
+  value: u64,
+  incident_name: vector&lt;u8&gt;
+) <b>acquires</b> <a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a> {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
     <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
-
     <b>let</b> cred = <a href="MakeWhole.md#0x1_MakeWhole_Credit">Credit</a> {
       incident_name,
       claimed: <b>false</b>,
       coins: <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, value),
     };
 
-
-
-    <b>if</b> (<b>exists</b>&lt;<a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a>&gt;(addr)) {
+    <b>if</b> (!<b>exists</b>&lt;<a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a>&gt;(addr)) {
         move_to&lt;<a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a>&gt;(account, <a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a> {
           credits: <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>(cred),
-        })
+        });
     } <b>else</b> {
       <b>let</b> c = borrow_global_mut&lt;<a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a>&gt;(addr);
       <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="MakeWhole.md#0x1_MakeWhole_Credit">Credit</a>&gt;(&<b>mut</b> c.credits, cred);
@@ -183,13 +185,15 @@ ensures that the caller is the one owed the payment at index i
 
 <pre><code><b>public</b> <b>fun</b> <a href="MakeWhole.md#0x1_MakeWhole_claim_make_whole_payment">claim_make_whole_payment</a>(account: &signer): u64 <b>acquires</b> <a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a> {
     <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
+    <b>if</b> (!<b>exists</b>&lt;<a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a>&gt;(addr)) <b>return</b> 0;
+
     <b>let</b> b = borrow_global_mut&lt;<a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a>&gt;(addr);
     <b>let</b> amount = 0;
     <b>let</b> i = 0;
     <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&b.credits)){
       <b>let</b> cred = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>(&<b>mut</b> b.credits, i);
       amount = amount + <a href="Diem.md#0x1_Diem_value">Diem::value</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&cred.coins);
-      <b>if</b> (amount &gt; 0) {
+      <b>if</b> (amount &gt; 0 && !cred.claimed) {
         <b>let</b> to_pay = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&<b>mut</b> cred.coins, amount);
 
         <a href="DiemAccount.md#0x1_DiemAccount_deposit">DiemAccount::deposit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
@@ -230,11 +234,13 @@ ensures that the caller is the one owed the payment at index i
 
 <pre><code><b>public</b> <b>fun</b> <a href="MakeWhole.md#0x1_MakeWhole_claim_one">claim_one</a>(account: &signer, i: u64): u64 <b>acquires</b> <a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a> {
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
+  <b>if</b> (!<b>exists</b>&lt;<a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a>&gt;(addr)) <b>return</b> 0;
+
   <b>let</b> b = borrow_global_mut&lt;<a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a>&gt;(addr);
   <b>let</b> cred = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>(&<b>mut</b> b.credits, i);
   <b>let</b> value = <a href="Diem.md#0x1_Diem_value">Diem::value</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&cred.coins);
 
-  <b>if</b> (value &gt; 0) {
+  <b>if</b> (value &gt; 0 && !cred.claimed) {
     <b>let</b> to_pay = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&<b>mut</b> cred.coins, value);
 
     <a href="DiemAccount.md#0x1_DiemAccount_deposit">DiemAccount::deposit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
@@ -273,6 +279,8 @@ returns (amount, index) if a payment exists, else (0, 0)
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MakeWhole.md#0x1_MakeWhole_query_make_whole_payment">query_make_whole_payment</a>(addr: address): u64 <b>acquires</b> <a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a> {
+  <b>if</b> (!<b>exists</b>&lt;<a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a>&gt;(addr)) <b>return</b> 0;
+
   <b>let</b> b = borrow_global&lt;<a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a>&gt;(addr);
   <b>let</b> val = 0;
   <b>let</b> i = 0;

@@ -25,7 +25,6 @@ module EpochBoundary {
     use 0x1::Burn;
     use 0x1::FullnodeSubsidy;
     use 0x1::ValidatorUniverse;
-
     use 0x1::Debug::print;
 
     struct DebugMode has copy, key, drop, store{
@@ -90,12 +89,11 @@ module EpochBoundary {
 
         let proposed_set = propose_new_set(vm, height_start, height_now);
         
-
-        proof_of_burn(vm, subsidy_units, &proposed_set);
-        
-        // release funds to slow wallets
+        // Update all slow wallet limits
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
 
+        proof_of_burn(vm,nominal_subsidy_per);
+        
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
     }
 
@@ -132,15 +130,15 @@ module EpochBoundary {
     }
 
     fun process_validators(
-        vm: &signer, nominal_subsidy_per: u64, outgoing_compliant_set: vector<address>
+        vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector<address>
     ) {
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
         
         if (Vector::is_empty<address>(&outgoing_compliant_set)) return;
 
-        if (nominal_subsidy_per > 0) {
-            Subsidy::process_subsidy(vm, nominal_subsidy_per, &outgoing_compliant_set);
+        if (subsidy_units > 0) {
+            Subsidy::process_subsidy(vm, subsidy_units, &outgoing_compliant_set);
         };
 
         Subsidy::process_fees(vm, &outgoing_compliant_set);
@@ -162,6 +160,7 @@ module EpochBoundary {
         );
 
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
+
 
 
         let i = 0;
@@ -203,6 +202,8 @@ module EpochBoundary {
 
         // Reset Stats
         Stats::reconfig(vm, &proposed_set);
+
+        // Migrate TowerState list from elegible.
         TowerState::reconfig(vm, &outgoing_compliant);
 
         // Reconfigure the network
@@ -216,37 +217,23 @@ module EpochBoundary {
         Epoch::reset_timer(vm, height_now);
     }
 
-
-    
     // NOTE: this was previously in propose_new_set since it used the same loop.
     // copied implementation from Teams proposal.
-    fun proof_of_burn(vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector<address>) {
-        // print(&222201);
+    fun proof_of_burn(vm: &signer, nominal_subsidy_per: u64) {
         CoreAddresses::assert_vm(vm);
-
-        // recaulculate the ratios of the community index.
         Burn::reset_ratios(vm);
-        
-        // get the burn value for next epoch. 50% of this epoch's reward.
-        let burn_value = nominal_subsidy_per/2;
-        // print(&burn_value);
-        // apply the cost-to-exist to all validator candidates
-        // TODO: remove proposed_set implementation until after epoch 185
-        let all_vals = if (DiemConfig::get_current_epoch() > 185) {
-         ValidatorUniverse::get_eligible_validators(vm)
-        } else {
-          *proposed_set
-        };
 
+        let burn_value = nominal_subsidy_per / 2; // 50% of the current per validator reward
+        let all_vals = ValidatorUniverse::get_eligible_validators(vm);
+        print(&all_vals);
         let i = 0;
         while (i < Vector::length<address>(&all_vals)) {
           let addr = *Vector::borrow(&all_vals, i);
+          print(&addr);
+
           Burn::epoch_start_burn(vm, addr, burn_value);
           i = i + 1;
         };
-
-      //  print(&222202);
-
     }
 }
 }
