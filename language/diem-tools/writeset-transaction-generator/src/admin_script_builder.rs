@@ -155,6 +155,16 @@ pub fn ol_writeset_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
 }
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
+pub fn ol_writeset_set_stagingnet(path: PathBuf) -> WriteSetPayload {
+    // Take the stdlib upgrade change set.
+    let testnet = ol_staging_net_changeset(path.clone()).unwrap();
+
+    let reconfig = ol_reconfig_changeset(path).unwrap();
+
+    WriteSetPayload::Direct(merge_change_set(testnet, reconfig).unwrap())
+}
+
+/// create the upgrade payload INCLUDING the epoch reconfigure
 pub fn ol_writeset_set_testnet(path: PathBuf) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
     let testnet = ol_testnet_changeset(path.clone()).unwrap();
@@ -212,7 +222,7 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> Wri
 
     let stdlib_cs = ol_fresh_stlib_changeset(path.clone()).unwrap();
     // TODO: forcing the boundary causes an error on the epoch boundary.
-    let boundary = ol_force_boundary(path.clone(), vals).unwrap();
+    let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
     // let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
@@ -671,7 +681,7 @@ fn ol_set_epoch_debug_mode(path: PathBuf, vals: Vec<AccountAddress>) -> Result<C
     })
 }
 
-fn _ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
+fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
     println!("\nencode validators bulk update changeset");
     let db = DiemDebugger::db(path)?;
 
@@ -792,10 +802,40 @@ fn ol_testnet_changeset(path: PathBuf) -> Result<ChangeSet> {
     })
 }
 
-fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
+fn ol_staging_net_changeset(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
 
     let v = db.get_latest_version()?;
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+        let args = vec![MoveValue::Signer(diem_root_address())];
+
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("StagingNet").unwrap(),
+                ),
+                &Identifier::new("initialize").unwrap(),
+                vec![],
+                serialize_values(&args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // TODO: don't use unwraps.
+        Ok(())
+    })
+}
+
+// TODO this doesn't work.
+fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+
+    // TODO: This is not producing the same version height after appling to database.
+    let v = db.get_latest_version()?;
+
     db.run_session_at_version(v, None, |session| {
         let mut gas_status = GasStatus::new_unmetered();
         let log_context = NoContextLog::new();
