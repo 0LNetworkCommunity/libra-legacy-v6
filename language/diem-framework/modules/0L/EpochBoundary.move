@@ -213,15 +213,20 @@ module EpochBoundary {
         // Migrate TowerState list from elegible.
         TowerState::reconfig(vm, &outgoing_compliant);
 
-        // Reconfigure the network
-        DiemSystem::bulk_update_validators(vm, proposed_set);
-
         // process community wallets
         DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
         
         // reset counters
         AutoPay::reconfig_reset_tick(vm);
+
         Epoch::reset_timer(vm, height_now);
+        
+        // Reconfig should be the last event.
+
+        // Reconfigure the network
+        DiemSystem::bulk_update_validators(vm, proposed_set);
+
+
     }
 
     // NOTE: this was previously in propose_new_set since it used the same loop.
