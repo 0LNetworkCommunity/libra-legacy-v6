@@ -220,21 +220,10 @@ module EpochBoundary {
     // NOTE: this was previously in propose_new_set since it used the same loop.
     // copied implementation from Teams proposal.
     fun proof_of_burn(vm: &signer, nominal_subsidy_per: u64) {
-        // print(&222201);
         CoreAddresses::assert_vm(vm);
         Burn::reset_ratios(vm);
 
-        // LEAVE THIS CODE COMMENTED for future use
-        // TODO: Make the burn value dynamic.
-        // let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
-        // let burn_value = Subsidy::subsidy_curve(
-        //   Globals::get_subsidy_ceiling_gas(),
-        //   incoming_count,
-        //   Globals::get_max_node_density()
-        // )/2;
-
-        let burn_value = nominal_subsidy_per/2; // TODO: switch to a variable cost, as above.
-
+        let burn_value = nominal_subsidy_per / 2; // 50% of the current per validator reward
         let all_vals = ValidatorUniverse::get_eligible_validators(vm);
         print(&all_vals);
         let i = 0;
