@@ -33,7 +33,7 @@ print(&300400200);
 
       let addr = *Vector::borrow(&list, i);
       let cumu = DiemAccount::get_index_cumu_deposits(addr);
-      print(&cumu);
+      // print(&cumu);
       global_deposits = global_deposits + cumu;
       Vector::push_back(&mut deposit_vec, cumu);
       i = i + 1;
@@ -131,14 +131,14 @@ print(&300400500);
   fun send(vm: &signer, payer: address, value: u64) acquires DepositInfo {
     let list = get_address_list();
     let len = Vector::length<address>(&list);
-    print(&list);
+    // print(&list);
     let i = 0;
     while (i < len) {
       let payee = *Vector::borrow<address>(&list, i);
-      print(&payee);
+      // print(&payee);
 
       let val = get_value(payee, value);
-      print(&val);
+      // print(&val);
 
       DiemAccount::vm_make_payment_no_limit<GAS>(
           payer,
