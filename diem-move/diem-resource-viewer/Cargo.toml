@@ -11,9 +11,9 @@ edition = "2018"
 
 [dependencies]
 diem-workspace-hack = { path = "../../crates/diem-workspace-hack" }
-move-resource-viewer = { git = "https://github.com/OLSF/move-0L", branch = "v6" }
+move-resource-viewer = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
 diem-types = { path = "../../types"  }
-move-core-types = { git = "https://github.com/OLSF/move-0L", branch = "v6" }
-move-binary-format = { git = "https://github.com/OLSF/move-0L", branch = "v6" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
+move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
 
 anyhow = "1.0.52"

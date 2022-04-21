@@ -25,7 +25,7 @@ diem-crypto-derive = { path = "../../crates/diem-crypto-derive"}
 diem-types = { path = "../../types", features=["fuzzing"] }
 diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 network = { path = "../../network" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", branch = "v6", features=["fuzzing"] }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce", features=["fuzzing"] }
 
 [[bin]]
 name = "compute"

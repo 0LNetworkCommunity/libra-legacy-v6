@@ -28,7 +28,7 @@ diem-infallible = { path = "../../crates/diem-infallible" }
 diem-secure-net = { path = "../../secure/net" }
 diem-state-view = { path = "../../storage/state-view" }
 diem-types = { path = "../../types" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", branch = "v6" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
 diem-vm = { path = "../../diem-move/diem-vm" }
 diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 scratchpad = { path = "../../storage/scratchpad" }
@@ -46,7 +46,7 @@ diem-config = { path = "../../config" }
 diem-genesis-tool = {path = "../../config/management/genesis", features = ["testing"] }
 diem-temppath = { path = "../../crates/diem-temppath" }
 diemdb = { path = "../../storage/diemdb" }
-move-ir-compiler = { git = "https://github.com/OLSF/move-0L", branch = "v6" }
+move-ir-compiler = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
 storage-interface = { path = "../../storage/storage-interface", features=["fuzzing"] }
 diem-transaction-builder = { path = "../../sdk/transaction-builder" }
 vm-genesis = { path = "../../diem-move/vm-genesis" }

@@ -18,7 +18,7 @@ serde = { version = "1.0.116", features = ["derive"] }
 serde_json = "1.0.58"
 backup-service = { path = "../../storage/backup/backup-service", version = "0.1.0" }
 storage-interface = { path = "../../storage/storage-interface", version = "0.1.0" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", branch = "v6" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
 vm-genesis={path="../../diem-move/vm-genesis", version="0.1.0"}
 diem-wallet = { path = "../../crates/diem-wallet", version = "0.1.0"}
 gumdrop = "0.8.0"
