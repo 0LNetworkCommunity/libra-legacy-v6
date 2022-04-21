@@ -199,8 +199,7 @@ fn parse_ancestry_file(ancestry_file: PathBuf) -> Result<Vec<AncestrysUnit>>{
 }
 
 fn parse_makewhole_file(makewhole_file: PathBuf) -> Result<Vec<MakeWholeUnit>>{
-  dbg!(&makewhole_file);
-      let file = fs::File::open(makewhole_file).expect("file should open read only");
+    let file = fs::File::open(makewhole_file).expect("file should open read only");
 
     let makewhole_vec: Vec<MakeWholeUnit> = serde_json::from_reader(file).expect("file should be proper JSON");
     Ok(makewhole_vec)
@@ -510,7 +509,7 @@ fn ol_vouch_migrate(path: PathBuf, val_set: Vec<AccountAddress>) -> Result<Chang
 #[derive(Debug, Serialize, Deserialize)]
 struct MakeWholeUnit {
   address: AccountAddress,
-  value: u64,
+  value: f64,
 }
 
 fn ol_makewhole_migrate(path: PathBuf, payments: Vec<MakeWholeUnit>) -> Result<ChangeSet> {
@@ -524,10 +523,13 @@ fn ol_makewhole_migrate(path: PathBuf, payments: Vec<MakeWholeUnit>) -> Result<C
 
         payments.iter()
         .for_each(|p| {
+
+        let scaled = f64::trunc(p.value * 1000000f64) as u64;
+
         let args = vec![
           MoveValue::Signer(diem_root_address()),
           MoveValue::Signer(p.address),
-          MoveValue::U64(p.value),
+          MoveValue::U64(scaled),
           MoveValue::vector_u8("carpe underpayment".as_bytes().to_vec()),
         ];
         

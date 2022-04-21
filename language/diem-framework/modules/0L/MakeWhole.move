@@ -7,8 +7,6 @@ address 0x1 {
         use 0x1::GAS::GAS;
         use 0x1::DiemAccount;
 
-        use 0x1::Debug::print;
-
         struct Balance has key {
             credits: vector<Credit>,
         }
@@ -32,21 +30,16 @@ address 0x1 {
         ) acquires Balance {
             CoreAddresses::assert_diem_root(vm);
             let addr = Signer::address_of(account);
-            print(&addr);
             let cred = Credit {
               incident_name,
               claimed: false,
               coins: Diem::mint<GAS>(vm, value),
             };
 
-            print(&cred);
-
             if (!exists<Balance>(addr)) {
                 move_to<Balance>(account, Balance {
                   credits: Vector::singleton(cred),
                 });
-                print(&111111);
-
             } else {
               let c = borrow_global_mut<Balance>(addr);
               Vector::push_back<Credit>(&mut c.credits, cred);

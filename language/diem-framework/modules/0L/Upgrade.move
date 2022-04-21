@@ -50,10 +50,7 @@ module Upgrade {
     // Can only be called by the VM
     // making public so that we can use in admin scripts of writeset-transaction-generator.
 
-    use 0x1::Debug::print;
-
     public fun upgrade_reconfig(vm: &signer) acquires UpgradePayload {
-      print(&1111111);
         CoreAddresses::assert_vm(vm);
         reset_payload(vm);
         let new_epoch_height = Epoch::get_timer_height_start(vm) + 2; // This is janky, but there's no other way to get the current block height, unless the prologue gives it to us. The upgrade reconfigure happens on round 2, so we'll increment the new start by 2 from previous.
