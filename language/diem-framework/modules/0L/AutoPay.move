@@ -97,7 +97,7 @@ address 0x1 {
     // 1: amt% of inflow until end_epoch 
     // 2: amt gas until end_epoch
     // 3: amt gas, one time payment
-    struct Payment has drop, store {
+    struct Payment has drop, store, copy {
       uid: u64,
       in_type: u8,
       payee: address,
@@ -397,6 +397,19 @@ address 0x1 {
 
       let payments = &mut borrow_global_mut<UserAutoPay>(addr).payments;
       Vector::remove<Payment>(payments, Option::extract<u64>(&mut index));
+    }
+
+    // Deletes the instruction with uid from the sender's account
+    // Function code 010105
+    public fun migrate_instructions(account: &signer) acquires UserAutoPay, Data {
+      let addr = Signer::address_of(account);
+      if (!exists<Data>(addr) || !exists<UserAutoPay>(addr)) return;
+
+      let old = borrow_global_mut<Data>(addr);
+      let new = borrow_global_mut<UserAutoPay>(addr);
+      new.payments = *&old.payments;
+
+      old.payments = Vector::empty();
     }
 
     ///////////////////////////////

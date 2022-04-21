@@ -30,6 +30,7 @@ This module enables automatic payments from accounts to community wallets at epo
 -  [Function `disable_autopay`](#0x1_AutoPay_disable_autopay)
 -  [Function `create_instruction`](#0x1_AutoPay_create_instruction)
 -  [Function `delete_instruction`](#0x1_AutoPay_delete_instruction)
+-  [Function `migrate_instructions`](#0x1_AutoPay_migrate_instructions)
 -  [Function `is_enabled`](#0x1_AutoPay_is_enabled)
 -  [Function `query_instruction`](#0x1_AutoPay_query_instruction)
 -  [Function `get_enabled`](#0x1_AutoPay_get_enabled)
@@ -198,7 +199,7 @@ This module enables automatic payments from accounts to community wallets at epo
 
 
 
-<pre><code><b>struct</b> <a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a> has drop, store
+<pre><code><b>struct</b> <a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a> has <b>copy</b>, drop, store
 </code></pre>
 
 
@@ -876,6 +877,37 @@ Attempt to use a UID that is already taken
 
   <b>let</b> payments = &<b>mut</b> borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_UserAutoPay">UserAutoPay</a>&gt;(addr).payments;
   <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments, <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>&lt;u64&gt;(&<b>mut</b> index));
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_AutoPay_migrate_instructions"></a>
+
+## Function `migrate_instructions`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_migrate_instructions">migrate_instructions</a>(account: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AutoPay.md#0x1_AutoPay_migrate_instructions">migrate_instructions</a>(account: &signer) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_UserAutoPay">UserAutoPay</a>, <a href="AutoPay.md#0x1_AutoPay_Data">Data</a> {
+  <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
+  <b>if</b> (!<b>exists</b>&lt;<a href="AutoPay.md#0x1_AutoPay_Data">Data</a>&gt;(addr) || !<b>exists</b>&lt;<a href="AutoPay.md#0x1_AutoPay_UserAutoPay">UserAutoPay</a>&gt;(addr)) <b>return</b>;
+
+  <b>let</b> <b>old</b> = borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_Data">Data</a>&gt;(addr);
+  <b>let</b> new = borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_UserAutoPay">UserAutoPay</a>&gt;(addr);
+  new.payments = *&<b>old</b>.payments;
+
+  <b>old</b>.payments = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>();
 }
 </code></pre>
 

@@ -124,7 +124,7 @@ pub fn encode_halt_network_payload() -> WriteSetPayload {
 
 //////// 0L ////////
 pub fn script_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPayload {
-    println!("encode_bulk_update_vals_payload");
+    println!("\nencode_bulk_update_vals_payload");
     let mut script = template_path();
     script.push("bulk_update.move");
 
@@ -294,7 +294,7 @@ pub fn ol_writeset_update_epoch_time(path: PathBuf) -> WriteSetPayload {
 
 
 pub fn ol_fresh_stlib_changeset(path: PathBuf) -> Result<ChangeSet> {
-    println!("encode stdlib changeset");
+    println!("\nencode stdlib changeset");
 
     let db = DiemDebugger::db(path)?;
 
