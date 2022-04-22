@@ -204,6 +204,15 @@ module DiemBlock {
         borrow_global<BlockMetadata>(CoreAddresses::DIEM_ROOT_ADDRESS()).height
     }
 
+
+    public fun debug_height_version(vm_height: u64) {
+      print(&111111);
+      print(&get_current_block_height());
+      print(&222222);
+      print(&vm_height);
+
+    };
+
     spec module { } // Switch documentation context to module level.
 
     /// # Initialization

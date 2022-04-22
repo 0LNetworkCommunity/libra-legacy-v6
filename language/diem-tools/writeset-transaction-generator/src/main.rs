@@ -56,6 +56,8 @@ enum Command {
     Migrate { ancestry_file: PathBuf, makewhole_file: PathBuf, addresses: Vec<AccountAddress>},
     #[structopt(name = "reconfig")]
     Reconfig { },
+    #[structopt(name = "debug")]
+    Debug { },
     #[structopt(name = "time")]
     Timestamp { },
     #[structopt(name = "testnet")]
@@ -72,6 +74,7 @@ enum Command {
         args: String,
         execute_as: Option<AccountAddress>,
     },
+    
     /// Create a release writeset by comparing local Diem Framework against a remote blockchain state.
     #[structopt(name = "create-release")]
     CreateDiemFrameworkRelease {
@@ -141,6 +144,7 @@ fn main() -> Result<()> {
         
         Command::UpdateStdlib {} => ol_writeset_stdlib_upgrade(opt.db.unwrap()),
         Command::Reconfig {} => ol_create_reconfig_payload(opt.db.unwrap()),
+        Command::Debug {} => ol_debug(opt.db.unwrap()),
         Command::Rescue { addresses } => ol_writset_encode_rescue(opt.db.unwrap(), addresses),
         Command::Timestamp {} => ol_writset_update_timestamp(opt.db.unwrap()),
         Command::Testnet {} => ol_writeset_set_testnet(opt.db.unwrap()),

@@ -144,6 +144,10 @@ pub fn ol_writeset_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> W
     WriteSetPayload::Direct(cs)
 }
 
+pub fn ol_debug(path: PathBuf) -> WriteSetPayload {
+  WriteSetPayload::Direct(ol_debug_height(path).unwrap())
+}
+
 /// create the upgrade payload INCLUDING the epoch reconfigure
 pub fn ol_writeset_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
@@ -858,6 +862,41 @@ fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeS
                     Identifier::new("EpochBoundary").unwrap(),
                 ),
                 &Identifier::new("reset_counters").unwrap(),
+                vec![],
+                serialize_values(&args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // TODO: don't use unwraps.
+        Ok(())
+    })
+}
+
+
+// TODO this doesn't work.
+fn ol_debug_height(path: PathBuf) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+
+    // TODO: This is not producing the same version height after appling to database.
+    let v = db.get_latest_version()?;
+
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+        // fun reset_counters(vm: &signer, proposed_set: vector<address>, outgoing_compliant: vector<address>, height_now: u64) {
+
+        let args = vec![
+           MoveValue::U64(v)              // height_now
+        ];
+
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("DiemBlock").unwrap(),
+                ),
+                &Identifier::new("debug_height_version").unwrap(),
                 vec![],
                 serialize_values(&args),
                 &mut gas_status,
