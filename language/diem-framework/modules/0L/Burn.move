@@ -133,6 +133,10 @@ print(&300400500);
     let len = Vector::length<address>(&list);
     // print(&list);
     let i = 0;
+
+    // There could be errors in the array, and underpayment happen.
+    let value_sent = 0;
+
     while (i < len) {
       let payee = *Vector::borrow<address>(&list, i);
       // print(&payee);
@@ -148,8 +152,14 @@ print(&300400500);
           b"",
           vm,
       );
-      
+      value_sent = value_sent + val;
       i = i + 1;
+    };
+
+    // prevent under-burn due to issues with index.
+    let diff = value - value_sent;
+    if (diff > 0) {
+      burn(vm, payer, diff)
     };
   }
 

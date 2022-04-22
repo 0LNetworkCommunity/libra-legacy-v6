@@ -47,7 +47,7 @@ module Epoch {
 
       // we target 24hrs for block production.
       // there are failure cases when there is a halt, and nodes have been offline for all of the 24hrs, producing a new epoch upon restart leads to further failures. So we check that a meaninful amount of blocks have been created too.
-      print(&9999999999999999);
+      print(&444444444444444);
       print(&Globals::get_min_blocks_epoch());
       print(&height_now);
       print(&time.height_start);
