@@ -1,24 +1,24 @@
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 
 // Test audit function val_audit_passing having autopay disabled
-//! new-transaction
-//! sender: diemroot
-//! execute-as: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
-    use 0x1::Audit;
+    use DiemFramework::Audit;
     use DiemFramework::ValidatorConfig;
-    use 0x1::AutoPay;
-    use 0x1::TowerState;
-    
-    fun main(_: signer, alice_account: signer) {
-        assert(ValidatorConfig::is_valid(@{{alice}}), 7357007001001);
+    use DiemFramework::AutoPay;
+    use DiemFramework::TowerState;
+    use Std::Signer;
+
+    fun main(_dr: signer, sender: signer) {
+        let alice_addr = Signer::address_of(&sender);
+        assert!(ValidatorConfig::is_valid(alice_addr), 7357007001001);
         
-        AutoPay::enable_autopay(&alice_account);
-        AutoPay::disable_autopay(&alice_account);
+        AutoPay::enable_autopay(&sender);
+        AutoPay::disable_autopay(&sender);
         
-        assert(!AutoPay::is_enabled(@{{alice}}), 7357007001003);       
-        assert(TowerState::is_init(@{{alice}}), 7357007001004);
-        assert(!Audit::val_audit_passing(@{{alice}}), 7357007001005);
+        assert!(!AutoPay::is_enabled(alice_addr), 7357007001003);       
+        assert!(TowerState::is_init(alice_addr), 7357007001004);
+        assert!(!Audit::val_audit_passing(alice_addr), 7357007001005);
     }
 }
 // check: EXECUTED
