@@ -7,7 +7,7 @@ use DiemFramework::Testnet;
 use DiemFramework::DiemSystem;
 
     fun main(_sender: signer) {
-        assert!(DiemSystem::is_validator(@{{alice}}) == true, 98);
+        assert!(DiemSystem::is_validator(@Alice) == true, 98);
 
         let len = Globals::get_epoch_length();
         let set = DiemSystem::validator_set_size();

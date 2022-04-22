@@ -53,9 +53,9 @@ script {
 
   fun main(vm: signer) {
     // send to community wallet Bob
-    DiemAccount::vm_make_payment_no_limit<GAS>(@{{alice}}, @{{bob}}, 100000, x"", x"", &vm);
+    DiemAccount::vm_make_payment_no_limit<GAS>(@Alice, @Bob, 100000, x"", x"", &vm);
     // send to community wallet Carol
-    DiemAccount::vm_make_payment_no_limit<GAS>(@{{alice}}, @{{carol}}, 900000, x"", x"", &vm);
+    DiemAccount::vm_make_payment_no_limit<GAS>(@Alice, @Carol, 900000, x"", x"", &vm);
 
     Burn::reset_ratios(&vm);
     let (addr, deps , ratios) = Burn::get_ratios();

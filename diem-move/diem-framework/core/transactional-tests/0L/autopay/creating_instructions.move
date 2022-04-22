@@ -15,12 +15,12 @@ script {
     let sender = &sender;
     AutoPay::enable_autopay(sender);
     assert!(AutoPay::is_enabled(Signer::address_of(sender)), 0);
-    AutoPay::create_instruction(sender, 1, 0, @{{bob}}, 2, 5);
+    AutoPay::create_instruction(sender, 1, 0, @Bob, 2, 5);
     let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
     );
     assert!(type == 0u8, 1);
-    assert!(payee == @{{bob}}, 1);
+    assert!(payee == @Bob, 1);
     assert!(end_epoch == 2, 1);
     assert!(percentage == 5, 1);
   }
@@ -35,7 +35,7 @@ script {
   use Std::Signer;
   fun main(sender: signer) {    
     assert!(AutoPay::is_enabled(Signer::address_of(&sender)), 0);
-    AutoPay::create_instruction(&sender, 2, 0, @{{alice}}, 4, 5);
+    AutoPay::create_instruction(&sender, 2, 0, @Alice, 4, 5);
   }
 }
 // check: EXECUTED
@@ -50,7 +50,7 @@ script {
 //   fun main(sender: signer) {
 //     AutoPay::enable_autopay();
 //     Transaction::assert!(AutoPay::is_enabled(Signer::address_of(sender)), 0);
-//     AutoPay::create_instruction(2, @{{bob}}, 5, 5);
+//     AutoPay::create_instruction(2, @Bob, 5, 5);
 //     }
 // }
 // // check: EXECUTED

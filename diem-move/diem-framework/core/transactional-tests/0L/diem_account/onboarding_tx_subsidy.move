@@ -77,7 +77,7 @@ use DiemFramework::Roles;
 
     // Bob's balance should have gone down by 2M microgas, because he sent 1 GAS each to Eve's operator and owner.
 
-    assert!(DiemAccount::balance<GAS>(@{{bob}}) == 1000000, 73571301011000);
+    assert!(DiemAccount::balance<GAS>(@Bob) == 1000000, 73571301011000);
 
   }
 }
@@ -110,7 +110,7 @@ script {
       print(&new_account_bal);
 
       // eve did not mine or validator in last epoch, case != 1. So there wont be a reward 
-      assert!(Cases::get_case(&vm, @{{bob}}, 0, 100) != 1, 7357002);
+      assert!(Cases::get_case(&vm, @Bob, 0, 100) != 1, 7357002);
       assert!(new_account_bal == 1000000, 7357003);
 
       // Operator account should not increase after epoch change
@@ -119,7 +119,7 @@ script {
         7357003
       );
 
-      assert!(TowerState::can_create_val_account(@{{bob}}) == false, 7357004);
+      assert!(TowerState::can_create_val_account(@Bob) == false, 7357004);
       
   }
 }

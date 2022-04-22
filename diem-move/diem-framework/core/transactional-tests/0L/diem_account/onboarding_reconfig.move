@@ -96,35 +96,35 @@ script {
         let vm = &vm;
         // Tests on initial size of validators
         assert!(DiemSystem::validator_set_size() == 4, 7357000180101);
-        assert!(DiemSystem::is_validator(@{{alice}}) == true, 7357000180102);
-        assert!(DiemSystem::is_validator(@{{bob}}) == true, 7357000180103);
+        assert!(DiemSystem::is_validator(@Alice) == true, 7357000180102);
+        assert!(DiemSystem::is_validator(@Bob) == true, 7357000180103);
         assert!(
             DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 
             7357000180104
         );
         assert!(TowerState::is_init(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180105);
 
-        TowerState::test_helper_mock_mining_vm(vm, @{{alice}}, 20);
-        TowerState::test_helper_mock_mining_vm(vm, @{{bob}}, 20);
-        TowerState::test_helper_mock_mining_vm(vm, @{{carol}}, 20);
-        TowerState::test_helper_mock_mining_vm(vm, @{{dave}}, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @Alice, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @Bob, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @Carol, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @Dave, 20);
 
         // Transfer coins to operators
-        let oper_alice = ValidatorConfig::get_operator(@{{alice}});
-        let oper_bob = ValidatorConfig::get_operator(@{{bob}});
-        let oper_carol = ValidatorConfig::get_operator(@{{carol}});
-        let oper_dave = ValidatorConfig::get_operator(@{{dave}});
-        DiemAccount::vm_make_payment_no_limit<GAS>( @{{alice}}, oper_alice, 60009, x"", x"", vm);  
-        DiemAccount::vm_make_payment_no_limit<GAS>( @{{bob}}, oper_bob, 60009, x"", x"", vm);  
-        DiemAccount::vm_make_payment_no_limit<GAS>( @{{carol}}, oper_carol, 60009, x"", x"", vm);  
-        DiemAccount::vm_make_payment_no_limit<GAS>( @{{dave}}, oper_dave, 60009, x"", x"", vm);
+        let oper_alice = ValidatorConfig::get_operator(@Alice);
+        let oper_bob = ValidatorConfig::get_operator(@Bob);
+        let oper_carol = ValidatorConfig::get_operator(@Carol);
+        let oper_dave = ValidatorConfig::get_operator(@Dave);
+        DiemAccount::vm_make_payment_no_limit<GAS>( @Alice, oper_alice, 60009, x"", x"", vm);  
+        DiemAccount::vm_make_payment_no_limit<GAS>( @Bob, oper_bob, 60009, x"", x"", vm);  
+        DiemAccount::vm_make_payment_no_limit<GAS>( @Carol, oper_carol, 60009, x"", x"", vm);  
+        DiemAccount::vm_make_payment_no_limit<GAS>( @Dave, oper_dave, 60009, x"", x"", vm);
 
         // Mock everyone being a CASE 1
         let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, @{{alice}});
-        Vector::push_back<address>(&mut voters, @{{bob}});
-        Vector::push_back<address>(&mut voters, @{{carol}});
-        Vector::push_back<address>(&mut voters, @{{dave}});
+        Vector::push_back<address>(&mut voters, @Alice);
+        Vector::push_back<address>(&mut voters, @Bob);
+        Vector::push_back<address>(&mut voters, @Carol);
+        Vector::push_back<address>(&mut voters, @Dave);
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
@@ -151,7 +151,7 @@ script {
         // Tests on initial size of validators
         // New validator is not in this set.
         assert!(DiemSystem::validator_set_size() == 4, 7357000180101);
-        assert!(DiemSystem::is_validator(@{{alice}}) == true, 7357000180102);
+        assert!(DiemSystem::is_validator(@Alice) == true, 7357000180102);
         assert!(!DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180103);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(&vm));
         // Is in validator universe
@@ -180,8 +180,8 @@ script {
         let vm = &vm;
         // Tests on initial size of validators
         assert!(DiemSystem::validator_set_size() == 4, 7357000180201);
-        assert!(DiemSystem::is_validator(@{{alice}}) == true, 7357000180202);
-        assert!(DiemSystem::is_validator(@{{bob}}) == true, 7357000180203);
+        assert!(DiemSystem::is_validator(@Alice) == true, 7357000180202);
+        assert!(DiemSystem::is_validator(@Bob) == true, 7357000180203);
         assert!(
             DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 
             7357000180204
@@ -189,15 +189,15 @@ script {
 
         // Mock everyone being a CASE 1
         let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, @{{alice}});
-        Vector::push_back<address>(&mut voters, @{{bob}});
-        Vector::push_back<address>(&mut voters, @{{carol}});
-        Vector::push_back<address>(&mut voters, @{{dave}});
+        Vector::push_back<address>(&mut voters, @Alice);
+        Vector::push_back<address>(&mut voters, @Bob);
+        Vector::push_back<address>(&mut voters, @Carol);
+        Vector::push_back<address>(&mut voters, @Dave);
 
-        TowerState::test_helper_mock_mining_vm(vm, @{{alice}}, 20);
-        TowerState::test_helper_mock_mining_vm(vm, @{{bob}}, 20);
-        TowerState::test_helper_mock_mining_vm(vm, @{{carol}}, 20);
-        TowerState::test_helper_mock_mining_vm(vm, @{{dave}}, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @Alice, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @Bob, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @Carol, 20);
+        TowerState::test_helper_mock_mining_vm(vm, @Dave, 20);
         TowerState::test_helper_mock_mining_vm(vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 20);
 
         // enable autopay and transfer coins to the new operator
@@ -244,7 +244,7 @@ script {
     fun main(vm: signer) {
         // Tests on initial size of validators
         assert!(DiemSystem::validator_set_size() == 6, 7357000200301);
-        assert!(DiemSystem::is_validator(@{{alice}}) == true, 7357000200302);
+        assert!(DiemSystem::is_validator(@Alice) == true, 7357000200302);
         assert!(DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000200303);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(&vm));
         assert!(len == 6, 7357000200304);

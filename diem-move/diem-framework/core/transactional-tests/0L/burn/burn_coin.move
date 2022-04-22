@@ -1,4 +1,4 @@
-//! account: alice, 1000000GAS, 0, validator
+//# init --validators Alice
 
 //! new-transaction
 //! sender: diemroot

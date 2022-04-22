@@ -56,13 +56,13 @@ script {
     use DiemFramework::DiemSystem;
 
     fun main(vm: signer) {
-        let voters = Vector::singleton<address>(@{{alice}});
-        Vector::push_back<address>(&mut voters, @{{bob}});
-        Vector::push_back<address>(&mut voters, @{{carol}});
-        Vector::push_back<address>(&mut voters, @{{dave}});
+        let voters = Vector::singleton<address>(@Alice);
+        Vector::push_back<address>(&mut voters, @Bob);
+        Vector::push_back<address>(&mut voters, @Carol);
+        Vector::push_back<address>(&mut voters, @Dave);
         // Skip Eve.
-        // Vector::push_back<address>(&mut voters, @{{eve}});
-        Vector::push_back<address>(&mut voters, @{{frank}});
+        // Vector::push_back<address>(&mut voters, @Eve);
+        Vector::push_back<address>(&mut voters, @Frank);
 
         let i = 1;
         while (i < 15) {
@@ -72,7 +72,7 @@ script {
         };
 
         assert!(DiemSystem::validator_set_size() == 6, 7357008005003);
-        assert!(DiemSystem::is_validator(@{{alice}}) == true, 7357008005004);
+        assert!(DiemSystem::is_validator(@Alice) == true, 7357008005004);
     }
 }
 //check: EXECUTED

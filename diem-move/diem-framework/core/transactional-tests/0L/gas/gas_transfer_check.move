@@ -13,9 +13,9 @@ fun main(account: signer) {
     //transfers are enabled in testnet, need to disable testnet to check that they are disabled otherwise
     Testnet::remove_testnet(&account);
     let with_cap = DiemAccount::extract_withdraw_capability(&account);
-    DiemAccount::pay_from<GAS>(&with_cap, @{{bob}}, 10, x"", x"");
-    assert!(DiemAccount::balance<GAS>(@{{alice}}) == 0, 0);
-    assert!(DiemAccount::balance<GAS>(@{{bob}}) == 10, 1);
+    DiemAccount::pay_from<GAS>(&with_cap, @Bob, 10, x"", x"");
+    assert!(DiemAccount::balance<GAS>(@Alice) == 0, 0);
+    assert!(DiemAccount::balance<GAS>(@Bob) == 10, 1);
     DiemAccount::restore_withdraw_capability(with_cap);
 }
 }
@@ -34,8 +34,8 @@ fun main(account: signer) {
 // ;
 // fun main(account: signer) {
 //     let coin = Diem::mint<GAS::T>(account, 10);
-//     DiemAccount::deposit(account, @{{bob}}, coin);
-//     assert!(DiemAccount::balance<GAS>(@{{bob}}) == 10, 4);
+//     DiemAccount::deposit(account, @Bob, coin);
+//     assert!(DiemAccount::balance<GAS>(@Bob) == 10, 4);
 // }
 // }
 // // check: EXECUTED

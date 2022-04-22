@@ -4,7 +4,7 @@
 // DID mine above the threshold for the epoch. 
 
 // Todo: These GAS values have no effect, all accounts start with 1M GAS
-//! account: alice, 1000000GAS, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000GAS, 0, validator
 //! account: carol, 1000000GAS, 0, validator
 //! account: dave, 1000000GAS, 0, validator
@@ -26,18 +26,18 @@ script {
 
     fun main(sender: signer) {
         // tranfer enough coins to operators
-        let oper_bob = ValidatorConfig::get_operator(@{{bob}});
-        let oper_eve = ValidatorConfig::get_operator(@{{eve}});
-        let oper_dave = ValidatorConfig::get_operator(@{{dave}});
-        let oper_alice = ValidatorConfig::get_operator(@{{alice}});
-        let oper_carol = ValidatorConfig::get_operator(@{{carol}});
-        let oper_frank = ValidatorConfig::get_operator(@{{frank}});
-        DiemAccount::vm_make_payment_no_limit<GAS>(@{{bob}}, oper_bob, 50009, x"", x"", &sender);
-        DiemAccount::vm_make_payment_no_limit<GAS>(@{{eve}}, oper_eve, 50009, x"", x"", &sender);
-        DiemAccount::vm_make_payment_no_limit<GAS>(@{{dave}}, oper_dave, 50009, x"", x"", &sender);
-        DiemAccount::vm_make_payment_no_limit<GAS>(@{{alice}}, oper_alice, 50009, x"", x"", &sender);
-        DiemAccount::vm_make_payment_no_limit<GAS>(@{{carol}}, oper_carol, 50009, x"", x"", &sender);
-        DiemAccount::vm_make_payment_no_limit<GAS>(@{{frank}}, oper_frank, 50009, x"", x"", &sender);
+        let oper_bob = ValidatorConfig::get_operator(@Bob);
+        let oper_eve = ValidatorConfig::get_operator(@Eve);
+        let oper_dave = ValidatorConfig::get_operator(@Dave);
+        let oper_alice = ValidatorConfig::get_operator(@Alice);
+        let oper_carol = ValidatorConfig::get_operator(@Carol);
+        let oper_frank = ValidatorConfig::get_operator(@Frank);
+        DiemAccount::vm_make_payment_no_limit<GAS>(@Bob, oper_bob, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>(@Eve, oper_eve, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>(@Dave, oper_dave, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>(@Alice, oper_alice, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>(@Carol, oper_carol, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>(@Frank, oper_frank, 50009, x"", x"", &sender);
     }
 }
 //check: EXECUTED
@@ -54,7 +54,7 @@ script {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357300101011000);
+        assert!(TowerState::get_count_in_epoch(@Alice) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -71,7 +71,7 @@ script {
         // Bob is the only one that can update her mining stats. 
         // Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{bob}}) == 5, 7357300101011000);
+        assert!(TowerState::get_count_in_epoch(@Bob) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -89,7 +89,7 @@ script {
         // Carol is the only one that can update her mining stats. 
         // Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{carol}}) == 5, 7357300101011000);
+        assert!(TowerState::get_count_in_epoch(@Carol) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -121,7 +121,7 @@ script {
         // Eve is the only one that can update her mining stats. 
         // Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{eve}}) == 5, 7357300101011000);
+        assert!(TowerState::get_count_in_epoch(@Eve) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -138,7 +138,7 @@ script {
         // Frank is the only one that can update her mining stats. 
         // Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{frank}}) == 5, 7357300101011000);
+        assert!(TowerState::get_count_in_epoch(@Frank) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -158,16 +158,16 @@ script {
     fun main(_vm: signer) {
         // This is not an onboarding case, steady state.
         // FullnodeState::test_set_fullnode_fixtures(
-        //     &vm, @{{dave}}, 0, 0, 0, 200, 200, 1000000
+        //     &vm, @Dave, 0, 0, 0, 200, 200, 1000000
         // );
 
         // Tests on initial size of validators 
         assert!(DiemSystem::validator_set_size() == 6, 7357000180101);
-        assert!(DiemSystem::is_validator(@{{dave}}) == true, 7357000180102);
-        assert!(TowerState::test_helper_get_height(@{{dave}}) == 0, 7357000180104);
-        assert!(DiemAccount::balance<GAS>(@{{dave}}) == 949991, 7357000180106);
-        assert!(NodeWeight::proof_of_weight(@{{dave}}) == 0, 7357000180107);  
-        assert!(TowerState::test_helper_get_height(@{{dave}}) == 0, 7357000180108);
+        assert!(DiemSystem::is_validator(@Dave) == true, 7357000180102);
+        assert!(TowerState::test_helper_get_height(@Dave) == 0, 7357000180104);
+        assert!(DiemAccount::balance<GAS>(@Dave) == 949991, 7357000180106);
+        assert!(NodeWeight::proof_of_weight(@Dave) == 0, 7357000180107);  
+        assert!(TowerState::test_helper_get_height(@Dave) == 0, 7357000180108);
     }
 }
 // check: EXECUTED
@@ -182,16 +182,16 @@ script {
     fun main(vm: signer) {
                 // This is not an onboarding case, steady state.
         // FullnodeState::test_set_fullnode_fixtures(
-        //     &vm, @{{dave}}, 0, 0, 0, 200, 200, 1000000
+        //     &vm, @Dave, 0, 0, 0, 200, 200, 1000000
         // );
         let voters = Vector::empty<address>();
         // Case 3 skip Carol, did not validate.
-        Vector::push_back<address>(&mut voters, @{{alice}});
-        Vector::push_back<address>(&mut voters, @{{bob}});
-        Vector::push_back<address>(&mut voters, @{{carol}});
+        Vector::push_back<address>(&mut voters, @Alice);
+        Vector::push_back<address>(&mut voters, @Bob);
+        Vector::push_back<address>(&mut voters, @Carol);
         // Case 4 SKIP DAVE, did not validate
-        Vector::push_back<address>(&mut voters, @{{eve}});
-        Vector::push_back<address>(&mut voters, @{{frank}});
+        Vector::push_back<address>(&mut voters, @Eve);
+        Vector::push_back<address>(&mut voters, @Frank);
 
 
         // Overwrite the statistics to mock that all have been validating.
@@ -212,7 +212,7 @@ script {
     fun main(vm: signer) {
         // We are in a new epoch.
         // Check carol is in the the correct case during reconfigure
-        assert!(Cases::get_case(&vm, @{{dave}}, 0, 15) == 4, 7357000180109);
+        assert!(Cases::get_case(&vm, @Dave, 0, 15) == 4, 7357000180109);
     }
 }
 
@@ -247,9 +247,9 @@ script {
         print(&DiemSystem::validator_set_size());
         
         assert!(DiemSystem::validator_set_size() == 5, 7357000180110);
-        assert!(DiemSystem::is_validator(@{{dave}}) == false, 7357000180111);            
-        assert!(DiemAccount::balance<GAS>(@{{dave}}) == 949991, 7357000180112);
-        assert!(NodeWeight::proof_of_weight(@{{dave}}) == 0, 7357000180113);  
+        assert!(DiemSystem::is_validator(@Dave) == false, 7357000180111);            
+        assert!(DiemAccount::balance<GAS>(@Dave) == 949991, 7357000180112);
+        assert!(NodeWeight::proof_of_weight(@Dave) == 0, 7357000180113);  
         assert!(DiemConfig::get_current_epoch()==2, 7357000180114);
 
     }

@@ -17,8 +17,8 @@ script {
         let len = Vector::length<address>(&my_before);
         assert!(len == 0, 7357130101011000);
 
-        let vec_my = Vector::singleton<address>(@{{alice}});
-        let vec_follow = Vector::singleton<address>(@{{bob}});
+        let vec_my = Vector::singleton<address>(@Alice);
+        let vec_follow = Vector::singleton<address>(@Bob);
 
         TrustedAccounts::update(
             &account,

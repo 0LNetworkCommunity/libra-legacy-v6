@@ -3,7 +3,7 @@
 // DID validate successfully.
 // DID mine above the threshold for the epoch.
 
-//! account: alice, 1000000GAS, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000GAS, 0, validator
 //! account: carol, 1000000GAS, 0, validator
 //! account: dave, 1000000GAS, 0, validator
@@ -26,17 +26,17 @@ script {
     fun main(sender: signer) {
         // Tests on initial size of validators
         assert!(DiemSystem::validator_set_size() == 5, 7357300101011000);
-        assert!(DiemSystem::is_validator(@{{alice}}) == true, 7357300101021000);
-        assert!(DiemSystem::is_validator(@{{eve}}) == true, 7357300101031000);
+        assert!(DiemSystem::is_validator(@Alice) == true, 7357300101021000);
+        assert!(DiemSystem::is_validator(@Eve) == true, 7357300101031000);
 
-        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 1, 7357300101041000);
-        assert!(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 7357300101051000);
-        assert!(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357300101051000);
+        assert!(TowerState::get_count_in_epoch(@Alice) == 1, 7357300101041000);
+        assert!(DiemAccount::balance<GAS>(@Alice) == 1000000, 7357300101051000);
+        assert!(NodeWeight::proof_of_weight(@Alice) == 0, 7357300101051000);
 
         // Alice continues to mine after genesis.
         // This test is adapted from chained_from_genesis.move
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357300101071000);
+        assert!(TowerState::get_count_in_epoch(@Alice) == 5, 7357300101071000);
     }
 }
 // check: EXECUTED
@@ -52,15 +52,15 @@ script {
     fun main(vm: signer) {
         // This is not an onboarding case, steady state.
         // FullnodeState::test_set_fullnode_fixtures(
-        //     &vm, @{{alice}}, 0, 0, 0, 200, 200, 1000000
+        //     &vm, @Alice, 0, 0, 0, 200, 200, 1000000
         // );
 
         let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, @{{alice}});
-        Vector::push_back<address>(&mut voters, @{{bob}});
-        Vector::push_back<address>(&mut voters, @{{carol}});
-        Vector::push_back<address>(&mut voters, @{{dave}});
-        Vector::push_back<address>(&mut voters, @{{eve}});
+        Vector::push_back<address>(&mut voters, @Alice);
+        Vector::push_back<address>(&mut voters, @Bob);
+        Vector::push_back<address>(&mut voters, @Carol);
+        Vector::push_back<address>(&mut voters, @Dave);
+        Vector::push_back<address>(&mut voters, @Eve);
 
         // Overwrite the statistics to mock that all have been validating.
         let i = 1;
@@ -83,11 +83,11 @@ script {
     fun main(vm: signer) {
         // We are in a new epoch.
         // Check alice is in the the correct case during reconfigure
-        assert!(Cases::get_case(&vm, @{{alice}}, 0, 15) == 1, 735700018010901);
-        assert!(Cases::get_case(&vm, @{{bob}}, 0, 15) == 2, 735700018010902);
-        assert!(Cases::get_case(&vm, @{{carol}}, 0, 15) == 2, 735700018010903);
-        assert!(Cases::get_case(&vm, @{{dave}}, 0, 15) == 2, 735700018010904);
-        assert!(Cases::get_case(&vm, @{{eve}}, 0, 15) == 2, 735700018010905);
+        assert!(Cases::get_case(&vm, @Alice, 0, 15) == 1, 735700018010901);
+        assert!(Cases::get_case(&vm, @Bob, 0, 15) == 2, 735700018010902);
+        assert!(Cases::get_case(&vm, @Carol, 0, 15) == 2, 735700018010903);
+        assert!(Cases::get_case(&vm, @Dave, 0, 15) == 2, 735700018010904);
+        assert!(Cases::get_case(&vm, @Eve, 0, 15) == 2, 735700018010905);
 
         // check only 1 val is getting the subsidy
         let (vals, _) = DiemSystem::get_fee_ratio(&vm, 0, 100);
@@ -132,8 +132,8 @@ script {
 
         let ending_balance = starting_balance + expected_subsidy - operator_refund;
 
-        assert!(DiemAccount::balance<GAS>(@{{alice}}) == ending_balance, 7357000180113);  
-        assert!(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357000180114);  
+        assert!(DiemAccount::balance<GAS>(@Alice) == ending_balance, 7357000180113);  
+        assert!(NodeWeight::proof_of_weight(@Alice) == 0, 7357000180114);  
     }
 }
 //check: EXECUTED

@@ -27,10 +27,10 @@ script {
     // check the case of a network density of 4 active validators.
 
     let vm = &vm;
-    let validators = Vector::singleton<address>(@{{alice}});
-    Vector::push_back(&mut validators, @{{bob}});
-    Vector::push_back(&mut validators, @{{carol}});
-    Vector::push_back(&mut validators, @{{dave}});
+    let validators = Vector::singleton<address>(@Alice);
+    Vector::push_back(&mut validators, @Bob);
+    Vector::push_back(&mut validators, @Carol);
+    Vector::push_back(&mut validators, @Dave);
 
     // create mock validator stats for full epoch
     let i = 0;

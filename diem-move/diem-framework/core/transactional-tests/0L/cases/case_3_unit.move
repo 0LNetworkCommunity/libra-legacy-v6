@@ -10,7 +10,7 @@ script {
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357300101011000);
+        assert!(TowerState::get_count_in_epoch(@Alice) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -24,11 +24,11 @@ script {
     use DiemFramework::Cases;
 
     fun main(sender: signer) {
-        let voters = Vector::singleton<address>(@{{alice}});
+        let voters = Vector::singleton<address>(@Alice);
         // only voted on 1 block out of 200
         Stats::process_set_votes(&sender, &voters);
 
-        assert!(Cases::get_case(&sender, @{{alice}}, 0, 200) == 3, 7357300103011000);
+        assert!(Cases::get_case(&sender, @Alice, 0, 200) == 3, 7357300103011000);
     }
 }
 //check: EXECUTED

@@ -23,14 +23,14 @@ script {
         print(&@DiemFramework);
         // validator needs to qualify for next epoch for the burn to register
         Audit::test_helper_make_passing(&sender);
-        print(&AutoPay::is_enabled(@{{alice}}));
+        print(&AutoPay::is_enabled(@Alice));
 
 
-        print(&Audit::val_audit_passing(@{{alice}}));
+        print(&Audit::val_audit_passing(@Alice));
 
         AutoPay::enable_autopay(&sender);
-        print(&AutoPay::is_enabled(@{{alice}}));
-        print(&Audit::val_audit_passing(@{{alice}}));
+        print(&AutoPay::is_enabled(@Alice));
+        print(&Audit::val_audit_passing(@Alice));
 
     }
 }
@@ -45,7 +45,7 @@ script {
 
     fun main(sender: signer) {
         let sender = &sender;
-        let voters = Vector::singleton<address>(@{{alice}});
+        let voters = Vector::singleton<address>(@Alice);
         let i = 1;
         while (i < 16) {
             // Mock the validator doing work for 15 blocks, and stats being updated.
@@ -53,7 +53,7 @@ script {
             i = i + 1;
         };
 
-        assert!(Cases::get_case(sender, @{{alice}}, 0 , 15) == 1, 7357300103011000);
+        assert!(Cases::get_case(sender, @Alice, 0 , 15) == 1, 7357300103011000);
     }
 }
 //check: EXECUTED
@@ -107,9 +107,9 @@ script {
 
   fun main(vm: signer) {
     // send to community wallet Bob
-    DiemAccount::vm_make_payment_no_limit<GAS>(@{{alice}}, @{{bob}}, 500000, x"", x"", &vm);
+    DiemAccount::vm_make_payment_no_limit<GAS>(@Alice, @Bob, 500000, x"", x"", &vm);
 
-    let bal = DiemAccount::balance<GAS>(@{{bob}});
+    let bal = DiemAccount::balance<GAS>(@Bob);
     assert!(bal == 1500000, 7357003);
   }
 }
@@ -135,7 +135,7 @@ script {
 
   fun main(_vm: signer) {
     // bob's community wallet increased after epoch change.
-    let bal = DiemAccount::balance<GAS>(@{{bob}});
+    let bal = DiemAccount::balance<GAS>(@Bob);
     print(&bal);
     assert!(bal == 2100399, 7357004);
   }

@@ -13,36 +13,36 @@ script {
       // Check that after a reconfig the counter is reset, and archived in history.
       
       let vm = &vm;
-      assert!(Stats::node_current_props(vm, @{{alice}}) == 0, 7357190201011000);
-      assert!(Stats::node_current_props(vm, @{{bob}}) == 0, 7357190201021000);
-      assert!(Stats::node_current_votes(vm, @{{alice}}) == 0, 7357190201031000);
-      assert!(Stats::node_current_votes(vm, @{{bob}}) == 0, 7357190201041000);
+      assert!(Stats::node_current_props(vm, @Alice) == 0, 7357190201011000);
+      assert!(Stats::node_current_props(vm, @Bob) == 0, 7357190201021000);
+      assert!(Stats::node_current_votes(vm, @Alice) == 0, 7357190201031000);
+      assert!(Stats::node_current_votes(vm, @Bob) == 0, 7357190201041000);
 
 
-      Stats::inc_prop(vm, @{{alice}});
-      Stats::inc_prop(vm, @{{alice}});
+      Stats::inc_prop(vm, @Alice);
+      Stats::inc_prop(vm, @Alice);
 
-      Stats::inc_prop(vm, @{{bob}});
+      Stats::inc_prop(vm, @Bob);
       
-      Stats::test_helper_inc_vote_addr(vm, @{{alice}});
-      Stats::test_helper_inc_vote_addr(vm, @{{alice}});
+      Stats::test_helper_inc_vote_addr(vm, @Alice);
+      Stats::test_helper_inc_vote_addr(vm, @Alice);
 
-      assert!(Stats::node_current_props(vm, @{{alice}}) == 2, 7357190201051000);
-      assert!(Stats::node_current_props(vm, @{{bob}}) == 1, 7357190201061000);
+      assert!(Stats::node_current_props(vm, @Alice) == 2, 7357190201051000);
+      assert!(Stats::node_current_props(vm, @Bob) == 1, 7357190201061000);
 
-      assert!(Stats::node_current_votes(vm, @{{alice}}) == 2, 7357190201071000);
-      assert!(Stats::node_current_votes(vm, @{{bob}}) == 0, 7357190201081000);
+      assert!(Stats::node_current_votes(vm, @Alice) == 2, 7357190201071000);
+      assert!(Stats::node_current_votes(vm, @Bob) == 0, 7357190201081000);
 
 
       let set = Vector::empty<address>();
-      Vector::push_back<address>(&mut set, @{{alice}});
-      Vector::push_back<address>(&mut set, @{{bob}});
+      Vector::push_back<address>(&mut set, @Alice);
+      Vector::push_back<address>(&mut set, @Bob);
 
 
       Stats::reconfig(vm, &set);
 
-      assert!(Stats::node_current_props(vm, @{{alice}}) == 0, 0);
-      assert!(Stats::node_current_props(vm, @{{bob}}) == 0, 0);
+      assert!(Stats::node_current_props(vm, @Alice) == 0, 0);
+      assert!(Stats::node_current_props(vm, @Bob) == 0, 0);
     }
 }
 // check: EXECUTED

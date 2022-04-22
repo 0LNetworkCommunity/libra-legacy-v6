@@ -1,4 +1,4 @@
-//! account: alice, 1000000GAS, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000GAS, 0
 //! account: carol, 1000000GAS, 0
 
@@ -72,16 +72,16 @@ script {
     fun main(sender: signer) {
         // Tests on initial size of validators
         // assert!(DiemSystem::validator_set_size() == 5, 7357300101011000);
-        assert!(DiemSystem::is_validator(@{{alice}}) == true, 735701);
+        assert!(DiemSystem::is_validator(@Alice) == true, 735701);
 
-        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 1, 735702);
-        assert!(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 735703);
-        assert!(NodeWeight::proof_of_weight(@{{alice}}) == 0, 735704);
+        assert!(TowerState::get_count_in_epoch(@Alice) == 1, 735702);
+        assert!(DiemAccount::balance<GAS>(@Alice) == 1000000, 735703);
+        assert!(NodeWeight::proof_of_weight(@Alice) == 0, 735704);
 
         // Alice continues to mine after genesis.
         // This test is adapted from chained_from_genesis.move
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 5, 735705);
+        assert!(TowerState::get_count_in_epoch(@Alice) == 5, 735705);
 
     }
 }
@@ -97,7 +97,7 @@ script {
     // This is the the epoch boundary.
     fun main(vm: signer) {
         let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, @{{alice}});
+        Vector::push_back<address>(&mut voters, @Alice);
 
         // Overwrite the statistics to mock that all have been validating.
         let i = 1;
@@ -121,16 +121,16 @@ script {
 
     fun main(sender: signer) {
         // Tests on initial size of validators
-        assert!(DiemSystem::is_validator(@{{alice}}), 735706);
-        assert!(!DiemSystem::is_validator(@{{bob}}), 735707);
+        assert!(DiemSystem::is_validator(@Alice), 735706);
+        assert!(!DiemSystem::is_validator(@Bob), 735707);
         
-        print(&TowerState::get_count_in_epoch(@{{bob}}));
+        print(&TowerState::get_count_in_epoch(@Bob));
 
         // bring bob to 10 proofs. (Note: alice has one proof as a fullnode from genesis, so it will total 11 fullnode proofs.);
         TowerState::test_helper_mock_mining(&sender, 10);
 
-        // assert!(TowerState::get_count_in_epoch(@{{bob}}) == 1, 7357300101041000);
-        print(&TowerState::get_count_in_epoch(@{{bob}}));
+        // assert!(TowerState::get_count_in_epoch(@Bob) == 1, 7357300101041000);
+        print(&TowerState::get_count_in_epoch(@Bob));
         print(&TowerState::get_fullnode_proofs());
     }
 }
@@ -185,8 +185,8 @@ script {
         // bob gets the whole subsidy
 
         // bob and carol submitted same number of proofs and will share the fullnode subsidy
-        assert!(DiemAccount::balance<GAS>(@{{bob}}) == ending_balance, 7357000180113);
-        assert!(DiemAccount::balance<GAS>(@{{bob}}) == ending_balance, 7357000180114);  
+        assert!(DiemAccount::balance<GAS>(@Bob) == ending_balance, 7357000180113);
+        assert!(DiemAccount::balance<GAS>(@Bob) == ending_balance, 7357000180114);  
     }
 }
 //check: EXECUTED

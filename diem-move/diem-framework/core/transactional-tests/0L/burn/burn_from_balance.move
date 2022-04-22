@@ -1,4 +1,4 @@
-//! account: alice, 1000000GAS, 0, validator
+//# init --validators Alice
 
 //! new-transaction
 //! sender: diemroot
@@ -10,7 +10,7 @@ script {
   fun main(vm: signer) {
     let cap = Diem::market_cap<GAS>();
     DiemAccount::vm_burn_from_balance<GAS>(
-        @{{alice}},
+        @Alice,
         100000,
         b"burn",
         &vm,

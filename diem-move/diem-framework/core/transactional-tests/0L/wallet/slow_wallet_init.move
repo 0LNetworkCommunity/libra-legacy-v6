@@ -1,4 +1,4 @@
-//! account: alice, 1000000GAS, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000GAS,
 
 // Tests that the slow wallet list at 0x0 is initialized at genesis, with validators (1)

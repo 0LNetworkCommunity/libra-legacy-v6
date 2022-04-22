@@ -12,7 +12,7 @@ fun main(vm: signer) {
         &ValidatorUniverse::get_eligible_validators(&vm)
     );
     assert!(len == 1, 73570);
-    ValidatorUniverse::remove_validator_vm(&vm, @{{bob}});
+    ValidatorUniverse::remove_validator_vm(&vm, @Bob);
 }
 }
 // check: EXECUTED

@@ -1,4 +1,4 @@
-//! account: alice, 1000000GAS, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000GAS, 0
 
 //! block-prologue
@@ -18,8 +18,8 @@ script {
 
     fun main(sender: signer) {
         // Tests on initial size of validators
-        assert!(DiemSystem::is_validator(@{{alice}}), 7357300101021000);
-        assert!(!DiemSystem::is_validator(@{{bob}}), 7357300101031000);
+        assert!(DiemSystem::is_validator(@Alice), 7357300101021000);
+        assert!(!DiemSystem::is_validator(@Bob), 7357300101031000);
         
         MinerState::test_helper_init_miner(
             &sender,
@@ -30,15 +30,15 @@ script {
 
         MinerState::test_helper_mock_mining(&sender, 5);
 
-        // assert!(MinerState::get_count_in_epoch(@{{bob}}) == 1, 7357300101041000);
-        print(&MinerState::get_count_in_epoch(@{{bob}}));
-        // assert!(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 7357300101051000);
-        // assert!(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357300101051000);
+        // assert!(MinerState::get_count_in_epoch(@Bob) == 1, 7357300101041000);
+        print(&MinerState::get_count_in_epoch(@Bob));
+        // assert!(DiemAccount::balance<GAS>(@Alice) == 1000000, 7357300101051000);
+        // assert!(NodeWeight::proof_of_weight(@Alice) == 0, 7357300101051000);
 
         // Alice continues to mine after genesis.
         // This test is adapted from chained_from_genesis.move
         // MinerState::test_helper_mock_mining(&sender, 5);
-        assert!(MinerState::get_count_in_epoch(@{{bob}}) == 5, 7357300101071000);
+        assert!(MinerState::get_count_in_epoch(@Bob) == 5, 7357300101071000);
     }
 }
 // check: EXECUTED
@@ -81,9 +81,9 @@ script {
         // let ending_balance = starting_balance + expected_subsidy - operator_refund;
 
         print(&expected_subsidy);
-        print(&DiemAccount::balance<GAS>(@{{alice}}));
+        print(&DiemAccount::balance<GAS>(@Alice));
         assert!(expected_subsidy == 0, 7357000180113);  
-        // assert!(NodeWeight::proof_of_weight(@{{alice}}) == 1, 7357000180114);  
+        // assert!(NodeWeight::proof_of_weight(@Alice) == 1, 7357000180114);  
     }
 }
 //check: EXECUTED

@@ -36,7 +36,7 @@ script {
       sender,
       1, // UID
       0, // percent of balance type
-      @{{jim}},
+      @Jim,
       2, // until epoch two
       500 // 5 percent
     );
@@ -45,7 +45,7 @@ script {
       Signer::address_of(sender), 1
     );
     assert!(type == 0, 735701);
-    assert!(payee == @{{jim}}, 735702);
+    assert!(payee == @Jim, 735702);
     assert!(end_epoch == 2, 735703);
     assert!(percentage == 500, 735704);
   }
@@ -80,7 +80,7 @@ script {
   use DiemFramework::GAS::GAS;
 
   fun main(_vm: signer) {
-    let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
+    let ending_balance = DiemAccount::balance<GAS>(@Alice);
     assert!(ending_balance == 9500001, 735705);
   }
 }
@@ -120,12 +120,12 @@ script {
   // use DiemFramework::Debug::print;
 
   fun main(_vm: signer) {
-    let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
+    let ending_balance = DiemAccount::balance<GAS>(@Alice);
     // print(&ending_balance);
     assert!(ending_balance == 9025001, 735711);
 
     // check balance of recipients
-    let ending_balance = DiemAccount::balance<GAS>(@{{jim}});
+    let ending_balance = DiemAccount::balance<GAS>(@Jim);
     // print(&ending_balance);
     assert!(ending_balance == 1974999, 735712);
   }

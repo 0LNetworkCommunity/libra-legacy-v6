@@ -16,7 +16,7 @@ script {
         let vec = Oracle::test_helper_query_oracle_votes();
 
         let e = *Vector::borrow<address>(&vec, 0);
-        assert!(e == @{{alice}}, 7357123401011000);
+        assert!(e == @Alice, 7357123401011000);
 
         assert!(Upgrade::has_upgrade() == false, 7357123401011000); 
     }

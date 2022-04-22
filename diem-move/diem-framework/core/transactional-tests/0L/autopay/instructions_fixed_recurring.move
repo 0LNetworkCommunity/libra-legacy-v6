@@ -32,13 +32,13 @@ script {
     AutoPay::enable_autopay(sender);
     assert!(AutoPay::is_enabled(Signer::address_of(sender)), 0);
     
-    AutoPay::create_instruction(sender, 1, 2, @{{carol}}, 2, 200);
+    AutoPay::create_instruction(sender, 1, 2, @Carol, 2, 200);
 
     let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
     );
     assert!(type == 2, 1);
-    assert!(payee == @{{carol}}, 1);
+    assert!(payee == @Carol, 1);
     assert!(end_epoch == 2, 1);
     assert!(percentage == 200, 1);
   }
@@ -72,7 +72,7 @@ script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
   fun main(_vm: signer) {
-    let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
+    let ending_balance = DiemAccount::balance<GAS>(@Alice);
     assert!(ending_balance == 1999800, 7357002);
   }
 }
@@ -112,12 +112,12 @@ script {
   // use DiemFramework::Debug::print;
   fun main(_vm: signer) {
     // alice will have paid 5% on the 10000 she received last epoch
-    let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
+    let ending_balance = DiemAccount::balance<GAS>(@Alice);
     // print(&ending_balance);
     assert!(ending_balance == 1999600, 7357003);
 
     // check balance of recipients
-    let ending_balance = DiemAccount::balance<GAS>(@{{carol}});
+    let ending_balance = DiemAccount::balance<GAS>(@Carol);
     // print(&ending_balance);
     assert!(ending_balance == 1000400, 7357004);
   }

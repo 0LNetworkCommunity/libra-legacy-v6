@@ -15,9 +15,9 @@ script {
       let list = Wallet::get_comm_list();
 
       assert!(Vector::length(&list) == 1, 7357001);
-      assert!(Wallet::is_comm(@{{alice}}), 7357002);
+      assert!(Wallet::is_comm(@Alice), 7357002);
 
-      let uid = Wallet::new_timed_transfer(&sender, @{{bob}}, 100, b"thanks bob");
+      let uid = Wallet::new_timed_transfer(&sender, @Bob, 100, b"thanks bob");
       assert!(Wallet::transfer_is_proposed(uid), 7357003);
     }
 }
@@ -32,12 +32,12 @@ script {
     use DiemFramework::GAS::GAS;
 
     fun main(vm: signer) {
-      let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
+      let bob_balance = DiemAccount::balance<GAS>(@Bob);
       assert!(bob_balance == 1000000, 7357004);
 
       DiemAccount::process_community_wallets(&vm, 4);
 
-      let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
+      let bob_balance = DiemAccount::balance<GAS>(@Bob);
       assert!(bob_balance == 1000100, 7357005);
     }
 }

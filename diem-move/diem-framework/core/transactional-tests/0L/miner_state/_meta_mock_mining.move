@@ -19,9 +19,9 @@ script {
     use DiemFramework::TowerState;
     
     fun main(sender: signer) {
-        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 5, 73570001);
-        TowerState::test_helper_mock_reconfig(&sender, @{{alice}});
-        assert!(TowerState::get_epochs_mining(@{{alice}}) == 1, 73570002);
+        assert!(TowerState::get_count_in_epoch(@Alice) == 5, 73570001);
+        TowerState::test_helper_mock_reconfig(&sender, @Alice);
+        assert!(TowerState::get_epochs_mining(@Alice) == 1, 73570002);
     }
 }
 //check: EXECUTED

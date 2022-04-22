@@ -90,6 +90,6 @@ script {
     Testnet::remove_testnet(&vm);
     
     // check is rate-limited
-    assert!(TowerState::can_create_val_account(@{{bob}}) == false, 7357130101091000);
+    assert!(TowerState::can_create_val_account(@Bob) == false, 7357130101091000);
   }
 }

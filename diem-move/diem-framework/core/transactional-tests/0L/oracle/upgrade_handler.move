@@ -16,7 +16,7 @@ script {
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 0);
-      assert!(e == @{{alice}}, 7357123401011000);
+      assert!(e == @Alice, 7357123401011000);
 
       assert!(Upgrade::has_upgrade() == false, 7357123401011000); 
 
@@ -47,7 +47,7 @@ script {
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 1);
-      assert!(e == @{{bob}}, 7357123401011000);
+      assert!(e == @Bob, 7357123401011000);
 
       assert!(Upgrade::has_upgrade() == false, 7357123401011000); 
   }
@@ -90,8 +90,8 @@ script {
       assert!(payload == data, 7357123401011000);
 
       let validators = Vector::empty<address>();
-      Vector::push_back(&mut validators, @{{alice}});
-      Vector::push_back(&mut validators, @{{charlie}});
+      Vector::push_back(&mut validators, @Alice);
+      Vector::push_back(&mut validators, @Charlie);
       assert!(Vector::compare(&voters, &validators), 7357123401011000);
   }
 }

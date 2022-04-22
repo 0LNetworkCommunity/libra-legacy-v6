@@ -4,7 +4,7 @@
 // DID mine above the threshold for the epoch. 
 
 // Todo: These GAS values have no effect, all accounts start with 1M GAS
-//! account: alice, 1000000GAS, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000GAS, 0, validator
 //! account: carol, 1000000GAS, 0, validator
 //! account: dave, 1000000GAS, 0, validator
@@ -26,18 +26,18 @@ script {
 
     fun main(sender: signer) {
         // tranfer enough coins to operators
-        let oper_bob = ValidatorConfig::get_operator(@{{bob}});
-        let oper_eve = ValidatorConfig::get_operator(@{{eve}});
-        let oper_dave = ValidatorConfig::get_operator(@{{dave}});
-        let oper_alice = ValidatorConfig::get_operator(@{{alice}});
-        let oper_carol = ValidatorConfig::get_operator(@{{carol}});
-        let oper_frank = ValidatorConfig::get_operator(@{{frank}});
-        DiemAccount::vm_make_payment_no_limit<GAS>(@{{bob}}, oper_bob, 50009, x"", x"", &sender);
-        DiemAccount::vm_make_payment_no_limit<GAS>(@{{eve}}, oper_eve, 50009, x"", x"", &sender);
-        DiemAccount::vm_make_payment_no_limit<GAS>(@{{dave}}, oper_dave, 50009, x"", x"", &sender);
-        DiemAccount::vm_make_payment_no_limit<GAS>(@{{alice}}, oper_alice, 50009, x"", x"", &sender);
-        DiemAccount::vm_make_payment_no_limit<GAS>(@{{carol}}, oper_carol, 50009, x"", x"", &sender);
-        DiemAccount::vm_make_payment_no_limit<GAS>(@{{frank}}, oper_frank, 50009, x"", x"", &sender);
+        let oper_bob = ValidatorConfig::get_operator(@Bob);
+        let oper_eve = ValidatorConfig::get_operator(@Eve);
+        let oper_dave = ValidatorConfig::get_operator(@Dave);
+        let oper_alice = ValidatorConfig::get_operator(@Alice);
+        let oper_carol = ValidatorConfig::get_operator(@Carol);
+        let oper_frank = ValidatorConfig::get_operator(@Frank);
+        DiemAccount::vm_make_payment_no_limit<GAS>(@Bob, oper_bob, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>(@Eve, oper_eve, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>(@Dave, oper_dave, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>(@Alice, oper_alice, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>(@Carol, oper_carol, 50009, x"", x"", &sender);
+        DiemAccount::vm_make_payment_no_limit<GAS>(@Frank, oper_frank, 50009, x"", x"", &sender);
     }
 }
 //check: EXECUTED
@@ -149,15 +149,15 @@ script {
     fun main(_vm: signer) {
         // This is not an onboarding case, steady state.
         // FullnodeState::test_set_fullnode_fixtures(
-        //     &vm, @{{carol}}, 0, 0, 0, 200, 200, 1000000
+        //     &vm, @Carol, 0, 0, 0, 200, 200, 1000000
         // );
 
         // Tests on initial size of validators 
         assert!(DiemSystem::validator_set_size() == 6, 7357000180101);
-        assert!(DiemSystem::is_validator(@{{carol}}) == true, 7357000180102);
-        assert!(TowerState::test_helper_get_height(@{{carol}}) == 0, 7357000180104);
-        assert!(DiemAccount::balance<GAS>(@{{carol}}) == 949991, 7357000180106);
-        assert!(TowerState::test_helper_get_height(@{{carol}}) == 0, 7357000180108);
+        assert!(DiemSystem::is_validator(@Carol) == true, 7357000180102);
+        assert!(TowerState::test_helper_get_height(@Carol) == 0, 7357000180104);
+        assert!(DiemAccount::balance<GAS>(@Carol) == 949991, 7357000180106);
+        assert!(TowerState::test_helper_get_height(@Carol) == 0, 7357000180108);
     }
 }
 // check: EXECUTED
@@ -172,18 +172,18 @@ script {
     fun main(vm: signer) {
         // This is not an onboarding case, steady state.
         // FullnodeState::test_set_fullnode_fixtures(
-        //     &vm, @{{carol}}, 0, 0, 0, 200, 200, 1000000
+        //     &vm, @Carol, 0, 0, 0, 200, 200, 1000000
         // );
 
         let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, @{{alice}});
-        Vector::push_back<address>(&mut voters, @{{bob}});
+        Vector::push_back<address>(&mut voters, @Alice);
+        Vector::push_back<address>(&mut voters, @Bob);
 
         // Case 3 SKIP CAROL, did not validate.
 
-        Vector::push_back<address>(&mut voters, @{{dave}});
-        Vector::push_back<address>(&mut voters, @{{eve}});
-        Vector::push_back<address>(&mut voters, @{{frank}});
+        Vector::push_back<address>(&mut voters, @Dave);
+        Vector::push_back<address>(&mut voters, @Eve);
+        Vector::push_back<address>(&mut voters, @Frank);
 
         // Overwrite the statistics to mock that all have been validating.
         let i = 1;
@@ -203,7 +203,7 @@ script {
     fun main(vm: signer) {
         // We are in a new epoch.
         // Check carol is in the the correct case during reconfigure
-        assert!(Cases::get_case(&vm, @{{carol}}, 0, 15) == 3, 7357000180109);
+        assert!(Cases::get_case(&vm, @Carol, 0, 15) == 3, 7357000180109);
     }
 }
 
@@ -232,9 +232,9 @@ script {
 
         // Check the validator set is at expected size
         assert!(DiemSystem::validator_set_size() == 5, 7357000180110);
-        assert!(DiemSystem::is_validator(@{{carol}}) == false, 7357000180111);
-        assert!(DiemAccount::balance<GAS>(@{{carol}}) == 949991, 7357000180112);
-        assert!(NodeWeight::proof_of_weight(@{{carol}}) == 0, 7357000180113);  
+        assert!(DiemSystem::is_validator(@Carol) == false, 7357000180111);
+        assert!(DiemAccount::balance<GAS>(@Carol) == 949991, 7357000180112);
+        assert!(NodeWeight::proof_of_weight(@Carol) == 0, 7357000180113);  
         assert!(DiemConfig::get_current_epoch() == 2, 7357000180114);
     }
 }

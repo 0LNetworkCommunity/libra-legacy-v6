@@ -15,9 +15,9 @@ script {
       let list = Wallet::get_comm_list();
 
       assert!(Vector::length(&list) == 1, 7357001);
-      assert!(Wallet::is_comm(@{{alice}}), 7357002);
+      assert!(Wallet::is_comm(@Alice), 7357002);
 
-      let uid = Wallet::new_timed_transfer(&sender, @{{bob}}, 100, b"thanks bob");
+      let uid = Wallet::new_timed_transfer(&sender, @Bob, 100, b"thanks bob");
       assert!(Wallet::transfer_is_proposed(uid), 7357003);
     }
 }

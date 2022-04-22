@@ -41,10 +41,10 @@ use DiemFramework::DiemAccount;
 use {{default}}::Holder;
 fun main(lr: signer, alice_account: signer) {
     AccountLimits::publish_unrestricted_limits<GAS>(&alice_account);
-    AccountLimits::update_limits_definition<GAS>(&lr, @{{alice}}, 0, 30, 0, 1);
-    AccountLimits::publish_window<GAS>(&lr, &alice_account, @{{alice}});
+    AccountLimits::update_limits_definition<GAS>(&lr, @Alice, 0, 30, 0, 1);
+    AccountLimits::publish_window<GAS>(&lr, &alice_account, @Alice);
 
-    Holder::hold(&alice_account, DiemAccount::balance<GAS>(@{{alice}}));
+    Holder::hold(&alice_account, DiemAccount::balance<GAS>(@Alice));
 }
 }
 // check: "Keep(EXECUTED)"
@@ -57,10 +57,10 @@ use DiemFramework::DiemAccount;
 use {{default}}::Holder;
 fun main(lr: signer, bob_account: signer) {
     AccountLimits::publish_unrestricted_limits<GAS>(&bob_account);
-    AccountLimits::update_limits_definition<GAS>(&lr, @{{bob}}, 0, 30, 0, 1);
-    AccountLimits::publish_window<GAS>(&lr, &bob_account, @{{bob}});
+    AccountLimits::update_limits_definition<GAS>(&lr, @Bob, 0, 30, 0, 1);
+    AccountLimits::publish_window<GAS>(&lr, &bob_account, @Bob);
 
-    Holder::hold(&bob_account, DiemAccount::balance<GAS>(@{{bob}}));
+    Holder::hold(&bob_account, DiemAccount::balance<GAS>(@Bob));
 }
 }
 // check: "Keep(EXECUTED)"
@@ -82,7 +82,7 @@ script {
     assert!(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
     
     //one shot payment to bob
-    AutoPay2::create_instruction(sender, 1, 3, @{{bob}}, 1000, 100);
+    AutoPay2::create_instruction(sender, 1, 3, @Bob, 1000, 100);
 
     //update account limit dedicated to paying escrow to 50%
     DiemAccount::update_escrow_percentage<GAS>(sender, 50);
@@ -90,7 +90,7 @@ script {
     let (type, payee, end_epoch, amt) = 
       AutoPay2::query_instruction(Signer::address_of(sender), 1);
     assert!(type == 3, 1);
-    assert!(payee == @{{bob}}, 1);
+    assert!(payee == @Bob, 1);
     assert!(end_epoch == 1000, 1);
     assert!(amt == 100, 1);
   }
@@ -106,13 +106,13 @@ script {
   use DiemFramework::Debug::print;
   use {{default}}::Holder;
   fun main() {
-    let alice_balance = DiemAccount::balance<GAS>(@{{alice}});
-    let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
+    let alice_balance = DiemAccount::balance<GAS>(@Alice);
+    let bob_balance = DiemAccount::balance<GAS>(@Bob);
     print(&alice_balance);
     print(&bob_balance);
 
-    let alice_store = Holder::fetch(@{{alice}});
-    let bob_store = Holder::fetch(@{{bob}});
+    let alice_store = Holder::fetch(@Alice);
+    let bob_store = Holder::fetch(@Bob);
     print(&alice_store);
     print(&bob_store);
 
@@ -149,10 +149,10 @@ script {
   use DiemFramework::GAS::GAS;
   use {{default}}::Holder;
   fun main(_vm: signer) {
-    let alice_balance = DiemAccount::balance<GAS>(@{{alice}});
-    let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
-    let alice_store = Holder::fetch(@{{alice}});
-    let bob_store = Holder::fetch(@{{bob}});
+    let alice_balance = DiemAccount::balance<GAS>(@Alice);
+    let bob_balance = DiemAccount::balance<GAS>(@Bob);
+    let alice_store = Holder::fetch(@Alice);
+    let bob_store = Holder::fetch(@Bob);
 
     assert!(alice_store - alice_balance == 100, 1);
     assert!(bob_balance - bob_store == 30, 2);
@@ -186,11 +186,11 @@ script {
   use DiemFramework::GAS::GAS;
   use {{default}}::Holder;
   fun main(_vm: signer) {
-    let alice_balance = DiemAccount::balance<GAS>(@{{alice}});
-    let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
+    let alice_balance = DiemAccount::balance<GAS>(@Alice);
+    let bob_balance = DiemAccount::balance<GAS>(@Bob);
 
-    let alice_store = Holder::fetch(@{{alice}});
-    let bob_store = Holder::fetch(@{{bob}});
+    let alice_store = Holder::fetch(@Alice);
+    let bob_store = Holder::fetch(@Bob);
 
     assert!(alice_store - alice_balance == 100, 1);
     assert!(bob_balance - bob_store == 45, 2);

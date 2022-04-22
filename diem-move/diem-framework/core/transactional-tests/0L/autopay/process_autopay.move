@@ -14,12 +14,12 @@ script {
     let sender = &sender;    
     AutoPay::enable_autopay(sender);
     assert!(AutoPay::is_enabled(Signer::address_of(sender)), 7357001);
-    AutoPay::create_instruction(sender, 1, 0, @{{bob}}, 2, 500);
+    AutoPay::create_instruction(sender, 1, 0, @Bob, 2, 500);
     let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
     );
     assert!(type == 0u8, 7357002);
-    assert!(payee == @{{bob}}, 7357003);
+    assert!(payee == @Bob, 7357003);
     assert!(end_epoch == 2, 7357004);
     assert!(percentage == 500, 7357005);
   }
@@ -61,16 +61,16 @@ script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
   fun main(sender: signer) {
-    let alice_balance = DiemAccount::balance<GAS>(@{{alice}});
-    let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
+    let alice_balance = DiemAccount::balance<GAS>(@Alice);
+    let bob_balance = DiemAccount::balance<GAS>(@Bob);
     assert!(alice_balance == 1000000, 7357007);
     AutoPay::process_autopay(&sender);
     
-    let alice_balance_after = DiemAccount::balance<GAS>(@{{alice}});
+    let alice_balance_after = DiemAccount::balance<GAS>(@Alice);
     assert!(alice_balance_after < alice_balance, 7357008);
     
     let transferred = alice_balance - alice_balance_after;    
-    let bob_received = DiemAccount::balance<GAS>(@{{bob}}) - bob_balance;    
+    let bob_received = DiemAccount::balance<GAS>(@Bob) - bob_balance;    
     assert!(transferred==bob_received, 7357009)
   }
 }

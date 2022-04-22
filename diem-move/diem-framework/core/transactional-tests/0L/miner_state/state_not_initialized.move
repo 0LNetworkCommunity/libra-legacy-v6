@@ -23,7 +23,7 @@ script {
         // return solution
         let proof = TowerState::create_proof_blob(challenge, difficulty, solution);
         TowerState::commit_state(&sender, proof);
-        let verified_tower_height_after = TowerState::test_helper_get_height(@{{alice}});
+        let verified_tower_height_after = TowerState::test_helper_get_height(@Alice);
 
         assert!(verified_tower_height_after == reported_tower_height, 10008001);
     }

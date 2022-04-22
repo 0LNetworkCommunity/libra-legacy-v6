@@ -9,8 +9,8 @@ script {
 
   fun main(sender: signer) {
     let validators = Vector::empty<address>();
-    Vector::push_back(&mut validators, @{{alice}});
-    Vector::push_back(&mut validators, @{{bob}});
+    Vector::push_back(&mut validators, @Alice);
+    Vector::push_back(&mut validators, @Bob);
 
     Upgrade::record_history(&sender, 0, x"1234", *&validators, 200);
     

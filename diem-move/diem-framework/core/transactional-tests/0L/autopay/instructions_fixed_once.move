@@ -32,13 +32,13 @@ script {
     assert!(AutoPay::is_enabled(Signer::address_of(sender)), 0);
     
     // note: end epoch does not matter here as long as it is after the next epoch
-    AutoPay::create_instruction(sender, 1, 3, @{{carol}}, 200, 500);
+    AutoPay::create_instruction(sender, 1, 3, @Carol, 200, 500);
 
     let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
         Signer::address_of(sender), 1
     );
     assert!(type == 3, 1);
-    assert!(payee == @{{carol}}, 1);
+    assert!(payee == @Carol, 1);
     assert!(end_epoch == 200, 1);
     assert!(percentage == 500, 1);
   }
@@ -74,11 +74,11 @@ script {
   use DiemFramework::AutoPay;
   fun main(_vm: signer) {
 
-    let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
+    let ending_balance = DiemAccount::balance<GAS>(@Alice);
     assert!(ending_balance == 999500, 7357002);
     
     //Confirm the one-shot instruction was deleted
-    let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(@{{alice}}, 1);
+    let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(@Alice, 1);
     assert!(type == 0, 1);
     assert!(payee == @0x0, 1);
     assert!(end_epoch == 0, 1);
@@ -121,11 +121,11 @@ script {
   use DiemFramework::GAS::GAS;
   fun main(_vm: signer) {
     // no change, one-shot instruction is finished
-    let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
+    let ending_balance = DiemAccount::balance<GAS>(@Alice);
     assert!(ending_balance == 999500, 7357003);
 
     // check balance of recipients
-    let ending_balance = DiemAccount::balance<GAS>(@{{carol}});
+    let ending_balance = DiemAccount::balance<GAS>(@Carol);
     assert!(ending_balance == 1000500, 7357004);
   }
 }

@@ -24,7 +24,7 @@ script {
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357008013001);
+        assert!(TowerState::get_count_in_epoch(@Alice) == 5, 7357008013001);
     }
 }
 //check: EXECUTED
@@ -39,7 +39,7 @@ script {
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{bob}}) == 5, 7357008013002);
+        assert!(TowerState::get_count_in_epoch(@Bob) == 5, 7357008013002);
     }
 }
 //check: EXECUTED
@@ -55,7 +55,7 @@ script {
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{carol}}) == 5, 7357008013003);
+        assert!(TowerState::get_count_in_epoch(@Carol) == 5, 7357008013003);
     }
 }
 //check: EXECUTED
@@ -68,7 +68,7 @@ script {
 
     fun main(sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{dave}}) == 5, 7357008013004);
+        assert!(TowerState::get_count_in_epoch(@Dave) == 5, 7357008013004);
     }
 }
 // //check: EXECUTED
@@ -79,7 +79,7 @@ script {
     use DiemFramework::TowerState;
     fun main(sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{eve}}) == 5, 7357008013005);
+        assert!(TowerState::get_count_in_epoch(@Eve) == 5, 7357008013005);
     }
 }
 //check: EXECUTED
@@ -91,7 +91,7 @@ script {
 
     fun main(sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{frank}}) == 5, 7357008013006);
+        assert!(TowerState::get_count_in_epoch(@Frank) == 5, 7357008013006);
     }
 }
 //check: EXECUTED
@@ -107,12 +107,12 @@ script {
         assert!(DiemSystem::validator_set_size() == 6, 7357008013007);
 
         let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, @{{alice}});
-        Vector::push_back<address>(&mut voters, @{{bob}});
-        Vector::push_back<address>(&mut voters, @{{carol}});
-        Vector::push_back<address>(&mut voters, @{{dave}});
-        Vector::push_back<address>(&mut voters, @{{eve}});
-        Vector::push_back<address>(&mut voters, @{{frank}});
+        Vector::push_back<address>(&mut voters, @Alice);
+        Vector::push_back<address>(&mut voters, @Bob);
+        Vector::push_back<address>(&mut voters, @Carol);
+        Vector::push_back<address>(&mut voters, @Dave);
+        Vector::push_back<address>(&mut voters, @Eve);
+        Vector::push_back<address>(&mut voters, @Frank);
 
         let i = 1;
         while (i < 16) {
@@ -145,7 +145,7 @@ script {
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357008013008);
+        assert!(TowerState::get_count_in_epoch(@Alice) == 5, 7357008013008);
     }
 }
 //check: EXECUTED
@@ -160,7 +160,7 @@ script {
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{bob}}) == 5, 7357008013009);
+        assert!(TowerState::get_count_in_epoch(@Bob) == 5, 7357008013009);
     }
 }
 //check: EXECUTED
@@ -176,7 +176,7 @@ script {
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{carol}}) == 5, 7357008013010);
+        assert!(TowerState::get_count_in_epoch(@Carol) == 5, 7357008013010);
     }
 }
 //check: EXECUTED
@@ -189,7 +189,7 @@ script {
 
     fun main(sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{dave}}) == 5, 7357008013011);
+        assert!(TowerState::get_count_in_epoch(@Dave) == 5, 7357008013011);
     }
 }
 // //check: EXECUTED
@@ -200,7 +200,7 @@ script {
     use DiemFramework::TowerState;
     fun main(sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{eve}}) == 5, 7357008013012);
+        assert!(TowerState::get_count_in_epoch(@Eve) == 5, 7357008013012);
     }
 }
 //check: EXECUTED
@@ -212,7 +212,7 @@ script {
 
     fun main(sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{frank}}) == 5, 7357008013013);
+        assert!(TowerState::get_count_in_epoch(@Frank) == 5, 7357008013013);
     }
 }
 //check: EXECUTED
@@ -227,12 +227,12 @@ script {
 
     fun main(vm: signer) {
         let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, @{{alice}});
-        Vector::push_back<address>(&mut voters, @{{bob}});
-        Vector::push_back<address>(&mut voters, @{{carol}});
-        Vector::push_back<address>(&mut voters, @{{dave}});
-        Vector::push_back<address>(&mut voters, @{{eve}});
-        Vector::push_back<address>(&mut voters, @{{frank}});
+        Vector::push_back<address>(&mut voters, @Alice);
+        Vector::push_back<address>(&mut voters, @Bob);
+        Vector::push_back<address>(&mut voters, @Carol);
+        Vector::push_back<address>(&mut voters, @Dave);
+        Vector::push_back<address>(&mut voters, @Eve);
+        Vector::push_back<address>(&mut voters, @Frank);
 
 
         let i = 16;

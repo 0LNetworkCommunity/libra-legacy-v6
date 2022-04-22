@@ -16,7 +16,7 @@ script {
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357300101011000);
+        assert!(TowerState::get_count_in_epoch(@Alice) == 5, 7357300101011000);
     }
 }
 //check: EXECUTED
@@ -32,7 +32,7 @@ script {
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 4);
-        assert!(TowerState::get_count_in_epoch(@{{bob}}) == 4, 7357300102011000);
+        assert!(TowerState::get_count_in_epoch(@Bob) == 4, 7357300102011000);
     }
 }
 //check: EXECUTED
@@ -47,7 +47,7 @@ script {
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 3);
-        assert!(TowerState::get_count_in_epoch(@{{carol}}) == 3, 7357300103011000);
+        assert!(TowerState::get_count_in_epoch(@Carol) == 3, 7357300103011000);
     }
 }
 //check: EXECUTED
@@ -62,7 +62,7 @@ script {
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 2);
-        assert!(TowerState::get_count_in_epoch(@{{dave}}) == 2, 7357300104011000);
+        assert!(TowerState::get_count_in_epoch(@Dave) == 2, 7357300104011000);
     }
 }
 //check: EXECUTED
@@ -95,7 +95,7 @@ script {
 
         // Check eve is NOT in that list.
         assert!(
-            Vector::contains<address>(&top_n_is_under, &@{{eve}}) != true, 
+            Vector::contains<address>(&top_n_is_under, &@Eve) != true, 
             7357140102031000
         );
 
@@ -106,7 +106,7 @@ script {
         assert!(Vector::length<address>(&top_n_is_equal) == len, 7357140102041000);
 
         // Check eve IS on that list.
-        assert!(Vector::contains<address>(&top_n_is_equal, &@{{eve}}), 7357140102051000);
+        assert!(Vector::contains<address>(&top_n_is_equal, &@Eve), 7357140102051000);
         
         // case of querying a larger n than the validator universe.
         // Check if we ask for a larger set we also get 

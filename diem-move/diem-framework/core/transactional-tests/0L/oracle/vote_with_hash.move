@@ -10,16 +10,16 @@ script {
     use DiemFramework::TowerState;
     use DiemFramework::NodeWeight;
     fun main(sender: signer) {
-        TowerState::test_helper_set_weight_vm(&sender, @{{alice}}, 10);
-        assert!(NodeWeight::proof_of_weight(@{{alice}}) == 10, 7357300101011088);
-        TowerState::test_helper_set_weight_vm(&sender, @{{bob}}, 10);
-        assert!(NodeWeight::proof_of_weight(@{{bob}}) == 10, 7357300101011088);
-        TowerState::test_helper_set_weight_vm(&sender, @{{carol}}, 10);
-        assert!(NodeWeight::proof_of_weight(@{{carol}}) == 10, 7357300101011088);
-        TowerState::test_helper_set_weight_vm(&sender, @{{dave}}, 31);
-        assert!(NodeWeight::proof_of_weight(@{{dave}}) == 31, 7357300101011088);
-        TowerState::test_helper_set_weight_vm(&sender, @{{eve}}, 31);
-        assert!(NodeWeight::proof_of_weight(@{{eve}}) == 31, 7357300101011088);
+        TowerState::test_helper_set_weight_vm(&sender, @Alice, 10);
+        assert!(NodeWeight::proof_of_weight(@Alice) == 10, 7357300101011088);
+        TowerState::test_helper_set_weight_vm(&sender, @Bob, 10);
+        assert!(NodeWeight::proof_of_weight(@Bob) == 10, 7357300101011088);
+        TowerState::test_helper_set_weight_vm(&sender, @Carol, 10);
+        assert!(NodeWeight::proof_of_weight(@Carol) == 10, 7357300101011088);
+        TowerState::test_helper_set_weight_vm(&sender, @Dave, 31);
+        assert!(NodeWeight::proof_of_weight(@Dave) == 31, 7357300101011088);
+        TowerState::test_helper_set_weight_vm(&sender, @Eve, 31);
+        assert!(NodeWeight::proof_of_weight(@Eve) == 31, 7357300101011088);
     }
 }
 //check: EXECUTED
@@ -40,7 +40,7 @@ script {
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 0);
-      assert!(e == @{{alice}}, 7357123401011000);
+      assert!(e == @Alice, 7357123401011000);
 
       assert!(Upgrade::has_upgrade() == false, 7357123401011000); 
       assert!(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
@@ -62,7 +62,7 @@ script {
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 1);
-      assert!(e == @{{bob}}, 7357123401011000);
+      assert!(e == @Bob, 7357123401011000);
 
       assert!(Upgrade::has_upgrade() == false, 7357123401011000); 
       assert!(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
@@ -85,7 +85,7 @@ script {
       Oracle::handler(&sender, id, hash);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = *Vector::borrow<address>(&vec, 2);
-      assert!(e == @{{carol}}, 7357123401011000);
+      assert!(e == @Carol, 7357123401011000);
 
       if (Oracle::upgrade_vote_type() == 0) {
           //One validator, one vote
@@ -118,7 +118,7 @@ script {
       Oracle::handler(&sender, id, data);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = *Vector::borrow<address>(&vec, 3);
-      assert!(e == @{{dave}}, 7357123401011000);
+      assert!(e == @Dave, 7357123401011000);
 
       if (Oracle::upgrade_vote_type() == 0) {
           //One validator, one vote
@@ -154,7 +154,7 @@ script {
       Oracle::handler(&sender, id, hash);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = *Vector::borrow<address>(&vec, 4);
-      assert!(e == @{{eve}}, 7357123401011000);
+      assert!(e == @Eve, 7357123401011000);
 
       if (Oracle::upgrade_vote_type() == 0) {
           //One validator, one vote

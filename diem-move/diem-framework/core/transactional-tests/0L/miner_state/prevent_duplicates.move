@@ -18,7 +18,7 @@ script {
             TestFixtures::easy_sol()
         );
 
-        let height = TowerState::test_helper_get_height(@{{bob}});
+        let height = TowerState::test_helper_get_height(@Bob);
         assert!(height==0, 01);
 
     }

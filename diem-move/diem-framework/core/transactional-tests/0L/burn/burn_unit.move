@@ -53,14 +53,14 @@ script {
 
   fun main(vm: signer) {
     // send to community wallet Bob
-    DiemAccount::vm_make_payment_no_limit<GAS>(@{{alice}}, @{{bob}}, 100000, x"", x"", &vm);
+    DiemAccount::vm_make_payment_no_limit<GAS>(@Alice, @Bob, 100000, x"", x"", &vm);
     // send to community wallet Carol
-    DiemAccount::vm_make_payment_no_limit<GAS>(@{{alice}}, @{{carol}}, 600000, x"", x"", &vm);
+    DiemAccount::vm_make_payment_no_limit<GAS>(@Alice, @Carol, 600000, x"", x"", &vm);
 
-    let bal_bob_old = DiemAccount::balance<GAS>(@{{bob}});
+    let bal_bob_old = DiemAccount::balance<GAS>(@Bob);
 
     assert!(bal_bob_old == 1100000, 7357003);
-    let bal_carol_old = DiemAccount::balance<GAS>(@{{carol}});
+    let bal_carol_old = DiemAccount::balance<GAS>(@Carol);
 
     assert!(bal_carol_old == 1600000, 7357004);
 
@@ -73,18 +73,18 @@ script {
     // ratio for carol's community wallet.
     assert!(pct_carol == 59, 7357006);
 
-    Burn::epoch_start_burn(&vm, @{{alice}}, 100000);
+    Burn::epoch_start_burn(&vm, @Alice, 100000);
 
-    let bal_alice = DiemAccount::balance<GAS>(@{{alice}});
+    let bal_alice = DiemAccount::balance<GAS>(@Alice);
     assert!(bal_alice == 1200000, 7357007); // rounding issues
     
     // unchanged balance
-    let bal_bob = DiemAccount::balance<GAS>(@{{bob}});
+    let bal_bob = DiemAccount::balance<GAS>(@Bob);
     assert!(bal_bob == bal_bob_old, 7357008);
 
     // unchanged balance
 
-    let bal_carol = DiemAccount::balance<GAS>(@{{carol}});
+    let bal_carol = DiemAccount::balance<GAS>(@Carol);
     assert!(bal_carol == bal_carol_old, 7357009);
   }
 }
@@ -111,21 +111,21 @@ script {
   use DiemFramework::Burn;
 
   fun main(vm: signer) {
-    let bal_bob_old = DiemAccount::balance<GAS>(@{{bob}});
-    let bal_carol_old = DiemAccount::balance<GAS>(@{{carol}});
+    let bal_bob_old = DiemAccount::balance<GAS>(@Bob);
+    let bal_carol_old = DiemAccount::balance<GAS>(@Carol);
 
     // this time alice changed burn settings, and is resending to community.
-    Burn::epoch_start_burn(&vm, @{{alice}}, 100000);
+    Burn::epoch_start_burn(&vm, @Alice, 100000);
 
-    let bal_alice = DiemAccount::balance<GAS>(@{{alice}});
+    let bal_alice = DiemAccount::balance<GAS>(@Alice);
     assert!(bal_alice == 1100001, 7357010); // rounding issues
     
     // balances are greater than before.
-    let bal_bob = DiemAccount::balance<GAS>(@{{bob}});
+    let bal_bob = DiemAccount::balance<GAS>(@Bob);
     assert!(bal_bob > bal_bob_old, 7357011);
 
     // balances are greater than before.
-    let bal_carol = DiemAccount::balance<GAS>(@{{carol}});
+    let bal_carol = DiemAccount::balance<GAS>(@Carol);
     assert!(bal_carol > bal_carol_old, 7357012);
   }
 }

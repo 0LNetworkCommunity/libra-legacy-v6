@@ -1,4 +1,4 @@
-//! account: alice, 1000000GAS, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000GAS
 //! account: carol, 1000000GAS
 
@@ -50,17 +50,17 @@ script {
   
   fun main(vm: signer) {
     // bobs_indexed amount changes
-    let index_before = DiemAccount::get_index_cumu_deposits(@{{bob}});
-    let index_carol_before = DiemAccount::get_index_cumu_deposits(@{{carol}});
+    let index_before = DiemAccount::get_index_cumu_deposits(@Bob);
+    let index_carol_before = DiemAccount::get_index_cumu_deposits(@Carol);
 
     // send to community wallet Bob
-    DiemAccount::vm_make_payment_no_limit<GAS>( @{{alice}}, @{{bob}}, 100000, x"", x"", &vm);
-    let index_after = DiemAccount::get_index_cumu_deposits(@{{bob}});
+    DiemAccount::vm_make_payment_no_limit<GAS>( @Alice, @Bob, 100000, x"", x"", &vm);
+    let index_after = DiemAccount::get_index_cumu_deposits(@Bob);
     assert!(index_after > index_before, 735701);
 
     // carol's amount DOES NOT change
     // send to community wallet Bob
-    let carol_after = DiemAccount::get_index_cumu_deposits(@{{carol}});
+    let carol_after = DiemAccount::get_index_cumu_deposits(@Carol);
     assert!(index_carol_before == carol_after, 735702)
   }
 }
