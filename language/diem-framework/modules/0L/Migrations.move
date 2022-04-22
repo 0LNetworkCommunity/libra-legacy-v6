@@ -128,6 +128,8 @@ module MigrateAutoPayBal {
         let addr = Vector::borrow(&enabled_accounts, i);
         let account_sig = DiemAccount::scary_wtf_create_signer(vm, *addr);
         AutoPay::enable_autopay(&account_sig);
+        AutoPay::migrate_instructions(&account_sig);
+
         i = i + 1;
       };
 

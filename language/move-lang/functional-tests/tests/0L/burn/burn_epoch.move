@@ -3,12 +3,14 @@
 
 // Tests that Alice burns the cost-to-exist on every epoch, (is NOT sending to community index)
 
+
 //! new-transaction
 //! sender: alice
 script {    
     use 0x1::TowerState;
     use 0x1::Diem;
     use 0x1::GAS::GAS;
+    use 0x1::Burn;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
@@ -19,8 +21,10 @@ script {
         assert(mk_cap_genesis == 10000000 + 1000000, 7357000);
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        
+
         // alice's preferences are set to always burn
+        Burn::set_send_community(&sender, false);
+
     }
 }
 //check: EXECUTED
