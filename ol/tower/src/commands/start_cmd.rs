@@ -77,8 +77,7 @@ impl Runnable for StartCmd {
 
         // Check for, and submit backlog proofs.
         if !self.skip_backlog {
-            // TODO: remove is_operator from signature, since tx_params has it.
-            match backlog::process_backlog(&cfg, &tx_params, is_operator) {
+            match backlog::process_backlog(&cfg, &tx_params) {
                 Ok(()) => status_ok!("Backlog:", "backlog committed to chain"),
                 Err(e) => {
                     println!("WARN: Failed processing backlog: {:?}", e);
@@ -90,7 +89,7 @@ impl Runnable for StartCmd {
 
         if !self.backlog_only {
             // Steady state.
-            let result = mine_and_submit(&cfg, tx_params, is_operator);
+            let result = mine_and_submit(&cfg, tx_params);
             match result {
                 Ok(_val) => {}
                 Err(err) => {

@@ -210,7 +210,7 @@ fn check_node_sync(tx_params: &TxParams, config: &AppCfg) -> Result<(), Error> {
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
     let (current_block_number, _current_block_path) = tower::proof::parse_block_height(&blocks_dir);
-    let current_block_number = current_block_number.unwrap();
+    let current_block_number = current_block_number.unwrap() as i64;
     println!("Local tower height: {}", current_block_number);
 
     // The client can be in sync with local or -1 wrt local. 
