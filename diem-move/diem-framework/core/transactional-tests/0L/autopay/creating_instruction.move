@@ -9,20 +9,20 @@
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::AutoPay;
+  use DiemFramework::AutoPay;
   use Std::Signer;
   fun main(sender: signer) {
     let sender = &sender;
     AutoPay::enable_autopay(sender);
-    assert(AutoPay::is_enabled(Signer::address_of(sender)), 73570001);
+    assert!(AutoPay::is_enabled(Signer::address_of(sender)), 73570001);
     AutoPay::create_instruction(sender, 1, 0, @{{bob}}, 2, 5);
     let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
     );
-    assert(type == 0, 7357005);
-    assert(payee == @{{bob}}, 73570002);
-    assert(end_epoch == 2, 73570003);
-    assert(percentage == 5, 73570004);
+    assert!(type == 0, 7357005);
+    assert!(payee == @{{bob}}, 73570002);
+    assert!(end_epoch == 2, 73570003);
+    assert!(percentage == 5, 73570004);
   }
 }
 // check: EXECUTED
@@ -31,11 +31,11 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::AutoPay;
+  use DiemFramework::AutoPay;
   use Std::Signer;
   fun main(sender: signer) {
     let sender = &sender;
-    assert(AutoPay::is_enabled(Signer::address_of(sender)), 73570005);    
+    assert!(AutoPay::is_enabled(Signer::address_of(sender)), 73570005);    
     AutoPay::create_instruction(sender, 2, 0, @{{alice}}, 4, 5);
   }
 }

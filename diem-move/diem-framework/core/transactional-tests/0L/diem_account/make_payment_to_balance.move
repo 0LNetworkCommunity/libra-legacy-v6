@@ -7,7 +7,7 @@
 //! sender: diemroot
 script {
   use DiemFramework::DiemAccount;
-  use 0x1::GAS::GAS;
+  use DiemFramework::GAS::GAS;
 
   fun main(vm: signer) {
     // Does not fail when trying to make payment to an account which cannot receive balance.
@@ -29,7 +29,7 @@ script {
 //! sender: diemroot
 script {
   use DiemFramework::DiemAccount;
-  use 0x1::GAS::GAS;
+  use DiemFramework::GAS::GAS;
 
   fun main(vm: signer) {
     // Should be fine if the balance is 0

@@ -4,8 +4,8 @@
 //! sender: bob
 script {
   use DiemFramework::DiemAccount;
-  use 0x1::TestFixtures;
-  use 0x1::GAS::GAS;
+  use DiemFramework::TestFixtures;
+  use DiemFramework::GAS::GAS;
 
   fun main(sender: signer) {
     // Scenario: Bob, an existing user, is sending a transaction for Eve, 
@@ -20,10 +20,10 @@ script {
       &solution,
     );
 
-    assert(DiemAccount::balance<GAS>(eve_addr) == 1000000, 735701);
+    assert!(DiemAccount::balance<GAS>(eve_addr) == 1000000, 735701);
 
     // is a slow wallet
-    assert(!DiemAccount::is_slow(eve_addr), 735702);
+    assert!(!DiemAccount::is_slow(eve_addr), 735702);
   }
 }
 // check: EXECUTED
@@ -32,10 +32,10 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-// use 0x1::VDF;
+// use DiemFramework::VDF;
 use DiemFramework::DiemAccount;
-// use 0x1::TowerState;
-use 0x1::TestFixtures;
+// use DiemFramework::TowerState;
+use DiemFramework::TestFixtures;
 // use Std::Vector;
 
 
@@ -47,7 +47,7 @@ fun main(sender: signer) {
   let solution = TestFixtures::eve_0_easy_sol();
   // // Parse key and check
   // let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
-  // assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 7357401001);
+  // assert!(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 7357401001);
   
   // let epochs_since_creation = 10;
   // TowerState::test_helper_set_rate_limit(&sender, epochs_since_creation);
@@ -67,7 +67,7 @@ fun main(sender: signer) {
   );
 
   // the prospective validator is in the current miner list.
-  // assert(Vector::contains<address>(&TowerState::get_miner_list(), &eve_addr), 7357401002);
+  // assert!(Vector::contains<address>(&TowerState::get_miner_list(), &eve_addr), 7357401002);
 }
 }
 // check: EXECUTED
@@ -77,10 +77,10 @@ fun main(sender: signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::EpochBoundary;
+use DiemFramework::EpochBoundary;
 use DiemFramework::DiemAccount;
-use 0x1::GAS::GAS;
-use 0x1::ValidatorUniverse;
+use DiemFramework::GAS::GAS;
+use DiemFramework::ValidatorUniverse;
 use DiemFramework::ValidatorConfig;
 
 fun main(vm: signer) {
@@ -93,15 +93,15 @@ fun main(vm: signer) {
   let oper_eve = ValidatorConfig::get_operator(eve_addr);
   let bal = DiemAccount::balance<GAS>(oper_eve);
   // we expect 1 gas (1,000,000 microgas) from bob's transfer
-  assert(bal == 1000000, 7357401003);
+  assert!(bal == 1000000, 7357401003);
 
   // validator should have jailedbit
-  assert(ValidatorUniverse::exists_jailedbit(eve_addr), 7357401004);
+  assert!(ValidatorUniverse::exists_jailedbit(eve_addr), 7357401004);
   // validator should be in universe if just joined.
-  assert(ValidatorUniverse::is_in_universe(eve_addr), 7357401005);
+  assert!(ValidatorUniverse::is_in_universe(eve_addr), 7357401005);
   // should not be jailed
-  assert(!ValidatorUniverse::is_jailed(eve_addr), 7357401006);
+  assert!(!ValidatorUniverse::is_jailed(eve_addr), 7357401006);
   // is a slow wallet
-  assert(DiemAccount::is_slow(eve_addr), 7357401007);
+  assert!(DiemAccount::is_slow(eve_addr), 7357401007);
 }
 }

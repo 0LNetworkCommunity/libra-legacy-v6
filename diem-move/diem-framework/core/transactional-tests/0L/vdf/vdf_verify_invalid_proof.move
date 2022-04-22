@@ -2,8 +2,8 @@
 
 //! new-transaction
 script{
-use 0x1::VDF;
-// use 0x1::Debug;
+use DiemFramework::VDF;
+// use DiemFramework::Debug;
 fun main() {
   // Test for the script handling an invalid "solution".
   // This tests that the verifier catches a wrong proof and gives feedback.
@@ -15,6 +15,6 @@ fun main() {
 
   // Issue: this assertion should evaluate to false==false so that the test 
   // *passes* when an invalid proof is submitted.
-  assert(VDF::verify(&challenge, &difficulty, &solution) == false, 1);
+  assert!(VDF::verify(&challenge, &difficulty, &solution) == false, 1);
 }
 }

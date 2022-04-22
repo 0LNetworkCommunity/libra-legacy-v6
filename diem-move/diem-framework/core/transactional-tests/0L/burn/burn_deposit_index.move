@@ -5,9 +5,9 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::Wallet;
+    use DiemFramework::Wallet;
     use Std::Vector;
-    use 0x1::GAS::GAS;
+    use DiemFramework::GAS::GAS;
     use Std::Signer;
     use DiemFramework::DiemAccount;
 
@@ -16,7 +16,7 @@ script {
       let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
       DiemAccount::init_cumulative_deposits(&sender, bal);
       let list = Wallet::get_comm_list();
-      assert(Vector::length(&list) == 1, 7357001);
+      assert!(Vector::length(&list) == 1, 7357001);
     }
 }
 
@@ -25,9 +25,9 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::Wallet;
+    use DiemFramework::Wallet;
     use Std::Vector;
-    use 0x1::GAS::GAS;
+    use DiemFramework::GAS::GAS;
     use Std::Signer;
     use DiemFramework::DiemAccount;
 
@@ -36,7 +36,7 @@ script {
       let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
       DiemAccount::init_cumulative_deposits(&sender, bal);
       let list = Wallet::get_comm_list();
-      assert(Vector::length(&list) == 2, 7357002);
+      assert!(Vector::length(&list) == 2, 7357002);
     }
 }
 
@@ -46,7 +46,7 @@ script {
 //! sender: diemroot
 script {
   use DiemFramework::DiemAccount;
-  use 0x1::GAS::GAS;
+  use DiemFramework::GAS::GAS;
   
   fun main(vm: signer) {
     // bobs_indexed amount changes
@@ -56,12 +56,12 @@ script {
     // send to community wallet Bob
     DiemAccount::vm_make_payment_no_limit<GAS>( @{{alice}}, @{{bob}}, 100000, x"", x"", &vm);
     let index_after = DiemAccount::get_index_cumu_deposits(@{{bob}});
-    assert(index_after > index_before, 735701);
+    assert!(index_after > index_before, 735701);
 
     // carol's amount DOES NOT change
     // send to community wallet Bob
     let carol_after = DiemAccount::get_index_cumu_deposits(@{{carol}});
-    assert(index_carol_before == carol_after, 735702)
+    assert!(index_carol_before == carol_after, 735702)
   }
 }
 

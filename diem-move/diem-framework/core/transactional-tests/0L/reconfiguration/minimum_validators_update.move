@@ -2,7 +2,7 @@
 // Here EPOCH-LENGTH = 15 Blocks.
 // NOTE: This test will fail in test-net and Production, only for Debug - due to epoch length.
 
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000, 0, validator
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
@@ -19,8 +19,8 @@ script {
 
     fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 4, 7357008004001);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357008004002);
+        assert!(DiemSystem::validator_set_size() == 4, 7357008004001);
+        assert!(DiemSystem::is_validator(@{{alice}}) == true, 7357008004002);
     }
 }
 // check: EXECUTED
@@ -32,7 +32,7 @@ script {
 
     fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 4, 7357000180103);
+        assert!(DiemSystem::validator_set_size() == 4, 7357000180103);
     }
 }
 
@@ -41,7 +41,7 @@ script {
 //! sender: diemroot
 script {
     use Std::Vector;
-    use 0x1::Stats;
+    use DiemFramework::Stats;
 
     fun main(vm: signer) {
         let voters = Vector::empty<address>();
@@ -78,8 +78,8 @@ script {
     
     fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 4, 7357000180104);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000180105);        
+        assert!(DiemSystem::validator_set_size() == 4, 7357000180104);
+        assert!(DiemSystem::is_validator(@{{alice}}) == true, 7357000180105);        
     }
 }
 //check: EXECUTED

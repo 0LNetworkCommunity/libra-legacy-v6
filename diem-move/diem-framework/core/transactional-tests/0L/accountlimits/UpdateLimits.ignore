@@ -13,8 +13,8 @@
 //   use DiemFramework::DiemConfig;
 //   fun main() {
 //     let time = DiemTimestamp::now_seconds();
-//     assert(time == 31, 7357001);
-//     assert(DiemConfig::get_current_epoch() == 1, 0);
+//     assert!(time == 31, 7357001);
+//     assert!(DiemConfig::get_current_epoch() == 1, 0);
 //   }
 // }
 // // check: EXECUTED
@@ -34,16 +34,16 @@
 //   use DiemFramework::DiemAccount;
 //   use DiemFramework::DiemConfig;
 //   use DiemFramework::AccountLimits;
-//   use 0x1::GAS::GAS;
+//   use DiemFramework::GAS::GAS;
 //   fun main(account: signer) {
 //     let time = DiemTimestamp::now_seconds();
-//     assert(time == 61, 7357001);
-//     assert(DiemConfig::get_current_epoch() == 2, 0);
+//     assert!(time == 61, 7357001);
+//     assert!(DiemConfig::get_current_epoch() == 2, 0);
 //     let with_cap = DiemAccount::extract_withdraw_capability(account);
-//     assert(AccountLimits::has_limits_published<GAS>(@{{alice}}), 1);
+//     assert!(AccountLimits::has_limits_published<GAS>(@{{alice}}), 1);
 //     DiemAccount::pay_from<GAS>(&with_cap, @{{bob}}, 10, x"", x"");
-//     assert(DiemAccount::balance<GAS>(@{{alice}}) == 999990, 2);
-//     assert(DiemAccount::balance<GAS>(@{{bob}}) == 110, 3);
+//     assert!(DiemAccount::balance<GAS>(@{{alice}}) == 999990, 2);
+//     assert!(DiemAccount::balance<GAS>(@{{bob}}) == 110, 3);
 //     DiemAccount::restore_withdraw_capability(with_cap); 
 //   }
 // }
@@ -55,13 +55,13 @@
 // script {
 //   use DiemFramework::DiemAccount;
 //   use DiemFramework::AccountLimits;
-//   use 0x1::GAS::GAS;
+//   use DiemFramework::GAS::GAS;
 //   fun main(account: signer) {
 //     let with_cap = DiemAccount::extract_withdraw_capability(account);
-//     assert(AccountLimits::has_limits_published<GAS>(@{{alice}}), 1);
+//     assert!(AccountLimits::has_limits_published<GAS>(@{{alice}}), 1);
 //     DiemAccount::pay_from<GAS>(&with_cap, @{{bob}}, 10, x"", x"");
-//     assert(DiemAccount::balance<GAS>(@{{alice}}) == 999980, 2);
-//     assert(DiemAccount::balance<GAS>(@{{bob}}) == 120, 3);
+//     assert!(DiemAccount::balance<GAS>(@{{alice}}) == 999980, 2);
+//     assert!(DiemAccount::balance<GAS>(@{{bob}}) == 120, 3);
 //     DiemAccount::restore_withdraw_capability(with_cap); 
 //   }
 // }

@@ -7,11 +7,11 @@
 //! new-transaction
 //! sender: alice
 script {    
-    use 0x1::TowerState;
-    use 0x1::Burn;
-    use 0x1::Audit;
-    use 0x1::Debug::print;
-    use 0x1::AutoPay;
+    use DiemFramework::TowerState;
+    use DiemFramework::Burn;
+    use DiemFramework::Audit;
+    use DiemFramework::Debug::print;
+    use DiemFramework::AutoPay;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
@@ -20,7 +20,7 @@ script {
         TowerState::test_helper_mock_mining(&sender, 5);
         // set alice burn preferences as sending to community wallets.
         Burn::set_send_community(&sender);
-        print(&@0x1);
+        print(&@DiemFramework);
         // validator needs to qualify for next epoch for the burn to register
         Audit::test_helper_make_passing(&sender);
         print(&AutoPay::is_enabled(@{{alice}}));
@@ -39,9 +39,9 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Stats;
+    use DiemFramework::Stats;
     use Std::Vector;
-    use 0x1::Cases;
+    use DiemFramework::Cases;
 
     fun main(sender: signer) {
         let sender = &sender;
@@ -53,7 +53,7 @@ script {
             i = i + 1;
         };
 
-        assert(Cases::get_case(sender, @{{alice}}, 0 , 15) == 1, 7357300103011000);
+        assert!(Cases::get_case(sender, @{{alice}}, 0 , 15) == 1, 7357300103011000);
     }
 }
 //check: EXECUTED
@@ -62,9 +62,9 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::Wallet;
+    use DiemFramework::Wallet;
     use Std::Vector;
-    use 0x1::GAS::GAS;
+    use DiemFramework::GAS::GAS;
     use Std::Signer;
     use DiemFramework::DiemAccount;
 
@@ -73,7 +73,7 @@ script {
       let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
       DiemAccount::init_cumulative_deposits(&sender, bal);
       let list = Wallet::get_comm_list();
-      assert(Vector::length(&list) == 1, 7357001);
+      assert!(Vector::length(&list) == 1, 7357001);
     }
 }
 
@@ -82,9 +82,9 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::Wallet;
+    use DiemFramework::Wallet;
     use Std::Vector;
-    use 0x1::GAS::GAS;
+    use DiemFramework::GAS::GAS;
     use Std::Signer;
     use DiemFramework::DiemAccount;
 
@@ -93,7 +93,7 @@ script {
       let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
       DiemAccount::init_cumulative_deposits(&sender, bal);
       let list = Wallet::get_comm_list();
-      assert(Vector::length(&list) == 2, 7357002);
+      assert!(Vector::length(&list) == 2, 7357002);
     }
 }
 
@@ -103,14 +103,14 @@ script {
 //! sender: diemroot
 script {
   use DiemFramework::DiemAccount;
-  use 0x1::GAS::GAS;
+  use DiemFramework::GAS::GAS;
 
   fun main(vm: signer) {
     // send to community wallet Bob
     DiemAccount::vm_make_payment_no_limit<GAS>(@{{alice}}, @{{bob}}, 500000, x"", x"", &vm);
 
     let bal = DiemAccount::balance<GAS>(@{{bob}});
-    assert(bal == 1500000, 7357003);
+    assert!(bal == 1500000, 7357003);
   }
 }
 // check: EXECUTED
@@ -130,14 +130,14 @@ script {
 //! sender: diemroot
 script {
   use DiemFramework::DiemAccount;
-  use 0x1::GAS::GAS;
-  use 0x1::Debug::print;
+  use DiemFramework::GAS::GAS;
+  use DiemFramework::Debug::print;
 
   fun main(_vm: signer) {
     // bob's community wallet increased after epoch change.
     let bal = DiemAccount::balance<GAS>(@{{bob}});
     print(&bal);
-    assert(bal == 2100399, 7357004);
+    assert!(bal == 2100399, 7357004);
   }
 }
 

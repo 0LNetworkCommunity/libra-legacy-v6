@@ -2,8 +2,8 @@
 
 //! new-transaction
 script{
-use 0x1::VDF;
-use 0x1::TestFixtures;
+use DiemFramework::VDF;
+use DiemFramework::TestFixtures;
 fun main() {
 
   // this tests the happy case, that a proof is submitted with all three correct parameters.
@@ -13,6 +13,6 @@ fun main() {
   // the -l=2048 is important because this is the security paramater of 0L miner.
   let solution = TestFixtures::easy_sol();
 
-  assert(VDF::verify(&challenge, &difficulty, &solution) == true, 1);
+  assert!(VDF::verify(&challenge, &difficulty, &solution) == true, 1);
 }
 }

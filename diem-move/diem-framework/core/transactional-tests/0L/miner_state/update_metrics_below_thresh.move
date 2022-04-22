@@ -5,8 +5,8 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::TowerState;
-    use 0x1::TestFixtures;
+    use DiemFramework::TowerState;
+    use DiemFramework::TestFixtures;
 
     // SIMULATES A MINER ONBOARDING PROOF (block_0.json)
     fun main(sender: signer) {
@@ -26,7 +26,7 @@ script {
         // check for initialized TowerState
         let verified_tower_height_after = TowerState::test_helper_get_height(@{{alice}});
 
-        assert(verified_tower_height_after == height_after, 10008001);
+        assert!(verified_tower_height_after == height_after, 10008001);
     }
 }
 // check: EXECUTED
@@ -34,24 +34,24 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     // Simulating the VM calling epoch boundary update_metrics.
     fun main(sender: signer) {
         let sender = &sender;
         //update_metrics
 
-        assert(TowerState::test_helper_get_height(@{{alice}}) == 0, 10009001);
-        assert(TowerState::get_miner_latest_epoch(sender, @{{alice}}) == 1, 10009002);
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 1, 10009003);
-        assert(TowerState::test_helper_get_contiguous_vm(sender, @{{alice}}) == 0, 10009005);
+        assert!(TowerState::test_helper_get_height(@{{alice}}) == 0, 10009001);
+        assert!(TowerState::get_miner_latest_epoch(sender, @{{alice}}) == 1, 10009002);
+        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 1, 10009003);
+        assert!(TowerState::test_helper_get_contiguous_vm(sender, @{{alice}}) == 0, 10009005);
         
         TowerState::test_helper_mock_reconfig(sender, @{{alice}});
 
-        assert(TowerState::test_helper_get_height(@{{alice}}) == 0, 10009006);
-        assert(TowerState::get_miner_latest_epoch(sender, @{{alice}}) == 1, 10009007);
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 0, 10009008);
-        assert(TowerState::test_helper_get_contiguous_vm(sender, @{{alice}}) == 0, 10009010);
+        assert!(TowerState::test_helper_get_height(@{{alice}}) == 0, 10009006);
+        assert!(TowerState::get_miner_latest_epoch(sender, @{{alice}}) == 1, 10009007);
+        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 0, 10009008);
+        assert!(TowerState::test_helper_get_contiguous_vm(sender, @{{alice}}) == 0, 10009010);
     }
 }
 // check: EXECUTED

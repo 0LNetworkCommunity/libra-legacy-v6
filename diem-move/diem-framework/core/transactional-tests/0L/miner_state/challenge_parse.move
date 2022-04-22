@@ -4,7 +4,7 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
     fun main() {
         // First 32 bytes (64 hex characters) make up the auth_key. Of this,
         // the first 16 bytes (32 hex characters) make up the auth_key pefix
@@ -35,7 +35,7 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main() {
         // Another key whose parsing will fail because it's too short.

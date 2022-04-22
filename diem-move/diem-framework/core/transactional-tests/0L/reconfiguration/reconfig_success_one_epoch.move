@@ -3,7 +3,7 @@
 // Here EPOCH-LENGTH = 15 Blocks.
 // NOTE: This test will fail with Staging and Production Constants, only for Debug - due to epoch length.
 
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000, 0, validator
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
@@ -21,9 +21,9 @@ script {
 
     fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 5, 7357008012001);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357008012002);
-        assert(DiemSystem::is_validator(@{{bob}}) == true, 7357008012003);
+        assert!(DiemSystem::validator_set_size() == 5, 7357008012001);
+        assert!(DiemSystem::is_validator(@{{alice}}) == true, 7357008012002);
+        assert!(DiemSystem::is_validator(@{{bob}}) == true, 7357008012003);
     }
 }
 // check: EXECUTED
@@ -36,9 +36,9 @@ script {
 
     fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 5, 7357008012004);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357008012005);
-        assert(DiemSystem::is_validator(@{{bob}}) == true, 7357008012006);
+        assert!(DiemSystem::validator_set_size() == 5, 7357008012004);
+        assert!(DiemSystem::is_validator(@{{alice}}) == true, 7357008012005);
+        assert!(DiemSystem::is_validator(@{{bob}}) == true, 7357008012006);
     }
 }
 //check: EXECUTED
@@ -47,7 +47,7 @@ script {
 //! sender: diemroot
 script {
     use Std::Vector;
-    use 0x1::Stats;
+    use DiemFramework::Stats;
 
     // This is the the epoch boundary.
     fun main(vm: signer) {
@@ -88,8 +88,8 @@ script {
     use DiemFramework::DiemSystem;
     use DiemFramework::DiemConfig;
     fun main(_account: signer) {
-        assert(DiemSystem::validator_set_size() == 5, 7357008012007);
-        assert(DiemConfig::get_current_epoch() == 2, 7357008012008);
+        assert!(DiemSystem::validator_set_size() == 5, 7357008012007);
+        assert!(DiemConfig::get_current_epoch() == 2, 7357008012008);
     }
 }
 // check: EXECUTED

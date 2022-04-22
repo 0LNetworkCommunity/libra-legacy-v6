@@ -3,7 +3,7 @@
 // Here EPOCH-LENGTH = 15 Blocks.
 // NOTE: This test will fail with Staging and Production Constants, only for Debug - due to epoch length.
 
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000, 0, validator
 
 

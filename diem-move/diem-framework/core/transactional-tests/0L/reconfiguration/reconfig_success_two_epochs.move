@@ -2,7 +2,7 @@
 // validators being CASE 1.
 
 
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000, 0, validator
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
@@ -17,14 +17,14 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357008013001);
+        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357008013001);
     }
 }
 //check: EXECUTED
@@ -32,14 +32,14 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{bob}}) == 5, 7357008013002);
+        assert!(TowerState::get_count_in_epoch(@{{bob}}) == 5, 7357008013002);
     }
 }
 //check: EXECUTED
@@ -48,14 +48,14 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{carol}}) == 5, 7357008013003);
+        assert!(TowerState::get_count_in_epoch(@{{carol}}) == 5, 7357008013003);
     }
 }
 //check: EXECUTED
@@ -64,11 +64,11 @@ script {
 //! new-transaction
 //! sender: dave
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{dave}}) == 5, 7357008013004);
+        assert!(TowerState::get_count_in_epoch(@{{dave}}) == 5, 7357008013004);
     }
 }
 // //check: EXECUTED
@@ -76,10 +76,10 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
     fun main(sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{eve}}) == 5, 7357008013005);
+        assert!(TowerState::get_count_in_epoch(@{{eve}}) == 5, 7357008013005);
     }
 }
 //check: EXECUTED
@@ -87,11 +87,11 @@ script {
 //! new-transaction
 //! sender: frank
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{frank}}) == 5, 7357008013006);
+        assert!(TowerState::get_count_in_epoch(@{{frank}}) == 5, 7357008013006);
     }
 }
 //check: EXECUTED
@@ -100,11 +100,11 @@ script {
 //! sender: diemroot
 script {
     use Std::Vector;
-    use 0x1::Stats;
+    use DiemFramework::Stats;
     use DiemFramework::DiemSystem;
 
     fun main(vm: signer) {
-        assert(DiemSystem::validator_set_size() == 6, 7357008013007);
+        assert!(DiemSystem::validator_set_size() == 6, 7357008013007);
 
         let voters = Vector::empty<address>();
         Vector::push_back<address>(&mut voters, @{{alice}});
@@ -138,14 +138,14 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357008013008);
+        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357008013008);
     }
 }
 //check: EXECUTED
@@ -153,14 +153,14 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{bob}}) == 5, 7357008013009);
+        assert!(TowerState::get_count_in_epoch(@{{bob}}) == 5, 7357008013009);
     }
 }
 //check: EXECUTED
@@ -169,14 +169,14 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{carol}}) == 5, 7357008013010);
+        assert!(TowerState::get_count_in_epoch(@{{carol}}) == 5, 7357008013010);
     }
 }
 //check: EXECUTED
@@ -185,11 +185,11 @@ script {
 //! new-transaction
 //! sender: dave
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{dave}}) == 5, 7357008013011);
+        assert!(TowerState::get_count_in_epoch(@{{dave}}) == 5, 7357008013011);
     }
 }
 // //check: EXECUTED
@@ -197,10 +197,10 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
     fun main(sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{eve}}) == 5, 7357008013012);
+        assert!(TowerState::get_count_in_epoch(@{{eve}}) == 5, 7357008013012);
     }
 }
 //check: EXECUTED
@@ -208,11 +208,11 @@ script {
 //! new-transaction
 //! sender: frank
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{frank}}) == 5, 7357008013013);
+        assert!(TowerState::get_count_in_epoch(@{{frank}}) == 5, 7357008013013);
     }
 }
 //check: EXECUTED
@@ -223,7 +223,7 @@ script {
 //! sender: diemroot
 script {
     use Std::Vector;
-    use 0x1::Stats;
+    use DiemFramework::Stats;
 
     fun main(vm: signer) {
         let voters = Vector::empty<address>();
@@ -265,8 +265,8 @@ script {
     use DiemFramework::DiemConfig;
 
     fun main(_account: signer) {
-        assert(DiemSystem::validator_set_size() == 6, 73570080130014);
-        assert(DiemConfig::get_current_epoch() == 3, 7357008013015);
+        assert!(DiemSystem::validator_set_size() == 6, 73570080130014);
+        assert!(DiemConfig::get_current_epoch() == 3, 7357008013015);
     }
 }
 // check: EXECUTED

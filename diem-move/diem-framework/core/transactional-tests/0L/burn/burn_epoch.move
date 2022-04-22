@@ -7,8 +7,8 @@
 //! new-transaction
 //! sender: alice
 script {    
-    use 0x1::TowerState;
-    // use 0x1::Burn;
+    use DiemFramework::TowerState;
+    // use DiemFramework::Burn;
     fun main(sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
@@ -23,9 +23,9 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Stats;
+    use DiemFramework::Stats;
     use Std::Vector;
-    use 0x1::Cases;
+    use DiemFramework::Cases;
 
     fun main(sender: signer) {
         let sender = &sender;
@@ -37,7 +37,7 @@ script {
             i = i + 1;
         };
 
-        assert(Cases::get_case(sender, @{{alice}}, 0 , 15) == 1, 7357300103011000);
+        assert!(Cases::get_case(sender, @{{alice}}, 0 , 15) == 1, 7357300103011000);
     }
 }
 //check: EXECUTED
@@ -46,9 +46,9 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::Wallet;
+    use DiemFramework::Wallet;
     use Std::Vector;
-    use 0x1::GAS::GAS;
+    use DiemFramework::GAS::GAS;
     use Std::Signer;
     use DiemFramework::DiemAccount;
 
@@ -57,7 +57,7 @@ script {
       let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
       DiemAccount::init_cumulative_deposits(&sender, bal);
       let list = Wallet::get_comm_list();
-      assert(Vector::length(&list) == 1, 7357001);
+      assert!(Vector::length(&list) == 1, 7357001);
     }
 }
 
@@ -66,9 +66,9 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::Wallet;
+    use DiemFramework::Wallet;
     use Std::Vector;
-    use 0x1::GAS::GAS;
+    use DiemFramework::GAS::GAS;
     use Std::Signer;
     use DiemFramework::DiemAccount;
 
@@ -77,7 +77,7 @@ script {
       let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
       DiemAccount::init_cumulative_deposits(&sender, bal);
       let list = Wallet::get_comm_list();
-      assert(Vector::length(&list) == 2, 7357002);
+      assert!(Vector::length(&list) == 2, 7357002);
     }
 }
 
@@ -87,8 +87,8 @@ script {
 //! sender: diemroot
 script {
   use DiemFramework::DiemAccount;
-  use 0x1::GAS::GAS;
-  // use 0x1::Debug::print;
+  use DiemFramework::GAS::GAS;
+  // use DiemFramework::Debug::print;
 
   fun main(vm: signer) {
     // send to community wallet Bob
@@ -96,7 +96,7 @@ script {
 
     let bal = DiemAccount::balance<GAS>(@{{bob}});
     // print(&bal);
-    assert(bal == 1500000, 7357001);
+    assert!(bal == 1500000, 7357001);
   }
 }
 // check: EXECUTED
@@ -119,13 +119,13 @@ script {
 //! sender: diemroot
 script {
   use DiemFramework::DiemAccount;
-  use 0x1::GAS::GAS;
-  // use 0x1::Debug::print;
+  use DiemFramework::GAS::GAS;
+  // use DiemFramework::Debug::print;
 
   fun main(_vm: signer) {
     // should not change bob's balance
     let bal = DiemAccount::balance<GAS>(@{{bob}});
-    assert(bal == 1500000, 7357002);
+    assert!(bal == 1500000, 7357002);
   }
 }
 

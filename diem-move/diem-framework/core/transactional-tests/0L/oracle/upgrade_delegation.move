@@ -1,4 +1,4 @@
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000, 0, validator
 //! account: charlie, 1000000, 0, validator
 //! account: jim, 1000000, 0, validator
@@ -9,21 +9,21 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::TowerState;
-    use 0x1::NodeWeight;
+    use DiemFramework::TowerState;
+    use DiemFramework::NodeWeight;
     fun main(sender: signer) {
         TowerState::test_helper_set_weight_vm(&sender, @{{alice}}, 10);
-        assert(NodeWeight::proof_of_weight(@{{alice}}) == 10, 7357300101011088);
+        assert!(NodeWeight::proof_of_weight(@{{alice}}) == 10, 7357300101011088);
         TowerState::test_helper_set_weight_vm(&sender, @{{bob}}, 10);
-        assert(NodeWeight::proof_of_weight(@{{bob}}) == 10, 7357300101011088);
+        assert!(NodeWeight::proof_of_weight(@{{bob}}) == 10, 7357300101011088);
         TowerState::test_helper_set_weight_vm(&sender, @{{charlie}}, 10);
-        assert(NodeWeight::proof_of_weight(@{{charlie}}) == 10, 7357300101011088);
+        assert!(NodeWeight::proof_of_weight(@{{charlie}}) == 10, 7357300101011088);
         TowerState::test_helper_set_weight_vm(&sender, @{{jim}}, 31);
-        assert(NodeWeight::proof_of_weight(@{{jim}}) == 31, 7357300101011088);
+        assert!(NodeWeight::proof_of_weight(@{{jim}}) == 31, 7357300101011088);
         TowerState::test_helper_set_weight_vm(&sender, @{{lucy}}, 31);
-        assert(NodeWeight::proof_of_weight(@{{lucy}}) == 31, 7357300101011088);
+        assert!(NodeWeight::proof_of_weight(@{{lucy}}) == 31, 7357300101011088);
         TowerState::test_helper_set_weight_vm(&sender, @{{thomas}}, 31);
-        assert(NodeWeight::proof_of_weight(@{{thomas}}) == 31, 7357300101011088);
+        assert!(NodeWeight::proof_of_weight(@{{thomas}}) == 31, 7357300101011088);
     }
 }
 //check: EXECUTED
@@ -31,7 +31,7 @@ script {
 //! new-transaction
 //! sender: lucy
 script {
-  use 0x1::Oracle;
+  use DiemFramework::Oracle;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       Oracle::enable_delegation(&sender);
@@ -43,12 +43,12 @@ script {
 //! new-transaction
 //! sender: jim
 script {
-  use 0x1::Oracle;
+  use DiemFramework::Oracle;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       Oracle::enable_delegation(&sender);
       Oracle::delegate_vote(&sender, @{{lucy}});
-      assert(Oracle::check_number_delegates(@{{lucy}}) == 1, 5);
+      assert!(Oracle::check_number_delegates(@{{lucy}}) == 1, 5);
     }
   }
 }
@@ -57,7 +57,7 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::Oracle;
+  use DiemFramework::Oracle;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       Oracle::enable_delegation(&sender);
@@ -69,12 +69,12 @@ script {
 //! new-transaction
 //! sender: thomas
 script {
-  use 0x1::Oracle;
+  use DiemFramework::Oracle;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       Oracle::enable_delegation(&sender);
       Oracle::delegate_vote(&sender, @{{alice}});
-      assert(Oracle::check_number_delegates(@{{alice}}) == 1, 5);
+      assert!(Oracle::check_number_delegates(@{{alice}}) == 1, 5);
     }
   }
 }
@@ -83,12 +83,12 @@ script {
 //! new-transaction
 //! sender: charlie
 script {
-  use 0x1::Oracle;
+  use DiemFramework::Oracle;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       Oracle::enable_delegation(&sender);
       Oracle::delegate_vote(&sender, @{{lucy}});
-      assert(Oracle::check_number_delegates(@{{lucy}}) == 2, 5);
+      assert!(Oracle::check_number_delegates(@{{lucy}}) == 2, 5);
     }
   }
 }
@@ -97,11 +97,11 @@ script {
 //! new-transaction
 //! sender: charlie
 script {
-  use 0x1::Oracle;
+  use DiemFramework::Oracle;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       Oracle::remove_delegate_vote(&sender);
-      assert(Oracle::check_number_delegates(@{{lucy}}) == 1, 5);
+      assert!(Oracle::check_number_delegates(@{{lucy}}) == 1, 5);
     }
   }
 }
@@ -110,9 +110,9 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::Oracle;
+  use DiemFramework::Oracle;
   use Std::Vector;
-  use 0x1::Upgrade;
+  use DiemFramework::Upgrade;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 1;
@@ -121,12 +121,12 @@ script {
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 0);
-      assert(e == @{{alice}}, 7357123401011000);
+      assert!(e == @{{alice}}, 7357123401011000);
       let e = *Vector::borrow<address>(&vec, 1);
-      assert(e == @{{thomas}}, 7357123401011000);
+      assert!(e == @{{thomas}}, 7357123401011000);
 
-      assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
+      assert!(Upgrade::has_upgrade() == false, 7357123401011000); 
+      assert!(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
     }
   }
 }
@@ -135,9 +135,9 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-  use 0x1::Oracle;
+  use DiemFramework::Oracle;
   use Std::Vector;
-  use 0x1::Upgrade;
+  use DiemFramework::Upgrade;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 1;
@@ -146,10 +146,10 @@ script {
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 2);
-      assert(e == @{{bob}}, 7357123401011000);
+      assert!(e == @{{bob}}, 7357123401011000);
 
-      assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
+      assert!(Upgrade::has_upgrade() == false, 7357123401011000); 
+      assert!(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
     }
   }
 }
@@ -161,10 +161,10 @@ script {
 //! new-transaction
 //! sender: thomas
 script {
-  use 0x1::Oracle;
+  use DiemFramework::Oracle;
   use Std::Vector;
   use Std::Hash;
-  //use 0x1::Debug::print;
+  //use DiemFramework::Debug::print;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       //already voted, must ensure vote not counted again
@@ -175,7 +175,7 @@ script {
       Oracle::handler(&sender, id, hash);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = Vector::length<address>(&vec);
-      assert(e == 3, 7357123401011002);
+      assert!(e == 3, 7357123401011002);
     }
   }
 }
@@ -186,9 +186,9 @@ script {
 //! new-transaction
 //! sender: lucy
 script {
-  use 0x1::Oracle;
+  use DiemFramework::Oracle;
   use Std::Vector;
-  use 0x1::Upgrade;
+  use DiemFramework::Upgrade;
   use Std::Hash;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
@@ -198,12 +198,12 @@ script {
       Oracle::handler(&sender, id, hash);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = *Vector::borrow<address>(&vec, 3);
-      assert(e == @{{lucy}}, 7357123401011000);
+      assert!(e == @{{lucy}}, 7357123401011000);
       let e = *Vector::borrow<address>(&vec, 4);
-      assert(e == @{{jim}}, 7357123401011000);
+      assert!(e == @{{jim}}, 7357123401011000);
 
-      assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
+      assert!(Upgrade::has_upgrade() == false, 7357123401011000); 
+      assert!(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
     }
   }
 }
@@ -213,7 +213,7 @@ script {
 //! new-transaction
 //! sender: jim
 script {
-  use 0x1::Oracle;
+  use DiemFramework::Oracle;
   use Std::Vector;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
@@ -223,7 +223,7 @@ script {
       // ensure jim's vote is not counted twice
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = Vector::length<address>(&vec);
-      assert(e == 5, 7357123401011002);
+      assert!(e == 5, 7357123401011002);
     }
   }
 }
@@ -232,11 +232,11 @@ script {
 //! new-transaction
 //! sender: charlie
 script {
-  use 0x1::Oracle;
+  use DiemFramework::Oracle;
   use Std::Vector;
-  use 0x1::Upgrade;
+  use DiemFramework::Upgrade;
   use Std::Hash;
-  //use 0x1::Debug::print;
+  //use DiemFramework::Debug::print;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 2;
@@ -246,10 +246,10 @@ script {
       Oracle::handler(&sender, id, hash);
       let vec = Oracle::test_helper_query_oracle_votes();
       let e = *Vector::borrow<address>(&vec, 5);
-      assert(e == @{{charlie}}, 7357123401011000);
+      assert!(e == @{{charlie}}, 7357123401011000);
 
-      assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_helper_check_upgrade() == true, 7357123401011001);
+      assert!(Upgrade::has_upgrade() == false, 7357123401011000); 
+      assert!(Oracle::test_helper_check_upgrade() == true, 7357123401011001);
     }
   }
 }
@@ -271,7 +271,7 @@ script {
 // //! new-transaction
 // //! sender: diemroot
 // script {
-//   use 0x1::Upgrade;
+//   use DiemFramework::Upgrade;
 //   use Std::Vector;
 //   fun main(){
 //     let (upgraded_version, payload, voters, height) = Upgrade::retrieve_latest_history();
@@ -279,10 +279,10 @@ script {
 //     let validators = Vector::empty<address>();
 //     Vector::push_back(&mut validators, @{{alice}});
 //     Vector::push_back(&mut validators, @{{charlie}});
-//     assert(upgraded_version == 0, 7357123401011000);
-//     assert(payload == b"hello", 7357123401011000);
-//     assert(Vector::compare(&voters, &validators), 7357123401011000);
-//     assert(height == 1, 7357123401011000);
+//     assert!(upgraded_version == 0, 7357123401011000);
+//     assert!(payload == b"hello", 7357123401011000);
+//     assert!(Vector::compare(&voters, &validators), 7357123401011000);
+//     assert!(height == 1, 7357123401011000);
 //   }
 // }
 // // check: EXECUTED

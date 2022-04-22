@@ -3,8 +3,8 @@
 // TODO: switch to unit test?
 
 // Give Alice some money...
-//# run --type-args 0x1::XUS::XUS --signers DesignatedDealer --args @Alice 10000 x"" x""
-//#     -- 0x1::PaymentScripts::peer_to_peer_with_metadata
+//# run --type-args DiemFramework::XUS::XUS --signers DesignatedDealer --args @Alice 10000 x"" x""
+//#     -- DiemFramework::PaymentScripts::peer_to_peer_with_metadata
 
 //# run --admin-script --signers DiemRoot Alice
 script {

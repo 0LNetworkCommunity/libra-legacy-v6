@@ -7,7 +7,7 @@
 //! account: alice, 10000000GAS
 //! sender: alice
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(sender: signer) {
         // TestFixtures::alice_1_easy_chal(),
@@ -25,7 +25,7 @@ script {
         TowerState::commit_state(&sender, proof);
         let verified_tower_height_after = TowerState::test_helper_get_height(@{{alice}});
 
-        assert(verified_tower_height_after == reported_tower_height, 10008001);
+        assert!(verified_tower_height_after == reported_tower_height, 10008001);
     }
 }
 // check: ABORTED

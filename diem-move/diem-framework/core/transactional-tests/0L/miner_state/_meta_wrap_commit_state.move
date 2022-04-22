@@ -7,8 +7,8 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::TowerState;
-    use 0x1::TestFixtures;
+    use DiemFramework::TowerState;
+    use DiemFramework::TestFixtures;
 
     fun main(sender: signer) {
         // Testing that state can be initialized, and a proof submitted as if it were genesis.
@@ -21,7 +21,7 @@ script {
         );
 
         let height = TowerState::test_helper_get_height(@{{bob}});
-        assert(height==0, 01);
+        assert!(height==0, 01);
     }
 }
 // check: EXECUTED

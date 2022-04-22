@@ -1,6 +1,6 @@
 // Testing if CAROL can successfully remove herself as a validator
 
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000, 0, validator
 // CAROL will remove herself as a validator
 //! account: carol, 1000000, 0, validator
@@ -20,10 +20,10 @@ stdlib_script::ValidatorScripts::leave
 //! new-transaction
 //! sender: diemroot
 script {
-    // use 0x1::TowerState;
-    use 0x1::Stats;
+    // use DiemFramework::TowerState;
+    use DiemFramework::Stats;
     use Std::Vector;
-    // use 0x1::EpochBoundary;
+    // use DiemFramework::EpochBoundary;
     use DiemFramework::DiemSystem;
 
     fun main(vm: signer) {
@@ -40,10 +40,10 @@ script {
             i = i + 1;
         };
         // Carol is still a validator until the next epoch
-        assert(DiemSystem::validator_set_size() == 3, 7357008011001);
-        assert(DiemSystem::is_validator(@{{alice}}), 7357008011002);
-        assert(DiemSystem::is_validator(@{{bob}}), 7357008011003);
-        assert(DiemSystem::is_validator(@{{carol}}), 7357008011004);
+        assert!(DiemSystem::validator_set_size() == 3, 7357008011001);
+        assert!(DiemSystem::is_validator(@{{alice}}), 7357008011002);
+        assert!(DiemSystem::is_validator(@{{bob}}), 7357008011003);
+        assert!(DiemSystem::is_validator(@{{carol}}), 7357008011004);
     }
 }
 //check: EXECUTED
@@ -70,11 +70,11 @@ script {
 
     fun main(_account: signer) {
         // We are in a new epoch.
-        assert(DiemConfig::get_current_epoch() == 2, 7357008011005);
+        assert!(DiemConfig::get_current_epoch() == 2, 7357008011005);
         // Tests to ensure validator set size has indeed dropped
-        assert(DiemSystem::validator_set_size() == 2, 7357008011006);
+        assert!(DiemSystem::validator_set_size() == 2, 7357008011006);
         // Carol is no longer a validator because she removed herself the previous epoch
-        assert(DiemSystem::is_validator(@{{carol}}) == false, 7357008011007);
+        assert!(DiemSystem::is_validator(@{{carol}}) == false, 7357008011007);
     }
 }
 //check: EXECUTED
@@ -83,9 +83,9 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    // use 0x1::EpochBoundary;
+    // use DiemFramework::EpochBoundary;
     use Std::Vector;
-    use 0x1::Stats;
+    use DiemFramework::Stats;
     
     fun main(vm: signer) {
         // start a new epoch.
@@ -121,10 +121,10 @@ script {
     use DiemFramework::DiemSystem;
     use DiemFramework::DiemConfig;
     fun main(_account: signer) {
-        assert(DiemConfig::get_current_epoch() == 3, 7357008011008);
+        assert!(DiemConfig::get_current_epoch() == 3, 7357008011008);
 
         // carol is still not a validator because she has not rejoined. 
-        assert(!DiemSystem::is_validator(@{{carol}}), 7357008011009);
+        assert!(!DiemSystem::is_validator(@{{carol}}), 7357008011009);
     }
 }
 //check: EXECUTED
@@ -134,7 +134,7 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-use 0x1::TowerState;
+use DiemFramework::TowerState;
 // use DiemFramework::DiemConfig;
 fun main(sender: signer) {
     // Mock some mining so carol can send rejoin tx
@@ -167,11 +167,11 @@ script {
     use DiemFramework::DiemSystem;
     use DiemFramework::DiemConfig;
     fun main(_account: signer) {
-        assert(DiemConfig::get_current_epoch() == 4, 7357008011010);
+        assert!(DiemConfig::get_current_epoch() == 4, 7357008011010);
 
         // Carol is a validator once more
-        assert(DiemSystem::is_validator(@{{carol}}), 7357008011011);
-        assert(DiemSystem::validator_set_size() == 3, 7357008011012);
+        assert!(DiemSystem::is_validator(@{{carol}}), 7357008011011);
+        assert!(DiemSystem::validator_set_size() == 3, 7357008011012);
     }
 }
 //check: EXECUTED

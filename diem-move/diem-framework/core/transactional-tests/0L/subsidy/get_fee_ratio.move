@@ -4,7 +4,7 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
     fun main(sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
     }
@@ -14,7 +14,7 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
     fun main(sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
     }
@@ -25,7 +25,7 @@ script {
 //! sender: diemroot
 script {
   use Std::Vector;
-  use 0x1::Stats;
+  use DiemFramework::Stats;
   use Std::FixedPoint32;
   use DiemFramework::DiemSystem;
 
@@ -46,9 +46,9 @@ script {
     };
 
     let (validators, fee_ratios) = DiemSystem::get_fee_ratio(vm, 0, 15);
-    assert(Vector::length(&validators) == 2, 735701);
-    assert(Vector::length(&fee_ratios) == 2, 735702);
-    assert(
+    assert!(Vector::length(&validators) == 2, 735701);
+    assert!(Vector::length(&fee_ratios) == 2, 735702);
+    assert!(
       *(Vector::borrow<FixedPoint32::FixedPoint32>(&fee_ratios, 1)) 
         == FixedPoint32::create_from_raw_value(2147483648u64),
       735703

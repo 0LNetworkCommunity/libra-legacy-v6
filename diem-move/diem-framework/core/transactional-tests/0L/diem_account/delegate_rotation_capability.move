@@ -3,13 +3,13 @@
 //#      --private-keys Alice=9fcb97240842bfd1089b169040305ae1a0c8b786c2db9cbece85dabe562f3dea
 
 //# run --signers TreasuryCompliance
-//#     --type-args 0x1::XUS::XUS
+//#     --type-args DiemFramework::XUS::XUS
 //#     --args 0
 //#            @Alice
 //#            x"10af6196879ea258e09f83aef42e0c85"
 //#            b"alice"
 //#            false
-//#     -- 0x1::AccountCreationScripts::create_parent_vasp_account
+//#     -- DiemFramework::AccountCreationScripts::create_parent_vasp_account
 
 //# publish
 module DiemRoot::Test {

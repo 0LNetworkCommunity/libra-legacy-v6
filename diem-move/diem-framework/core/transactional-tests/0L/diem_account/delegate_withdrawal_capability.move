@@ -1,16 +1,16 @@
 //# init --parent-vasps Alice Bob Carrol
 
 // Give Alice some money...
-//# run --type-args 0x1::XUS::XUS --signers DesignatedDealer --args @Alice 10000 x"" x""
-//#     -- 0x1::PaymentScripts::peer_to_peer_with_metadata
+//# run --type-args DiemFramework::XUS::XUS --signers DesignatedDealer --args @Alice 10000 x"" x""
+//#     -- DiemFramework::PaymentScripts::peer_to_peer_with_metadata
 
 // Give Bob some money...
-//# run --type-args 0x1::XUS::XUS --signers DesignatedDealer --args @Bob 10000 x"" x""
-//#     -- 0x1::PaymentScripts::peer_to_peer_with_metadata
+//# run --type-args DiemFramework::XUS::XUS --signers DesignatedDealer --args @Bob 10000 x"" x""
+//#     -- DiemFramework::PaymentScripts::peer_to_peer_with_metadata
 
 // Give Carrol some money...
-//# run --type-args 0x1::XUS::XUS --signers DesignatedDealer --args @Carrol 10000 x"" x""
-//#     -- 0x1::PaymentScripts::peer_to_peer_with_metadata
+//# run --type-args DiemFramework::XUS::XUS --signers DesignatedDealer --args @Carrol 10000 x"" x""
+//#     -- DiemFramework::PaymentScripts::peer_to_peer_with_metadata
 
 //# publish
 module DiemRoot::SillyColdWallet {
@@ -42,15 +42,15 @@ module DiemRoot::SillyColdWallet {
 
 // Check that Alice can no longer withdraw from her account.
 //
-//# run --type-args 0x1::XUS::XUS --signers Alice --args @Alice 1000 x"" x""
-//#     -- 0x1::PaymentScripts::peer_to_peer_with_metadata
+//# run --type-args DiemFramework::XUS::XUS --signers Alice --args @Alice 1000 x"" x""
+//#     -- DiemFramework::PaymentScripts::peer_to_peer_with_metadata
 
 // Check that Bob can still withdraw from his normal account.
 //
-//# run --type-args 0x1::XUS::XUS --signers Bob --args @Bob 1000 x"" x""
-//#     -- 0x1::PaymentScripts::peer_to_peer_with_metadata
+//# run --type-args DiemFramework::XUS::XUS --signers Bob --args @Bob 1000 x"" x""
+//#     -- DiemFramework::PaymentScripts::peer_to_peer_with_metadata
 
 // Check that other users can still pay into Alice's account in the normal way.
 //
-//# run --type-args 0x1::XUS::XUS --signers Carrol --args @Alice 1000 x"" x""
-//#     -- 0x1::PaymentScripts::peer_to_peer_with_metadata
+//# run --type-args DiemFramework::XUS::XUS --signers Carrol --args @Alice 1000 x"" x""
+//#     -- DiemFramework::PaymentScripts::peer_to_peer_with_metadata

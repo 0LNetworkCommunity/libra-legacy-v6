@@ -46,14 +46,14 @@ fun main(_dr: signer, account: signer) {
 }
 
 //# run --signers TreasuryCompliance
-//#     --type-args 0x1::XUS::XUS
+//#     --type-args DiemFramework::XUS::XUS
 //#     --args 0 @Vasp x"8ae64fead0bd7f052f0b608e8e704960" b"vasp" true
-//#     -- 0x1::AccountCreationScripts::create_parent_vasp_account
+//#     -- DiemFramework::AccountCreationScripts::create_parent_vasp_account
 
 //# run --signers Vasp
-//#     --type-args 0x1::XUS::XUS
+//#     --type-args DiemFramework::XUS::XUS
 //#     --args @Child x"d803a42f5d154ce1f2bdefbf2630ce5a" true 0
-//#     -- 0x1::AccountCreationScripts::create_child_vasp_account
+//#     -- DiemFramework::AccountCreationScripts::create_child_vasp_account
 
 //# run --admin-script --signers DiemRoot TreasuryCompliance --show-events
 script {
@@ -117,13 +117,13 @@ script {
 }
 
 //# run --signers TreasuryCompliance
-//#     --type-args 0x1::XUS::XUS
+//#     --type-args DiemFramework::XUS::XUS
 //#     --args 0
 //#            @Alice
 //#            x"3aa76fbc2fdf6fb765ef48484c7357f5"
 //#            b"alice"
 //#            true
-//#     -- 0x1::AccountCreationScripts::create_parent_vasp_account
+//#     -- DiemFramework::AccountCreationScripts::create_parent_vasp_account
 
 //# run --admin-script --signers DiemRoot TreasuryCompliance
 script {

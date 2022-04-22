@@ -3,12 +3,12 @@
 //! new-transaction
 //! sender: bob
 script {
-use 0x1::VDF;
+use DiemFramework::VDF;
 use DiemFramework::DiemAccount;
-use 0x1::GAS::GAS;
-use 0x1::TowerState;
-use 0x1::NodeWeight;
-use 0x1::TestFixtures;
+use DiemFramework::GAS::GAS;
+use DiemFramework::TowerState;
+use DiemFramework::NodeWeight;
+use DiemFramework::TestFixtures;
 use DiemFramework::ValidatorConfig;
 use DiemFramework::Roles;
 
@@ -26,7 +26,7 @@ use DiemFramework::Roles;
     let solution = TestFixtures::eve_0_easy_sol();
     // Parse miner challenge and check
     let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
-    assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
+    assert!(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
     
     DiemAccount::create_validator_account_with_proof(
         &sender,
@@ -42,42 +42,42 @@ use DiemFramework::Roles;
         x"1ee7", // human_name: vector<u8>,
     );
 
-    assert(Roles::assert_validator_addr(eve_addr), 7357130101011000);
-    assert(
+    assert!(Roles::assert_validator_addr(eve_addr), 7357130101011000);
+    assert!(
       Roles::assert_validator_operator_addr(@0xfa72817f1b5aab94658238ddcdc08010), 
       7357130101021000
     );
 
-    assert(ValidatorConfig::is_valid(eve_addr), 7357130101031000);
-    assert(
+    assert!(ValidatorConfig::is_valid(eve_addr), 7357130101031000);
+    assert!(
       ValidatorConfig::get_operator(eve_addr) == @0xfa72817f1b5aab94658238ddcdc08010, 
       7357130101041000
     );
     
     let config = ValidatorConfig::get_config(eve_addr);
     let consensus_pubkey = ValidatorConfig::get_consensus_pubkey(&config);
-    assert(
+    assert!(
       consensus_pubkey == &x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010", 
       7357130101051000
     );
 
-    assert(TowerState::test_helper_get_height(eve_addr) == 0, 7357130101061000);
+    assert!(TowerState::test_helper_get_height(eve_addr) == 0, 7357130101061000);
 
     //Check the validator is in the validator universe.
-    assert(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101071000);
+    assert!(NodeWeight::proof_of_weight(eve_addr) == 0, 7357130101071000);
 
     // Check the account exists and the balance is 10, from Bob's onboarding transfer
-    assert(DiemAccount::balance<GAS>(eve_addr) == 1000000, 7357130101081000);
+    assert!(DiemAccount::balance<GAS>(eve_addr) == 1000000, 7357130101081000);
 
     // assert the operator has balance
-    assert(
+    assert!(
       DiemAccount::balance<GAS>(@0xfa72817f1b5aab94658238ddcdc08010) == 1000000, 
       7357130101091000
     );
 
     // Bob's balance should have gone down by 2M microgas, because he sent 1 GAS each to Eve's operator and owner.
 
-    assert(DiemAccount::balance<GAS>(@{{bob}}) == 1000000, 73571301011000);
+    assert!(DiemAccount::balance<GAS>(@{{bob}}) == 1000000, 73571301011000);
 
   }
 }
@@ -88,12 +88,12 @@ use DiemFramework::Roles;
 //! sender: diemroot
 script {
   use DiemFramework::DiemAccount;
-  use 0x1::GAS::GAS;
-  use 0x1::EpochBoundary;
-  use 0x1::TowerState;
-  use 0x1::Testnet;
-  use 0x1::Debug::print;
-  use 0x1::Cases;
+  use DiemFramework::GAS::GAS;
+  use DiemFramework::EpochBoundary;
+  use DiemFramework::TowerState;
+  use DiemFramework::Testnet;
+  use DiemFramework::Debug::print;
+  use DiemFramework::Cases;
   
   fun main(vm: signer) {
       // need to remove testnet for this test, since testnet does not ratelimit account creation.
@@ -106,20 +106,20 @@ script {
       EpochBoundary::reconfigure(&vm, 100);
       let new_account_bal = DiemAccount::balance<GAS>(eve);
 
-      assert(old_account_bal == 1000000, 7357001);
+      assert!(old_account_bal == 1000000, 7357001);
       print(&new_account_bal);
 
       // eve did not mine or validator in last epoch, case != 1. So there wont be a reward 
-      assert(Cases::get_case(&vm, @{{bob}}, 0, 100) != 1, 7357002);
-      assert(new_account_bal == 1000000, 7357003);
+      assert!(Cases::get_case(&vm, @{{bob}}, 0, 100) != 1, 7357002);
+      assert!(new_account_bal == 1000000, 7357003);
 
       // Operator account should not increase after epoch change
-      assert(
+      assert!(
         DiemAccount::balance<GAS>(@0xfa72817f1b5aab94658238ddcdc08010) == old_account_bal_oper, 
         7357003
       );
 
-      assert(TowerState::can_create_val_account(@{{bob}}) == false, 7357004);
+      assert!(TowerState::can_create_val_account(@{{bob}}) == false, 7357004);
       
   }
 }

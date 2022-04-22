@@ -1,10 +1,10 @@
-//# init --parent-vasps Test Alice Bob Caroll Doris=0x1::XDX::XDX
+//# init --parent-vasps Test Alice Bob Caroll Doris=DiemFramework::XDX::XDX
 //#      --addresses Abby=0x751eb65a16f7f36411cb3990a6f08c58
 //#      --private-keys Abby=1bbba5c7064e06e4fb757d14823f36f76bf7f97eb751cf11e8c8294a75aa159c
 
 // Give Bob some money...
-//# run --type-args 0x1::XUS::XUS --signers DesignatedDealer --args @Bob 100000 x"" x""
-//#     -- 0x1::PaymentScripts::peer_to_peer_with_metadata
+//# run --type-args DiemFramework::XUS::XUS --signers DesignatedDealer --args @Bob 100000 x"" x""
+//#     -- DiemFramework::PaymentScripts::peer_to_peer_with_metadata
 
 //# publish
 module Test::Holder {
@@ -33,20 +33,20 @@ script {
     }
 }
 
-//# run --type-args 0x1::XUS::XUS --signers Bob --args @Bob 10 x"" x""
-//#     -- 0x1::PaymentScripts::peer_to_peer_with_metadata
+//# run --type-args DiemFramework::XUS::XUS --signers Bob --args @Bob 10 x"" x""
+//#     -- DiemFramework::PaymentScripts::peer_to_peer_with_metadata
 
-//# run --type-args 0x1::XUS::XUS --signers Bob --args @Abby 10 x"" x""
-//#     -- 0x1::PaymentScripts::peer_to_peer_with_metadata
+//# run --type-args DiemFramework::XUS::XUS --signers Bob --args @Abby 10 x"" x""
+//#     -- DiemFramework::PaymentScripts::peer_to_peer_with_metadata
 
-//# run --type-args 0x1::XDX::XDX --signers Bob --args @Abby 10 x"" x""
-//#     -- 0x1::PaymentScripts::peer_to_peer_with_metadata
+//# run --type-args DiemFramework::XDX::XDX --signers Bob --args @Abby 10 x"" x""
+//#     -- DiemFramework::PaymentScripts::peer_to_peer_with_metadata
 
-//# run --type-args 0x1::XUS::XUS --signers Bob --args @Doris 10 x"" x""
-//#     -- 0x1::PaymentScripts::peer_to_peer_with_metadata
+//# run --type-args DiemFramework::XUS::XUS --signers Bob --args @Doris 10 x"" x""
+//#     -- DiemFramework::PaymentScripts::peer_to_peer_with_metadata
 
 //# run --signers Bob --args x"123abc"
-//#     -- 0x1::AccountAdministrationScripts::rotate_authentication_key
+//#     -- DiemFramework::AccountAdministrationScripts::rotate_authentication_key
 
 //# run --admin-script --signers DiemRoot Bob
 script {
@@ -84,8 +84,8 @@ script {
     }
 }
 
-//# run --type-args 0x1::XUS::XUS --signers Bob --args @Alice 10000 x"" x""
-//#     -- 0x1::PaymentScripts::peer_to_peer_with_metadata
+//# run --type-args DiemFramework::XUS::XUS --signers Bob --args @Alice 10000 x"" x""
+//#     -- DiemFramework::PaymentScripts::peer_to_peer_with_metadata
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -98,36 +98,28 @@ script {
 }
 
 //# run --signers TreasuryCompliance
-//#     --type-args 0x1::XDX::XDX
+//#     --type-args DiemFramework::XDX::XDX
 //#     --args 0
 //#            0x0
 //#            x"00000000000000000000000000000000"
 //#            b"xxx"
 //#            true
-//#     -- 0x1::AccountCreationScripts::create_parent_vasp_account
+//#     -- DiemFramework::AccountCreationScripts::create_parent_vasp_account
 
 //# run --signers TreasuryCompliance
-//#     --type-args 0x1::XDX::XDX
+//#     --type-args DiemFramework::XDX::XDX
 //#     --args 0
 //#            @Abby
 //#            x""
 //#            b"abby"
 //#            true
-//#     -- 0x1::AccountCreationScripts::create_parent_vasp_account
+//#     -- DiemFramework::AccountCreationScripts::create_parent_vasp_account
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
 use DiemFramework::DiemAccount;
 fun main() {
-    DiemAccount::sequence_number(@0x1);
-}
-}
-
-//# run --admin-script --signers DiemRoot DiemRoot
-script {
-use DiemFramework::DiemAccount;
-fun main() {
-    DiemAccount::authentication_key(@0x1);
+    DiemAccount::sequence_number(@DiemFramework);
 }
 }
 
@@ -135,7 +127,7 @@ fun main() {
 script {
 use DiemFramework::DiemAccount;
 fun main() {
-    DiemAccount::delegated_key_rotation_capability(@0x1);
+    DiemAccount::authentication_key(@DiemFramework);
 }
 }
 
@@ -143,6 +135,14 @@ fun main() {
 script {
 use DiemFramework::DiemAccount;
 fun main() {
-    DiemAccount::delegated_withdraw_capability(@0x1);
+    DiemAccount::delegated_key_rotation_capability(@DiemFramework);
+}
+}
+
+//# run --admin-script --signers DiemRoot DiemRoot
+script {
+use DiemFramework::DiemAccount;
+fun main() {
+    DiemAccount::delegated_withdraw_capability(@DiemFramework);
 }
 }

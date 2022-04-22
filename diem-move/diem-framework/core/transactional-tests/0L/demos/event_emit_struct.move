@@ -1,4 +1,4 @@
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 
 //! new-transaction
 module {{default}}::M {

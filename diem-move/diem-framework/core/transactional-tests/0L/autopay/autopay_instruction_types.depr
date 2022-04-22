@@ -15,19 +15,17 @@
 script {
     use DiemFramework::AccountLimits;
     use DiemFramework::CoreAddresses;
-    use 0x1::GAS::GAS;
+    use DiemFramework::GAS::GAS;
     fun main(account: &signer) {
         AccountLimits::update_limits_definition<GAS>(account, @DiemRoot, 0, 10000, 0, 1);
     }
 }
 // check: "Keep(EXECUTED)"
 
-//! new-transaction
-//! sender: diemroot
-//! execute-as: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
 use DiemFramework::AccountLimits;
-use 0x1::GAS::GAS;
+use DiemFramework::GAS::GAS;
   fun main(dm: &signer, alice_account: &signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(alice_account);
       AccountLimits::update_limits_definition<GAS>(dm, @{{alice}}, 0, 10000, 0, 1);
@@ -41,7 +39,7 @@ use 0x1::GAS::GAS;
 //! execute-as: jim
 script {
 use DiemFramework::AccountLimits;
-use 0x1::GAS::GAS;
+use DiemFramework::GAS::GAS;
   fun main(dm: &signer, jim_account: &signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(jim_account);
       AccountLimits::update_limits_definition<GAS>(dm, @{{jim}}, 0, 10000, 0, 1);
@@ -55,7 +53,7 @@ use 0x1::GAS::GAS;
 //! execute-as: lucy
 script {
 use DiemFramework::AccountLimits;
-use 0x1::GAS::GAS;
+use DiemFramework::GAS::GAS;
   fun main(dm: &signer, lucy_account: &signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(lucy_account);
       AccountLimits::update_limits_definition<GAS>(dm, @{{lucy}}, 0, 10000, 0, 1);
@@ -69,7 +67,7 @@ use 0x1::GAS::GAS;
 //! execute-as: paul
 script {
 use DiemFramework::AccountLimits;
-use 0x1::GAS::GAS;
+use DiemFramework::GAS::GAS;
   fun main(dm: &signer, paul_account: &signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(paul_account);
       AccountLimits::update_limits_definition<GAS>(dm, @{{paul}}, 0, 10000, 0, 1);
@@ -83,7 +81,7 @@ use 0x1::GAS::GAS;
 //! execute-as: thomas
 script {
 use DiemFramework::AccountLimits;
-use 0x1::GAS::GAS;
+use DiemFramework::GAS::GAS;
   fun main(dm: &signer, thomas_account: &signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(thomas_account);
       AccountLimits::update_limits_definition<GAS>(dm, @{{thomas}}, 0, 10000, 0, 1);
@@ -97,7 +95,7 @@ use 0x1::GAS::GAS;
 //! execute-as: denice
 script {
 use DiemFramework::AccountLimits;
-use 0x1::GAS::GAS;
+use DiemFramework::GAS::GAS;
   fun main(dm: &signer, denice_account: &signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(denice_account);
       AccountLimits::update_limits_definition<GAS>(dm, @{{denice}}, 0, 10000, 0, 1);
@@ -111,7 +109,7 @@ use 0x1::GAS::GAS;
 //! execute-as: carlos
 script {
 use DiemFramework::AccountLimits;
-use 0x1::GAS::GAS;
+use DiemFramework::GAS::GAS;
   fun main(dm: &signer, carlos_account: &signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(carlos_account);
       AccountLimits::update_limits_definition<GAS>(dm, @{{carlos}}, 0, 10000, 0, 1);
@@ -125,7 +123,7 @@ use 0x1::GAS::GAS;
 //! execute-as: eric
 script {
 use DiemFramework::AccountLimits;
-use 0x1::GAS::GAS;
+use DiemFramework::GAS::GAS;
   fun main(dm: &signer, eric_account: &signer) {
       AccountLimits::publish_unrestricted_limits<GAS>(eric_account);
       AccountLimits::update_limits_definition<GAS>(dm, @{{eric}}, 0, 10000, 0, 1);
@@ -139,19 +137,19 @@ use 0x1::GAS::GAS;
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::AutoPay2;
+  use DiemFramework::AutoPay2;
   use Std::Signer;
   fun main(sender: &signer) {
     AutoPay2::enable_autopay(sender);
-    assert(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
+    assert!(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
     
     AutoPay2::create_instruction(sender, 1, 0, @{{jim}}, 2, 500);
 
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(Signer::address_of(sender), 1);
-    assert(type == 0, 1);
-    assert(payee == @{{jim}}, 1);
-    assert(end_epoch == 2, 1);
-    assert(percentage == 500, 1);
+    assert!(type == 0, 1);
+    assert!(payee == @{{jim}}, 1);
+    assert!(end_epoch == 2, 1);
+    assert!(percentage == 500, 1);
   }
 }
 // check: EXECUTED
@@ -160,19 +158,19 @@ script {
 //! new-transaction
 //! sender: lucy
 script {
-  use 0x1::AutoPay2;
+  use DiemFramework::AutoPay2;
   use Std::Signer;
   fun main(sender: &signer) {
     AutoPay2::enable_autopay(sender);
-    assert(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
+    assert!(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
     
     AutoPay2::create_instruction(sender, 1, 1, @{{paul}}, 2, 500);
 
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(Signer::address_of(sender), 1);
-    assert(type == 1, 1);
-    assert(payee == @{{paul}}, 1);
-    assert(end_epoch == 2, 1);
-    assert(percentage == 500, 1);
+    assert!(type == 1, 1);
+    assert!(payee == @{{paul}}, 1);
+    assert!(end_epoch == 2, 1);
+    assert!(percentage == 500, 1);
   }
 }
 // check: EXECUTED
@@ -181,19 +179,19 @@ script {
 //! new-transaction
 //! sender: thomas
 script {
-  use 0x1::AutoPay2;
+  use DiemFramework::AutoPay2;
   use Std::Signer;
   fun main(sender: &signer) {
     AutoPay2::enable_autopay(sender);
-    assert(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
+    assert!(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
     
     AutoPay2::create_instruction(sender, 1, 2, @{{denice}}, 2, 200);
 
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(Signer::address_of(sender), 1);
-    assert(type == 2, 1);
-    assert(payee == @{{denice}}, 1);
-    assert(end_epoch == 2, 1);
-    assert(percentage == 200, 1);
+    assert!(type == 2, 1);
+    assert!(payee == @{{denice}}, 1);
+    assert!(end_epoch == 2, 1);
+    assert!(percentage == 200, 1);
   }
 }
 // check: EXECUTED
@@ -202,20 +200,20 @@ script {
 //! new-transaction
 //! sender: carlos
 script {
-  use 0x1::AutoPay2;
+  use DiemFramework::AutoPay2;
   use Std::Signer;
   fun main(sender: &signer) {
     AutoPay2::enable_autopay(sender);
-    assert(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
+    assert!(AutoPay2::is_enabled(Signer::address_of(sender)), 0);
     
     // note: end epoch does not matter here as long as it is after the next epoch
     AutoPay2::create_instruction(sender, 1, 3, @{{eric}}, 200, 500);
 
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(Signer::address_of(sender), 1);
-    assert(type == 3, 1);
-    assert(payee == @{{eric}}, 1);
-    assert(end_epoch == 200, 1);
-    assert(percentage == 500, 1);
+    assert!(type == 3, 1);
+    assert!(payee == @{{eric}}, 1);
+    assert!(end_epoch == 200, 1);
+    assert!(percentage == 500, 1);
   }
 }
 // check: EXECUTED
@@ -244,32 +242,32 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::AutoPay2;
+  use DiemFramework::AutoPay2;
   use DiemFramework::DiemAccount;
-  use 0x1::GAS::GAS;
+  use DiemFramework::GAS::GAS;
   use DiemFramework::Diem;
   fun main(vm: &signer) {
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    assert(ending_balance == 9501, 7357004);
+    assert!(ending_balance == 9501, 7357004);
 
     // lucy didn't receive any funds, so no change in balance, so no payment sent
     let ending_balance = DiemAccount::balance<GAS>(@{{lucy}});
-    assert(ending_balance == 10000, 7357006);
+    assert!(ending_balance == 10000, 7357006);
 
     let ending_balance = DiemAccount::balance<GAS>(@{{thomas}});
-    assert(ending_balance == 9800, 7357006);
+    assert!(ending_balance == 9800, 7357006);
 
     let ending_balance = DiemAccount::balance<GAS>(@{{carlos}});
-    assert(ending_balance == 9500, 7357006);
+    assert!(ending_balance == 9500, 7357006);
     //Confirm the one-shot instruction was deleted
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(@{{carlos}}, 1);
-    assert(type == 0, 1);
-    assert(payee == @0x0, 1);
-    assert(end_epoch == 0, 1);
-    assert(percentage == 0, 1);
+    assert!(type == 0, 1);
+    assert!(payee == @0x0, 1);
+    assert!(end_epoch == 0, 1);
+    assert!(percentage == 0, 1);
 
     let coin = Diem::mint<GAS>(vm, 10000);
-    assert(Diem::value<GAS>(&coin) == 10000, 1);
+    assert!(Diem::value<GAS>(&coin) == 10000, 1);
     DiemAccount::vm_deposit_with_metadata<GAS>(
         vm,
         @{{lucy}},
@@ -278,7 +276,7 @@ script {
     );
 
     let ending_balance = DiemAccount::balance<GAS>(@{{lucy}});
-    assert(ending_balance == 20000, 7357006);
+    assert!(ending_balance == 20000, 7357006);
     
   }
 }
@@ -315,55 +313,55 @@ script {
 //! sender: diemroot
 script {
   use DiemFramework::DiemAccount;
-  use 0x1::GAS::GAS;
-  use 0x1::AutoPay2;
+  use DiemFramework::GAS::GAS;
+  use DiemFramework::AutoPay2;
   fun main(_vm: &signer) {
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    assert(ending_balance == 9026, 7357004);
+    assert!(ending_balance == 9026, 7357004);
 
     // lucy will have paid 5% on the 10000 she received last epoch
     let ending_balance = DiemAccount::balance<GAS>(@{{lucy}});
-    assert(ending_balance == 19501, 7357006);
+    assert!(ending_balance == 19501, 7357006);
     
     let ending_balance = DiemAccount::balance<GAS>(@{{thomas}});
-    assert(ending_balance == 9600, 7357006);
+    assert!(ending_balance == 9600, 7357006);
 
     // no change, one-shot instruction is finished
     let ending_balance = DiemAccount::balance<GAS>(@{{carlos}});
-    assert(ending_balance == 9500, 7357006);
+    assert!(ending_balance == 9500, 7357006);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@{{jim}});
-    assert(ending_balance == 10974, 7357006);
+    assert!(ending_balance == 10974, 7357006);
 
     let ending_balance = DiemAccount::balance<GAS>(@{{paul}});
-    assert(ending_balance == 10499, 7357006);
+    assert!(ending_balance == 10499, 7357006);
 
     let ending_balance = DiemAccount::balance<GAS>(@{{denice}});
-    assert(ending_balance == 10400, 7357006);
+    assert!(ending_balance == 10400, 7357006);
 
     let ending_balance = DiemAccount::balance<GAS>(@{{eric}});
-    assert(ending_balance == 10500, 7357006);
+    assert!(ending_balance == 10500, 7357006);
 
     //all instructions should be deleted as they expired in epoch 2, check to confirm
     //Confirm the one-shot instruction was deleted
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(@{{alice}}, 1);
-    assert(type == 0, 1);
-    assert(payee == @0x0, 1);
-    assert(end_epoch == 0, 1);
-    assert(percentage == 0, 1);
+    assert!(type == 0, 1);
+    assert!(payee == @0x0, 1);
+    assert!(end_epoch == 0, 1);
+    assert!(percentage == 0, 1);
 
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(@{{lucy}}, 1);
-    assert(type == 0, 1);
-    assert(payee == @0x0, 1);
-    assert(end_epoch == 0, 1);
-    assert(percentage == 0, 1);
+    assert!(type == 0, 1);
+    assert!(payee == @0x0, 1);
+    assert!(end_epoch == 0, 1);
+    assert!(percentage == 0, 1);
 
     let (type, payee, end_epoch, percentage) = AutoPay2::query_instruction(@{{thomas}}, 1);
-    assert(type == 0, 1);
-    assert(payee == @0x0, 1);
-    assert(end_epoch == 0, 1);
-    assert(percentage == 0, 1);
+    assert!(type == 0, 1);
+    assert!(payee == @0x0, 1);
+    assert!(end_epoch == 0, 1);
+    assert!(percentage == 0, 1);
   }
 
 

@@ -4,14 +4,14 @@
 //! new-transaction
 //! sender: diemroot
 script{
-use 0x1::ValidatorUniverse;
+use DiemFramework::ValidatorUniverse;
 use Std::Vector;
 
 fun main(vm: signer) {
     let len = Vector::length<address>(
         &ValidatorUniverse::get_eligible_validators(&vm)
     );
-    assert(len == 1, 73570);
+    assert!(len == 1, 73570);
     ValidatorUniverse::remove_validator_vm(&vm, @{{bob}});
 }
 }
@@ -21,14 +21,14 @@ fun main(vm: signer) {
 //! new-transaction
 //! sender: diemroot
 script{
-use 0x1::ValidatorUniverse;
+use DiemFramework::ValidatorUniverse;
 use Std::Vector;
 
 fun main(vm: signer) {
     let len = Vector::length<address>(
         &ValidatorUniverse::get_eligible_validators(&vm)
     );
-    assert(len == 0, 73570);
+    assert!(len == 0, 73570);
 }
 }
 // check: EXECUTED

@@ -9,20 +9,20 @@
 //! new-transaction
 //! sender: carol
 script {
-  use 0x1::AutoPay;
+  use DiemFramework::AutoPay;
   use Std::Signer;
   fun main(sender: signer) {
     let sender = &sender;
     AutoPay::enable_autopay(sender);
-    assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
+    assert!(AutoPay::is_enabled(Signer::address_of(sender)), 0);
     AutoPay::create_instruction(sender, 1, 0, @{{bob}}, 2, 5);
     let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
     );
-    assert(type == 0u8, 1);
-    assert(payee == @{{bob}}, 1);
-    assert(end_epoch == 2, 1);
-    assert(percentage == 5, 1);
+    assert!(type == 0u8, 1);
+    assert!(payee == @{{bob}}, 1);
+    assert!(end_epoch == 2, 1);
+    assert!(percentage == 5, 1);
   }
 }
 // check: EXECUTED
@@ -31,10 +31,10 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-  use 0x1::AutoPay;
+  use DiemFramework::AutoPay;
   use Std::Signer;
   fun main(sender: signer) {    
-    assert(AutoPay::is_enabled(Signer::address_of(&sender)), 0);
+    assert!(AutoPay::is_enabled(Signer::address_of(&sender)), 0);
     AutoPay::create_instruction(&sender, 2, 0, @{{alice}}, 4, 5);
   }
 }
@@ -49,7 +49,7 @@ script {
 //   use 0x0::Signer;
 //   fun main(sender: signer) {
 //     AutoPay::enable_autopay();
-//     Transaction::assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
+//     Transaction::assert!(AutoPay::is_enabled(Signer::address_of(sender)), 0);
 //     AutoPay::create_instruction(2, @{{bob}}, 5, 5);
 //     }
 // }

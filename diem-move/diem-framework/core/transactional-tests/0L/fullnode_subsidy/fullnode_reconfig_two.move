@@ -7,9 +7,9 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::TowerState;
-    use 0x1::Globals;
-    use 0x1::TestFixtures;
+    use DiemFramework::TowerState;
+    use DiemFramework::Globals;
+    use DiemFramework::TestFixtures;
 
     fun main(sender: signer) {
         // add one proof and init the state.
@@ -25,9 +25,9 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::TowerState;
-    use 0x1::Globals;
-    use 0x1::TestFixtures;
+    use DiemFramework::TowerState;
+    use DiemFramework::Globals;
+    use DiemFramework::TestFixtures;
 
     fun main(sender: signer) {
         // add one proof and init the state.
@@ -45,7 +45,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(vm: signer) {
       TowerState::epoch_reset(&vm);
@@ -64,24 +64,24 @@ script {
 //! sender: alice
 script {
     use DiemFramework::DiemSystem;
-    use 0x1::TowerState;
-    use 0x1::NodeWeight;
-    use 0x1::GAS::GAS;
+    use DiemFramework::TowerState;
+    use DiemFramework::NodeWeight;
+    use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
 
     fun main(sender: signer) {
         // Tests on initial size of validators
-        // assert(DiemSystem::validator_set_size() == 5, 7357300101011000);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 735701);
+        // assert!(DiemSystem::validator_set_size() == 5, 7357300101011000);
+        assert!(DiemSystem::is_validator(@{{alice}}) == true, 735701);
 
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 1, 735702);
-        assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 735703);
-        assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 735704);
+        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 1, 735702);
+        assert!(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 735703);
+        assert!(NodeWeight::proof_of_weight(@{{alice}}) == 0, 735704);
 
         // Alice continues to mine after genesis.
         // This test is adapted from chained_from_genesis.move
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 5, 735705);
+        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 5, 735705);
 
     }
 }
@@ -92,7 +92,7 @@ script {
 //! sender: diemroot
 script {
     use Std::Vector;
-    use 0x1::Stats;
+    use DiemFramework::Stats;
 
     // This is the the epoch boundary.
     fun main(vm: signer) {
@@ -116,20 +116,20 @@ script {
 //! sender: bob
 script {
     use DiemFramework::DiemSystem;
-    use 0x1::TowerState;
-    use 0x1::Debug::print;
+    use DiemFramework::TowerState;
+    use DiemFramework::Debug::print;
 
     fun main(sender: signer) {
         // Tests on initial size of validators
-        assert(DiemSystem::is_validator(@{{alice}}), 735706);
-        assert(!DiemSystem::is_validator(@{{bob}}), 735707);
+        assert!(DiemSystem::is_validator(@{{alice}}), 735706);
+        assert!(!DiemSystem::is_validator(@{{bob}}), 735707);
         
         print(&TowerState::get_count_in_epoch(@{{bob}}));
 
         // bring bob to 10 proofs. (Note: alice has one proof as a fullnode from genesis, so it will total 11 fullnode proofs.);
         TowerState::test_helper_mock_mining(&sender, 10);
 
-        // assert(TowerState::get_count_in_epoch(@{{bob}}) == 1, 7357300101041000);
+        // assert!(TowerState::get_count_in_epoch(@{{bob}}) == 1, 7357300101041000);
         print(&TowerState::get_count_in_epoch(@{{bob}}));
         print(&TowerState::get_fullnode_proofs());
     }
@@ -139,7 +139,7 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(sender: signer) {
 
@@ -163,12 +163,12 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {  
-    // use 0x1::NodeWeight;
-    use 0x1::GAS::GAS;
+    // use DiemFramework::NodeWeight;
+    use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
-    use 0x1::Subsidy;
-    use 0x1::Globals;
-    // use 0x1::Debug::print;
+    use DiemFramework::Subsidy;
+    use DiemFramework::Globals;
+    // use DiemFramework::Debug::print;
 
     fun main(_vm: signer) {
         // We are in a new epoch.
@@ -185,8 +185,8 @@ script {
         // bob gets the whole subsidy
 
         // bob and carol submitted same number of proofs and will share the fullnode subsidy
-        assert(DiemAccount::balance<GAS>(@{{bob}}) == ending_balance, 7357000180113);
-        assert(DiemAccount::balance<GAS>(@{{bob}}) == ending_balance, 7357000180114);  
+        assert!(DiemAccount::balance<GAS>(@{{bob}}) == ending_balance, 7357000180113);
+        assert!(DiemAccount::balance<GAS>(@{{bob}}) == ending_balance, 7357000180114);  
     }
 }
 //check: EXECUTED

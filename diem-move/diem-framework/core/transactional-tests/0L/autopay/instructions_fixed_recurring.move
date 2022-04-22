@@ -8,13 +8,13 @@
 //! new-transaction
 //! sender: carol
 script {
-  use 0x1::Wallet;
+  use DiemFramework::Wallet;
   use Std::Vector;
 
   fun main(sender: signer) {
     Wallet::set_comm(&sender);
     let list = Wallet::get_comm_list();
-    assert(Vector::length(&list) == 1, 7357001);
+    assert!(Vector::length(&list) == 1, 7357001);
   }
 }
 
@@ -25,22 +25,22 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::AutoPay;
+  use DiemFramework::AutoPay;
   use Std::Signer;
   fun main(sender: signer) {
     let sender = &sender;
     AutoPay::enable_autopay(sender);
-    assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
+    assert!(AutoPay::is_enabled(Signer::address_of(sender)), 0);
     
     AutoPay::create_instruction(sender, 1, 2, @{{carol}}, 2, 200);
 
     let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
     );
-    assert(type == 2, 1);
-    assert(payee == @{{carol}}, 1);
-    assert(end_epoch == 2, 1);
-    assert(percentage == 200, 1);
+    assert!(type == 2, 1);
+    assert!(payee == @{{carol}}, 1);
+    assert!(end_epoch == 2, 1);
+    assert!(percentage == 200, 1);
   }
 }
 // check: EXECUTED
@@ -70,10 +70,10 @@ script {
 //! sender: diemroot
 script {
   use DiemFramework::DiemAccount;
-  use 0x1::GAS::GAS;
+  use DiemFramework::GAS::GAS;
   fun main(_vm: signer) {
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
-    assert(ending_balance == 1999800, 7357002);
+    assert!(ending_balance == 1999800, 7357002);
   }
 }
 // check: EXECUTED
@@ -108,18 +108,18 @@ script {
 //! sender: diemroot
 script {
   use DiemFramework::DiemAccount;
-  use 0x1::GAS::GAS;
-  // use 0x1::Debug::print;
+  use DiemFramework::GAS::GAS;
+  // use DiemFramework::Debug::print;
   fun main(_vm: signer) {
     // alice will have paid 5% on the 10000 she received last epoch
     let ending_balance = DiemAccount::balance<GAS>(@{{alice}});
     // print(&ending_balance);
-    assert(ending_balance == 1999600, 7357003);
+    assert!(ending_balance == 1999600, 7357003);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@{{carol}});
     // print(&ending_balance);
-    assert(ending_balance == 1000400, 7357004);
+    assert!(ending_balance == 1000400, 7357004);
   }
 }
 // check: EXECUTED

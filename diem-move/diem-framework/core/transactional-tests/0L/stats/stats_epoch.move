@@ -3,7 +3,7 @@
 // Here EPOCH-LENGTH = 15 Blocks.
 // NOTE: This test will fail with Staging and Production Constants, only for Debug - due to epoch length.
 
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000, 0, validator
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
@@ -15,17 +15,17 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Stats;
+    use DiemFramework::Stats;
 
     // Assumes an epoch changed at round 15
     fun main(vm: signer) {
       let vm = &vm;
       //proposals
-      assert(Stats::node_current_props(vm, @{{alice}}) == 1, 0);
-      assert(Stats::node_current_props(vm, @{{bob}}) == 0, 0);
+      assert!(Stats::node_current_props(vm, @{{alice}}) == 1, 0);
+      assert!(Stats::node_current_props(vm, @{{bob}}) == 0, 0);
       //votes
-      assert(Stats::node_current_votes(vm, @{{alice}}) == 0, 0);
-      assert(Stats::node_current_votes(vm, @{{bob}}) == 0, 0);
+      assert!(Stats::node_current_votes(vm, @{{alice}}) == 0, 0);
+      assert!(Stats::node_current_votes(vm, @{{bob}}) == 0, 0);
 
     }
 }
@@ -41,15 +41,15 @@ script {
 //! sender: diemroot
 script {
     use Std::Vector;
-    use 0x1::Stats;
+    use DiemFramework::Stats;
     // This is the the epoch boundary.
     fun main(vm: signer) {
       let vm = &vm;
 
-      assert(Stats::node_current_props(vm, @{{alice}}) == 2, 735700001);
-      assert(Stats::node_current_props(vm, @{{bob}}) == 0, 735700002);
-      assert(Stats::node_current_votes(vm, @{{alice}}) == 0, 735700003);
-      assert(Stats::node_current_votes(vm, @{{bob}}) == 0, 735700004);
+      assert!(Stats::node_current_props(vm, @{{alice}}) == 2, 735700001);
+      assert!(Stats::node_current_props(vm, @{{bob}}) == 0, 735700002);
+      assert!(Stats::node_current_votes(vm, @{{alice}}) == 0, 735700003);
+      assert!(Stats::node_current_votes(vm, @{{bob}}) == 0, 735700004);
 
       let voters = Vector::empty<address>();
       Vector::push_back<address>(&mut voters, @{{alice}});
@@ -65,12 +65,12 @@ script {
             i = i + 1;
         };
 
-      assert(Stats::node_above_thresh(vm, @{{alice}}, 0, 15), 735700005);
-      assert(Stats::node_above_thresh(vm, @{{bob}}, 0, 15), 735700006);
-      assert(Stats::node_above_thresh(vm, @{{carol}}, 0, 15), 735700007);
-      assert(Stats::node_above_thresh(vm, @{{dave}}, 0, 15), 735700008);
+      assert!(Stats::node_above_thresh(vm, @{{alice}}, 0, 15), 735700005);
+      assert!(Stats::node_above_thresh(vm, @{{bob}}, 0, 15), 735700006);
+      assert!(Stats::node_above_thresh(vm, @{{carol}}, 0, 15), 735700007);
+      assert!(Stats::node_above_thresh(vm, @{{dave}}, 0, 15), 735700008);
 
-      assert(Stats::network_density(vm, 0, 15) == 4, 735700009);
+      assert!(Stats::network_density(vm, 0, 15) == 4, 735700009);
     }
 }
 // check: EXECUTED
@@ -90,18 +90,18 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Stats;
+    use DiemFramework::Stats;
     // use Std::Vector;
     fun main(vm: signer) {
       let vm = &vm;
       // Testing that reconfigure reset the counter for current epoch.
-      assert(!Stats::node_above_thresh(vm, @{{alice}}, 16, 17), 735700010);
+      assert!(!Stats::node_above_thresh(vm, @{{alice}}, 16, 17), 735700010);
 
       // should reset alice's count
-      assert(Stats::node_current_props(vm, @{{alice}}) == 0, 735700011);
-      assert(Stats::node_current_props(vm, @{{bob}}) == 0, 735700012);
-      assert(Stats::node_current_votes(vm, @{{alice}}) == 0, 735700013);
-      assert(Stats::node_current_votes(vm, @{{bob}}) == 0, 735700014);
+      assert!(Stats::node_current_props(vm, @{{alice}}) == 0, 735700011);
+      assert!(Stats::node_current_props(vm, @{{bob}}) == 0, 735700012);
+      assert!(Stats::node_current_votes(vm, @{{alice}}) == 0, 735700013);
+      assert!(Stats::node_current_votes(vm, @{{bob}}) == 0, 735700014);
     }
 }
 // check: EXECUTED

@@ -1,17 +1,17 @@
 // Module to test bulk validator updates function in DiemSystem.move
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 
 //! new-transaction
 //! sender: alice
 script {
   use DiemFramework::DiemAccount;
-  use 0x1::GAS::GAS;
-  use 0x1::TestFixtures;
+  use DiemFramework::GAS::GAS;
+  use DiemFramework::TestFixtures;
   use Std::Signer;
-  use 0x1::VDF;
+  use DiemFramework::VDF;
   use DiemFramework::ValidatorConfig;
   use DiemFramework::Roles;
-  use 0x1::TowerState;
+  use DiemFramework::TowerState;
 
   fun main(sender: signer) {
     let challenge = TestFixtures::eve_0_easy_chal();
@@ -36,12 +36,12 @@ script {
 
 
     // Check the account has the Validator role
-    assert(Roles::assert_validator_addr(parsed_address), 7357130101011000);
-    assert(ValidatorConfig::is_valid(parsed_address), 7357130101021000);
+    assert!(Roles::assert_validator_addr(parsed_address), 7357130101011000);
+    assert!(ValidatorConfig::is_valid(parsed_address), 7357130101021000);
     // Check the account exists and the balance is 0
-    assert(DiemAccount::balance<GAS>(parsed_address) == 0, 7357130101031000);
+    assert!(DiemAccount::balance<GAS>(parsed_address) == 0, 7357130101031000);
     let sender_addr = Signer::address_of(&sender);
-    assert(TowerState::can_create_val_account(sender_addr) == false, 7357130101041000);
+    assert!(TowerState::can_create_val_account(sender_addr) == false, 7357130101041000);
   }
 }
 //check: ABORTED

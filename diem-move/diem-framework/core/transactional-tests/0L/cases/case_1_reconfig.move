@@ -18,25 +18,25 @@
 //! sender: alice
 script {
     use DiemFramework::DiemSystem;
-    use 0x1::TowerState;
-    use 0x1::NodeWeight;
-    use 0x1::GAS::GAS;
+    use DiemFramework::TowerState;
+    use DiemFramework::NodeWeight;
+    use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
 
     fun main(sender: signer) {
         // Tests on initial size of validators
-        assert(DiemSystem::validator_set_size() == 5, 7357300101011000);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357300101021000);
-        assert(DiemSystem::is_validator(@{{eve}}) == true, 7357300101031000);
+        assert!(DiemSystem::validator_set_size() == 5, 7357300101011000);
+        assert!(DiemSystem::is_validator(@{{alice}}) == true, 7357300101021000);
+        assert!(DiemSystem::is_validator(@{{eve}}) == true, 7357300101031000);
 
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 1, 7357300101041000);
-        assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 7357300101051000);
-        assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357300101051000);
+        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 1, 7357300101041000);
+        assert!(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 7357300101051000);
+        assert!(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357300101051000);
 
         // Alice continues to mine after genesis.
         // This test is adapted from chained_from_genesis.move
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357300101071000);
+        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357300101071000);
     }
 }
 // check: EXECUTED
@@ -46,7 +46,7 @@ script {
 //! sender: diemroot
 script {
     use Std::Vector;
-    use 0x1::Stats;
+    use DiemFramework::Stats;
 
     // This is the the epoch boundary.
     fun main(vm: signer) {
@@ -76,22 +76,22 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Cases;
+    use DiemFramework::Cases;
     use Std::Vector;
     use DiemFramework::DiemSystem;
     
     fun main(vm: signer) {
         // We are in a new epoch.
         // Check alice is in the the correct case during reconfigure
-        assert(Cases::get_case(&vm, @{{alice}}, 0, 15) == 1, 735700018010901);
-        assert(Cases::get_case(&vm, @{{bob}}, 0, 15) == 2, 735700018010902);
-        assert(Cases::get_case(&vm, @{{carol}}, 0, 15) == 2, 735700018010903);
-        assert(Cases::get_case(&vm, @{{dave}}, 0, 15) == 2, 735700018010904);
-        assert(Cases::get_case(&vm, @{{eve}}, 0, 15) == 2, 735700018010905);
+        assert!(Cases::get_case(&vm, @{{alice}}, 0, 15) == 1, 735700018010901);
+        assert!(Cases::get_case(&vm, @{{bob}}, 0, 15) == 2, 735700018010902);
+        assert!(Cases::get_case(&vm, @{{carol}}, 0, 15) == 2, 735700018010903);
+        assert!(Cases::get_case(&vm, @{{dave}}, 0, 15) == 2, 735700018010904);
+        assert!(Cases::get_case(&vm, @{{eve}}, 0, 15) == 2, 735700018010905);
 
         // check only 1 val is getting the subsidy
         let (vals, _) = DiemSystem::get_fee_ratio(&vm, 0, 100);
-        assert(Vector::length<address>(&vals) == 1, 7357000180111);
+        assert!(Vector::length<address>(&vals) == 1, 7357000180111);
 
     }
 }
@@ -111,11 +111,11 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {  
-    use 0x1::NodeWeight;
-    use 0x1::GAS::GAS;
+    use DiemFramework::NodeWeight;
+    use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
-    use 0x1::Subsidy;
-    use 0x1::Globals;
+    use DiemFramework::Subsidy;
+    use DiemFramework::Globals;
 
     fun main(_vm: signer) {
         // We are in a new epoch.
@@ -132,8 +132,8 @@ script {
 
         let ending_balance = starting_balance + expected_subsidy - operator_refund;
 
-        assert(DiemAccount::balance<GAS>(@{{alice}}) == ending_balance, 7357000180113);  
-        assert(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357000180114);  
+        assert!(DiemAccount::balance<GAS>(@{{alice}}) == ending_balance, 7357000180113);  
+        assert!(NodeWeight::proof_of_weight(@{{alice}}) == 0, 7357000180114);  
     }
 }
 //check: EXECUTED

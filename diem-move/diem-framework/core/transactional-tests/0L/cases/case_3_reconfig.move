@@ -21,7 +21,7 @@
 //! sender: diemroot
 script {
     use DiemFramework::DiemAccount;
-    use 0x1::GAS::GAS;
+    use DiemFramework::GAS::GAS;
     use DiemFramework::ValidatorConfig;
 
     fun main(sender: signer) {
@@ -45,14 +45,14 @@ script {
 //! new-transaction
 //! sender: alice
 script {    
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
     use Std::Signer;
-    use 0x1::AutoPay;
+    use DiemFramework::AutoPay;
 
     fun main(sender: signer) {
         AutoPay::enable_autopay(&sender);
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
+        assert!(TowerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -61,14 +61,14 @@ script {
 //! sender: bob
 script {
     
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
     use Std::Signer;
-    use 0x1::AutoPay;
+    use DiemFramework::AutoPay;
 
     fun main(sender: signer) {
         AutoPay::enable_autopay(&sender);
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
+        assert!(TowerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -77,14 +77,14 @@ script {
 //! sender: carol
 script {
     
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
     use Std::Signer;
-    use 0x1::AutoPay;
+    use DiemFramework::AutoPay;
 
     fun main(sender: signer) {
         AutoPay::enable_autopay(&sender);
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
+        assert!(TowerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -93,14 +93,14 @@ script {
 //! sender: dave
 script {
     
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
     use Std::Signer;
-    use 0x1::AutoPay;
+    use DiemFramework::AutoPay;
 
     fun main(sender: signer) {
         AutoPay::enable_autopay(&sender);
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
+        assert!(TowerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -109,14 +109,14 @@ script {
 //! sender: eve
 script {
     
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
     use Std::Signer;
-    use 0x1::AutoPay;
+    use DiemFramework::AutoPay;
 
     fun main(sender: signer) {
         AutoPay::enable_autopay(&sender);
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
+        assert!(TowerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -125,14 +125,14 @@ script {
 //! sender: frank
 script {
     
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
     use Std::Signer;
-    use 0x1::AutoPay;
+    use DiemFramework::AutoPay;
 
     fun main(sender: signer) {
         AutoPay::enable_autopay(&sender);
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
+        assert!(TowerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
     }
 }
 //check: EXECUTED
@@ -141,10 +141,10 @@ script {
 //! sender: diemroot
 script {
     use DiemFramework::DiemSystem;
-    use 0x1::TowerState;
-    use 0x1::GAS::GAS;
+    use DiemFramework::TowerState;
+    use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
-    // use 0x1::FullnodeState;
+    // use DiemFramework::FullnodeState;
     
     fun main(_vm: signer) {
         // This is not an onboarding case, steady state.
@@ -153,11 +153,11 @@ script {
         // );
 
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 6, 7357000180101);
-        assert(DiemSystem::is_validator(@{{carol}}) == true, 7357000180102);
-        assert(TowerState::test_helper_get_height(@{{carol}}) == 0, 7357000180104);
-        assert(DiemAccount::balance<GAS>(@{{carol}}) == 949991, 7357000180106);
-        assert(TowerState::test_helper_get_height(@{{carol}}) == 0, 7357000180108);
+        assert!(DiemSystem::validator_set_size() == 6, 7357000180101);
+        assert!(DiemSystem::is_validator(@{{carol}}) == true, 7357000180102);
+        assert!(TowerState::test_helper_get_height(@{{carol}}) == 0, 7357000180104);
+        assert!(DiemAccount::balance<GAS>(@{{carol}}) == 949991, 7357000180106);
+        assert!(TowerState::test_helper_get_height(@{{carol}}) == 0, 7357000180108);
     }
 }
 // check: EXECUTED
@@ -166,8 +166,8 @@ script {
 //! sender: diemroot
 script {
     use Std::Vector;
-    use 0x1::Stats;
-    // use 0x1::FullnodeState;
+    use DiemFramework::Stats;
+    // use DiemFramework::FullnodeState;
     // This is the the epoch boundary.
     fun main(vm: signer) {
         // This is not an onboarding case, steady state.
@@ -198,12 +198,12 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Cases;
+    use DiemFramework::Cases;
     
     fun main(vm: signer) {
         // We are in a new epoch.
         // Check carol is in the the correct case during reconfigure
-        assert(Cases::get_case(&vm, @{{carol}}, 0, 15) == 3, 7357000180109);
+        assert!(Cases::get_case(&vm, @{{carol}}, 0, 15) == 3, 7357000180109);
     }
 }
 
@@ -222,8 +222,8 @@ script {
 //! sender: diemroot
 script {
     use DiemFramework::DiemSystem;
-    use 0x1::NodeWeight;
-    use 0x1::GAS::GAS;
+    use DiemFramework::NodeWeight;
+    use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
     use DiemFramework::DiemConfig;
 
@@ -231,11 +231,11 @@ script {
         // We are in a new epoch.
 
         // Check the validator set is at expected size
-        assert(DiemSystem::validator_set_size() == 5, 7357000180110);
-        assert(DiemSystem::is_validator(@{{carol}}) == false, 7357000180111);
-        assert(DiemAccount::balance<GAS>(@{{carol}}) == 949991, 7357000180112);
-        assert(NodeWeight::proof_of_weight(@{{carol}}) == 0, 7357000180113);  
-        assert(DiemConfig::get_current_epoch() == 2, 7357000180114);
+        assert!(DiemSystem::validator_set_size() == 5, 7357000180110);
+        assert!(DiemSystem::is_validator(@{{carol}}) == false, 7357000180111);
+        assert!(DiemAccount::balance<GAS>(@{{carol}}) == 949991, 7357000180112);
+        assert!(NodeWeight::proof_of_weight(@{{carol}}) == 0, 7357000180113);  
+        assert!(DiemConfig::get_current_epoch() == 2, 7357000180114);
     }
 }
 //check: EXECUTED

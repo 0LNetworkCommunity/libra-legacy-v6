@@ -3,9 +3,9 @@
 //! new-transaction
 //! sender: alices_app
 script {
-  use 0x1::Bonding;
+  use DiemFramework::Bonding;
   use Std::Signer;
-  // use 0x1::Debug::print;
+  // use DiemFramework::Debug::print;
 
   fun main(sender: signer) {
     let coin = 10;
@@ -14,7 +14,7 @@ script {
 
     let addr = Signer::address_of(&sender);
     let (reserve, supply) = Bonding::get_curve_state(addr);
-    assert(reserve == 10, 735701);
-    assert(supply == 100, 735701);
+    assert!(reserve == 10, 735701);
+    assert!(supply == 100, 735701);
   }
 }

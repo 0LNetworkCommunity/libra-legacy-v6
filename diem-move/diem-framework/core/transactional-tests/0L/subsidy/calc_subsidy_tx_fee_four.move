@@ -1,4 +1,4 @@
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000, 0, validator
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
@@ -15,13 +15,13 @@
 //! sender: diemroot
 script {
   
-  use 0x1::Subsidy;
+  use DiemFramework::Subsidy;
   use Std::Vector;
-  use 0x1::Stats;
+  use DiemFramework::Stats;
   use DiemFramework::TransactionFee;
-  use 0x1::GAS::GAS;
+  use DiemFramework::GAS::GAS;
   use DiemFramework::Diem;
-  use 0x1::Globals;
+  use DiemFramework::Globals;
   
   fun main(vm: signer) {
     // check the case of a network density of 4 active validators.
@@ -51,7 +51,7 @@ script {
 
     // deducts gas from txs from subsidy.
     let (subsidy, _) = Subsidy::calculate_subsidy(vm, 4);
-    assert(subsidy == expected_subsidy, 7357190101021000);
+    assert!(subsidy == expected_subsidy, 7357190101021000);
 
     }
 }

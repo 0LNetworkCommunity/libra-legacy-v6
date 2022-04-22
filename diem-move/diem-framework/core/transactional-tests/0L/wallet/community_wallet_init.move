@@ -7,13 +7,13 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::Wallet;
+    use DiemFramework::Wallet;
     use Std::Vector;
 
     fun main(sender: signer) {
       Wallet::set_comm(&sender);
       let list = Wallet::get_comm_list();
-      assert(Vector::length(&list) == 1, 7357001);
+      assert!(Vector::length(&list) == 1, 7357001);
     }
 }
 
@@ -22,13 +22,13 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Wallet;
+    use DiemFramework::Wallet;
     use Std::Vector;
 
     fun main(vm: signer) {
       Wallet::vm_remove_comm(&vm, @{{alice}});
       let list = Wallet::get_comm_list();
-      assert(Vector::length(&list) == 0, 7357002);
+      assert!(Vector::length(&list) == 0, 7357002);
     }
 }
 

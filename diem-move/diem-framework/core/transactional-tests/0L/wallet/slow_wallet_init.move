@@ -11,7 +11,7 @@ script {
     fun main(_sender: signer) {
       let list = DiemAccount::get_slow_list();
       // alice, the validator, is already a slow wallet.
-      assert(Vector::length<address>(&list) ==1, 735701);
+      assert!(Vector::length<address>(&list) ==1, 735701);
     }
 }
 

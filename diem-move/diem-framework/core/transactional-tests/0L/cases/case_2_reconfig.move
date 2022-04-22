@@ -20,7 +20,7 @@
 //! sender: diemroot
 script {
     use DiemFramework::DiemAccount;
-    use 0x1::GAS::GAS;
+    use DiemFramework::GAS::GAS;
     use DiemFramework::ValidatorConfig;
 
     fun main(sender: signer) {
@@ -53,23 +53,23 @@ script {
 //! sender: bob
 script {
     use DiemFramework::DiemSystem;
-    use 0x1::TowerState;
-    use 0x1::NodeWeight;
-    use 0x1::GAS::GAS;
+    use DiemFramework::TowerState;
+    use DiemFramework::NodeWeight;
+    use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
 
     fun main(_sender: signer) {
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 5, 7357000180101);
-        assert(DiemSystem::is_validator(@{{bob}}) == true, 7357000180102);
-        assert(DiemSystem::is_validator(@{{eve}}) == true, 7357000180103);
-        assert(TowerState::test_helper_get_height(@{{bob}}) == 0, 7357000180104);
+        assert!(DiemSystem::validator_set_size() == 5, 7357000180101);
+        assert!(DiemSystem::is_validator(@{{bob}}) == true, 7357000180102);
+        assert!(DiemSystem::is_validator(@{{eve}}) == true, 7357000180103);
+        assert!(TowerState::test_helper_get_height(@{{bob}}) == 0, 7357000180104);
 
         //// NO MINING ////
 
-        assert(DiemAccount::balance<GAS>(@{{bob}}) == 949991, 7357000180106);
-        assert(NodeWeight::proof_of_weight(@{{bob}}) == 0, 7357000180107);  
-        assert(TowerState::test_helper_get_height(@{{bob}}) == 0, 7357000180108);
+        assert!(DiemAccount::balance<GAS>(@{{bob}}) == 949991, 7357000180106);
+        assert!(NodeWeight::proof_of_weight(@{{bob}}) == 0, 7357000180107);  
+        assert!(TowerState::test_helper_get_height(@{{bob}}) == 0, 7357000180108);
     }
 }
 // check: EXECUTED
@@ -79,8 +79,8 @@ script {
 //! sender: diemroot
 script {
     use Std::Vector;
-    use 0x1::Stats;
-    // use 0x1::FullnodeState;
+    use DiemFramework::Stats;
+    // use DiemFramework::FullnodeState;
     // This is the the epoch boundary.
     fun main(vm: signer) {
         // This is not an onboarding case, steady state.
@@ -109,11 +109,11 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Cases;
+    use DiemFramework::Cases;
     fun main(vm: signer) {
         // We are in a new epoch.
         // Check Bob is in the the correct case during reconfigure
-        assert(Cases::get_case(&vm, @{{bob}}, 0, 15) == 2, 7357000180109);
+        assert!(Cases::get_case(&vm, @{{bob}}, 0, 15) == 2, 7357000180109);
     }
 }
 
@@ -133,8 +133,8 @@ script {
 //! sender: diemroot
 script {
     use DiemFramework::DiemSystem;
-    use 0x1::NodeWeight;
-    use 0x1::GAS::GAS;
+    use DiemFramework::NodeWeight;
+    use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
 
     fun main(_account: signer) {
@@ -142,14 +142,14 @@ script {
 
         // Check the validator set is at expected size
         // case 2 does not reject Alice.
-        assert(DiemSystem::validator_set_size() == 5, 7357000180110);
+        assert!(DiemSystem::validator_set_size() == 5, 7357000180110);
 
-        assert(DiemSystem::is_validator(@{{bob}}) == true, 7357000180111);
+        assert!(DiemSystem::is_validator(@{{bob}}) == true, 7357000180111);
         
         //case 2 does not get rewards.
-        assert(DiemAccount::balance<GAS>(@{{bob}}) == 949991, 7357000180112);  
+        assert!(DiemAccount::balance<GAS>(@{{bob}}) == 949991, 7357000180112);  
 
         //case 2 does not increment weight.
-        assert(NodeWeight::proof_of_weight(@{{bob}}) == 0, 7357000180113);  
+        assert!(NodeWeight::proof_of_weight(@{{bob}}) == 0, 7357000180113);  
     }
 }

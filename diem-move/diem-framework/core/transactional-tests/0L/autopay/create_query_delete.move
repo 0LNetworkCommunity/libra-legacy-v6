@@ -8,20 +8,20 @@
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::AutoPay;
+  use DiemFramework::AutoPay;
   use Std::Signer;
   fun main(sender: signer) {
     let sender = &sender;
     AutoPay::enable_autopay(sender);
-    assert(AutoPay::is_enabled(Signer::address_of(sender)), 0);
+    assert!(AutoPay::is_enabled(Signer::address_of(sender)), 0);
     AutoPay::create_instruction(sender, 1, 0, @{{bob}}, 2, 5);
     let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
     );
-    assert(type == 0, 1);
-    assert(payee == @{{bob}}, 1);
-    assert(end_epoch == 2, 1);
-    assert(percentage == 5, 1);
+    assert!(type == 0, 1);
+    assert!(payee == @{{bob}}, 1);
+    assert!(end_epoch == 2, 1);
+    assert!(percentage == 5, 1);
   }
 }
 // check: EXECUTED
@@ -30,13 +30,13 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-  use 0x1::AutoPay;
+  use DiemFramework::AutoPay;
   fun main() {
     let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(@{{alice}}, 1);
-    assert(type == 0, 1);
-    assert(payee == @{{bob}}, 1);
-    assert(end_epoch == 2, 1);
-    assert(percentage == 5, 1);
+    assert!(type == 0, 1);
+    assert!(payee == @{{bob}}, 1);
+    assert!(end_epoch == 2, 1);
+    assert!(percentage == 5, 1);
   }
 }
 // check: EXECUTED
@@ -46,7 +46,7 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::AutoPay;
+  use DiemFramework::AutoPay;
   use Std::Signer;
   fun main(sender: signer) {
     let sender = &sender;
@@ -55,10 +55,10 @@ script {
       Signer::address_of(sender), 1
     );
     // If autopay instruction doesn't exists, it returns (@0x0, 0, 0)
-    assert(type == 0u8, 1);
-    assert(payee == @0x0, 1);
-    assert(end_epoch == 0, 1);
-    assert(percentage == 0, 1);
+    assert!(type == 0u8, 1);
+    assert!(payee == @0x0, 1);
+    assert!(end_epoch == 0, 1);
+    assert!(percentage == 0, 1);
   }
 }
 // check: EXECUTED

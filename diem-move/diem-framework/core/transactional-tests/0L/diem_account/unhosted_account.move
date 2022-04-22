@@ -4,8 +4,8 @@
 //! sender: bob
 script {
   use DiemFramework::DiemAccount;
-  use 0x1::TestFixtures;
-  use 0x1::GAS::GAS;
+  use DiemFramework::TestFixtures;
+  use DiemFramework::GAS::GAS;
 
   fun main(sender: signer) {
     // Scenario: Bob, an existing user, is sending a transaction for Eve, 
@@ -20,10 +20,10 @@ script {
       &solution,
     );
 
-    assert(DiemAccount::balance<GAS>(eve_addr) == 1000000, 735701);
+    assert!(DiemAccount::balance<GAS>(eve_addr) == 1000000, 735701);
 
     // is a slow wallet
-    assert(!DiemAccount::is_slow(eve_addr), 735702);
+    assert!(!DiemAccount::is_slow(eve_addr), 735702);
   }
 }
 // check: EXECUTED

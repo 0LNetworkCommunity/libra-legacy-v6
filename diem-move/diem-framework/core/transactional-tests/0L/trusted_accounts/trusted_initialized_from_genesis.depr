@@ -5,8 +5,8 @@
 script {
     use DiemFramework::DiemSystem;
     // use DiemFramework::DiemAccount;
-    // use 0x1::GAS::GAS;
-    use 0x1::TrustedAccounts;
+    // use DiemFramework::GAS::GAS;
+    use DiemFramework::TrustedAccounts;
     use Std::Vector;
 
     fun main(_account: signer) {
@@ -16,7 +16,7 @@ script {
             let addr = DiemSystem::get_ith_validator_address(index);
                 let (test, _ ) = TrustedAccounts::get_trusted(addr);
                 let len = Vector::length<address>(&test);
-                assert(len == 0, 7357130101051000);
+                assert!(len == 0, 7357130101051000);
             index = index + 1;
         };
     }

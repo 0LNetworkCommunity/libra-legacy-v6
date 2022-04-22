@@ -5,8 +5,8 @@
 //! account: alice, 10000000GAS
 //! sender: alice
 script {
-use 0x1::TowerState;
-use 0x1::TestFixtures;
+use DiemFramework::TowerState;
+use DiemFramework::TestFixtures;
 
 fun main(sender: signer) {
     TowerState::init_miner_state(

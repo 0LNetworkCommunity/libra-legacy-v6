@@ -2,7 +2,7 @@
 // validators falls below 4
 
 // ALICE is CASE 1
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 // BOB is CASE 2
 //! account: bob, 1000000, 0, validator
 // CAROL is CASE 2
@@ -22,28 +22,28 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(sender: signer) {
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008005001);
+        assert!(TowerState::test_helper_get_count(&sender) == 5, 7357008005001);
     }
 }
 //check: EXECUTED
 //! new-transaction
 //! sender: eve
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
 
     fun main(sender: signer) {
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
 
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008005002);
+        assert!(TowerState::test_helper_get_count(&sender) == 5, 7357008005002);
     }
 }
 //check: EXECUTED
@@ -51,7 +51,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Stats;
+    use DiemFramework::Stats;
     use Std::Vector;
     use DiemFramework::DiemSystem;
 
@@ -71,8 +71,8 @@ script {
             i = i + 1;
         };
 
-        assert(DiemSystem::validator_set_size() == 6, 7357008005003);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357008005004);
+        assert!(DiemSystem::validator_set_size() == 6, 7357008005003);
+        assert!(DiemSystem::is_validator(@{{alice}}) == true, 7357008005004);
     }
 }
 //check: EXECUTED
@@ -96,9 +96,9 @@ script {
 
     fun main(_account: signer) {
         // We are in a new epoch.
-        assert(DiemConfig::get_current_epoch() == 2, 7357008005005);
+        assert!(DiemConfig::get_current_epoch() == 2, 7357008005005);
         // Tests on initial size of validators
-        assert(DiemSystem::validator_set_size() == 6, 7357008005006);
+        assert!(DiemSystem::validator_set_size() == 6, 7357008005006);
     }
 }
 //check: EXECUTED

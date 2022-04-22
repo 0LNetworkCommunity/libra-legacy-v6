@@ -1,7 +1,7 @@
 // Testing if EVE a CASE 3 Validator gets dropped.
 
 // ALICE is CASE 1
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 // BOB is CASE 1
 //! account: bob, 1000000, 0, validator
 // CAROL is CASE 1
@@ -22,7 +22,7 @@
 //! sender: diemroot
 script {
     use DiemFramework::DiemAccount;
-    use 0x1::GAS::GAS;
+    use DiemFramework::GAS::GAS;
     use DiemFramework::ValidatorConfig;
 
     fun main(sender: signer) {
@@ -46,8 +46,8 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::TowerState;
-    use 0x1::AutoPay;
+    use DiemFramework::TowerState;
+    use DiemFramework::AutoPay;
 
     fun main(sender: signer) {
         AutoPay::enable_autopay(&sender);
@@ -55,7 +55,7 @@ script {
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357008009001);
+        assert!(TowerState::get_count_in_epoch(@{{alice}}) == 5, 7357008009001);
     }
 }
 //check: EXECUTED
@@ -63,8 +63,8 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::TowerState;
-    use 0x1::AutoPay;
+    use DiemFramework::TowerState;
+    use DiemFramework::AutoPay;
 
     fun main(sender: signer) {
         AutoPay::enable_autopay(&sender);
@@ -72,7 +72,7 @@ script {
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008009002);
+        assert!(TowerState::test_helper_get_count(&sender) == 5, 7357008009002);
     }
 }
 //check: EXECUTED
@@ -80,8 +80,8 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::TowerState;
-    use 0x1::AutoPay;
+    use DiemFramework::TowerState;
+    use DiemFramework::AutoPay;
 
     fun main(sender: signer) {
         AutoPay::enable_autopay(&sender);
@@ -89,7 +89,7 @@ script {
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008009003);
+        assert!(TowerState::test_helper_get_count(&sender) == 5, 7357008009003);
     }
 }
 //check: EXECUTED
@@ -97,8 +97,8 @@ script {
 //! new-transaction
 //! sender: dave
 script {
-    use 0x1::TowerState;
-    use 0x1::AutoPay;
+    use DiemFramework::TowerState;
+    use DiemFramework::AutoPay;
 
     fun main(sender: signer) {
         AutoPay::enable_autopay(&sender);
@@ -106,7 +106,7 @@ script {
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008009004);
+        assert!(TowerState::test_helper_get_count(&sender) == 5, 7357008009004);
     }
 }
 //check: EXECUTED
@@ -114,8 +114,8 @@ script {
 //! new-transaction
 //! sender: eve
 script {
-    use 0x1::TowerState;
-    use 0x1::AutoPay;
+    use DiemFramework::TowerState;
+    use DiemFramework::AutoPay;
 
     fun main(sender: signer) {
         AutoPay::enable_autopay(&sender);
@@ -123,7 +123,7 @@ script {
         // Miner is the only one that can update their mining stats. 
         // Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::get_count_in_epoch(@{{eve}}) == 5, 7357008009005);
+        assert!(TowerState::get_count_in_epoch(@{{eve}}) == 5, 7357008009005);
     }
 }
 //check: EXECUTED
@@ -131,7 +131,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Stats;
+    use DiemFramework::Stats;
     use Std::Vector;
     use DiemFramework::DiemSystem;
 
@@ -151,8 +151,8 @@ script {
             i = i + 1;
         };
 
-        assert(DiemSystem::validator_set_size() == 6, 7357008009006);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357008009007);
+        assert!(DiemSystem::validator_set_size() == 6, 7357008009006);
+        assert!(DiemSystem::is_validator(@{{alice}}) == true, 7357008009007);
     }
 }
 //check: EXECUTED
@@ -173,15 +173,15 @@ script {
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::DiemConfig;
-    use 0x1::Debug::print;
+    use DiemFramework::Debug::print;
 
     fun main(_account: signer) {
         // We are in a new epoch.
-        assert(DiemConfig::get_current_epoch() == 2, 7357008009008);
+        assert!(DiemConfig::get_current_epoch() == 2, 7357008009008);
         print(&DiemSystem::validator_set_size());
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 4, 7357008009009);
-        assert(DiemSystem::is_validator(@{{eve}}) == false, 7357008009010);
+        assert!(DiemSystem::validator_set_size() == 4, 7357008009009);
+        assert!(DiemSystem::is_validator(@{{eve}}) == false, 7357008009010);
     }
 }
 //check: EXECUTED

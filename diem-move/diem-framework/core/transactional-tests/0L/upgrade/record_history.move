@@ -1,10 +1,10 @@
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 //! account: bob, 1000000, 0, validator
 
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::Upgrade;
+  use DiemFramework::Upgrade;
   use Std::Vector;
 
   fun main(sender: signer) {
@@ -15,10 +15,10 @@ script {
     Upgrade::record_history(&sender, 0, x"1234", *&validators, 200);
     
     let (upgraded_version, payload, voters, height) = Upgrade::retrieve_latest_history();
-    assert(upgraded_version == 0, 1);
-    assert(payload == x"1234", 1);
-    assert(Vector::compare(&voters, &validators), 1);
-    assert(height == 200, 1);
+    assert!(upgraded_version == 0, 1);
+    assert!(payload == x"1234", 1);
+    assert!(Vector::compare(&voters, &validators), 1);
+    assert!(height == 200, 1);
   }
 }
 // check: EXECUTED

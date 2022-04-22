@@ -8,8 +8,8 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::MinerState;
-    use 0x1::TestFixtures;
+    use DiemFramework::MinerState;
+    use DiemFramework::TestFixtures;
 
     fun main(sender: signer) {
         MinerState::test_helper_init_miner(
@@ -20,7 +20,7 @@ script {
         );
 
         let height = MinerState::test_helper_get_height(@{{bob}});
-        assert(height==0, 01);
+        assert!(height==0, 01);
 
     }
 }
@@ -29,8 +29,8 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::MinerState;
-    use 0x1::TestFixtures;
+    use DiemFramework::MinerState;
+    use DiemFramework::TestFixtures;
 
     fun main(sender: signer) {
         MinerState::test_helper_set_proofs_in_epoch(&sender, 10000);

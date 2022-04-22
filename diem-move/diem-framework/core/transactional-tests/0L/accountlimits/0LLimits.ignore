@@ -6,7 +6,7 @@
 // script {
 //     use DiemFramework::AccountLimits;
 //     use DiemFramework::CoreAddresses;
-//     use 0x1::GAS::GAS;
+//     use DiemFramework::GAS::GAS;
 //     fun main(account: signer) {
 //         AccountLimits::update_limits_definition<GAS>(account, @DiemRoot, 0, 10, 0, 0);
 //     }
@@ -18,7 +18,7 @@
 // //! execute-as: alice
 // script {
 // use DiemFramework::AccountLimits;
-// use 0x1::GAS::GAS;
+// use DiemFramework::GAS::GAS;
 // fun main(lr: signer, alice_account: signer) {
 //     AccountLimits::publish_unrestricted_limits<GAS>(alice_account);
 //     AccountLimits::update_limits_definition<GAS>(lr, @{{alice}}, 0, 10, 0, 0);
@@ -33,13 +33,13 @@
 // //! execute-as: bob
 // script {
 // use DiemFramework::AccountLimits;
-// use 0x1::GAS::GAS;
+// use DiemFramework::GAS::GAS;
 // fun main(lr: signer, bob_account: signer) {
 //     AccountLimits::publish_unrestricted_limits<GAS>(bob_account);
 //     AccountLimits::update_limits_definition<GAS>(lr, @{{bob}}, 0, 10, 0, 0);
 //     AccountLimits::publish_window<GAS>(lr, bob_account, @{{bob}});
-//     assert(AccountLimits::has_limits_published<GAS>(@{{bob}}), 1);
-//     assert(AccountLimits::has_limits_published<GAS>(@{{alice}}), 2);
+//     assert!(AccountLimits::has_limits_published<GAS>(@{{bob}}), 1);
+//     assert!(AccountLimits::has_limits_published<GAS>(@{{alice}}), 2);
 // }
 // }
 // // check: "Keep(EXECUTED)"
@@ -50,12 +50,12 @@
 // //! gas-currency: GAS
 // script {
 // use DiemFramework::DiemAccount;
-// use 0x1::GAS::GAS;
+// use DiemFramework::GAS::GAS;
 // fun main(account: signer) {
 //     let with_cap = DiemAccount::extract_withdraw_capability(account);
 //     DiemAccount::pay_from<GAS>(&with_cap, @{{bob}}, 11, x"", x"");
-//     assert(DiemAccount::balance<GAS>(@{{alice}}) == 89, 0);
-//     assert(DiemAccount::balance<GAS>(@{{bob}}) == 111, 1);
+//     assert!(DiemAccount::balance<GAS>(@{{alice}}) == 89, 0);
+//     assert!(DiemAccount::balance<GAS>(@{{bob}}) == 111, 1);
 //     DiemAccount::restore_withdraw_capability(with_cap);
 // }
 // }
@@ -67,12 +67,12 @@
 // //! gas-currency: GAS
 // script {
 // use DiemFramework::DiemAccount;
-// use 0x1::GAS::GAS;
+// use DiemFramework::GAS::GAS;
 // fun main(account: signer) {
 //     let with_cap = DiemAccount::extract_withdraw_capability(account);
 //     DiemAccount::pay_from<GAS>(&with_cap, @{{bob}}, 10, x"", x"");
-//     assert(DiemAccount::balance<GAS>(@{{alice}}) == 90, 0);
-//     assert(DiemAccount::balance<GAS>(@{{bob}}) == 110, 1);
+//     assert!(DiemAccount::balance<GAS>(@{{alice}}) == 90, 0);
+//     assert!(DiemAccount::balance<GAS>(@{{bob}}) == 110, 1);
 //     DiemAccount::restore_withdraw_capability(with_cap);
 // }
 // }
@@ -84,12 +84,12 @@
 // //! gas-currency: GAS
 // script {
 // use DiemFramework::DiemAccount;
-// use 0x1::GAS::GAS;
+// use DiemFramework::GAS::GAS;
 // fun main(account: signer) {
 //     let with_cap = DiemAccount::extract_withdraw_capability(account);
 //     DiemAccount::pay_from<GAS>(&with_cap, @{{bob}}, 10, x"", x"");
-//     assert(DiemAccount::balance<GAS>(@{{alice}}) == 80, 0);
-//     assert(DiemAccount::balance<GAS>(@{{bob}}) == 120, 1);
+//     assert!(DiemAccount::balance<GAS>(@{{alice}}) == 80, 0);
+//     assert!(DiemAccount::balance<GAS>(@{{bob}}) == 120, 1);
 //     DiemAccount::restore_withdraw_capability(with_cap);
 // }
 // }
