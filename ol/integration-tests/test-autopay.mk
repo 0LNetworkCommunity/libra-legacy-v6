@@ -88,7 +88,7 @@ check-swarm:
 
 send-tx: 
 	PERSONA=alice make -f ${MAKE_FILE} init
-	PERSONA=alice make -f ${MAKE_FILE} tx &>> ${LOG} &
+	PERSONA=alice make -f ${MAKE_FILE} tx &> ${LOG} &
 
 check-tx:
 	@while [[ ${NOW} -le ${END} ]] ; do \
