@@ -108,11 +108,12 @@ module DiemBlock {
 
         //////// 0L ////////
         // increment stats        
-        print(&100100);
+        print(&100);
         Stats::process_set_votes(&vm, &previous_block_votes);
-        print(&200100);
+        print(&200);
         Stats::inc_prop(&vm, *&proposer);    
-        print(&300100);
+        
+        print(&300);
 
         if (AutoPay::tick(&vm)){
             // triggers autopay at beginning of each epoch 
@@ -121,7 +122,7 @@ module DiemBlock {
             AutoPay::process_autopay(&vm);
         };       
 
-        print(&400100);
+        print(&400);
 
         // Do any pending migrations
         // TODO: should this be round 2 (when upgrade writeset happens). May be a on off-by-one.
@@ -137,12 +138,10 @@ module DiemBlock {
           // MakeWhole::make_whole_init(&vm);
         };    
 
-        print(&500100);
+        print(&500);
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::DIEM_ROOT_ADDRESS());
         DiemTimestamp::update_global_time(&vm, proposer, timestamp);
-
-        print(&500110);
 
         block_metadata_ref.height = block_metadata_ref.height + 1;
         Event::emit_event<NewBlockEvent>(
@@ -155,21 +154,21 @@ module DiemBlock {
             }
         );
 
-        print(&600100);
+        print(&600);
 
         //////// 0L ////////
         // EPOCH BOUNDARY
         let height = get_current_block_height();
-        print(&700100);
+        print(&700);
         if (Epoch::epoch_finished(height)) {
-          print(&800200);
+        print(&800);
 
           // TODO: We don't need to pass block height to EpochBoundaryOL. 
           // It should use the BlockMetadata. But there's a circular reference 
           // there when we try.
           EpochBoundary::reconfigure(&vm, height);
         };
-        print(&900200);
+        print(&900);
     
     }
     spec block_prologue {
@@ -202,6 +201,15 @@ module DiemBlock {
     public fun get_current_block_height(): u64 acquires BlockMetadata {
         assert(is_initialized(), Errors::not_published(EBLOCK_METADATA));
         borrow_global<BlockMetadata>(CoreAddresses::DIEM_ROOT_ADDRESS()).height
+    }
+
+
+    public fun debug_height_version(vm_height: u64) acquires BlockMetadata {
+      print(&111111);
+      print(&get_current_block_height());
+      print(&222222);
+      print(&vm_height);
+
     }
 
     spec module { } // Switch documentation context to module level.

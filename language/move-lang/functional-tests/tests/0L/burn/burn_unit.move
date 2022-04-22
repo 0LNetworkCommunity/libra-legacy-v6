@@ -138,6 +138,8 @@ script {
   use 0x1::GAS::GAS;
   use 0x1::Burn;
 
+  // use 0x1::Debug::print;
+
   fun main(vm: signer) {
     let bal_bob_old = DiemAccount::balance<GAS>(@{{bob}});
     let bal_carol_old = DiemAccount::balance<GAS>(@{{carol}});
@@ -146,7 +148,7 @@ script {
     Burn::epoch_start_burn(&vm, @{{alice}}, 100000);
 
     let bal_alice = DiemAccount::balance<GAS>(@{{alice}});
-    assert(bal_alice == 1100001, 7357010); // rounding issues
+    assert(bal_alice == 1100000, 7357010); // rounding issues
     
     // balances are greater than before.
     let bal_bob = DiemAccount::balance<GAS>(@{{bob}});
