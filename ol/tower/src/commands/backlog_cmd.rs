@@ -23,7 +23,7 @@ pub struct BacklogCmd {
     /// Submits the specified proof from the proof directory
     #[options(
     short = "n",
-    help = "Submit specific proof"
+    help = "Submit specific proof, given as numerical argument, e.g. 1337 to submit proof no. 1337"
     )]
     submit_specific: Option<u64>,
 
