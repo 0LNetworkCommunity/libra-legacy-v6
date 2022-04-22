@@ -205,13 +205,13 @@ module DiemBlock {
     }
 
 
-    public fun debug_height_version(vm_height: u64) {
+    public fun debug_height_version(vm_height: u64) acquires BlockMetadata {
       print(&111111);
       print(&get_current_block_height());
       print(&222222);
       print(&vm_height);
 
-    };
+    }
 
     spec module { } // Switch documentation context to module level.
 
