@@ -254,7 +254,8 @@ pub fn ol_writset_encode_migrations(
 
     let vouch = ol_vouch_migrate(path.clone(), vals.clone()).unwrap();
 
-    let boundary = ol_force_boundary(path.clone(), vals.clone()).unwrap();
+    // force an NewEpochEvent
+    let boundary = ol_bulk_validators_changeset(path.clone(), vals.clone()).unwrap();
 
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
     let new_cs = merge_vec_changeset(vec![ancestry, makewhole, vouch, boundary]).unwrap();
@@ -686,6 +687,7 @@ fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Res
     let db = DiemDebugger::db(path)?;
 
     let v = db.get_latest_version()?;
+    dbg!(&v);
     db.run_session_at_version(v, None, |session| {
         let mut gas_status = GasStatus::new_unmetered();
         let log_context = NoContextLog::new();
