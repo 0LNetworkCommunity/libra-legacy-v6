@@ -121,7 +121,7 @@ module Globals {
         }
       } else {
         return GlobalConstants {
-          epoch_length: 60 * 60, // approx 24 hours at 1.4 vdf_proofs/sec
+          epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 vdf_proofs/sec
           max_validators_per_set: 100, // max expected for BFT limits.
           // See DiemVMConfig for gas constants:
           // Target max gas units per transaction 100000000
@@ -133,7 +133,7 @@ module Globals {
           epoch_mining_thres_lower: 7, // NOTE: bootstrapping, allowance for operator error.
           epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
           epoch_slow_wallet_unlock: 1000 * COIN_SCALING_FACTOR, // approx 10 years for largest accounts in genesis.
-          min_blocks_per_epoch: 500,
+          min_blocks_per_epoch: 10000,
         }
       }
     }
