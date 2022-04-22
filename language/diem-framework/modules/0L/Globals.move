@@ -104,7 +104,7 @@ module Globals {
           epoch_mining_thres_lower: 2, //many tests depend on two proofs because the test harness already gives one at genesis to validators
           epoch_mining_thres_upper: 1000, // upper bound unlimited
           epoch_slow_wallet_unlock: 10,
-          min_blocks_per_epoch: 10,
+          min_blocks_per_epoch: 0,
         }
       };
 
