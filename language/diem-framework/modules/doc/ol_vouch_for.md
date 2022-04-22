@@ -5,7 +5,7 @@
 
 
 
--  [Function `init_struct`](#0x1_WalletScripts_init_struct)
+-  [Function `init_vouch`](#0x1_WalletScripts_init_vouch)
 -  [Function `vouch_for`](#0x1_WalletScripts_vouch_for)
 
 
@@ -14,13 +14,13 @@
 
 
 
-<a name="0x1_WalletScripts_init_struct"></a>
+<a name="0x1_WalletScripts_init_vouch"></a>
 
-## Function `init_struct`
+## Function `init_vouch`
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_vouch_for.md#0x1_WalletScripts_init_struct">init_struct</a>(sender: signer)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_vouch_for.md#0x1_WalletScripts_init_vouch">init_vouch</a>(sender: signer)
 </code></pre>
 
 
@@ -29,7 +29,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_vouch_for.md#0x1_WalletScripts_init_struct">init_struct</a>(sender: signer) {
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_vouch_for.md#0x1_WalletScripts_init_vouch">init_vouch</a>(sender: signer) {
   <a href="Vouch.md#0x1_Vouch_init">Vouch::init</a>(&sender);
 }
 </code></pre>

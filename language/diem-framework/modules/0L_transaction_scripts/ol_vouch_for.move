@@ -4,7 +4,7 @@ module WalletScripts {
     use 0x1::Vouch;
 
     // in case the epoch migration did not initialize the vouch struct.
-    public(script) fun init_struct(sender: signer) {
+    public(script) fun init_vouch(sender: signer) {
       Vouch::init(&sender);
     }
 

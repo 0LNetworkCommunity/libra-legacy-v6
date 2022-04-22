@@ -2204,7 +2204,7 @@ pub enum ScriptFunctionCall {
         to_freeze_account: AccountAddress,
     },
 
-    InitStruct {},
+    InitVouch {},
 
     /// # Summary
     /// Initializes the Diem consensus config that is stored on-chain.  This
@@ -3667,7 +3667,7 @@ impl ScriptFunctionCall {
                 sliding_nonce,
                 to_freeze_account,
             } => encode_freeze_account_script_function(sliding_nonce, to_freeze_account),
-            InitStruct {} => encode_init_struct_script_function(),
+            InitVouch {} => encode_init_vouch_script_function(),
             InitializeDiemConsensusConfig { sliding_nonce } => {
                 encode_initialize_diem_consensus_config_script_function(sliding_nonce)
             }
@@ -4983,13 +4983,13 @@ pub fn encode_freeze_account_script_function(
     ))
 }
 
-pub fn encode_init_struct_script_function() -> TransactionPayload {
+pub fn encode_init_vouch_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
             ident_str!("WalletScripts").to_owned(),
         ),
-        ident_str!("init_struct").to_owned(),
+        ident_str!("init_vouch").to_owned(),
         vec![],
         vec![],
     ))
@@ -8467,9 +8467,9 @@ fn decode_freeze_account_script_function(
     }
 }
 
-fn decode_init_struct_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+fn decode_init_vouch_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::InitStruct {})
+        Some(ScriptFunctionCall::InitVouch {})
     } else {
         None
     }
@@ -9462,8 +9462,8 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_freeze_account_script_function),
         );
         map.insert(
-            "WalletScriptsinit_struct".to_string(),
-            Box::new(decode_init_struct_script_function),
+            "WalletScriptsinit_vouch".to_string(),
+            Box::new(decode_init_vouch_script_function),
         );
         map.insert(
             "SystemAdministrationScriptsinitialize_diem_consensus_config".to_string(),
