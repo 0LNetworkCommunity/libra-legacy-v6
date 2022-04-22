@@ -36,7 +36,7 @@ pub fn process_backlog(
             let mut i = remote_height + 1;
 
             // use i64 for safety
-            if !(proofs_in_epoch < EPOCH_MINING_THRES_UPPER) {
+            if !(proofs_in_epoch <= EPOCH_MINING_THRES_UPPER) {
                 info!(
                     "Backlog: Maximum number of proofs sent this epoch {}, exiting.",
                     EPOCH_MINING_THRES_UPPER
