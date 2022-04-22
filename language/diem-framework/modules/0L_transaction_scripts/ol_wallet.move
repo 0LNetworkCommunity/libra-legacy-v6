@@ -1,5 +1,5 @@
 address 0x1 {
-module WalletScripts {
+module VouchScripts {
 
     use 0x1::Wallet;
     use 0x1::DiemAccount;

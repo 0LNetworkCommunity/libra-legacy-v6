@@ -162,9 +162,6 @@
   <b>if</b> (!<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(val)) <b>return</b>;
   <b>if</b> (!<b>exists</b>&lt;<a href="Vouch.md#0x1_Vouch">Vouch</a>&gt;(val)) <b>return</b>;
 
-
-
-
   <b>let</b> v = borrow_global_mut&lt;<a href="Vouch.md#0x1_Vouch">Vouch</a>&gt;(val);
 
   // take self out of list

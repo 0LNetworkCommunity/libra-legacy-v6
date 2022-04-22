@@ -1,11 +1,11 @@
 
-<a name="0x1_WalletScripts"></a>
+<a name="0x1_VouchScripts"></a>
 
-# Module `0x1::WalletScripts`
+# Module `0x1::VouchScripts`
 
 
 
--  [Function `set_wallet_type`](#0x1_WalletScripts_set_wallet_type)
+-  [Function `set_wallet_type`](#0x1_VouchScripts_set_wallet_type)
 
 
 <pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
@@ -14,13 +14,13 @@
 
 
 
-<a name="0x1_WalletScripts_set_wallet_type"></a>
+<a name="0x1_VouchScripts_set_wallet_type"></a>
 
 ## Function `set_wallet_type`
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_wallet.md#0x1_WalletScripts_set_wallet_type">set_wallet_type</a>(sender: signer, type_of: u8)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_wallet.md#0x1_VouchScripts_set_wallet_type">set_wallet_type</a>(sender: signer, type_of: u8)
 </code></pre>
 
 
@@ -29,7 +29,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_wallet.md#0x1_WalletScripts_set_wallet_type">set_wallet_type</a>(sender: signer, type_of: u8) {
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_wallet.md#0x1_VouchScripts_set_wallet_type">set_wallet_type</a>(sender: signer, type_of: u8) {
   <b>if</b> (type_of == 0) {
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">DiemAccount::set_slow</a>(&sender);
   };

@@ -2204,6 +2204,8 @@ pub enum ScriptFunctionCall {
         to_freeze_account: AccountAddress,
     },
 
+    InitStruct {},
+
     /// # Summary
     /// Initializes the Diem consensus config that is stored on-chain.  This
     /// transaction can only be sent from the Diem Root account.
@@ -3207,6 +3209,10 @@ pub enum ScriptFunctionCall {
     },
 
     ValAddSelf {},
+
+    VouchFor {
+        val: AccountAddress,
+    },
 }
 
 impl ScriptCall {
@@ -3661,6 +3667,7 @@ impl ScriptFunctionCall {
                 sliding_nonce,
                 to_freeze_account,
             } => encode_freeze_account_script_function(sliding_nonce, to_freeze_account),
+            InitStruct {} => encode_init_struct_script_function(),
             InitializeDiemConsensusConfig { sliding_nonce } => {
                 encode_initialize_diem_consensus_config_script_function(sliding_nonce)
             }
@@ -3870,6 +3877,7 @@ impl ScriptFunctionCall {
                 allow_minting,
             } => encode_update_minting_ability_script_function(currency, allow_minting),
             ValAddSelf {} => encode_val_add_self_script_function(),
+            VouchFor { val } => encode_vouch_for_script_function(val),
         }
     }
 
@@ -4975,6 +4983,18 @@ pub fn encode_freeze_account_script_function(
     ))
 }
 
+pub fn encode_init_struct_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("WalletScripts").to_owned(),
+        ),
+        ident_str!("init_struct").to_owned(),
+        vec![],
+        vec![],
+    ))
+}
+
 /// # Summary
 /// Initializes the Diem consensus config that is stored on-chain.  This
 /// transaction can only be sent from the Diem Root account.
@@ -6043,7 +6063,7 @@ pub fn encode_set_wallet_type_script_function(type_of: u8) -> TransactionPayload
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("WalletScripts").to_owned(),
+            ident_str!("VouchScripts").to_owned(),
         ),
         ident_str!("set_wallet_type").to_owned(),
         vec![],
@@ -6415,6 +6435,18 @@ pub fn encode_val_add_self_script_function() -> TransactionPayload {
         ident_str!("val_add_self").to_owned(),
         vec![],
         vec![],
+    ))
+}
+
+pub fn encode_vouch_for_script_function(val: AccountAddress) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("WalletScripts").to_owned(),
+        ),
+        ident_str!("vouch_for").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&val).unwrap()],
     ))
 }
 
@@ -8435,6 +8467,14 @@ fn decode_freeze_account_script_function(
     }
 }
 
+fn decode_init_struct_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::InitStruct {})
+    } else {
+        None
+    }
+}
+
 fn decode_initialize_diem_consensus_config_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -8901,6 +8941,16 @@ fn decode_update_minting_ability_script_function(
 fn decode_val_add_self_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
         Some(ScriptFunctionCall::ValAddSelf {})
+    } else {
+        None
+    }
+}
+
+fn decode_vouch_for_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::VouchFor {
+            val: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
     } else {
         None
     }
@@ -9412,6 +9462,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_freeze_account_script_function),
         );
         map.insert(
+            "WalletScriptsinit_struct".to_string(),
+            Box::new(decode_init_struct_script_function),
+        );
+        map.insert(
             "SystemAdministrationScriptsinitialize_diem_consensus_config".to_string(),
             Box::new(decode_initialize_diem_consensus_config_script_function),
         );
@@ -9521,7 +9575,7 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_set_validator_operator_with_nonce_admin_script_function),
         );
         map.insert(
-            "WalletScriptsset_wallet_type".to_string(),
+            "VouchScriptsset_wallet_type".to_string(),
             Box::new(decode_set_wallet_type_script_function),
         );
         map.insert(
@@ -9555,6 +9609,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "ValidatorScriptsval_add_self".to_string(),
             Box::new(decode_val_add_self_script_function),
+        );
+        map.insert(
+            "WalletScriptsvouch_for".to_string(),
+            Box::new(decode_vouch_for_script_function),
         );
         map
     });
