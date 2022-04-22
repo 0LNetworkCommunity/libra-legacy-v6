@@ -4,15 +4,14 @@
 
 use crate::{
     entrypoint,
-    submit_tx::{maybe_submit, tx_params_wrapper, TxError},
-    tx_params::TxParams,
+    submit_tx::{maybe_submit, tx_params_wrapper},
 };
 use abscissa_core::{Command, Options, Runnable};
-use diem_json_rpc_types::views::TransactionView;
+
 use diem_transaction_builder::stdlib as transaction_builder;
 use diem_types::account_address::AccountAddress;
 use ol_types::config::TxType;
-use std::path::PathBuf;
+
 use std::process::exit;
 
 /// `CreateAccount` subcommand
@@ -29,7 +28,7 @@ pub struct VouchCmd {
 
 impl Runnable for VouchCmd {
     fn run(&self) {
-        let entry_args = entrypoint::get_args();
+        let _entry_args = entrypoint::get_args();
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
 
         let script = if self.address.is_some() {
