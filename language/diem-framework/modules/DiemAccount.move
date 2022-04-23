@@ -10,6 +10,7 @@ address 0x1 {
 module DiemAccount {
     friend 0x1::MigrateAutoPayBal;
     friend 0x1::MigrateVouch;
+    friend 0x1::MakeWhole;
 
     use 0x1::AccountFreezing;
     use 0x1::CoreAddresses;
@@ -49,7 +50,7 @@ module DiemAccount {
     use 0x1::Receipts;
     use 0x1::Ancestry;
     use 0x1::Vouch;
-    friend 0x1::MakeWhole;
+    use 0x1::Debug::print;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -1394,16 +1395,22 @@ module DiemAccount {
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         
+        print(&990100);
         // Migrate on the fly if state doesn't exist on upgrade.
         if (!Wallet::is_init_comm()) {
             Wallet::init(vm);
             return
         };
+        print(&990200);
+        let all = Wallet::list_transfers(0);
+        print(&all);
 
         let v = Wallet::list_tx_by_epoch(epoch);
         let len = Vector::length<Wallet::TimedTransfer>(&v);
+        print(&len);
         let i = 0;
         while (i < len) {
+          print(&990201);
             let t: Wallet::TimedTransfer = *Vector::borrow(&v, i);
             // TODO: Is this the best way to access a struct property from 
             // outside a module?
@@ -1412,9 +1419,12 @@ module DiemAccount {
               i = i + 1;
               continue
             };
+            print(&990202);
             vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
+            print(&990203);
             Wallet::mark_processed(vm, t);
             Wallet::reset_rejection_counter(vm, payer);
+            print(&990204);
             i = i + 1;
         };
     }

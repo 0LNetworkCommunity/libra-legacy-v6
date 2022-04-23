@@ -3,7 +3,8 @@
 //! account: bob,   1000000GAS, 0
 //! account: carol,   1000000GAS, 0
 
-
+// CAROL THE COMMUNITY WALLET TIMED TRANSFER
+// Carol will send Bob funds from the community wallet. It will be processed after three epoch boundaries complete.
 
 //! new-transaction
 //! sender: carol
@@ -42,7 +43,7 @@ script {
 //! block-prologue
 //! proposer: alice
 //! block-time: 125000000
-//! round: 20
+//! round: 30
 
 ////// TEST RECONFIGURATION IS HAPPENING /////
 // check: NewEpochEvent
@@ -54,7 +55,7 @@ script {
 //! block-prologue
 //! proposer: alice
 //! block-time: 190000000
-//! round: 20
+//! round: 90
 
 ////// TEST RECONFIGURATION IS HAPPENING /////
 // check: NewEpochEvent

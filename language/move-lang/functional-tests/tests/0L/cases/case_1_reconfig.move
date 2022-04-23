@@ -143,7 +143,7 @@ script {
 
 
         let ending_balance = starting_balance + expected_subsidy - operator_refund - burn;
-
+        print(&ending_balance);
         print(&DiemAccount::balance<GAS>(@{{alice}}));
 
         assert(DiemAccount::balance<GAS>(@{{alice}}) == ending_balance, 7357000180113);  

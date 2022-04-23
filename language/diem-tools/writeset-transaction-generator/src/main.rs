@@ -11,7 +11,7 @@ use diem_types::{
 use diem_writeset_generator::{
     create_release, encode_custom_script, encode_halt_network_payload,
     encode_remove_validators_payload, script_bulk_update_vals_payload, release_flow::artifacts::load_latest_artifact,
-    verify_release, ol_writeset_stdlib_upgrade, ol_create_reconfig_payload, ol_writset_encode_rescue, ol_writset_update_timestamp, ol_writeset_force_boundary, ol_writeset_set_testnet, ol_writeset_debug_epoch, ol_writeset_update_epoch_time, ol_writeset_ancestry, ol_writset_encode_migrations
+    verify_release, ol_writeset_stdlib_upgrade, ol_create_reconfig_payload, ol_writset_encode_rescue, ol_writset_update_timestamp, ol_writeset_force_boundary, ol_writeset_set_testnet, ol_writeset_debug_epoch, ol_writeset_update_epoch_time, ol_writeset_ancestry, ol_writset_encode_migrations, ol_debug
 };
 use move_binary_format::CompiledModule;
 use std::path::PathBuf;
@@ -56,6 +56,8 @@ enum Command {
     Migrate { ancestry_file: PathBuf, makewhole_file: PathBuf, addresses: Vec<AccountAddress>},
     #[structopt(name = "reconfig")]
     Reconfig { },
+    #[structopt(name = "debug")]
+    Debug { },
     #[structopt(name = "time")]
     Timestamp { },
     #[structopt(name = "testnet")]
@@ -72,6 +74,7 @@ enum Command {
         args: String,
         execute_as: Option<AccountAddress>,
     },
+    
     /// Create a release writeset by comparing local Diem Framework against a remote blockchain state.
     #[structopt(name = "create-release")]
     CreateDiemFrameworkRelease {
@@ -141,6 +144,7 @@ fn main() -> Result<()> {
         
         Command::UpdateStdlib {} => ol_writeset_stdlib_upgrade(opt.db.unwrap()),
         Command::Reconfig {} => ol_create_reconfig_payload(opt.db.unwrap()),
+        Command::Debug {} => ol_debug(opt.db.unwrap()),
         Command::Rescue { addresses } => ol_writset_encode_rescue(opt.db.unwrap(), addresses),
         Command::Timestamp {} => ol_writset_update_timestamp(opt.db.unwrap()),
         Command::Testnet {} => ol_writeset_set_testnet(opt.db.unwrap()),

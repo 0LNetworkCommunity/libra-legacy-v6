@@ -19,7 +19,6 @@ address 0x1 {
     use 0x1::Errors;
     use 0x1::Wallet;
     use 0x1::Roles;
-    use 0x1::Debug::print;
 
     /// Attempted to send funds to an account that does not exist
     /// Maximum value for the Payment type selection
@@ -180,7 +179,6 @@ address 0x1 {
       let account_list = &borrow_global<AccountList>(
         CoreAddresses::DIEM_ROOT_ADDRESS()
       ).accounts;
-      print(account_list);
       let accounts_length = Vector::length<address>(account_list);
       let account_idx = 0;
       while (account_idx < accounts_length) {
@@ -203,18 +201,15 @@ address 0x1 {
       let payments_len = Vector::length<Payment>(payments);
       let payments_idx = 0;
       let pre_run_bal = DiemAccount::balance<GAS>(*account_addr);
-
       let bal_change_since_last_run = if (pre_run_bal > my_autopay_state.prev_bal) {
         pre_run_bal - my_autopay_state.prev_bal
       } else { 0 };
-
       // go through the pledges 
       while (payments_idx < payments_len) {
         let payment = Vector::borrow_mut<Payment>(payments, payments_idx);
         // Make a payment if one is required/allowed
         let delete_payment = process_autopay_payment(vm, account_addr, payment, bal_change_since_last_run);
         // Delete any expired payments and increment idx (or decrement list size)
-
         if (delete_payment == true) {
           Vector::remove<Payment>(payments, payments_idx);
           payments_len = payments_len - 1;
@@ -223,7 +218,6 @@ address 0x1 {
           payments_idx = payments_idx + 1;
         };
       };
-
       my_autopay_state.prev_bal = DiemAccount::balance<GAS>(*account_addr);
 
     }
