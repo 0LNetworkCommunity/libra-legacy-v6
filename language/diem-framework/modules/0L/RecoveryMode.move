@@ -26,11 +26,11 @@ module RecoveryMode {
 
     // private function so that it can only be called by vm session.
     // should never be used in production.
-    fun init_debug(vm: &signer, vals: vector<address>) {
+    fun init_recovery(vm: &signer, vals: vector<address>, epoch_ends: u64) {
       if (!is_recovery()) {
         move_to<RecoveryMode>(vm, RecoveryMode {
           fixed_set: vals,
-          epoch_ends: DiemConfig::get_current_epoch() + 2,
+          epoch_ends,
         });
       }
     }
@@ -39,8 +39,8 @@ module RecoveryMode {
       CoreAddresses::assert_vm(vm);
       let d = borrow_global<RecoveryMode>(CoreAddresses::VM_RESERVED_ADDRESS());
       if (
-        DiemConfig::get_current_epoch() > d.epoch_ends &&
-        DiemSystem::validator_set_size() > 20
+        DiemConfig::get_current_epoch() >= d.epoch_ends &&
+        DiemSystem::validator_set_size() >= 21
       ){
         remove_debug(vm);
       }
