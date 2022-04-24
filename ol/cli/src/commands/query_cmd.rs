@@ -158,6 +158,7 @@ impl Runnable for QueryCmd {
     }
 }
 
+/// get wallet type
 pub fn get_wallet_type(account: AccountAddress, mut node: Node) -> WalletType {
     match node.get_annotate_account_blob(account) {
         Ok((Some(r), _)) => {

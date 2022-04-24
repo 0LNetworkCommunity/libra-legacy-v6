@@ -52,9 +52,6 @@ address 0x1 {
       if (!ValidatorUniverse::is_in_universe(val)) return;
       if (!exists<Vouch>(val)) return;
 
-
-      
-
       let v = borrow_global_mut<Vouch>(val);
 
       // take self out of list

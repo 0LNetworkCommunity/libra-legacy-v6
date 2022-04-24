@@ -77,6 +77,8 @@ pub enum QueryType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+
+/// wallet type
 pub enum WalletType {
     ///
     None,
@@ -353,6 +355,7 @@ pub fn find_value_from_state(
     }
 }
 
+/// check if is a slow wallet
 pub fn is_slow_wallet(r: &AnnotatedAccountStateBlob) -> bool {
     let slow_module_name = "DiemAccount";
     let slow_struct_name = "SlowWallet";
@@ -362,20 +365,21 @@ pub fn is_slow_wallet(r: &AnnotatedAccountStateBlob) -> bool {
         slow_struct_name.to_string(),
         "unlocked".to_string(),
     );
-    if let (Some(AnnotatedMoveValue::U64(0))) = unlocked {
+    if let Some(AnnotatedMoveValue::U64(0)) = unlocked {
         let transferred = find_value_from_state(
             &r,
             slow_module_name.to_string(),
             slow_struct_name.to_string(),
             "transferred".to_string(),
         );
-        if let (Some(AnnotatedMoveValue::U64(0))) = transferred {
+        if let Some(AnnotatedMoveValue::U64(0)) = transferred {
             return true;
         }
     }
     false
 }
 
+/// check if is a community wallet
 pub fn is_community_wallet(r: &AnnotatedAccountStateBlob) -> bool {
     let community_module_name = "Wallet";
     let community_struct_name = "CommunityFreeze";
@@ -385,21 +389,21 @@ pub fn is_community_wallet(r: &AnnotatedAccountStateBlob) -> bool {
         community_struct_name.to_string(),
         "is_frozen".to_string(),
     );
-    if let (Some(AnnotatedMoveValue::Bool(false))) = is_frozen {
+    if let Some(AnnotatedMoveValue::Bool(false)) = is_frozen {
         let consecutive_rejections = find_value_from_state(
             &r,
             community_module_name.to_string(),
             community_struct_name.to_string(),
             "consecutive_rejections".to_string(),
         );
-        if let (Some(AnnotatedMoveValue::U64(0))) = consecutive_rejections {
+        if let Some(AnnotatedMoveValue::U64(0)) = consecutive_rejections {
             let unfreeze_votes = find_value_from_state(
                 &r,
                 community_module_name.to_string(),
                 community_struct_name.to_string(),
                 "unfreeze_votes".to_string(),
             );
-            if let (Some(AnnotatedMoveValue::Vector(TypeTag::Address, vec))) = unfreeze_votes {
+            if let Some(AnnotatedMoveValue::Vector(TypeTag::Address, vec)) = unfreeze_votes {
                 if vec.len() == 0 {
                     return true;
                 }
@@ -436,6 +440,7 @@ pub fn test_fixture_struct() -> AnnotatedMoveStruct {
     }
 }
 
+/// test fixtures to generate wallet
 pub fn test_fixture_wallet_type(module_name: &str, struct_name: &str, value: Vec<(Identifier, AnnotatedMoveValue)>) -> AnnotatedAccountStateBlob {
     let mut s = BTreeMap::new();
     let module_tag = StructTag {

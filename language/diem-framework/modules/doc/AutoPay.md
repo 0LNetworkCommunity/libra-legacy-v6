@@ -38,7 +38,6 @@ This module enables automatic payments from accounts to community wallets at epo
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
@@ -557,7 +556,6 @@ Attempt to use a UID that is already taken
   <b>let</b> account_list = &borrow_global&lt;<a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>&gt;(
     <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>()
   ).accounts;
-  print(account_list);
   <b>let</b> accounts_length = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(account_list);
   <b>let</b> account_idx = 0;
   <b>while</b> (account_idx &lt; accounts_length) {
@@ -593,25 +591,21 @@ Attempt to use a UID that is already taken
 ) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_UserAutoPay">UserAutoPay</a> {
   <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
   <b>if</b> (!<b>exists</b>&lt;<a href="AutoPay.md#0x1_AutoPay_UserAutoPay">UserAutoPay</a>&gt;(*account_addr)) <b>return</b>;
-  print(&1);
   // Get the payment list from the account
   <b>let</b> my_autopay_state = borrow_global_mut&lt;<a href="AutoPay.md#0x1_AutoPay_UserAutoPay">UserAutoPay</a>&gt;(*account_addr);
   <b>let</b> payments = &<b>mut</b> my_autopay_state.payments;
   <b>let</b> payments_len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments);
   <b>let</b> payments_idx = 0;
   <b>let</b> pre_run_bal = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr);
-print(&2);
   <b>let</b> bal_change_since_last_run = <b>if</b> (pre_run_bal &gt; my_autopay_state.prev_bal) {
     pre_run_bal - my_autopay_state.prev_bal
   } <b>else</b> { 0 };
-print(&3);
   // go through the pledges
   <b>while</b> (payments_idx &lt; payments_len) {
     <b>let</b> payment = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments, payments_idx);
     // Make a payment <b>if</b> one is required/allowed
     <b>let</b> delete_payment = <a href="AutoPay.md#0x1_AutoPay_process_autopay_payment">process_autopay_payment</a>(vm, account_addr, payment, bal_change_since_last_run);
     // Delete any expired payments and increment idx (or decrement list size)
-    print(&4);
     <b>if</b> (delete_payment == <b>true</b>) {
       <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments, payments_idx);
       payments_len = payments_len - 1;
@@ -620,7 +614,6 @@ print(&3);
       payments_idx = payments_idx + 1;
     };
   };
-print(&5);
   my_autopay_state.prev_bal = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr);
 
 }
