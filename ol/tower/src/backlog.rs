@@ -28,6 +28,7 @@ pub fn process_backlog(
     let (remote_height, proofs_in_epoch) = get_remote_tower_height(tx_params)?;
 
     info!("Remote tower height: {}", remote_height);
+    info!("Proofs already submitted in epoch: {}", proofs_in_epoch);
     // Getting local state height
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
@@ -38,7 +39,7 @@ pub fn process_backlog(
             let mut i = remote_height as u64 + 1;
 
             // use i64 for safety
-            if !(proofs_in_epoch <= EPOCH_MINING_THRES_UPPER as i64) {
+            if !(proofs_in_epoch < EPOCH_MINING_THRES_UPPER as i64) {
                 info!(
                     "Backlog: Maximum number of proofs sent this epoch {}, exiting.",
                     EPOCH_MINING_THRES_UPPER
@@ -46,12 +47,12 @@ pub fn process_backlog(
                 return Err(anyhow!("cannot submit more proofs than allowed in epoch, aborting backlog.").into());
             }
 
-            info!("Backlog: resubmitting missing proofs.");
-
-            let remaining_in_epoch = if proofs_in_epoch > 0 { EPOCH_MINING_THRES_UPPER - proofs_in_epoch as u64 } else { 0 };
+            let remaining_in_epoch = if proofs_in_epoch > 0 { EPOCH_MINING_THRES_UPPER - proofs_in_epoch as u64 } else { EPOCH_MINING_THRES_UPPER };
             let mut submitted_now = 1u64;
 
-            while i <= current_proof_number && submitted_now < remaining_in_epoch {
+            info!("Backlog: resubmitting missing proofs. Remaining in epoch: {}, already submitted in this backlog: {}", remaining_in_epoch, submitted_now);
+
+            while i <= current_proof_number && submitted_now <= remaining_in_epoch {
                 let path =
                     PathBuf::from(format!("{}/{}_{}.json", blocks_dir.display(), FILENAME, i));
                 info!("submitting proof {}, in this backlog: {}", i, submitted_now);
@@ -163,7 +164,17 @@ pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<(i64, i64), Error
     );
     let tower_state = client.get_miner_state(&tx_params.owner_address);
     match tower_state {
-        Ok(Some(s)) => Ok((s.verified_tower_height as i64, s.actual_count_proofs_in_epoch as i64)),
+        Ok(Some(s)) => {
+            debug!("verified_tower_height: {:?}", s.verified_tower_height);
+            debug!("latest_epoch_mining: {:?}", s.latest_epoch_mining);
+            debug!("count_proofs_in_epoch: {:?}", s.count_proofs_in_epoch);
+            debug!("epochs_validating_and_mining: {:?}", s.epochs_validating_and_mining);
+            debug!("contiguous_epochs_validating_and_mining: {:?}", s.contiguous_epochs_validating_and_mining);
+            debug!("epochs_since_last_account_creation: {:?}", s.epochs_since_last_account_creation);
+            debug!("actual_count_proofs_in_epoch: {:?}", s.actual_count_proofs_in_epoch);
+
+            return Ok((s.verified_tower_height as i64, s.actual_count_proofs_in_epoch as i64));
+        },
         RemoteStateError => {
             println!("WARN: unable to get real tower height from chain");
             return Ok((-1, -1));
