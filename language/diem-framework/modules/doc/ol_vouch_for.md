@@ -1,12 +1,12 @@
 
-<a name="0x1_WalletScripts"></a>
+<a name="0x1_VouchScripts"></a>
 
-# Module `0x1::WalletScripts`
+# Module `0x1::VouchScripts`
 
 
 
--  [Function `init_vouch`](#0x1_WalletScripts_init_vouch)
--  [Function `vouch_for`](#0x1_WalletScripts_vouch_for)
+-  [Function `init_vouch`](#0x1_VouchScripts_init_vouch)
+-  [Function `vouch_for`](#0x1_VouchScripts_vouch_for)
 
 
 <pre><code><b>use</b> <a href="Vouch.md#0x1_Vouch">0x1::Vouch</a>;
@@ -14,13 +14,13 @@
 
 
 
-<a name="0x1_WalletScripts_init_vouch"></a>
+<a name="0x1_VouchScripts_init_vouch"></a>
 
 ## Function `init_vouch`
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_vouch_for.md#0x1_WalletScripts_init_vouch">init_vouch</a>(sender: signer)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_vouch_for.md#0x1_VouchScripts_init_vouch">init_vouch</a>(sender: signer)
 </code></pre>
 
 
@@ -29,7 +29,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_vouch_for.md#0x1_WalletScripts_init_vouch">init_vouch</a>(sender: signer) {
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_vouch_for.md#0x1_VouchScripts_init_vouch">init_vouch</a>(sender: signer) {
   <a href="Vouch.md#0x1_Vouch_init">Vouch::init</a>(&sender);
 }
 </code></pre>
@@ -38,13 +38,13 @@
 
 </details>
 
-<a name="0x1_WalletScripts_vouch_for"></a>
+<a name="0x1_VouchScripts_vouch_for"></a>
 
 ## Function `vouch_for`
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_vouch_for.md#0x1_WalletScripts_vouch_for">vouch_for</a>(sender: signer, val: address)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_vouch_for.md#0x1_VouchScripts_vouch_for">vouch_for</a>(sender: signer, val: address)
 </code></pre>
 
 
@@ -53,7 +53,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_vouch_for.md#0x1_WalletScripts_vouch_for">vouch_for</a>(sender: signer, val: address) {
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_vouch_for.md#0x1_VouchScripts_vouch_for">vouch_for</a>(sender: signer, val: address) {
   <a href="Vouch.md#0x1_Vouch_vouch_for">Vouch::vouch_for</a>(&sender, val);
 }
 </code></pre>

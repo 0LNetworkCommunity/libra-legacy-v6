@@ -4987,7 +4987,7 @@ pub fn encode_init_vouch_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("WalletScripts").to_owned(),
+            ident_str!("VouchScripts").to_owned(),
         ),
         ident_str!("init_vouch").to_owned(),
         vec![],
@@ -6063,7 +6063,7 @@ pub fn encode_set_wallet_type_script_function(type_of: u8) -> TransactionPayload
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("VouchScripts").to_owned(),
+            ident_str!("WalletScripts").to_owned(),
         ),
         ident_str!("set_wallet_type").to_owned(),
         vec![],
@@ -6442,7 +6442,7 @@ pub fn encode_vouch_for_script_function(val: AccountAddress) -> TransactionPaylo
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("WalletScripts").to_owned(),
+            ident_str!("VouchScripts").to_owned(),
         ),
         ident_str!("vouch_for").to_owned(),
         vec![],
@@ -9462,7 +9462,7 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_freeze_account_script_function),
         );
         map.insert(
-            "WalletScriptsinit_vouch".to_string(),
+            "VouchScriptsinit_vouch".to_string(),
             Box::new(decode_init_vouch_script_function),
         );
         map.insert(
@@ -9575,7 +9575,7 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_set_validator_operator_with_nonce_admin_script_function),
         );
         map.insert(
-            "VouchScriptsset_wallet_type".to_string(),
+            "WalletScriptsset_wallet_type".to_string(),
             Box::new(decode_set_wallet_type_script_function),
         );
         map.insert(
@@ -9611,7 +9611,7 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_val_add_self_script_function),
         );
         map.insert(
-            "WalletScriptsvouch_for".to_string(),
+            "VouchScriptsvouch_for".to_string(),
             Box::new(decode_vouch_for_script_function),
         );
         map
