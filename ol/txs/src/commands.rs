@@ -26,6 +26,7 @@ mod authkey_cmd;
 mod create_validator_cmd;
 mod oracle_upgrade_cmd;
 mod version_cmd;
+mod vouch_cmd;
 
 use abscissa_core::{Command, Configurable, Help, Options, Runnable};
 use ol::commands::CONFIG_FILE;
@@ -47,6 +48,7 @@ use self::{
     community_pay_cmd::CommunityPayCmd,
     val_config_cmd::ValConfigCmd,
     burn_pref_cmd::BurnPrefCmd,
+    vouch_cmd::VouchCmd,
 
 };
 use std::path::PathBuf;
@@ -120,6 +122,10 @@ pub enum TxsCmd {
     /// The `burn-pref` subcommand sets the burn preferences for an account.
     #[options(help = "set burn preferences for an account, optionall send to community wallet index")]
     BurnPref(BurnPrefCmd),
+
+    /// The `vouch` subcommand for validators to pick trusted peers
+    #[options(help = "send a vouch_for tx for an account, which you'll include in your trusted list")]
+    Vouch(VouchCmd),
 }
 
 /// This trait allows you to define how application configuration is loaded.

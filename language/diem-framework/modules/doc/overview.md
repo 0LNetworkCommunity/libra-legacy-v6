@@ -125,6 +125,7 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::Epoch`](Epoch.md#0x1_Epoch)
 -  [`0x1::EpochBoundary`](EpochBoundary.md#0x1_EpochBoundary)
 -  [`0x1::Errors`](../../../../../../move-stdlib/docs/Errors.md#0x1_Errors)
+-  [`0x1::EthSignature`](EthSignature.md#0x1_EthSignature)
 -  [`0x1::Event`](../../../../../../move-stdlib/docs/Event.md#0x1_Event)
 -  [`0x1::FIFO`](FIFO.md#0x1_FIFO)
 -  [`0x1::FixedPoint32`](../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32)
@@ -174,9 +175,11 @@ The Move modules in the Diem Framework can be bucketed in to a couple categories
 -  [`0x1::ValidatorUniverse`](ValidatorUniverse.md#0x1_ValidatorUniverse)
 -  [`0x1::Vector`](../../../../../../move-stdlib/docs/Vector.md#0x1_Vector)
 -  [`0x1::Vouch`](Vouch.md#0x1_Vouch)
+-  [`0x1::VouchScripts`](ol_vouch_for.md#0x1_VouchScripts)
 -  [`0x1::Wallet`](Wallet.md#0x1_Wallet)
 -  [`0x1::WalletScripts`](ol_wallet.md#0x1_WalletScripts)
 -  [`0x1::XDX`](XDX.md#0x1_XDX)
+-  [`0x1::XHash`](xhash.md#0x1_XHash)
 -  [`0x1::XUS`](XUS.md#0x1_XUS)
 
 

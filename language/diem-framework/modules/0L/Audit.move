@@ -13,8 +13,11 @@ address 0x1 {
     use 0x1::Testnet;
     use 0x1::Vouch;
 
+    use 0x1::Debug::print;
+
 
     public fun val_audit_passing(val: address): bool {
+      print(&11111);
       // has valid configs
       if (!ValidatorConfig::is_valid(val)) return false;
       // has operator account set to another address
@@ -23,13 +26,22 @@ address 0x1 {
       // operator account has balance
       // if (DiemAccount::balance<GAS>(oper) < 50000 && !Testnet::is_testnet()) return false;
       // has autopay enabled
-      if (!AutoPay::is_enabled(val)) return false;
+      print(&111110001);
+
+      // if (!AutoPay::is_enabled(val)) return false;
+
+            print(&111110002);
+
       // has mining state
       if (!TowerState::is_init(val)) return false;
+            print(&111110003);
+
       // is a slow wallet
       if (!DiemAccount::is_slow(val)) return false;
+      print(&111110004);
 
       if (!Vouch::unrelated_buddies_above_thresh(val)) return false;
+      print(&111110005);
 
       true
     }
