@@ -29,7 +29,7 @@ pub struct VouchCmd {
 impl Runnable for VouchCmd {
     fn run(&self) {
         let _entry_args = entrypoint::get_args();
-        let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
+        let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
 
         let script = if self.address.is_some() {
             if let Some(addr) = &self.address {
