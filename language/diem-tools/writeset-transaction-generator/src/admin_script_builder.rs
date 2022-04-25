@@ -226,7 +226,7 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>, block_
 
     let stdlib_cs = ol_fresh_stlib_changeset(path.clone()).unwrap();
     // TODO: forcing the boundary causes an error on the epoch boundary.
-    let boundary = ol_force_boundary(path.clone(), vals, block_height).unwrap();
+    let boundary = ol_force_boundary(path.clone(), vals.clone(), block_height).unwrap();
     // let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
     // set recovery mode
