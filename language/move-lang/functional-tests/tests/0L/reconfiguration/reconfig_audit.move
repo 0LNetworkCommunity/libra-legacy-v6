@@ -111,6 +111,7 @@ script {
 //! sender: eve
 script {
     use 0x1::TowerState;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
         AutoPay::enable_autopay(&sender);
@@ -172,7 +173,7 @@ script {
         assert(DiemConfig::get_current_epoch() == 2, 7357008015007);
         // Tests on initial size of validators 
         assert(DiemSystem::validator_set_size() == 5, 7357008015008);
-        assert(DiemSystem::is_validator(@{{eve}}) == false, 7357008015009);
+        assert(DiemSystem::is_validator(@{{eve}}), 7357008015009);
     }
 }
 //check: EXECUTED
