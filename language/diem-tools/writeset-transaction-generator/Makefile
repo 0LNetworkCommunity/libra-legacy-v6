@@ -41,7 +41,7 @@ tx:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob rescue ${VALS} 
 
 tx-migrate:
-	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --block-height ${BLOCK_HEIGHT} --recovery_epoch ${RECOVERY_EPOCH} --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob migrate ${SOURCE_PATH}/ol/fixtures/rescue/ancestry.json ${SOURCE_PATH}/ol/fixtures/rescue/make_whole.json ${VALS}
+	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --block-height ${BLOCK_HEIGHT} --recovery-epoch ${RECOVERY_EPOCH} --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob migrate ${SOURCE_PATH}/ol/fixtures/rescue/ancestry.json ${SOURCE_PATH}/ol/fixtures/rescue/make_whole.json ${VALS}
 
 tx-debug:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob debug ${VALS}
