@@ -30,8 +30,14 @@ struct Opt {
     /// Output as serialized WriteSet payload. Set this flag if this payload is submitted to AOS portal.
     #[structopt(long)]
     output_payload: bool,
+
+    #[structopt(long, short)]
+    block_height: Option<u64>,
+
     #[structopt(subcommand)]
     cmd: Command,
+
+
 }
 
 #[derive(Debug, StructOpt)]
@@ -45,15 +51,15 @@ enum Command {
     #[structopt(name = "update-stdlib")]
     UpdateStdlib { },
     #[structopt(name = "rescue")]
-    Rescue { addresses: Vec<AccountAddress>, block_height: u64 },
+    Rescue { addresses: Vec<AccountAddress> },
     #[structopt(name = "debug-epoch")]
     RecoveryMode { addresses: Vec<AccountAddress> , epoch_ending: u64},
     #[structopt(name = "boundary")]
-    Boundary { addresses: Vec<AccountAddress> , block_height: u64},
+    Boundary { addresses: Vec<AccountAddress>},
     #[structopt(name = "ancestry")]
     Ancestry { ancestry_file: PathBuf,},
     #[structopt(name = "migrate")]
-    Migrate { ancestry_file: PathBuf, makewhole_file: PathBuf, addresses: Vec<AccountAddress>, block_height: u64},
+    Migrate { ancestry_file: PathBuf, makewhole_file: PathBuf, addresses: Vec<AccountAddress>},
     #[structopt(name = "reconfig")]
     Reconfig { },
     #[structopt(name = "debug")]
@@ -139,19 +145,19 @@ fn main() -> Result<()> {
     let payload = match opt.cmd {
         Command::RemoveValidators { addresses } => encode_remove_validators_payload(addresses),
         //////// 0L ////////
-        Command::Boundary { addresses, block_height } => ol_writeset_force_boundary(opt.db.unwrap(), addresses, block_height),
+        Command::Boundary { addresses } => ol_writeset_force_boundary(opt.db.unwrap(), addresses, opt.block_height.expect("need to provide --block-height")),
         Command::UpdateValidators { addresses } => script_bulk_update_vals_payload(addresses),
         
         Command::UpdateStdlib {} => ol_writeset_stdlib_upgrade(opt.db.unwrap()),
         Command::Reconfig {} => ol_create_reconfig_payload(opt.db.unwrap()),
         Command::Debug {} => ol_debug(opt.db.unwrap()),
-        Command::Rescue { addresses , block_height} => ol_writset_encode_rescue(opt.db.unwrap(), addresses, block_height),
+        Command::Rescue { addresses} => ol_writset_encode_rescue(opt.db.unwrap(), addresses, opt.block_height.expect("need to provide --block-height")),
         Command::Timestamp {} => ol_writset_update_timestamp(opt.db.unwrap()),
         Command::Testnet {} => ol_writeset_set_testnet(opt.db.unwrap()),
         Command::RecoveryMode { addresses, epoch_ending } => ol_writeset_recover_mode(opt.db.unwrap(), addresses, epoch_ending),
         Command::EpochTime {} => ol_writeset_update_epoch_time(opt.db.unwrap()),
         Command::Ancestry { ancestry_file } => ol_writeset_ancestry(opt.db.unwrap(), ancestry_file),
-        Command::Migrate { ancestry_file, makewhole_file, addresses, block_height} => ol_writset_encode_migrations(opt.db.unwrap(), ancestry_file, makewhole_file, addresses, block_height),
+        Command::Migrate { ancestry_file, makewhole_file, addresses} => ol_writset_encode_migrations(opt.db.unwrap(), ancestry_file, makewhole_file, addresses, opt.block_height.expect("need to provide --block-height")),
 
         //////// end 0L ////////
         
