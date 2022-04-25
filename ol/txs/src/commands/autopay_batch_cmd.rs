@@ -35,7 +35,7 @@ impl Runnable for AutopayBatchCmd {
         // Note: autopay batching needs to have id numbers to each instruction.
         // will not increment automatically, since this can lead to user error.
         let entry_args = entrypoint::get_args();
-        let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
+        let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
         let cfg = app_config();
 
         // // get highest autopay number

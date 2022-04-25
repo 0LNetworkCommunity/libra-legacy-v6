@@ -112,7 +112,7 @@ check-transfer:
 # all tests above push the balance back up to 10, 11 or 15
 
 	@while [[ ${NOW} -le ${END} ]] ; do \
-			if PERSONA=alice make -f ${MAKE_FILE} balance-bob | grep -e '10' -e '11' -e '15'; then \
+			if PERSONA=alice make -f ${MAKE_FILE} balance-bob | grep -e '16' -e '17' -e '15'; then \
 				echo TX SUCCESS ; \
 				break ; \
 			else \

@@ -1639,6 +1639,7 @@ Initialize this module. This is only callable from genesis.
 
     <a href="Ancestry.md#0x1_Ancestry_init">Ancestry::init</a>(sender, &new_signer);
     <a href="Vouch.md#0x1_Vouch_init">Vouch::init</a>(&new_signer);
+    <a href="Vouch.md#0x1_Vouch_vouch_for">Vouch::vouch_for</a>(sender, new_account_address);
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_signer);
 
     new_account_address

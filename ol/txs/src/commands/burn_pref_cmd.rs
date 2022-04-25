@@ -27,7 +27,7 @@ pub struct BurnPrefCmd {
 impl Runnable for BurnPrefCmd {    
     fn run(&self) {
         let entry_args = entrypoint::get_args();
-        let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
+        let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
 
         match set_burn_prefs(
           &tx_params,

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 // 0L Module
-// Epoch Prologue
+// Epoch Boundary
 ///////////////////////////////////////////////////////////////////////////
 // The prologue for transitioning to next epoch after every n blocks.
 // File Prefix for errors: 1800
@@ -27,46 +27,15 @@ module EpochBoundary {
     use 0x1::ValidatorUniverse;
     use 0x1::Testnet;
     use 0x1::StagingNet;
+    use 0x1::RecoveryMode;
 
     use 0x1::Debug::print;
 
-    struct DebugMode has copy, key, drop, store{
-      fixed_set: vector<address>
-    }
 
-    // private function so that it can only be called by vm session.
-    // should never be used in production.
-    fun init_debug(vm: &signer, vals: vector<address>) {
-      if (!is_debug()) {
-        move_to<DebugMode>(vm, DebugMode {
-          fixed_set: vals
-        });
-      }
-    }
-
-    fun remove_debug(vm: &signer) acquires DebugMode {
-      CoreAddresses::assert_vm(vm);
-      if (is_debug()) {
-        _ = move_from<DebugMode>(CoreAddresses::VM_RESERVED_ADDRESS());
-      }
-    }
-
-    fun is_debug(): bool {
-      exists<DebugMode>(CoreAddresses::VM_RESERVED_ADDRESS())
-    }
-
-    fun get_debug_vals(): vector<address> acquires DebugMode  {
-      if (is_debug()) {
-        let d = borrow_global<DebugMode>(CoreAddresses::VM_RESERVED_ADDRESS());
-        *&d.fixed_set
-      } else {
-        Vector::empty<address>()
-      }
-    }
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
-    public fun reconfigure(vm: &signer, height_now: u64) acquires DebugMode{
+    public fun reconfigure(vm: &signer, height_now: u64) {
 
         CoreAddresses::assert_vm(vm);
         let height_start = Epoch::get_timer_height_start(vm);
@@ -128,7 +97,12 @@ module EpochBoundary {
               let count = TowerState::get_count_above_thresh_in_epoch(addr);
 
               let miner_subsidy = count * proof_price;
-              FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
+
+              // don't pay while we are in recovery mode, since that creates a frontrunning opportunity
+              if (!RecoveryMode::is_recovery()){ 
+                FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
+              }
+              
             };
 
             k = k + 1;
@@ -143,19 +117,24 @@ module EpochBoundary {
         
         if (Vector::is_empty<address>(&outgoing_compliant_set)) return;
 
-        if (subsidy_units > 0) {
+        // don't pay while we are in recovery mode, since that creates a frontrunning opportunity
+        if (subsidy_units > 0 && !RecoveryMode::is_recovery()) {
             Subsidy::process_subsidy(vm, subsidy_units, &outgoing_compliant_set);
         };
 
         Subsidy::process_fees(vm, &outgoing_compliant_set);
     }
 
-    fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> acquires DebugMode{
+    fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> {
         // Propose upcoming validator set:
         
         // in emergency admin roles set the validator set
-        if (is_debug()) {
-          return get_debug_vals()
+        // there may be a recovery set to be used.
+        // if there is no rescue mission validators, just do usual procedure.
+        
+        if (RecoveryMode::is_recovery()) {
+          let recovery_vals = RecoveryMode::get_debug_vals();
+          if (Vector::length(&recovery_vals) > 0) return recovery_vals;
         };
 
         // save all the eligible list, before the jailing removes them.
@@ -222,8 +201,8 @@ module EpochBoundary {
 
         Epoch::reset_timer(vm, height_now);
 
+        RecoveryMode::maybe_remove_debug_at_epoch(vm);
         // Reconfig should be the last event.
-
         // Reconfigure the network
         DiemSystem::bulk_update_validators(vm, proposed_set);
 
