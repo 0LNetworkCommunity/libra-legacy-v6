@@ -7,6 +7,9 @@ ifndef BLOCK_HEIGHT
 BLOCK_HEIGHT = 28671095
 endif
 
+ifndef ACCOUNT
+ACCOUNT = 00000000000000000000000000000000
+endif 
 
 ifndef DATA_PATH
 DATA_PATH = $$HOME/.0L
@@ -92,11 +95,8 @@ start:
 
 dump:
 	mkdir ${RESCUE_PATH} | true
-	cd ${SOURCE_PATH} && cargo r -p diem-transaction-replay -- --db ${DATA_PATH}/db annotate-account 00000000000000000000000000000000 > ${RESCUE_PATH}/dump-${STEP}
+	cd ${SOURCE_PATH} && cargo r -p diem-transaction-replay -- --db ${DATA_PATH}/db annotate-account ${ACCOUNT} > ${RESCUE_PATH}/dump-${STEP}
 
-dump-self:
-	mkdir ${RESCUE_PATH} | true
-	cd ${SOURCE_PATH} && cargo r -p diem-transaction-replay -- --db ${DATA_PATH}/db annotate-account ${VALS} > ${RESCUE_PATH}/dump-self
 
 test: wipe tx check commit init start
 
