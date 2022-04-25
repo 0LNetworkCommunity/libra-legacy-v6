@@ -15,6 +15,8 @@ address 0x1 {
     use 0x1::StagingNet;
     use 0x1::CoreAddresses;
 
+    use 0x1::Debug::print;
+
     // triggered once per epoch
     struct Vouch has key {
       vals: vector<address>,
@@ -42,8 +44,9 @@ address 0x1 {
       if (!exists<Vouch>(val)) return;
 
       let v = borrow_global_mut<Vouch>(val);
-      Vector::push_back<address>(&mut v.vals, buddy_acc);
-
+      if (!Vector::contains(&v.vals, &buddy_acc)) { // prevent duplicates
+        Vector::push_back<address>(&mut v.vals, buddy_acc);
+      }
     }
 
     public fun vm_migrate(vm: &signer, val: address, buddy_list: vector<address>) acquires Vouch {
@@ -131,14 +134,19 @@ address 0x1 {
     }
 
     public fun unrelated_buddies_above_thresh(val: address): bool acquires Vouch{
+      print(&222222);
       if (Testnet::is_testnet() || StagingNet::is_staging_net()) {
         return true
       };
+      print(&22222200001);
 
       if (!exists<Vouch>(val)) return false;
+      print(&22222200002);
 
       let len = Vector::length(&unrelated_buddies(val));
-      (len > 3) // TODO: move to Globals
+      print(&22222200003);
+
+      (len >= 4) // TODO: move to Globals
     }
   }
 }

@@ -111,10 +111,10 @@ script {
 //! sender: eve
 script {
     use 0x1::TowerState;
+    use 0x1::AutoPay;
 
     fun main(sender: signer) {
-        // Skip eve forcing audit to fail
-        // AutoPay::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
@@ -172,8 +172,8 @@ script {
         // We are in a new epoch.
         assert(DiemConfig::get_current_epoch() == 2, 7357008015007);
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 4, 7357008015008);
-        assert(DiemSystem::is_validator(@{{eve}}) == false, 7357008015009);
+        assert(DiemSystem::validator_set_size() == 5, 7357008015008);
+        assert(DiemSystem::is_validator(@{{eve}}), 7357008015009);
     }
 }
 //check: EXECUTED
