@@ -150,7 +150,7 @@ module MigrateVouch {
   use 0x1::Vector;
   use 0x1::Migrations;
 
-  const UID:u64 = 2;
+  const UID:u64 = 3;
   // Migration to migrate all wallets to be slow wallets
   public fun do_it(vm: &signer) {
     CoreAddresses::assert_diem_root(vm);
