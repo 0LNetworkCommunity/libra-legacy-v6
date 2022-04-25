@@ -46,15 +46,28 @@ module RecoveryMode {
         StagingNet::is_staging_net()
       ){ true }
       else { (DiemSystem::validator_set_size() >= 21) };
-      
       let d = borrow_global<RecoveryMode>(CoreAddresses::VM_RESERVED_ADDRESS());
-      if (
-        DiemConfig::get_current_epoch() >= d.epoch_ends &&
-        enough_vals
-      ){
-        remove_debug(vm);
+
+      let enough_epochs = DiemConfig::get_current_epoch() >= d.epoch_ends;
+      
+
+      // In the case that we set a fixed group of validators. Make it expire after enough time has passed.
+      if (enough_epochs) {
+        if (Vector::length(&d.fixed_set) > 0) {
+          remove_debug(vm);
+        } else {
+          // Otherwise, we are keeping the same validator selection logic.
+          // In that case the system needs to pick enough validators for this to disable.
+          if (enough_vals){
+              remove_debug(vm);
+            }
+          }
+        }
       }
-    }
+
+      
+
+
 
     fun remove_debug(vm: &signer) acquires RecoveryMode {
       CoreAddresses::assert_vm(vm);
