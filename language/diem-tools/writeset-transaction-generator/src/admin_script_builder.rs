@@ -218,7 +218,7 @@ fn parse_makewhole_file(makewhole_file: PathBuf) -> Result<Vec<MakeWholeUnit>>{
     Ok(makewhole_vec)
 }
 
-pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>, block_height: u64, recovery_epoch: u64) -> WriteSetPayload {
+pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
         exit(1)
@@ -226,14 +226,13 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>, block_
 
     let stdlib_cs = ol_fresh_stlib_changeset(path.clone()).unwrap();
     // TODO: forcing the boundary causes an error on the epoch boundary.
-    let boundary = ol_force_boundary(path.clone(), vals.clone(), block_height).unwrap();
-    // let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
+    // let boundary = ol_force_boundary(path.clone(), vals.clone(), block_height).unwrap();
+    let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
     // set recovery mode
-    let recovery = ol_set_epoch_recovery_mode(path.clone(), vals, recovery_epoch).unwrap();
 
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
-    let new_cs = merge_vec_changeset(vec![stdlib_cs, boundary, recovery]).unwrap();
+    let new_cs = merge_vec_changeset(vec![stdlib_cs, boundary]).unwrap();
     // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
     WriteSetPayload::Direct(new_cs)
 }
@@ -244,6 +243,7 @@ pub fn ol_writset_encode_migrations(
   makewhole_file: PathBuf,
   vals: Vec<AccountAddress>,
   block_height: u64,
+  recovery_epoch: u64,
 ) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
@@ -262,12 +262,14 @@ pub fn ol_writset_encode_migrations(
 
     let vouch = ol_vouch_migrate(path.clone(), vals.clone()).unwrap();
 
+    let recovery = ol_set_epoch_recovery_mode(path.clone(), vals.clone(), recovery_epoch).unwrap();
     // force an NewEpochEvent
     // let boundary = ol_bulk_validators_changeset(path.clone(), vals.clone()).unwrap();
     let boundary = ol_force_boundary(path.clone(), vals, block_height).unwrap();
 
+
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
-    let new_cs = merge_vec_changeset(vec![ancestry, makewhole, vouch, boundary]).unwrap();
+    let new_cs = merge_vec_changeset(vec![ancestry, makewhole, vouch, boundary, recovery]).unwrap();
     // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
     WriteSetPayload::Direct(new_cs)
 }
@@ -692,7 +694,7 @@ fn ol_set_epoch_recovery_mode(path: PathBuf, vals: Vec<AccountAddress>, end_epoc
     })
 }
 
-fn _ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
+fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
     println!("\nencode validators bulk update changeset");
     let db = DiemDebugger::db(path)?;
 

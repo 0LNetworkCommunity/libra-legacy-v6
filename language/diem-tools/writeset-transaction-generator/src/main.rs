@@ -158,16 +158,21 @@ fn main() -> Result<()> {
         Command::Debug {} => ol_debug(opt.db.unwrap()),
         Command::Rescue { addresses} => ol_writset_encode_rescue(
           opt.db.unwrap(), 
-          addresses, 
-          opt.block_height.expect("need to provide --block-height"),
-          opt.recovery_epoch.expect("need to provide an epoch to end the recovery mode"),
+          addresses
         ),
         Command::Timestamp {} => ol_writset_update_timestamp(opt.db.unwrap()),
         Command::Testnet {} => ol_writeset_set_testnet(opt.db.unwrap()),
         Command::RecoveryMode { addresses, epoch_ending } => ol_writeset_recover_mode(opt.db.unwrap(), addresses, epoch_ending),
         Command::EpochTime {} => ol_writeset_update_epoch_time(opt.db.unwrap()),
         Command::Ancestry { ancestry_file } => ol_writeset_ancestry(opt.db.unwrap(), ancestry_file),
-        Command::Migrate { ancestry_file, makewhole_file, addresses} => ol_writset_encode_migrations(opt.db.unwrap(), ancestry_file, makewhole_file, addresses, opt.block_height.expect("need to provide --block-height")),
+        Command::Migrate { ancestry_file, makewhole_file, addresses} => ol_writset_encode_migrations(
+          opt.db.unwrap(), 
+          ancestry_file,
+           makewhole_file, 
+           addresses, 
+           opt.block_height.expect("need to provide --block-height"),
+           opt.recovery_epoch.expect("need to provide --recovery-epoch")
+          ),
 
         //////// end 0L ////////
         
