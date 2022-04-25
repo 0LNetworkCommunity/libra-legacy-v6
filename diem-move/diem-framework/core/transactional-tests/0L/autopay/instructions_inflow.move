@@ -1,17 +1,13 @@
-// Todo: These GAS values have no effect, all accounts start with 1M GAS
-//! account: bob,   1000000GAS, 0, validator
-//! account: alice, 1000000GAS, 0 
-//! account: carol, 1000000GAS, 0 
+//# init --validators Alice Bob Carol
 
 // test runs various autopay instruction types to ensure they are being executed as expected
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 script {
   use DiemFramework::Wallet;
   use Std::Vector;
 
-  fun main(sender: signer) {
+  fun main(_dr: signer, sender: signer) {
     Wallet::set_comm(&sender);
     let list = Wallet::get_comm_list();
     assert!(Vector::length(&list) == 1, 7357001);
@@ -20,13 +16,11 @@ script {
 
 // check: EXECUTED
 
-// alice commits to paying carol 5% of her inflow each epoch
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::AutoPay;
   use Std::Signer;
-  fun main(sender: signer) {
+  fun main(_dr: signer, sender: signer) {
     let sender = &sender;
     AutoPay::enable_autopay(sender);
     assert!(AutoPay::is_enabled(Signer::address_of(sender)), 0);
@@ -44,37 +38,22 @@ script {
 }
 // check: EXECUTED
 
-
 ///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs           ////
-/// i.e. 1 second after 1/2 epoch  /////
-//! block-prologue
-//! proposer: bob
-//! block-time: 31000000
-//! round: 23
+///// Trigger Autopay Tick at 31 secs /////
+///// i.e. 1 second after 1/2 epoch   /////
 ///////////////////////////////////////////////////
+//# block --proposer Bob --time 31000000
+  // todo: how to add "round 23" param, and is it needed?
 
-
-// Weird. This next block needs to be added here otherwise the prologue above does not run.
-///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs           ////
-/// i.e. 1 second after 1/2 epoch  /////
-//! block-prologue
-//! proposer: bob
-//! block-time: 32000000
-//! round: 24
-///////////////////////////////////////////////////
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
   use DiemFramework::Diem;
-  fun main(vm: signer) {
+  fun main(vm: signer, _account: signer) {
     // alice didn't receive any funds, so no change in balance, so no payment sent
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 1000000, 7357002);
+    assert!(ending_balance == 10000000, 7357002);
 
     // add funds to alice account for next tick
     let coin = Diem::mint<GAS>(&vm, 10000);
@@ -87,53 +66,44 @@ script {
     );
 
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 1010000, 7357003);
+    assert!(ending_balance == 10010000, 7357003);
   }
 }
 // check: EXECUTED
 
 ///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs           ////
-/// i.e. 1 second after 1/2 epoch  /////
-//! block-prologue
-//! proposer: bob
-//! block-time: 61000000
-//! round: 65
+///// Trigger Autopay Tick at 31 secs /////
+///// i.e. 1 second after 1/2 epoch   /////
 ///////////////////////////////////////////////////
+//# block --proposer Bob --time 61000000
+  // todo: how to add "round 65" param, and is it needed?
 
 ///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs           ////
-/// i.e. 1 second after 1/2 epoch  /////
-//! block-prologue
-//! proposer: bob
-//! block-time: 92000000
-//! round: 66
+///// Trigger Autopay Tick at 31 secs /////
+///// i.e. 1 second after 1/2 epoch   /////
 ///////////////////////////////////////////////////
-///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs           ////
-/// i.e. 1 second after 1/2 epoch  /////
-//! block-prologue
-//! proposer: bob
-//! block-time: 93000000
-//! round: 67
-///////////////////////////////////////////////////
+//# block --proposer Bob --time 92000000
+  // todo: how to add "round 66" param, and is it needed?
 
-//! new-transaction
-//! sender: diemroot
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs /////
+///// i.e. 1 second after 1/2 epoch   /////
+///////////////////////////////////////////////////
+//# block --proposer Bob --time 93000000
+  // todo: how to add "round 67" param, and is it needed?
+
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
-  // use DiemFramework::Debug::print;
-  fun main(_vm: signer) {
+  fun main() {
     // alice will have paid 5% on the 10000 she received last epoch
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    // print(&ending_balance);
-    assert!(ending_balance == 1009501, 7357004);
+    assert!(ending_balance == 10009501, 7357004);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@Carol);
-    // print(&ending_balance);
-    assert!(ending_balance == 1000499, 7357005);
+    assert!(ending_balance == 10000499, 7357005);
   }
 }
 // check: EXECUTED

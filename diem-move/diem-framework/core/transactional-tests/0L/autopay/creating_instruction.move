@@ -1,17 +1,14 @@
-//! account: alice, 1GAS
-//! account: bob, 1GAS
-//! account: carol, 1GAS
+//# init --validators Alice Bob
 
 // We test creation of autopay, retrieving it using same and different accounts
 // Finally, we also test deleting of autopay
 
 // Test to create instruction and retrieve it
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::AutoPay;
   use Std::Signer;
-  fun main(sender: signer) {
+  fun main(_dr: signer, sender: signer) {
     let sender = &sender;
     AutoPay::enable_autopay(sender);
     assert!(AutoPay::is_enabled(Signer::address_of(sender)), 73570001);
@@ -27,13 +24,13 @@ script {
 }
 // check: EXECUTED
 
-// Test to create another instruction also by alice. The account already has autopay enabled.
-//! new-transaction
-//! sender: alice
+// Test to create another instruction also by alice.
+// The account already has autopay enabled.
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::AutoPay;
   use Std::Signer;
-  fun main(sender: signer) {
+  fun main(_dr: signer, sender: signer) {
     let sender = &sender;
     assert!(AutoPay::is_enabled(Signer::address_of(sender)), 73570005);    
     AutoPay::create_instruction(sender, 2, 0, @Alice, 4, 5);

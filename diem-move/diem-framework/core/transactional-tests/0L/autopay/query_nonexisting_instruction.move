@@ -1,15 +1,13 @@
-//! account: shashank, 100
-//! account: bob, 100
+//# init --validators Shashank Bob
 
 // We are trying to query a instruction which doesnot exist in the network
 
 // Create instruction and retrieve it
-//! new-transaction
-//! sender: shashank
+//# run --admin-script --signers DiemRoot Shashank
 script {
   use DiemFramework::AutoPay;
   use Std::Signer;
-  fun main(sender: signer) {
+  fun main(_dr: signer, sender: signer) {
     let sender = &sender;
     AutoPay::enable_autopay(sender);
     assert!(AutoPay::is_enabled(Signer::address_of(sender)), 0);

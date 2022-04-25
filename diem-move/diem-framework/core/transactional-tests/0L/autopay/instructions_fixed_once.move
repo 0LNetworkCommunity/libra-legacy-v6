@@ -1,17 +1,13 @@
-// Todo: These GAS values have no effect, all accounts start with 1M GAS
-//! account: bob,   1000000GAS, 0, validator
-//! account: alice, 1000000GAS, 0 
-//! account: carol, 1000000GAS, 0 
+//# init --validators Alice Bob Carol
 
 // test runs various autopay instruction types to ensure they are being executed as expected
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::Wallet;
     use Std::Vector;
 
-    fun main(sender: signer) {
+  fun main(_dr: signer, sender: signer) {
       Wallet::set_comm(&sender);
       let list = Wallet::get_comm_list();
       assert!(Vector::length(&list) == 1, 7357001);
@@ -21,12 +17,11 @@ script {
 // check: EXECUTED
 
 // alice commits to paying carol 500 GAS at the next tick
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::AutoPay;
   use Std::Signer;
-  fun main(sender: signer) {
+  fun main(_dr: signer, sender: signer) {
     let sender = &sender;
     AutoPay::enable_autopay(sender);
     assert!(AutoPay::is_enabled(Signer::address_of(sender)), 0);
@@ -45,37 +40,21 @@ script {
 }
 // check: EXECUTED
 
-
 ///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs           ////
-/// i.e. 1 second after 1/2 epoch  /////
-//! block-prologue
-//! proposer: bob
-//! block-time: 31000000
-//! round: 23
+///// Trigger Autopay Tick at 31 secs /////
+///// i.e. 1 second after 1/2 epoch   /////
 ///////////////////////////////////////////////////
+//# block --proposer Bob --time 31000000
+  // todo: how to add "round 23" param, and is it needed?
 
-
-// Weird. This next block needs to be added here otherwise the prologue above does not run.
-///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs           ////
-/// i.e. 1 second after 1/2 epoch  /////
-//! block-prologue
-//! proposer: bob
-//! block-time: 32000000
-//! round: 24
-///////////////////////////////////////////////////
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
   use DiemFramework::AutoPay;
-  fun main(_vm: signer) {
-
+  fun main() {
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 999500, 7357002);
+    assert!(ending_balance == 9999500, 7357002);
     
     //Confirm the one-shot instruction was deleted
     let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(@Alice, 1);
@@ -88,45 +67,38 @@ script {
 // check: EXECUTED
 
 ///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs           ////
-/// i.e. 1 second after 1/2 epoch  /////
-//! block-prologue
-//! proposer: bob
-//! block-time: 61000000
-//! round: 65
+///// Trigger Autopay Tick at 31 secs /////
+///// i.e. 1 second after 1/2 epoch   /////
 ///////////////////////////////////////////////////
+//# block --proposer Bob --time 61000000
+  // todo: how to add "round 65" param, and is it needed?
 
 ///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs           ////
-/// i.e. 1 second after 1/2 epoch  /////
-//! block-prologue
-//! proposer: bob
-//! block-time: 92000000
-//! round: 66
+///// Trigger Autopay Tick at 31 secs /////
+///// i.e. 1 second after 1/2 epoch   /////
 ///////////////////////////////////////////////////
+//# block --proposer Bob --time 92000000
+  // todo: how to add "round 66" param, and is it needed?
 
 ///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs           ////
-/// i.e. 1 second after 1/2 epoch  /////
-//! block-prologue
-//! proposer: bob
-//! block-time: 93000000
-//! round: 67
+///// Trigger Autopay Tick at 31 secs /////
+///// i.e. 1 second after 1/2 epoch   /////
 ///////////////////////////////////////////////////
+//# block --proposer Bob --time 93000000
+  // todo: how to add "round 67" param, and is it needed?
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
-  fun main(_vm: signer) {
+  fun main() {
     // no change, one-shot instruction is finished
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 999500, 7357003);
+    assert!(ending_balance == 9999500, 7357003);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@Carol);
-    assert!(ending_balance == 1000500, 7357004);
+    assert!(ending_balance == 10000500, 7357004);
   }
 }
 // check: EXECUTED

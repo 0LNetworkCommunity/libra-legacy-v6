@@ -1,16 +1,13 @@
-//! account: alice, 1000000GAS
-//! account: bob, 10000GAS
+//# init --validators Alice Bob
 
 // We test processing of autopay at differnt epochs and balance transfers
 // Finally, we also check the end_epoch functionality of autopay
 
-// creating the instruction
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::AutoPay;
   use Std::Signer;
-  fun main(sender: signer) {
+  fun main(_dr: signer, sender: signer) {
     let sender = &sender;    
     AutoPay::enable_autopay(sender);
     assert!(AutoPay::is_enabled(Signer::address_of(sender)), 7357001);
@@ -38,13 +35,12 @@ script {
 
 // // check: EXECUTED
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::Wallet;
     use Std::Vector;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
       Wallet::set_comm(&sender);
       let list = Wallet::get_comm_list();
       assert!(Vector::length(&list) == 1, 7357006);
@@ -54,17 +50,16 @@ script {
 // check: EXECUTED
 
 // Processing AutoPay to see if payments are done
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::AutoPay;
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
-  fun main(sender: signer) {
+  fun main(dr:signer, _account: signer) {
     let alice_balance = DiemAccount::balance<GAS>(@Alice);
     let bob_balance = DiemAccount::balance<GAS>(@Bob);
-    assert!(alice_balance == 1000000, 7357007);
-    AutoPay::process_autopay(&sender);
+    assert!(alice_balance == 10000000, 7357007);
+    AutoPay::process_autopay(&dr);
     
     let alice_balance_after = DiemAccount::balance<GAS>(@Alice);
     assert!(alice_balance_after < alice_balance, 7357008);
