@@ -36,6 +36,7 @@ struct Opt {
     block_height: Option<u64>,
 
     /// at what epoch to end the recovery mode
+    #[structopt(long, short)]
     recovery_epoch: Option<u64>,
 
     #[structopt(subcommand)]
