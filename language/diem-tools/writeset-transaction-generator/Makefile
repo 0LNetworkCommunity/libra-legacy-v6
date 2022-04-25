@@ -7,6 +7,10 @@ ifndef BLOCK_HEIGHT
 BLOCK_HEIGHT = 28671095
 endif
 
+ifndef RECOVERY_EPOCH
+BLOCK_HEIGHT = 170
+endif
+
 ifndef ACCOUNT
 ACCOUNT = 00000000000000000000000000000000
 endif 
@@ -34,7 +38,7 @@ wipe:
 
 tx:
 	mkdir ${RESCUE_PATH} | true
-	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --block-height ${BLOCK_HEIGHT} --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob rescue ${VALS} 
+	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --block-height ${BLOCK_HEIGHT} --recovery-epoch ${RECOVERY_EPOCH} --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob rescue ${VALS} 
 
 tx-debug:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob debug ${VALS}

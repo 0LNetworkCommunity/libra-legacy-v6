@@ -423,7 +423,7 @@ Get the constants for the current network
     }
   } <b>else</b> {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
-      epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 vdf_proofs/sec
+      epoch_length: 60 * 5, // approx 24 hours at 1.4 vdf_proofs/sec
       max_validators_per_set: 100, // max expected for BFT limits.
       // See <a href="DiemVMConfig.md#0x1_DiemVMConfig">DiemVMConfig</a> for gas constants:
       // Target max gas units per transaction 100000000
@@ -435,7 +435,7 @@ Get the constants for the current network
       epoch_mining_thres_lower: 7, // NOTE: bootstrapping, allowance for operator error.
       epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
       epoch_slow_wallet_unlock: 1000 * <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>, // approx 10 years for largest accounts in genesis.
-      min_blocks_per_epoch: 10000,
+      min_blocks_per_epoch: 50,
     }
   }
 }

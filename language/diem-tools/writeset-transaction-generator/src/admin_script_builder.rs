@@ -218,7 +218,7 @@ fn parse_makewhole_file(makewhole_file: PathBuf) -> Result<Vec<MakeWholeUnit>>{
     Ok(makewhole_vec)
 }
 
-pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>, block_height: u64) -> WriteSetPayload {
+pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>, block_height: u64, recovery_epoch: u64) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
         exit(1)
@@ -229,8 +229,11 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>, block_
     let boundary = ol_force_boundary(path.clone(), vals, block_height).unwrap();
     // let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
+    // set recovery mode
+    let recovery = ol_set_epoch_recovery_mode(path.clone(), vals, recovery_epoch).unwrap();
+
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
-    let new_cs = merge_vec_changeset(vec![stdlib_cs, boundary]).unwrap();
+    let new_cs = merge_vec_changeset(vec![stdlib_cs, boundary, recovery]).unwrap();
     // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
     WriteSetPayload::Direct(new_cs)
 }

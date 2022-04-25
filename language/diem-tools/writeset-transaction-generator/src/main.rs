@@ -31,8 +31,12 @@ struct Opt {
     #[structopt(long)]
     output_payload: bool,
 
+    /// what block height to set in the recovery writeset
     #[structopt(long, short)]
     block_height: Option<u64>,
+
+    /// at what epoch to end the recovery mode
+    recovery_epoch: Option<u64>,
 
     #[structopt(subcommand)]
     cmd: Command,
@@ -151,7 +155,12 @@ fn main() -> Result<()> {
         Command::UpdateStdlib {} => ol_writeset_stdlib_upgrade(opt.db.unwrap()),
         Command::Reconfig {} => ol_create_reconfig_payload(opt.db.unwrap()),
         Command::Debug {} => ol_debug(opt.db.unwrap()),
-        Command::Rescue { addresses} => ol_writset_encode_rescue(opt.db.unwrap(), addresses, opt.block_height.expect("need to provide --block-height")),
+        Command::Rescue { addresses} => ol_writset_encode_rescue(
+          opt.db.unwrap(), 
+          addresses, 
+          opt.block_height.expect("need to provide --block-height"),
+          opt.recovery_epoch.expect("need to provide an epoch to end the recovery mode"),
+        ),
         Command::Timestamp {} => ol_writset_update_timestamp(opt.db.unwrap()),
         Command::Testnet {} => ol_writeset_set_testnet(opt.db.unwrap()),
         Command::RecoveryMode { addresses, epoch_ending } => ol_writeset_recover_mode(opt.db.unwrap(), addresses, epoch_ending),
