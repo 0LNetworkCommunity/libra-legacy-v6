@@ -2,6 +2,12 @@ ifndef SOURCE_PATH
 SOURCE_PATH = $$HOME/libra
 endif
 
+
+ifndef BLOCK_HEIGHT
+BLOCK_HEIGHT = 28671095
+endif
+
+
 ifndef DATA_PATH
 DATA_PATH = $$HOME/.0L
 RESCUE_PATH = ${DATA_PATH}/rescue
