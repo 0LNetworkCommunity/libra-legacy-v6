@@ -57,7 +57,7 @@ enum Command {
     UpdateStdlib { },
     #[structopt(name = "rescue")]
     Rescue { addresses: Vec<AccountAddress> },
-    #[structopt(name = "debug-epoch")]
+    #[structopt(name = "recovery")]
     RecoveryMode { addresses: Vec<AccountAddress> },
     #[structopt(name = "boundary")]
     Boundary { addresses: Vec<AccountAddress>},
