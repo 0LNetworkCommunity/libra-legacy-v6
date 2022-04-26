@@ -3,49 +3,10 @@
 #![allow(clippy::never_loop)]
 use crate::node::states::*;
 use crate::{
-    mgmt::{self, management::NodeMode::*},
+    mgmt::management::NodeMode::*,
     node::node::Node,
 };
 use std::{thread, time::Duration};
-
-/// check if we need to restore the db
-pub fn maybe_restore_db(mut node: &mut Node, verbose: bool) -> &mut Node {
-    let cfg = node.app_conf.to_owned();
-    // Abort if the database is not set correctly.
-    node.vitals.host_state.onboard_state = OnboardState::EmptyBox;
-
-    if node.db_files_exist() {
-        node.vitals.host_state.onboard_state = OnboardState::DbFilesOk;
-
-        if verbose {
-            println!("DB: db files exist");
-        }
-        // is DB bootstrapped
-        if node.db_bootstrapped() {
-            node.vitals.host_state.onboard_state = OnboardState::DbBootstrapOk;
-            if verbose {
-                println!("DB: db bootstrapped");
-            }
-        } else {
-            if verbose {
-                println!("DB: WARN: diemDB is not bootstrapped. Database needs a valid set of transactions to boot. Attempting `ol restore` to fetch backups from archive.");
-            }
-            mgmt::restore::fast_forward_db(true, None).unwrap();
-            node.vitals.host_state.onboard_state = OnboardState::DbBootstrapOk;
-        }
-    // return
-    } else {
-        if verbose {
-            println!(
-                "NO db files found {:?}. Attempting `ol restore` to fetch backups from archive.",
-                &cfg.workspace.node_home
-            );
-        }
-        mgmt::restore::fast_forward_db(true, None).unwrap();
-        node.vitals.host_state.onboard_state = OnboardState::DbBootstrapOk;
-    }
-    node
-}
 
 /// run once
 pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {

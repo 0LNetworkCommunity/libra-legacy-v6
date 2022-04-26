@@ -12,16 +12,23 @@ use crate::mgmt;
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
 pub struct RestoreCmd {
-    #[options(short="v", help = "verbose logging of backup restore")]
+    #[options(help = "verbose logging of backup restore")]
     verbose: bool,
+    
     #[options(short="e", help = "what epoch to start restore from")]
     epoch: Option<u64>,
+
+    #[options(short="v", help = "specify a version or height if there is more than one per archive")]
+    version: Option<u64>,
+
+    #[options(help = "get only the exact last block at the end of an epoch. Not extra blocks at the start of following epoch.")]
+    exclude_buffer: bool,
 }
 
 impl Runnable for RestoreCmd {
     /// Start the application.
     fn run(&self) {
-        match mgmt::restore::fast_forward_db(self.verbose, self.epoch) {
+        match mgmt::restore::fast_forward_db(self.verbose, self.epoch, self.version) {
             Ok(_) => {},
             Err(e) => println!("ERROR: could not complete db restore, message: {:?}", e),
         };

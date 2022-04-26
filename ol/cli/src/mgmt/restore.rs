@@ -40,7 +40,7 @@ pub static IS_DEVNET: Lazy<bool> = Lazy::new(||{
 });
 
 /// Restore database from archive
-pub fn fast_forward_db(verbose: bool, epoch: Option<u64>) -> Result<(), Error>{
+pub fn fast_forward_db(verbose: bool, epoch: Option<u64>, version_opt: Option<u64>) -> Result<(), Error>{
     let mut backup = Backup::new(epoch);
 
     println!("fetching latest epoch backup from epoch archive");
@@ -50,7 +50,7 @@ pub fn fast_forward_db(verbose: bool, epoch: Option<u64>) -> Result<(), Error>{
     backup.set_waypoint()?;
 
     println!("\nRestoring db from archive to home path");
-    backup.restore_backup(verbose)?;
+    backup.restore_backup(verbose, version_opt)?;
     
     println!("\nCreating fullnode.node.yaml to home path");
     backup.create_fullnode_yaml()?;
@@ -148,12 +148,12 @@ impl Backup {
     }
 
     /// Restore Backups
-    pub fn restore_backup(&self, verbose: bool) -> Result<(), Error>{
+    pub fn restore_backup(&self, verbose: bool, version_opt: Option<u64>) -> Result<(), Error>{
         let db_path = &self.home_path.join("db/");
         let restore_path = self.restore_path.to_str().unwrap();
         let height = &self.waypoint.unwrap().version();
         restore_epoch(db_path, restore_path, verbose)?;
-        restore_transaction(db_path, restore_path, verbose)?;
+        restore_transaction(db_path, restore_path, verbose, version_opt)?;
         restore_snapshot(db_path, restore_path, height, verbose)?;
         Ok(())
     }
@@ -323,11 +323,20 @@ pub fn restore_epoch(
 
 /// Restores transaction type backups
 pub fn restore_transaction(
-    db_path: &PathBuf, restore_path: &str, verbose: bool
+    db_path: &PathBuf, restore_path: &str, verbose: bool, version_opt: Option<u64>
 ) -> Result<(), Error> {
+    let file_path = if version_opt.is_some() {
+      format!("{}/{}/**/transaction.manifest", restore_path, &version_opt.unwrap().to_string())
+    } else {
+      format!("{}/**/transaction.manifest", restore_path)
+    };
+
+
     let manifest_path = glob(
-        &format!("{}/**/transaction.manifest", restore_path)
+      &file_path
     ).expect("Failed to read glob pattern").next().unwrap()?;
+
+    // ${VERSION}/transaction_${EPOCH_HEIGHT}*/transaction.manifest 
 
     let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
 
