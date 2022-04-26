@@ -1,6 +1,6 @@
 //! `restore` functions
 
-use std::{env, io::Write, process::Stdio};
+use std::{env, io::Write, process::{Stdio, exit}};
 use abscissa_core::{status_ok};
 use diem_global_constants::WAYPOINT;
 use once_cell::sync::Lazy;
@@ -150,11 +150,22 @@ impl Backup {
     /// Restore Backups
     pub fn restore_backup(&self, verbose: bool, version_opt: Option<u64>) -> Result<(), Error>{
         let db_path = &self.home_path.join("db/");
-        let restore_path = self.restore_path.to_str().unwrap();
+
+        let restore_path = self.restore_path.clone(); 
+        
+        let restore_path_for_txs = if version_opt.is_some() {
+          self.restore_path
+          .to_owned()
+          .join(version_opt.unwrap().to_string())
+        } else {
+          restore_path.clone()
+        };
+
+
         let height = &self.waypoint.unwrap().version();
-        restore_epoch(db_path, restore_path, verbose)?;
-        restore_transaction(db_path, restore_path, verbose, version_opt)?;
-        restore_snapshot(db_path, restore_path, height, verbose)?;
+        restore_epoch(db_path, restore_path.to_str().unwrap(), verbose)?;
+        restore_transaction(db_path, restore_path_for_txs.to_str().unwrap(), verbose)?;
+        restore_snapshot(db_path, restore_path_for_txs.to_str().unwrap(), height, verbose)?;
         Ok(())
     }
 
@@ -176,7 +187,6 @@ impl Backup {
                     return Err(Error::from(e))
                 },
             }
-            
         }
 
         Err(Error::msg("no manifest found"))
@@ -282,9 +292,13 @@ fn get_archive_url(epoch: u64) -> Result<String, Error> {
 pub fn restore_epoch(
     db_path: &PathBuf, restore_path: &str, verbose: bool
 ) -> Result<(), Error> {
-    let manifest_path = glob(
-        &format!("{}/**/epoch_ending.manifest", restore_path)
-    ).expect("Failed to read glob pattern").next().unwrap()?;
+    let glob_format = &format!("{}/**/epoch_ending.manifest", restore_path);
+    let manifest_path = match glob(glob_format)
+      .expect("Failed to read glob pattern")
+      .next() {
+        Some(Ok(p)) => p,
+        _ => bail!("no path found for {:?}", glob_format)
+    };
     
     if !manifest_path.exists() {
       let msg = format!("manifest path does not exist at: {:?}", &manifest_path);
@@ -323,20 +337,21 @@ pub fn restore_epoch(
 
 /// Restores transaction type backups
 pub fn restore_transaction(
-    db_path: &PathBuf, restore_path: &str, verbose: bool, version_opt: Option<u64>
+    db_path: &PathBuf, restore_path: &str, verbose: bool
 ) -> Result<(), Error> {
-    let file_path = if version_opt.is_some() {
-      format!("{}/{}/**/transaction.manifest", restore_path, &version_opt.unwrap().to_string())
-    } else {
-      format!("{}/**/transaction.manifest", restore_path)
+  
+    let glob_format = &format!("{}/**/transaction.manifest", restore_path);
+    let manifest_path = match glob(glob_format)
+      .expect("Failed to read glob pattern")
+      .next() {
+        Some(Ok(p)) => p,
+        _ => bail!("no path found for {:?}", glob_format)
     };
 
-
-    let manifest_path = glob(
-      &file_path
-    ).expect("Failed to read glob pattern").next().unwrap()?;
-
-    // ${VERSION}/transaction_${EPOCH_HEIGHT}*/transaction.manifest 
+    if !manifest_path.exists() {
+      println!("ERROR: cannot find manifest path: {}", manifest_path.to_str().unwrap() );
+      exit(1);
+    }
 
     let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
 
