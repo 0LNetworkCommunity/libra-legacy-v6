@@ -8,7 +8,7 @@ BLOCK_HEIGHT = 28671095
 endif
 
 ifndef RECOVERY_EPOCH
-RECOVERY_EPOCH = 173
+RECOVERY_EPOCH = 174
 endif
 
 ifndef ACCOUNT
@@ -73,6 +73,9 @@ tx-epoch-time:
 
 tx-debug:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob debug
+
+tx-hotfix:
+	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --recovery-epoch ${RECOVERY_EPOCH}  --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob hotfix ${VALS}
 
 
 # tx-custom:
