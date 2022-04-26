@@ -155,15 +155,27 @@ fn main() -> Result<()> {
         Command::Boundary { addresses } => ol_writeset_force_boundary(opt.db.unwrap(), addresses, opt.block_height.expect("need to provide --block-height")),
         Command::UpdateValidators { addresses } => script_bulk_update_vals_payload(addresses),
         
-        Command::UpdateStdlib {} => ol_writeset_stdlib_upgrade(opt.db.unwrap()),
-        Command::Reconfig {} => ol_create_reconfig_payload(opt.db.unwrap()),
+        Command::UpdateStdlib {} => ol_writeset_stdlib_upgrade(
+          opt.db.unwrap(),
+          opt.block_height.expect("need to provide --block-height")
+        ),
+        Command::Reconfig {} => ol_create_reconfig_payload(
+          opt.db.unwrap(),
+          opt.block_height.expect("need to provide --block-height"),
+        ),
         Command::Debug {} => ol_debug(opt.db.unwrap()),
         Command::Rescue { addresses} => ol_writset_encode_rescue(
           opt.db.unwrap(), 
           addresses
         ),
-        Command::Timestamp {} => ol_writset_update_timestamp(opt.db.unwrap()),
-        Command::Testnet {} => ol_writeset_set_testnet(opt.db.unwrap()),
+        Command::Timestamp {} => ol_writset_update_timestamp(
+          opt.db.unwrap(),
+          opt.block_height.expect("need to provide --block-height")
+        ),
+        Command::Testnet {} => ol_writeset_set_testnet(
+          opt.db.unwrap(),
+          opt.block_height.expect("need to provide --block-height")
+        ),
         Command::RecoveryMode {
            addresses
           } => ol_writeset_recovery_mode(
@@ -171,7 +183,10 @@ fn main() -> Result<()> {
             addresses, 
             opt.recovery_epoch.expect("need to provide --recovery-epoch")
           ),
-        Command::EpochTime {} => ol_writeset_update_epoch_time(opt.db.unwrap()),
+        Command::EpochTime {} => ol_writeset_update_epoch_time(
+          opt.db.unwrap(),
+          opt.block_height.expect("need to provide --block-height")
+        ),
         Command::Ancestry { ancestry_file } => ol_writeset_ancestry(opt.db.unwrap(), ancestry_file),
         Command::Migrate { ancestry_file, makewhole_file, addresses} => ol_writset_encode_migrations(
           opt.db.unwrap(), 
@@ -181,9 +196,7 @@ fn main() -> Result<()> {
            opt.block_height.expect("need to provide --block-height"),
            opt.recovery_epoch.expect("need to provide --recovery-epoch")
           ),
-        Command::Hotfix {
-           addresses
-          } => ol_writeset_hotfix(
+        Command::Hotfix { } => ol_writeset_hotfix(
             opt.db.unwrap(), 
             opt.recovery_epoch.expect("need to provide --recovery-epoch")
           ),
