@@ -60,7 +60,7 @@ enum Command {
     #[structopt(name = "recovery")]
     RecoveryMode { addresses: Vec<AccountAddress> },
     #[structopt(name = "hotfix")]
-    Hotfix {},
+    Hotfix { addresses: Vec<AccountAddress> },
     #[structopt(name = "boundary")]
     Boundary { addresses: Vec<AccountAddress>},
     #[structopt(name = "ancestry")]
@@ -196,8 +196,9 @@ fn main() -> Result<()> {
            opt.block_height.expect("need to provide --block-height"),
            opt.recovery_epoch.expect("need to provide --recovery-epoch")
           ),
-        Command::Hotfix { } => ol_writeset_hotfix(
+        Command::Hotfix { addresses } => ol_writeset_hotfix(
             opt.db.unwrap(), 
+            addresses,
             opt.recovery_epoch.expect("need to provide --recovery-epoch")
           ),
 
