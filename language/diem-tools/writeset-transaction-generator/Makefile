@@ -61,9 +61,13 @@ tx-debug:
 # tx-custom:
 # 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${DATA_PATH}/restore/rescue.blob build-custom-script set_testnet.move '{}'
 
+# Calls 2 targets to syncronize the final output
+check: check-work check-echo
 
-check:
+check-work:
 	cd ${SOURCE_PATH} && cargo r -p db-bootstrapper -- ${DATA_PATH}/db/ --genesis-txn-file ${RESCUE_PATH}/rescue.blob | grep -oP 'waypoint: \K\w+:\w+' > ${RESCUE_PATH}/rescue_waypoint.txt 
+	
+check-echo:
 	@echo Waypoint: $(shell cat ${RESCUE_PATH}/rescue_waypoint.txt )
 
 commit:
