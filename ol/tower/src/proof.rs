@@ -153,7 +153,7 @@ pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>
           dbg!(&entry);
             let file = fs::File::open(&entry).expect("Could not open block file");
             let reader = BufReader::new(file);
-            let block: VDFProof = serde_json::from_reader(reader).expect(&format!("could not parse epoch proof {}", &entry));
+            let block: VDFProof = serde_json::from_reader(reader).expect(&format!("could not parse epoch proof {:?}", &entry));
             let blocknumber = block.height;
             if max_block.is_none() {
                 max_block = Some(blocknumber);
