@@ -149,31 +149,31 @@ pub fn ol_debug(path: PathBuf) -> WriteSetPayload {
 }
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
-pub fn ol_writeset_stdlib_upgrade(path: PathBuf) -> WriteSetPayload {
+pub fn ol_writeset_stdlib_upgrade(path: PathBuf, height_now: u64) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
     let stdlib_cs = encode_stdlib_upgrade_transaction();
 
-    let reconfig = ol_reconfig_changeset(path).unwrap();
+    let reconfig = ol_reconfig_changeset(path, height_now).unwrap();
 
     WriteSetPayload::Direct(merge_change_set(stdlib_cs, reconfig).unwrap())
 }
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
-pub fn ol_writeset_set_stagingnet(path: PathBuf) -> WriteSetPayload {
+pub fn ol_writeset_set_stagingnet(path: PathBuf, height_now: u64) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
     let testnet = ol_staging_net_changeset(path.clone()).unwrap();
 
-    let reconfig = ol_reconfig_changeset(path).unwrap();
+    let reconfig = ol_reconfig_changeset(path, height_now).unwrap();
 
     WriteSetPayload::Direct(merge_change_set(testnet, reconfig).unwrap())
 }
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
-pub fn ol_writeset_set_testnet(path: PathBuf) -> WriteSetPayload {
+pub fn ol_writeset_set_testnet(path: PathBuf, height_now: u64) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
     let testnet = ol_testnet_changeset(path.clone()).unwrap();
 
-    let reconfig = ol_reconfig_changeset(path).unwrap();
+    let reconfig = ol_reconfig_changeset(path, height_now).unwrap();
 
     WriteSetPayload::Direct(merge_change_set(testnet, reconfig).unwrap())
 }
@@ -202,6 +202,20 @@ pub fn ol_writeset_ancestry(path: PathBuf, ancestry_file: PathBuf) -> WriteSetPa
     WriteSetPayload::Direct(cs)
 
 }
+
+/// create the upgrade payload INCLUDING the epoch reconfigure
+pub fn ol_writeset_hotfix(path: PathBuf, recovery_epoch: u64) -> WriteSetPayload {
+    // Take the stdlib upgrade change set.
+    let cs = ol_cumu_deposits_hotfix(path.clone()).unwrap();
+
+    let recovery = ol_set_epoch_recovery_mode(path.clone(), vec![], recovery_epoch).unwrap();
+
+    let new_cs = merge_vec_changeset(vec![stdlib_cs, boundary]).unwrap();
+
+    WriteSetPayload::Direct(cs)
+
+}
+
 
 
 fn parse_ancestry_file(ancestry_file: PathBuf) -> Result<Vec<AncestrysUnit>>{
@@ -289,26 +303,26 @@ pub fn ol_writeset_recovery_mode(path: PathBuf, vals: Vec<AccountAddress>, epoch
     WriteSetPayload::Direct(merge_change_set(recovery_mode, reconfig).unwrap())
 }
 
-pub fn ol_writset_update_timestamp(path: PathBuf) -> WriteSetPayload {
+pub fn ol_writset_update_timestamp(path: PathBuf, height_now: u64) -> WriteSetPayload {
     let timestamp = ol_increment_timestamp(path.clone()).expect("could not get timestamp writeset");
 
     // Take the stdlib upgrade change set.
-    let reconfig = ol_reconfig_changeset(path).expect("could not get reconfig writeset");
+    let reconfig = ol_reconfig_changeset(path, height_now).expect("could not get reconfig writeset");
 
     WriteSetPayload::Direct(merge_change_set(timestamp, reconfig).unwrap())
 }
 
-pub fn ol_create_reconfig_payload(path: PathBuf) -> WriteSetPayload {
+pub fn ol_create_reconfig_payload(path: PathBuf, height_now: u64) -> WriteSetPayload {
     WriteSetPayload::Direct(
-        ol_reconfig_changeset(path).expect("could not create reconfig change set"),
+        ol_reconfig_changeset(path, height_now).expect("could not create reconfig change set"),
     )
 }
 
 
-pub fn ol_writeset_update_epoch_time(path: PathBuf) -> WriteSetPayload {
+pub fn ol_writeset_update_epoch_time(path: PathBuf, height_now: u64) -> WriteSetPayload {
 
     let epoch_time = ol_epoch_timestamp_update(path.clone()).unwrap();
-    let reconfig = ol_reconfig_changeset(path).unwrap();
+    let reconfig = ol_reconfig_changeset(path, height_now).unwrap();
 
     WriteSetPayload::Direct(merge_change_set(epoch_time, reconfig).unwrap())
 }
@@ -717,6 +731,38 @@ fn ol_set_epoch_recovery_mode(path: PathBuf, vals: Vec<AccountAddress>, end_epoc
     })
 }
 
+fn ol_cumu_deposits_hotfix(path: PathBuf) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+
+
+        // first we remove the recovery mode in case it has been set, so we 
+        // make sure it has the properties we want.
+
+        let txn_args = vec![
+            TransactionArgument::Address(diem_root_address()),
+        ];
+          session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("DiemAccount").unwrap(),
+                ),
+                &Identifier::new("migrate_cumu_deposits").unwrap(),
+                vec![],
+                convert_txn_args(&txn_args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // todo remove this unwrap.
+        Ok(())
+    })
+}
+
 fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
     println!("\nencode validators bulk update changeset");
     let db = DiemDebugger::db(path)?;
@@ -748,7 +794,7 @@ fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Res
     })
 }
 
-fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
+fn ol_reconfig_changeset(path: PathBuf, height_now: u64) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
 
     let v = db.get_latest_version()?;
@@ -756,15 +802,19 @@ fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
         let mut gas_status = GasStatus::new_unmetered();
         let log_context = NoContextLog::new();
 
-        let args = vec![MoveValue::Signer(diem_root_address())];
+        let args = vec![
+          MoveValue::Signer(diem_root_address()),
+          MoveValue::U64(height_now),
+
+        ];
 
         session
             .execute_function(
                 &ModuleId::new(
                     account_config::CORE_CODE_ADDRESS,
-                    Identifier::new("Upgrade").unwrap(),
+                    Identifier::new("EpochBoundary").unwrap(),
                 ),
-                &Identifier::new("upgrade_reconfig").unwrap(),
+                &Identifier::new("reconfigure").unwrap(),
                 vec![],
                 serialize_values(&args),
                 &mut gas_status,

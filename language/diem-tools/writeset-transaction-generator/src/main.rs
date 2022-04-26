@@ -11,7 +11,7 @@ use diem_types::{
 use diem_writeset_generator::{
     create_release, encode_custom_script, encode_halt_network_payload,
     encode_remove_validators_payload, script_bulk_update_vals_payload, release_flow::artifacts::load_latest_artifact,
-    verify_release, ol_writeset_stdlib_upgrade, ol_create_reconfig_payload, ol_writset_encode_rescue, ol_writset_update_timestamp, ol_writeset_force_boundary, ol_writeset_set_testnet, ol_writeset_recovery_mode, ol_writeset_update_epoch_time, ol_writeset_ancestry, ol_writset_encode_migrations, ol_debug
+    verify_release, ol_writeset_stdlib_upgrade, ol_create_reconfig_payload, ol_writset_encode_rescue, ol_writset_update_timestamp, ol_writeset_force_boundary, ol_writeset_set_testnet, ol_writeset_recovery_mode, ol_writeset_update_epoch_time, ol_writeset_ancestry, ol_writset_encode_migrations, ol_debug, ol_writeset_hotfix
 };
 use move_binary_format::CompiledModule;
 use std::path::PathBuf;
@@ -59,6 +59,8 @@ enum Command {
     Rescue { addresses: Vec<AccountAddress> },
     #[structopt(name = "recovery")]
     RecoveryMode { addresses: Vec<AccountAddress> },
+    #[structopt(name = "hotfix")]
+    Hotfix {},
     #[structopt(name = "boundary")]
     Boundary { addresses: Vec<AccountAddress>},
     #[structopt(name = "ancestry")]
@@ -178,6 +180,12 @@ fn main() -> Result<()> {
            addresses, 
            opt.block_height.expect("need to provide --block-height"),
            opt.recovery_epoch.expect("need to provide --recovery-epoch")
+          ),
+        Command::Hotfix {
+           addresses
+          } => ol_writeset_hotfix(
+            opt.db.unwrap(), 
+            opt.recovery_epoch.expect("need to provide --recovery-epoch")
           ),
 
         //////// end 0L ////////
