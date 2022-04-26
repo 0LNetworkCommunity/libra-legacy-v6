@@ -276,14 +276,14 @@ pub fn ol_writset_encode_migrations(
 
 
 /// set the EpochBoundary debug mode.
-pub fn ol_writeset_recover_mode(path: PathBuf, vals: Vec<AccountAddress>, epoch_ending: u64) -> WriteSetPayload {
+pub fn ol_writeset_recovery_mode(path: PathBuf, vals: Vec<AccountAddress>, epoch_ending: u64) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
         exit(1)
     };
 
-    let debug_mode = ol_set_epoch_recovery_mode(path.clone(), vals, epoch_ending).unwrap();
-    let reconfig = ol_reconfig_changeset(path).unwrap();
+    let debug_mode = ol_set_epoch_recovery_mode(path.clone(), vec![], epoch_ending).unwrap();
+    let reconfig = ol_bulk_validators_changeset(path, vals).unwrap();
 
     WriteSetPayload::Direct(merge_change_set(debug_mode, reconfig).unwrap())
 }
