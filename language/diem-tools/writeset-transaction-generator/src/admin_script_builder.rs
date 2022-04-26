@@ -206,13 +206,13 @@ pub fn ol_writeset_ancestry(path: PathBuf, ancestry_file: PathBuf) -> WriteSetPa
 /// create the upgrade payload INCLUDING the epoch reconfigure
 pub fn ol_writeset_hotfix(path: PathBuf, recovery_epoch: u64) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
-    let cs = ol_cumu_deposits_hotfix(path.clone()).unwrap();
+    let cumu_deps = ol_cumu_deposits_hotfix(path.clone()).unwrap();
 
     let recovery = ol_set_epoch_recovery_mode(path.clone(), vec![], recovery_epoch).unwrap();
 
-    let new_cs = merge_vec_changeset(vec![stdlib_cs, boundary]).unwrap();
+    let new_cs = merge_vec_changeset(vec![cumu_deps, recovery]).unwrap();
 
-    WriteSetPayload::Direct(cs)
+    WriteSetPayload::Direct(new_cs)
 
 }
 
