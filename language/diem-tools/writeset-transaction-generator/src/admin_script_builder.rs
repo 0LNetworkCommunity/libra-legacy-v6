@@ -262,9 +262,9 @@ pub fn ol_writset_encode_migrations(
 
     let vouch = ol_vouch_migrate(path.clone(), vals.clone()).unwrap();
 
-    let recovery = ol_set_epoch_recovery_mode(path.clone(), vals.clone(), recovery_epoch).unwrap();
-    // force an NewEpochEvent
-    // let boundary = ol_bulk_validators_changeset(path.clone(), vals.clone()).unwrap();
+    // Note: passing an emptry vec for vals will preserve validator selection logic. To create a fixed validator set for recovery modify this code to pass a list of validators.
+    let recovery = ol_set_epoch_recovery_mode(path.clone(), vec![], recovery_epoch).unwrap();
+
     let boundary = ol_force_boundary(path.clone(), vals, block_height).unwrap();
 
 
@@ -282,10 +282,11 @@ pub fn ol_writeset_recovery_mode(path: PathBuf, vals: Vec<AccountAddress>, epoch
         exit(1)
     };
 
-    let debug_mode = ol_set_epoch_recovery_mode(path.clone(), vec![], epoch_ending).unwrap();
+    // Note: passing an emptry vec for vals will preserve validator selection logic. To create a fixed validator set for recovery modify this code to pass a list of validators.
+    let recovery_mode = ol_set_epoch_recovery_mode(path.clone(), vec![], epoch_ending).unwrap();
     let reconfig = ol_bulk_validators_changeset(path, vals).unwrap();
 
-    WriteSetPayload::Direct(merge_change_set(debug_mode, reconfig).unwrap())
+    WriteSetPayload::Direct(merge_change_set(recovery_mode, reconfig).unwrap())
 }
 
 pub fn ol_writset_update_timestamp(path: PathBuf) -> WriteSetPayload {
@@ -672,11 +673,33 @@ fn ol_set_epoch_recovery_mode(path: PathBuf, vals: Vec<AccountAddress>, end_epoc
         let mut gas_status = GasStatus::new_unmetered();
         let log_context = NoContextLog::new();
 
+
+        // first we remove the recovery mode in case it has been set, so we 
+        // make sure it has the properties we want.
+
+        let txn_args = vec![
+            TransactionArgument::Address(diem_root_address()),
+        ];
+          session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("RecoveryMode").unwrap(),
+                ),
+                &Identifier::new("remove_debug").unwrap(),
+                vec![],
+                convert_txn_args(&txn_args),
+                &mut gas_status,
+                &log_context,
+            )
+            .unwrap(); // todo remove this unwrap.
+
         let txn_args = vec![
             TransactionArgument::Address(diem_root_address()),
             TransactionArgument::AddressVector(vals),
             TransactionArgument::U64(end_epoch),
         ];
+
         session
             .execute_function(
                 &ModuleId::new(
