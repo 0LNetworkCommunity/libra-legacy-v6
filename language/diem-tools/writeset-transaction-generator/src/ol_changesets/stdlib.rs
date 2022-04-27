@@ -48,6 +48,8 @@ pub fn ol_set_epoch_recovery_mode(
     vals: Vec<AccountAddress>,
     end_epoch: u64,
 ) -> Result<ChangeSet> {
+  // TODO: this could be done with the wrapper.
+
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
