@@ -29,6 +29,8 @@ use tempfile::NamedTempFile;
 use resource_viewer::AnnotatedMoveValue;
 use move_core_types::move_resource::MoveStructType;
 
+use crate::ol_changesets::stdlib;
+
 /// The relative path to the scripts templates
 pub const SCRIPTS_DIR_PATH: &str = "templates";
 
@@ -240,7 +242,7 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> Wri
         exit(1)
     };
 
-    let stdlib_cs = ol_fresh_stlib_changeset(path.clone()).unwrap();
+    let stdlib_cs = stdlib::ol_fresh_stlib_changeset(path.clone()).unwrap();
     // TODO: forcing the boundary causes an error on the epoch boundary.
     // let boundary = ol_force_boundary(path.clone(), vals.clone(), block_height).unwrap();
     let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
@@ -332,35 +334,35 @@ pub fn ol_writeset_update_epoch_time(path: PathBuf, height_now: u64) -> WriteSet
 ///////////////// ENCODE CHANGESETS ///////////////////////////////
 
 
-pub fn ol_fresh_stlib_changeset(path: PathBuf) -> Result<ChangeSet> {
-    println!("\nencode stdlib changeset");
+// pub fn ol_fresh_stlib_changeset(path: PathBuf) -> Result<ChangeSet> {
+//     println!("\nencode stdlib changeset");
 
-    let db = DiemDebugger::db(path)?;
+//     let db = DiemDebugger::db(path)?;
 
-    // publish the agreed stdlib
-    let new_stdlib = diem_framework::modules();
+//     // publish the agreed stdlib
+//     let new_stdlib = diem_framework::modules();
 
-    let v = db.get_latest_version()?;
-    db.run_session_at_version(v, None, |session| {
-        let mut gas_status = GasStatus::new_unmetered();
-        let log_context = NoContextLog::new();
+//     let v = db.get_latest_version()?;
+//     db.run_session_at_version(v, None, |session| {
+//         let mut gas_status = GasStatus::new_unmetered();
+//         let log_context = NoContextLog::new();
 
-        for module in new_stdlib {
-            let mut bytes = vec![];
-            module.serialize(&mut bytes).unwrap();
+//         for module in new_stdlib {
+//             let mut bytes = vec![];
+//             module.serialize(&mut bytes).unwrap();
 
-            session
-                .revise_module(
-                    bytes,
-                    account_config::CORE_CODE_ADDRESS,
-                    &mut gas_status,
-                    &log_context,
-                )
-                .unwrap()
-        }
-        Ok(())
-    })
-}
+//             session
+//                 .revise_module(
+//                     bytes,
+//                     account_config::CORE_CODE_ADDRESS,
+//                     &mut gas_status,
+//                     &log_context,
+//                 )
+//                 .unwrap()
+//         }
+//         Ok(())
+//     })
+// }
 
 // NOTE: all new "genesis" writesets to be applied on db-bootstrapper must emit a reconfig NewEpochEvent.
 // However. The Diemconfig::reconfig_ has a naive implementation of deduplication of reconfig events it checks that the current time is NOT equal to the last reconfig time.
