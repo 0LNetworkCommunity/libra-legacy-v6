@@ -5,6 +5,8 @@ mod admin_script_builder;
 pub mod old_releases;
 pub mod release_flow;
 
+mod ol_changesets;
+
 mod writeset_builder;
 
 pub use admin_script_builder::*;
