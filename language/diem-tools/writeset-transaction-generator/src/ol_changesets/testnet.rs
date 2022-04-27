@@ -1,16 +1,20 @@
-use std::{path::PathBuf};
+use std::path::PathBuf;
 
-use diem_transaction_replay::DiemDebugger;
 use anyhow::Result;
-use diem_types::{account_config::{self, diem_root_address}, transaction::ChangeSet};
-use move_core_types::{value::{MoveValue, serialize_values}, language_storage::ModuleId, identifier::Identifier};
+use diem_transaction_replay::DiemDebugger;
+use diem_types::{
+    account_config::{self, diem_root_address},
+    transaction::ChangeSet,
+};
+use move_core_types::{
+    identifier::Identifier,
+    language_storage::ModuleId,
+    value::{serialize_values, MoveValue},
+};
 use move_vm_runtime::logging::NoContextLog;
 use move_vm_types::gas_schedule::GasStatus;
 
-
-
-
-fn ol_testnet_changeset(path: PathBuf) -> Result<ChangeSet> {
+pub fn ol_testnet_changeset(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
 
     let v = db.get_latest_version()?;
@@ -37,7 +41,7 @@ fn ol_testnet_changeset(path: PathBuf) -> Result<ChangeSet> {
     })
 }
 
-fn ol_staging_net_changeset(path: PathBuf) -> Result<ChangeSet> {
+pub fn ol_staging_net_changeset(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
 
     let v = db.get_latest_version()?;
