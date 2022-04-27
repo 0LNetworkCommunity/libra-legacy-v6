@@ -1,12 +1,11 @@
 //# init --validators Alice
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::GAS::GAS;
   use DiemFramework::Diem;
     
-  fun main(vm: signer) {
+  fun main(vm: signer, _account: signer) {
     let coin = Diem::mint<GAS>(&vm, 10);
     let cap = Diem::market_cap<GAS>();
     Diem::vm_burn_this_coin(&vm, coin);
@@ -14,6 +13,5 @@ script {
     assert!(cap_later < cap, 735701);
   }
 }
-
 // check: BurnEvent
 // check: "Keep(EXECUTED)"

@@ -1,9 +1,6 @@
-//! account: alice, 2000000GAS, 0, validator
-//! account: bob, 1000000GAS
-//! account: carol, 1000000GAS
+//# init --validators Alice Bob Carol
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::Wallet;
     use Std::Vector;
@@ -11,7 +8,7 @@ script {
     use Std::Signer;
     use DiemFramework::DiemAccount;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
       Wallet::set_comm(&sender);
       let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
       DiemAccount::init_cumulative_deposits(&sender, bal);
@@ -19,11 +16,9 @@ script {
       assert!(Vector::length(&list) == 1, 7357001);
     }
 }
-
 // check: EXECUTED
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::Wallet;
     use Std::Vector;
@@ -31,7 +26,7 @@ script {
     use Std::Signer;
     use DiemFramework::DiemAccount;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
       Wallet::set_comm(&sender);
       let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
       DiemAccount::init_cumulative_deposits(&sender, bal);
@@ -39,11 +34,9 @@ script {
       assert!(Vector::length(&list) == 2, 7357002);
     }
 }
+// check: EXECUTED
 
-// // check: EXECUTED
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
@@ -51,7 +44,7 @@ script {
   use Std::Vector;
   use Std::FixedPoint32;
 
-  fun main(vm: signer) {
+  fun main(vm: signer, _:signer) {
     // send to community wallet Bob
     DiemAccount::vm_make_payment_no_limit<GAS>(@Alice, @Bob, 100000, x"", x"", &vm);
     // send to community wallet Carol
@@ -59,31 +52,31 @@ script {
 
     let bal_bob_old = DiemAccount::balance<GAS>(@Bob);
 
-    assert!(bal_bob_old == 1100000, 7357003);
+    assert!(bal_bob_old == 10100000, 7357003);
     let bal_carol_old = DiemAccount::balance<GAS>(@Carol);
 
-    assert!(bal_carol_old == 1600000, 7357004);
+    assert!(bal_carol_old == 10600000, 7357004);
 
     Burn::reset_ratios(&vm);
     let (addr, _ , ratios) = Burn::get_ratios();
     assert!(Vector::length(&addr) == 2, 7357005);
 
+    // todo: update assertion
     let carol_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 1);
     let pct_carol = FixedPoint32::multiply_u64(100, carol_mult);
     // ratio for carol's community wallet.
-    assert!(pct_carol == 59, 7357006);
+    assert!(pct_carol == 59, 7357006); // todo
 
     Burn::epoch_start_burn(&vm, @Alice, 100000);
 
     let bal_alice = DiemAccount::balance<GAS>(@Alice);
-    assert!(bal_alice == 1200000, 7357007); // rounding issues
+    assert!(bal_alice == 9200000, 7357007); // rounding issues
     
     // unchanged balance
     let bal_bob = DiemAccount::balance<GAS>(@Bob);
     assert!(bal_bob == bal_bob_old, 7357008);
 
     // unchanged balance
-
     let bal_carol = DiemAccount::balance<GAS>(@Carol);
     assert!(bal_carol == bal_carol_old, 7357009);
   }
@@ -91,26 +84,23 @@ script {
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::Burn;
 
-  fun main(alice: signer) {
-
-    Burn::set_send_community(&alice);
+    fun main(_dr: signer, sender: signer) {
+    Burn::set_send_community(&sender);
   }
 }
 //////// SETS community send
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
   use DiemFramework::Burn;
 
-  fun main(vm: signer) {
+  fun main(vm: signer, _:signer) {
     let bal_bob_old = DiemAccount::balance<GAS>(@Bob);
     let bal_carol_old = DiemAccount::balance<GAS>(@Carol);
 
@@ -118,8 +108,8 @@ script {
     Burn::epoch_start_burn(&vm, @Alice, 100000);
 
     let bal_alice = DiemAccount::balance<GAS>(@Alice);
-    assert!(bal_alice == 1100001, 7357010); // rounding issues
-    
+    assert!(bal_alice == 9100001, 7357010); // rounding issues
+
     // balances are greater than before.
     let bal_bob = DiemAccount::balance<GAS>(@Bob);
     assert!(bal_bob > bal_bob_old, 7357011);

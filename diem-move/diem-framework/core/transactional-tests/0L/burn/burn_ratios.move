@@ -1,9 +1,6 @@
-//! account: alice, 2000000GAS, 0, validator
-//! account: bob, 1000000GAS
-//! account: carol, 1000000GAS
+//# init --validators Alice Bob Carol
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::Wallet;
     use Std::Vector;
@@ -11,7 +8,7 @@ script {
     use Std::Signer;
     use DiemFramework::DiemAccount;
 
-    fun main(sender: signer) {
+    fun main(_dr:signer, sender: signer) {
       Wallet::set_comm(&sender);
       let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
       DiemAccount::init_cumulative_deposits(&sender, bal);
@@ -19,11 +16,9 @@ script {
       assert!(Vector::length(&list) == 1, 7357001);
     }
 }
-
 // check: EXECUTED
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::Wallet;
     use Std::Vector;
@@ -31,7 +26,7 @@ script {
     use Std::Signer;
     use DiemFramework::DiemAccount;
 
-    fun main(sender: signer) {
+    fun main(_dr:signer, sender: signer) {
       Wallet::set_comm(&sender);
       let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
       DiemAccount::init_cumulative_deposits(&sender, bal);
@@ -39,11 +34,9 @@ script {
       assert!(Vector::length(&list) == 2, 7357002);
     }
 }
-
 // check: EXECUTED
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
@@ -51,7 +44,7 @@ script {
   use Std::Vector;
   use Std::FixedPoint32;
 
-  fun main(vm: signer) {
+  fun main(vm: signer, _:signer) {
     // send to community wallet Bob
     DiemAccount::vm_make_payment_no_limit<GAS>(@Alice, @Bob, 100000, x"", x"", &vm);
     // send to community wallet Carol
@@ -64,22 +57,19 @@ script {
     assert!(Vector::length(&ratios) == 2, 7357005);
 
     let bob_deposits_indexed = *Vector::borrow<u64>(&deps, 0);
-    // print(&bob_deposits_indexed);
-    assert!(bob_deposits_indexed == 1100500, 7357006);
+    assert!(bob_deposits_indexed == 10100500, 7357006);
     let carol_deposits_indexed = *Vector::borrow<u64>(&deps, 1);
-    assert!(carol_deposits_indexed == 1904500, 7357007);
+    assert!(carol_deposits_indexed == 10904500, 7357007);
 
     let bob_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 0);
     let pct_bob = FixedPoint32::multiply_u64(100, bob_mult);
-    // print(&pct_bob);
     // ratio for bob's community wallet.
-    assert!(pct_bob == 36, 7357008);
+    assert!(pct_bob == 36, 7357008); // todo
 
     let carol_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 1);
     let pct_carol = FixedPoint32::multiply_u64(100, carol_mult);
-    // print(&pct_carol);
     // ratio for carol's community wallet.
-    assert!(pct_carol == 63, 7357009);
+    assert!(pct_carol == 63, 7357009); // todo
   }
 }
 // check: EXECUTED

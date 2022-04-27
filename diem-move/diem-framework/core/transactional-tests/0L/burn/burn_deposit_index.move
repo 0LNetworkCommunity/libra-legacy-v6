@@ -1,9 +1,6 @@
-//# init --validators Alice
-//! account: bob, 1000000GAS
-//! account: carol, 1000000GAS
+//# init --validators Alice Bob Carol
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::Wallet;
     use Std::Vector;
@@ -11,7 +8,7 @@ script {
     use Std::Signer;
     use DiemFramework::DiemAccount;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
       Wallet::set_comm(&sender);
       let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
       DiemAccount::init_cumulative_deposits(&sender, bal);
@@ -19,11 +16,9 @@ script {
       assert!(Vector::length(&list) == 1, 7357001);
     }
 }
-
 // check: EXECUTED
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::Wallet;
     use Std::Vector;
@@ -31,7 +26,7 @@ script {
     use Std::Signer;
     use DiemFramework::DiemAccount;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
       Wallet::set_comm(&sender);
       let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
       DiemAccount::init_cumulative_deposits(&sender, bal);
@@ -39,16 +34,14 @@ script {
       assert!(Vector::length(&list) == 2, 7357002);
     }
 }
-
 // check: EXECUTED
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
   
-  fun main(vm: signer) {
+  fun main(vm: signer, _account: signer) {
     // bobs_indexed amount changes
     let index_before = DiemAccount::get_index_cumu_deposits(@Bob);
     let index_carol_before = DiemAccount::get_index_cumu_deposits(@Carol);
@@ -64,4 +57,3 @@ script {
     assert!(index_carol_before == carol_after, 735702)
   }
 }
-
