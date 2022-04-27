@@ -1,12 +1,17 @@
-use std::{path::PathBuf};
+use std::path::PathBuf;
 
-use diem_transaction_replay::DiemDebugger;
 use anyhow::Result;
-use diem_types::{account_config::{self, diem_root_address}, transaction::{ChangeSet, TransactionArgument}, account_address::AccountAddress};
-use move_core_types::{language_storage::ModuleId, identifier::Identifier, transaction_argument::convert_txn_args};
+use diem_transaction_replay::DiemDebugger;
+use diem_types::{
+    account_address::AccountAddress,
+    account_config::{self, diem_root_address},
+    transaction::{ChangeSet, TransactionArgument},
+};
+use move_core_types::{
+    identifier::Identifier, language_storage::ModuleId, transaction_argument::convert_txn_args,
+};
 use move_vm_runtime::logging::NoContextLog;
 use move_vm_types::gas_schedule::GasStatus;
-use serde::{Serialize};
 
 pub fn ol_fresh_stlib_changeset(path: PathBuf) -> Result<ChangeSet> {
     println!("\nencode stdlib changeset");
@@ -38,8 +43,11 @@ pub fn ol_fresh_stlib_changeset(path: PathBuf) -> Result<ChangeSet> {
     })
 }
 
-
-fn ol_set_epoch_recovery_mode(path: PathBuf, vals: Vec<AccountAddress>, end_epoch: u64) -> Result<ChangeSet> {
+pub fn ol_set_epoch_recovery_mode(
+    path: PathBuf,
+    vals: Vec<AccountAddress>,
+    end_epoch: u64,
+) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -47,14 +55,11 @@ fn ol_set_epoch_recovery_mode(path: PathBuf, vals: Vec<AccountAddress>, end_epoc
         let mut gas_status = GasStatus::new_unmetered();
         let log_context = NoContextLog::new();
 
-
-        // first we remove the recovery mode in case it has been set, so we 
+        // first we remove the recovery mode in case it has been set, so we
         // make sure it has the properties we want.
 
-        let txn_args = vec![
-            TransactionArgument::Address(diem_root_address()),
-        ];
-          session
+        let txn_args = vec![TransactionArgument::Address(diem_root_address())];
+        session
             .execute_function(
                 &ModuleId::new(
                     account_config::CORE_CODE_ADDRESS,
@@ -90,4 +95,3 @@ fn ol_set_epoch_recovery_mode(path: PathBuf, vals: Vec<AccountAddress>, end_epoc
         Ok(())
     })
 }
-
