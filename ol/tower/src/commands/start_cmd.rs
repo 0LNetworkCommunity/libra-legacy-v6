@@ -62,7 +62,7 @@ impl Runnable for StartCmd {
             waypoint
         };
 
-        let tx_params = TxParams::new(
+        let tx_params = match TxParams::new(
             cfg.clone(),
             url,
             waypoint,
@@ -72,8 +72,13 @@ impl Runnable for StartCmd {
             is_operator,
             use_first_url,
             None,
-        )
-        .expect("could not get tx parameters");
+        ) {
+            Ok(t) => t,
+            Err(e) => {
+              println!("ERROR: could not get tx params, exiting. message: {:?}", e);
+              exit(0);
+            },
+        };
 
         // Check for, and submit backlog proofs.
         if !self.skip_backlog {

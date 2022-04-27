@@ -150,7 +150,6 @@ pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>
         .expect("Failed to read glob pattern")
     {
         if let Ok(entry) = entry {
-          dbg!(&entry);
             let file = fs::File::open(&entry).expect("Could not open block file");
             let reader = BufReader::new(file);
             let block: VDFProof = serde_json::from_reader(reader).expect(&format!("could not parse epoch proof {:?}", &entry));
