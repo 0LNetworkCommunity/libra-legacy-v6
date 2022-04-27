@@ -7,21 +7,19 @@ use anyhow::{bail, Result};
 use diem_transaction_replay::DiemDebugger;
 use diem_types::{
     account_address::AccountAddress,
-    account_config::{self, diem_root_address, NewEpochEvent},
+    account_config::{diem_root_address, NewEpochEvent},
     contract_event::ContractEvent,
     transaction::{ChangeSet, TransactionArgument},
 };
 use move_core_types::{
-    identifier::Identifier,
-    language_storage::{ModuleId, TypeTag},
+    language_storage::TypeTag,
     move_resource::MoveStructType,
-    transaction_argument::convert_txn_args,
-    value::{serialize_values, MoveValue},
 };
-use move_vm_runtime::logging::NoContextLog;
-use move_vm_types::gas_schedule::GasStatus;
+
 use ol_types::epoch_timer::EpochTimerResource;
 use resource_viewer::AnnotatedMoveValue;
+
+use crate::ol_changesets::wrapper::{self, FunctionWrapper};
 
 // NOTE: all new "genesis" writesets to be applied on db-bootstrapper must emit a reconfig NewEpochEvent.
 // However. The Diemconfig::reconfig_ has a naive implementation of deduplication of reconfig events it checks that the current time is NOT equal to the last reconfig time.
@@ -30,78 +28,34 @@ use resource_viewer::AnnotatedMoveValue;
 
 pub fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
     println!("\nencode validators bulk update changeset");
-    let db = DiemDebugger::db(path)?;
 
-    let v = db.get_latest_version()?;
-    dbg!(&v);
-    db.run_session_at_version(v, None, |session| {
-        let mut gas_status = GasStatus::new_unmetered();
-        let log_context = NoContextLog::new();
+    let txn_args = vec![
+        TransactionArgument::Address(diem_root_address()),
+        TransactionArgument::AddressVector(vals),
+    ];
 
-        let txn_args = vec![
-            TransactionArgument::Address(diem_root_address()),
-            TransactionArgument::AddressVector(vals),
-        ];
-        session
-            .execute_function(
-                &ModuleId::new(
-                    account_config::CORE_CODE_ADDRESS,
-                    Identifier::new("DiemSystem").unwrap(),
-                ),
-                &Identifier::new("bulk_update_validators").unwrap(),
-                vec![],
-                convert_txn_args(&txn_args),
-                &mut gas_status,
-                &log_context,
-            )
-            .unwrap(); // todo remove this unwrap.
-        Ok(())
-    })
+    let fnwrap = FunctionWrapper {
+        module_name: "DiemSystem".to_string(),
+        function_name: "bulk_update_validators".to_string(),
+        txn_args,
+    };
+
+    wrapper::function_changeset_from_db(path, vec![fnwrap])
 }
 
 pub fn ol_reconfig_changeset(path: PathBuf, height_now: u64) -> Result<ChangeSet> {
-    let db = DiemDebugger::db(path)?;
+    let txn_args = vec![
+        TransactionArgument::Address(diem_root_address()),
+        TransactionArgument::U64(height_now),
+    ];
 
-    let v = db.get_latest_version()?;
-    let cs = db.run_session_at_version(v, None, |session| {
-        let mut gas_status = GasStatus::new_unmetered();
-        let log_context = NoContextLog::new();
+    let fnwrap = FunctionWrapper {
+        module_name: "EpochBoundary".to_string(),
+        function_name: "reconfigure".to_string(),
+        txn_args,
+    };
 
-        let args = vec![
-            MoveValue::Signer(diem_root_address()),
-            MoveValue::U64(height_now),
-        ];
-
-        session
-            .execute_function(
-                &ModuleId::new(
-                    account_config::CORE_CODE_ADDRESS,
-                    Identifier::new("EpochBoundary").unwrap(),
-                ),
-                &Identifier::new("reconfigure").unwrap(),
-                vec![],
-                serialize_values(&args),
-                &mut gas_status,
-                &log_context,
-            )
-            .unwrap(); // TODO: don't use unwraps.
-        Ok(())
-    })?;
-    // dbg!(&cs.events().len());
-
-    let old_event = cs.events().first().unwrap();
-    let epoch_change = read_epoch_event(&cs)?;
-
-    let new_ce = mfg_epoch_event(epoch_change.epoch(), old_event.sequence_number())?;
-
-    let new_change_set = ChangeSet::new(cs.write_set().to_owned(), vec![new_ce]);
-
-    new_change_set.events().iter().for_each(|e| {
-        // dbg!(&e);
-        dbg!(&e.sequence_number());
-    });
-
-    Ok(cs)
+    wrapper::function_changeset_from_db(path, vec![fnwrap])
 }
 
 pub fn mfg_epoch_event(epoch: u64, seq: u64) -> Result<ContractEvent> {
@@ -117,50 +71,27 @@ pub fn mfg_epoch_event(epoch: u64, seq: u64) -> Result<ContractEvent> {
     ))
 }
 
-fn read_epoch_event(cs: &ChangeSet) -> Result<NewEpochEvent> {
-    let event = cs.events().first().unwrap();
-    NewEpochEvent::try_from_bytes(event.event_data())
-}
 
 // TODO this doesn't work.
-pub fn ol_force_boundary(
+pub fn ol_reset_epoch_counters(
     path: PathBuf,
     vals: Vec<AccountAddress>,
     block_height: u64,
 ) -> Result<ChangeSet> {
-    let db = DiemDebugger::db(path)?;
+    let txn_args = vec![
+        TransactionArgument::Address(diem_root_address()),
+        TransactionArgument::AddressVector(vals),
+        TransactionArgument::AddressVector(vec![]),
+        TransactionArgument::U64(block_height + 1),
+    ];
 
-    // TODO: This is not producing the same version height after appling to database.
-    let v = db.get_latest_version()?;
+    let fnwrap = FunctionWrapper {
+        module_name: "EpochBoundary".to_string(),
+        function_name: "reset_counters".to_string(),
+        txn_args,
+    };
 
-    db.run_session_at_version(v, None, |session| {
-        let mut gas_status = GasStatus::new_unmetered();
-        let log_context = NoContextLog::new();
-
-        // fun reset_counters(vm: &signer, proposed_set: vector<address>, outgoing_compliant: vector<address>, height_now: u64) {
-
-        let args = vec![
-            MoveValue::Signer(diem_root_address()),
-            MoveValue::vector_address(vals),   // proposed_set
-            MoveValue::vector_address(vec![]), // outgoing_compliant
-            MoveValue::U64(block_height + 1),  // height_now
-        ];
-
-        session
-            .execute_function(
-                &ModuleId::new(
-                    account_config::CORE_CODE_ADDRESS,
-                    Identifier::new("EpochBoundary").unwrap(),
-                ),
-                &Identifier::new("reset_counters").unwrap(),
-                vec![],
-                serialize_values(&args),
-                &mut gas_status,
-                &log_context,
-            )
-            .unwrap(); // TODO: don't use unwraps.
-        Ok(())
-    })
+    wrapper::function_changeset_from_db(path, vec![fnwrap])
 }
 
 pub fn ol_epoch_timestamp_update(path: PathBuf) -> Result<ChangeSet> {
@@ -202,92 +133,23 @@ pub fn ol_epoch_timestamp_update(path: PathBuf) -> Result<ChangeSet> {
     bail!("could not get epoch timer state")
 }
 
-#[test]
-fn test_epoch() {
-    ol_epoch_timestamp_update("/home/node/.0L/db".parse().unwrap());
-}
 
 pub fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
-    let db = DiemDebugger::db(path)?;
-    let v = db.get_latest_version()?;
-
     let start = SystemTime::now();
     let now = start.duration_since(UNIX_EPOCH)?;
     let microseconds = now.as_micros();
 
-    db.run_session_at_version(v, None, |session| {
-        let mut gas_status = GasStatus::new_unmetered();
-        let log_context = NoContextLog::new();
+    let txn_args = vec![
+        TransactionArgument::Address(diem_root_address()),
+        TransactionArgument::Address(AccountAddress::random()),
+        TransactionArgument::U64(microseconds as u64),
+    ];
 
-        let txn_args = vec![
-            TransactionArgument::Address(diem_root_address()),
-            TransactionArgument::Address(AccountAddress::random()),
-            TransactionArgument::U64(microseconds as u64),
-        ];
-        session
-            .execute_function(
-                &ModuleId::new(
-                    account_config::CORE_CODE_ADDRESS,
-                    Identifier::new("DiemTimestamp").unwrap(),
-                ),
-                &Identifier::new("update_global_time").unwrap(),
-                vec![],
-                convert_txn_args(&txn_args),
-                &mut gas_status,
-                &log_context,
-            )
-            .unwrap(); // todo remove this unwrap.
+    let fnwrap = FunctionWrapper {
+        module_name: "DiemTimestamp".to_string(),
+        function_name: "update_global_time".to_string(),
+        txn_args,
+    };
 
-        let args = vec![MoveValue::Signer(diem_root_address())];
-
-        session
-            .execute_function(
-                &ModuleId::new(
-                    account_config::CORE_CODE_ADDRESS,
-                    Identifier::new("DiemConfig").unwrap(),
-                ),
-                &Identifier::new("upgrade_reconfig").unwrap(),
-                vec![],
-                serialize_values(&args),
-                &mut gas_status,
-                &log_context,
-            )
-            .unwrap(); // TODO: don't use unwraps.
-        Ok(())
-    })
-}
-
-fn _ol_increment_timestamp_changeset(path: PathBuf) -> Result<ChangeSet> {
-    let db = DiemDebugger::db(path)?;
-    let v = db.get_latest_version()?;
-
-    let start = SystemTime::now();
-    let now = start.duration_since(UNIX_EPOCH)?;
-    let microseconds = now.as_micros();
-
-    db.run_session_at_version(v, None, |session| {
-        let mut gas_status = GasStatus::new_unmetered();
-        let log_context = NoContextLog::new();
-
-        let txn_args = vec![
-            TransactionArgument::Address(diem_root_address()),
-            TransactionArgument::Address("46A7A744B5D33C47F6B20766F8088B10".parse().unwrap()),
-            TransactionArgument::U64(microseconds as u64),
-        ];
-        session
-            .execute_function(
-                &ModuleId::new(
-                    account_config::CORE_CODE_ADDRESS,
-                    Identifier::new("DiemTimestamp").unwrap(),
-                ),
-                &Identifier::new("update_global_time").unwrap(),
-                vec![],
-                convert_txn_args(&txn_args),
-                &mut gas_status,
-                &log_context,
-            )
-            .unwrap(); // todo remove this unwrap.
-
-        Ok(())
-    })
+    wrapper::function_changeset_from_db(path, vec![fnwrap])
 }

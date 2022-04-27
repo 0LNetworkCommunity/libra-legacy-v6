@@ -24,7 +24,7 @@ pub fn ol_writeset_force_boundary(
     vals: Vec<AccountAddress>,
     block_height: u64,
 ) -> WriteSetPayload {
-    let cs = reconfig::ol_force_boundary(path, vals, block_height).unwrap();
+    let cs = reconfig::ol_reset_epoch_counters(path, vals, block_height).unwrap();
     WriteSetPayload::Direct(cs)
 }
 
@@ -150,7 +150,7 @@ pub fn ol_writset_encode_migrations(
     let recovery =
         stdlib::ol_set_epoch_recovery_mode(path.clone(), vec![], recovery_epoch).unwrap();
 
-    let boundary = reconfig::ol_force_boundary(path.clone(), vals, block_height).unwrap();
+    let boundary = reconfig::ol_reset_epoch_counters(path.clone(), vals, block_height).unwrap();
 
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
     let new_cs = merge_vec_changeset(vec![ancestry, makewhole, vouch, boundary, recovery]).unwrap();
