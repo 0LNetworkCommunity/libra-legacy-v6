@@ -21,26 +21,34 @@ use crate::gas_resource::GasResource;
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 pub struct MakeWholeResource {
-    coin: u64,
-}
-pub struct Balance {
-    credits: Vec<Credit>,
+    credits: Vec<CreditResource>,
 }
 
-struct Credit {
+
+#[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
+struct CreditResource {
     incident_name: Vec<u8>,
     claimed: bool,
     coins: GasResource,
 }
 
-impl MakeWholeResource {
-    pub fn new(coin: u64) -> Self {
-        Self { coin }
-    }
+impl MoveStructType for CreditResource {
+    const MODULE_NAME: &'static IdentStr = ident_str!("MakeWhole");
+    const STRUCT_NAME: &'static IdentStr = ident_str!("Credit");
+}
 
-    pub fn coin(&self) -> u64 {
-        self.coin
-    }
+impl MoveResource for CreditResource {}
+
+
+impl MakeWholeResource {
+    // pub fn new(coin: u64) -> Self {
+    //     Self { coin }
+    // }
+
+    // pub fn coin(&self) -> u64 {
+    //     self.coin
+    // }
 
     // TODO/XXX: remove this once the MoveResource trait allows type arguments to `struct_tag`.
     pub fn struct_tag() -> StructTag {
@@ -59,8 +67,10 @@ impl MakeWholeResource {
 }
 
 impl MoveStructType for MakeWholeResource {
-    const MODULE_NAME: &'static IdentStr = ACCOUNT_MODULE_IDENTIFIER;
+    const MODULE_NAME: &'static IdentStr = ident_str!("MakeWhole");
     const STRUCT_NAME: &'static IdentStr = ident_str!("Balance");
 }
 
 impl MoveResource for MakeWholeResource {}
+
+
