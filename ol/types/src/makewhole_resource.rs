@@ -21,16 +21,20 @@ use crate::gas_resource::GasResource;
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 pub struct MakeWholeResource {
-    credits: Vec<CreditResource>,
+  ///
+    pub credits: Vec<CreditResource>,
 }
 
 
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
-struct CreditResource {
-    incident_name: Vec<u8>,
-    claimed: bool,
-    coins: GasResource,
+pub struct CreditResource {
+  ///
+  pub incident_name: Vec<u8>,
+  ///
+  pub claimed: bool,
+  ///
+  pub coins: GasResource,
 }
 
 impl MoveStructType for CreditResource {
