@@ -18,6 +18,7 @@
 
 <pre><code><b>use</b> <a href="Ancestry.md#0x1_Ancestry">0x1::Ancestry</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
@@ -132,8 +133,9 @@
   <b>if</b> (!<b>exists</b>&lt;<a href="Vouch.md#0x1_Vouch">Vouch</a>&gt;(val)) <b>return</b>;
 
   <b>let</b> v = borrow_global_mut&lt;<a href="Vouch.md#0x1_Vouch">Vouch</a>&gt;(val);
-  <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> v.vals, buddy_acc);
-
+  <b>if</b> (!<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&v.vals, &buddy_acc)) { // prevent duplicates
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> v.vals, buddy_acc);
+  }
 }
 </code></pre>
 
@@ -320,14 +322,19 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Vouch.md#0x1_Vouch_unrelated_buddies_above_thresh">unrelated_buddies_above_thresh</a>(val: address): bool <b>acquires</b> <a href="Vouch.md#0x1_Vouch">Vouch</a>{
+  print(&222222);
   <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>() || <a href="Testnet.md#0x1_StagingNet_is_staging_net">StagingNet::is_staging_net</a>()) {
     <b>return</b> <b>true</b>
   };
+  print(&22222200001);
 
   <b>if</b> (!<b>exists</b>&lt;<a href="Vouch.md#0x1_Vouch">Vouch</a>&gt;(val)) <b>return</b> <b>false</b>;
+  print(&22222200002);
 
   <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&<a href="Vouch.md#0x1_Vouch_unrelated_buddies">unrelated_buddies</a>(val));
-  (len &gt; 3) // TODO: <b>move</b> <b>to</b> <a href="Globals.md#0x1_Globals">Globals</a>
+  print(&22222200003);
+
+  (len &gt;= 4) // TODO: <b>move</b> <b>to</b> <a href="Globals.md#0x1_Globals">Globals</a>
 }
 </code></pre>
 

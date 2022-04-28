@@ -4,7 +4,7 @@
 use std::{fs::File, path::PathBuf};
 use std::io::BufReader;
 
-use anyhow::{anyhow, bail, Error, Result};
+use anyhow::{anyhow, Error, Result, bail};
 
 use cli::diem_client::DiemClient;
 use diem_logger::prelude::*;
@@ -81,6 +81,7 @@ pub fn process_backlog(
     Ok(())
 }
 
+/// submit an exact proof height
 pub fn submit_proof_by_number(
     config: &AppCfg,
     tx_params: &TxParams,
@@ -88,7 +89,7 @@ pub fn submit_proof_by_number(
 ) -> Result<(), TxError> {
     // Getting remote miner state
     // there may not be any onchain state.
-    let (remote_height, proofs_in_epoch) = get_remote_tower_height(tx_params)?;
+    let (remote_height, _proofs_in_epoch) = get_remote_tower_height(tx_params)?;
 
     info!("Remote tower height: {}", remote_height);
     // Getting local state height
@@ -133,13 +134,14 @@ pub fn submit_proof_by_number(
     Ok(())
 }
 
+/// display the user's tower backlog
 pub fn show_backlog(
     config: &AppCfg,
     tx_params: &TxParams,
 ) -> Result<(), TxError> {
     // Getting remote miner state
     // there may not be any onchain state.
-    let (remote_height, proofs_in_epoch) = get_remote_tower_height(tx_params)?;
+    let (remote_height, _proofs_in_epoch) = get_remote_tower_height(tx_params)?;
 
     println!("Remote tower height: {}", remote_height);
     // Getting local state height
@@ -175,9 +177,12 @@ pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<(i64, i64), Error
 
             return Ok((s.verified_tower_height as i64, s.actual_count_proofs_in_epoch as i64));
         },
-        RemoteStateError => {
-            println!("WARN: unable to get real tower height from chain");
-            return Ok((-1, -1));
+        Ok(None) => {
+          bail!("ERROR: user has no tower state on chain");
+        },
+        Err(e) => {
+            println!("ERROR: unable to get tower height from chain, message: {:?}", e);
+            return Err(e);
         }
     }
 }
