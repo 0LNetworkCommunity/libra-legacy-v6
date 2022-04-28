@@ -45,6 +45,8 @@ While it doesn't take group permission to onboard a new validator, existing vali
 
 - Validators spend their credits to be candidates for validation. This is also known as a cost-to-exist. It can also be thought of a pre-paid "slashing" for lack of node liveness.
 
+- The validator burn amount is dynamic. To enter a validator set, all validators burn 50% of the previous epoch's subsidy.
+
 - The validator has two options for the burn settings. 1) The validator can elect to have the burn be a pure burn, and the coins are removed from circulation. 2) the validator can have the burn recycled to the Community Wallet Index, which is updated every epoch based on how many donations are flowing to each community wallet.
 
 ## Validator Vouch
