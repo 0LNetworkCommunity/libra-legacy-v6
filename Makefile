@@ -28,7 +28,8 @@ CARGO_ARGS = --release
 # testnet automation settings
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
-MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
+MNEM = $(shell cat ol/
+fixtures/mnemonic/${NS}.mnem)
 CARGO_ARGS = --locked # just keeping this from doing --release mode, while in testnet mode.
 GITHUB_USER = OLSF
 endif
@@ -370,13 +371,13 @@ ifdef TEST
 	@echo NAMESPACE: ${NS}
 	@echo GENESIS: ${V}
 	@if test ! -d ${DATA_PATH}; then \
-		echo Creating Directories \
+		echo Creating Directories; \
 		mkdir ${DATA_PATH}; \
 		mkdir -p ${DATA_PATH}/vdf_proofs/; \
 	fi
 
 	@if test ! -d ${DATA_PATH}/vdf_proofs; then \
-		echo Creating Directories \
+		echo Creating Directories; \
 		mkdir -p ${DATA_PATH}/vdf_proofs/; \
 	fi
 

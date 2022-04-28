@@ -8,6 +8,10 @@ address 0x1 {
 // File Prefix for errors: 1201 used for OL errors
 
 module DiemAccount {
+    friend 0x1::MigrateAutoPayBal;
+    friend 0x1::MigrateVouch;
+    friend 0x1::MakeWhole;
+
     use 0x1::AccountFreezing;
     use 0x1::CoreAddresses;
     use 0x1::ChainId;
@@ -44,6 +48,9 @@ module DiemAccount {
     use 0x1::ValidatorUniverse;
     use 0x1::Wallet;
     use 0x1::Receipts;
+    use 0x1::Ancestry;
+    use 0x1::Vouch;
+    use 0x1::Debug::print;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -248,6 +255,18 @@ module DiemAccount {
         //what percent of your available account limit should be dedicated to autopay?
         share: u64,
     }
+
+
+    //////// 0L ////////
+    // A helper function for the VM to MOCK THE SIGNATURE OF ANY ADDRESS.
+    // This is necessary for migrating user state, when a new struct needs to be created.
+    // This is restricted by `friend` visibility, which is defined above as the 0x1::MigrateAutoPayBal module for a one-time use.
+    // language/changes/1-friend-visibility.md
+    public(friend) fun scary_wtf_create_signer(vm: &signer, addr: address): signer {
+        CoreAddresses::assert_diem_root(vm);
+        create_signer(addr)
+    }
+
 
     //////// 0L ////////
     fun new_escrow<Token: store>(
@@ -472,7 +491,7 @@ module DiemAccount {
         // account will not be created if this step fails.
         let new_signer = create_signer(new_account_address);
         TowerState::init_miner_state(&new_signer, challenge, solution, difficulty, security);
-        // set_slow(&new_signer);
+        Ancestry::init(sender, &new_signer);
         new_account_address
     }
 
@@ -489,6 +508,9 @@ module DiemAccount {
         Event::publish_generator(&new_signer);
         add_currencies_for_account<GAS>(&new_signer, false);
         make_account(new_signer, new_account_authkey_prefix);
+
+        let new_signer = create_signer(new_account);
+        Ancestry::init(sender, &new_signer);
 
         // if the initial coin sent is the minimum amount, don't check transfer limits.
         if (value <= BOOTSTRAP_COIN_VALUE) {
@@ -613,6 +635,10 @@ module DiemAccount {
         onboarding_gas_transfer<GAS>(sender, op_address, BOOTSTRAP_COIN_VALUE);
 
         let new_signer = create_signer(new_account_address);
+        
+        Ancestry::init(sender, &new_signer);
+        Vouch::init(&new_signer);
+        Vouch::vouch_for(sender, new_account_address);
         set_slow(&new_signer);
 
         new_account_address
@@ -724,6 +750,9 @@ module DiemAccount {
         // Transfer for operator as well
         onboarding_gas_transfer<GAS>(sender, op_address, BOOTSTRAP_COIN_VALUE);
         let new_signer = create_signer(new_account_address);
+
+        Ancestry::init(sender, &new_signer);
+        Vouch::init(&new_signer);
         set_slow(&new_signer);
         new_account_address
     }
@@ -779,7 +808,7 @@ module DiemAccount {
     }
 
     /// Record a payment of `to_deposit` from `payer` to `payee` with the attached `metadata`
-    fun deposit<Token: store>(
+    public(friend) fun deposit<Token: store>(
         payer: address,
         payee: address,
         to_deposit: Diem<Token>,
@@ -1242,14 +1271,14 @@ module DiemAccount {
         /////// 0L /////////
         // Slow wallet transfers disabled by default, enabled when epoch is 1000
         // At that point slow wallets receive 1,000 coins unlocked per day.
-        if (is_slow(sender_addr) && !DiemConfig::check_transfer_enabled() ) {
-          // if transfers are not enabled for slow wallets
-          // then the tx should fail
-            assert(
-                false, 
-                Errors::limit_exceeded(ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE)
-            );
-        };
+        // if (is_slow(sender_addr) && !DiemConfig::check_transfer_enabled() ) {
+        //   // if transfers are not enabled for slow wallets
+        //   // then the tx should fail
+        //     assert(
+        //         false, 
+        //         Errors::limit_exceeded(ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE)
+        //     );
+        // };
         // Abort if we already extracted the unique withdraw capability for this account.
         assert(
             !delegated_withdraw_capability(sender_addr),
@@ -1367,16 +1396,22 @@ module DiemAccount {
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
         
+        print(&990100);
         // Migrate on the fly if state doesn't exist on upgrade.
         if (!Wallet::is_init_comm()) {
             Wallet::init(vm);
             return
         };
+        print(&990200);
+        let all = Wallet::list_transfers(0);
+        print(&all);
 
         let v = Wallet::list_tx_by_epoch(epoch);
         let len = Vector::length<Wallet::TimedTransfer>(&v);
+        print(&len);
         let i = 0;
         while (i < len) {
+          print(&990201);
             let t: Wallet::TimedTransfer = *Vector::borrow(&v, i);
             // TODO: Is this the best way to access a struct property from 
             // outside a module?
@@ -1385,9 +1420,12 @@ module DiemAccount {
               i = i + 1;
               continue
             };
+            print(&990202);
             vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
+            print(&990203);
             Wallet::mark_processed(vm, t);
             Wallet::reset_rejection_counter(vm, payer);
+            print(&990204);
             i = i + 1;
         };
     }
@@ -3243,6 +3281,23 @@ module DiemAccount {
 
     public fun is_init(addr: address): bool {
       exists<CumulativeDeposits>(addr)
+    }
+
+    public fun migrate_cumu_deposits(vm: &signer) acquires Balance {
+      CoreAddresses::assert_vm(vm);
+      let list = Wallet::get_comm_list();
+      let i = 0;
+      while (i < Vector::length<address>(&list)) {
+        let addr = Vector::borrow(&list, i);
+        if (!exists<CumulativeDeposits>(*addr)) {
+          let sig = create_signer(*addr);
+          let current_bal = balance<GAS>(*addr);
+
+          init_cumulative_deposits(&sig, current_bal);
+        };
+        i = i + 1;
+      }
+      
     }
 
 

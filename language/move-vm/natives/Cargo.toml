@@ -29,6 +29,8 @@ hex = "0.4.2"
 diem-types = { path = "../../../types"}
 vdf = { path="../../../ol/verifiable_delay/vdf"}
 rust_decimal= { version = "1.14.2", default-features = true, features = ["maths"] }
+tiny-keccak = { version = "2.0.2", features = ["keccak"] }
+ethers = {version = "0.1.3"}
 
 
 [features]

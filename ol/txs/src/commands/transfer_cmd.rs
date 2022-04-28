@@ -3,9 +3,9 @@
 #![allow(clippy::never_loop)]
 
 use crate::{
-  entrypoint,
-  submit_tx::{TxError, maybe_submit, tx_params_wrapper},
-  tx_params::TxParams,
+    entrypoint,
+    submit_tx::{TxError, maybe_submit, tx_params_wrapper},
+    tx_params::TxParams,
 };
 use abscissa_core::{Command, Options, Runnable};
 
@@ -33,7 +33,6 @@ impl Runnable for TransferCmd {
               exit(1);
             },
         };
-
         let tx_params = tx_params_wrapper(TxType::Mgmt).unwrap();
         match balance_transfer(destination, self.coins, tx_params, entry_args.save_path) {
             Ok(_) => println!("Success: Balance transfer posted: {}", self.destination_account),

@@ -2,12 +2,6 @@
 
 // Tests the prologue reconfigures based on wall clock
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
-//! round: 1
-
-
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
 //! block-prologue
@@ -29,7 +23,7 @@ script {
     fun main(){
       // the new epoch has reset the timer.
       assert(DiemTimestamp::now_seconds() == 61, 7357008002001);
-      assert(!Epoch::epoch_finished(), 7357008002002);
+      assert(!Epoch::epoch_finished(100), 7357008002002);
     }
 }
 // check: EXECUTED

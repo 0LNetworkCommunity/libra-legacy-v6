@@ -141,10 +141,11 @@ fn main() -> Result<()> {
             } else {
                 bail!("Unexpected transaction payload: {:?}", transaction_payload);
             };
+            let this_version = debugger.get_latest_version()?;
             println!(
                 "{:?}",
                 debugger.execute_writeset_at_version(
-                    version,
+                    this_version,
                     &writeset_payload,
                     opt.save_write_sets
                 )?

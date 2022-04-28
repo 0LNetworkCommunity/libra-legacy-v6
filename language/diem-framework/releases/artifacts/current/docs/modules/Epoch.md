@@ -22,6 +22,7 @@ epoch change operations (e.g. updating the validator set)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
@@ -114,7 +115,7 @@ Check to see if epoch is finished
 Simply checks if the elapsed time is greater than the epoch time
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_epoch_finished">epoch_finished</a>(): bool
+<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_epoch_finished">epoch_finished</a>(height_now: u64): bool
 </code></pre>
 
 
@@ -123,10 +124,28 @@ Simply checks if the elapsed time is greater than the epoch time
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_epoch_finished">epoch_finished</a>(): bool <b>acquires</b> <a href="Epoch.md#0x1_Epoch_Timer">Timer</a> {
-    <b>let</b> epoch_secs = <a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>();
+<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_epoch_finished">epoch_finished</a>(height_now: u64): bool <b>acquires</b> <a href="Epoch.md#0x1_Epoch_Timer">Timer</a> {
     <b>let</b> time = borrow_global&lt;<a href="Epoch.md#0x1_Epoch_Timer">Timer</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
-    <a href="DiemTimestamp.md#0x1_DiemTimestamp_now_seconds">DiemTimestamp::now_seconds</a>() &gt; (epoch_secs + time.seconds_start)
+
+    // we target 24hrs for block production.
+    // there are failure cases when there is a halt, and nodes have been offline for all of the 24hrs, producing a new epoch upon restart leads <b>to</b> further failures. So we check that a meaninful amount of blocks have been created too.
+    print(&444444444444444);
+    print(&height_now);
+    print(&time.height_start);
+    <b>let</b> enough_blocks = height_now &gt; (time.height_start + <a href="Globals.md#0x1_Globals_get_min_blocks_epoch">Globals::get_min_blocks_epoch</a>());
+
+    print(&enough_blocks);
+
+    <b>let</b> time_now = <a href="DiemTimestamp.md#0x1_DiemTimestamp_now_seconds">DiemTimestamp::now_seconds</a>();
+    <b>let</b> len = <a href="Globals.md#0x1_Globals_get_epoch_length">Globals::get_epoch_length</a>();
+    print(&time_now);
+
+    <b>let</b> enough_time = (time_now &gt; (time.seconds_start + len));
+
+    print(&enough_time);
+
+    (enough_blocks && enough_time)
+
 }
 </code></pre>
 
