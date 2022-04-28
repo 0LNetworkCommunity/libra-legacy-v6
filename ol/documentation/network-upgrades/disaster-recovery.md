@@ -1,32 +1,76 @@
-# Plan B  - Manual Overrides to State
+# Manual Overrides to State
 
-This is the (WIP) documentation on how to rescue a stuck network. 
-This entails a subset of validators to apply manual transactions to the DB
-to: 1) change the validator set, in case validators are unresponsive. 2) update the stdlib Move code.
+How to rescue a halted network.
+
+When a network halts for any reason there may be two solutions:
+1) change the validator set, in case validators are unresponsive.
+2) update the stdlib Move code.
+
+Both solutions require that the validators (or subset of validators) to apply manual transactions to the DB, and then restart.
+
 These instructions assume the database is at rest, and diem-node is not running.
 
-These insructions assumes you are building binaries from /libra source.
+These instructions assumes you are building binaries from /libra source.
 
 The CLI Tools you will use:
-`db-restore`: The `backup-cli` tool to take archived snapshots and restore a database.
-`diem-transaction-replay`: To inspect state of the DB.
-`diem-writeset-generator`: Create transaction binaries, and save the files. Those file will be applied to db at a later step.
-`db-boostrapper`: a tool typically to create genesis files, can be used to apply writesets to a database at rest (halted network).
+ - `db-restore`: The `backup-cli` tool to take archived snapshots and restore a database. We provide wrappers to those tools in: https://github.com/OLSF/epoch-archive
 
+- `diem-transaction-replay`: To inspect state of the DB.
+- `diem-writeset-generator`: Create transaction binaries, and save the files. Those file will be applied to db at a later step.
+- `db-boostrapper`: a tool used to apply writesets to a database at rest (halted network). Usually this is for "genesis"
+
+
+## Gotchas
+
+1. A database must NOT be at the epoch's last block (at reconfiguration time).
+There is a check in the Move code (DiemConfig::reconfigure_) which deduplicates NewEpochEvents being emitted. If the last_reconfiguration timestamp is EQUAL to current DiemTimestamp, then a new epoch event will not be emitted.
+What this means: your DB (or backup) must not be at the last block of the epoch. This is an issue with the epoch archive backups, which are taken of the last epoch's block.
+You will see an error by the db-bootsrapper saying `Writeset did not emit new epoch event`, and the writeset will fail to be confirmed.
+
+Solution: Use a backup or snapshot not at the epoch boundary. Or do a coodinated halt, see #3 below.
+
+TODO: the backup flow or Move code need to be changes so that people.
+
+2. You are starting from the Stdlib that is in the database, not whats in source.
+If there's a change to the stdlib that is needed to get the network unstuck, you'll need to apply two recovery steps. The first will update the stdlib with new source. And then the second would apply the changes by executing functions that are in that new stdlib.
+
+To be clear, you CANNOT bundle a stdlib upgrade writset, with another transaction that depends on the new stdlib.
+
+Note that the issue #1 above still applies. The second writeset, will likely find a database that is at last_reconfiguration timestamp is EQUAL to current DiemTimestamp. 
+
+Solution: So you'll need to run the database for a while (at least one block) and halt the network again to apply the second step.
+
+3. All nodes must be at exactly the same block.
+Databases that are at different blockheights will yield different state, and consensus is not possible
+
+Being in sync is easy to do if all nodes are starting from one backup file. But in a running system there may be nodes that are at different blockheights.
+
+Solution: Run nodes with validator.node.yaml with `sync_only: true`, until all nodes in the recovery validator are at the same block. The way to see this in the logs is that the `timeout` block is at the same number.
+
+4. There may be other nodes in the network trying to connect to the recovery nodes.
+This will create side-effects, and unexpected errors. So the nodes in the recovery validator set need to have a private network. 
+
+Solution: This can be achieved by creating a validator.node.yaml file, which has 1) no fullnode network connections. 2) in validator network `discovery_service: none`, and 3) in the validator network settings `seeds` need to contain all the networking information of all nodes.
+
+5. The new epochs on the restored network will be discontinuous.
+Nodes that were previously on the network will not be able to automatically sync to recovery nodes. They will see an `epochChangeProof certificate is not valid`. This is because the previous epoch validators did not "sign off" on the epoch transition.
+
+Solution: fullnodes, validators, etc. that join the network after recovery will need to do so with a `db-restore` operation. Either using `ol restore` or otherwise with instructions `https://github.com/OLSF/epoch-archive`
 ##  Cheatsheet
 
 
 ```
-// checkout source
-git checkout rescue-mission -f
+// Starting from a reference db
+tar -xv backup.tar.gz ~/.0L/db
+
+// or use a state snapshot
+ol restore -e <epoch> -v <version>
 
 // go to transaction generator Makefile
 cd libra/language/diem-tools/writeset-transaction-generator
 
-// Starting from a reference db
-tar -xv db-reference.tar.gz ~/.0L/db
 
-// Export the list of validators ADDRESS that will be leading the mission
+// Export the list of validators ADDRESS that will be leading the recovery
 
 export VALS = <alice> <bob> <carol>
 
@@ -46,14 +90,12 @@ make init
 make start
 ```
 
-
-
-## Creating a Forked DB
+# Get a DB
 1. Take a known good state snapshot (Snapshot A)
 
-```
-https://home.gouin.io:5443/0L.167.tar.xz - Provided by Gnudrew)
-```
+Either from https://github.com/OLSF/epoch-archive, or from a tar.gz file of someone's database.
+
+Note: the DB should not be at the epoch boundary block.
 
 2. Export the 0x0 state to file for easy viewing
 
@@ -63,40 +105,42 @@ cargo r -p diem-transaction-replay -- --db ~/.0L/db annotate-account 00000000000
 sha256sum ~/.0L/dump-a
 ```
 
-4. Start a node as fullnode
 
-You'll need to get 100+ new blocks before a new timestamp is committed.
+3. You are ready to create the writeset transaction that is needed.
+NOTE: as above, if you need changes to the stdlib, your first writeset and recovery need to be of the stdlib. To be clear, you CANNOT bundle a stdlib upgrade writset, with another transaction that depends on the new stdlib.
 
-Epoch snapshots have a timestamp time equal to the time of "the last reconfiguration". New reconfigurations will not run in those cases. We need to advance the timestamp to make that work.
+# Creating a Writeset Transaction File
 
-
-3. Turn off node once it has advanced and export snapshot.
-
+The tool `diem-writeset-generator` creates files (e.g. rescue.blob) which can be intepreted by the `db-boostrapper`. That file contains "writesets" which are state transitions to the database.
+### stdlib update:
+After making changes and compiling your Move code, the following writset can be created to update all the system contracts, and issue a reconfiguration event.
 ```
-cargo r -p diem-transaction-replay -- --db ~/.0L/db annotate-account 00000000000000000000000000000000 > ~/.0L/dump-b
+make tx-stdlib
 
-sha256sum ~/.0L/dump-b
+// or 
+cargo r -p diem-writeset-generator -- --db ~/.0L/db --output ~/.0L/restore/rescue.blob update-stdlib 
 ```
-
-4. Create the writeset transaction which bulk updates validators.
-This only creates the binary representation of a transaction to apply
 
 ###  Update validators
 
 ```
-cargo r -p diem-writeset-generator -- --output ~/.0L/restore/rescue.blob update-validators ECAF65ADD1B785B0495E3099F4045EC0 46A7A744B5D33C47F6B20766F8088B10 7EC16859C24200D8E074809D252AC740
+// set the vals of the new set
+export VALS = ECAF65ADD1B785B0495E3099F4045EC0 46A7A744B5D33C47F6B20766F8088B10 7EC16859C24200D8E074809D252AC740
+make tx-vals
+
+// or 
+cargo r -p diem-writeset-generator -- --output ~/.0L/restore/rescue.blob update-validators $VALS
 ```
 
 ###  Remove validators
 
 ```
-cargo r -p diem-writeset-generator -- --output ~/.0L/restore/rescue.blob remove-validators 304A03C0B4ACDFDCE54BFAF39D4E0448
-```
+// set the vals to remove
+export VALS = ECAF65ADD1B785B0495E3099F4045EC0 46A7A744B5D33C47F6B20766F8088B10 7EC16859C24200D8E074809D252AC740
+make tx-remove
 
-### stdlib update:
-After making changes and compiling your Move code, the following writset can be created to update all the system contracts, and issue a reconfiguration event.
-```
-cargo r -p diem-writeset-generator -- --db ~/.0L/db --output ~/.0L/restore/rescue.blob update-stdlib 
+// or
+cargo r -p diem-writeset-generator -- --output ~/.0L/restore/rescue.blob remove-validators 304A03C0B4ACDFDCE54BFAF39D4E0448
 ```
 
 ### rescue mission:
@@ -105,11 +149,17 @@ A combined Stdlib update and change of validator set. This dispenses with an int
 Node the `--db` field
 
 ```
+export VALS = ECAF65ADD1B785B0495E3099F4045EC0 46A7A744B5D33C47F6B20766F8088B10 7EC16859C24200D8E074809D252AC740
+
+make tx-recue
+// or
 cargo r -p diem-writeset-generator -- --db ~/.0L/db --output ~/.0L/restore/rescue.blob rescue ECAF65ADD1B785B0495E3099F4045EC0 46A7A744B5D33C47F6B20766F8088B10 7EC16859C24200D8E074809D252AC740 
 ```
 
 
 ## Devs: Emit a Reconfiguration Event New Epoch Event
+
+TODO: this is WIP it's not known to produce a DB in a usable state.
 
 All writesets that `db-bootstrapper` will apply must have a reconfiguraion event. 
 This is a no-op to test that the writeset generator can create a writeset that simply issues a reconfiguration event.
@@ -118,28 +168,42 @@ cargo r -p diem-writeset-generator -- --output ~/.0L/restore/rescue.blob reconfi
 
 ```
 
+# Apply the Writeset to DB
 
 
-5. A. boostrapper: Use `db-bootstrapper` to check that the writeset can be applied.
+## check the DB can accept the writeset
+A. boostrapper: Use `db-bootstrapper` to check that the writeset can be applied.
 
 Apply the writeset to the database. You should see a new genesis waypoint printed if successful. Note this wa
 
 ```
+make check
+
+// or
 cargo r -p db-bootstrapper -- ~/.0L/db/ --genesis-txn-file ~/.0L/restore/rescue.blob
 ```
 NOTE THE `<WAYPOINT>` displayed
 
-5. B. boostrapper: Commit the writeset using `db-bootstrapper`.
+### Troubleshooting:
+You may see two kinds of errors
+1) The `writset failed to emit epoch change event`. Meaning that the writset did not trigger DiemConfig::reconfigure_ when all writesets applied to a db at rest must create a new epoch. Check the Move code of the writeset you are applying.
+
+2) The `writset failed to bump epoch`. Similar to above, the new writset also needs to advance to a new epoch number. In this case, an epoch event WAS detected, but it did not have the expected outcome of increasing the epoch height. Likely because the epoch event height emitted, was the same as a writeset previously applied.
+# Commit the writeset
+
+Commit the writeset using `db-bootstrapper`.
 
 Apply the writeset to the database. You should see a new genesis waypoint printed if successful. Note this waypoint
 
 ```
+make commit
+// or
 cargo r -p db-bootstrapper -- ~/.0L/db/ --genesis-txn-file ~/.0L/restore/rescue.blob --commit --waypoint-to-verify <WAYPOINT>
 ```
 
 
 
-6. Check the writeset was applied by inspecting the DB with transaction replay
+### Check the writeset was applied by inspecting the DB with transaction replay
 
 ```
 cargo r -p diem-transaction-replay -- --db ~/.0L/db annotate-account 00000000000000000000000000000000 > ~/.0L/dump-c
@@ -147,22 +211,14 @@ shas256sum ~/.0L/dump-c
 git diff ~/.0L/dump-b ~/.0L/dump-c
 ```
 
-## From here either all validators apply steps 1-5, or a second snapshot is created and circulated.
+# Starting Up again
 
-6. Create a new snapshot (Snapshot B)
-Using DB backup snapshot the new "lab grown" database.
-
-7. Share the new snapshot.
-
-
-## Starting Up again
-
-8. Create a temporary validator.node.yaml file
+## Create a temporary validator.node.yaml file
 - Remove the fullnode networks fields.
 - Change `validator_network.service_discovery`: to `none`
 - Add `seeds` peer information for the nodes participating in rescue in `validator_network.seeds`.
 
-9. reinitialize key-store.json
+## reinitialize key-store.json
 
 Two things need to be changed in key-store: 1) clear the safety rules and 2) set new waypoint
 

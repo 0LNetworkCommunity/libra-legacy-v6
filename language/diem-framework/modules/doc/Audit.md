@@ -10,6 +10,7 @@
 
 
 <pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
@@ -35,6 +36,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Audit.md#0x1_Audit_val_audit_passing">val_audit_passing</a>(val: address): bool {
+  print(&11111);
   // has valid configs
   <b>if</b> (!<a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(val)) <b>return</b> <b>false</b>;
   // has operator account set <b>to</b> another address
@@ -43,13 +45,22 @@
   // operator account has balance
   // <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(oper) &lt; 50000 && !<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) <b>return</b> <b>false</b>;
   // has autopay enabled
-  <b>if</b> (!<a href="AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(val)) <b>return</b> <b>false</b>;
+  print(&111110001);
+
+  // <b>if</b> (!<a href="AutoPay.md#0x1_AutoPay_is_enabled">AutoPay::is_enabled</a>(val)) <b>return</b> <b>false</b>;
+
+        print(&111110002);
+
   // has mining state
   <b>if</b> (!<a href="TowerState.md#0x1_TowerState_is_init">TowerState::is_init</a>(val)) <b>return</b> <b>false</b>;
+        print(&111110003);
+
   // is a slow wallet
   <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(val)) <b>return</b> <b>false</b>;
+  print(&111110004);
 
   <b>if</b> (!<a href="Vouch.md#0x1_Vouch_unrelated_buddies_above_thresh">Vouch::unrelated_buddies_above_thresh</a>(val)) <b>return</b> <b>false</b>;
+  print(&111110005);
 
   <b>true</b>
 }

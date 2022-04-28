@@ -62,3 +62,6 @@ key_store.json
 .vscode/
 
 *.swp
+
+# prevent mv files from being committed
+*.mv

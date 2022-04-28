@@ -5293,6 +5293,7 @@ a reconfiguration of the system.
 -  [`0x1::PaymentScripts`](script_documentation.md#0x1_PaymentScripts)
 -  [`0x1::Receipts`](../../../../../releases/artifacts/current/docs/modules/Receipts.md#0x1_Receipts)
 -  [`0x1::RecoveryAddress`](../../../../../releases/artifacts/current/docs/modules/RecoveryAddress.md#0x1_RecoveryAddress)
+-  [`0x1::RecoveryMode`](../../../../../releases/artifacts/current/docs/modules/RecoveryMode.md#0x1_RecoveryMode)
 -  [`0x1::RegisteredCurrencies`](../../../../../releases/artifacts/current/docs/modules/RegisteredCurrencies.md#0x1_RegisteredCurrencies)
 -  [`0x1::Roles`](../../../../../releases/artifacts/current/docs/modules/Roles.md#0x1_Roles)
 -  [`0x1::SharedEd25519PublicKey`](../../../../../releases/artifacts/current/docs/modules/SharedEd25519PublicKey.md#0x1_SharedEd25519PublicKey)
