@@ -182,6 +182,10 @@ struct BlockCommand {
 
     #[structopt(long = "time")]
     time: u64,
+
+    /////// 0L /////////
+    #[structopt(long = "round")]
+    round: u64,
 }
 
 /// Custom commands for the Diem transactional test flow.
@@ -1225,8 +1229,10 @@ impl<'a> MoveTestAdapter<'a> for DiemTestAdapter<'a> {
         match input.command {
             DiemSubCommand::BlockCommand(block_cmd) => {
                 let proposer = self.compiled_state().resolve_address(&block_cmd.proposer);
+                
+                /////// 0L /////////
                 let metadata =
-                    BlockMetadata::new(HashValue::zero(), 0, block_cmd.time, vec![], proposer);
+                    BlockMetadata::new(HashValue::zero(), block_cmd.round, block_cmd.time, vec![], proposer);
 
                 let output = self.run_transaction(Transaction::BlockMetadata(metadata))?;
 
