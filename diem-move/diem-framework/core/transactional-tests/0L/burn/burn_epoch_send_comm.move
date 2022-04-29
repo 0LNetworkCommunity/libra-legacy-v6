@@ -45,7 +45,6 @@ script {
 }
 //check: EXECUTED
 
-
 //# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::Wallet;
@@ -99,8 +98,7 @@ script {
 
 //////////////////////////////////////////////
 //// Trigger reconfiguration at 61 seconds ////
-//# block --proposer Alice --time 61000000
-  // todo: how to add "round 15" param, and is it needed?
+//# block --proposer Alice --time 61000000 --round 15
 
 ////// TEST RECONFIGURATION IS HAPPENING /////
 // check: NewEpochEvent

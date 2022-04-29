@@ -1,6 +1,6 @@
 processed 9 tasks
 
-task 3 'block'. lines 55-56:
+task 3 'block'. lines 55-55:
 Events:
 {
     key:     010000000000000006505ccd81e562b524d8f656abd92a15
@@ -18,16 +18,16 @@ Events:
     key:     0c0000000000000000000000000000000000000000000000
     seq_num: 0
     type:    0x1::DiemBlock::NewBlockEvent
-    data:    "0000000000000000de589ec6b85a4a1a58be166c38551cc200c005d90100000000"
+    data:    "1700000000000000de589ec6b85a4a1a58be166c38551cc200c005d90100000000"
 }
 
-task 5 'block'. lines 74-80:
+task 5 'block'. lines 73-78:
 Events:
 {
     key:     0c0000000000000000000000000000000000000000000000
     seq_num: 1
     type:    0x1::DiemBlock::NewBlockEvent
-    data:    "0000000000000000de589ec6b85a4a1a58be166c38551cc20040c9a20300000000"
+    data:    "4100000000000000de589ec6b85a4a1a58be166c38551cc20040c9a20300000000"
 }
 {
     key:     040000000000000000000000000000000000000000000000
@@ -36,7 +36,7 @@ Events:
     data:    "0200000000000000"
 }
 
-task 6 'block'. lines 81-87:
+task 6 'block'. lines 79-84:
 Events:
 {
     key:     010000000000000006505ccd81e562b524d8f656abd92a15
@@ -54,14 +54,14 @@ Events:
     key:     0c0000000000000000000000000000000000000000000000
     seq_num: 2
     type:    0x1::DiemBlock::NewBlockEvent
-    data:    "0000000000000000de589ec6b85a4a1a58be166c38551cc20000cf7b0500000000"
+    data:    "4200000000000000de589ec6b85a4a1a58be166c38551cc20000cf7b0500000000"
 }
 
-task 7 'block'. lines 88-89:
+task 7 'block'. lines 85-85:
 Events:
 {
     key:     0c0000000000000000000000000000000000000000000000
     seq_num: 3
     type:    0x1::DiemBlock::NewBlockEvent
-    data:    "0000000000000000de589ec6b85a4a1a58be166c38551cc20040118b0500000000"
+    data:    "4300000000000000de589ec6b85a4a1a58be166c38551cc20040118b0500000000"
 }

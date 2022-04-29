@@ -52,8 +52,7 @@ script {
 ///// Trigger Autopay Tick at 31 secs /////
 ///// i.e. 1 second after 1/2 epoch   /////
 ///////////////////////////////////////////////////
-//# block --proposer Bob --time 31000000
-  // todo: how to add "round 23" param, and is it needed?
+//# block --proposer Bob --time 31000000 --round 23
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -71,22 +70,19 @@ script {
 ///// Trigger Autopay Tick at 31 secs /////
 ///// i.e. 1 second after 1/2 epoch   /////
 ///////////////////////////////////////////////////
-//# block --proposer Bob --time 61000000
-  // todo: how to add "round 65" param, and is it needed?
+//# block --proposer Bob --time 61000000 --round 65
 
 ///////////////////////////////////////////////////
 ///// Trigger Autopay Tick at 31 secs /////
 ///// i.e. 1 second after 1/2 epoch   /////
 ///////////////////////////////////////////////////
-//# block --proposer Bob --time 92000000
-  // todo: how to add "round 66" param, and is it needed?
+//# block --proposer Bob --time 92000000 --round 66
 
 ///////////////////////////////////////////////////
 ///// Trigger Autopay Tick at 31 secs /////
 ///// i.e. 1 second after 1/2 epoch   /////
 ///////////////////////////////////////////////////
-//# block --proposer Bob --time 93000000
-  // todo: how to add "round 67" param, and is it needed?  
+//# block --proposer Bob --time 93000000 --round 67
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
