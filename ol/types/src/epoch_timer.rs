@@ -75,5 +75,5 @@ pub fn test_changeset() {
       height_start: 2,
       seconds_start: 3,
   };
-  let c = e.to_writeset().unwrap();
+  e.to_writeset().unwrap();
 }
