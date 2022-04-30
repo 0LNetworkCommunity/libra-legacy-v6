@@ -69,10 +69,10 @@ diem-crypto = { path = "../../crypto/crypto" }
 
 
 # Parity with Storage create
-[dependencies.rocksdb]
-version = "0.15.0"
-default-features = false
-features = ["lz4"]
+# [dependencies.rocksdb]
+# version = "0.15.0"
+# default-features = false
+# features = ["lz4"]
 
 [dependencies.abscissa_core]
 version = "0.5.2"
