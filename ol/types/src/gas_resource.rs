@@ -1,7 +1,5 @@
-// Copyright (c) The Diem Core Contributors
-// SPDX-License-Identifier: Apache-2.0
+//! GAS resource struct for parsing chain state
 
-// use crate::access_path::AccessPath;
 use diem_types::{
     access_path::AccessPath,
     account_config::{
@@ -23,6 +21,8 @@ use serde::{Deserialize, Serialize};
 /// The balance resource held under an account.
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
+
+/// The GAS coin resource
 pub struct GasResource {
   pub value: u64,
 }
@@ -35,8 +35,8 @@ impl GasResource {
     pub fn value(&self) -> u64 {
         self.value
     }
-
-    // TODO/XXX: remove this once the MoveResource trait allows type arguments to `struct_tag`.
+    
+    ///
     pub fn struct_tag() -> StructTag {
         StructTag {
           address: CORE_CODE_ADDRESS,
@@ -46,7 +46,7 @@ impl GasResource {
       }
     }
 
-    // TODO: remove this once the MoveResource trait allows type arguments to `resource_path`.
+    ///
     pub fn access_path_for() -> Vec<u8> {
         AccessPath::resource_access_vec(GasResource::struct_tag())
     }
