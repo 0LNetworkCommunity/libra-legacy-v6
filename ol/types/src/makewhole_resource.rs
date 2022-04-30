@@ -2,12 +2,12 @@
 //! 
 use diem_types::{
     access_path::AccessPath,
-    account_config::constants::{xus_tag, ACCOUNT_MODULE_IDENTIFIER, CORE_CODE_ADDRESS},
+    account_config::constants::CORE_CODE_ADDRESS,
 };
 use move_core_types::{
     ident_str,
     identifier::IdentStr,
-    language_storage::{StructTag, TypeTag},
+    language_storage::StructTag,
     move_resource::{MoveResource, MoveStructType},
 };
 // #[cfg(any(test, feature = "fuzzing"))]

@@ -3,8 +3,7 @@
 use diem_types::{
     access_path::AccessPath,
     account_config::{
-        self,
-        constants::{xus_tag, ACCOUNT_MODULE_IDENTIFIER, CORE_CODE_ADDRESS},
+        constants::{xus_tag, CORE_CODE_ADDRESS},
         DIEM_MODULE_IDENTIFIER,
     },
 };
@@ -24,18 +23,21 @@ use serde::{Deserialize, Serialize};
 
 /// The GAS coin resource
 pub struct GasResource {
+  ///
   pub value: u64,
 }
 
 impl GasResource {
+    ///
     pub fn new(value: u64) -> Self {
         Self { value }
     }
 
+    ///
     pub fn value(&self) -> u64 {
         self.value
     }
-    
+
     ///
     pub fn struct_tag() -> StructTag {
         StructTag {

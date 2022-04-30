@@ -226,7 +226,7 @@ fn create_fixtures() {
         configs_fixture.workspace.block_dir = save_to.clone();
 
         // mine to save_to path
-        write_genesis(&configs_fixture);
+        write_genesis(&configs_fixture).unwrap();
 
         // also create mnemonic
         let mut mnemonic_path = PathBuf::from(save_to.clone());
@@ -270,7 +270,7 @@ fn test_mine_once() {
         security: Some(2048),
     };
 
-    write_json(&fixture_block, &configs_fixture.get_block_dir());
+    write_json(&fixture_block, &configs_fixture.get_block_dir()).unwrap();
     mine_once(&configs_fixture).unwrap();
     // confirm this file was written to disk.
     let block_file = fs::read_to_string("./test_blocks_temp_2/proof_1.json")
@@ -301,7 +301,7 @@ fn test_mine_genesis() {
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 
     // mine
-    write_genesis(&configs_fixture);
+    write_genesis(&configs_fixture).unwrap();
     // read file
     let block_file =
         // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("proof_0.json"));
