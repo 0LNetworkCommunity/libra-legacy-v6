@@ -502,7 +502,8 @@ impl RoundManager {
         self.network.broadcast(timeout_vote_msg).await;
         warn!( //////// 0L ////////
             round = round,
-            remote_peer = self.proposer_election.get_valid_proposer(round),
+            current_proposer = self.proposer_election.get_valid_proposer(round),
+            next_proposer = self.proposer_election.get_valid_proposer(round + 1),
             voted = use_last_vote,
             event = LogEvent::Timeout,
         );
@@ -563,7 +564,13 @@ impl RoundManager {
         let recipients = self
             .proposer_election
             .get_valid_proposer(proposal_round + 1);
+        
         debug!(self.new_log(LogEvent::Vote).remote_peer(author), "{}", vote);
+
+        debug!(
+          current_proposer = self.proposer_election.get_valid_proposer(proposal_round),
+          next_proposer = self.proposer_election.get_valid_proposer(proposal_round + 1)
+        );
 
         self.round_state.record_vote(vote.clone());
         let vote_msg = VoteMsg::new(vote, self.block_store.sync_info());
