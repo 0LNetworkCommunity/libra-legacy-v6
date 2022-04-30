@@ -13,14 +13,10 @@ use move_core_types::{
     language_storage::{StructTag, TypeTag},
     move_resource::{MoveResource, MoveStructType},
 };
-#[cfg(any(test, feature = "fuzzing"))]
-use proptest_derive::Arbitrary;
 use serde::{Deserialize, Serialize};
 
 /// The balance resource held under an account.
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
-
 /// The GAS coin resource
 pub struct GasResource {
   ///

@@ -10,15 +10,13 @@ use move_core_types::{
     language_storage::StructTag,
     move_resource::{MoveResource, MoveStructType},
 };
-// #[cfg(any(test, feature = "fuzzing"))]
-// use proptest_derive::Arbitrary;
+
 use serde::{Deserialize, Serialize};
 
 use crate::gas_resource::GasResource;
 
 /// The balance resource held under an account.
 #[derive(Debug, Serialize, Deserialize)]
-#[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
 pub struct MakeWholeResource {
   ///
     pub credits: Vec<CreditResource>,
@@ -26,8 +24,6 @@ pub struct MakeWholeResource {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-// #[cfg_attr(any(test, feature = "fuzzing"), derive(Arbitrary))]
-
 /// the makewhole credit resource
 pub struct CreditResource {
   ///
