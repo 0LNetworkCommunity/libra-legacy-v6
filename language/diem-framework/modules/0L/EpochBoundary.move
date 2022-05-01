@@ -171,7 +171,7 @@ module EpochBoundary {
         };
 
         let len_proven_nodes = Vector::length(&proven_nodes);
-        let max_unproven_nodes = len_proven_nodes / 3;
+        let max_unproven_nodes = len_proven_nodes / 6;
         print(&max_unproven_nodes);
         // start from the proven nodes
         let proposed_set = proven_nodes;
