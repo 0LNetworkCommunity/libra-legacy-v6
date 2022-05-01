@@ -15,17 +15,17 @@ seeds='''
   addresses:
     - "/ip4/65.108.73.53/tcp/6180/ln-noise-ik/33ed842980f68a0a78d2d5d240b062c8cae59ebf58b25fa07022fd93133c457a/ln-handshake/0"
   role: "Validator"
+7EC16859C24200D8E074809D252AC740:
+  addresses:
+    - "/ip4/35.231.138.89/tcp/6180/ln-noise-ik/987f636ef651abc3bc0ad1a33ef2e5841768fde064971333059d84442bb3d576/ln-handshake/0"
+  role: "Validator"
 46A7A744B5D33C47F6B20766F8088B10:
   addresses:
-    - ""
+    - "/ip4/35.192.123.205/tcp/6180/ln-noise-ik/da9ea456e1d9f45810669ecfcdb9f75a4d828a7e7a97f68014f47d789972a710/ln-handshake/0"
   role: "Validator"
-46A7A744B5D33C47F6B20766F8088B10 --- OD2:
+ECAF65ADD1B785B0495E3099F4045EC0:
   addresses:
-    - ""
-  role: "Validator"
-46A7A744B5D33C47F6B20766F8088B10 --- OD3:
-  addresses:
-    - ""
+    - "/ip4/34.145.88.77/tcp/6180/ln-noise-ik/14680097d0ae4d37158ade5c90da4ce43b13c5dbeb918016f0cc8e9830f54f33/ln-handshake/0"
   role: "Validator"
 E264023342B41ACCDBB61A190B6CB2A7:
   addresses:
