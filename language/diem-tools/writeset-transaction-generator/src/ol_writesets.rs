@@ -109,7 +109,7 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>, recove
     let stdlib_cs = stdlib::ol_fresh_stlib_changeset(path.clone()).unwrap();
 
     // set recovery mode
-    let recovery =
+    let _recovery =
         stdlib::ol_set_epoch_recovery_mode(path.clone(), vec![], recovery_epoch).unwrap();
 
     // TODO: forcing the boundary causes an error on the epoch boundary.
@@ -118,7 +118,7 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>, recove
 
 
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
-    let new_cs = merge_vec_changeset(vec![stdlib_cs, recovery, boundary]).unwrap();
+    let new_cs = merge_vec_changeset(vec![stdlib_cs, boundary]).unwrap();
     // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
     WriteSetPayload::Direct(new_cs)
 }
