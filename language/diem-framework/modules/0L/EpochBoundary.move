@@ -180,6 +180,10 @@ module EpochBoundary {
         let top_accounts = NodeWeight::top_n_accounts(
             vm, Globals::get_max_validators_per_set()
         );
+
+        // we also need to explicitly filter those which did not do work.
+        let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
+
         print(&top_accounts);
         // let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
         // find the top unproven nodes and add to the proposed set
@@ -196,6 +200,8 @@ module EpochBoundary {
             if (
                 // ignore those already on list
                 !Vector::contains<address>(&proposed_set, &addr) &&
+                // jail the current validators which did not perform.
+                !Vector::contains<address>(&jailed_set, &addr) &&
                 // check the unproven node has done a minimum of work
                 mined_last_epoch &&
                 Audit::val_audit_passing(addr)
