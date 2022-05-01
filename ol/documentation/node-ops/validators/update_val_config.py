@@ -11,9 +11,9 @@ with open("validator.node.yaml", "r") as f:
 yin["validator_network"]["discovery_method"]="none"
 
 seeds='''
-D1281DE242839FC939745996882C5FC2:
+4B08C148F5E80962BE1E5755F0D2ED29:
   addresses:
-    - "/ip4/172.31.11.23/tcp/6180/ln-noise-ik/0a3cab5f2ecb29bdb4a9efe1dd4576feacefe4ec74ab7ef65d472bbb4461804d/ln-handshake/0"
+    - "/ip4/65.108.73.53/tcp/6180/ln-noise-ik/33ed842980f68a0a78d2d5d240b062c8cae59ebf58b25fa07022fd93133c457a/ln-handshake/0"
   role: "Validator"
 46A7A744B5D33C47F6B20766F8088B10:
   addresses:
