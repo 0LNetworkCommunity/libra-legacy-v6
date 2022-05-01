@@ -24,17 +24,9 @@ address 0x1 {
       let oper = ValidatorConfig::get_operator(val);
       if (oper == val) return false;
       // operator account has balance
-      // if (DiemAccount::balance<GAS>(oper) < 50000 && !Testnet::is_testnet()) return false;
-      // has autopay enabled
-      print(&111110001);
-
-      // if (!AutoPay::is_enabled(val)) return false;
-
-            print(&111110002);
-
       // has mining state
       if (!TowerState::is_init(val)) return false;
-            print(&111110003);
+      print(&111110003);
 
       // is a slow wallet
       if (!DiemAccount::is_slow(val)) return false;

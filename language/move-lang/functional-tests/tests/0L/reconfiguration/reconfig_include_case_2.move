@@ -58,11 +58,11 @@ script {
     fun main(vm: signer) {
         let voters = Vector::singleton<address>(@{{alice}});
         Vector::push_back<address>(&mut voters, @{{bob}});
-        // Vector::push_back<address>(&mut voters, @{{carol}});
-        // Vector::push_back<address>(&mut voters, @{{dave}});
+        Vector::push_back<address>(&mut voters, @{{carol}});
+        Vector::push_back<address>(&mut voters, @{{dave}});
         // Skip Eve.
         // Vector::push_back<address>(&mut voters, @{{eve}});
-        // Vector::push_back<address>(&mut voters, @{{frank}});
+        Vector::push_back<address>(&mut voters, @{{frank}});
 
         let i = 1;
         while (i < 15) {
@@ -101,7 +101,7 @@ script {
         assert(DiemConfig::get_current_epoch() == 2, 7357008005005);
         print(&DiemSystem::validator_set_size());
         // Tests on initial size of validators
-        assert(DiemSystem::validator_set_size() == 6, 7357008005006);
+        assert(DiemSystem::validator_set_size() == 5, 7357008005006);
     }
 }
 //check: EXECUTED

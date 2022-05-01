@@ -130,6 +130,8 @@ module EpochBoundary {
     }
 
     fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> {
+        print(&99999999999999);
+
         // Propose upcoming validator set:
         // Get validators we know to be in consensus correctly: Case1 and Case2
         // Only expand the amount of seats so that the new set has a max of 25% unproven nodes. I.e. nodes that were not in the previous epoch and we have stats on.
@@ -158,7 +160,9 @@ module EpochBoundary {
             // let mined_last_epoch = TowerState::node_above_thresh(addr);
             // TODO: temporary until jailing is enabled.
             if (
+              // TODO: We should include CASE 2
               (case == 1 || case == 2) &&
+              // case == 1 &&
               Audit::val_audit_passing(addr)
             ) {
                 Vector::push_back(&mut proven_nodes, addr);
@@ -166,8 +170,9 @@ module EpochBoundary {
             i = i+ 1;
         };
 
-        let max_unproven_nodes = Vector::length(&proven_nodes) / 3;
-
+        let len_proven_nodes = Vector::length(&proven_nodes);
+        let max_unproven_nodes = len_proven_nodes / 3;
+        print(&max_unproven_nodes);
         // start from the proven nodes
         let proposed_set = proven_nodes;
 
@@ -175,13 +180,19 @@ module EpochBoundary {
         let top_accounts = NodeWeight::top_n_accounts(
             vm, Globals::get_max_validators_per_set()
         );
-
+        print(&top_accounts);
         // let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
         // find the top unproven nodes and add to the proposed set
         let i = 0;
-        while (i < max_unproven_nodes) {
+        while (
+          i < Vector::length(&top_accounts) && 
+          Vector::length(&proposed_set) < len_proven_nodes + max_unproven_nodes
+        ) {
             let addr = *Vector::borrow(&top_accounts, i);
             let mined_last_epoch = TowerState::node_above_thresh(addr);
+            
+            print(&addr);
+
             if (
                 // ignore those already on list
                 !Vector::contains<address>(&proposed_set, &addr) &&
@@ -189,10 +200,13 @@ module EpochBoundary {
                 mined_last_epoch &&
                 Audit::val_audit_passing(addr)
             ) {
+                print(&901);
                 Vector::push_back(&mut proposed_set, addr);
             };
             i = i+ 1;
         };
+
+        print(&proposed_set);
 
 
         // If the cardinality of validator_set in the next epoch is less than 4, 
@@ -222,7 +236,6 @@ module EpochBoundary {
         // Migrate TowerState list from elegible.
         TowerState::reconfig(vm, &outgoing_compliant);
         
-        print(&99999999999999);
 
         // process community wallets
         DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
