@@ -100,21 +100,25 @@ pub fn ol_writeset_ancestry(path: PathBuf, ancestry_file: PathBuf) -> WriteSetPa
 
 // }
 
-pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>, recovery_epoch: u64) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
         exit(1)
     };
 
     let stdlib_cs = stdlib::ol_fresh_stlib_changeset(path.clone()).unwrap();
+
+    // set recovery mode
+    let recovery =
+        stdlib::ol_set_epoch_recovery_mode(path.clone(), vec![], recovery_epoch).unwrap();
+
     // TODO: forcing the boundary causes an error on the epoch boundary.
     // let boundary = ol_force_boundary(path.clone(), vals.clone(), block_height).unwrap();
     let boundary = reconfig::ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
-    // set recovery mode
 
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
-    let new_cs = merge_vec_changeset(vec![stdlib_cs, boundary]).unwrap();
+    let new_cs = merge_vec_changeset(vec![stdlib_cs, recovery, boundary]).unwrap();
     // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
     WriteSetPayload::Direct(new_cs)
 }
