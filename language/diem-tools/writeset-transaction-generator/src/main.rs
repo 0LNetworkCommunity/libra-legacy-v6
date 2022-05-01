@@ -168,7 +168,7 @@ fn main() -> Result<()> {
             opt.db.unwrap(),
             opt.block_height.expect("need to provide --block-height"),
         ),
-        Command::Rescue { addresses } => ol_writset_encode_rescue(opt.db.unwrap(), addresses, opt.recovery_epoch.expect("--recovery-epoch number expected")),
+        Command::Rescue { addresses } => ol_writset_encode_rescue(opt.db.unwrap(), addresses, opt.recovery_epoch),
         Command::Timestamp {} => ol_writset_update_timestamp(
             opt.db.unwrap(),
             opt.block_height.expect("need to provide --block-height"),
