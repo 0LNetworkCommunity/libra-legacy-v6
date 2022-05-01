@@ -15,6 +15,50 @@ D1281DE242839FC939745996882C5FC2:
   addresses:
     - "/ip4/172.31.11.23/tcp/6180/ln-noise-ik/0a3cab5f2ecb29bdb4a9efe1dd4576feacefe4ec74ab7ef65d472bbb4461804d/ln-handshake/0"
   role: "Validator"
+46A7A744B5D33C47F6B20766F8088B10:
+  addresses:
+    - ""
+  role: "Validator"
+46A7A744B5D33C47F6B20766F8088B10 --- OD2:
+  addresses:
+    - ""
+  role: "Validator"
+46A7A744B5D33C47F6B20766F8088B10 --- OD3:
+  addresses:
+    - ""
+  role: "Validator"
+E264023342B41ACCDBB61A190B6CB2A7:
+  addresses:
+    - "/ip4/137.184.118.15/tcp/6180/ln-noise-ik/e41c5b51f18d9826ca23136f0edc442d701c82c246ed1f306ece495e763df823/ln-handshake/0"
+  role: "Validator"
+8186F4D8FDD09DFE02963B0B4C385105:
+  addresses:
+    - "/ip4/20.39.34.205/tcp/6180/ln-noise-ik/2e7b8c6cf5abff63f88b26bd960e2c586f3723d08c895cc04c5eef3449a3905e/ln-handshake/0"
+  role: "Validator"
+D96E89E270A5273D94BC8AB7953754F9:
+  addresses:
+    - "/ip4/65.108.108.82/tcp/6180/ln-noise-ik/b998763ff5e33ec52baad9d3a3f395451202fee3690c8f98a372fa2c67bcca70/ln-handshake/0"
+  role: "Validator"
+63BB637E57BF088B129BCF1BFD93EBF4:
+  addresses:
+    - "/ip4/65.108.122.162/tcp/6180/ln-noise-ik/7e34a17c9e09fe733d471b86e3db6150f1d9d71a04d30a4dbb2344de2bb9b154/ln-handshake/0"
+  role: "Validator"
+351F3C360630F790DE10570C0A224B06:
+  addresses:
+    - "/ip4/65.108.195.43/tcp/6180/ln-noise-ik/d0f0d094564779a31a8ce36d572e68485a9f57263420234695579e16b5d9d031/ln-handshake/0"
+  role: "Validator"
+79D2A77B01E5CDE1A5FB123119424ACB:
+  addresses:
+    - "/ip4/65.108.143.43/tcp/6180/ln-noise-ik/ab89d9487f1b7d431409d46aca57e2d884760a3730c75f34cdb441ea62c86e6c/ln-handshake/0"
+  role: "Validator"
+E77DDB76C9AFCB3D5511E46CBC89023D:
+  addresses:
+    - "/ip4/144.126.245.86/tcp/6180/ln-noise-ik/ce7168ac62fde698c34d2e7b968f8b7b4be7cce221829dbcc3761fdf1aefaf70/ln-handshake/0"
+  role: "Validator"
+D1281DE242839FC939745996882C5FC2:
+  addresses:
+    - "/ip4/172.31.11.23/tcp/6180/ln-noise-ik/0a3cab5f2ecb29bdb4a9efe1dd4576feacefe4ec74ab7ef65d472bbb4461804d/ln-handshake/0"
+  role: "Validator"
 012338B54BA4625ADCC313394D87819C:
   addresses:
     - "/ip4/63.229.234.74/tcp/6180/ln-noise-ik/7825869ae4c0cb91bbd8027ce16c64680f84c979320f8921fc76a17c7bec6f32/ln-handshake/0"
