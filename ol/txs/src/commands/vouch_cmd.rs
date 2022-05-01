@@ -19,6 +19,10 @@ use std::process::exit;
 pub struct VouchCmd {
     #[options(short = "a", help = "set this address as part of your trusted set.")]
     address: Option<String>,
+
+    #[options(short = "r", help = "set this address as part of your trusted set.")]
+    revoke: bool,
+
     #[options(
         short = "e",
         help = "enable the vouch struct on your account in case it hasn't on account creation."
@@ -34,7 +38,14 @@ impl Runnable for VouchCmd {
         let script = if self.address.is_some() {
             if let Some(addr) = &self.address {
                 match addr.parse::<AccountAddress>() {
-                    Ok(a) => transaction_builder::encode_vouch_for_script_function(a),
+                    Ok(a) => {
+                      
+                      if self.revoke {
+                        transaction_builder::encode_revoke_vouch_script_function(a)
+                      } else {
+                        transaction_builder::encode_vouch_for_script_function(a)
+                      }
+                    },
                     Err(_) => {
                         println!("could not parse address from args");
                         exit(1)
