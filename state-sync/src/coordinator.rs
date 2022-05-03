@@ -238,6 +238,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         network_id: NodeNetworkId,
         peer_id: PeerId,
     ) -> Result<(), Error> {
+        dbg!("lost peer", &peer_id);
         let peer = PeerNetworkId(network_id, peer_id);
         self.request_manager.disable_peer(&peer)
     }
