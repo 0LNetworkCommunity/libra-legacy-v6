@@ -893,6 +893,7 @@ mod tests {
         validator: &PeerNetworkId,
         peer_role: PeerRole,
     ) {
+        dbg!("adding validator to state sync", &validator);
         let connection_metadata = ConnectionMetadata::mock_with_role_and_origin(
             validator.peer_id(),
             peer_role,

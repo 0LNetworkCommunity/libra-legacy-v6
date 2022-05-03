@@ -1565,6 +1565,8 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         target: TargetType,
     ) -> Result<(), Error> {
         if self.request_manager.no_available_peers() {
+            dbg!("no available peers");
+            
             warn!(LogSchema::event_log(
                 LogEntry::SendChunkRequest,
                 LogEvent::MissingPeers
