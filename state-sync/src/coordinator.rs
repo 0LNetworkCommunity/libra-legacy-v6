@@ -202,6 +202,8 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
                             }
                         }
                         Event::LostPeer(metadata) => {
+                            dbg!("received event lost peer");
+
                             if let Err(e) = self.process_lost_peer(network_id, metadata.remote_peer_id) {
                                 error!(LogSchema::new(LogEntry::LostPeer).error(&e));
                             }
@@ -582,6 +584,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         )
         .await
         {
+          dbg!("statesync commit to mempool failed with mempool_commit_timeout_ms expired");
             counters::COMMIT_FLOW_FAIL
                 .with_label_values(&[counters::FROM_MEMPOOL_LABEL])
                 .inc();
@@ -669,7 +672,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         // 0L todo: don't penalize validators. Validators should always try to connect to others.
         
         if let Err(error) = self.verify_chunk_request_is_valid(&request) {
-            dbg!("penalizing peer {:?}", peer);
+            dbg!("statesync penalizing peer {:?}", &peer);
             self.request_manager.process_invalid_chunk_request(&peer);
             return Err(error);
         }

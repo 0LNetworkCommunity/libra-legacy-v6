@@ -143,6 +143,8 @@ impl RequestManager {
     }
 
     pub fn disable_peer(&mut self, peer: &PeerNetworkId) -> Result<(), Error> {
+        dbg!("disable_peer {:?}", &peer);
+
         info!(LogSchema::new(LogEntry::LostPeer).peer(&peer));
 
         if self.peer_scores.contains_key(peer) {
@@ -158,10 +160,15 @@ impl RequestManager {
     }
 
     pub fn no_available_peers(&self) -> bool {
+        if self.peer_scores.is_empty() {
+          dbg!("no available peers");
+        };
         self.peer_scores.is_empty()
     }
 
     fn update_score(&mut self, peer: &PeerNetworkId, update_type: PeerScoreUpdateType) {
+        dbg!("update peer score: {:?}, type: {:?}", &peer, &update_type);
+
         if let Some(score) = self.peer_scores.get_mut(peer) {
             let old_score = *score;
             let new_score = match update_type {
@@ -251,7 +258,7 @@ impl RequestManager {
         if let Some(network_level) = new_multicast_network_level {
             self.update_multicast_network_level(network_level, None);
         }
-
+        dbg!("pick peers", &chosen_peers);
         chosen_peers
     }
 
@@ -260,6 +267,7 @@ impl RequestManager {
 
         let peers = self.pick_peers();
         if peers.is_empty() {
+            dbg!("no statesync available peers");
             warn!(log.event(LogEvent::MissingPeers));
             return Err(Error::NoAvailablePeers(
                 "No peers to send chunk request to".into(),
