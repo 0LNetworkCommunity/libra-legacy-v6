@@ -145,15 +145,20 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         network_handles: Vec<(NodeNetworkId, StateSyncSender, StateSyncEvents)>,
     ) {
         info!(LogSchema::new(LogEntry::RuntimeStart));
+
+        // load duration of state sync tick from configs.
         let mut interval = IntervalStream::new(interval(Duration::from_millis(
             self.config.tick_interval_ms,
         )))
         .fuse();
 
+        // iterate over all the state sync senders and collect the stream of network events.
         let events: Vec<_> = network_handles
             .into_iter()
             .map(|(network_id, _sender, events)| events.map(move |e| (network_id.clone(), e)))
             .collect();
+        
+        // combine/fuse the streams of network events.
         let mut network_events = select_all(events).fuse();
 
         loop {
@@ -215,6 +220,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
                     }
                 },
                 _ = interval.select_next_some() => {
+                    dbg!("statesync tick");
                     if let Err(e) = self.check_progress() {
                         error!(LogSchema::event_log(LogEntry::ProgressCheck, LogEvent::Fail).error(&e));
                     }
@@ -333,6 +339,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         if self.is_initialized() {
             Self::send_initialization_callback(cb_sender)?;
         } else {
+            dbg!("start statesync initialization listener");
             self.initialization_listener = Some(cb_sender);
         }
 
@@ -658,15 +665,24 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
 
         // Verify the chunk request is valid before trying to process it. If it's invalid,
         // penalize the peer's score.
+
+        // 0L todo: don't penalize validators. Validators should always try to connect to others.
+        
         if let Err(error) = self.verify_chunk_request_is_valid(&request) {
+            dbg!("penalizing peer {:?}", peer);
             self.request_manager.process_invalid_chunk_request(&peer);
             return Err(error);
         }
 
         match request.target.clone() {
+            // 0L: thsi is for validators
+            // uses the max_timeout_ms from config, to put the chunk on a subsripction queue if the local state is not ready to process.
             TargetType::TargetLedgerInfo(li) => {
                 self.process_request_for_target_and_highest(peer, request, Some(li), None)
             }
+
+            // 0L: This is for Fullnodes, requesting a highest available
+            // must include a specific timeout for the request.
             TargetType::HighestAvailable {
                 target_li,
                 timeout_ms,
@@ -745,6 +761,8 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         // requestor) add the request to the subscriptions to be handled when this node catches up.
         let local_version = self.local_state.committed_version();
         if local_version <= request.known_version {
+            dbg!("this node local veresion is less than known_version. Adding req to subscription.");
+
             let expiration_time = SystemTime::now().checked_add(Duration::from_millis(timeout));
             if let Some(time) = expiration_time {
                 let request_info = PendingRequestInfo {
@@ -1460,6 +1478,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
     /// therefore not write to storage. Reads are still permitted (e.g., to
     /// handle chunk requests).
     fn is_consensus_executing(&mut self) -> bool {
+    // TODO(0L) this is not actually checking if consensus is executing.
         self.is_initialized() && self.role == RoleType::Validator && self.sync_request.is_none()
     }
 

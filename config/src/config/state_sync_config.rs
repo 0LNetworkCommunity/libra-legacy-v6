@@ -15,6 +15,8 @@ pub struct StateSyncConfig {
     // valid maximum chunk limit for sanity check
     pub max_chunk_limit: u64,
     // valid maximum timeout limit for sanity check
+    // This timeout applies to the process_request_for_target_and_highest
+    // if the chunk cannot be applied now, then insert it in a subscription to appply. The subscription expires at max_timeout_ms
     pub max_timeout_ms: u64,
     // The timeout of the state sync coordinator to receive a commit ack from mempool (in milliseconds)
     pub mempool_commit_timeout_ms: u64,
