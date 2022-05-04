@@ -151,7 +151,7 @@ impl PeerManager {
 
     pub fn is_backoff_mode(&self, peer: &PeerNetworkId) -> bool {
         if let Some(state) = self.peer_states.lock().get(peer) {
-            dbg!("shared mempool is in backoff mode for peer: {:?} ". &peer);
+            dbg!("shared mempool is in backoff mode for peer: {:?} ", &peer);
             state.broadcast_info.backoff_mode
         } else {
             // If we don't have sync state, we shouldn't backoff
@@ -180,7 +180,7 @@ impl PeerManager {
 
         // Only broadcast to peers that are alive.
         if !state.is_alive {
-            dbg!("shared mempool peer is not alive: {:?}", &state);
+            dbg!("shared mempool peer is not alive: {:?}", &state.metadata);
             return;
         }
 

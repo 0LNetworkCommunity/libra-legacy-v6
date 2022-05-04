@@ -75,7 +75,14 @@ pub(crate) async fn coordinator<V>(
             (msg, callback) = client_events.select_next_some() => {
                 handle_client_event(&mut smp, &bounded_executor, msg, callback).await;
             },
+            // 0L TODO: execute mempool tasks in a bounded execution with capacity.
             msg = consensus_requests.select_next_some() => {
+              //////// 0L ////////
+              // uses tokio Semaphore to create backpressure and limit capacity of the queue.
+              // let task_executor = BoundedExecutor::new(workers_available, executor.clone());
+              // task_executor.clone().spawn(
+              //   tasks::process_consensus_request(&smp.mempool, msg)
+              // ).await;
                 tasks::process_consensus_request(&smp.mempool, msg).await;
             }
             msg = state_sync_requests.select_next_some() => {
