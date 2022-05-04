@@ -112,6 +112,8 @@ pub(crate) async fn process_transaction_broadcast<V>(
 ) where
     V: TransactionValidation,
 {
+  dbg!("process_transaction_broadcast from other node {:?}", &peer);
+
     timer.stop_and_record();
     let _timer = counters::process_txn_submit_latency_timer(
         peer.raw_network_id().as_str(),
@@ -126,6 +128,7 @@ pub(crate) async fn process_transaction_broadcast<V>(
         .get_mut(&peer.network_id())
         .expect("[shared mempool] missing network sender");
     if let Err(e) = network_sender.send_to(peer.peer_id(), ack_response) {
+      dbg!("process_transaction_broadcast, {:?}", &peer);
         counters::network_send_fail_inc(counters::ACK_TXNS);
         error!(
             LogSchema::event_log(LogEntry::BroadcastACK, LogEvent::NetworkSendFail)
@@ -226,7 +229,7 @@ where
             if let Ok(sequence_number) = seq_numbers[idx] {
                 if t.sequence_number() == sequence_number {
                     return Some((t, sequence_number));
-                } else if t.sequence_number() > sequence_number{
+                } else if t.sequence_number() > sequence_number{ // discard transactions that are too new.
                     statuses.push((
         
                         t,

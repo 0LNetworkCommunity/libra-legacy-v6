@@ -140,6 +140,7 @@ impl PeerManager {
 
     /// Disables a peer if it can be restarted, otherwise removes it
     pub fn disable_peer(&self, peer: PeerNetworkId) {
+        dbg!("shared mempool disable peer {:?}", &peer);
         // Remove all state on the peer, and start over
         self.peer_states.lock().remove(&peer);
         counters::active_upstream_peers(&peer.raw_network_id()).dec();
@@ -150,6 +151,7 @@ impl PeerManager {
 
     pub fn is_backoff_mode(&self, peer: &PeerNetworkId) -> bool {
         if let Some(state) = self.peer_states.lock().get(peer) {
+            dbg!("shared mempool is in backoff mode for peer: {:?} ". &peer);
             state.broadcast_info.backoff_mode
         } else {
             // If we don't have sync state, we shouldn't backoff
@@ -178,6 +180,7 @@ impl PeerManager {
 
         // Only broadcast to peers that are alive.
         if !state.is_alive {
+            dbg!("shared mempool peer is not alive: {:?}", &state);
             return;
         }
 
@@ -242,6 +245,7 @@ impl PeerManager {
                 // This helps rate-limit egress network bandwidth and not overload a remote peer or this
                 // node's Diem network sender.
                 if pending_broadcasts >= self.mempool_config.max_broadcasts_per_peer {
+                  dbg!("will stop broadcasting shared mempool to peer: {:?}", &peer);
                     return;
                 }
             }
@@ -433,6 +437,7 @@ impl PeerManager {
         // as a backoff broadcast.
         // This ensures backpressure request from remote peer is honored at least once.
         if backoff {
+            dbg!("remote peer requested backpressure, place in backoff mode: {:?}", &peer);
             sync_state.broadcast_info.backoff_mode = true;
         }
     }
