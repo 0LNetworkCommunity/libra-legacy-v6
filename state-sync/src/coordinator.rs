@@ -167,6 +167,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
                 msg = self.client_events.select_next_some() => {
                     match msg {
                         CoordinatorMessage::SyncRequest(request) => {
+                           dbg!("sync request");
                             let _timer = counters::PROCESS_COORDINATOR_MSG_LATENCY
                                 .with_label_values(&[counters::SYNC_MSG_LABEL])
                                 .start_timer();
@@ -176,6 +177,8 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
                             }
                         }
                         CoordinatorMessage::CommitNotification(notification) => {
+                          dbg!("CommitNotification");
+
                             let _timer = counters::PROCESS_COORDINATOR_MSG_LATENCY
                                 .with_label_values(&[counters::COMMIT_MSG_LABEL])
                                 .start_timer();
@@ -185,9 +188,13 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
                             }
                         }
                         CoordinatorMessage::GetSyncState(callback) => {
+                          dbg!("GetSyncState");
+
                             let _ = self.get_sync_state(callback);
                         }
                         CoordinatorMessage::WaitForInitialization(cb_sender) => {
+                            dbg!("WaitForInitialization");
+
                             if let Err(e) = self.wait_for_initialization(cb_sender) {
                                 error!(LogSchema::new(LogEntry::Waypoint).error(&e));
                             }
@@ -222,7 +229,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
                     }
                 },
                 _ = interval.select_next_some() => {
-                    dbg!("statesync tick");
+                    // dbg!("statesync tick");
                     if let Err(e) = self.check_progress() {
                         error!(LogSchema::event_log(LogEntry::ProgressCheck, LogEvent::Fail).error(&e));
                     }
@@ -246,7 +253,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         network_id: NodeNetworkId,
         peer_id: PeerId,
     ) -> Result<(), Error> {
-        dbg!("lost peer", &peer_id);
+        error!("lost peer: {:?}", &peer_id);
         let peer = PeerNetworkId(network_id, peer_id);
         self.request_manager.disable_peer(&peer)
     }
@@ -353,6 +360,8 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
     /// Note: when processing a sync request, state sync assumes that it's the only one
     /// modifying storage, i.e., consensus is not trying to commit transactions concurrently.
     fn process_sync_request(&mut self, request: SyncRequest) -> Result<(), Error> {
+        dbg!("processing state sync request");
+
         fail_point!("state_sync::process_sync_request_message", |_| {
             Err(crate::error::Error::UnexpectedError(
                 "Injected error in process_sync_request_message".into(),
@@ -1489,9 +1498,11 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
     /// * Kick starts the initial sync process (e.g., syncing to a waypoint or target).
     /// * Issues a new request if too much time has passed since the last request was sent.
     fn check_progress(&mut self) -> Result<(), Error> {
-        if self.is_consensus_executing() {
-            return Ok(()); // No need to check progress or issue any requests (consensus is running).
-        }
+      // dbg!("check_progress");
+        // if self.is_consensus_executing() {
+        //     dbg!("is_consensus_executing");
+        //     return Ok(()); // No need to check progress or issue any requests (consensus is running).
+        // }
 
         // Check if the sync request has timed out (i.e., if we aren't committing fast enough)
         if let Some(sync_request) = self.sync_request.as_ref() {
@@ -1564,6 +1575,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         chunk_target: TargetType,
         log_entry: LogEntry,
     ) -> Result<(), Error> {
+        // dbg!("sending chunk request");
         if let Err(error) =
             self.send_chunk_request_with_target(known_version, known_epoch, chunk_target)
         {
@@ -1586,6 +1598,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         known_epoch: u64,
         target: TargetType,
     ) -> Result<(), Error> {
+        dbg!("sending chunk request with");
         if self.request_manager.no_available_peers() {
             dbg!("no available peers");
             

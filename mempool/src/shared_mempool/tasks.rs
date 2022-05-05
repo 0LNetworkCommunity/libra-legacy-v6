@@ -112,7 +112,7 @@ pub(crate) async fn process_transaction_broadcast<V>(
 ) where
     V: TransactionValidation,
 {
-  dbg!("process_transaction_broadcast from other node {:?}", &peer);
+  warn!("process_transaction_broadcast from other node {:?}", &peer);
 
     timer.stop_and_record();
     let _timer = counters::process_txn_submit_latency_timer(
@@ -127,8 +127,9 @@ pub(crate) async fn process_transaction_broadcast<V>(
         .network_senders
         .get_mut(&peer.network_id())
         .expect("[shared mempool] missing network sender");
-    if let Err(e) = network_sender.send_to(peer.peer_id(), ack_response) {
-      dbg!("process_transaction_broadcast, {:?}", &peer);
+    if let Err(e) = network_sender.send_to(peer.peer_id(), ack_response.clone()) {
+        error!("process_transaction_broadcast network error, {:?}, message: {:?}", &peer, &ack_response);
+
         counters::network_send_fail_inc(counters::ACK_TXNS);
         error!(
             LogSchema::event_log(LogEntry::BroadcastACK, LogEvent::NetworkSendFail)
@@ -149,7 +150,10 @@ fn gen_ack_response(
     let mut retry = false;
     for r in results.into_iter() {
         let submission_status = r.1;
+
+        // 0L TODO: when is backoff submitted when mempool is full.
         if submission_status.0.code == MempoolStatusCode::MempoolIsFull {
+            dbg!("mempool is full, responding to peer with backoff.");
             backoff = true;
         }
         if is_txn_retryable(submission_status) {
@@ -381,6 +385,7 @@ pub(crate) async fn process_state_sync_request(
 }
 
 pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req: ConsensusRequest) {
+  dbg!("process_consensus_request");
     // Start latency timer
     let start_time = Instant::now();
     debug!(LogSchema::event_log(LogEntry::Consensus, LogEvent::Received).consensus_msg(&req));

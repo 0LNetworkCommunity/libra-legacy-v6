@@ -143,7 +143,7 @@ impl RequestManager {
     }
 
     pub fn disable_peer(&mut self, peer: &PeerNetworkId) -> Result<(), Error> {
-        dbg!("disable_peer {:?}", &peer);
+        error!("disable_peer {:?}", &peer);
 
         info!(LogSchema::new(LogEntry::LostPeer).peer(&peer));
 
@@ -161,15 +161,15 @@ impl RequestManager {
 
     pub fn no_available_peers(&self) -> bool {
         if self.peer_scores.is_empty() {
-          dbg!("no available peers");
+          error!("no available peers");
         };
         self.peer_scores.is_empty()
     }
 
     fn update_score(&mut self, peer: &PeerNetworkId, update_type: PeerScoreUpdateType) {
-        dbg!("update peer score: {:?}, type: {:?}", &peer, &update_type);
 
         if let Some(score) = self.peer_scores.get_mut(peer) {
+
             let old_score = *score;
             let new_score = match update_type {
                 PeerScoreUpdateType::Success => {
@@ -189,6 +189,9 @@ impl RequestManager {
                 }
             };
             *score = new_score;
+
+            error!("update peer score: {:?} with update_type {:?}, old score: {:?}, new score: {:?}", &peer, &update_type, &old_score, &score);
+
         }
     }
 
@@ -258,7 +261,7 @@ impl RequestManager {
         if let Some(network_level) = new_multicast_network_level {
             self.update_multicast_network_level(network_level, None);
         }
-        dbg!("pick peers", &chosen_peers);
+        dbg!(&chosen_peers);
         chosen_peers
     }
 
@@ -461,6 +464,7 @@ impl RequestManager {
     /// Checks whether the request sent with known_version = `version` has timed out
     /// Returns true if such a request timed out (or does not exist), else false.
     pub fn has_request_timed_out(&mut self, version: u64) -> Result<bool, Error> {
+        
         let last_request_time = self.get_last_request_time(version).unwrap_or(UNIX_EPOCH);
 
         let timeout = is_timeout(last_request_time, self.request_timeout);
@@ -475,6 +479,9 @@ impl RequestManager {
                 return Ok(timeout);
             }
         };
+
+        error!("request timed out, length: {:?}, peers {:?}", &self.request_timeout, &peers_to_penalize);
+
         for peer in peers_to_penalize.iter() {
             self.update_score(peer, PeerScoreUpdateType::TimeOut);
         }
