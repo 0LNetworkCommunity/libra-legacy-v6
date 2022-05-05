@@ -1,11 +1,10 @@
-//! account: alice, 1, 0, validator
+//# init --validators Alice Bob Carol
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {    
     use DiemFramework::TowerState;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
@@ -15,15 +14,13 @@ script {
 }
 //check: EXECUTED
 
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Stats;
     use Std::Vector;
     use DiemFramework::Cases;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         let sender = &sender;
         let voters = Vector::singleton<address>(@Alice);
         let i = 1;

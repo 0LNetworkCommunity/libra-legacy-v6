@@ -1,29 +1,19 @@
+//# init --validators Alice Bob Carol Dave Eve
 
 // This tests consensus Case 2.
 // ALICE is a validator.
 // DID validate successfully.
 // DID NOT mine above the threshold for the epoch. 
 
-// Todo: These GAS values have no effect, all accounts start with 1M GAS
-//# init --validators Alice
-//! account: bob, 1000000GAS, 0, validator
-//! account: carol, 1000000GAS, 0, validator
-//! account: dave, 1000000GAS, 0, validator
-//! account: eve, 1000000GAS, 0, validator
+//# block --proposer Alice --time 1 --round 0
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
-//! NewBlockEvent
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
     use DiemFramework::ValidatorConfig;
 
-    fun main(sender: signer) {
+    fun main(dr: signer, _account: signer) {        
         // tranfer enough coins to operators
         let oper_alice = ValidatorConfig::get_operator(@Alice);
         let oper_bob = ValidatorConfig::get_operator(@Bob);
@@ -31,26 +21,25 @@ script {
         let oper_dave = ValidatorConfig::get_operator(@Dave);
         let oper_eve = ValidatorConfig::get_operator(@Eve);
         DiemAccount::vm_make_payment_no_limit<GAS>(
-            @Alice, oper_alice, 50009, x"", x"", &sender
+            @Alice, oper_alice, 50009, x"", x"", &dr
         );
         DiemAccount::vm_make_payment_no_limit<GAS>(
-            @Bob, oper_bob, 50009, x"", x"", &sender
+            @Bob, oper_bob, 50009, x"", x"", &dr
         );
         DiemAccount::vm_make_payment_no_limit<GAS>(
-            @Carol, oper_carol, 50009, x"", x"", &sender
+            @Carol, oper_carol, 50009, x"", x"", &dr
         );
         DiemAccount::vm_make_payment_no_limit<GAS>(
-            @Dave, oper_dave, 50009, x"", x"", &sender
+            @Dave, oper_dave, 50009, x"", x"", &dr
         );
         DiemAccount::vm_make_payment_no_limit<GAS>(
-            @Eve, oper_eve, 50009, x"", x"", &sender
+            @Eve, oper_eve, 50009, x"", x"", &dr
         );
     }
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::TowerState;
@@ -58,31 +47,29 @@ script {
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
 
-    fun main(_sender: signer) {
+    fun main(_dr: signer, _account: signer) {
         // Tests on initial size of validators 
         assert!(DiemSystem::validator_set_size() == 5, 7357000180101);
-        assert!(DiemSystem::is_validator(@Bob) == true, 7357000180102);
-        assert!(DiemSystem::is_validator(@Eve) == true, 7357000180103);
+        assert!(DiemSystem::is_validator(@Bob), 7357000180102);
+        assert!(DiemSystem::is_validator(@Eve), 7357000180103);
         assert!(TowerState::test_helper_get_height(@Bob) == 0, 7357000180104);
 
         //// NO MINING ////
 
-        assert!(DiemAccount::balance<GAS>(@Bob) == 949991, 7357000180106);
+        assert!(DiemAccount::balance<GAS>(@Bob) == 9949991, 7357000180106);
         assert!(NodeWeight::proof_of_weight(@Bob) == 0, 7357000180107);  
         assert!(TowerState::test_helper_get_height(@Bob) == 0, 7357000180108);
     }
 }
 // check: EXECUTED
 
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use Std::Vector;
     use DiemFramework::Stats;
     // use DiemFramework::FullnodeState;
     // This is the the epoch boundary.
-    fun main(vm: signer) {
+    fun main(vm: signer, _account: signer) {
         // This is not an onboarding case, steady state.
         // FullnodeState::test_set_fullnode_fixtures(&vm, @Bob, 0, 0, 0, 200, 200, 1000000);
 
@@ -93,7 +80,7 @@ script {
         Vector::push_back<address>(&mut voters, @Dave);
         Vector::push_back<address>(&mut voters, @Eve);
 
-        /// NOTE: BOB DOES NOT MINE
+        //// NOTE: BOB DOES NOT MINE
 
         // Overwrite the statistics to mock that all have been validating.
         let i = 1;
@@ -102,15 +89,14 @@ script {
             Stats::process_set_votes(&vm, &voters);
             i = i + 1;
         };
-
     }
 }
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Cases;
-    fun main(vm: signer) {
+    
+    fun main(vm: signer, _:signer) {
         // We are in a new epoch.
         // Check Bob is in the the correct case during reconfigure
         assert!(Cases::get_case(&vm, @Bob, 0, 15) == 2, 7357000180109);
@@ -119,37 +105,35 @@ script {
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 61000000
-//! round: 15
+//# block --proposer Alice --time 61000000 --round 15
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::NodeWeight;
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
+    use DiemFramework::TowerState;
 
-    fun main(_account: signer) {
+    fun main(_dr: signer, _account: signer) {
         // We are in a new epoch.
 
         // Check the validator set is at expected size
         // case 2 does not reject Alice.
         assert!(DiemSystem::validator_set_size() == 5, 7357000180110);
-
-        assert!(DiemSystem::is_validator(@Bob) == true, 7357000180111);
+        assert!(DiemSystem::is_validator(@Bob), 7357000180111);
         
         //case 2 does not get rewards.
-        assert!(DiemAccount::balance<GAS>(@Bob) == 949991, 7357000180112);  
+        assert!(DiemAccount::balance<GAS>(@Bob) == 9949991, 7357000180112);
 
         //case 2 does not increment weight.
-        assert!(NodeWeight::proof_of_weight(@Bob) == 0, 7357000180113);  
+        assert!(NodeWeight::proof_of_weight(@Bob) == 0, 7357000180113);
+
+        //case 2 does not increment epochs_validating and mining.
+        assert!(TowerState::get_epochs_compliant(@Bob) == 0, 7357000180114);
     }
 }
