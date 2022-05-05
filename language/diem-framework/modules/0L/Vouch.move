@@ -15,8 +15,6 @@ address 0x1 {
     use 0x1::StagingNet;
     use 0x1::CoreAddresses;
 
-    use 0x1::Debug::print;
-
     // triggered once per epoch
     struct Vouch has key {
       vals: vector<address>,
@@ -147,17 +145,13 @@ address 0x1 {
     }
 
     public fun unrelated_buddies_above_thresh(val: address): bool acquires Vouch{
-      print(&222222);
       if (Testnet::is_testnet() || StagingNet::is_staging_net()) {
         return true
       };
-      print(&22222200001);
 
       if (!exists<Vouch>(val)) return false;
-      print(&22222200002);
 
       let len = Vector::length(&unrelated_buddies(val));
-      print(&22222200003);
 
       (len >= 4) // TODO: move to Globals
     }

@@ -4,7 +4,6 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    // use 0x1::Vector;
     use 0x1::Mock;
 
     fun main(vm: signer) {

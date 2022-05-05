@@ -18,6 +18,8 @@ address 0x1 {
 
     public fun val_audit_passing(val: address): bool {
       print(&11111);
+      print(&val);
+
       // has valid configs
       if (!ValidatorConfig::is_valid(val)) return false;
       // has operator account set to another address

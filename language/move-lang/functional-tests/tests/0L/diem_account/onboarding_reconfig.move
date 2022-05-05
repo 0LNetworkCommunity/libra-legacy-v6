@@ -2,6 +2,8 @@
 //! account: bob, 1000000, 0, validator
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
+//! account: eve, 1000000, 0, validator
+//! account: frank, 1000000, 0, validator
 
 //! new-transaction
 //! sender: alice
@@ -56,7 +58,7 @@ script {
     fun main(vm: signer) {
         let vm = &vm;
         // Tests on initial size of validators
-        assert(DiemSystem::validator_set_size() == 4, 7357000180101);
+        assert(DiemSystem::validator_set_size() == 6, 7357000180101);
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000180102);
         assert(DiemSystem::is_validator(@{{bob}}) == true, 7357000180103);
         assert(
@@ -65,13 +67,15 @@ script {
         );
         assert(TowerState::is_init(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180105);
 
-        Mock::mock_case_1(vm, @{{alice}});
-        Mock::mock_case_1(vm, @{{bob}});
-        Mock::mock_case_1(vm, @{{carol}});
-        Mock::mock_case_1(vm, @{{dave}});
+        Mock::mock_case_1(vm, @{{alice}}, 0, 15);
+        Mock::mock_case_1(vm, @{{bob}}, 0, 15);
+        Mock::mock_case_1(vm, @{{carol}}, 0, 15);
+        Mock::mock_case_1(vm, @{{dave}}, 0, 15);
+        Mock::mock_case_1(vm, @{{eve}}, 0, 15);
+        Mock::mock_case_1(vm, @{{frank}}, 0, 15);
 
         EpochBoundary::reconfigure(vm, 15); // reconfigure at height 15
-        assert(DiemSystem::validator_set_size() == 4, 7357000180106);
+        assert(DiemSystem::validator_set_size() == 6, 7357000180106);
     }
 }
 // check: EXECUTED
@@ -88,12 +92,12 @@ script {
     fun main(vm: signer) {
         // Tests on initial size of validators
         // New validator is not in this set.
-        assert(DiemSystem::validator_set_size() == 4, 7357000180101);
+        assert(DiemSystem::validator_set_size() == 6, 7357000180101);
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000180102);
         assert(!DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180103);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(&vm));
         // Is in validator universe
-        assert(len == 5, 7357000180104);
+        assert(len == 7, 7357000180104);
       }
 }
 // check: EXECUTED
@@ -109,64 +113,36 @@ script {
     use 0x1::Mock;
     use 0x1::Vector;
     use 0x1::ValidatorUniverse;
- 
+    use 0x1::Vouch;
 
     fun main(vm: signer) {
         let vm = &vm;
         // Tests on initial size of validators
-        assert(DiemSystem::validator_set_size() == 4, 7357000180201);
+        assert(DiemSystem::validator_set_size() == 6, 7357000180201);
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000180202);
         assert(DiemSystem::is_validator(@{{bob}}) == true, 7357000180203);
         assert(
             DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 
             7357000180204
         );
-        Mock::mock_case_1(vm, @{{alice}});
-        Mock::mock_case_1(vm, @{{bob}});
-        Mock::mock_case_1(vm, @{{carol}});
-        Mock::mock_case_1(vm, @{{dave}});
+        Mock::mock_case_1(vm, @{{alice}}, 15, 30);
+        Mock::mock_case_1(vm, @{{bob}}, 15, 30);
+        Mock::mock_case_1(vm, @{{carol}}, 15, 30);
+        Mock::mock_case_1(vm, @{{dave}}, 15, 30);
+        Mock::mock_case_1(vm, @{{eve}}, 15, 30);
+        Mock::mock_case_1(vm, @{{frank}}, 15, 30);
 
+        let list = Vector::singleton<address>(@{{alice}});
+        Vector::push_back(&mut list, @{{bob}});
+        Vector::push_back(&mut list, @{{carol}});
+        Vector::push_back(&mut list, @{{dave}});
+
+        Vouch::vm_migrate(vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, list);
+        
         TowerState::test_helper_mock_mining_vm(vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 20);
 
-        // // Mock everyone being a CASE 1
-        // let voters = Vector::empty<address>();
-        // Vector::push_back<address>(&mut voters, @{{alice}});
-        // Vector::push_back<address>(&mut voters, @{{bob}});
-        // Vector::push_back<address>(&mut voters, @{{carol}});
-        // Vector::push_back<address>(&mut voters, @{{dave}});
-
-        // TowerState::test_helper_mock_mining_vm(vm, @{{alice}}, 20);
-        // TowerState::test_helper_mock_mining_vm(vm, @{{bob}}, 20);
-        // TowerState::test_helper_mock_mining_vm(vm, @{{carol}}, 20);
-        // TowerState::test_helper_mock_mining_vm(vm, @{{dave}}, 20);
-        // TowerState::test_helper_mock_mining_vm(vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 20);
-
-        // // enable autopay and transfer coins to the new operator
-        // let new_val = DiemAccount::test_helper_create_signer(
-        //     vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B
-        // );
-        // AutoPay::enable_autopay(&new_val);
-        // let new_oper = ValidatorConfig::get_operator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B);
-        // DiemAccount::vm_make_payment_no_limit<GAS>(
-        //     @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, new_oper, 60009, x"", x"", vm
-        // );
-
-        // // check the new account is in the list of eligible
-        // let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
-        // assert(len == 5 , 7357000180205);
-
-        // // Adding eve to validator universe - would be done by self
-        // ValidatorUniverse::test_helper_add_self_onboard(vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B);
-
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
-        assert(len == 5 , 7357000180206);
-
-        // let i = 1;
-        // while (i < 16) {
-        //     // Mock the validator doing work for 15 blocks, and stats being updated.
-        //     Stats::process_set_votes(vm, &voters);
-        //     i = i + 1;
-        // };
+        assert(len == 7 , 7357000180206);
 
         EpochBoundary::reconfigure(vm, 15); // reconfigure at height 15
     }
@@ -186,11 +162,11 @@ script {
     fun main(vm: signer) {
         // Tests on initial size of validators
         print(&DiemSystem::validator_set_size());
-        assert(DiemSystem::validator_set_size() == 5, 7357000200301);
+        assert(DiemSystem::validator_set_size() == 7, 7357000200301);
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000200302);
         assert(DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000200303);
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(&vm));
-        assert(len == 5, 7357000200304);
+        assert(len == 7, 7357000200304);
       }
 }
 // check: EXECUTED
