@@ -8,7 +8,7 @@ module Mock {
   use 0x1::Stats;
   use 0x1::Cases;
 
-  public fun mock_case_1(vm: &signer, addr: address){
+  public fun mock_case_1(vm: &signer, addr: address, start_height: u64, end_height: u64){
       // can only apply this to a validator
       assert(DiemSystem::is_validator(addr) == true, 777701);
       // mock mining for the address
@@ -19,16 +19,19 @@ module Mock {
       let voters = Vector::empty<address>();
       Vector::push_back<address>(&mut voters, addr);
 
+      let num_blocks = end_height - start_height;
       // Overwrite the statistics to mock that all have been validating.
       let i = 1;
-      while (i < 16) {
+      let above_thresh = num_blocks / 10; //be above 5% signatures
+
+      while (i < above_thresh) {
           // Mock the validator doing work for 15 blocks, and stats being updated.
           Stats::process_set_votes(vm, &voters);
           i = i + 1;
       };
       
       // TODO: careful that the range of heights is within the test
-      assert(Cases::get_case(vm, addr, 0 , 1000) == 1, 777703);
+      assert(Cases::get_case(vm, addr, start_height, end_height) == 1, 777703);
 
     }
 
