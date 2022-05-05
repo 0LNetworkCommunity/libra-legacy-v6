@@ -26,7 +26,7 @@ use diem_types::{
     vm_status::KeptVMStatus,
 };
 use diem_vm::DiemVM;
-use language_e2e_tests::data_store::{FakeDataStore, GENESIS_CHANGE_SET_FRESH};
+use language_e2e_tests::data_store::{FakeDataStore};
 use move_binary_format::file_format::{CompiledModule, CompiledScript};
 use move_compiler::{
     shared::{verify_and_create_named_address_mapping, NumberFormat, NumericalAddress},
@@ -52,7 +52,7 @@ use std::{
     path::Path,
 };
 use structopt::StructOpt;
-use vm_genesis::GENESIS_KEYPAIR;
+use vm_genesis::{generate_genesis_change_set_for_testing_ol, GENESIS_KEYPAIR, GenesisOptions};
 
 /*************************************************************************************************
  *
@@ -825,7 +825,13 @@ impl<'a> MoveTestAdapter<'a> for DiemTestAdapter<'a> {
         // Genesis modules
         // TODO: rework vm-genesis and try not to compile the genesis modules twice.
         let mut storage = FakeDataStore::new(HashMap::new());
-        storage.add_write_set(GENESIS_CHANGE_SET_FRESH.write_set());
+
+        /////// 0L /////////
+        // storage.add_write_set(GENESIS_CHANGE_SET_FRESH.write_set());
+        let val_size = task_opt.as_ref().unwrap().command.1.validators.as_ref().unwrap().len();
+        storage.add_write_set(
+            generate_genesis_change_set_for_testing_ol(GenesisOptions::Fresh, Some(val_size)).write_set()
+        );
 
         // Builtin private key mapping
         let mut private_key_mapping = BTreeMap::new();

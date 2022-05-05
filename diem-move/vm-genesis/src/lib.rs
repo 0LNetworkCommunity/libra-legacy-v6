@@ -804,6 +804,22 @@ pub fn generate_genesis_change_set_for_testing(genesis_options: GenesisOptions) 
     generate_test_genesis(&modules, VMPublishingOption::open(), None, false).0
 }
 
+/////// 0L /////////
+/// 0L: Copy of generate_genesis_change_set_for_testing()
+/// Generate an artificial genesis `ChangeSet` for testing WITH count
+pub fn generate_genesis_change_set_for_testing_ol(
+    genesis_options: GenesisOptions,
+    count: Option<usize>
+) -> ChangeSet {
+    let modules = match genesis_options {
+        GenesisOptions::Compiled => diem_framework_releases::current_module_blobs().to_vec(),
+        GenesisOptions::Fresh => diem_framework::module_blobs(),
+        GenesisOptions::Experimental => diem_framework::experimental_module_blobs(),
+    };
+
+    generate_test_genesis(&modules, VMPublishingOption::open(), count, false).0
+}
+
 pub fn test_genesis_transaction() -> Transaction {
     let changeset = test_genesis_change_set_and_validators(None).0;
     Transaction::GenesisTransaction(WriteSetPayload::Direct(changeset))
@@ -853,7 +869,7 @@ pub struct TestValidator {
 impl TestValidator {
     pub fn new_test_set(count: Option<usize>) -> Vec<TestValidator> {
         let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([1u8; 32]);
-        (0..count.unwrap_or(4)) //////// 0L ////////
+        (0..count.unwrap_or(8)) //////// 0L ////////
             .map(|idx| TestValidator::gen(idx, &mut rng))
             .collect()
     }
