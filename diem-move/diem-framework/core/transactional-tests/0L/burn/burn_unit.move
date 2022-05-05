@@ -61,7 +61,6 @@ script {
     let (addr, _ , ratios) = Burn::get_ratios();
     assert!(Vector::length(&addr) == 2, 7357005);
 
-    // todo: update assertion
     let carol_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 1);
     let pct_carol = FixedPoint32::multiply_u64(100, carol_mult);
     // ratio for carol's community wallet.
