@@ -17,8 +17,8 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::TowerState;
-    use 0x1::TestFixtures;
+    use DiemFramework::TowerState;
+    use DiemFramework::TestFixtures;
 
     fun main(sender: signer) {
         TowerState::test_helper_init_val(
@@ -38,32 +38,32 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Mock;
-    use 0x1::TowerState;
+    use DiemFramework::Mock;
+    use DiemFramework::TowerState;
 
     fun main(vm: signer) {
       TowerState::test_epoch_reset_counter(&vm);
-      TowerState::test_helper_mock_reconfig(&vm, @{{alice}});
-      TowerState::test_helper_mock_reconfig(&vm, @{{bob}});
-      TowerState::test_helper_mock_reconfig(&vm, @{{carol}});
-      TowerState::test_helper_mock_reconfig(&vm, @{{dave}});
-      TowerState::test_helper_mock_reconfig(&vm, @{{eve}});
-      TowerState::test_helper_mock_reconfig(&vm, @{{frank}});
-      TowerState::test_helper_mock_reconfig(&vm, @{{gertie}});
+      TowerState::test_helper_mock_reconfig(&vm, @Alice);
+      TowerState::test_helper_mock_reconfig(&vm, @Bob);
+      TowerState::test_helper_mock_reconfig(&vm, @Carol);
+      TowerState::test_helper_mock_reconfig(&vm, @Dave);
+      TowerState::test_helper_mock_reconfig(&vm, @Eve);
+      TowerState::test_helper_mock_reconfig(&vm, @Frank);
+      TowerState::test_helper_mock_reconfig(&vm, @Gertie);
 
-      Mock::mock_case_1(&vm, @{{alice}});
-      Mock::mock_case_1(&vm, @{{carol}});
-      Mock::mock_case_1(&vm, @{{dave}});
-      Mock::mock_case_1(&vm, @{{eve}});
-      Mock::mock_case_1(&vm, @{{frank}});
+      Mock::mock_case_1(&vm, @Alice);
+      Mock::mock_case_1(&vm, @Carol);
+      Mock::mock_case_1(&vm, @Dave);
+      Mock::mock_case_1(&vm, @Eve);
+      Mock::mock_case_1(&vm, @Frank);
       // gertie will BE CASE 2
-      Mock::mock_case_2(&vm, @{{gertie}});
+      Mock::mock_case_2(&vm, @Gertie);
 
       // Mock the end-users submitting proofs above threshold.
       // Add 13: make it so that +2 gets above threshold 
       // Using 11 in this case because its a factor of the resulting validator payment
       // and doesnt cause rounding issues.
-      TowerState::test_helper_mock_mining_vm(&vm, @{{bob}}, 13);
+      TowerState::test_helper_mock_mining_vm(&vm, @Bob, 13);
     }
 }
 //check: EXECUTED
@@ -84,11 +84,11 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {  
-    use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
-    use 0x1::Subsidy;
-    use 0x1::Globals;
-    use 0x1::Debug::print;
+    use DiemFramework::GAS::GAS;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::Subsidy;
+    use DiemFramework::Globals;
+    use DiemFramework::Debug::print;
 
     fun main(_vm: signer) {
         // We are in a new epoch.
@@ -111,11 +111,11 @@ script {
 
         print(&ending_balance);
 
-        print(&DiemAccount::balance<GAS>(@{{bob}}));
-        print(&DiemAccount::balance<GAS>(@{{alice}}));
+        print(&DiemAccount::balance<GAS>(@Bob));
+        print(&DiemAccount::balance<GAS>(@Alice));
 
         // bob gets the entire identity pool (equivalent to one FIFTH of the validator subsidy)
-        assert(DiemAccount::balance<GAS>(@{{bob}}) == ending_balance, 735711);
+        assert!(DiemAccount::balance<GAS>(@Bob) == ending_balance, 735711);
 
     }
 }

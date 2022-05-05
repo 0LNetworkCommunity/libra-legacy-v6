@@ -2,8 +2,8 @@
 
 //! new-transaction
 script{
-  use 0x1::VDF;
-  use 0x1::TestFixtures;
+  use DiemFramework::VDF;
+  use DiemFramework::TestFixtures;
   fun main() {
     // this tests the happy case, that a proof is submitted with all three 
     // correct parameters.
@@ -23,6 +23,6 @@ script{
       &TestFixtures::security()
     );
     
-    assert(res == false, 1);
+    assert!(res == false, 1);
   }
 }

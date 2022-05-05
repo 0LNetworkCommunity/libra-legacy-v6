@@ -11,8 +11,8 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::TowerState;
-    use 0x1::TestFixtures;
+    use DiemFramework::TowerState;
+    use DiemFramework::TestFixtures;
 
     fun main(sender: signer) {
 
@@ -25,9 +25,9 @@ script {
         );
         TowerState::commit_state(&sender, proof);
 
-        let verified_tower_height_after = TowerState::test_helper_get_height(@{{bob}});
+        let verified_tower_height_after = TowerState::test_helper_get_height(@Bob);
 
-        assert(verified_tower_height_after == 0, 7357001);
+        assert!(verified_tower_height_after == 0, 7357001);
     }
 }
 //check: VMExecutionFailure(ABORTED 

@@ -6,8 +6,8 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::TowerState;
-    use 0x1::Debug::print;
+    use DiemFramework::TowerState;
+    use DiemFramework::Debug::print;
     fun main(vm: signer) {
 
       // destroy the struct

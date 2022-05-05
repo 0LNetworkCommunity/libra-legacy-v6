@@ -5,13 +5,13 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::DiemAccount;
-    use 0x1::Vector;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::Vector;
 
     fun main(_sender: signer) {
       let list = DiemAccount::get_slow_list();
       // alice, the validator, is already a slow wallet.
-      assert(Vector::length<address>(&list) ==1, 735701);
+      assert!(Vector::length<address>(&list) ==1, 735701);
     }
 }
 

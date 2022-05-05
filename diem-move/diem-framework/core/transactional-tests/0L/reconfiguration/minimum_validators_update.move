@@ -15,12 +15,12 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
 
     fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 4, 7357008004001);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357008004002);
+        assert!(DiemSystem::validator_set_size() == 4, 7357008004001);
+        assert!(DiemSystem::is_validator(@Alice) == true, 7357008004002);
     }
 }
 // check: EXECUTED
@@ -28,11 +28,11 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
 
     fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 4, 7357000180103);
+        assert!(DiemSystem::validator_set_size() == 4, 7357000180103);
     }
 }
 
@@ -40,15 +40,15 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Vector;
-    use 0x1::Stats;
+    use DiemFramework::Vector;
+    use DiemFramework::Stats;
 
     fun main(vm: signer) {
         let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, @{{alice}});
-        Vector::push_back<address>(&mut voters, @{{bob}});
-        Vector::push_back<address>(&mut voters, @{{carol}});
-        Vector::push_back<address>(&mut voters, @{{dave}});
+        Vector::push_back<address>(&mut voters, @Alice);
+        Vector::push_back<address>(&mut voters, @Bob);
+        Vector::push_back<address>(&mut voters, @Carol);
+        Vector::push_back<address>(&mut voters, @Dave);
 
         let i = 1;
         while (i < 16) {
@@ -74,12 +74,12 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
     
     fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 4, 7357000180104);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000180105);        
+        assert!(DiemSystem::validator_set_size() == 4, 7357000180104);
+        assert!(DiemSystem::is_validator(@Alice) == true, 7357000180105);        
     }
 }
 //check: EXECUTED

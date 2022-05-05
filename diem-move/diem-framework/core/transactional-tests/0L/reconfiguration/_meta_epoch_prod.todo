@@ -22,7 +22,7 @@
 //! new-transaction
 //! sender: diemroot
 script {  
-    use 0x1::Debug::print;
+    use DiemFramework::Debug::print;
     fun main(_vm: signer) {
         // We are in a new epoch.
         print(&12121212121212);

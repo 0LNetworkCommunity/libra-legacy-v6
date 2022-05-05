@@ -3,7 +3,7 @@
 //! new-transaction
 //! sender: alice
 script {
-use 0x1::Decimal;
+use DiemFramework::Decimal;
 
 fun main(_s: signer) {
     //////// POWER ////////
@@ -11,7 +11,7 @@ fun main(_s: signer) {
     let right = Decimal::new(true, 2, 0);
 
     let res = Decimal::power(&left, &right);
-    assert(Decimal::borrow_int(&res) == &4, 7357005);
+    assert!(Decimal::borrow_int(&res) == &4, 7357005);
 
 
     // test negative powers with decimals
@@ -19,6 +19,6 @@ fun main(_s: signer) {
     let right = Decimal::new(false, 123, 2);
 
     let res = Decimal::power(&left, &right);
-    assert(Decimal::borrow_int(&res) == &4263174467315223084025448727, 7357006);
+    assert!(Decimal::borrow_int(&res) == &4263174467315223084025448727, 7357006);
 }
 }

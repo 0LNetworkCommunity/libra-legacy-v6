@@ -6,8 +6,8 @@
 
 //! new-transaction
 script{
-  use 0x1::VDF;
-  use 0x1::TestFixtures;
+  use DiemFramework::VDF;
+  use DiemFramework::TestFixtures;
   fun main() {
     // This checks that the VDF verifier catches an invalide "challenge" 
     // parameter, and fails gracefully with error.
@@ -26,6 +26,6 @@ script{
       &TestFixtures::security(), // security
     );
 
-    assert( res == false, 1);
+    assert!( res == false, 1);
   }
 }

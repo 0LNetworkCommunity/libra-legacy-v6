@@ -10,9 +10,9 @@
 //! new-transaction
 //! sender: alice
 script {
-  use 0x1::Oracle;
-  use 0x1::Vector;
-  use 0x1::Upgrade;
+  use DiemFramework::Oracle;
+  use DiemFramework::Vector;
+  use DiemFramework::Upgrade;
 
   fun main(sender: signer){
       let id = 1;
@@ -21,9 +21,9 @@ script {
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 0);
-      assert(e == @{{alice}}, 735701);
+      assert!(e == @Alice, 735701);
 
-      assert(Upgrade::has_upgrade() == false, 735702); 
+      assert!(Upgrade::has_upgrade() == false, 735702); 
   }
 }
 // check: EXECUTED
@@ -32,9 +32,9 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-  use 0x1::Oracle;
-  use 0x1::Vector;
-  use 0x1::Upgrade;
+  use DiemFramework::Oracle;
+  use DiemFramework::Vector;
+  use DiemFramework::Upgrade;
 
   fun main(sender: signer){
       let id = 1;
@@ -43,9 +43,9 @@ script {
       let vec = Oracle::test_helper_query_oracle_votes();
 
       let e = *Vector::borrow<address>(&vec, 1);
-      assert(e == @{{bob}}, 735703);
+      assert!(e == @Bob, 735703);
 
-      assert(Upgrade::has_upgrade() == false, 735704); 
+      assert!(Upgrade::has_upgrade() == false, 735704); 
   }
 }
 // check: EXECUTED
@@ -53,15 +53,15 @@ script {
 //! new-transaction
 //! sender: charlie
 script {
-  use 0x1::Oracle;
-  use 0x1::Upgrade;
+  use DiemFramework::Oracle;
+  use DiemFramework::Upgrade;
 
   fun main(sender: signer){
       let id = 1;
       let data = b"hello";
       Oracle::handler(&sender, id, data);
 
-      assert(Upgrade::has_upgrade() == false, 735705); 
+      assert!(Upgrade::has_upgrade() == false, 735705); 
   }
 }
 // check: EXECUTED
@@ -74,22 +74,22 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::Upgrade;
-  use 0x1::Vector;
+  use DiemFramework::Upgrade;
+  use DiemFramework::Vector;
 
   fun main(){
     let (upgraded_version, payload, voters, height) = 
       Upgrade::retrieve_latest_history();
 
     let validators = Vector::empty<address>();
-    Vector::push_back(&mut validators, @{{alice}});
-    Vector::push_back(&mut validators, @{{charlie}});
+    Vector::push_back(&mut validators, @Alice);
+    Vector::push_back(&mut validators, @Charlie);
 
-    assert(Upgrade::has_upgrade(), 735706); 
-    assert(upgraded_version == 0, 735707);
-    assert(payload == b"hello", 735708);
-    assert(Vector::compare(&voters, &validators), 735709);
-    assert(height == 2, 735710);
+    assert!(Upgrade::has_upgrade(), 735706); 
+    assert!(upgraded_version == 0, 735707);
+    assert!(payload == b"hello", 735708);
+    assert!(Vector::compare(&voters, &validators), 735709);
+    assert!(height == 2, 735710);
   }
 }
 // check: EXECUTED

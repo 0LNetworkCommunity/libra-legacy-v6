@@ -23,13 +23,13 @@
 //! sender: diemroot
 
 script {
-    use 0x1::Epoch;
-    use 0x1::DiemTimestamp;
+    use DiemFramework::Epoch;
+    use DiemFramework::DiemTimestamp;
     
     fun main(){
       // the new epoch has reset the timer.
-      assert(DiemTimestamp::now_seconds() == 61, 7357008002001);
-      assert(!Epoch::epoch_finished(), 7357008002002);
+      assert!(DiemTimestamp::now_seconds() == 61, 7357008002001);
+      assert!(!Epoch::epoch_finished(), 7357008002002);
     }
 }
 // check: EXECUTED

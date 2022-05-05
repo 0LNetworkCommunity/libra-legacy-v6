@@ -3,9 +3,9 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::TransactionFee;
+    use DiemFramework::TransactionFee;
 
     fun main(vm: signer) {
-        assert(TransactionFee::get_amount_to_distribute(&vm) == 0, 735701);
+        assert!(TransactionFee::get_amount_to_distribute(&vm) == 0, 735701);
     }
 }

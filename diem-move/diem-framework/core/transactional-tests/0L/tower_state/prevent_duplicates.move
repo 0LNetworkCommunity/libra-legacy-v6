@@ -7,8 +7,8 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::TowerState;
-    use 0x1::TestFixtures;
+    use DiemFramework::TowerState;
+    use DiemFramework::TestFixtures;
 
     fun main(sender: signer) {
         TowerState::test_helper_init_val(
@@ -19,8 +19,8 @@ script {
             TestFixtures::security(),
         );
 
-        let height = TowerState::test_helper_get_height(@{{bob}});
-        assert(height==0, 01);
+        let height = TowerState::test_helper_get_height(@Bob);
+        assert!(height==0, 01);
 
     }
 }
@@ -30,8 +30,8 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::TowerState;
-    use 0x1::TestFixtures;
+    use DiemFramework::TowerState;
+    use DiemFramework::TestFixtures;
 
     fun main(sender: signer) {
         let proof = TowerState::create_proof_blob(

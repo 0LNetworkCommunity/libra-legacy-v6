@@ -7,10 +7,10 @@
 
 //! sender: alice
 script {
-use 0x1::TowerState;
-use 0x1::TestFixtures;
-use 0x1::Debug::print;
-use 0x1::Vector;
+use DiemFramework::TowerState;
+use DiemFramework::TestFixtures;
+use DiemFramework::Debug::print;
+use DiemFramework::Vector;
 
 fun main(sender: signer) {
     TowerState::init_miner_state(
@@ -21,12 +21,12 @@ fun main(sender: signer) {
         TestFixtures::security(),
     );
 
-    print(&TowerState::get_epochs_compliant(@{{alice}}));
-    assert(TowerState::get_tower_height(@{{alice}}) == 0, 735701);
-    assert(TowerState::get_epochs_compliant(@{{alice}}) == 0, 735702);
-    assert(TowerState::get_count_in_epoch(@{{alice}}) == 1, 735703);
+    print(&TowerState::get_epochs_compliant(@Alice));
+    assert!(TowerState::get_tower_height(@Alice) == 0, 735701);
+    assert!(TowerState::get_epochs_compliant(@Alice) == 0, 735702);
+    assert!(TowerState::get_count_in_epoch(@Alice) == 1, 735703);
     print(&TowerState::get_miner_list());
-    assert(Vector::length<address>(&TowerState::get_miner_list()) == 2, 735704); // includes the dummy validator from genesis
+    assert!(Vector::length<address>(&TowerState::get_miner_list()) == 2, 735704); // includes the dummy validator from genesis
 
 }
 }

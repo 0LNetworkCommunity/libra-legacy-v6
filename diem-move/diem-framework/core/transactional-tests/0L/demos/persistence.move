@@ -16,7 +16,7 @@
 //! sender: alice
 //! gas-currency: GAS
 script {
-    use 0x1::PersistenceDemo;
+    use DiemFramework::PersistenceDemo;
 
     // This sender argument was populated by the test harness with a random 
     // address for `alice`, which can be accessed with sender variable or 
@@ -27,8 +27,8 @@ script {
       PersistenceDemo::add_stuff(&alice);
 
     // our checks
-      assert(PersistenceDemo::length(&alice) == 3, 0);
-      assert(PersistenceDemo::contains(&alice, 1), 1);
+      assert!(PersistenceDemo::length(&alice) == 3, 0);
+      assert!(PersistenceDemo::contains(&alice, 1), 1);
     }
 }
 
@@ -46,9 +46,9 @@ script {
 //! sender: alice
 //! gas-currency: GAS
 script {
-    use 0x1::PersistenceDemo;
+    use DiemFramework::PersistenceDemo;
     fun main(sender: signer){
-      assert(PersistenceDemo::length(&sender) == 2, 4);
+      assert!(PersistenceDemo::length(&sender) == 2, 4);
     }
 }
 
@@ -66,7 +66,7 @@ script {
 //! sender: bob
 //! gas-currency: GAS
 script {
-    use 0x1::PersistenceDemo;
+    use DiemFramework::PersistenceDemo;
     fun main(sender: signer){
         PersistenceDemo::add_stuff(&sender);
     }

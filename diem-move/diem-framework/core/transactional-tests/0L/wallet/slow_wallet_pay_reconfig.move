@@ -19,16 +19,16 @@
 //! new-transaction
 //! sender: alice
 script {
-use 0x1::GAS::GAS;
-use 0x1::DiemAccount;
+use DiemFramework::GAS::GAS;
+use DiemFramework::DiemAccount;
 fun main(account: signer) {
-    assert(DiemAccount::unlocked_amount(@{{alice}}) == 10, 735701);
-    assert(DiemAccount::balance<GAS>(@{{bob}}) == 10, 735701);
+    assert!(DiemAccount::unlocked_amount(@Alice) == 10, 735701);
+    assert!(DiemAccount::balance<GAS>(@Bob) == 10, 735701);
 
     let with_cap = DiemAccount::extract_withdraw_capability(&account);
-    DiemAccount::pay_from<GAS>(&with_cap, @{{bob}}, 5, x"", x"");
+    DiemAccount::pay_from<GAS>(&with_cap, @Bob, 5, x"", x"");
     DiemAccount::restore_withdraw_capability(with_cap);
-    assert(DiemAccount::balance<GAS>(@{{bob}}) == 15, 735701);
+    assert!(DiemAccount::balance<GAS>(@Bob) == 15, 735701);
 }
 }
 

@@ -6,14 +6,14 @@
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::DiemAccount;
-  use 0x1::GAS::GAS;
+  use DiemFramework::DiemAccount;
+  use DiemFramework::GAS::GAS;
 
   fun main(vm: signer) {
     // Does not fail when trying to make payment to an account which cannot receive balance.
     // fails silently, as asserts can cause the VM to halt.
     DiemAccount::vm_make_payment_no_limit<GAS>(
-      @{{alice}},
+      @Alice,
       @0x0, // cannot receive balance
       100,
       x"",
@@ -28,14 +28,14 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::DiemAccount;
-  use 0x1::GAS::GAS;
+  use DiemFramework::DiemAccount;
+  use DiemFramework::GAS::GAS;
 
   fun main(vm: signer) {
     // Should be fine if the balance is 0
     DiemAccount::vm_make_payment_no_limit<GAS>(
-      @{{alice}},
-      @{{bob}}, // has a 0 in balance
+      @Alice,
+      @Bob, // has a 0 in balance
       100,
       x"",
       x"",

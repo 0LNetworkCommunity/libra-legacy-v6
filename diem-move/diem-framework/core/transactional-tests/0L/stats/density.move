@@ -12,21 +12,21 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Vector;
-    use 0x1::Stats;
+    use DiemFramework::Vector;
+    use DiemFramework::Stats;
 
     // Assumes an epoch changed at round 15
     fun main(vm: signer) {
         let vm = &vm;
-        assert(Stats::node_current_props(vm, @{{bob}}) == 0, 0);
-        assert(Stats::node_current_votes(vm, @{{alice}}) == 0, 0);
-        assert(Stats::node_current_votes(vm, @{{bob}}) == 0, 0);
+        assert!(Stats::node_current_props(vm, @Bob) == 0, 0);
+        assert!(Stats::node_current_votes(vm, @Alice) == 0, 0);
+        assert!(Stats::node_current_votes(vm, @Bob) == 0, 0);
 
         let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, @{{alice}});
-        Vector::push_back<address>(&mut voters, @{{bob}});
-        Vector::push_back<address>(&mut voters, @{{carol}});
-        Vector::push_back<address>(&mut voters, @{{dave}});
+        Vector::push_back<address>(&mut voters, @Alice);
+        Vector::push_back<address>(&mut voters, @Bob);
+        Vector::push_back<address>(&mut voters, @Carol);
+        Vector::push_back<address>(&mut voters, @Dave);
 
         // Testing Below Threshold
         let i = 1;
@@ -36,8 +36,8 @@ script {
             i = i + 1;
         };
 
-        assert(!Stats::node_above_thresh(vm, @{{alice}}, 0, 500), 735701);
-        assert(Stats::network_density(vm, 0, 500) == 0, 735702);
+        assert!(!Stats::node_above_thresh(vm, @Alice, 0, 500), 735701);
+        assert!(Stats::network_density(vm, 0, 500) == 0, 735702);
 
         // Testing Above Threshold
         let i = 1;
@@ -47,8 +47,8 @@ script {
             i = i + 1;
         };
 
-        assert(Stats::node_above_thresh(vm, @{{alice}}, 0, 500), 735703);
-        assert(Stats::network_density(vm, 0, 500) == 4, 735704);
+        assert!(Stats::node_above_thresh(vm, @Alice, 0, 500), 735703);
+        assert!(Stats::network_density(vm, 0, 500) == 4, 735704);
     }
 }
 // check: EXECUTED

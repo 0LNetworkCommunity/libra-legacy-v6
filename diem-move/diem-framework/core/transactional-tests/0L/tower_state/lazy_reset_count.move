@@ -7,10 +7,10 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::TowerState;
-    use 0x1::TestFixtures;
-    use 0x1::DiemConfig;
-    use 0x1::Debug::print;
+    use DiemFramework::TowerState;
+    use DiemFramework::TestFixtures;
+    use DiemFramework::DiemConfig;
+    use DiemFramework::Debug::print;
 
     // SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
     fun main(sender: signer) {
@@ -24,17 +24,17 @@ script {
             TestFixtures::security(),
         );
 
-        assert(TowerState::test_helper_get_height(@{{alice}}) == 0, 10008001);
-        assert(TowerState::get_epochs_compliant(@{{alice}}) == 0, 735701);
+        assert!(TowerState::test_helper_get_height(@Alice) == 0, 10008001);
+        assert!(TowerState::get_epochs_compliant(@Alice) == 0, 735701);
 
         // the last epoch mining is this one.
-        assert(TowerState::get_miner_latest_epoch(@{{alice}}) == DiemConfig::get_current_epoch(), 735702);
+        assert!(TowerState::get_miner_latest_epoch(@Alice) == DiemConfig::get_current_epoch(), 735702);
         // initialization created one proof.
         // With Lazy computation, is number will not change on the next epochboundary.
         // if will only change after the next mining proof is submitted.
-        assert(TowerState::get_count_in_epoch(@{{alice}}) == 1, 735703);
+        assert!(TowerState::get_count_in_epoch(@Alice) == 1, 735703);
         // the nominal count will match the expected count in epoch.
-        assert(TowerState::test_helper_get_nominal_count(@{{alice}}) == 1, 735704);
+        assert!(TowerState::test_helper_get_nominal_count(@Alice) == 1, 735704);
 
     }
 }
@@ -58,22 +58,22 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemConfig;
-    use 0x1::TowerState;
-    use 0x1::Debug::print;
+    use DiemFramework::DiemConfig;
+    use DiemFramework::TowerState;
+    use DiemFramework::Debug::print;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
     fun main(_: signer) {
       print(&DiemConfig::get_current_epoch());
-      print(&TowerState::get_count_in_epoch(@{{alice}}));
+      print(&TowerState::get_count_in_epoch(@Alice));
       
       // the latest epoch mining cannot be the current epoch.
-      assert(TowerState::get_miner_latest_epoch(@{{alice}}) != DiemConfig::get_current_epoch(), 735701);
+      assert!(TowerState::get_miner_latest_epoch(@Alice) != DiemConfig::get_current_epoch(), 735701);
       // Lazy would mean no change from before epoch boundary in nominal count
-      assert(TowerState::test_helper_get_nominal_count(@{{alice}}) == 1, 735703);
+      assert!(TowerState::test_helper_get_nominal_count(@Alice) == 1, 735703);
 
       // but the helpers know  the actual count in epoch is 0.
-      assert(TowerState::get_count_in_epoch(@{{alice}}) == 0, 735703);
+      assert!(TowerState::get_count_in_epoch(@Alice) == 0, 735703);
       
 
     }
@@ -97,23 +97,23 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemConfig;
-    use 0x1::TowerState;
-    use 0x1::Debug::print;
+    use DiemFramework::DiemConfig;
+    use DiemFramework::TowerState;
+    use DiemFramework::Debug::print;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
     fun main(_: signer) {
       print(&DiemConfig::get_current_epoch());
-      print(&TowerState::get_count_in_epoch(@{{alice}}));
+      print(&TowerState::get_count_in_epoch(@Alice));
     
       // the latest epoch mining cannot be the current epoch.
-      assert(TowerState::get_miner_latest_epoch(@{{alice}}) != DiemConfig::get_current_epoch(), 735704);
+      assert!(TowerState::get_miner_latest_epoch(@Alice) != DiemConfig::get_current_epoch(), 735704);
 
       // Lazy would mean no change from before epoch boundary in nominal count
-      assert(TowerState::test_helper_get_nominal_count(@{{alice}}) == 1, 735705);
+      assert!(TowerState::test_helper_get_nominal_count(@Alice) == 1, 735705);
 
       // but the helpers know  the actual count in epoch is 0.
-      assert(TowerState::get_count_in_epoch(@{{alice}}) == 0, 735706);
+      assert!(TowerState::get_count_in_epoch(@Alice) == 0, 735706);
       
 
     }
@@ -126,17 +126,17 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::TowerState;
-    use 0x1::TestFixtures;
-    use 0x1::DiemConfig;
-    use 0x1::Debug::print;
+    use DiemFramework::TowerState;
+    use DiemFramework::TestFixtures;
+    use DiemFramework::DiemConfig;
+    use DiemFramework::Debug::print;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
     fun main(sender: signer) {
-      let before = TowerState::get_tower_height(@{{alice}});
+      let before = TowerState::get_tower_height(@Alice);
 
         print(&before);
-        // assert(TowerState::test_helper_get_height(@{{alice}}) == 0, 10008001);
+        // assert!(TowerState::test_helper_get_height(@Alice) == 0, 10008001);
         
         let proof = TowerState::create_proof_blob(
             TestFixtures::alice_1_easy_chal(),
@@ -146,24 +146,24 @@ script {
         );
         TowerState::commit_state(&sender, proof);
 
-        let after = TowerState::get_tower_height(@{{alice}});
+        let after = TowerState::get_tower_height(@Alice);
 
         print(&after);
 
       // the cumulative tower height has increased
-        assert(after > before , 735707);
+        assert!(after > before , 735707);
       
       // HOWEVER the nominal count is just 1 (it was reset to 0 and then a new proof was added)
       
-      assert(TowerState::test_helper_get_nominal_count(@{{alice}}) == 1, 735708);
+      assert!(TowerState::test_helper_get_nominal_count(@Alice) == 1, 735708);
 
       // Now everthing should match as expected
 
       // the latest epoch mining is the current epoch.
-      assert(TowerState::get_miner_latest_epoch(@{{alice}}) == DiemConfig::get_current_epoch(), 735709);
+      assert!(TowerState::get_miner_latest_epoch(@Alice) == DiemConfig::get_current_epoch(), 735709);
 
       // Lazy would mean no change from before epoch boundary in nominal count
-      assert(TowerState::test_helper_get_nominal_count(@{{alice}}) == TowerState::get_count_in_epoch(@{{alice}}), 735710);
+      assert!(TowerState::test_helper_get_nominal_count(@Alice) == TowerState::get_count_in_epoch(@Alice), 735710);
 
     }
 }

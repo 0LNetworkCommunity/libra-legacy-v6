@@ -4,8 +4,8 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::MigrateTowerCounter;
-    use 0x1::TowerState;
+    use DiemFramework::MigrateTowerCounter;
+    use DiemFramework::TowerState;
     fun main(vm: signer) {
       // remove the TowerCounter state to mock the state of the network before the upgrade.
       TowerState::test_danger_destroy_tower_counter(&vm);
@@ -15,7 +15,7 @@ script {
       // migrate MinerStats to MinerCounter
       MigrateTowerCounter::migrate_tower_counter(&vm);
       
-      assert(TowerState::test_get_liftime_proofs() == 111, 735701);
+      assert!(TowerState::test_get_liftime_proofs() == 111, 735701);
 
     }
 }

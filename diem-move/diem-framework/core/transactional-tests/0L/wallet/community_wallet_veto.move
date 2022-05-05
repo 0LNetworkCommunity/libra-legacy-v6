@@ -14,10 +14,10 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::TowerState;
+    use DiemFramework::TowerState;
     fun main(vm: signer) {
-      TowerState::test_helper_set_weight_vm(&vm, @{{carol}}, 50);
-      TowerState::test_helper_set_weight_vm(&vm, @{{dave}}, 50);
+      TowerState::test_helper_set_weight_vm(&vm, @Carol, 50);
+      TowerState::test_helper_set_weight_vm(&vm, @Dave, 50);
     }
 }
 // check: EXECUTED
@@ -26,18 +26,18 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::Wallet;
-    use 0x1::Vector;
+    use DiemFramework::Wallet;
+    use DiemFramework::Vector;
 
     fun main(sender: signer) {
       Wallet::set_comm(&sender);
       let list = Wallet::get_comm_list();
 
-      assert(Vector::length(&list) == 1, 7357001);
-      assert(Wallet::is_comm(@{{alice}}), 7357002);
+      assert!(Vector::length(&list) == 1, 7357001);
+      assert!(Wallet::is_comm(@Alice), 7357002);
 
-      let uid = Wallet::new_timed_transfer(&sender, @{{bob}}, 100, b"thanks bob");
-      assert(Wallet::transfer_is_proposed(uid), 7357003);
+      let uid = Wallet::new_timed_transfer(&sender, @Bob, 100, b"thanks bob");
+      assert!(Wallet::transfer_is_proposed(uid), 7357003);
     }
 }
 
@@ -46,22 +46,22 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::Wallet;
+    use DiemFramework::Wallet;
 
     fun main(sender: signer) {
       let uid = 1;
       let e = Wallet::get_tx_epoch(uid);
-      assert(e == 4, 7357004);
+      assert!(e == 4, 7357004);
 
       Wallet::veto(&sender, uid);
 
 
       let e = Wallet::get_tx_epoch(uid);
       // adds latency to tx
-      assert(e == 5, 7357005);
+      assert!(e == 5, 7357005);
 
-      assert(Wallet::transfer_is_proposed(uid), 7357006);
-      assert(!Wallet::transfer_is_rejected(uid), 7357007);
+      assert!(Wallet::transfer_is_proposed(uid), 7357006);
+      assert!(!Wallet::transfer_is_rejected(uid), 7357007);
     }
 }
 
@@ -70,21 +70,21 @@ script {
 //! new-transaction
 //! sender: dave
 script {
-    use 0x1::Wallet;
+    use DiemFramework::Wallet;
 
     fun main(sender: signer) {
       let uid = 1;
 
       let e = Wallet::get_tx_epoch(uid);
-      assert(e == 5, 7357008);
+      assert!(e == 5, 7357008);
 
       Wallet::veto(&sender, uid);
 
       let e = Wallet::get_tx_epoch(uid);
-      assert(e == 0, 7357009);
+      assert!(e == 0, 7357009);
 
-      assert(!Wallet::transfer_is_proposed(uid), 7357010);
-      assert(Wallet::transfer_is_rejected(uid), 7357011);
+      assert!(!Wallet::transfer_is_proposed(uid), 7357010);
+      assert!(Wallet::transfer_is_rejected(uid), 7357011);
     }
 }
 

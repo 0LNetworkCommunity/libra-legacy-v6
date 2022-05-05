@@ -17,13 +17,13 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
 
     fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 5, 7357008012001);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357008012002);
-        assert(DiemSystem::is_validator(@{{bob}}) == true, 7357008012003);
+        assert!(DiemSystem::validator_set_size() == 5, 7357008012001);
+        assert!(DiemSystem::is_validator(@Alice) == true, 7357008012002);
+        assert!(DiemSystem::is_validator(@Bob) == true, 7357008012003);
     }
 }
 // check: EXECUTED
@@ -32,13 +32,13 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
+    use DiemFramework::DiemSystem;
 
     fun main(_account: signer) {
         // Tests on initial size of validators 
-        assert(DiemSystem::validator_set_size() == 5, 7357008012004);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357008012005);
-        assert(DiemSystem::is_validator(@{{bob}}) == true, 7357008012006);
+        assert!(DiemSystem::validator_set_size() == 5, 7357008012004);
+        assert!(DiemSystem::is_validator(@Alice) == true, 7357008012005);
+        assert!(DiemSystem::is_validator(@Bob) == true, 7357008012006);
     }
 }
 //check: EXECUTED
@@ -46,17 +46,17 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Vector;
-    use 0x1::Stats;
+    use DiemFramework::Vector;
+    use DiemFramework::Stats;
 
     // This is the the epoch boundary.
     fun main(vm: signer) {
         let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, @{{alice}});
-        Vector::push_back<address>(&mut voters, @{{bob}});
-        Vector::push_back<address>(&mut voters, @{{carol}});
-        Vector::push_back<address>(&mut voters, @{{dave}});
-        Vector::push_back<address>(&mut voters, @{{eve}});
+        Vector::push_back<address>(&mut voters, @Alice);
+        Vector::push_back<address>(&mut voters, @Bob);
+        Vector::push_back<address>(&mut voters, @Carol);
+        Vector::push_back<address>(&mut voters, @Dave);
+        Vector::push_back<address>(&mut voters, @Eve);
 
         // Overwrite the statistics to mock that all have been validating.
         let i = 1;
@@ -85,11 +85,11 @@ script {
 //! sender: diemroot
 script {
     
-    use 0x1::DiemSystem;
-    use 0x1::DiemConfig;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::DiemConfig;
     fun main(_account: signer) {
-        assert(DiemSystem::validator_set_size() == 5, 7357008012007);
-        assert(DiemConfig::get_current_epoch() == 2, 7357008012008);
+        assert!(DiemSystem::validator_set_size() == 5, 7357008012007);
+        assert!(DiemConfig::get_current_epoch() == 2, 7357008012008);
     }
 }
 // check: EXECUTED

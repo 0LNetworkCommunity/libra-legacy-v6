@@ -3,8 +3,8 @@
 //! new-transaction
 //! sender: bob
 script {
-  use 0x1::DiemAccount;
-  use 0x1::GAS::GAS;
+  use DiemFramework::DiemAccount;
+  use DiemFramework::GAS::GAS;
 
   fun main(sender: signer) {
     // Eve's account info.
@@ -20,10 +20,10 @@ script {
       value,
     );
 
-    assert(DiemAccount::balance<GAS>(eve_addr) == 1000000, 735701);
+    assert!(DiemAccount::balance<GAS>(eve_addr) == 1000000, 735701);
 
     // is NOT a slow wallet
-    assert(!DiemAccount::is_slow(eve_addr), 735702);
+    assert!(!DiemAccount::is_slow(eve_addr), 735702);
   }
 }
 // check: EXECUTED

@@ -5,8 +5,8 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::TowerState;
-    use 0x1::TestFixtures;
+    use DiemFramework::TowerState;
+    use DiemFramework::TestFixtures;
 
     // SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
     fun main(sender: signer) {
@@ -19,10 +19,10 @@ script {
         );
 
         // check for initialized TowerState
-        assert(TowerState::test_helper_get_height(@{{alice}}) == 0, 10008001);
+        assert!(TowerState::test_helper_get_height(@Alice) == 0, 10008001);
 
         // Note: test helper mocks init of a VALIDATOR, not end-user account
-        assert(TowerState::get_epochs_compliant(@{{alice}}) == 1, 735701);
+        assert!(TowerState::get_epochs_compliant(@Alice) == 1, 735701);
     }
 }
 // check: EXECUTED
@@ -31,12 +31,12 @@ script {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::TowerState;
-    use 0x1::TestFixtures;
+    use DiemFramework::TowerState;
+    use DiemFramework::TestFixtures;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
     fun main(sender: signer) {
-        assert(TowerState::test_helper_get_height(@{{alice}}) == 0, 10008001);
+        assert!(TowerState::test_helper_get_height(@Alice) == 0, 10008001);
         let height_after = 1;
         
         let proof = TowerState::create_proof_blob(
@@ -47,8 +47,8 @@ script {
         );
         TowerState::commit_state(&sender, proof);
 
-        let verified_height = TowerState::test_helper_get_height(@{{alice}});
-        assert(verified_height == height_after, 10008002);
+        let verified_height = TowerState::test_helper_get_height(@Alice);
+        assert!(verified_height == height_after, 10008002);
     }
 }
 // check: EXECUTED
@@ -57,14 +57,14 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::EpochBoundary;
-    use 0x1::TowerState;
+    use DiemFramework::EpochBoundary;
+    use DiemFramework::TowerState;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
     fun main(vm: signer) {
       EpochBoundary::reconfigure(&vm, 100);
       
       // no change from before epoch boundary
-      assert(TowerState::get_epochs_compliant(@{{alice}}) == 1, 735701);
+      assert!(TowerState::get_epochs_compliant(@Alice) == 1, 735701);
     }
 }

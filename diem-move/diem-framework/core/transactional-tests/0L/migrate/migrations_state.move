@@ -4,7 +4,7 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Migrations;
+    use DiemFramework::Migrations;
 
     fun main(vm: signer) { // alice's signer type added in tx.
       Migrations::init(&vm);

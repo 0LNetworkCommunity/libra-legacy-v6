@@ -4,8 +4,8 @@
 //! new-transaction
 //! sender: diemroot
 script{
-use 0x1::ValidatorUniverse;
-use 0x1::Vector;
+use DiemFramework::ValidatorUniverse;
+use DiemFramework::Vector;
 
 
 fun main(vm: signer) {
@@ -17,7 +17,7 @@ fun main(vm: signer) {
         &ValidatorUniverse::get_eligible_validators(&vm)
     );
 
-    assert(len == 1, 100001);
+    assert!(len == 1, 100001);
 }
 }
 // check: EXECUTED

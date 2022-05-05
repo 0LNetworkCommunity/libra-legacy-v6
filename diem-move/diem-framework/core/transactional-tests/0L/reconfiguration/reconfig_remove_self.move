@@ -20,18 +20,18 @@ stdlib_script::ValidatorScripts::leave
 //! new-transaction
 //! sender: diemroot
 script {
-    // use 0x1::TowerState;
-    use 0x1::Stats;
-    use 0x1::Vector;
-    // use 0x1::EpochBoundary;
-    use 0x1::DiemSystem;
+    // use DiemFramework::TowerState;
+    use DiemFramework::Stats;
+    use DiemFramework::Vector;
+    // use DiemFramework::EpochBoundary;
+    use DiemFramework::DiemSystem;
 
     fun main(vm: signer) {
         // todo: change name to Mock epochs
         // TowerState::test_helper_set_epochs(&sender, 5);
-        let voters = Vector::singleton<address>(@{{alice}});
-        Vector::push_back<address>(&mut voters, @{{bob}});
-        Vector::push_back<address>(&mut voters, @{{carol}});
+        let voters = Vector::singleton<address>(@Alice);
+        Vector::push_back<address>(&mut voters, @Bob);
+        Vector::push_back<address>(&mut voters, @Carol);
 
         let i = 1;
         while (i < 15) {
@@ -40,10 +40,10 @@ script {
             i = i + 1;
         };
         // Carol is still a validator until the next epoch
-        assert(DiemSystem::validator_set_size() == 3, 7357008011001);
-        assert(DiemSystem::is_validator(@{{alice}}), 7357008011002);
-        assert(DiemSystem::is_validator(@{{bob}}), 7357008011003);
-        assert(DiemSystem::is_validator(@{{carol}}), 7357008011004);
+        assert!(DiemSystem::validator_set_size() == 3, 7357008011001);
+        assert!(DiemSystem::is_validator(@Alice), 7357008011002);
+        assert!(DiemSystem::is_validator(@Bob), 7357008011003);
+        assert!(DiemSystem::is_validator(@Carol), 7357008011004);
     }
 }
 //check: EXECUTED
@@ -65,16 +65,16 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
-    use 0x1::DiemConfig;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::DiemConfig;
 
     fun main(_account: signer) {
         // We are in a new epoch.
-        assert(DiemConfig::get_current_epoch() == 2, 7357008011005);
+        assert!(DiemConfig::get_current_epoch() == 2, 7357008011005);
         // Tests to ensure validator set size has indeed dropped
-        assert(DiemSystem::validator_set_size() == 2, 7357008011006);
+        assert!(DiemSystem::validator_set_size() == 2, 7357008011006);
         // Carol is no longer a validator because she removed herself the previous epoch
-        assert(DiemSystem::is_validator(@{{carol}}) == false, 7357008011007);
+        assert!(DiemSystem::is_validator(@Carol) == false, 7357008011007);
     }
 }
 //check: EXECUTED
@@ -83,14 +83,14 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    // use 0x1::EpochBoundary;
-    use 0x1::Vector;
-    use 0x1::Stats;
+    // use DiemFramework::EpochBoundary;
+    use DiemFramework::Vector;
+    use DiemFramework::Stats;
     
     fun main(vm: signer) {
         // start a new epoch.
-        let voters = Vector::singleton<address>(@{{alice}});
-        Vector::push_back<address>(&mut voters, @{{bob}});
+        let voters = Vector::singleton<address>(@Alice);
+        Vector::push_back<address>(&mut voters, @Bob);
 
         let i = 1;
         while (i < 15) {
@@ -118,13 +118,13 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
-    use 0x1::DiemConfig;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::DiemConfig;
     fun main(_account: signer) {
-        assert(DiemConfig::get_current_epoch() == 3, 7357008011008);
+        assert!(DiemConfig::get_current_epoch() == 3, 7357008011008);
 
         // carol is still not a validator because she has not rejoined. 
-        assert(!DiemSystem::is_validator(@{{carol}}), 7357008011009);
+        assert!(!DiemSystem::is_validator(@Carol), 7357008011009);
     }
 }
 //check: EXECUTED
@@ -134,8 +134,8 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-use 0x1::TowerState;
-// use 0x1::DiemConfig;
+use DiemFramework::TowerState;
+// use DiemFramework::DiemConfig;
 fun main(sender: signer) {
     // Mock some mining so carol can send rejoin tx
     TowerState::test_helper_mock_mining(&sender, 100);
@@ -164,14 +164,14 @@ stdlib_script::ValidatorScripts::join
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemSystem;
-    use 0x1::DiemConfig;
+    use DiemFramework::DiemSystem;
+    use DiemFramework::DiemConfig;
     fun main(_account: signer) {
-        assert(DiemConfig::get_current_epoch() == 4, 7357008011010);
+        assert!(DiemConfig::get_current_epoch() == 4, 7357008011010);
 
         // Carol is a validator once more
-        assert(DiemSystem::is_validator(@{{carol}}), 7357008011011);
-        assert(DiemSystem::validator_set_size() == 3, 7357008011012);
+        assert!(DiemSystem::is_validator(@Carol), 7357008011011);
+        assert!(DiemSystem::validator_set_size() == 3, 7357008011012);
     }
 }
 //check: EXECUTED

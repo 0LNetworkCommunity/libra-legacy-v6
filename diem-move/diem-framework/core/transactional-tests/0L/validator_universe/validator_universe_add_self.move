@@ -5,16 +5,16 @@
 //! new-transaction
 //! sender: diemroot
 script{
-use 0x1::ValidatorUniverse;
-use 0x1::Vector;
-// use 0x1::TestFixtures;
-// use 0x1::DiemAccount;
+use DiemFramework::ValidatorUniverse;
+use DiemFramework::Vector;
+// use DiemFramework::TestFixtures;
+// use DiemFramework::DiemAccount;
 
 fun main(vm: signer) {
     let len = Vector::length<address>(
         &ValidatorUniverse::get_eligible_validators(&vm)
     );
-    assert(len == 1, 73570);
+    assert!(len == 1, 73570);
 }
 }
 // check: EXECUTED
@@ -22,10 +22,10 @@ fun main(vm: signer) {
 //! new-transaction
 //! sender: eve
 script{
-use 0x1::ValidatorUniverse;
-use 0x1::TestFixtures;
-use 0x1::TowerState;
-// use 0x1::FullnodeState;
+use DiemFramework::ValidatorUniverse;
+use DiemFramework::TestFixtures;
+use DiemFramework::TowerState;
+// use DiemFramework::FullnodeState;
 
 fun main(eve_sig: signer) {
     let eve_sig = &eve_sig;
@@ -47,14 +47,14 @@ fun main(eve_sig: signer) {
 //! new-transaction
 //! sender: diemroot
 script{
-    use 0x1::Vector;
-    use 0x1::ValidatorUniverse;
+    use DiemFramework::Vector;
+    use DiemFramework::ValidatorUniverse;
 
     fun main(vm: signer) {
         let len = Vector::length<address>(
             &ValidatorUniverse::get_eligible_validators(&vm
         ));
-        assert(len == 2, 73570);
+        assert!(len == 2, 73570);
     }
 }
 // check: EXECUTED

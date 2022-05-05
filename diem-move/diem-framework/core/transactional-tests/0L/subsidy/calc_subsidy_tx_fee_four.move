@@ -15,22 +15,22 @@
 //! sender: diemroot
 script {
   
-  use 0x1::Subsidy;
-  use 0x1::Vector;
-  use 0x1::Stats;
-  use 0x1::TransactionFee;
-  use 0x1::GAS::GAS;
-  use 0x1::Diem;
-  use 0x1::Globals;
+  use DiemFramework::Subsidy;
+  use DiemFramework::Vector;
+  use DiemFramework::Stats;
+  use DiemFramework::TransactionFee;
+  use DiemFramework::GAS::GAS;
+  use DiemFramework::Diem;
+  use DiemFramework::Globals;
   
   fun main(vm: signer) {
     // check the case of a network density of 4 active validators.
 
     let vm = &vm;
-    let validators = Vector::singleton<address>(@{{alice}});
-    Vector::push_back(&mut validators, @{{bob}});
-    Vector::push_back(&mut validators, @{{carol}});
-    Vector::push_back(&mut validators, @{{dave}});
+    let validators = Vector::singleton<address>(@Alice);
+    Vector::push_back(&mut validators, @Bob);
+    Vector::push_back(&mut validators, @Carol);
+    Vector::push_back(&mut validators, @Dave);
 
     // create mock validator stats for full epoch
     let i = 0;
@@ -51,7 +51,7 @@ script {
 
     // deducts gas from txs from subsidy.
     let (subsidy, _) = Subsidy::calculate_subsidy(vm, 4);
-    assert(subsidy == expected_subsidy, 7357190101021000);
+    assert!(subsidy == expected_subsidy, 7357190101021000);
 
     }
 }

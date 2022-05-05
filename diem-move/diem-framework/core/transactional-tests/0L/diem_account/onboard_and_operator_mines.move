@@ -6,10 +6,10 @@
 //! sender: alice
 
 script {
-use 0x1::VDF;
-use 0x1::TestFixtures;
-use 0x1::TowerState;
-use 0x1::DiemAccount;
+use DiemFramework::VDF;
+use DiemFramework::TestFixtures;
+use DiemFramework::TowerState;
+use DiemFramework::DiemAccount;
 
 // Test Prefix: 1301
 
@@ -18,7 +18,7 @@ fun main(alice_sig: signer) {
   let solution = TestFixtures::eve_0_easy_sol();
   // // Parse key and check
   let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
-  assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
+  assert!(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
   
   let epochs_since_creation = 10;
   TowerState::test_helper_set_rate_limit(&alice_sig, epochs_since_creation);
@@ -44,8 +44,8 @@ fun main(alice_sig: signer) {
 //! new-transaction
 //! sender: diemroot
 script {
-use 0x1::TowerState;
-use 0x1::TestFixtures;
+use DiemFramework::TowerState;
+use DiemFramework::TestFixtures;
 
 // SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
 fun main(_: signer) { 
@@ -67,7 +67,7 @@ fun main(_: signer) {
     // // check for initialized TowerState
     let verified_tower_height_after = TowerState::test_helper_get_height(eve);
 
-    assert(verified_tower_height_after > 0, 10008001);
+    assert!(verified_tower_height_after > 0, 10008001);
 
 }
 }

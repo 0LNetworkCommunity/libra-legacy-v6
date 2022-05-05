@@ -9,9 +9,9 @@
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::Subsidy;
+  use DiemFramework::Subsidy;
 
-  use 0x1::Globals;
+  use DiemFramework::Globals;
 
   fun main(vm: signer) {
     let expected_subsidy = Subsidy::subsidy_curve(
@@ -23,7 +23,7 @@ script {
     // assumes no tx fees were paid
 
     let (subsidy, _) = Subsidy::calculate_subsidy(&vm, 7);
-    assert(subsidy == expected_subsidy, 7357190101021000);
+    assert!(subsidy == expected_subsidy, 7357190101021000);
 
   }
 }

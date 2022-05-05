@@ -11,8 +11,8 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::TowerState;
-    use 0x1::TestFixtures;
+    use DiemFramework::TowerState;
+    use DiemFramework::TestFixtures;
 
     fun main(sender: signer) {
         TowerState::test_helper_init_val(
@@ -34,25 +34,25 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Mock;
-    use 0x1::TowerState;
-    use 0x1::DiemAccount;
-    use 0x1::NodeWeight;
-    use 0x1::GAS::GAS;
+    use DiemFramework::Mock;
+    use DiemFramework::TowerState;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::NodeWeight;
+    use DiemFramework::GAS::GAS;
 
     fun main(vm: signer) {
       // Test suite makes all validators have 1 fullnode proof when starting.
       // need to reset to avoid confusion.
       TowerState::test_epoch_reset_counter(&vm);
-      TowerState::test_helper_mock_reconfig(&vm, @{{alice}});
-      TowerState::test_helper_mock_reconfig(&vm, @{{bob}});
+      TowerState::test_helper_mock_reconfig(&vm, @Alice);
+      TowerState::test_helper_mock_reconfig(&vm, @Bob);
 
       // make alice a compliant validator, and mine 10 proofs
-      Mock::mock_case_1(&vm, @{{alice}});
-      assert(TowerState::get_count_in_epoch(@{{alice}}) == 10, 735701);
-      // print(&TowerState::get_count_in_epoch(@{{alice}}));
-      assert(DiemAccount::balance<GAS>(@{{alice}}) == 1000000, 735704);
-      assert(NodeWeight::proof_of_weight(@{{alice}}) == 10, 735705);
+      Mock::mock_case_1(&vm, @Alice);
+      assert!(TowerState::get_count_in_epoch(@Alice) == 10, 735701);
+      // print(&TowerState::get_count_in_epoch(@Alice));
+      assert!(DiemAccount::balance<GAS>(@Alice) == 1000000, 735704);
+      assert!(NodeWeight::proof_of_weight(@Alice) == 10, 735705);
     }
 }
 //check: EXECUTED
@@ -66,12 +66,12 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-    // use 0x1::DiemSystem;
-    use 0x1::TowerState;
-    use 0x1::Debug::print;
-    use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
-    // use 0x1::NodeWeight;
+    // use DiemFramework::DiemSystem;
+    use DiemFramework::TowerState;
+    use DiemFramework::Debug::print;
+    use DiemFramework::GAS::GAS;
+    use DiemFramework::DiemAccount;
+    // use DiemFramework::NodeWeight;
 
 
     fun main(sender: signer) {
@@ -80,9 +80,9 @@ script {
         
 
         // Bob has one proof from init above
-        assert(TowerState::get_fullnode_proofs_in_epoch() == 0, 735706);
+        assert!(TowerState::get_fullnode_proofs_in_epoch() == 0, 735706);
         // there should be no proofs above threshold at this point.
-        assert(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 0, 735707);
+        assert!(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 0, 735707);
 
         // Bob needs to beabove threshold (two) before the subsequent proofs are counted.
         // adding 10 more here (which are all above threshold).
@@ -90,15 +90,15 @@ script {
         print(&TowerState::get_fullnode_proofs_in_epoch());
         print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
 
-        print(&TowerState::get_count_in_epoch(@{{bob}}));
-        print(&TowerState::get_count_above_thresh_in_epoch(@{{bob}}));
+        print(&TowerState::get_count_in_epoch(@Bob));
+        print(&TowerState::get_count_above_thresh_in_epoch(@Bob));
 
         
         // Since the threshold in test suite is 1 proof, all the 10 are counted above threshold.
-        assert(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 10, 735708);
+        assert!(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 10, 735708);
 
-        print(&DiemAccount::balance<GAS>(@{{bob}}));
-        print(&DiemAccount::balance<GAS>(@{{alice}}));
+        print(&DiemAccount::balance<GAS>(@Bob));
+        print(&DiemAccount::balance<GAS>(@Alice));
 
         
     }
@@ -120,11 +120,11 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {  
-    use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
-    use 0x1::Subsidy;
-    use 0x1::Globals;
-    use 0x1::Debug::print;
+    use DiemFramework::GAS::GAS;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::Subsidy;
+    use DiemFramework::Globals;
+    use DiemFramework::Debug::print;
 
     fun main(_vm: signer) {
         // We are in a new epoch.
@@ -142,11 +142,11 @@ script {
 
         let ending_balance = bob_starting_balance + expected_subsidy;
 
-        print(&DiemAccount::balance<GAS>(@{{bob}}));
-        print(&DiemAccount::balance<GAS>(@{{alice}}));
+        print(&DiemAccount::balance<GAS>(@Bob));
+        print(&DiemAccount::balance<GAS>(@Alice));
 
         // bob gets the whole subsidy
-        assert(DiemAccount::balance<GAS>(@{{bob}}) == ending_balance, 735711);  
+        assert!(DiemAccount::balance<GAS>(@Bob) == ending_balance, 735711);  
     }
 }
 //check: EXECUTED

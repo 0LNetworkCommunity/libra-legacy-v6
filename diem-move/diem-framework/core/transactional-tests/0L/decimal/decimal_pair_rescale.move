@@ -3,7 +3,7 @@
 //! new-transaction
 //! sender: alice
 script {
-use 0x1::Decimal;
+use DiemFramework::Decimal;
 
 fun main(_s: signer) {
     //////// RESCALE ////////
@@ -11,6 +11,6 @@ fun main(_s: signer) {
     let right = Decimal::new(true, 6, 0);
 
     let res = Decimal::rescale(&left, &right);
-    assert(Decimal::borrow_int(&res) == &1230000, 7357007);
+    assert!(Decimal::borrow_int(&res) == &1230000, 7357007);
 }
 }

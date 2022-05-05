@@ -13,8 +13,8 @@
 //! new-transaction
 //! sender: bob
 script {
-    use 0x1::TowerState;
-    use 0x1::TestFixtures;
+    use DiemFramework::TowerState;
+    use DiemFramework::TestFixtures;
 
     fun main(sender: signer) {
         TowerState::test_helper_init_val(
@@ -30,8 +30,8 @@ script {
 //! new-transaction
 //! sender: carol
 script {
-    use 0x1::TowerState;
-    use 0x1::TestFixtures;
+    use DiemFramework::TowerState;
+    use DiemFramework::TestFixtures;
 
     fun main(sender: signer) {
         TowerState::test_helper_init_val(
@@ -48,8 +48,8 @@ script {
 //! new-transaction
 //! sender: dave
 script {
-    use 0x1::TowerState;
-    use 0x1::TestFixtures;
+    use DiemFramework::TowerState;
+    use DiemFramework::TestFixtures;
 
     fun main(sender: signer) {
         TowerState::test_helper_init_val(
@@ -69,30 +69,30 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Mock;
-    use 0x1::TowerState;
-    use 0x1::Debug::print;
+    use DiemFramework::Mock;
+    use DiemFramework::TowerState;
+    use DiemFramework::Debug::print;
 
     fun main(vm: signer) {
       TowerState::test_epoch_reset_counter(&vm);
-      TowerState::test_helper_mock_reconfig(&vm, @{{alice}});
-      TowerState::test_helper_mock_reconfig(&vm, @{{bob}});
-      TowerState::test_helper_mock_reconfig(&vm, @{{carol}});
-      TowerState::test_helper_mock_reconfig(&vm, @{{dave}});
+      TowerState::test_helper_mock_reconfig(&vm, @Alice);
+      TowerState::test_helper_mock_reconfig(&vm, @Bob);
+      TowerState::test_helper_mock_reconfig(&vm, @Carol);
+      TowerState::test_helper_mock_reconfig(&vm, @Dave);
 
 
       // Mock the end-users submitting proofs above threshold.
       // Add 12: make it so that +2 gets above threshold so that 10 are counted as above thresh.
-      TowerState::test_helper_mock_mining_vm(&vm, @{{bob}}, 12);
-      TowerState::test_helper_mock_mining_vm(&vm, @{{carol}}, 12);
-      TowerState::test_helper_mock_mining_vm(&vm, @{{dave}}, 1);
+      TowerState::test_helper_mock_mining_vm(&vm, @Bob, 12);
+      TowerState::test_helper_mock_mining_vm(&vm, @Carol, 12);
+      TowerState::test_helper_mock_mining_vm(&vm, @Dave, 1);
 
       print(&TowerState::get_fullnode_proofs_in_epoch());
       print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
-      print(&TowerState::get_count_in_epoch(@{{bob}}));
-      print(&TowerState::get_count_above_thresh_in_epoch(@{{bob}}));
+      print(&TowerState::get_count_in_epoch(@Bob));
+      print(&TowerState::get_count_above_thresh_in_epoch(@Bob));
 
-      Mock::mock_case_1(&vm, @{{alice}});
+      Mock::mock_case_1(&vm, @Alice);
 
     }
 }
@@ -114,19 +114,19 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {  
-    use 0x1::GAS::GAS;
-    use 0x1::DiemAccount;
-    use 0x1::Subsidy;
-    use 0x1::Globals;
-    use 0x1::Debug::print;
-    use 0x1::TowerState;
+    use DiemFramework::GAS::GAS;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::Subsidy;
+    use DiemFramework::Globals;
+    use DiemFramework::Debug::print;
+    use DiemFramework::TowerState;
 
     fun main(_vm: signer) {
         // We are in a new epoch.
         print(&TowerState::get_fullnode_proofs_in_epoch());
         print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
-        print(&TowerState::get_count_in_epoch(@{{bob}}));
-        print(&TowerState::get_count_above_thresh_in_epoch(@{{bob}}));
+        print(&TowerState::get_count_in_epoch(@Bob));
+        print(&TowerState::get_count_above_thresh_in_epoch(@Bob));
 
         // we expect that Bob receives the share that one validator would get.
         let expected_subsidy = Subsidy::subsidy_curve(
@@ -143,16 +143,16 @@ script {
 
         let ending_balance = starting_balance + expected_subsidy/2;
 
-        print(&DiemAccount::balance<GAS>(@{{alice}}));
+        print(&DiemAccount::balance<GAS>(@Alice));
 
-        print(&DiemAccount::balance<GAS>(@{{bob}}));
-        print(&DiemAccount::balance<GAS>(@{{carol}}));
+        print(&DiemAccount::balance<GAS>(@Bob));
+        print(&DiemAccount::balance<GAS>(@Carol));
 
         // bob and carol share half the identity subsidy
-        assert(DiemAccount::balance<GAS>(@{{bob}}) == ending_balance, 735711);
-        assert(DiemAccount::balance<GAS>(@{{carol}}) == ending_balance, 735712);
+        assert!(DiemAccount::balance<GAS>(@Bob) == ending_balance, 735711);
+        assert!(DiemAccount::balance<GAS>(@Carol) == ending_balance, 735712);
         // dave's balance is unchanged
-        assert(DiemAccount::balance<GAS>(@{{dave}}) == starting_balance, 735713);
+        assert!(DiemAccount::balance<GAS>(@Dave) == starting_balance, 735713);
 
     }
 }

@@ -6,18 +6,18 @@
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::Wallet;
-    use 0x1::Vector;
+    use DiemFramework::Wallet;
+    use DiemFramework::Vector;
 
     fun main(sender: signer) {
       Wallet::set_comm(&sender);
       let list = Wallet::get_comm_list();
 
-      assert(Vector::length(&list) == 1, 7357001);
-      assert(Wallet::is_comm(@{{alice}}), 7357002);
+      assert!(Vector::length(&list) == 1, 7357001);
+      assert!(Wallet::is_comm(@Alice), 7357002);
 
-      let uid = Wallet::new_timed_transfer(&sender, @{{bob}}, 100, b"thanks bob");
-      assert(Wallet::transfer_is_proposed(uid), 7357003);
+      let uid = Wallet::new_timed_transfer(&sender, @Bob, 100, b"thanks bob");
+      assert!(Wallet::transfer_is_proposed(uid), 7357003);
     }
 }
 
@@ -62,11 +62,11 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::DiemAccount;
-    use 0x1::GAS::GAS;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::GAS::GAS;
     fun main(_vm: signer) {
-      let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
-      assert(bob_balance == 1000100, 7357005);
+      let bob_balance = DiemAccount::balance<GAS>(@Bob);
+      assert!(bob_balance == 1000100, 7357005);
     }
 }
 

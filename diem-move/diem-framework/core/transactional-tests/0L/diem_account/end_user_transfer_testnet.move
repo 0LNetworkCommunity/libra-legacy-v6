@@ -5,14 +5,14 @@
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::DiemAccount;
-  use 0x1::GAS::GAS;
+  use DiemFramework::DiemAccount;
+  use DiemFramework::GAS::GAS;
   fun main(_: signer) {
     // need to remove testnet for this test, since testnet does not ratelimit account creation.
 
-    assert(!DiemAccount::is_slow(@{{bob}}), 735701);
-    assert(!DiemAccount::is_slow(@{{carol}}), 735702);
-    assert(DiemAccount::balance<GAS>(@{{bob}}) == 1000000, 735703);
+    assert!(!DiemAccount::is_slow(@Bob), 735701);
+    assert!(!DiemAccount::is_slow(@Carol), 735702);
+    assert!(DiemAccount::balance<GAS>(@Bob) == 1000000, 735703);
   }
 }
 
@@ -26,14 +26,14 @@ stdlib_script::TransferScripts::balance_transfer
 //! new-transaction
 //! sender: diemroot
 script {
-  use 0x1::DiemAccount;
-  use 0x1::GAS::GAS;
-  // use 0x1::Debug::print;
+  use DiemFramework::DiemAccount;
+  use DiemFramework::GAS::GAS;
+  // use DiemFramework::Debug::print;
   fun main(_: signer) {
     // need to remove testnet for this test, since testnet does not ratelimit account creation.
     
     /// bob is initialized with 1,000,000 microgas, should now have one more.
-    assert(DiemAccount::balance<GAS>(@{{bob}}) == 2000000, 735704);
+    assert!(DiemAccount::balance<GAS>(@Bob) == 2000000, 735704);
 
   }
 }

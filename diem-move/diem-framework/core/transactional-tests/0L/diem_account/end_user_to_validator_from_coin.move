@@ -5,8 +5,8 @@
 //! new-transaction
 //! sender: bob
 script {
-  use 0x1::DiemAccount;
-  use 0x1::GAS::GAS;
+  use DiemFramework::DiemAccount;
+  use DiemFramework::GAS::GAS;
 
   fun main(sender: signer) {
     // Eve's account info.
@@ -22,10 +22,10 @@ script {
       value,
     );
 
-    assert(DiemAccount::balance<GAS>(eve_addr) == 1000000, 735701);
+    assert!(DiemAccount::balance<GAS>(eve_addr) == 1000000, 735701);
 
     // is NOT a slow wallet
-    assert(!DiemAccount::is_slow(eve_addr), 735702);
+    assert!(!DiemAccount::is_slow(eve_addr), 735702);
   }
 }
 // check: EXECUTED
@@ -36,9 +36,9 @@ script {
 //! new-transaction
 //! sender: bob
 script {
-use 0x1::DiemAccount;
-use 0x1::TestFixtures;
-use 0x1::ValidatorUniverse;
+use DiemFramework::DiemAccount;
+use DiemFramework::TestFixtures;
+use DiemFramework::ValidatorUniverse;
 
 
 // Test Prefix: 1301
@@ -49,7 +49,7 @@ fun main(sender: signer) {
   let solution = TestFixtures::eve_0_easy_sol();
   // // Parse key and check
   // let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
-  // assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 7357401001);
+  // assert!(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 7357401001);
 
   DiemAccount::create_validator_account_with_proof(
       &sender,
@@ -68,7 +68,7 @@ fun main(sender: signer) {
   );
 
   // the prospective validator is in the current miner list.
-  assert(ValidatorUniverse::is_in_universe(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 735703);
+  assert!(ValidatorUniverse::is_in_universe(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 735703);
 }
 }
 // check: EXECUTED
