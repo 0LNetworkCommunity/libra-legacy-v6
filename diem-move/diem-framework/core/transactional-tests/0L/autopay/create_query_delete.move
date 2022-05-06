@@ -1,4 +1,8 @@
 //# init --validators Alice Bob
+    // todo: Make them non-validators
+//// Old syntax for reference, delete it after fixing this test
+//! account: alice, 1GAS
+//! account: bob, 1GAS
 
 // We test creation of autopay, retiriving it using same and different accounts
 // Finally, we also test deleting of autopay

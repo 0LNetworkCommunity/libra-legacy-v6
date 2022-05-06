@@ -1,4 +1,9 @@
 //# init --validators Alice Bob Jim
+    // todo: Make them non-validators
+//// Old syntax for reference, delete it after fixing this test
+//! account: alice, 10000000GAS, 0
+//! account: bob,   1000000GAS, 0, validator
+//! account: jim,   1000000GAS, 0
 
 // Test runs various autopay instruction types to ensure they are being
 // executed as expected

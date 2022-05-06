@@ -1,4 +1,8 @@
 //# init --validators Alice Bob
+    // todo: Make them non-validators
+//// Old syntax for reference, delete it after fixing this test
+//! account: alice, 1000000GAS
+//! account: bob, 10000GAS
 
 // We test processing of autopay at differnt epochs and balance transfers
 // Finally, we also check the end_epoch functionality of autopay

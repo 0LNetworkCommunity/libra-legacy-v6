@@ -678,7 +678,7 @@ module TowerState {
       // Get address, assumes the sender is the signer.
       assert!(
         ValidatorConfig::get_operator(miner_addr) == operator_addr,
-        Errors::requires_address(130111)
+        Errors::requires_address(130119)
       );
       // Abort if not initialized.
       assert!(exists<TowerProofHistory>(miner_addr), Errors::not_published(130116));

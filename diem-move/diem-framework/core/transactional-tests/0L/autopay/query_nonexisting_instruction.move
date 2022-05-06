@@ -1,4 +1,8 @@
 //# init --validators Shashank Bob
+    // todo: Make them non-validators
+//// Old syntax for reference, delete it after fixing this test
+//! account: shashank, 100
+//! account: bob, 100
 
 // We are trying to query a instruction which doesnot exist in the network
 
