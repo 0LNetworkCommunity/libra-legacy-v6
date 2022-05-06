@@ -9,6 +9,7 @@
 -  [Function `init`](#0x1_Vouch_init)
 -  [Function `is_init`](#0x1_Vouch_is_init)
 -  [Function `vouch_for`](#0x1_Vouch_vouch_for)
+-  [Function `revoke`](#0x1_Vouch_revoke)
 -  [Function `vm_migrate`](#0x1_Vouch_vm_migrate)
 -  [Function `get_buddies`](#0x1_Vouch_get_buddies)
 -  [Function `buddies_in_set`](#0x1_Vouch_buddies_in_set)
@@ -18,7 +19,6 @@
 
 <pre><code><b>use</b> <a href="Ancestry.md#0x1_Ancestry">0x1::Ancestry</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
@@ -136,6 +136,39 @@
   <b>if</b> (!<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&v.vals, &buddy_acc)) { // prevent duplicates
     <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;address&gt;(&<b>mut</b> v.vals, buddy_acc);
   }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Vouch_revoke"></a>
+
+## Function `revoke`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Vouch.md#0x1_Vouch_revoke">revoke</a>(buddy: &signer, val: address)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Vouch.md#0x1_Vouch_revoke">revoke</a>(buddy: &signer, val: address) <b>acquires</b> <a href="Vouch.md#0x1_Vouch">Vouch</a> {
+  <b>let</b> buddy_acc = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(buddy);
+  <b>assert</b>(buddy_acc!=val, 12345); // TODO: Error code.
+
+  <b>if</b> (!<b>exists</b>&lt;<a href="Vouch.md#0x1_Vouch">Vouch</a>&gt;(val)) <b>return</b>;
+
+  <b>let</b> v = borrow_global_mut&lt;<a href="Vouch.md#0x1_Vouch">Vouch</a>&gt;(val);
+  <b>let</b> (found, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&v.vals, &buddy_acc);
+  <b>if</b> (found) {
+    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> v.vals, i);
+  };
 }
 </code></pre>
 
@@ -322,17 +355,13 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Vouch.md#0x1_Vouch_unrelated_buddies_above_thresh">unrelated_buddies_above_thresh</a>(val: address): bool <b>acquires</b> <a href="Vouch.md#0x1_Vouch">Vouch</a>{
-  print(&222222);
   <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>() || <a href="Testnet.md#0x1_StagingNet_is_staging_net">StagingNet::is_staging_net</a>()) {
     <b>return</b> <b>true</b>
   };
-  print(&22222200001);
 
   <b>if</b> (!<b>exists</b>&lt;<a href="Vouch.md#0x1_Vouch">Vouch</a>&gt;(val)) <b>return</b> <b>false</b>;
-  print(&22222200002);
 
   <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&<a href="Vouch.md#0x1_Vouch_unrelated_buddies">unrelated_buddies</a>(val));
-  print(&22222200003);
 
   (len &gt;= 4) // TODO: <b>move</b> <b>to</b> <a href="Globals.md#0x1_Globals">Globals</a>
 }
