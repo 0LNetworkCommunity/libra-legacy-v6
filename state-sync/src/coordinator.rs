@@ -1491,7 +1491,14 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
     /// handle chunk requests).
     fn is_consensus_executing(&mut self) -> bool {
     // TODO(0L) this is not actually checking if consensus is executing.
-        self.is_initialized() && self.role == RoleType::Validator && self.sync_request.is_none()
+    // !!!!!!!!!!!!!! 
+    //////// 0L ////////
+    // EXPERIMENTAL
+    // !!!!!!!!!!!!!
+    // always return false
+      return false
+
+        // self.is_initialized() && self.role == RoleType::Validator && self.sync_request.is_none()
     }
 
     /// Ensures that state sync is making progress:

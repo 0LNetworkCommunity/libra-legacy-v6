@@ -80,12 +80,10 @@ pub(crate) async fn coordinator<V>(
             msg = consensus_requests.select_next_some() => {
               dbg!("process_consensus_request");
               //////// 0L ////////
-              // uses tokio Semaphore to create backpressure and limit capacity of the queue.
-              // let task_executor = BoundedExecutor::new(workers_available, executor.clone());
-              // task_executor.clone().spawn(
-              //   tasks::process_consensus_request(&smp.mempool, msg)
-              // ).await;
-                tasks::process_consensus_request(&smp.mempool, msg).await;
+              // The goal here is to put consensus requests also in a Tokio Semaphore (diem BoundedExecutor) where we can control the amount of workers and put backpressure.
+
+              handle_consensus_request(&mut smp, &bounded_executor, msg).await;
+                // tasks::process_consensus_request(&smp.mempool, msg).await;
             }
             msg = state_sync_requests.select_next_some() => {
                 dbg!("state_sync_requests");
@@ -136,6 +134,28 @@ async fn handle_client_event<V>(
         ))
         .await;
 }
+
+//////// 0L ////////
+async fn handle_consensus_request<V>(
+    smp: &mut SharedMempool<V>,
+    bounded_executor: &BoundedExecutor,
+    msg: ConsensusRequest,
+) where
+    V: TransactionValidation,
+{
+    // This timer measures how long it took for the bounded executor to *schedule* the
+    // task.
+    let _timer =
+        counters::task_spawn_latency_timer(counters::CONSENSUS_REQUEST_LABEL, counters::SPAWN_LABEL);
+    // This timer measures how long it took for the task to go from scheduled to started.
+    let task_start_timer =
+        counters::task_spawn_latency_timer(counters::CONSENSUS_REQUEST_LABEL, counters::START_LABEL);
+
+    bounded_executor
+        .spawn(tasks::process_consensus_request(&smp.mempool, msg))
+        .await;
+}
+
 
 fn handle_state_sync_request<V>(smp: &mut SharedMempool<V>, msg: CommitNotification)
 where

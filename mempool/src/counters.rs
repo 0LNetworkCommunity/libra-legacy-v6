@@ -55,6 +55,10 @@ pub const STATE_SYNC_EVENT_LABEL: &str = "state_sync";
 pub const RECONFIG_EVENT_LABEL: &str = "reconfig";
 pub const PEER_BROADCAST_EVENT_LABEL: &str = "peer_broadcast";
 
+//////// 0L ////////
+pub const CONSENSUS_REQUEST_LABEL: &str = "consensu_request";
+
+
 // task spawn stage labels
 pub const SPAWN_LABEL: &str = "spawn";
 pub const START_LABEL: &str = "start";
