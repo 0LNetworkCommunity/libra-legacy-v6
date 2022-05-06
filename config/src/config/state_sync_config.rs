@@ -30,6 +30,7 @@ pub struct StateSyncConfig {
     // commits when processing a sync request).
     pub sync_request_timeout_ms: u64,
     // interval used for checking state synchronization progress
+    // IMPORTANT: the mempool peer ack timeout is determined by 2X this number.
     pub tick_interval_ms: u64,
 }
 
