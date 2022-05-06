@@ -20,59 +20,24 @@
 //! NewBlockEvent
 
 //! new-transaction
-//! sender: alice
-script {
-    use 0x1::TowerState;
-
-    fun main(sender: signer) {
-        // Miner is the only one that can update their mining stats. 
-        // Hence this first transaction.
-
-        TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008005001);
-    }
-}
-//check: EXECUTED
-//! new-transaction
-//! sender: eve
-script {
-    use 0x1::TowerState;
-
-    fun main(sender: signer) {
-        // Miner is the only one that can update their mining stats. 
-        // Hence this first transaction.
-
-        TowerState::test_helper_mock_mining(&sender, 5);
-        assert(TowerState::test_helper_get_count(&sender) == 5, 7357008005002);
-    }
-}
-//check: EXECUTED
-
-//! new-transaction
 //! sender: diemroot
 script {
-    use 0x1::Stats;
-    use 0x1::Vector;
+    // use 0x1::Stats;
+    use 0x1::Mock;
     use 0x1::DiemSystem;
 
     fun main(vm: signer) {
-        let voters = Vector::singleton<address>(@{{alice}});
-        Vector::push_back<address>(&mut voters, @{{bob}});
-        // Vector::push_back<address>(&mut voters, @{{carol}});
-        // Vector::push_back<address>(&mut voters, @{{dave}});
-        // Skip Eve.
-        // Vector::push_back<address>(&mut voters, @{{eve}});
-        // Vector::push_back<address>(&mut voters, @{{frank}});
+        Mock::mock_case_1(&vm, @{{alice}});
+        Mock::mock_case_1(&vm, @{{bob}});
+        Mock::mock_case_1(&vm, @{{carol}});
+        Mock::mock_case_1(&vm, @{{dave}});
+        Mock::mock_case_1(&vm, @{{eve}});
 
-        let i = 1;
-        while (i < 15) {
-            // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(&vm, &voters);
-            i = i + 1;
-        };
+        Mock::mock_case_2(&vm, @{{frank}});
+
 
         assert(DiemSystem::validator_set_size() == 6, 7357008005003);
-        assert(DiemSystem::is_validator(@{{alice}}) == true, 7357008005004);
+        // assert(DiemSystem::is_validator(@{{alice}}) == true, 7357008005004);
     }
 }
 //check: EXECUTED

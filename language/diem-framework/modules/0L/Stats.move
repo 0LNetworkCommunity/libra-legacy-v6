@@ -112,6 +112,7 @@ module Stats{
     let sender = Signer::address_of(vm);
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190006));
     let range = height_end-height_start;
+    // TODO: Change to 5 percent
     let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(1, 100));
     if (node_current_votes(vm, node_addr) >  threshold_signing) { return true };
     return false
