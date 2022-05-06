@@ -27,13 +27,13 @@ script {
     use 0x1::DiemSystem;
 
     fun main(vm: signer) {
-        Mock::mock_case_1(&vm, @{{alice}});
-        Mock::mock_case_1(&vm, @{{bob}});
-        Mock::mock_case_1(&vm, @{{carol}});
-        Mock::mock_case_1(&vm, @{{dave}});
-        Mock::mock_case_1(&vm, @{{eve}});
+        Mock::mock_case_1(&vm, @{{alice}}, 0, 15);
+        Mock::mock_case_1(&vm, @{{bob}}, 0, 15);
+        Mock::mock_case_1(&vm, @{{carol}}, 0, 15);
+        Mock::mock_case_1(&vm, @{{dave}}, 0, 15);
+        Mock::mock_case_1(&vm, @{{eve}}, 0, 15);
 
-        Mock::mock_case_2(&vm, @{{frank}});
+        Mock::mock_case_2(&vm, @{{frank}}, 0, 15);
 
 
         assert(DiemSystem::validator_set_size() == 6, 7357008005003);
