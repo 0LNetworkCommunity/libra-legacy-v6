@@ -4,24 +4,15 @@
 # Module `0x1::TowerState`
 
 
-<a name="@Summary_0"></a>
 
-## Summary
-
-TODO
-
-
--  [Summary](#@Summary_0)
 -  [Resource `TowerList`](#0x1_TowerState_TowerList)
 -  [Resource `TowerStats`](#0x1_TowerState_TowerStats)
+-  [Resource `TowerCounter`](#0x1_TowerState_TowerCounter)
 -  [Struct `Proof`](#0x1_TowerState_Proof)
 -  [Resource `TowerProofHistory`](#0x1_TowerState_TowerProofHistory)
--  [Constants](#@Constants_1)
--  [Function `increment_stats`](#0x1_TowerState_increment_stats)
--  [Function `epoch_reset`](#0x1_TowerState_epoch_reset)
--  [Function `get_fullnode_proofs`](#0x1_TowerState_get_fullnode_proofs)
+-  [Constants](#@Constants_0)
 -  [Function `init_miner_list`](#0x1_TowerState_init_miner_list)
--  [Function `init_miner_stats`](#0x1_TowerState_init_miner_stats)
+-  [Function `init_tower_counter`](#0x1_TowerState_init_tower_counter)
 -  [Function `init_miner_list_and_stats`](#0x1_TowerState_init_miner_list_and_stats)
 -  [Function `is_init`](#0x1_TowerState_is_init)
 -  [Function `is_onboarding`](#0x1_TowerState_is_onboarding)
@@ -31,25 +22,37 @@ TODO
 -  [Function `commit_state`](#0x1_TowerState_commit_state)
 -  [Function `commit_state_by_operator`](#0x1_TowerState_commit_state_by_operator)
 -  [Function `verify_and_update_state`](#0x1_TowerState_verify_and_update_state)
--  [Function `update_metrics`](#0x1_TowerState_update_metrics)
+-  [Function `update_epoch_metrics_vals`](#0x1_TowerState_update_epoch_metrics_vals)
 -  [Function `node_above_thresh`](#0x1_TowerState_node_above_thresh)
 -  [Function `reconfig`](#0x1_TowerState_reconfig)
 -  [Function `init_miner_state`](#0x1_TowerState_init_miner_state)
 -  [Function `first_challenge_includes_address`](#0x1_TowerState_first_challenge_includes_address)
 -  [Function `get_miner_latest_epoch`](#0x1_TowerState_get_miner_latest_epoch)
 -  [Function `reset_rate_limit`](#0x1_TowerState_reset_rate_limit)
+-  [Function `increment_stats`](#0x1_TowerState_increment_stats)
+-  [Function `epoch_reset`](#0x1_TowerState_epoch_reset)
 -  [Function `get_miner_list`](#0x1_TowerState_get_miner_list)
 -  [Function `get_tower_height`](#0x1_TowerState_get_tower_height)
--  [Function `get_epochs_mining`](#0x1_TowerState_get_epochs_mining)
+-  [Function `get_epochs_compliant`](#0x1_TowerState_get_epochs_compliant)
 -  [Function `get_count_in_epoch`](#0x1_TowerState_get_count_in_epoch)
+-  [Function `get_count_above_thresh_in_epoch`](#0x1_TowerState_get_count_above_thresh_in_epoch)
+-  [Function `lazy_reset_count_in_epoch`](#0x1_TowerState_lazy_reset_count_in_epoch)
 -  [Function `can_create_val_account`](#0x1_TowerState_can_create_val_account)
--  [Function `test_helper_init_miner`](#0x1_TowerState_test_helper_init_miner)
+-  [Function `get_validator_proofs_in_epoch`](#0x1_TowerState_get_validator_proofs_in_epoch)
+-  [Function `get_fullnode_proofs_in_epoch`](#0x1_TowerState_get_fullnode_proofs_in_epoch)
+-  [Function `get_fullnode_proofs_in_epoch_above_thresh`](#0x1_TowerState_get_fullnode_proofs_in_epoch_above_thresh)
+-  [Function `get_lifetime_proof_count`](#0x1_TowerState_get_lifetime_proof_count)
+-  [Function `danger_migrate_get_lifetime_proof_count`](#0x1_TowerState_danger_migrate_get_lifetime_proof_count)
+-  [Function `test_helper_init_val`](#0x1_TowerState_test_helper_init_val)
+-  [Function `test_epoch_reset_counter`](#0x1_TowerState_test_epoch_reset_counter)
 -  [Function `test_helper_operator_submits`](#0x1_TowerState_test_helper_operator_submits)
 -  [Function `test_helper_mock_mining`](#0x1_TowerState_test_helper_mock_mining)
 -  [Function `test_helper_mock_mining_vm`](#0x1_TowerState_test_helper_mock_mining_vm)
+-  [Function `danger_mock_mining`](#0x1_TowerState_danger_mock_mining)
 -  [Function `test_helper_mock_reconfig`](#0x1_TowerState_test_helper_mock_reconfig)
 -  [Function `test_helper_get_height`](#0x1_TowerState_test_helper_get_height)
 -  [Function `test_helper_get_count`](#0x1_TowerState_test_helper_get_count)
+-  [Function `test_helper_get_nominal_count`](#0x1_TowerState_test_helper_get_nominal_count)
 -  [Function `test_helper_get_contiguous_vm`](#0x1_TowerState_test_helper_get_contiguous_vm)
 -  [Function `test_helper_set_rate_limit`](#0x1_TowerState_test_helper_set_rate_limit)
 -  [Function `test_helper_set_epochs_mining`](#0x1_TowerState_test_helper_set_epochs_mining)
@@ -57,6 +60,9 @@ TODO
 -  [Function `test_helper_previous_proof_hash`](#0x1_TowerState_test_helper_previous_proof_hash)
 -  [Function `test_helper_set_weight_vm`](#0x1_TowerState_test_helper_set_weight_vm)
 -  [Function `test_helper_set_weight`](#0x1_TowerState_test_helper_set_weight)
+-  [Function `test_mock_depr_tower_stats`](#0x1_TowerState_test_mock_depr_tower_stats)
+-  [Function `test_get_liftime_proofs`](#0x1_TowerState_test_get_liftime_proofs)
+-  [Function `test_danger_destroy_tower_counter`](#0x1_TowerState_test_danger_destroy_tower_counter)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -107,6 +113,7 @@ A list of all miners' addresses
 
 ## Resource `TowerStats`
 
+To use in migration, and in future upgrade to deprecate.
 
 
 <pre><code><b>struct</b> <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> has key
@@ -133,6 +140,76 @@ A list of all miners' addresses
 </dd>
 <dt>
 <code>fullnode_proofs: u64</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a name="0x1_TowerState_TowerCounter"></a>
+
+## Resource `TowerCounter`
+
+The struct to store the global count of proofs in 0x0
+
+
+<pre><code><b>struct</b> <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> has key
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>lifetime_proofs: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>lifetime_validator_proofs: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>lifetime_fullnode_proofs: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>proofs_in_epoch: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>validator_proofs_in_epoch: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>fullnode_proofs_in_epoch: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>validator_proofs_in_epoch_above_thresh: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>fullnode_proofs_in_epoch_above_thresh: u64</code>
 </dt>
 <dd>
 
@@ -272,7 +349,7 @@ the miner last created a new account
 
 </details>
 
-<a name="@Constants_1"></a>
+<a name="@Constants_0"></a>
 
 ## Constants
 
@@ -285,92 +362,6 @@ the miner last created a new account
 </code></pre>
 
 
-
-<a name="0x1_TowerState_increment_stats"></a>
-
-## Function `increment_stats`
-
-
-
-<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_increment_stats">increment_stats</a>(miner_addr: address)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_increment_stats">increment_stats</a>(miner_addr: address) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
-  <b>assert</b>(<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>()), 1301001);
-  <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
-
-  <b>if</b> (<a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(miner_addr)) {
-    state.validator_proofs = state.validator_proofs + 1;
-  } <b>else</b> {
-    state.fullnode_proofs = state.fullnode_proofs + 1;
-  };
-
-  state.proofs_in_epoch = state.proofs_in_epoch + 1;
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_TowerState_epoch_reset"></a>
-
-## Function `epoch_reset`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_epoch_reset">epoch_reset</a>(vm: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_epoch_reset">epoch_reset</a>(vm: &signer) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
-  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-  <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
-  state.proofs_in_epoch = 0;
-  state.validator_proofs = 0;
-  state.fullnode_proofs = 0;
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_TowerState_get_fullnode_proofs"></a>
-
-## Function `get_fullnode_proofs`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_fullnode_proofs">get_fullnode_proofs</a>(): u64
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_fullnode_proofs">get_fullnode_proofs</a>(): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>{
-  <b>let</b> state = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
-  state.fullnode_proofs
-}
-</code></pre>
-
-
-
-</details>
 
 <a name="0x1_TowerState_init_miner_list"></a>
 
@@ -400,14 +391,14 @@ Create an empty list of miners
 
 </details>
 
-<a name="0x1_TowerState_init_miner_stats"></a>
+<a name="0x1_TowerState_init_tower_counter"></a>
 
-## Function `init_miner_stats`
+## Function `init_tower_counter`
 
 Create an empty miner stats
 
 
-<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_init_miner_stats">init_miner_stats</a>(vm: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_init_tower_counter">init_tower_counter</a>(vm: &signer, lifetime_proofs: u64, lifetime_validator_proofs: u64, lifetime_fullnode_proofs: u64)
 </code></pre>
 
 
@@ -416,12 +407,25 @@ Create an empty miner stats
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_init_miner_stats">init_miner_stats</a>(vm: &signer) {
-  move_to&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(vm, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
-    proofs_in_epoch: 0u64,
-    validator_proofs: 0u64,
-    fullnode_proofs: 0u64,
-  });
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_init_tower_counter">init_tower_counter</a>(
+  vm: &signer,
+  lifetime_proofs: u64,
+  lifetime_validator_proofs: u64,
+  lifetime_fullnode_proofs: u64,
+) {
+  <b>if</b> (!<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())) {
+    move_to&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(vm, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+      lifetime_proofs,
+      lifetime_validator_proofs,
+      lifetime_fullnode_proofs,
+      proofs_in_epoch: 0,
+      validator_proofs_in_epoch: 0,
+      fullnode_proofs_in_epoch: 0,
+      validator_proofs_in_epoch_above_thresh: 0,
+      fullnode_proofs_in_epoch_above_thresh: 0,
+    });
+  }
+
 }
 </code></pre>
 
@@ -447,7 +451,9 @@ Create empty miners list and stats
 
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_init_miner_list_and_stats">init_miner_list_and_stats</a>(vm: &signer) {
   <a href="TowerState.md#0x1_TowerState_init_miner_list">init_miner_list</a>(vm);
-  <a href="TowerState.md#0x1_TowerState_init_miner_stats">init_miner_stats</a>(vm);
+
+  // Note: for testing migration we need <b>to</b> destroy this <b>struct</b>, see test_danger_destroy_tower_counter
+  <a href="TowerState.md#0x1_TowerState_init_tower_counter">init_tower_counter</a>(vm, 0, 0, 0);
 }
 </code></pre>
 
@@ -497,9 +503,10 @@ is onboarding
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_is_onboarding">is_onboarding</a>(addr: address): bool <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
+  <b>let</b> count = <a href="TowerState.md#0x1_TowerState_get_count_in_epoch">get_count_in_epoch</a>(addr);
   <b>let</b> state = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(addr);
 
-  state.count_proofs_in_epoch &lt; 2 &&
+  count &lt; 2 &&
   state.epochs_since_last_account_creation &lt; 2
 }
 </code></pre>
@@ -595,13 +602,12 @@ adds <code>tower</code> to list of towers
   solution: vector&lt;u8&gt;,
   difficulty: u64,
   security: u64,
-) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
+) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
   // TODO: Previously in OLv3 is_genesis() returned <b>true</b>.
   // How <b>to</b> check that this is part of genesis? is_genesis returns <b>false</b> here.
 
   // In rust the vm_genesis creates a <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a> for the miner.
   // So the SENDER is not the same and the <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a>.
-
 
   <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sig, &challenge, &solution, difficulty, security);
   // TODO: Move this elsewhere?
@@ -636,7 +642,7 @@ Permissions: PUBLIC, ANYONE
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_commit_state">commit_state</a>(
   miner_sign: &signer,
   proof: <a href="TowerState.md#0x1_TowerState_Proof">Proof</a>
-) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
+) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
   // Get address, assumes the sender is the signer.
   <b>let</b> miner_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign);
 
@@ -656,7 +662,6 @@ Permissions: PUBLIC, ANYONE
     <a href="TowerState.md#0x1_TowerState_init_miner_state">init_miner_state</a>(miner_sign, &proof.challenge, &proof.solution, proof.difficulty, proof.security);
     <b>return</b>
   };
-
 
   // Process the proof
   <a href="TowerState.md#0x1_TowerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
@@ -686,17 +691,16 @@ Permissions: PUBLIC, ANYONE
   operator_sig: &signer,
   miner_addr: address,
   proof: <a href="TowerState.md#0x1_TowerState_Proof">Proof</a>
-) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
+) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
 
   // Check the signer is in fact an operator delegated by the owner.
 
   // Get address, assumes the sender is the signer.
   <b>assert</b>(<a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner_addr) == <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(operator_sig), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130103));
-
   // Abort <b>if</b> not initialized. Assumes the validator Owner account already has submitted the 0th miner proof in onboarding.
   <b>assert</b>(<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(130104));
 
-  // <b>return</b> early <b>if</b> difficulty and security are not correct.
+  // Return early <b>if</b> difficulty and security are not correct.
   // Check vdf difficulty constant. Will be different in tests than in production.
   // Skip this check on local tests, we need tests <b>to</b> send differentdifficulties.
   <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
@@ -738,13 +742,16 @@ Permissions: PUBLIC, ANYONE
   miner_addr: address,
   proof: <a href="TowerState.md#0x1_TowerState_Proof">Proof</a>,
   steady_state: bool
-) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
+) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+  // instead of looping through all miners at end of epcoh the stats are only reset when the miner submits a new proof.
+  <a href="TowerState.md#0x1_TowerState_lazy_reset_count_in_epoch">lazy_reset_count_in_epoch</a>(miner_addr);
 
-  <b>let</b> miner_history = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr);
   <b>assert</b>(
-    miner_history.count_proofs_in_epoch &lt; <a href="Globals.md#0x1_Globals_get_epoch_mining_thres_upper">Globals::get_epoch_mining_thres_upper</a>(),
+    <a href="TowerState.md#0x1_TowerState_get_count_in_epoch">get_count_in_epoch</a>(miner_addr) &lt; <a href="Globals.md#0x1_Globals_get_epoch_mining_thres_upper">Globals::get_epoch_mining_thres_upper</a>(),
     <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130108)
   );
+
+  <b>let</b> miner_history = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr);
 
   // If not genesis proof, check hash <b>to</b> ensure the proof continues the chain
   <b>if</b> (steady_state) {
@@ -784,13 +791,13 @@ Permissions: PUBLIC, ANYONE
 
 </details>
 
-<a name="0x1_TowerState_update_metrics"></a>
+<a name="0x1_TowerState_update_epoch_metrics_vals"></a>
 
-## Function `update_metrics`
+## Function `update_epoch_metrics_vals`
 
 
 
-<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_update_metrics">update_metrics</a>(account: &signer, miner_addr: address)
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_update_epoch_metrics_vals">update_epoch_metrics_vals</a>(account: &signer, miner_addr: address)
 </code></pre>
 
 
@@ -799,7 +806,7 @@ Permissions: PUBLIC, ANYONE
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_update_metrics">update_metrics</a>(account: &signer, miner_addr: address) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_update_epoch_metrics_vals">update_epoch_metrics_vals</a>(account: &signer, miner_addr: address) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
   // The goal of update_metrics is <b>to</b> confirm that a miner participated in consensus during
   // an epoch, but also that there were mining proofs submitted in that epoch.
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(account);
@@ -813,11 +820,10 @@ Permissions: PUBLIC, ANYONE
   // the <b>resource</b> was last emptied.
   <b>let</b> passed = <a href="TowerState.md#0x1_TowerState_node_above_thresh">node_above_thresh</a>(miner_addr);
   <b>let</b> miner_history = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr);
-
   // Update statistics.
   <b>if</b> (passed) {
-      <b>let</b> this_epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
-      miner_history.latest_epoch_mining = this_epoch;
+      // <b>let</b> this_epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
+      // miner_history.latest_epoch_mining = this_epoch; // TODO: Don't need this
       miner_history.epochs_validating_and_mining
         = miner_history.epochs_validating_and_mining + 1u64;
       miner_history.contiguous_epochs_validating_and_mining
@@ -855,8 +861,7 @@ Checks to see if miner submitted enough proofs to be considered compliant
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_node_above_thresh">node_above_thresh</a>(miner_addr: address): bool <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
-  <b>let</b> miner_history = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr);
-  miner_history.count_proofs_in_epoch &gt; <a href="Globals.md#0x1_Globals_get_epoch_mining_thres_lower">Globals::get_epoch_mining_thres_lower</a>()
+  <a href="TowerState.md#0x1_TowerState_get_count_in_epoch">get_count_in_epoch</a>(miner_addr) &gt;= <a href="Globals.md#0x1_Globals_get_epoch_mining_thres_lower">Globals::get_epoch_mining_thres_lower</a>()
 }
 </code></pre>
 
@@ -870,7 +875,7 @@ Checks to see if miner submitted enough proofs to be considered compliant
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_reconfig">reconfig</a>(vm: &signer, migrate_eligible_validators: &vector&lt;address&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_reconfig">reconfig</a>(vm: &signer, outgoing_validators: &vector&lt;address&gt;)
 </code></pre>
 
 
@@ -879,38 +884,30 @@ Checks to see if miner submitted enough proofs to be considered compliant
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_reconfig">reconfig</a>(vm: &signer, migrate_eligible_validators: &vector&lt;address&gt;) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_reconfig">reconfig</a>(vm: &signer, outgoing_validators: &vector&lt;address&gt;) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
   // Check permissions
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
 
-  // check <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a> <b>exists</b>, or <b>use</b> eligible_validators <b>to</b> initialize.
-  // Migration on hot upgrade
-  <b>if</b> (!<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>&gt;(@0x0)) {
-    move_to&lt;<a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>&gt;(vm, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a> {
-      list: *migrate_eligible_validators
-    });
-  };
-
-  <b>let</b> towerlist_state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>&gt;(@0x0);
-
-  // Get list of validators from <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">ValidatorUniverse</a>
-  // <b>let</b> eligible_validators = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
-
   // Iterate through validators and call update_metrics for each validator that had proofs this epoch
-  <b>let</b> size = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(& *&towerlist_state.list); //TODO: These references are weird
+  <b>let</b> vals_len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(outgoing_validators); //TODO: These references are weird
   <b>let</b> i = 0;
-  <b>while</b> (i &lt; size) {
-      <b>let</b> val = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&towerlist_state.list, i);
+  <b>while</b> (i &lt; vals_len) {
+      <b>let</b> val = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(outgoing_validators, i);
 
       // For testing: don't call update_metrics unless there is account state for the address.
       <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(*val)){
-          <a href="TowerState.md#0x1_TowerState_update_metrics">update_metrics</a>(vm, *val);
+          <a href="TowerState.md#0x1_TowerState_update_epoch_metrics_vals">update_epoch_metrics_vals</a>(vm, *val);
       };
       i = i + 1;
   };
 
-  //reset miner list
-  towerlist_state.list = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
+  <a href="TowerState.md#0x1_TowerState_epoch_reset">epoch_reset</a>(vm);
+  // safety
+  <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>&gt;(@0x0)) {
+    //reset miner list
+    <b>let</b> towerlist_state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>&gt;(@0x0);
+    towerlist_state.list = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
+  };
 }
 </code></pre>
 
@@ -939,7 +936,7 @@ Checks to see if miner submitted enough proofs to be considered compliant
   solution: &vector&lt;u8&gt;,
   difficulty: u64,
   security: u64
-) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
+) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
 
   // NOTE Only <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">Signer</a> can <b>update</b> own state.
   // Should only happen once.
@@ -963,7 +960,6 @@ Checks to see if miner submitted enough proofs to be considered compliant
     solution: *solution,
     security,
   };
-
 
   //submit the proof
   <a href="TowerState.md#0x1_TowerState_verify_and_update_state">verify_and_update_state</a>(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sig), proof, <b>false</b>);
@@ -1018,7 +1014,7 @@ Checks to see if miner submitted enough proofs to be considered compliant
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_miner_latest_epoch">get_miner_latest_epoch</a>(vm: &signer, addr: address): u64
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_miner_latest_epoch">get_miner_latest_epoch</a>(addr: address): u64
 </code></pre>
 
 
@@ -1027,8 +1023,7 @@ Checks to see if miner submitted enough proofs to be considered compliant
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_miner_latest_epoch">get_miner_latest_epoch</a>(vm: &signer, addr: address): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
-  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_miner_latest_epoch">get_miner_latest_epoch</a>(addr: address): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
   <b>let</b> addr_state = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(addr);
   *&addr_state.latest_epoch_mining
 }
@@ -1056,6 +1051,83 @@ Checks to see if miner submitted enough proofs to be considered compliant
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_reset_rate_limit">reset_rate_limit</a>(miner: &signer) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
   <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner));
   state.epochs_since_last_account_creation = 0;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_increment_stats"></a>
+
+## Function `increment_stats`
+
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_increment_stats">increment_stats</a>(miner_addr: address)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_increment_stats">increment_stats</a>(miner_addr: address) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+  // safety. Don't cause VM <b>to</b> halt
+  <b>if</b> (!<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())) <b>return</b>;
+
+  <b>let</b> above = <a href="TowerState.md#0x1_TowerState_node_above_thresh">node_above_thresh</a>(miner_addr);
+
+  <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+
+  <b>if</b> (<a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(miner_addr)) {
+    state.validator_proofs_in_epoch = state.validator_proofs_in_epoch + 1;
+    state.lifetime_validator_proofs = state.lifetime_validator_proofs + 1;
+    // only proofs above threshold are counted here. The preceding proofs are not counted;
+    <b>if</b> (above) { state.validator_proofs_in_epoch_above_thresh = state.validator_proofs_in_epoch_above_thresh + 1; }
+  } <b>else</b> {
+    state.fullnode_proofs_in_epoch = state.fullnode_proofs_in_epoch + 1;
+    state.lifetime_fullnode_proofs = state.lifetime_fullnode_proofs + 1;
+    // Preceding proofs before threshold was met are not counted <b>to</b> payment.
+    <b>if</b> (above) { state.fullnode_proofs_in_epoch_above_thresh = state.fullnode_proofs_in_epoch_above_thresh + 1; }
+  };
+
+  state.proofs_in_epoch = state.proofs_in_epoch + 1;
+  state.lifetime_proofs = state.lifetime_proofs + 1;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_epoch_reset"></a>
+
+## Function `epoch_reset`
+
+Reset the tower counter at the end of epoch.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_epoch_reset">epoch_reset</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_epoch_reset">epoch_reset</a>(vm: &signer) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>if</b> (!<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())) <b>return</b>;
+
+  <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  state.proofs_in_epoch = 0;
+  state.validator_proofs_in_epoch = 0;
+  state.fullnode_proofs_in_epoch = 0;
+  state.validator_proofs_in_epoch_above_thresh = 0;
+  state.fullnode_proofs_in_epoch_above_thresh = 0;
 }
 </code></pre>
 
@@ -1118,13 +1190,13 @@ Public Getters ///
 
 </details>
 
-<a name="0x1_TowerState_get_epochs_mining"></a>
+<a name="0x1_TowerState_get_epochs_compliant"></a>
 
-## Function `get_epochs_mining`
+## Function `get_epochs_compliant`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_epochs_mining">get_epochs_mining</a>(node_addr: address): u64
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_epochs_compliant">get_epochs_compliant</a>(node_addr: address): u64
 </code></pre>
 
 
@@ -1133,7 +1205,7 @@ Public Getters ///
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_epochs_mining">get_epochs_mining</a>(node_addr: address): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_epochs_compliant">get_epochs_compliant</a>(node_addr: address): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
   <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(node_addr)) {
     <b>return</b> borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(node_addr).epochs_validating_and_mining
   };
@@ -1162,9 +1234,68 @@ Public Getters ///
 
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_count_in_epoch">get_count_in_epoch</a>(miner_addr: address): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
   <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr)) {
-    <b>return</b> borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr).count_proofs_in_epoch
+    <b>let</b> s = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr);
+    <b>if</b> (s.latest_epoch_mining == <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>()) {
+      <b>return</b> s.count_proofs_in_epoch
+    };
   };
   0
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_get_count_above_thresh_in_epoch"></a>
+
+## Function `get_count_above_thresh_in_epoch`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_count_above_thresh_in_epoch">get_count_above_thresh_in_epoch</a>(miner_addr: address): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_count_above_thresh_in_epoch">get_count_above_thresh_in_epoch</a>(miner_addr: address): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
+  <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr)) {
+    <b>if</b> (borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr).count_proofs_in_epoch &gt; <a href="Globals.md#0x1_Globals_get_epoch_mining_thres_lower">Globals::get_epoch_mining_thres_lower</a>()) {
+      <b>return</b> borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr).count_proofs_in_epoch - <a href="Globals.md#0x1_Globals_get_epoch_mining_thres_lower">Globals::get_epoch_mining_thres_lower</a>()
+    }
+  };
+  0
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_lazy_reset_count_in_epoch"></a>
+
+## Function `lazy_reset_count_in_epoch`
+
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_lazy_reset_count_in_epoch">lazy_reset_count_in_epoch</a>(miner_addr: address)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_lazy_reset_count_in_epoch">lazy_reset_count_in_epoch</a>(miner_addr: address) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
+  <b>let</b> s = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr);
+  <b>if</b> (s.latest_epoch_mining &lt; <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>()) {
+    s.count_proofs_in_epoch = 0;
+  };
 }
 </code></pre>
 
@@ -1203,13 +1334,13 @@ Public Getters ///
 
 </details>
 
-<a name="0x1_TowerState_test_helper_init_miner"></a>
+<a name="0x1_TowerState_get_validator_proofs_in_epoch"></a>
 
-## Function `test_helper_init_miner`
+## Function `get_validator_proofs_in_epoch`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_init_miner">test_helper_init_miner</a>(miner_sig: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, difficulty: u64, security: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_validator_proofs_in_epoch">get_validator_proofs_in_epoch</a>(): u64
 </code></pre>
 
 
@@ -1218,13 +1349,141 @@ Public Getters ///
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_init_miner">test_helper_init_miner</a>(
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_validator_proofs_in_epoch">get_validator_proofs_in_epoch</a>(): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>{
+  <b>let</b> state = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  state.validator_proofs_in_epoch
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_get_fullnode_proofs_in_epoch"></a>
+
+## Function `get_fullnode_proofs_in_epoch`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_fullnode_proofs_in_epoch">get_fullnode_proofs_in_epoch</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_fullnode_proofs_in_epoch">get_fullnode_proofs_in_epoch</a>(): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>{
+  <b>let</b> state = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  state.fullnode_proofs_in_epoch
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_get_fullnode_proofs_in_epoch_above_thresh"></a>
+
+## Function `get_fullnode_proofs_in_epoch_above_thresh`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_fullnode_proofs_in_epoch_above_thresh">get_fullnode_proofs_in_epoch_above_thresh</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_fullnode_proofs_in_epoch_above_thresh">get_fullnode_proofs_in_epoch_above_thresh</a>(): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>{
+  <b>let</b> state = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  state.fullnode_proofs_in_epoch_above_thresh
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_get_lifetime_proof_count"></a>
+
+## Function `get_lifetime_proof_count`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_lifetime_proof_count">get_lifetime_proof_count</a>(): (u64, u64, u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_lifetime_proof_count">get_lifetime_proof_count</a>(): (u64, u64, u64) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>{
+  <b>let</b> s = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  (s.lifetime_proofs, s.lifetime_validator_proofs, s.lifetime_fullnode_proofs)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_danger_migrate_get_lifetime_proof_count"></a>
+
+## Function `danger_migrate_get_lifetime_proof_count`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_danger_migrate_get_lifetime_proof_count">danger_migrate_get_lifetime_proof_count</a>(): (u64, u64, u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_danger_migrate_get_lifetime_proof_count">danger_migrate_get_lifetime_proof_count</a>(): (u64, u64, u64) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>{
+  <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())) {
+    <b>let</b> s = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+    <b>return</b> (s.proofs_in_epoch, s.validator_proofs, s.fullnode_proofs)
+  };
+  (0,0,0)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_test_helper_init_val"></a>
+
+## Function `test_helper_init_val`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_init_val">test_helper_init_val</a>(miner_sig: &signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, difficulty: u64, security: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_init_val">test_helper_init_val</a>(
     miner_sig: &signer,
     challenge: vector&lt;u8&gt;,
     solution: vector&lt;u8&gt;,
     difficulty: u64,
     security: u64,
-  ) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
+  ) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
     <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130102014010);
 
     move_to&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_sig, <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
@@ -1254,6 +1513,40 @@ Public Getters ///
 
 </details>
 
+<a name="0x1_TowerState_test_epoch_reset_counter"></a>
+
+## Function `test_epoch_reset_counter`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_epoch_reset_counter">test_epoch_reset_counter</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_epoch_reset_counter">test_epoch_reset_counter</a>(vm: &signer) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130118));
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  state.lifetime_proofs = 0;
+  state.lifetime_validator_proofs = 0;
+  state.lifetime_fullnode_proofs = 0;
+  state.proofs_in_epoch = 0;
+  state.validator_proofs_in_epoch = 0;
+  state.fullnode_proofs_in_epoch = 0;
+  state.validator_proofs_in_epoch_above_thresh = 0;
+  state.fullnode_proofs_in_epoch_above_thresh = 0;
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_TowerState_test_helper_operator_submits"></a>
 
 ## Function `test_helper_operator_submits`
@@ -1275,7 +1568,7 @@ Public Getters ///
                           // differ slightly from api
   miner_addr: address,
   proof: <a href="TowerState.md#0x1_TowerState_Proof">Proof</a>
-) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
+) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130102014010);
 
   // Get address, assumes the sender is the signer.
@@ -1321,18 +1614,10 @@ Public Getters ///
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_mock_mining">test_helper_mock_mining</a>(sender: &signer,  count: u64) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_mock_mining">test_helper_mock_mining</a>(sender: &signer,  count: u64) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130118));
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
-  <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(addr);
-  state.count_proofs_in_epoch = count;
-  <b>let</b> i = 0;
-  <b>while</b> (i &lt; count) {
-    <a href="TowerState.md#0x1_TowerState_increment_stats">increment_stats</a>(addr);
-    i = i + 1;
-  }
-
-  // FullnodeState::mock_proof(sender, count);
+  <a href="TowerState.md#0x1_TowerState_danger_mock_mining">danger_mock_mining</a>(addr, count)
 }
 </code></pre>
 
@@ -1355,17 +1640,50 @@ Public Getters ///
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_mock_mining_vm">test_helper_mock_mining_vm</a>(vm: &signer, addr: address, count: u64) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_mock_mining_vm">test_helper_mock_mining_vm</a>(vm: &signer, addr: address, count: u64) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130120));
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
-  <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(addr);
-  state.count_proofs_in_epoch = count;
+  <a href="TowerState.md#0x1_TowerState_danger_mock_mining">danger_mock_mining</a>(addr, count)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_danger_mock_mining"></a>
+
+## Function `danger_mock_mining`
+
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_danger_mock_mining">danger_mock_mining</a>(addr: address, count: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_danger_mock_mining">danger_mock_mining</a>(addr: address, count: u64) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+  // again for safety
+  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130118));
+
 
   <b>let</b> i = 0;
   <b>while</b> (i &lt; count) {
     <a href="TowerState.md#0x1_TowerState_increment_stats">increment_stats</a>(addr);
+    <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(addr);
+    // mock verify_and_update
+    state.verified_tower_height = state.verified_tower_height + 1;
+    state.count_proofs_in_epoch = state.count_proofs_in_epoch + 1;
     i = i + 1;
-  }
+  };
+
+  <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(addr);
+  state.count_proofs_in_epoch = count;
+  state.latest_epoch_mining = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
 }
 </code></pre>
 
@@ -1388,10 +1706,12 @@ Public Getters ///
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_mock_reconfig">test_helper_mock_reconfig</a>(account: &signer, miner_addr: address) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>{
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_mock_reconfig">test_helper_mock_reconfig</a>(account: &signer, miner_addr: address) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(account);
   <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130122));
-  <a href="TowerState.md#0x1_TowerState_update_metrics">update_metrics</a>(account, miner_addr);
+  // update_metrics(account, miner_addr);
+  <a href="TowerState.md#0x1_TowerState_epoch_reset">epoch_reset</a>(account);
+  <a href="TowerState.md#0x1_TowerState_update_epoch_metrics_vals">update_epoch_metrics_vals</a>(account, miner_addr);
 }
 </code></pre>
 
@@ -1445,7 +1765,35 @@ Public Getters ///
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_get_count">test_helper_get_count</a>(account: &signer): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
     <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130115014011);
     <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
-    borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(addr).count_proofs_in_epoch
+    <a href="TowerState.md#0x1_TowerState_get_count_in_epoch">get_count_in_epoch</a>(addr)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_test_helper_get_nominal_count"></a>
+
+## Function `test_helper_get_nominal_count`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_get_nominal_count">test_helper_get_nominal_count</a>(miner_addr: address): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_helper_get_nominal_count">test_helper_get_nominal_count</a>(miner_addr: address): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
+  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130123));
+  <b>assert</b>(<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(130124));
+
+  <b>let</b> state = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr);
+  *&state.count_proofs_in_epoch
 }
 </code></pre>
 
@@ -1635,6 +1983,103 @@ Public Getters ///
   <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
   <b>let</b> state = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(addr);
   state.verified_tower_height = weight;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_test_mock_depr_tower_stats"></a>
+
+## Function `test_mock_depr_tower_stats`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_mock_depr_tower_stats">test_mock_depr_tower_stats</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_mock_depr_tower_stats">test_mock_depr_tower_stats</a>(vm: &signer) {
+  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130113));
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  move_to&lt;<a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>&gt;(vm, <a href="TowerState.md#0x1_TowerState_TowerStats">TowerStats</a>{
+    proofs_in_epoch: 111,
+    validator_proofs: 222,
+    fullnode_proofs: 333,
+  });
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_test_get_liftime_proofs"></a>
+
+## Function `test_get_liftime_proofs`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_get_liftime_proofs">test_get_liftime_proofs</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_get_liftime_proofs">test_get_liftime_proofs</a>(): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130113));
+
+  <b>let</b> s = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  s.lifetime_proofs
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_test_danger_destroy_tower_counter"></a>
+
+## Function `test_danger_destroy_tower_counter`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_danger_destroy_tower_counter">test_danger_destroy_tower_counter</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_danger_destroy_tower_counter">test_danger_destroy_tower_counter</a>(vm: &signer) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130113));
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>assert</b>(<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>()), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130115));
+
+    // We destroy the data <b>resource</b> for sender
+    // move_from and then destructure
+
+    <b>let</b> <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+      lifetime_proofs: _,
+      lifetime_validator_proofs: _,
+      lifetime_fullnode_proofs: _,
+      proofs_in_epoch: _,
+      validator_proofs_in_epoch: _,
+      fullnode_proofs_in_epoch: _,
+      validator_proofs_in_epoch_above_thresh: _,
+      fullnode_proofs_in_epoch_above_thresh: _,
+   } = move_from&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
 }
 </code></pre>
 

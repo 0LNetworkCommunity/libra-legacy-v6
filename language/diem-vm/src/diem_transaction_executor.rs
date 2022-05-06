@@ -489,16 +489,15 @@ impl DiemVM {
         let mut session = self.0.new_session(storage);
 
         let (round, timestamp, previous_vote, proposer) = block_metadata.clone().into_inner();
-
-        println!("========================================== {} ==========================================", round);
-
+        
+        println!("====================================== {} ======================================", round);
         
         let args = serialize_values(&vec![
             MoveValue::Signer(txn_data.sender),
             MoveValue::U64(round),
             MoveValue::U64(timestamp),
-            MoveValue::Vector(previous_vote.into_iter().map(MoveValue::Address).collect()),
-            MoveValue::Address(proposer),
+            MoveValue::Vector(previous_vote.clone().into_iter().map(MoveValue::Address).collect()),
+            MoveValue::Address(proposer.clone()),
         ]);
 
         session
@@ -512,6 +511,10 @@ impl DiemVM {
             )
             .map(|_return_vals| ())
             .or_else(|e| {
+                println!("error here\n");
+                dbg!(&proposer);
+                dbg!(&previous_vote);
+
                 expect_only_successful_execution(e, BLOCK_PROLOGUE.as_str(), log_context)
             })?;
 
@@ -528,14 +531,19 @@ impl DiemVM {
 
             //////// 0L ////////
             // Apply upgrade for Upgrade oracle
-            self.0.apply_stdlib_upgrade(
+            match self.0.apply_stdlib_upgrade(
                 &mut session,
                 &storage,
                 block_metadata.clone(),
                 &txn_data,
                 &mut gas_status,
                 log_context,
-            )?;
+            ) {
+                Ok(_) => {},
+                Err(e) => {
+                  println!("0L ==== stdlib upgrade: aborting. Message: {:?}", &e);
+                },
+            };
         }
 
         SYSTEM_TRANSACTIONS_EXECUTED.inc();

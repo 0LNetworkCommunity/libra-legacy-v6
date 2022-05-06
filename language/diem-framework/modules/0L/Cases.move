@@ -29,9 +29,15 @@ address 0x1{
         public fun get_case(
             vm: &signer, node_addr: address, height_start: u64, height_end: u64
         ): u64 {
+
+            // this is a failure mode. Only usually seen in rescue missions, where epoch counters are reconfigured by writeset offline.
+            if (height_end < height_start) return VALIDATOR_DOUBLY_NOT_COMPLIANT;
+
             Roles::assert_diem_root(vm);
             // did the validator sign blocks above threshold?
+
             let signs = Stats::node_above_thresh(vm, node_addr, height_start, height_end);
+
             let mines = TowerState::node_above_thresh(node_addr);
 
             if (signs && mines) {

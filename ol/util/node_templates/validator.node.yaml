@@ -1,0 +1,34 @@
+base:
+    data_dir: "path/to/data"
+    role: "validator"
+    waypoint:
+      from_config: "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2"
+
+execution:
+    genesis_file_location: "/home/node/.0L/genesis.blob"
+
+full_node_networks:
+    # Validators do not serve sync request (nor JSON rpc)
+    # They do not connect to the Public fullnode network.
+    # Validators do however open a private connection to their VFN (validator full node).
+    # The VFN in turn shares public information to other fullnodes.
+
+    # the address of the downstream fullnode or fullnodes. 0.0.0.0 if there are multiple VFNs
+    # If there is one VFN the validator can set an IP in place of 0.0.0.0 to only receive connections from the downstream fullnode's IP
+
+    - listen_address: "/ip4/0.0.0.0/tcp/7180" 
+      network_id:
+          private: "vfn"
+      max_outbound_connections: 1
+
+      # Besides locking the IP address to listen you can set mutual authentication and set the trusted (seed) peers
+      # mutual_authentication: true
+
+      # The SEED peers are what the mutual authentication look for.
+      # here would be the identity, or identities of the downstream VFN.
+      # seeds:
+      #   "<a peer id>":
+      #     addresses:
+      #       - "/ip4/127.0.0.1/tcp/7180/ln-noise-ik/<a pub key>/ln-handshake/0"
+      #     keys: ["<SAME pub key as in address>"]
+      #     role: "Validator"

@@ -4,13 +4,15 @@ address 0x1 {
 /// to synchronize configuration changes for the validators.
 
 module DiemConfig {
+    friend 0x1::Upgrade;
+
     use 0x1::CoreAddresses;
     use 0x1::Errors;
     use 0x1::Event;
     use 0x1::DiemTimestamp;
     use 0x1::Signer;
     use 0x1::Roles;
-    use 0x1::Testnet;
+    // use 0x1::Testnet;
 
     /// A generic singleton resource that holds a value of a specific type.
     struct DiemConfig<Config: copy + drop + store> has key, store {
@@ -308,9 +310,9 @@ module DiemConfig {
         //
         // Thus, this check ensures that a transaction that does multiple "reconfiguration required" actions emits only
         // one reconfiguration event.
-        //
+        
         if (current_time == config_ref.last_reconfiguration_time) {
-            return
+           return
         };
 
         assert(current_time > config_ref.last_reconfiguration_time, Errors::invalid_state(EINVALID_BLOCK_TIME));
@@ -324,6 +326,7 @@ module DiemConfig {
             },
         );
     }
+
     spec fun spec_reconfigure_omitted(): bool {
        DiemTimestamp::is_genesis() || DiemTimestamp::spec_now_microseconds() == 0 || !reconfiguration_enabled()
     }
@@ -382,6 +385,24 @@ module DiemConfig {
         emits msg to handle if (!spec_reconfigure_omitted() && now != config.last_reconfiguration_time);
     }
 
+    /// Emit a `NewEpochEvent` 
+    /// this is used only in upgrade scenarios or offline recovery writesets
+    public(friend) fun upgrade_reconfig(vm: &signer) acquires Configuration {
+        CoreAddresses::assert_vm(vm);
+        assert(exists<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS()), Errors::not_published(ECONFIGURATION));
+        let config_ref = borrow_global_mut<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
+        
+        // Must increment otherwise the diem-nodes lose track due to safety-rules.
+        config_ref.epoch = config_ref.epoch + 1;
+
+        Event::emit_event<NewEpochEvent>(
+            &mut config_ref.events,
+            NewEpochEvent {
+                epoch: config_ref.epoch,
+            },
+        );
+    }
+
     /// Emit a `NewEpochEvent` event. This function will be invoked by genesis directly to generate the very first
     /// reconfiguration event.
     fun emit_genesis_reconfiguration_event() acquires Configuration {
@@ -397,6 +418,7 @@ module DiemConfig {
             },
         );
     }
+
     spec emit_genesis_reconfiguration_event {
         let post config = global<Configuration>(CoreAddresses::DIEM_ROOT_ADDRESS());
         let post handle = config.events;
@@ -474,13 +496,13 @@ module DiemConfig {
         
     }
 
-    public fun check_transfer_enabled(): bool acquires Configuration {
-        if(Testnet::is_testnet()){
-            true
-        } else {
-            get_current_epoch() > TRANSFER_ENABLED_EPOCH
-        }
-    }    
+    // public fun check_transfer_enabled(): bool acquires Configuration {
+    //     if(Testnet::is_testnet()){
+    //         true
+    //     } else {
+    //         get_current_epoch() > TRANSFER_ENABLED_EPOCH
+    //     }
+    // }    
     //////// 0L end ////////
 
 }

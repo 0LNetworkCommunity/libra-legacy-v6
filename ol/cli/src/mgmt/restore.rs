@@ -111,7 +111,7 @@ impl Backup {
             restore_path: restore_path.clone(),
             archive_path: conf.workspace.node_home.join(format!("restore/restore-{}.tar.gz", restore_epoch)),
             waypoint: None,
-            node_namespace: format!("{}-oper", conf.profile.account.clone().to_hex()), // NOTE: needs to match namespace used in ol/onboard and config/management/genesis
+            node_namespace: conf.format_oper_namespace(), // NOTE: needs to match namespace used in ol/onboard and config/management/genesis
         }
     }
     /// Fetch backups

@@ -4,7 +4,7 @@
 use std::{fs, path::{Path}, process::{Command, Stdio}, thread, time::{self, Duration}};
 use diem_config::config::NodeConfig;
 use ol::config::AppCfg;
-use txs::submit_tx::{TxParams, get_tx_params_from_swarm};
+use txs::tx_params::TxParams;
 use anyhow::{bail, Error};
 
 #[test]
@@ -93,9 +93,9 @@ pub fn integration_submit_tx() {
             thread::sleep(test_timeout);
 
             // TODO: make these paths references
-            let tx_params = get_tx_params_from_swarm(swarm_configs_path.clone(), "alice".to_owned(), false).unwrap();// TO write logic
+            let tx_params = TxParams::get_tx_params_from_swarm(swarm_configs_path.clone(), "alice".to_owned(), false).unwrap();// TO write logic
             let config =  AppCfg::init_app_configs_swarm(swarm_configs_path.clone(), 
-                                    swarm_configs_path.join("0"), Some(root_source_path.clone().to_path_buf()));
+                                    swarm_configs_path.join("0"), Some(root_source_path.clone().to_path_buf())).unwrap();
 
             let mut blocks_dir = config.workspace.node_home.clone();
             blocks_dir.push(&config.workspace.block_dir);
@@ -204,17 +204,17 @@ fn get_node_port() -> u16 {
 }
 
 fn check_node_sync(tx_params: &TxParams, config: &AppCfg) -> Result<(), Error> {
-    let remote_height = tower::backlog::get_remote_tower_height(&tx_params).unwrap();
+    let (remote_height, _) = tower::backlog::get_remote_tower_height(&tx_params).unwrap();
     println!("Remote tower height: {}", remote_height);
 
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
     let (current_block_number, _current_block_path) = tower::proof::parse_block_height(&blocks_dir);
-    let current_block_number = current_block_number.unwrap();
+    let current_block_number = current_block_number.unwrap() as i64;
     println!("Local tower height: {}", current_block_number);
 
     // The client can be in sync with local or -1 wrt local. 
-    if (i128::from(current_block_number) != remote_height) && i128::from(current_block_number - 1)!= remote_height {
+    if (current_block_number != remote_height) && (current_block_number - 1) != remote_height {
         bail!("Block heights don't match: Miner: {}, Remote: {}", current_block_number, remote_height)
     }
     Ok(())

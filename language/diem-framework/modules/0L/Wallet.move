@@ -145,7 +145,7 @@ module Wallet {
 
       let t = TimedTransfer {
         uid: transfers.max_uid,
-        expire_epoch: current_epoch + 3,
+        expire_epoch: current_epoch + 2, // pays at the end of second (start of third epoch)
         payer: sender_addr,
         payee: payee,
         value: value,

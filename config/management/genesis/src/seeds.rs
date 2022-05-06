@@ -9,12 +9,12 @@ use structopt::StructOpt;
 use std::{
     convert::TryFrom,
     collections::{HashMap},
-    path::{PathBuf},
+    path::{PathBuf}, fs,
 };
 
 use crate::verify::compute_genesis;
 
-type SeedAddresses = HashMap<PeerId, Vec<NetworkAddress>>; 
+pub type SeedAddresses = HashMap<PeerId, Vec<NetworkAddress>>; 
 
 // NOTE: Deprecated for use on validator config. Kept here for reference.
 
@@ -27,11 +27,29 @@ pub struct Seeds {
 }
 
 impl Seeds {
+    pub fn execute(self) -> Result<String, Error> {
+
+     let peers = &self.get_network_peers_info()?;
+     dbg!(peers);
+     Ok("ok".to_string())
+    }
+
     pub fn new(genesis_path: PathBuf) -> Self {
       Self {
         genesis_path,
       }
     }
+
+    pub fn read_from_file(seed_peers_path: PathBuf) -> Result<SeedAddresses, Error>  {
+
+        let file_string = fs::read_to_string(seed_peers_path)
+        .map_err(|e| Error::ConfigError(e.to_string()))?;
+        let yaml: SeedAddresses = serde_yaml::from_str(&file_string)
+        .map_err(|e| Error::ConfigError(e.to_string()))?;
+        Ok(yaml)
+    }
+
+
 
     pub fn get_network_peers_info(&self)->Result<SeedAddresses, Error> {
         let db_path = TempPath::new();
@@ -56,9 +74,8 @@ impl Seeds {
             .map_err(|e| Error::UnexpectedError(format!("ValidatorSet issue {}", e.to_string())))?
             .ok_or_else(|| Error::UnexpectedError("ValidatorSet does not exist".into()))?;
 
-        let info = validator_set.payload();
         let mut seed_addr = SeedAddresses::default();
-
+        let info = validator_set.payload();
         for info in info.iter() {
             let seed_pubkey = info.config().consensus_public_key.clone();
             //NOTE: This usually expects a x25519 key

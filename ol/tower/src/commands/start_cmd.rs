@@ -5,9 +5,8 @@ use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
 use ol_types::config::AppCfg;
 use ol_types::config::TxType;
+use txs::tx_params::TxParams;
 use std::process::exit;
-use diem_logger::prelude::FileWriter;
-use txs::submit_tx::tx_params;
 use diem_logger::{Level, Logger};
 
 /// `start` subcommand
@@ -34,7 +33,7 @@ impl Runnable for StartCmd {
             swarm_path,
             swarm_persona,
             is_operator,
-            use_upstream_url,
+            use_first_url,
             ..
         } = entrypoint::get_args();
 
@@ -63,7 +62,7 @@ impl Runnable for StartCmd {
             waypoint
         };
 
-        let tx_params = tx_params(
+        let tx_params = match TxParams::new(
             cfg.clone(),
             url,
             waypoint,
@@ -71,18 +70,22 @@ impl Runnable for StartCmd {
             swarm_persona,
             TxType::Miner,
             is_operator,
-            use_upstream_url,
+            use_first_url,
             None,
-        )
-        .expect("could not get tx parameters");
+        ) {
+            Ok(t) => t,
+            Err(e) => {
+              println!("ERROR: could not get tx params, exiting. message: {:?}", e);
+              exit(0);
+            },
+        };
 
         // Check for, and submit backlog proofs.
         if !self.skip_backlog {
-            // TODO: remove is_operator from signature, since tx_params has it.
-            match backlog::process_backlog(&cfg, &tx_params, is_operator) {
+            match backlog::process_backlog(&cfg, &tx_params) {
                 Ok(()) => status_ok!("Backlog:", "backlog committed to chain"),
                 Err(e) => {
-                    println!("WARN: Failed fetching remote state: {}", e);
+                    println!("WARN: Failed processing backlog: {:?}", e);
                 }
             }
         }
@@ -91,7 +94,7 @@ impl Runnable for StartCmd {
 
         if !self.backlog_only {
             // Steady state.
-            let result = mine_and_submit(&cfg, tx_params, is_operator);
+            let result = mine_and_submit(&cfg, tx_params);
             match result {
                 Ok(_val) => {}
                 Err(err) => {

@@ -28,7 +28,8 @@ CARGO_ARGS = --release
 # testnet automation settings
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
-MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
+MNEM = $(shell cat ol/
+fixtures/mnemonic/${NS}.mnem)
 CARGO_ARGS = --locked # just keeping this from doing --release mode, while in testnet mode.
 GITHUB_USER = OLSF
 endif
@@ -132,10 +133,6 @@ mv-bin:
 
 reset:
 	onboard val --skip-mining --upstream-peer http://167.172.248.37/ --source-path ~/libra
-
-reset-safety:
-	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
-
 
 backup:
 	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L/* ~/0L_backup_$(shell date +"%m-%d-%y-%T")
@@ -301,7 +298,9 @@ genesis:
 	--namespace ${ACC}-oper \
 	--repo ${REPO_NAME} \
 	--github-org ${REPO_ORG} \
-  --layout-path ${DATA_PATH}/set_layout.toml
+  --layout-path ${DATA_PATH}/set_layout.toml \
+	--val-ip-address ${IP}
+
 
 	sha256sum ${DATA_PATH}/genesis.blob
 
@@ -315,10 +314,8 @@ start-full:
 	cargo run -p diem-node -- --config ${DATA_PATH}/fullnode.node.yaml
 
 daemon:
-# your node's custom diem-node.service lives in ~/.0L. Take the template from libra/util and edit for your needs.
-	@echo REMEMBER TO COPY A TEMPLATE from ./ol/util/diem-node.service and edit the username
 	mkdir -p ~/.config/systemd/user/
-	cp ~/.0L/diem-node.service ~/.config/systemd/user/
+	cp ./ol/util/diem-node.service ~/.config/systemd/user/
 
 	@if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
@@ -374,13 +371,13 @@ ifdef TEST
 	@echo NAMESPACE: ${NS}
 	@echo GENESIS: ${V}
 	@if test ! -d ${DATA_PATH}; then \
-		echo Creating Directories \
+		echo Creating Directories; \
 		mkdir ${DATA_PATH}; \
 		mkdir -p ${DATA_PATH}/vdf_proofs/; \
 	fi
 
 	@if test ! -d ${DATA_PATH}/vdf_proofs; then \
-		echo Creating Directories \
+		echo Creating Directories; \
 		mkdir -p ${DATA_PATH}/vdf_proofs/; \
 	fi
 

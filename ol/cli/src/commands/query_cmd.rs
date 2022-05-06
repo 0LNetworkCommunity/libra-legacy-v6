@@ -4,11 +4,13 @@ use abscissa_core::{Command, Options, Runnable, status_info};
 use crate::{
     entrypoint,
     prelude::app_config,
-    node::query::QueryType,
+    node::query::{
+        QueryType, WalletType, is_slow_wallet, is_community_wallet},
     node::client,
     node::node::Node
 };
 use std::process::exit;
+use move_core_types::account_address::AccountAddress;
 
 /// `bal` subcommand
 ///
@@ -62,7 +64,10 @@ pub struct QueryCmd {
     move_struct: Option<String>,
 
     #[options(help = "move value name")]
-    move_value: Option<String>,    
+    move_value: Option<String>,
+    
+    #[options(help = "Get a validator's on-chain config")]
+    val_config: bool,
 }
 
 impl Runnable for QueryCmd {
@@ -73,7 +78,6 @@ impl Runnable for QueryCmd {
         let account = 
             if args.account.is_some() { args.account.unwrap() }
             else { cfg.profile.account };
-            
         let client = client::pick_client(
             args.swarm_path.clone(), &mut cfg
         ).unwrap_or_else(|e| {
@@ -81,60 +85,93 @@ impl Runnable for QueryCmd {
             exit(1);
         });
         let mut node = Node::new(client, &cfg, is_swarm);
-        let mut info = String::new();
         let mut display = "";
+        let mut query_type = QueryType::Balance{account};
 
         if self.balance {
-            info = node.query(QueryType::Balance{account});
+            query_type = QueryType::Balance{account};
             display = "BALANCE";
         }
         else if self.blockheight {
-            info = node.query(QueryType::BlockHeight);
+            query_type = QueryType::BlockHeight;
             display = "BLOCK HEIGHT";
         }
         else if self.sync {
-            info = node.query(QueryType::SyncDelay);
+            query_type = QueryType::SyncDelay;
             display = "SYNC";
         }
         else if self.resources {
-            info = node.query(QueryType::Resources{account});
+            query_type = QueryType::Resources{account};
             display = "RESOURCES";
         }
         else if self.move_state {
-            info = node.query(QueryType::MoveValue{
+            query_type = QueryType::MoveValue{
               account,
               module_name: self.move_module.clone().unwrap(),
               struct_name: self.move_struct.clone().unwrap(),
               key_name: self.move_value.clone().unwrap(),
-            });
+            };
             display = "RESOURCES";
         }
         else if self.epoch {
-            info = node.query(QueryType::Epoch);
+            query_type = QueryType::Epoch;
             display = "EPOCH";
         } else if self.events_received {
             
-            info = node.query(QueryType::Events{
+            query_type = QueryType::Events{
                 account, sent_or_received: false, seq_start: self.txs_height
-            });
+            };
             display = "EVENTS";
         } else if self.events_sent {
-            info = node.query(QueryType::Events{
+            query_type = QueryType::Events{
                 account, sent_or_received: true, seq_start: self.txs_height
-            });
+            };
             display = "EVENTS";
         }
         else if self.txs {
-            info = node.query(
+            query_type = 
               QueryType::Txs {
                 account,
                 txs_height: self.txs_height,
                 txs_count: self.txs_count, 
                 txs_type: self.txs_type.to_owned(),
-              }
-            );
+              };
             display = "TRANSACTIONS";
         }
-        status_info!(display, format!("{}", info));
+        else if self.val_config {
+            query_type = 
+              QueryType::ValConfig {
+                account,
+              };
+            display = "VALIDATOR CONFIGS";
+        }
+
+        match node.query(query_type) {
+            Ok(info) => {
+              status_info!(display, format!("{}", info));
+            },
+            Err(e) => {
+              println!("could not query node, exiting. Message: {:?}", e);
+              exit(1);
+            },
+        };
     }
 }
+
+/// get wallet type
+pub fn get_wallet_type(account: AccountAddress, mut node: Node) -> WalletType {
+    match node.get_annotate_account_blob(account) {
+        Ok((Some(r), _)) => {
+            if is_slow_wallet(&r) {
+                return WalletType::Slow;
+            }
+            if is_community_wallet(&r) {
+                return WalletType::Community;
+            }
+            WalletType::None
+        }
+        _ => WalletType::None,
+    }
+}
+
+

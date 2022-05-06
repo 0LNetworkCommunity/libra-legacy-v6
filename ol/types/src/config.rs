@@ -20,7 +20,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::dialogue::{add_tower, what_home, what_ip, what_statement};
+use crate::dialogue::{add_tower, what_home, what_ip, what_statement, what_vfn_ip};
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 
@@ -61,14 +61,23 @@ pub struct AppCfg {
 }
 
 /// Get a AppCfg object from toml file
-pub fn parse_toml(path: String) -> Result<AppCfg, Error> {
-    let mut config_toml = String::new();
-    let mut file = File::open(&path)?;
-    file.read_to_string(&mut config_toml)?;
+pub fn parse_toml(path: Option<PathBuf>) -> Result<AppCfg, Error> {
+    let cfg_path = path.unwrap_or(dirs::home_dir().unwrap().join(".0L").join("0L.toml"));
+
+    let mut toml_buf = "".to_string();
+    let mut file = File::open(&cfg_path)?;
+    file.read_to_string(&mut toml_buf)?;
 
 
-    let cfg: AppCfg = toml::from_str(&config_toml).unwrap();
+    let cfg: AppCfg = toml::from_str(&toml_buf)?;
     Ok(cfg)
+}
+
+/// Get a AppCfg object from toml file
+pub fn fix_missing_fields(path: PathBuf) -> Result<(), Error> {
+    let cfg: AppCfg = parse_toml(Some(path))?;
+    cfg.save_file()?;
+    Ok(())
 }
 
 impl AppCfg {
@@ -104,6 +113,11 @@ impl AppCfg {
         }
     }
 
+    /// format the standard namespace for 0L validator
+    pub fn format_oper_namespace(&self) -> String {
+      format!("{}-oper", self.profile.account.to_hex())
+    }
+
     /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self) -> PathBuf {
         let mut home = self.workspace.node_home.clone();
@@ -129,7 +143,7 @@ impl AppCfg {
         source_path: &Option<PathBuf>,
         statement: Option<String>,
         ip: Option<Ipv4Addr>,
-    ) -> AppCfg {
+    ) -> Result<AppCfg, Error> {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
         default_config.profile.auth_key = authkey;
@@ -145,6 +159,12 @@ impl AppCfg {
             Some(i) => i,
             None => what_ip().unwrap(),
         };
+
+        default_config.profile.vfn_ip = match ip {
+            Some(i) => Some(i),
+            None => what_vfn_ip().ok(),
+        };
+
         default_config.workspace.node_home =
             config_path.clone().unwrap_or_else(|| what_home(None, None));
 
@@ -170,7 +190,7 @@ impl AppCfg {
             default_config.chain_info.base_waypoint = *base_waypoint;
         } else {
             if let Some(url) = upstream_peer {
-                default_config.profile.upstream_nodes = Some(vec![url.to_owned()]);
+                default_config.profile.upstream_nodes = vec![url.to_owned()];
                 let mut web_monitor_url = url.clone();
                 let (e, w) = bootstrap_waypoint_from_upstream(&mut web_monitor_url).unwrap();
                 default_config.chain_info.base_epoch = Some(e);
@@ -185,14 +205,14 @@ impl AppCfg {
 
         // skip questionnaire if CI
         if *IS_TEST {
-            default_config.save_file();
+            default_config.save_file()?;
 
-            return default_config;
+            return Ok(default_config);
         }
         fs::create_dir_all(&default_config.workspace.node_home).unwrap();
-        default_config.save_file();
+        default_config.save_file()?;
 
-        default_config
+        Ok(default_config)
     }
 
     /// Save swarm default configs to swarm path
@@ -202,11 +222,11 @@ impl AppCfg {
         swarm_path: PathBuf,
         node_home: PathBuf,
         source_path: Option<PathBuf>,
-    ) -> AppCfg {
+    ) -> Result<AppCfg, Error> {
         // println!("init_swarm_config: {:?}", swarm_path); already logged in commands.rs
         let host_config = AppCfg::make_swarm_configs(swarm_path, node_home, source_path);
-        host_config.save_file();
-        host_config
+        host_config.save_file()?;
+        Ok(host_config)
     }
 
     /// get configs from swarm
@@ -220,10 +240,6 @@ impl AppCfg {
         let config_path = swarm_path.join(&node_home).join("node.yaml");
         let config = NodeConfig::load(&config_path)
             .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &config_path));
-
-        let url =
-            Url::parse(format!("http://localhost:{}", config.json_rpc.address.port()).as_str())
-                .unwrap();
 
         // upstream configs
         let upstream_config_path = swarm_path.join(&node_home).join("node.yaml");
@@ -257,44 +273,26 @@ impl AppCfg {
         cfg.workspace.source_path = source_path;
         cfg.chain_info.base_waypoint = Some(config.base.waypoint.waypoint());
         cfg.profile.account = "4C613C2F4B1E67CA8D98A542EE3F59F5".parse().unwrap(); // alice
-        cfg.profile.default_node = Some(url);
-        cfg.profile.upstream_nodes = Some(vec![upstream_url]);
+        cfg.profile.upstream_nodes = vec![upstream_url];
 
         cfg
     }
-    /// choose a node to connect to, either localhost or upstream
-    pub fn what_url(&self, use_upstream_url: bool) -> Url {
-        if use_upstream_url {
-            self.profile
-                .upstream_nodes
-                .clone()
-                .unwrap()
-                .into_iter()
-                .next()
-                .expect("no backup url provided in config toml")
-        } else {
-            self.profile
-                .default_node
-                .clone()
-                .expect("no url provided in config toml")
-        }
-    }
 
     /// save the config file to 0L.toml to the workspace home path
-    pub fn save_file(&self) {
-        let toml = toml::to_string(&self).unwrap();
+    pub fn save_file(&self) -> Result<(), Error>{
+        let toml = toml::to_string(&self)?;
         let home_path = &self.workspace.node_home.clone();
         // create home path if doesn't exist, usually only in dev/ci environments.
-        fs::create_dir_all(&home_path).expect("could not create 0L home directory");
+        fs::create_dir_all(&home_path)?;
         let toml_path = home_path.join(CONFIG_FILE);
-        let file = fs::File::create(&toml_path);
-        file.unwrap()
-            .write(&toml.as_bytes())
-            .expect("Could not write toml file");
+        let mut file = fs::File::create(&toml_path)?;
+        file.write(&toml.as_bytes())?;
+
         println!(
             "\nhost configs initialized, file saved to: {:?}",
             &toml_path
         );
+        Ok(())
     }
 }
 
@@ -349,7 +347,7 @@ impl Default for Workspace {
 
 /// Information about the Chain to mined for
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct ChainInfo {
     /// Chain that this work is being committed to
     pub chain_id: String,
@@ -374,7 +372,7 @@ impl Default for ChainInfo {
 }
 /// Miner profile to commit this work chain to a particular identity
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct Profile {
     /// The 0L account for the Miner and prospective validator. This is derived from auth_key
     pub account: AccountAddress,
@@ -388,11 +386,14 @@ pub struct Profile {
     /// ip address of this node. May be different from transaction URL.
     pub ip: Ipv4Addr,
 
-    /// Node URL and and port to submit transactions. Defaults to localhost:8080
-    pub default_node: Option<Url>,
+    /// ip address of the validator fullnodee
+    pub vfn_ip: Option<Ipv4Addr>,
+
+    // /// Node URL and and port to submit transactions. Defaults to localhost:8080
+    // pub default_node: Option<Url>,
 
     /// Other nodes to connect for fallback connections
-    pub upstream_nodes: Option<Vec<Url>>,
+    pub upstream_nodes: Vec<Url>,
 
     /// Link to another delay tower.
     pub tower_link: Option<String>,
@@ -408,8 +409,9 @@ impl Default for Profile {
             .unwrap(),
             statement: "Protests rage across the nation".to_owned(),
             ip: "0.0.0.0".parse().unwrap(),
-            default_node: Some("http://localhost:8080".parse().expect("parse url")),
-            upstream_nodes: Some(vec!["http://localhost:8080".parse().expect("parse url")]),
+            vfn_ip: "0.0.0.0".parse().ok(),
+            // default_node: Some("http://localhost:8080".parse().expect("parse url")),
+            upstream_nodes: vec!["http://localhost:8080".parse().expect("parse url")],
             tower_link: None,
         }
     }
@@ -467,7 +469,7 @@ impl TxConfigs {
 
 /// Transaction preferences for a given type of transaction
 #[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+// #[serde(deny_unknown_fields)]
 pub struct TxCost {
     /// Max gas units to pay per transaction
     pub max_gas_unit_for_tx: u64, // gas UNITS of computation

@@ -1,9 +1,12 @@
 //! MinerApp submit_tx module
 #![forbid(unsafe_code)]
-use anyhow::Error;
 use cli::{diem_client::DiemClient, AccountData, AccountStatus};
 use ol_types::block::VDFProof;
-use txs::{sign_tx::sign_tx, submit_tx::{TxParams, submit_tx}};
+use txs::{
+  sign_tx::sign_tx,
+  submit_tx::{submit_tx, eval_tx_status, TxError},
+  tx_params::TxParams,
+};
 use diem_json_rpc_types::views::{TransactionView};
 use diem_transaction_builder::stdlib as transaction_builder;
 
@@ -11,8 +14,7 @@ use diem_transaction_builder::stdlib as transaction_builder;
 pub fn commit_proof_tx(
     tx_params: &TxParams,
     block: VDFProof,
-    is_operator: bool,
-) -> Result<TransactionView, Error> {
+) -> Result<TransactionView, TxError> {
 
     // Create a client object
     let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
@@ -26,7 +28,7 @@ pub fn commit_proof_tx(
         None => 0,
     };
 
-    let script = if is_operator {
+    let script = if tx_params.is_operator {
         transaction_builder::encode_minerstate_commit_by_operator_script_function(
             tx_params.owner_address.clone(), 
             block.preimage.clone(), 
@@ -55,5 +57,6 @@ pub fn commit_proof_tx(
         status: AccountStatus::Persisted,
     };
 
-    submit_tx(client, signed_tx, &mut signer_account_data )
+    let t = submit_tx(client, signed_tx, &mut signer_account_data )?;
+    eval_tx_status(t)
 }

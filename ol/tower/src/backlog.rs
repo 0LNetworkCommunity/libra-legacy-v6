@@ -1,85 +1,188 @@
 //! Miner resubmit backlog transactions module
 #![forbid(unsafe_code)]
 
-use cli::{diem_client::DiemClient};
-use ol_types::block::VDFProof;
-use txs::submit_tx::{TxParams, eval_tx_status};
-use std::{fs::File, path::PathBuf, thread, time};
-use ol_types::config::AppCfg;
-use crate::commit_proof::commit_proof_tx;
+use std::{fs::File, path::PathBuf};
 use std::io::BufReader;
-use crate::proof::{parse_block_height, FILENAME};
-use anyhow::{bail, Result, Error};
-use diem_logger::prelude::*;
 
-/// Submit a backlog of blocks that may have been mined while network is offline. 
-/// Likely not more than 1. 
+use anyhow::{anyhow, Error, Result, bail};
+
+use cli::diem_client::DiemClient;
+use diem_logger::prelude::*;
+use ol_types::block::VDFProof;
+use ol_types::config::AppCfg;
+use txs::submit_tx::{eval_tx_status, TxError};
+use txs::tx_params::TxParams;
+
+use crate::commit_proof::commit_proof_tx;
+use crate::EPOCH_MINING_THRES_UPPER;
+use crate::proof::{FILENAME, parse_block_height};
+
+/// Submit a backlog of blocks that may have been mined while network is offline.
+/// Likely not more than 1.
 pub fn process_backlog(
-    config: &AppCfg, tx_params: &TxParams, is_operator: bool
-) -> Result<(), Error> {
+    config: &AppCfg,
+    tx_params: &TxParams,
+) -> Result<(), TxError> {
     // Getting remote miner state
-    //let remote_state = get_remote_state(tx_params)?;
-    //let remote_height = remote_state.verified_tower_height;
-    let remote_height = get_remote_tower_height(tx_params).unwrap();
+    // there may not be any onchain state.
+    let (remote_height, proofs_in_epoch) = get_remote_tower_height(tx_params)?;
 
     info!("Remote tower height: {}", remote_height);
+    info!("Proofs already submitted in epoch: {}", proofs_in_epoch);
     // Getting local state height
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
     let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
-    if let Some(current_block_number) = current_block_number {
-        info!("Local tower height: {:?}", current_block_number);
-        if i128::from(current_block_number) > remote_height {
-            info!("Backlog: resubmitting missing proofs.");
+    if let Some(current_proof_number) = current_block_number {
+        info!("Local tower height: {:?}", current_proof_number);
+        if remote_height < 0 || current_proof_number > remote_height as u64 {
+            let mut i = remote_height as u64 + 1;
 
-            let mut i = remote_height + 1;
-            while i <= current_block_number.into() {
-                let path = PathBuf::from(
-                    format!("{}/{}_{}.json", blocks_dir.display(), FILENAME, i)
+            // use i64 for safety
+            if !(proofs_in_epoch < EPOCH_MINING_THRES_UPPER as i64) {
+                info!(
+                    "Backlog: Maximum number of proofs sent this epoch {}, exiting.",
+                    EPOCH_MINING_THRES_UPPER
                 );
-                info!("submitting proof {}", i);
-                let file = File::open(&path)?;
+                return Err(anyhow!("cannot submit more proofs than allowed in epoch, aborting backlog.").into());
+            }
+
+            let remaining_in_epoch = if proofs_in_epoch > 0 { EPOCH_MINING_THRES_UPPER - proofs_in_epoch as u64 } else { EPOCH_MINING_THRES_UPPER };
+            let mut submitted_now = 1u64;
+
+            info!("Backlog: resubmitting missing proofs. Remaining in epoch: {}, already submitted in this backlog: {}", remaining_in_epoch, submitted_now);
+
+            while i <= current_proof_number && submitted_now <= remaining_in_epoch {
+                let path =
+                    PathBuf::from(format!("{}/{}_{}.json", blocks_dir.display(), FILENAME, i));
+                info!("submitting proof {}, in this backlog: {}", i, submitted_now);
+                let file = File::open(&path).map_err(|e| Error::from(e))?;
+
                 let reader = BufReader::new(file);
-                let block: VDFProof = serde_json::from_reader(reader)?;
-                let view = commit_proof_tx(
-                    &tx_params, block, is_operator
-                )?;
+                let block: VDFProof =
+                    serde_json::from_reader(reader).map_err(|e| Error::from(e))?;
+
+                let view = commit_proof_tx(&tx_params, block)?;
                 match eval_tx_status(view) {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(e) => {
-                      warn!("WARN: could not fetch TX status, continuing to next block in backlog after 30 seconds. Message: {:?} ", e);
-                      thread::sleep(time::Duration::from_millis(30_000));
-                    },
+                        warn!(
+                            "WARN: could not fetch TX status, aborting. Message: {:?} ",
+                            e
+                        );
+                        return Err(e);
+                    }
                 };
                 i = i + 1;
+                submitted_now = submitted_now + 1;
             }
         }
     }
     Ok(())
 }
 
-/// returns remote tower height
-pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<i128, Error> {
-    let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
-    info!("Fetching remote tower height: {}, {}",
-        tx_params.url.clone(), tx_params.owner_address.clone()
-    );
-    let remote_state = client.get_miner_state(&tx_params.owner_address);
-    match remote_state {
-        Ok( s ) => { match s {
-            Some(remote_state) => {
-                Ok(remote_state.verified_tower_height.into())
-            },
-            None => {
-                static MSG: &str = "Info: Received response but no remote state found. Exiting.";
-                info!("{}", MSG);
-                bail!(MSG)
+/// submit an exact proof height
+pub fn submit_proof_by_number(
+    config: &AppCfg,
+    tx_params: &TxParams,
+    proof_to_submit: u64,
+) -> Result<(), TxError> {
+    // Getting remote miner state
+    // there may not be any onchain state.
+    let (remote_height, _proofs_in_epoch) = get_remote_tower_height(tx_params)?;
+
+    info!("Remote tower height: {}", remote_height);
+    // Getting local state height
+    let mut blocks_dir = config.workspace.node_home.clone();
+    blocks_dir.push(&config.workspace.block_dir);
+    let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
+    if let Some(current_proof_number) = current_block_number {
+        info!("Local tower height: {:?}", current_proof_number);
+
+        if proof_to_submit > current_proof_number {
+            warn!("unable to submit proof - local tower height is smaller than {:?}", proof_to_submit);
+            return Ok(());
+        }
+
+        if remote_height > 0 && proof_to_submit <= remote_height as u64 {
+            warn!("unable to submit proof - remote tower height is higher than or equal to {:?}", proof_to_submit);
+            return Ok(());
+        }
+
+        info!("Backlog: submitting proof {:?}", proof_to_submit);
+
+        let path =
+            PathBuf::from(format!("{}/{}_{}.json", blocks_dir.display(), FILENAME, proof_to_submit));
+        let file = File::open(&path).map_err(|e| Error::from(e))?;
+
+        let reader = BufReader::new(file);
+        let block: VDFProof =
+            serde_json::from_reader(reader).map_err(|e| Error::from(e))?;
+
+        let view = commit_proof_tx(&tx_params, block)?;
+        match eval_tx_status(view) {
+            Ok(_) => {}
+            Err(e) => {
+                warn!(
+                            "WARN: could not fetch TX status, aborting. Message: {:?} ",
+                            e
+                        );
+                return Err(e);
             }
-        } },
-        Err( _ ) => {
-            // error info returned -> tower is not yet on chain, so the height is 0
-            Ok(-1)
-        },
+        };
     }
+    Ok(())
 }
 
+/// display the user's tower backlog
+pub fn show_backlog(
+    config: &AppCfg,
+    tx_params: &TxParams,
+) -> Result<(), TxError> {
+    // Getting remote miner state
+    // there may not be any onchain state.
+    let (remote_height, _proofs_in_epoch) = get_remote_tower_height(tx_params)?;
+
+    println!("Remote tower height: {}", remote_height);
+    // Getting local state height
+    let mut blocks_dir = config.workspace.node_home.clone();
+    blocks_dir.push(&config.workspace.block_dir);
+    let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
+    if let Some(current_proof_number) = current_block_number {
+        println!("Local tower height: {:?}", current_proof_number);
+    } else {
+        println!("Local tower height: 0");
+    }
+    Ok(())
+}
+
+/// returns remote tower height and current proofs in epoch
+pub fn get_remote_tower_height(tx_params: &TxParams) -> Result<(i64, i64), Error> {
+    let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint)?;
+    info!(
+        "Fetching remote tower height: {}, {}",
+        tx_params.url.clone(),
+        tx_params.owner_address.clone()
+    );
+    let tower_state = client.get_miner_state(&tx_params.owner_address);
+    match tower_state {
+        Ok(Some(s)) => {
+            debug!("verified_tower_height: {:?}", s.verified_tower_height);
+            debug!("latest_epoch_mining: {:?}", s.latest_epoch_mining);
+            debug!("count_proofs_in_epoch: {:?}", s.count_proofs_in_epoch);
+            debug!("epochs_validating_and_mining: {:?}", s.epochs_validating_and_mining);
+            debug!("contiguous_epochs_validating_and_mining: {:?}", s.contiguous_epochs_validating_and_mining);
+            debug!("epochs_since_last_account_creation: {:?}", s.epochs_since_last_account_creation);
+            debug!("actual_count_proofs_in_epoch: {:?}", s.actual_count_proofs_in_epoch);
+
+            return Ok((s.verified_tower_height as i64, s.actual_count_proofs_in_epoch as i64));
+        },
+        Ok(None) => {
+          bail!("ERROR: user has no tower state on chain");
+        },
+        Err(e) => {
+            println!("ERROR: unable to get tower height from chain, message: {:?}", e);
+            return Err(e);
+        }
+    }
+}
