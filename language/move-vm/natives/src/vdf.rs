@@ -15,6 +15,7 @@ use std::{collections::VecDeque, time::Instant};
 use std::convert::TryFrom;
 use move_binary_format::errors::{PartialVMError, PartialVMResult};
 use smallvec::smallvec;
+use crate::counters::MOVE_VM_NATIVE_VERIFY_VDF_LATENCY;
 
 /// Rust implementation of Move's `native public fun verify(challenge: vector<u8>, difficulty: u64, alleged_solution: vector<u8>): bool`
 pub fn verify(
@@ -24,6 +25,7 @@ pub fn verify(
 ) -> PartialVMResult<NativeResult> {
     // temporary logging.
     let start_time = Instant::now();
+    let metric_timer = MOVE_VM_NATIVE_VERIFY_VDF_LATENCY.start_timer();
 
     if arguments.len() != 4 {
         let msg = format!(
@@ -65,6 +67,7 @@ pub fn verify(
 
     // temporary logging
     let latency = start_time.elapsed();
+    metric_timer.observe_duration();
     dbg!("vdf verification latency", &latency);
 
     Ok(NativeResult::ok(cost, return_values))

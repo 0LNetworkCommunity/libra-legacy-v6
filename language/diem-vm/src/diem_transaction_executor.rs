@@ -772,6 +772,7 @@ impl DiemVM {
             
             // temp time the transaction execution.
             let start_time = Instant::now();
+            let metric_single_tx_lat = EXECUTOR_SINGLE_TX_LATENCY.start_timer();
             
             let (vm_status, output, sender) =
                 self.execute_single_transaction(&txn, data_cache, &log_context)?;
@@ -784,6 +785,7 @@ impl DiemVM {
             };
             dbg!("tx sender", &sender);
             let latency = start_time.elapsed();
+            metric_single_tx_lat.observe_duration();
             dbg!("single tx latency", &latency);
 
             if !output.status().is_discarded() {
