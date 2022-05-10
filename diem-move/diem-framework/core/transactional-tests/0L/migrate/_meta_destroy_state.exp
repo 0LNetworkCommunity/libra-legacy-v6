@@ -1,0 +1,4 @@
+processed 2 tasks
+
+task 1 'run'. lines 6-18:
+Error: Transaction discarded. VMStatus: status MISSING_DATA of type Execution

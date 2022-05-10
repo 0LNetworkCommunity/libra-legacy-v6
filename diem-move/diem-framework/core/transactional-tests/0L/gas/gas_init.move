@@ -1,8 +1,6 @@
-//! account: blessed, 300GAS
+//# init --validators Alice
 
-//! new-transaction
-//! sender: blessed
-
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Diem;
     use DiemFramework::GAS::GAS;

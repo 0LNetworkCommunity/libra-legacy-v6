@@ -1,14 +1,14 @@
-// ! account: bob, 1230000GAS, 0, validator
+//# init --validators Bob
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
-  fun main(_: signer) {
-    // need to remove testnet for this test, since testnet does not ratelimit account creation.
+  fun main(_dr: signer, _: signer) {
+    // need to remove testnet for this test,
+    // since testnet does not ratelimit account creation.
     
     let bal = DiemAccount::balance<GAS>(@Bob);
-    assert!(bal == 1230000, 7357001);
+    assert!(bal == 10000000, 7357001);
   }
 }
