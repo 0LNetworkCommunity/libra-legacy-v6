@@ -11,10 +11,12 @@ use move_vm_types::{
     natives::function::{native_gas, NativeContext, NativeResult},
     values::{Reference, Value},
 };
-use std::collections::VecDeque;
+use std::{collections::VecDeque, time::Instant};
 use std::convert::TryFrom;
 use move_binary_format::errors::{PartialVMError, PartialVMResult};
 use smallvec::smallvec;
+use crate::counters::{MOVE_VM_NATIVE_VERIFY_VDF_LATENCY, MOVE_VM_NATIVE_VERIFY_VDF_PROOF_COUNT,
+                      MOVE_VM_NATIVE_VERIFY_VDF_PROOF_ERROR_COUNT};
 
 /// Rust implementation of Move's `native public fun verify(challenge: vector<u8>, difficulty: u64, alleged_solution: vector<u8>): bool`
 pub fn verify(
@@ -22,13 +24,20 @@ pub fn verify(
     _ty_args: Vec<Type>,
     mut arguments: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {
+    // temporary logging.
+    let start_time = Instant::now();
+    let metric_timer = MOVE_VM_NATIVE_VERIFY_VDF_LATENCY.start_timer();
+
     if arguments.len() != 4 {
         let msg = format!(
             "wrong number of arguments for vdf_verify expected 4 found {}",
             arguments.len()
         );
+        MOVE_VM_NATIVE_VERIFY_VDF_PROOF_ERROR_COUNT.inc();
         return Err(PartialVMError::new(StatusCode::UNREACHABLE).with_message(msg));
     }
+
+    MOVE_VM_NATIVE_VERIFY_VDF_PROOF_COUNT.inc();
 
     // pop the arguments (reverse order).
     let security = pop_arg!(arguments, Reference)
@@ -49,7 +58,8 @@ pub fn verify(
 
     // refuse to try anthing with a security parameter above 2048 for DOS risk.
     if security > 2048 {
-      return Err(PartialVMError::new(StatusCode::UNREACHABLE).with_message("VDF security parameter above threshold".to_string()));
+        MOVE_VM_NATIVE_VERIFY_VDF_PROOF_ERROR_COUNT.inc();
+        return Err(PartialVMError::new(StatusCode::UNREACHABLE).with_message("VDF security parameter above threshold".to_string()));
     }
 
     // TODO change the `cost_index` when we have our own cost table.
@@ -59,6 +69,12 @@ pub fn verify(
     let result = v.verify(&challenge, difficulty, &solution);
 
     let return_values = smallvec![Value::bool(result.is_ok())];
+
+    // temporary logging
+    let latency = start_time.elapsed();
+    metric_timer.observe_duration();
+    dbg!("vdf verification latency", &latency);
+
     Ok(NativeResult::ok(cost, return_values))
 }
 
