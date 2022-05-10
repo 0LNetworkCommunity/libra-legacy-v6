@@ -5,6 +5,7 @@ To enter the active validator set on epoch _A_ one must check these requirements
 - Submit at least 8 proofs (as before) ;
 - [NEW] Collect at least 4 vouches from active validators from different family ancestry ;
   - The command to provide to voucher ```txs vouch --address <<<YOUR_ADDRESS>>>``` 
+  - The command to see your collected vouches ```cd ~/libra && cargo r -p diem-transaction-replay -- --db ~/.0L/db annotate-account <<<YOUR_ADDRESS>>>``` 
 
 At the time of writing, the validator set can inflate of 15% maximum. Therefore, if more validators verify the requirements the validators with the most voting power will pass in the active set first. 
 
