@@ -1,18 +1,15 @@
-//! account: alice
+//# init --validators Alice
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::Bonding;
 
-  fun main(_diemroot: signer) {
+  fun main(_dr: signer, _: signer) {
     let add_to_reserve = 300;
     let reserve = 100;
     let supply = 1;
     let res = Bonding::deposit_calc(add_to_reserve, reserve, supply);
     assert!(res == 2, 73501);
-
-    
 
     let add_to_reserve = 10;
     let reserve = 100;

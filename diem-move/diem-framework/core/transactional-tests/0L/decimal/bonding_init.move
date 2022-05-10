@@ -1,12 +1,11 @@
-//! account: alices_app
+//# init --validators alices_app
 
-//! new-transaction
-//! sender: alices_app
+//# run --admin-script --signers DiemRoot alices_app
 script {
   use DiemFramework::Bonding;
-  use DiemFramework::Signer;
+  use Std::Signer;
 
-  fun main(sender: signer) {
+  fun main(_dr: signer, sender: signer) {
     let coin = 10;
     let supply = 100;
     Bonding::initialize_curve(&sender, coin, supply);
