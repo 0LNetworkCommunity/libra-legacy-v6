@@ -85,38 +85,27 @@ pub fn ol_writeset_ancestry(path: PathBuf, ancestry_file: PathBuf) -> WriteSetPa
     WriteSetPayload::Direct(cs)
 }
 
-// /// create the upgrade payload INCLUDING the epoch reconfigure
-// pub fn ol_writeset_hotfix(path: PathBuf, vals: Vec<AccountAddress>, recovery_epoch: u64) -> WriteSetPayload {
-//     // Take the stdlib upgrade change set.
-//     let cumu_deps = ol_cumu_deposits_hotfix(path.clone()).unwrap();
-
-//     let recovery = stdlib::ol_set_epoch_recovery_mode(path.clone(), vec![], recovery_epoch).unwrap();
-
-//     let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
-
-//     let new_cs = merge_vec_changeset(vec![cumu_deps, recovery, boundary]).unwrap();
-
-//     WriteSetPayload::Direct(new_cs)
-
-// }
-
-pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>, recovery_epoch: Option<u64>) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
         exit(1)
     };
 
     let stdlib_cs = stdlib::ol_fresh_stlib_changeset(path.clone()).unwrap();
-    // TODO: forcing the boundary causes an error on the epoch boundary.
-    // let boundary = ol_force_boundary(path.clone(), vals.clone(), block_height).unwrap();
+
+    // Changing the validators creates a new epoch boundary. But does not run the reconfiguration.
     let boundary = reconfig::ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
-    // set recovery mode
+    let mut all_cs = vec![stdlib_cs, boundary];
 
-    // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
-    let new_cs = merge_vec_changeset(vec![stdlib_cs, boundary]).unwrap();
-    // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
-    WriteSetPayload::Direct(new_cs)
+    // set recovery mode if the option was passed by commandline
+    if let Some(end_epoch) = recovery_epoch {
+      // NOTE: we are not using a fixed validator set here. Just using usual validator selection.
+      let recovery = stdlib::ol_set_epoch_recovery_mode(path.clone(), vec![], end_epoch).unwrap();
+      all_cs.push(recovery)
+    }
+
+    WriteSetPayload::Direct(merge_vec_changeset(all_cs).unwrap())
 }
 
 pub fn ol_writset_encode_migrations(

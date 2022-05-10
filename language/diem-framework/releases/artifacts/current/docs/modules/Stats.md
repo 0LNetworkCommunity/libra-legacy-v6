@@ -330,7 +330,8 @@
   <b>let</b> sender = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>(sender == <a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190006));
   <b>let</b> range = height_end-height_start;
-  <b>let</b> threshold_signing = <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(range, <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(1, 100));
+  // TODO: Change <b>to</b> 5 percent
+  <b>let</b> threshold_signing = <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(range, <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(5, 100));
   <b>if</b> (<a href="Stats.md#0x1_Stats_node_current_votes">node_current_votes</a>(vm, node_addr) &gt;  threshold_signing) { <b>return</b> <b>true</b> };
   <b>return</b> <b>false</b>
 }
