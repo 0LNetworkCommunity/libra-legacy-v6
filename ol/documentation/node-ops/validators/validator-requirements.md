@@ -40,4 +40,4 @@ In addition, the active validators must vote at least on 5% of the blocks during
 
 All validators (active AND inactive) are paying a fee called '_entry fee_' for the _privilege_ of being a validator.
 The entry fee is 50% of the validator payment, for example, let's assume validator are being paid 20k coins every validator will pay 10k at the begining of the epoch.
-Hence, inactive validators will be paying the entry fee but not receiving the payment, in other words, inactive validators will be penalized for not being active.
+Therefore, inactive validators will be paying the entry fee but not receiving the payment, in other words, inactive validators will be penalized for not being active.
