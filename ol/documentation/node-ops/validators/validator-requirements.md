@@ -1,11 +1,12 @@
 # Requirements to enter the active validator set
 
 To enter the active validator set on epoch _A_ one must check these requirements on epoch _A-1_:
-- Submit 8 proofs ;
-- Collect at least 4 vouches from active validators from different family ancestry ;
+- Get onboarded by a validator (as before) ;
+- Submit 8 proofs (as before) ;
+- [NEW] Collect at least 4 vouches from active validators from different family ancestry ;
   - The command to provide to voucher ```txs vouch --address <<<YOUR_ADDRESS>>>``` 
 
-At the time of writing, the validator set can inflate of 15% maximum. Therefore, if more validator check the requirements the validator with the most voting power will passed in the active set first. 
+At the time of writing, the validator set can inflate of 15% maximum. Therefore, if more validators verify the requirements the validators with the most voting power will pass in the active set first. 
 
 
 # To stay in the active set
