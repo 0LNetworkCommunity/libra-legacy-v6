@@ -20,7 +20,7 @@ A family is defined as accounts sharing common ancesters.
 
 # To stay in the active set
 
-All active validators MUST still satisfy the entry requirements, otherwise it will drop off the active set. 
+All active validators MUST keep satisfying the requirements of entry, otherwise it will drop off the active set. 
 In addition, the active validators must vote at least on 5% of the blocks during the epoch. If one validator fails to vote enough, it will drop.
 
 # Inactive validators
