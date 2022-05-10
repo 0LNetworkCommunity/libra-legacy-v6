@@ -5,7 +5,7 @@
 //! sender: diemroot
 script{
 use DiemFramework::ValidatorUniverse;
-use DiemFramework::Vector;
+use Std::Vector;
 
 fun main(vm: signer) {
     let len = Vector::length<address>(
@@ -22,7 +22,7 @@ fun main(vm: signer) {
 //! sender: diemroot
 script{
 use DiemFramework::ValidatorUniverse;
-use DiemFramework::Vector;
+use Std::Vector;
 
 fun main(vm: signer) {
     let len = Vector::length<address>(

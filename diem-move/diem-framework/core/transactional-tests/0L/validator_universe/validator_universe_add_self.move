@@ -6,7 +6,7 @@
 //! sender: diemroot
 script{
 use DiemFramework::ValidatorUniverse;
-use DiemFramework::Vector;
+use Std::Vector;
 // use DiemFramework::TestFixtures;
 // use DiemFramework::DiemAccount;
 
@@ -47,7 +47,7 @@ fun main(eve_sig: signer) {
 //! new-transaction
 //! sender: diemroot
 script{
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::ValidatorUniverse;
 
     fun main(vm: signer) {

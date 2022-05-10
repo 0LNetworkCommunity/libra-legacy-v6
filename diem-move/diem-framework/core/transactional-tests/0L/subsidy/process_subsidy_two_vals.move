@@ -39,7 +39,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Stats;
   use DiemFramework::GAS::GAS;
   use DiemFramework::DiemAccount;

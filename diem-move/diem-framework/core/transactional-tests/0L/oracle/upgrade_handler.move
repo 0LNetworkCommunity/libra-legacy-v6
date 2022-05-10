@@ -6,7 +6,7 @@
 //! sender: alice
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Upgrade;
 
   fun main(sender: signer){
@@ -37,7 +37,7 @@ script {
 //! sender: bob
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Upgrade;
 
   fun main(sender: signer){
@@ -75,7 +75,7 @@ script {
 script {
   use DiemFramework::Oracle;
   use DiemFramework::Upgrade;
-  use DiemFramework::Vector;
+  use Std::Vector;
   
   fun main(sender: signer){
       let data = b"hello";

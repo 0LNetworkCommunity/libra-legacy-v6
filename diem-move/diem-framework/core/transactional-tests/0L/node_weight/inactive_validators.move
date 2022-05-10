@@ -26,7 +26,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::NodeWeight;
     use DiemFramework::ValidatorUniverse;
     use DiemFramework::TowerState;

@@ -40,7 +40,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::Stats;
 
     fun main(vm: signer) {

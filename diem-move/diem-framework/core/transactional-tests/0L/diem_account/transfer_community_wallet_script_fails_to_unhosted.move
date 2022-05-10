@@ -8,7 +8,7 @@
 //! sender: bob
 script {
   use DiemFramework::DiemAccount;
-  use DiemFramework::Vector;
+  use Std::Vector;
 
   fun main(_bob: signer) {
     // BOB Sets wallet to slow wallet
@@ -24,7 +24,7 @@ script {
 //! sender: carol
 script {
   use DiemFramework::Wallet;
-  use DiemFramework::Vector;
+  use Std::Vector;
 
   fun main(carol: signer) {
     Wallet::set_comm(&carol);

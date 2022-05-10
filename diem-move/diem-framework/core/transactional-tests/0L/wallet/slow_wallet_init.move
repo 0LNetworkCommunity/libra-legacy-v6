@@ -6,7 +6,7 @@
 //! sender: bob
 script {
     use DiemFramework::DiemAccount;
-    use DiemFramework::Vector;
+    use Std::Vector;
 
     fun main(_sender: signer) {
       let list = DiemAccount::get_slow_list();

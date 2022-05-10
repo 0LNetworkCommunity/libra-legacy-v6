@@ -15,7 +15,7 @@
 script {
     
     use DiemFramework::DiemSystem;
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::ValidatorUniverse;
 
     fun main(vm: signer) {

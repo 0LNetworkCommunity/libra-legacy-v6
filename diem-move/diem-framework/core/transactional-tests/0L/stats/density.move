@@ -12,7 +12,7 @@
 //! new-transaction
 //! sender: diemroot
 script {
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::Stats;
 
     // Assumes an epoch changed at round 15

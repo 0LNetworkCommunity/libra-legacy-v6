@@ -5,7 +5,7 @@
 //! sender: diemroot
 script {
   use DiemFramework::Upgrade;
-  use DiemFramework::Vector;
+  use Std::Vector;
 
   fun main(sender: signer) {
     let validators = Vector::empty<address>();

@@ -7,7 +7,7 @@
 //! sender: diemroot
 script {
     use DiemFramework::Stats;
-    use DiemFramework::Vector;
+    use Std::Vector;
 
     fun main(vm: signer){
       let vm = &vm;

@@ -6,7 +6,7 @@
 //! sender: alice
 script{
 use DiemFramework::ValidatorUniverse;
-use DiemFramework::Signer;
+use Std::Signer;
 fun main(eve_sig: signer) {
     // Test from genesis if not jailed and in universe
     let addr = Signer::address_of(&eve_sig);
@@ -21,7 +21,7 @@ fun main(eve_sig: signer) {
 //! sender: diemroot
 script{
 use DiemFramework::ValidatorUniverse;
-// use DiemFramework::Signer;
+// use Std::Signer;
 fun main(vm: signer) {
     // Test from genesis if not jailed and in universe
     ValidatorUniverse::jail(&vm, @Alice);

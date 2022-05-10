@@ -144,7 +144,7 @@ script {
 script {
     // use DiemFramework::TowerState;
     use DiemFramework::Stats;
-    use DiemFramework::Vector;
+    use Std::Vector;
     // use DiemFramework::EpochBoundary;
     use DiemFramework::DiemSystem;
 
@@ -203,7 +203,7 @@ script {
 script {
     // use DiemFramework::EpochBoundary;
     use DiemFramework::Cases;
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::Stats;
     
     fun main(vm: signer) {

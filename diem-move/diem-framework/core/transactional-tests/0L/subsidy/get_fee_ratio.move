@@ -24,7 +24,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Stats;
   use DiemFramework::FixedPoint32;
   use DiemFramework::DiemSystem;

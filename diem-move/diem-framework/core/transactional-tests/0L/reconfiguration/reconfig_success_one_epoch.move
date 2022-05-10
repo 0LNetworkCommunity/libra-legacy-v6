@@ -46,7 +46,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::Stats;
 
     // This is the the epoch boundary.

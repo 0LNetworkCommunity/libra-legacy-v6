@@ -7,7 +7,7 @@
 //! sender: diemroot
 script {
     use DiemFramework::Stats;
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::EpochBoundary;
 
     fun main(vm: signer){

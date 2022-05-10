@@ -11,7 +11,7 @@
 //! sender: alice
 script {
     use DiemFramework::Wallet;
-    use DiemFramework::Vector;
+    use Std::Vector;
 
     fun main(sender: signer) {
       Wallet::set_comm(&sender);
@@ -34,7 +34,7 @@ script {
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
     use DiemFramework::Wallet;
-    use DiemFramework::Vector;
+    use Std::Vector;
 
     fun main(vm: signer) {
       let bob_balance = DiemAccount::balance<GAS>(@Bob);

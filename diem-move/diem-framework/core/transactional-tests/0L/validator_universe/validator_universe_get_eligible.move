@@ -5,7 +5,7 @@
 //! sender: diemroot
 script{
 use DiemFramework::ValidatorUniverse;
-use DiemFramework::Vector;
+use Std::Vector;
 
 
 fun main(vm: signer) {

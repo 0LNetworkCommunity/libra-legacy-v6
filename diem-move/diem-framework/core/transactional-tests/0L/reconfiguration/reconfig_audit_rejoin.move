@@ -123,7 +123,7 @@ script {
 //! sender: diemroot
 script {
     use DiemFramework::Stats;
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::DiemSystem;
 
     fun main(vm: signer) {
@@ -257,7 +257,7 @@ script {
 //! sender: diemroot
 script {
     use DiemFramework::Stats;
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::DiemSystem;
 
     fun main(vm: signer) {

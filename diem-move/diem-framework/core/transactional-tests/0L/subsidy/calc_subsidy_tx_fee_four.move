@@ -16,7 +16,7 @@
 script {
   
   use DiemFramework::Subsidy;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Stats;
   use DiemFramework::TransactionFee;
   use DiemFramework::GAS::GAS;

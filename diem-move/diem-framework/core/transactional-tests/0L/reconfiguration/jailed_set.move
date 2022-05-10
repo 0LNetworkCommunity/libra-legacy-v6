@@ -45,7 +45,7 @@ script {
 //! sender: diemroot
 script {
     use DiemFramework::Stats;
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::Cases;
     use DiemFramework::DiemSystem;
 

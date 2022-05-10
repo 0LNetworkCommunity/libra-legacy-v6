@@ -40,7 +40,7 @@ script {
 //! new-transaction
 //! sender: diemroot
 script {
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::Stats;
     // This is the the epoch boundary.
     fun main(vm: signer) {
@@ -91,7 +91,7 @@ script {
 //! sender: diemroot
 script {
     use DiemFramework::Stats;
-    // use DiemFramework::Vector;
+    // use Std::Vector;
     fun main(vm: signer) {
       let vm = &vm;
       // Testing that reconfigure reset the counter for current epoch.

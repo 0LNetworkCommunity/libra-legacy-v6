@@ -111,7 +111,7 @@ script {
 //! sender: alice
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Upgrade;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
@@ -136,7 +136,7 @@ script {
 //! sender: bob
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Upgrade;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
@@ -162,7 +162,7 @@ script {
 //! sender: thomas
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Hash;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
@@ -185,7 +185,7 @@ script {
 //! sender: lucy
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Upgrade;
   use DiemFramework::Hash;
   fun main(sender: signer){
@@ -212,7 +212,7 @@ script {
 //! sender: jim
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   fun main(sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 1;
@@ -231,7 +231,7 @@ script {
 //! sender: charlie
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Upgrade;
   use DiemFramework::Hash;
   fun main(sender: signer){
@@ -268,7 +268,7 @@ script {
 // //! sender: diemroot
 // script {
 //   use DiemFramework::Upgrade;
-//   use DiemFramework::Vector;
+//   use Std::Vector;
 //   fun main(){
 //     let (upgraded_version, payload, voters, height) = Upgrade::retrieve_latest_history();
 

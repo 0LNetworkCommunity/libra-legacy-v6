@@ -143,7 +143,7 @@ script {
 //! sender: diemroot
 script {
     use DiemFramework::Stats;
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::DiemSystem;
 
     fun main(vm: signer) {
@@ -216,7 +216,7 @@ script {
 script {
     // use DiemFramework::EpochBoundary;
     use DiemFramework::Cases;
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::Stats;
 
     fun main(vm: signer) {

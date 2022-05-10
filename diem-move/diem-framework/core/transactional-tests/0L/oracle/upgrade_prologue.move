@@ -11,7 +11,7 @@
 //! sender: alice
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Upgrade;
 
   fun main(sender: signer){
@@ -33,7 +33,7 @@ script {
 //! sender: bob
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Upgrade;
 
   fun main(sender: signer){
@@ -75,7 +75,7 @@ script {
 //! sender: diemroot
 script {
   use DiemFramework::Upgrade;
-  use DiemFramework::Vector;
+  use Std::Vector;
 
   fun main(){
     let (upgraded_version, payload, voters, height) = 

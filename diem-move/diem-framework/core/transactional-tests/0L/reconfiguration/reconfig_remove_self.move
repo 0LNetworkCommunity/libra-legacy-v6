@@ -22,7 +22,7 @@ stdlib_script::ValidatorScripts::leave
 script {
     // use DiemFramework::TowerState;
     use DiemFramework::Stats;
-    use DiemFramework::Vector;
+    use Std::Vector;
     // use DiemFramework::EpochBoundary;
     use DiemFramework::DiemSystem;
 
@@ -84,7 +84,7 @@ script {
 //! sender: diemroot
 script {
     // use DiemFramework::EpochBoundary;
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::Stats;
     
     fun main(vm: signer) {

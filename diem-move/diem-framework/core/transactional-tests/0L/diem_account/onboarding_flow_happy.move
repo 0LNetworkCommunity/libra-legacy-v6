@@ -7,7 +7,7 @@ use DiemFramework::VDF;
 use DiemFramework::DiemAccount;
 use DiemFramework::TowerState;
 use DiemFramework::TestFixtures;
-use DiemFramework::Vector;
+use Std::Vector;
 
 
 // Test Prefix: 1301

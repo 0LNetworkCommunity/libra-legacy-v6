@@ -27,7 +27,7 @@ script {
 //! sender: alice
 script {
     use DiemFramework::Wallet;
-    use DiemFramework::Vector;
+    use Std::Vector;
 
     fun main(sender: signer) {
       Wallet::set_comm(&sender);

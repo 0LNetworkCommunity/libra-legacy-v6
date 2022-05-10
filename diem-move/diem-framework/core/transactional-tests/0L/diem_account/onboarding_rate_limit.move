@@ -7,7 +7,7 @@ script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
   use DiemFramework::TestFixtures;
-  use DiemFramework::Signer;
+  use Std::Signer;
   use DiemFramework::VDF;
   use DiemFramework::ValidatorConfig;
   use DiemFramework::Roles;

@@ -31,7 +31,7 @@ script {
 //! sender: alice
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Upgrade;
   fun main(sender: signer){
       let id = 1;
@@ -53,7 +53,7 @@ script {
 //! sender: bob
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Upgrade;
   fun main(sender: signer){
       let id = 1;
@@ -74,7 +74,7 @@ script {
 //! sender: carol
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Upgrade;
   use DiemFramework::Hash;
   fun main(sender: signer){
@@ -109,7 +109,7 @@ script {
 //! sender: dave
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Upgrade;
   fun main(sender: signer){
       let id = 1;
@@ -141,7 +141,7 @@ script {
 //! sender: eve
 script {
   use DiemFramework::Oracle;
-  use DiemFramework::Vector;
+  use Std::Vector;
   use DiemFramework::Upgrade;
   use DiemFramework::Hash;
   fun main(sender: signer){

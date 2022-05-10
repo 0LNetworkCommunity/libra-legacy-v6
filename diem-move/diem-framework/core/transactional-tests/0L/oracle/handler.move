@@ -6,7 +6,7 @@
 //! sender: alice
 script {
     use DiemFramework::Oracle;
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::Upgrade;
 
     fun main(sender: signer){

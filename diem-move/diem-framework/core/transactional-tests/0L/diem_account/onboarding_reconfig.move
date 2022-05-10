@@ -87,7 +87,7 @@ script {
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::EpochBoundary;
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::TowerState;
     use DiemFramework::Stats;
     use DiemFramework::DiemAccount;
@@ -148,7 +148,7 @@ script {
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::ValidatorUniverse;
-    use DiemFramework::Vector;
+    use Std::Vector;
     fun main(vm: signer) {
         // Tests on initial size of validators
         // New validator is not in this set.
@@ -169,7 +169,7 @@ script {
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::EpochBoundary;
-    use DiemFramework::Vector;
+    use Std::Vector;
     use DiemFramework::TowerState;
     use DiemFramework::Stats;
     use DiemFramework::ValidatorUniverse;
@@ -242,7 +242,7 @@ script {
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::ValidatorUniverse;
-    use DiemFramework::Vector;
+    use Std::Vector;
     fun main(vm: signer) {
         // Tests on initial size of validators
         assert!(DiemSystem::validator_set_size() == 6, 7357000200301);
