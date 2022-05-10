@@ -9,7 +9,9 @@ To enter the active validator set on epoch _A_ one must check these requirements
 At the time of writing, the validator set can inflate of 15% maximum. Therefore, if more validators verify the requirements the validators with the most voting power will pass in the active set first. 
 
 ### The Vouching System
-The new vouching system goal is a lever for active validators to express an opinion on who should or should not be in the active set based on their own criteria. This will hopefully be beneficial for the network where active validators will endorse contributors, people with special skills or equipments for the well-being or improvments of 0L. The vouches also allow some kind of weak security against sybils. 
+The new vouching system is a lever for active validators to express an opinion on who should or should not be in the active set based on their own criteria. 
+This will hopefully be beneficial for the network where active validators will endorse contributors, people with special skills or equipments for the well-being or improvments of 0L. 
+The vouches also allow some kind of weak security against sybils. 
 
 ### Family ancestry
 One must collect at least 4 vouches from 4 different families.
