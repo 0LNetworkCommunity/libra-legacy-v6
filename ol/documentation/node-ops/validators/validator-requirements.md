@@ -20,11 +20,9 @@ A family is defined as accounts sharing common ancesters.
     - The command to see your collected vouches ```cd ~/libra && cargo r -p diem-transaction-replay -- --db ~/.0L/db annotate-account <<<YOUR_ADDRESS>>>```
 
 4. Tower Height - Be one of the validators with the highest tower height among validators who have met the other five criteria in this list;
-5. Voting Power - If all the above criteria are met, the validators will be admitted according to descending voting power;
+5. Voting Power - At the time of writing, the validator set can inflate of 15% maximum. Therefore, if more validators verify the requirements, the validators with the most voting power will pass in the active set first.
 
-At the time of writing, the validator set can inflate of 15% maximum. Therefore, if more validators verify the requirements the validators with the most voting power will pass in the active set first.
-
-For example, if three validators will be admitted at the epoch change, the 3 validators who have been onboarded, submitted 8 proofs, collected 4 vouches and have the highest tower height and greatest voting power will be admitted into the set.
+For example, if only three validators will be admitted at the epoch change, the 3 validators who have been onboarded, submitted 8 proofs, collected 4 vouches and have the highest tower height and greatest voting power will be admitted into the set.
 
 Additional resources to bring - 
 
@@ -40,4 +38,4 @@ In addition, the active validators must vote at least on 5% of the blocks during
 
 All validators (active AND inactive) are paying a fee called '_entry fee_' for the _privilege_ of being a validator.
 The entry fee is 50% of the validator payment, for example, let's assume validator are being paid 20k coins every validator will pay 10k at the begining of the epoch.
-Therefore, inactive validators will be paying the entry fee but not receiving the payment, in other words, inactive validators will be penalized for not being active.
+Therefore, inactive validators will be paying the entry fee but not receiving the payment for not being active.
