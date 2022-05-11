@@ -365,16 +365,8 @@ pub fn is_slow_wallet(r: &AnnotatedAccountStateBlob) -> bool {
         slow_struct_name.to_string(),
         "unlocked".to_string(),
     );
-    if let Some(AnnotatedMoveValue::U64(0)) = unlocked {
-        let transferred = find_value_from_state(
-            &r,
-            slow_module_name.to_string(),
-            slow_struct_name.to_string(),
-            "transferred".to_string(),
-        );
-        if let Some(AnnotatedMoveValue::U64(0)) = transferred {
-            return true;
-        }
+    if !unlocked.is_none() {
+        return true;
     }
     false
 }
@@ -484,39 +476,9 @@ fn test_find_annotated_move_value() {
 fn test_is_slow_wallet_should_return_true() {
     let value = vec![
         (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0)),
-        (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(0))
     ];
     let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
     assert_eq!(true, is_slow_wallet(&s), "{}", s.to_string());
-}
-
-#[test]
-fn test_is_slow_wallet_should_return_false_with_wrong_unlocked() {
-    let value = vec![
-        (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(1)),
-        (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(0))
-    ];
-    let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
-    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
-}
-
-#[test]
-fn test_is_slow_wallet_should_return_false_with_wrong_transferred() {
-    let value = vec![
-        (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0)),
-        (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(1))
-    ];
-    let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
-    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
-}
-
-#[test]
-fn test_is_slow_wallet_should_return_false_if_missing_transferred() {
-    let value = vec![
-        (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0))
-    ];
-    let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
-    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
 }
 
 #[test]
