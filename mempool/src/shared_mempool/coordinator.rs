@@ -152,10 +152,9 @@ async fn handle_consensus_request<V>(
         counters::task_spawn_latency_timer(counters::CONSENSUS_REQUEST_LABEL, counters::START_LABEL);
 
     bounded_executor
-        .spawn(tasks::process_consensus_request(&smp.mempool, msg))
+        .spawn(tasks::process_consensus_request(smp.clone(), msg))
         .await;
 }
-
 
 fn handle_state_sync_request<V>(smp: &mut SharedMempool<V>, msg: CommitNotification)
 where

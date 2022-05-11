@@ -384,7 +384,11 @@ pub(crate) async fn process_state_sync_request(
     counters::mempool_service_latency(counters::COMMIT_STATE_SYNC_LABEL, result, latency);
 }
 
-pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req: ConsensusRequest) {
+
+pub(crate) async fn process_consensus_request<V: TransactionValidation>(
+    smp: SharedMempool<V>,
+    req: ConsensusRequest
+) {
   dbg!("process_consensus_request");
     // Start latency timer
     let start_time = Instant::now();
@@ -398,7 +402,7 @@ pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req:
                 .collect();
             let mut txns;
             {
-                let mut mempool = mempool.lock();
+                let mut mempool = smp.mempool.lock();
                 // gc before pulling block as extra protection against txns that may expire in consensus
                 // Note: this gc operation relies on the fact that consensus uses the system time to determine block timestamp
                 let curr_time = diem_infallible::duration_since_epoch();
@@ -421,7 +425,7 @@ pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req:
                 counters::COMMIT_CONSENSUS_LABEL,
                 transactions.len(),
             );
-            reject_txns(mempool, transactions).await;
+            reject_txns(&smp.mempool, transactions).await;
             (
                 ConsensusResponse::CommitResponse(),
                 callback,
