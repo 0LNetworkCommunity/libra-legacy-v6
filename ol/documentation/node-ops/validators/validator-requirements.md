@@ -39,3 +39,7 @@ In addition, the active validators must vote at least on 5% of the blocks during
 All validators (active AND inactive) are paying a fee called '_entry fee_' for the _privilege_ of being a validator.
 The entry fee is 50% of the validator payment, for example, let's assume validator are being paid 20k coins every validator will pay 10k at the begining of the epoch.
 Therefore, inactive validators will be paying the entry fee but not receiving the payment for not being active.
+
+# Entry fee
+
+The entry fee is redistributed to community wallets, hence replacing the autopay **partially**. The community wallets are not being equally paid. Their share is somehow equivalent to the amount validator are giving through their autopay. The community wallets receiving the most donations will receive a biggest chunk of the entry fees as additionnal income source. 
