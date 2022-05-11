@@ -42,4 +42,4 @@ Therefore, inactive validators will be paying the entry fee but not receiving th
 
 # Entry fee
 
-The entry fee is redistributed to community wallets, hence replacing the autopay **partially**. The community wallets are not being equally paid. Their share is somehow equivalent to the amount validator are giving through their autopay. The community wallets receiving the most donations will receive a biggest chunk of the entry fees as additionnal income source. 
+The entry fees collected are redistributed to community wallets, hence replacing the autopay mechanism **partially**. The community wallets are not receiving an equal pay from these fee. Their share is equivalent to the amount validators are giving through their autopay. The community wallets receiving the most donations will receive a biggest chunk of the entry fees as additionnal income source. 
