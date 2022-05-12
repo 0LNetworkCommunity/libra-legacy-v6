@@ -1,12 +1,12 @@
 //! Proof block datastructure
 
+use crate::next_proof::{NextProof, self};
 use crate::{backlog, delay::*, preimage::genesis_preimage};
 use anyhow::{bail, Error};
-use diem_crypto::HashValue;
 use diem_global_constants::{delay_difficulty, VDF_SECURITY_PARAM};
 use glob::glob;
 use ol_types::config::AppCfg;
-use ol_types::{block::VDFProof, vdf_difficulty::VDFDifficulty};
+use ol_types::block::VDFProof;
 use std::{fs, io::Write, path::PathBuf, time::Instant};
 use txs::tx_params::TxParams;
 
@@ -79,28 +79,7 @@ pub fn mine_once(
     Ok(block)
 }
 
-/// container for the next proof parameters to be fed to VDF prover.
-pub struct NextProof {
-  diff: VDFDifficulty,
-  next_height: u64,
-  preimage: Vec<u8>
-}
-/// return the VDF difficulty expected and the next tower height
-pub fn get_next_proof_params_from_local(config: &AppCfg) -> Result<NextProof, Error> {
-    // get the location of this miner's blocks
-    let mut blocks_dir = config.workspace.node_home.clone();
-    blocks_dir.push(&config.workspace.block_dir);
-    let (current_local_block, _) = get_highest_block(&blocks_dir)?;
-    let diff = VDFDifficulty {
-        difficulty: current_local_block.difficulty(),
-        security: current_local_block.security.unwrap(),
-    };
-    Ok(NextProof {
-      diff,
-      next_height: current_local_block.height + 1,
-      preimage: HashValue::sha3_256_of(&current_local_block.proof).to_vec(), 
-    })
-}
+
 /// Write block to file
 pub fn mine_and_submit(config: &AppCfg, tx_params: TxParams) -> Result<(), Error> {
     // // get the location of this miner's blocks
@@ -109,7 +88,7 @@ pub fn mine_and_submit(config: &AppCfg, tx_params: TxParams) -> Result<(), Error
     // let (current_local_block, _) = get_highest_block(&blocks_dir)?;
 
     loop {
-        let next = get_next_proof_params_from_local(&config)?;
+        let next = next_proof::get_next_proof_params_from_local(&config)?;
 
         println!("Mining VDF Proof # {}", next.next_height);
 
