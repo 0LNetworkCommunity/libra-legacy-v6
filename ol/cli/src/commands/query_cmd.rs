@@ -96,7 +96,7 @@ impl Runnable for QueryCmd {
             display = "BALANCE";
         }
         else if self.unlocked_balance {
-            query_type = QueryType::UnlockedBalance(account);
+            query_type = QueryType::UnlockedBalance{account};
             display = "UNLOCKED BALANCE";
         }
         else if self.blockheight {
