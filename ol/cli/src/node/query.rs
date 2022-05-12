@@ -2,12 +2,11 @@
 use std::collections::BTreeMap;
 
 use super::node::Node;
-use anyhow::{Error, bail};
+use anyhow::Error;
 use diem_json_rpc_client::{
     views::{BytesView, EventView, TransactionView},
     AccountAddress,
 };
-use diem_types::ol_miner_state::TowerStateResource;
 use hex::decode;
 use move_binary_format::file_format::{Ability, AbilitySet};
 use move_core_types::{
