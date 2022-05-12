@@ -24,3 +24,5 @@ pub mod rpc_playlist;
 pub mod epoch_timer;
 pub mod gas_resource;
 pub mod makewhole_resource;
+
+pub mod vdf_difficulty;

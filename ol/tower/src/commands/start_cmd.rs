@@ -22,6 +22,13 @@ pub struct StartCmd {
     /// don't process backlog
     #[options(short = "s", help = "Skip backlog")]
     skip_backlog: bool,
+
+        /// Option for --backlog, only sends backlogged transactions.
+    #[options(
+        short = "l",
+        help = "local mode, continues mining from last proof, without checking chain for params. Warning: may lead to discontinous proofs."
+    )]
+    local: bool,
 }
 
 impl Runnable for StartCmd {
