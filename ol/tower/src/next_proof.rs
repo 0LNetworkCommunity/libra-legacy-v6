@@ -4,7 +4,6 @@ use anyhow::{Error, bail};
 use diem_crypto::HashValue;
 use diem_types::{ol_vdf_difficulty::VDFDifficulty, account_address::AccountAddress};
 use ol::{config::AppCfg, node::client::pick_client};
-
 use crate::proof;
 /// container for the next proof parameters to be fed to VDF prover.
 pub struct NextProof {

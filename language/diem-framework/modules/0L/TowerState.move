@@ -87,6 +87,22 @@ module TowerState {
         epochs_since_last_account_creation: u64
     }
 
+    struct VDFDifficulty has key {
+      difficulty: u64,
+      // Security parameter for VDF
+      security: u64,
+    }
+
+    // Create the difficulty struct
+    public fun init_difficulty(vm: &signer) {
+      CoreAddresses::assert_diem_root(vm);
+      move_to<VDFDifficulty>(vm, VDFDifficulty {
+        difficulty: 5000000,
+        security: 512,
+      });
+    }
+
+
     /// Create an empty list of miners 
     fun init_miner_list(vm: &signer) {
       CoreAddresses::assert_diem_root(vm);
@@ -94,16 +110,7 @@ module TowerState {
         list: Vector::empty<address>()
       }); 
     }
-
-    // /// Create an empty miner stats 
-    // fun init_miner_stats(vm: &signer) {
-    //   move_to<TowerStats>(vm, TowerStats {
-    //     proofs_in_epoch: 0u64,
-    //     validator_proofs: 0u64,
-    //     fullnode_proofs: 0u64,
-    //   });
-    // }
-
+    
     /// Create an empty miner stats 
     public fun init_tower_counter(
       vm: &signer,
@@ -204,15 +211,16 @@ module TowerState {
     public fun commit_state(
       miner_sign: &signer,
       proof: Proof
-    ) acquires TowerProofHistory, TowerList, TowerCounter {
+    ) acquires TowerProofHistory, TowerList, TowerCounter, VDFDifficulty {
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
       
       // Skip this check on local tests, we need tests to send different difficulties.
       if (!Testnet::is_testnet()){
         // Get vdf difficulty constant. Will be different in tests than in production.
-        let difficulty_constant = Globals::get_vdf_difficulty();
+        let (difficulty_constant, security) = get_difficulty();
         assert(&proof.difficulty == &difficulty_constant, Errors::invalid_argument(130102));
+        assert(&proof.security == &security, Errors::invalid_argument(13010202));
       };
 
       // This may be the 0th proof of an end user that hasn't had tower state initialized
@@ -504,7 +512,7 @@ module TowerState {
 
 
     //////////////////////
-    /// Public Getters ///
+    ///    Getters     ///
     /////////////////////
 
     // Returns number of epochs for input miner's state
@@ -607,6 +615,15 @@ module TowerState {
       (0,0,0)
     }
 
+    fun get_difficulty(): (u64, u64) acquires VDFDifficulty {
+      if (exists<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+        let v = borrow_global_mut<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
+        return (v.difficulty, v.security)
+      } else {
+        // we are probably in the middle of a migration
+        (5000000, 512)
+      }
+    }
 
 
     //////////////////
