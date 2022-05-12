@@ -5,7 +5,7 @@ use anyhow::{bail, Error};
 use diem_crypto::hash::HashValue;
 use diem_global_constants::{delay_difficulty, VDF_SECURITY_PARAM};
 use glob::glob;
-use ol_types::block::VDFProof;
+use ol_types::{block::VDFProof, vdf_difficulty::VDFDifficulty};
 use ol_types::config::AppCfg;
 use std::{
     fs,
@@ -85,22 +85,35 @@ pub fn mine_once(config: &AppCfg) -> Result<VDFProof, Error> {
     Ok(block)
 }
 
+/// return the VDF difficulty expected and the next tower height
+pub fn get_next_block_params_from_local(config: &AppCfg) -> Result<(VDFDifficulty, u64), Error>{
+      // get the location of this miner's blocks
+    let mut blocks_dir = config.workspace.node_home.clone();
+    blocks_dir.push(&config.workspace.block_dir);
+    let (current_local_block, _) = get_highest_block(&blocks_dir)?;
+    let diff = VDFDifficulty {
+        difficulty: current_local_block.difficulty(),
+        security: current_local_block.security(),
+    };
+    Ok((diff, current_local_block.height))
+
+}
 /// Write block to file
 pub fn mine_and_submit(
     config: &AppCfg,
     tx_params: TxParams
 ) -> Result<(), Error> {
-    // get the location of this miner's blocks
+    // // get the location of this miner's blocks
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
-    let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
+    let (current_local_block, _current_block_path) = get_highest_block(&blocks_dir)?;
 
-    // If there are NO files in path, mine the genesis proof.
-    if current_block_number.is_none() {
-        bail!("ERROR: Genesis proof_0.json not found.");
-    } else {
+    // // If there are NO files in path, mine the genesis proof.
+    // if current_local_block.is_none() {
+    //     bail!("ERROR: Genesis proof_0.json not found.");
+    // } else {
         // the max block that has been succesfully submitted to client
-        let mut mining_height = current_block_number.unwrap() + 1;
+        let mut mining_height = current_local_block.height + 1;
         // in the beginning, mining height is +1 of client block number
 
         // mine continuously from the last block in the file systems
@@ -124,7 +137,7 @@ pub fn mine_and_submit(
 
             mining_height = block.height + 1;
         }
-    }
+    // }
 }
 
 fn write_json(block: &VDFProof, blocks_dir: &PathBuf) -> Result<(), std::io::Error> {
@@ -141,55 +154,59 @@ fn write_json(block: &VDFProof, blocks_dir: &PathBuf) -> Result<(), std::io::Err
 }
 
 /// parse the existing blocks in the miner's path. This function receives any path. Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
-pub fn parse_block_height(blocks_dir: &PathBuf) -> (Option<u64>, Option<PathBuf>) {
-    let mut max_block: Option<u64> = None;
-    let mut max_block_path = None;
+pub fn get_highest_block(blocks_dir: &PathBuf) -> Result<(VDFProof, PathBuf), Error> {
+    let mut max_block: Option<VDFProof> = None;
+    let mut max_block_path: Option<PathBuf> = None;
 
+    let file_list = glob(&format!("{}/{}_*.json", blocks_dir.display(), FILENAME))?;
     // iterate through all json files in the directory.
-    for entry in glob(&format!("{}/{}_*.json", blocks_dir.display(), FILENAME))
-        .expect("Failed to read glob pattern")
-    {
+    // if file_list.last().is_none() {
+    //   bail!("cannot find any VDF proof files in, {:?}", blocks_dir);
+    // }
+
+    for entry in file_list {
         if let Ok(entry) = entry {
-            let file = fs::File::open(&entry).expect("Could not open block file");
-            let reader = BufReader::new(file);
-            let block: VDFProof = serde_json::from_reader(reader).expect(&format!("could not parse epoch proof {:?}", &entry));
+            // let file = fs::File::open(&entry).expect("Could not open block file");
+            // let reader = BufReader::new(file);
+            let block: VDFProof = parse_block_file(&entry)?;
+            
             let blocknumber = block.height;
-            if max_block.is_none() {
-                max_block = Some(blocknumber);
-                max_block_path = Some(entry);
-            } else {
-                if blocknumber > max_block.unwrap() {
-                    max_block = Some(blocknumber);
+
+            if let Some(b) = &max_block {
+              if blocknumber > b.height {
+                    max_block = Some(b.to_owned());
                     max_block_path = Some(entry);
                 }
+            } else {
+              max_block = Some(block);
+              max_block_path = Some(entry);
             }
         }
     }
-    (max_block, max_block_path)
+
+    if max_block.is_some() && max_block_path.is_some() {
+      return Ok((max_block.unwrap(), max_block_path.unwrap()))
+    } else {
+      bail!("cannot find a valid VDF proof in files to determine next proof's parameters. Exiting.")
+    }
+    // (max_block, max_block_path)
 }
 
 /// Parse a proof_x.json file and return a VDFProof
 pub fn parse_block_file(path: &PathBuf) -> Result<VDFProof, Error> {
-    let block_file = fs::read_to_string(path).expect("Could not read latest block file in path");
+    let block_file = fs::read_to_string(path)?;
 
     match serde_json::from_str(&block_file) {
         Ok(v) => Ok(v),
-        Err(e) => bail!(e),
+        Err(e) => bail!("Could not read latest block file in path {:?}, message: {:?}", &path, e),
     }
 }
 
 /// find the most recent proof on disk
 pub fn get_latest_proof(config: &AppCfg) -> Result<VDFProof, Error> {
-    let (_current_block_number, current_block_path) = parse_block_height(&config.get_block_dir());
+    let (_current_block_number, current_block_path) = get_highest_block(&config.get_block_dir())?;
 
-    match current_block_path {
-        // current_block_path is Option type, check if destructures to Some.
-        Some(p) => parse_block_file(&p),
-        None => bail!(format!(
-            "ERROR: cannot find a block in directory, path: {:?}",
-            &config.get_block_dir()
-        )),
-    }
+    parse_block_file(&current_block_path)
 }
 
 /* ////////////// */
@@ -324,7 +341,7 @@ fn test_mine_genesis() {
 fn test_parse_no_files() {
     // if no file is found, the block height is 0
     let blocks_dir = PathBuf::from(".");
-    assert_eq!(parse_block_height(&blocks_dir).0, None);
+    assert_eq!(get_highest_block(&blocks_dir).0, None);
 }
 
 #[test]
@@ -353,7 +370,7 @@ fn test_parse_one_file() {
         .expect("Could not write block");
 
     // block height
-    assert_eq!(parse_block_height(&blocks_dir).0, Some(33));
+    assert_eq!(get_highest_block(&blocks_dir).0, Some(33));
 
     test_helper_clear_block_dir(&blocks_dir)
 }

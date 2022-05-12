@@ -25,7 +25,16 @@ pub struct VDFDifficulty {
 
 
 impl VDFDifficulty {
+    /// get the difficulty/iterations of the block, or assume legacy
+    pub fn difficulty(&self) -> u64 {
+      self.difficulty
+    }
 
+    /// get the security param of the block, or assume legacy
+    pub fn security(&self) -> u64 {
+      self.security
+    }
+    
     ///
     pub fn struct_tag() -> StructTag {
         StructTag {
@@ -48,3 +57,12 @@ impl MoveStructType for VDFDifficulty {
 }
 
 impl MoveResource for VDFDifficulty {}
+
+impl Default for VDFDifficulty {
+    fn default() -> Self {
+        Self { 
+          difficulty: 5_000_000,  // historical value from genesis
+          security: 2048, // historical value from genesis 
+        }
+    }
+}
