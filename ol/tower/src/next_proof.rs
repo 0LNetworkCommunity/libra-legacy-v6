@@ -36,13 +36,12 @@ pub fn get_next_proof_params_from_local(config: &AppCfg) -> Result<NextProof, Er
 /// includes global parameters for difficulty
 /// and individual parameters like tower height and the preimage (previous proof hash)
 pub fn get_next_proof_from_chain(
-    mut config: AppCfg,
-    address: AccountAddress,
+    config: &mut AppCfg
 ) -> Result<NextProof, Error> {
-    let client = pick_client(None, &mut config)?;
+    let client = pick_client(None, config)?;
 
     // get the user's tower state from chain.
-    let ts = client.get_account_state(address)?.get_miner_state()?;
+    let ts = client.get_account_state(config.profile.account)?.get_miner_state()?;
 
     if let Some(t) = ts {
         let a = client.get_account_state(AccountAddress::ZERO)?;
@@ -55,5 +54,5 @@ pub fn get_next_proof_from_chain(
         }
         bail!("could not get this epoch's VDF params from chain.")
     }
-    bail!("could not get tower state for accout: {}", address)
+    bail!("could not get tower state for accout: {}", config.profile.account)
 }

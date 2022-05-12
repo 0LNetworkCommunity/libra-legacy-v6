@@ -55,7 +55,7 @@ impl Runnable for StartCmd {
 
         // config reading respects swarm setup
         // so also cfg.get_waypoint will return correct data
-        let cfg = app_config().clone();
+        let mut cfg = app_config().clone();
 
         let waypoint = if waypoint.is_none() {
             match cfg.get_waypoint(None) {
@@ -101,7 +101,7 @@ impl Runnable for StartCmd {
 
         if !self.backlog_only {
             // Steady state.
-            let result = mine_and_submit(&cfg, tx_params);
+            let result = mine_and_submit(&mut cfg, tx_params, self.local);
             match result {
                 Ok(_val) => {}
                 Err(err) => {
