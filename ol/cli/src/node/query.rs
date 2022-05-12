@@ -129,7 +129,7 @@ impl Node {
                             format!("Error, account is not a slow wallet")
                         }else{
                             let value = find_value_from_state(&r, "DiemAccount".to_string(), "SlowWallet".to_string(), "unlocked".to_string());
-                            format!("{:#?}", value)
+                            value.unwrap().to_string()
                         }
                     }
                     Err(e) => format!("Error retrieving unlocked balance. Message: {:#?}", e),
