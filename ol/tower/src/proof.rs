@@ -51,9 +51,7 @@ pub fn write_genesis(config: &AppCfg) -> Result<VDFProof, Error> {
 /// Mine one block
 pub fn mine_once(
     config: &AppCfg,
-    next_height: u64,
-    preimage: Vec<u8>,
-    params: VDFDifficulty,
+    next: NextProof,
 ) -> Result<VDFProof, Error> {
     // If there are files in path, continue mining.
     // let latest_block = ?;
@@ -64,25 +62,31 @@ pub fn mine_once(
     // };
 
     let now = Instant::now();
-    let data = do_delay(&preimage, params.difficulty, params.security)?;
+    let data = do_delay(&next.preimage, next.diff.difficulty, next.diff.security)?;
     let elapsed_secs = now.elapsed().as_secs();
     println!("Delay: {:?} seconds", elapsed_secs);
 
     let block = VDFProof {
-        height: next_height,
+        height: next.next_height,
         elapsed_secs,
-        preimage,
+        preimage: next.preimage,
         proof: data.clone(),
-        difficulty: Some(params.difficulty),
-        security: Some(params.security),
+        difficulty: Some(next.diff.difficulty),
+        security: Some(next.diff.security),
     };
 
     write_json(&block, &config.get_block_dir())?;
     Ok(block)
 }
 
+/// container for the next proof parameters to be fed to VDF prover.
+pub struct NextProof {
+  diff: VDFDifficulty,
+  next_height: u64,
+  preimage: Vec<u8>
+}
 /// return the VDF difficulty expected and the next tower height
-pub fn get_next_block_params_from_local(config: &AppCfg) -> Result<(VDFDifficulty, u64), Error> {
+pub fn get_next_proof_params_from_local(config: &AppCfg) -> Result<NextProof, Error> {
     // get the location of this miner's blocks
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
@@ -91,26 +95,25 @@ pub fn get_next_block_params_from_local(config: &AppCfg) -> Result<(VDFDifficult
         difficulty: current_local_block.difficulty(),
         security: current_local_block.security.unwrap(),
     };
-    Ok((diff, current_local_block.height))
+    Ok(NextProof {
+      diff,
+      next_height: current_local_block.height + 1,
+      preimage: current_local_block.proof, 
+    })
 }
 /// Write block to file
 pub fn mine_and_submit(config: &AppCfg, tx_params: TxParams) -> Result<(), Error> {
     // // get the location of this miner's blocks
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
-    let (current_local_block, _current_block_path) = get_highest_block(&blocks_dir)?;
+    let (current_local_block, _) = get_highest_block(&blocks_dir)?;
 
     loop {
-        let (param, next_height) = get_next_block_params_from_local(&config)?;
+        let next = get_next_proof_params_from_local(&config)?;
 
-        println!("Mining VDF Proof # {}", next_height);
+        println!("Mining VDF Proof # {}", next.next_height);
 
-        let block = mine_once(
-            &config,
-            next_height,
-            current_local_block.proof.clone(),
-            param,
-        )?;
+        let block = mine_once(&config,next)?;
 
         println!(
             "Proof mined: proof_{}.json created.",
