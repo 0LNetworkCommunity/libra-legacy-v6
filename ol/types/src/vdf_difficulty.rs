@@ -20,7 +20,7 @@ pub struct VDFDifficulty {
     /// Difficulty
     pub difficulty: u64,
     /// Security parameter for VDF
-    pub security: u64,
+    pub security: u16,
 }
 
 
@@ -31,7 +31,7 @@ impl VDFDifficulty {
     }
 
     /// get the security param of the block, or assume legacy
-    pub fn security(&self) -> u64 {
+    pub fn security(&self) -> u16 {
       self.security
     }
     

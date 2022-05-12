@@ -5,14 +5,9 @@ use anyhow::{bail, Error};
 use diem_crypto::hash::HashValue;
 use diem_global_constants::{delay_difficulty, VDF_SECURITY_PARAM};
 use glob::glob;
-use ol_types::{block::VDFProof, vdf_difficulty::VDFDifficulty};
 use ol_types::config::AppCfg;
-use std::{
-    fs,
-    io::{BufReader, Write},
-    path::PathBuf,
-    time::Instant,
-};
+use ol_types::{block::VDFProof, vdf_difficulty::VDFDifficulty};
+use std::{fs, io::Write, path::PathBuf, time::Instant};
 use txs::tx_params::TxParams;
 
 /// name of the proof files
@@ -54,31 +49,32 @@ pub fn write_genesis(config: &AppCfg) -> Result<VDFProof, Error> {
     Ok(block)
 }
 /// Mine one block
-pub fn mine_once(config: &AppCfg) -> Result<VDFProof, Error> {
+pub fn mine_once(
+    config: &AppCfg,
+    next_height: u64,
+    preimage: Vec<u8>,
+    params: VDFDifficulty,
+) -> Result<VDFProof, Error> {
     // If there are files in path, continue mining.
     // let latest_block = ?;
-    let (preimage, height) = match get_latest_proof(config) {
-      Ok(latest_block) => (HashValue::sha3_256_of(&latest_block.proof).to_vec(), latest_block.height + 1 ),
-      // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
-      Err(_) => return write_genesis(config)
-    };
-
-    // TODO: cleanup this duplication with mine_genesis_once?
-    let difficulty = delay_difficulty();
-    let security = VDF_SECURITY_PARAM;
+    // let (preimage, height) = match get_latest_proof(config) {
+    //   Ok(latest_block) => (HashValue::sha3_256_of(&latest_block.proof).to_vec(), latest_block.height + 1 ),
+    //   // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
+    //   Err(_) => return write_genesis(config)
+    // };
 
     let now = Instant::now();
-    let data = do_delay(&preimage, difficulty, security)?;
+    let data = do_delay(&preimage, params.difficulty, params.security)?;
     let elapsed_secs = now.elapsed().as_secs();
     println!("Delay: {:?} seconds", elapsed_secs);
 
     let block = VDFProof {
-        height,
+        height: next_height,
         elapsed_secs,
         preimage,
         proof: data.clone(),
-        difficulty: Some(difficulty),
-        security: Some(security),
+        difficulty: Some(params.difficulty),
+        security: Some(params.security),
     };
 
     write_json(&block, &config.get_block_dir())?;
@@ -86,57 +82,52 @@ pub fn mine_once(config: &AppCfg) -> Result<VDFProof, Error> {
 }
 
 /// return the VDF difficulty expected and the next tower height
-pub fn get_next_block_params_from_local(config: &AppCfg) -> Result<(VDFDifficulty, u64), Error>{
-      // get the location of this miner's blocks
+pub fn get_next_block_params_from_local(config: &AppCfg) -> Result<(VDFDifficulty, u64), Error> {
+    // get the location of this miner's blocks
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
     let (current_local_block, _) = get_highest_block(&blocks_dir)?;
     let diff = VDFDifficulty {
         difficulty: current_local_block.difficulty(),
-        security: current_local_block.security(),
+        security: current_local_block.security.unwrap(),
     };
     Ok((diff, current_local_block.height))
-
 }
 /// Write block to file
-pub fn mine_and_submit(
-    config: &AppCfg,
-    tx_params: TxParams
-) -> Result<(), Error> {
+pub fn mine_and_submit(config: &AppCfg, tx_params: TxParams) -> Result<(), Error> {
     // // get the location of this miner's blocks
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
     let (current_local_block, _current_block_path) = get_highest_block(&blocks_dir)?;
 
-    // // If there are NO files in path, mine the genesis proof.
-    // if current_local_block.is_none() {
-    //     bail!("ERROR: Genesis proof_0.json not found.");
-    // } else {
-        // the max block that has been succesfully submitted to client
-        let mut mining_height = current_local_block.height + 1;
-        // in the beginning, mining height is +1 of client block number
+    loop {
+        let (param, next_height) = get_next_block_params_from_local(&config)?;
 
-        // mine continuously from the last block in the file systems
-        loop {
-            println!("Mining VDF Proof # {}", mining_height);
+        println!("Mining VDF Proof # {}", next_height);
 
-            let block = mine_once(&config)?;
-            println!(
-                "Proof mined: proof_{}.json created.",
-                block.height.to_string()
-            );
+        let block = mine_once(
+            &config,
+            next_height,
+            current_local_block.proof.clone(),
+            param,
+        )?;
 
-            // submits backlog to client
-            match backlog::process_backlog(&config, &tx_params) {
-                Ok(()) => println!("Success: Proof committed to chain"),
-                Err(e) => {
-                    // don't stop on tx errors
-                    println!("ERROR: Failed processing backlog, message: {:?}", e);
-                }
+        println!(
+            "Proof mined: proof_{}.json created.",
+            block.height.to_string()
+        );
+
+        // submits backlog to client
+        match backlog::process_backlog(&config, &tx_params) {
+            Ok(()) => println!("Success: Proof committed to chain"),
+            Err(e) => {
+                // don't stop on tx errors
+                println!("ERROR: Failed processing backlog, message: {:?}", e);
             }
-
-            mining_height = block.height + 1;
         }
+
+        // next_height = block.height + 1;
+    }
     // }
 }
 
@@ -169,25 +160,27 @@ pub fn get_highest_block(blocks_dir: &PathBuf) -> Result<(VDFProof, PathBuf), Er
             // let file = fs::File::open(&entry).expect("Could not open block file");
             // let reader = BufReader::new(file);
             let block: VDFProof = parse_block_file(&entry)?;
-            
+
             let blocknumber = block.height;
 
             if let Some(b) = &max_block {
-              if blocknumber > b.height {
+                if blocknumber > b.height {
                     max_block = Some(b.to_owned());
                     max_block_path = Some(entry);
                 }
             } else {
-              max_block = Some(block);
-              max_block_path = Some(entry);
+                max_block = Some(block);
+                max_block_path = Some(entry);
             }
         }
     }
 
     if max_block.is_some() && max_block_path.is_some() {
-      return Ok((max_block.unwrap(), max_block_path.unwrap()))
+        return Ok((max_block.unwrap(), max_block_path.unwrap()));
     } else {
-      bail!("cannot find a valid VDF proof in files to determine next proof's parameters. Exiting.")
+        bail!(
+            "cannot find a valid VDF proof in files to determine next proof's parameters. Exiting."
+        )
     }
     // (max_block, max_block_path)
 }
@@ -198,7 +191,11 @@ pub fn parse_block_file(path: &PathBuf) -> Result<VDFProof, Error> {
 
     match serde_json::from_str(&block_file) {
         Ok(v) => Ok(v),
-        Err(e) => bail!("Could not read latest block file in path {:?}, message: {:?}", &path, e),
+        Err(e) => bail!(
+            "Could not read latest block file in path {:?}, message: {:?}",
+            &path,
+            e
+        ),
     }
 }
 

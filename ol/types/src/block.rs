@@ -42,11 +42,11 @@ impl VDFProof {
 
     /// get the difficulty/iterations of the block, or assume legacy
     pub fn difficulty(&self) -> u64 {
-      self.difficulty.unwrap_or(5_000_000) // if the block doesn't have this info, assume it's legacy block.
+      self.difficulty.unwrap() // if the block doesn't have this info, assume it's legacy block.
     }
 
     /// get the security param of the block, or assume legacy
     pub fn security(&self) -> u64 {
-      self.security.unwrap_or(2048) as u64 // if the block doesn't have this info, assume it's legacy block.
+      self.security.unwrap() as u64 // if the block doesn't have this info, assume it's legacy block.
     }
 }
