@@ -2,11 +2,12 @@
 use std::collections::BTreeMap;
 
 use super::node::Node;
-use anyhow::Error;
+use anyhow::{Error, bail};
 use diem_json_rpc_client::{
     views::{BytesView, EventView, TransactionView},
     AccountAddress,
 };
+use diem_types::ol_miner_state::TowerStateResource;
 use hex::decode;
 use move_binary_format::file_format::{Ability, AbilitySet};
 use move_core_types::{
@@ -219,6 +220,17 @@ impl Node {
                 };
                 print
             }
+  //           Tower { account } => {
+  //             match self.get_account_state(account) {
+  //               Ok(a) => {
+  //                 let t: Option<TowerStateResource> = a.get_resource()?;
+                  
+                  
+  //               },
+  //               Err(_) => format!("No tower found at: {}", account)
+  // ,
+  //             }
+  //           }
             ValConfig { account } => {
                 // account
                 match self.get_account_state(account) {
@@ -247,7 +259,7 @@ impl Node {
                           cr.validator_config.unwrap().fullnode_network_addresses()?,
                         )
                       } else {
-                        format!("No validator configs cound at: {}", account)
+                        format!("No validator configs found at: {}", account)
                       }
                     },
                     Err(_) => format!("No validator configs cound at: {}", account),
@@ -458,6 +470,7 @@ pub fn test_fixture_wallet_type(module_name: &str, struct_name: &str, value: Vec
     s.insert(move_struct.type_.clone(), move_struct);
     AnnotatedAccountStateBlob(s)
 }
+
 
 #[test]
 fn test_find_annotated_move_value() {

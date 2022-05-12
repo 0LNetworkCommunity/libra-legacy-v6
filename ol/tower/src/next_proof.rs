@@ -2,8 +2,8 @@
 
 use anyhow::Error;
 use diem_crypto::HashValue;
-use ol::config::AppCfg;
-use ol_types::vdf_difficulty::VDFDifficulty;
+use ol::{config::AppCfg, node::client::pick_client};
+use diem_types::ol_vdf_difficulty::VDFDifficulty;
 
 use crate::proof;
 /// container for the next proof parameters to be fed to VDF prover.
@@ -30,4 +30,8 @@ pub fn get_next_proof_params_from_local(config: &AppCfg) -> Result<NextProof, Er
       next_height: current_local_block.height + 1,
       preimage: HashValue::sha3_256_of(&current_local_block.proof).to_vec(), 
     })
+}
+
+pub fn get_next_proof_from_chain(mut config: AppCfg) {
+  let client = pick_client(None, &mut config);
 }

@@ -53,13 +53,6 @@ pub fn mine_once(
     config: &AppCfg,
     next: NextProof,
 ) -> Result<VDFProof, Error> {
-    // If there are files in path, continue mining.
-    // let latest_block = ?;
-    // let (preimage, height) = match get_latest_proof(config) {
-    //   Ok(latest_block) => (HashValue::sha3_256_of(&latest_block.proof).to_vec(), latest_block.height + 1 ),
-    //   // Otherwise this is the first time the app is run, and it needs a genesis preimage, which comes from configs.
-    //   Err(_) => return write_genesis(config)
-    // };
 
     let now = Instant::now();
     let data = do_delay(&next.preimage, next.diff.difficulty, next.diff.security)?;

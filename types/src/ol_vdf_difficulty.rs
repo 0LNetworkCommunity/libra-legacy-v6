@@ -1,6 +1,6 @@
 //! GAS resource struct for parsing chain state
 
-use diem_types::{
+use crate::{
     access_path::AccessPath,
     account_config::{
         constants::CORE_CODE_ADDRESS,
