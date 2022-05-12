@@ -1,20 +1,23 @@
+//# init --validators Bob
+//// Old syntax for reference, delete it after fixing this test
 //! account: bob, 3000000, 0, validator
 
-//! new-transaction
-//! sender: bob
+// todo: fix this first: native_extract_address_from_challenge()
+// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
+
+//# run --admin-script --signers DiemRoot Bob
 script {
-use DiemFramework::VDF;
-use DiemFramework::DiemAccount;
-use DiemFramework::GAS::GAS;
-use DiemFramework::TowerState;
-use DiemFramework::NodeWeight;
-use DiemFramework::TestFixtures;
-use DiemFramework::ValidatorConfig;
-use DiemFramework::Roles;
+  use DiemFramework::VDF;
+  use DiemFramework::DiemAccount;
+  use DiemFramework::GAS::GAS;
+  use DiemFramework::TowerState;
+  use DiemFramework::NodeWeight;
+  use DiemFramework::TestFixtures;
+  use DiemFramework::ValidatorConfig;
+  use DiemFramework::Roles;
 
-// Test Prefix: 1301
-
-  fun main(sender: signer) {
+  // Test Prefix: 1301
+  fun main(_dr: signer, sender: signer) {
     // Scenario: Bob, an existing validator, is sending an onboarding transaction for Eve.
 
     // mock bob's account limits so he's not rate limited from onboarding eve
@@ -77,17 +80,15 @@ use DiemFramework::Roles;
       7357130101091000
     );
 
-    // Bob's balance should have gone down by 2M microgas, because he sent 1 GAS each to Eve's operator and owner.
+    // Bob's balance should have gone down by 2M microgas, because he sent 1 GAS
+    // each to Eve's operator and owner.
 
     assert!(DiemAccount::balance<GAS>(@Bob) == 1000000, 73571301011000);
-
   }
 }
 // check: EXECUTED
 
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
@@ -96,7 +97,7 @@ script {
   use DiemFramework::Testnet;
   use DiemFramework::Cases;
   
-  fun main(vm: signer) {
+  fun main(vm: signer, _: signer) {
       // need to remove testnet for this test, since testnet does not ratelimit account creation.
       Testnet::remove_testnet(&vm); 
 
@@ -120,6 +121,5 @@ script {
       );
 
       assert!(TowerState::can_create_val_account(@Bob) == false, 7357004);
-      
   }
 }

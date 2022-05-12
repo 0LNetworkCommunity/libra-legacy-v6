@@ -1,7 +1,11 @@
+//# init --validators Bob
+//// Old syntax for reference, delete it after fixing this test
 // ! account: bob, 2000001GAS, 0, validator
 
-//! new-transaction
-//! sender: bob
+// todo: fix this first: native_extract_address_from_challenge()
+// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
+
+//# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::VDF;
   use DiemFramework::DiemAccount;
@@ -14,7 +18,7 @@ script {
   use DiemFramework::ValidatorUniverse;
 
   // Test Prefix: 1301
-  fun main(sender: signer) {
+  fun main(_dr: signer, sender: signer) {
     // Scenario: Bob, an existing validator, is sending a transaction for Eve, 
     // with a challenge and proof not yet submitted to the chain.
     let challenge = TestFixtures::eve_0_easy_chal();
@@ -27,19 +31,19 @@ script {
     TowerState::test_helper_set_rate_limit(&sender, epochs_since_creation);
 
     DiemAccount::create_validator_account_with_proof(
-        &sender,
-        &challenge,
-        &solution,
-        TestFixtures::easy_difficulty(), // difficulty
-        TestFixtures::security(), // security
-        b"leet",
-        @0xfa72817f1b5aab94658238ddcdc08010,
-        x"fa72817f1b5aab94658238ddcdc08010",
-        // random consensus_pubkey: vector<u8>,
-        x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010",
-        b"192.168.0.1", // validator_network_addresses: vector<u8>,
-        b"192.168.0.1", // fullnode_network_addresses: vector<u8>,
-        x"1ee7", // human_name: vector<u8>,
+      &sender,
+      &challenge,
+      &solution,
+      TestFixtures::easy_difficulty(), // difficulty
+      TestFixtures::security(), // security
+      b"leet",
+      @0xfa72817f1b5aab94658238ddcdc08010,
+      x"fa72817f1b5aab94658238ddcdc08010",
+      // random consensus_pubkey: vector<u8>,
+      x"8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010",
+      b"192.168.0.1", // validator_network_addresses: vector<u8>,
+      b"192.168.0.1", // fullnode_network_addresses: vector<u8>,
+      x"1ee7", // human_name: vector<u8>,
     );
 
     assert!(Roles::assert_validator_addr(eve_addr), 7357130101011000);
@@ -81,13 +85,12 @@ script {
 }
 // check: EXECUTED
 
-  //! new-transaction
-  //! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::TowerState;
   use DiemFramework::Testnet;
 
-  fun main(vm: signer) {
+  fun main(vm: signer, _: signer) {
     // need to remove testnet for this test, since testnet does not ratelimit account creation.
     Testnet::remove_testnet(&vm);
     

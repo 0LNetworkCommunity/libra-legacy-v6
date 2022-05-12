@@ -1,8 +1,10 @@
+//# init --validators Alice
 // Module to test bulk validator updates function in DiemSystem.move
-//! account: alice, 1000000, 0, validator
 
-//! new-transaction
-//! sender: alice
+// todo: fix this first: native_extract_address_from_challenge()
+// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
+
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
@@ -13,7 +15,7 @@ script {
   use DiemFramework::Roles;
   use DiemFramework::TowerState;
 
-  fun main(sender: signer) {
+  fun main(_dr: signer, sender: signer) {
     let challenge = TestFixtures::eve_0_easy_chal();
     let solution = TestFixtures::eve_0_easy_sol();
     let (parsed_address, _auth_key_prefix) = VDF::extract_address_from_challenge(&challenge);
@@ -35,7 +37,6 @@ script {
         b"192.168.0.1", // fullnode_network_addresses: vector<u8>,
         x"1ee7", // human_name: vector<u8>,
     );
-
 
     // Check the account has the Validator role
     assert!(Roles::assert_validator_addr(parsed_address), 7357130101011000);

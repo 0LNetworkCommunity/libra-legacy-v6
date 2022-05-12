@@ -1,5 +1,4 @@
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 //! args: 13
 stdlib_script::DemoScripts::demo_e2e
 // check: "Keep(EXECUTED)"

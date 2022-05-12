@@ -1,10 +1,14 @@
+//# init --validators Alice Bob Carol Dave
+//// Old syntax for reference, delete it after fixing this test
 //! account: alice, 4000000, 0, validator
 //! account: bob, 1000000, 0, validator
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
 
-//! new-transaction
-//! sender: alice
+// todo: fix this first: native_extract_address_from_challenge()
+// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
+
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::ValidatorConfig;
@@ -12,7 +16,7 @@ script {
   use DiemFramework::VDF;
   use DiemFramework::TowerState;
 
-  fun main(sender: signer) {
+  fun main(_dr: signer, sender: signer) {
     // Scenario: Alice, an existing validator, is sending a transaction for Eve, 
     // with a challenge and proof from eve's block_0
     let challenge = TestFixtures::eve_0_easy_chal();
@@ -45,45 +49,39 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::AutoPay;
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         AutoPay::enable_autopay(&sender);
     }
 }
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::AutoPay;
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         AutoPay::enable_autopay(&sender);
     }
 }
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::AutoPay;
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         AutoPay::enable_autopay(&sender);
     }
 }
 
-//! new-transaction
-//! sender: dave
+//# run --admin-script --signers DiemRoot Dave
 script {
     use DiemFramework::AutoPay;
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         AutoPay::enable_autopay(&sender);
     }
 }
 
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::EpochBoundary;
@@ -94,7 +92,7 @@ script {
     use DiemFramework::GAS::GAS;
     use DiemFramework::ValidatorConfig;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         let vm = &vm;
         // Tests on initial size of validators
         assert!(DiemSystem::validator_set_size() == 4, 7357000180101);
@@ -143,13 +141,12 @@ script {
 // Epoch 2 began
 // The new node is in validatorUniverse but not in validator set
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::ValidatorUniverse;
     use Std::Vector;
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         // Tests on initial size of validators
         // New validator is not in this set.
         assert!(DiemSystem::validator_set_size() == 4, 7357000180101);
@@ -164,8 +161,7 @@ script {
 
 // The new node starts mining and submiting proofs in the epoch 2
 //
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::EpochBoundary;
@@ -178,7 +174,7 @@ script {
     use DiemFramework::GAS::GAS;
     use DiemFramework::ValidatorConfig;    
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         let vm = &vm;
         // Tests on initial size of validators
         assert!(DiemSystem::validator_set_size() == 4, 7357000180201);
@@ -237,13 +233,12 @@ script {
 // Epoch 3 began
 // The new node is in validatorUniverse and also in validator set
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::ValidatorUniverse;
     use Std::Vector;
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         // Tests on initial size of validators
         assert!(DiemSystem::validator_set_size() == 6, 7357000200301);
         assert!(DiemSystem::is_validator(@Alice) == true, 7357000200302);

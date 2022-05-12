@@ -1,11 +1,11 @@
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 
-//! new-transaction
-module {{default}}::M {
-    use DiemFramework::Event::{destroy_handle, emit_event, EventHandle, new_event_handle};
-    use DiemFramework::Signer::address_of;
+//# publish
+module Alice::M {
+    use Std::Event::{destroy_handle, emit_event, EventHandle, new_event_handle};
+    use Std::Signer::address_of;
 
-    struct MyEvent<T: copy + drop + store> has key {
+    struct MyEvent<phantom T: copy + drop + store> has key {
         e: EventHandle<T>
     }
 
@@ -22,10 +22,9 @@ module {{default}}::M {
     }
 }
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice --show-events
 script {
-    use {{default}}::M;
+    use Alice::M;
 
     fun main(sender: signer) {
         M::emit(&sender);
