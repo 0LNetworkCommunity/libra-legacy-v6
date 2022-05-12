@@ -284,17 +284,17 @@ fn test_mine_once() {
         preimage: Vec::new(),
         proof: fixture_previous_proof,
         difficulty: Some(100),
-        security: Some(2048),
+        security: Some(512),
     };
 
     write_json(&fixture_block, &configs_fixture.get_block_dir()).unwrap();
 
     let next = NextProof {
-      next_height: 0,
-      preimage: fixture_block.proof,
+      next_height: fixture_block.height + 1,
+      preimage: HashValue::sha3_256_of(&fixture_block.proof).to_vec(),
       diff: VDFDifficulty {
         difficulty: 100,
-        security: 2048,
+        security: 512,
       }
     };
 
