@@ -2,7 +2,7 @@
 
 use crate::{backlog, delay::*, preimage::genesis_preimage};
 use anyhow::{bail, Error};
-use diem_crypto::hash::HashValue;
+use diem_crypto::HashValue;
 use diem_global_constants::{delay_difficulty, VDF_SECURITY_PARAM};
 use glob::glob;
 use ol_types::config::AppCfg;
@@ -98,7 +98,7 @@ pub fn get_next_proof_params_from_local(config: &AppCfg) -> Result<NextProof, Er
     Ok(NextProof {
       diff,
       next_height: current_local_block.height + 1,
-      preimage: current_local_block.proof, 
+      preimage: HashValue::sha3_256_of(&current_local_block.proof).to_vec(), 
     })
 }
 /// Write block to file
@@ -106,7 +106,7 @@ pub fn mine_and_submit(config: &AppCfg, tx_params: TxParams) -> Result<(), Error
     // // get the location of this miner's blocks
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
-    let (current_local_block, _) = get_highest_block(&blocks_dir)?;
+    // let (current_local_block, _) = get_highest_block(&blocks_dir)?;
 
     loop {
         let next = get_next_proof_params_from_local(&config)?;
@@ -288,7 +288,17 @@ fn test_mine_once() {
     };
 
     write_json(&fixture_block, &configs_fixture.get_block_dir()).unwrap();
-    mine_once(&configs_fixture).unwrap();
+
+    let next = NextProof {
+      next_height: 0,
+      preimage: fixture_block.proof,
+      diff: VDFDifficulty {
+        difficulty: 100,
+        security: 2048,
+      }
+    };
+
+    mine_once(&configs_fixture, next).unwrap();
     // confirm this file was written to disk.
     let block_file = fs::read_to_string("./test_blocks_temp_2/proof_1.json")
         .expect("Could not read latest block");
@@ -341,7 +351,11 @@ fn test_mine_genesis() {
 fn test_parse_no_files() {
     // if no file is found, the block height is 0
     let blocks_dir = PathBuf::from(".");
-    assert_eq!(get_highest_block(&blocks_dir).0, None);
+    
+    match get_highest_block(&blocks_dir) {
+        Ok(_) => assert!(false),
+        Err(_) => assert!(true),
+    }
 }
 
 #[test]
@@ -370,7 +384,7 @@ fn test_parse_one_file() {
         .expect("Could not write block");
 
     // block height
-    assert_eq!(get_highest_block(&blocks_dir).0, Some(33));
+    assert_eq!(get_highest_block(&blocks_dir).unwrap().0.height, 33);
 
     test_helper_clear_block_dir(&blocks_dir)
 }
