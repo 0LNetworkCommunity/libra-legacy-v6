@@ -1,12 +1,10 @@
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::MigrateTowerCounter;
     use DiemFramework::TowerState;
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
       // remove the TowerCounter state to mock the state of the network before the upgrade.
       TowerState::test_danger_destroy_tower_counter(&vm);
       // need to mock the previous state of the network which uses MinerStats

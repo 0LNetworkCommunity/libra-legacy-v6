@@ -1,12 +1,12 @@
-//! account: alice, 100000,0, validator
-//! new-transaction
-//! sender: diemroot
-script {
-use DiemFramework::Globals;
-use DiemFramework::Testnet;
-use DiemFramework::DiemSystem;
+//# init --validators Alice
 
-    fun main(_sender: signer) {
+//# run --admin-script --signers DiemRoot DiemRoot
+script {
+    use DiemFramework::Globals;
+    use DiemFramework::Testnet;
+    use DiemFramework::DiemSystem;
+
+    fun main() {
         assert!(DiemSystem::is_validator(@Alice) == true, 98);
 
         let len = Globals::get_epoch_length();

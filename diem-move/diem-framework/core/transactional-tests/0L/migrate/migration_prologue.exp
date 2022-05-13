@@ -1,0 +1,19 @@
+processed 5 tasks
+
+task 1 'block'. lines 7-7:
+Events:
+{
+    key:     0c0000000000000000000000000000000000000000000000
+    seq_num: 0
+    type:    0x1::DiemBlock::NewBlockEvent
+    data:    "010000000000000006505ccd81e562b524d8f656abd92a15000100000000000000"
+}
+
+task 3 'block'. lines 30-33:
+Events:
+{
+    key:     0c0000000000000000000000000000000000000000000000
+    seq_num: 1
+    type:    0x1::DiemBlock::NewBlockEvent
+    data:    "030000000000000006505ccd81e562b524d8f656abd92a15000a00000000000000"
+}
