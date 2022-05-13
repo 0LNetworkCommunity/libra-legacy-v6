@@ -1,11 +1,9 @@
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 
-//! new-transaction
-//! sender: diemroot
-
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::FIFO;
-    fun main(_s: signer) {
+    fun main() {
         let f = FIFO::empty<u64>();
         let len = FIFO::len<u64>(& f);
         assert!(len == 0, 1);
@@ -79,4 +77,3 @@ script {
     }
 }
 // check: EXECUTED
-

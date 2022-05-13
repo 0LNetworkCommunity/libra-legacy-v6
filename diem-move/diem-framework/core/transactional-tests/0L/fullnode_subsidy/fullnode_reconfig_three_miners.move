@@ -1,22 +1,29 @@
+//# init --validators Alice
+//#      --addresses Bob=0x4b7653f6566a52c9b496f245628a69a0
+//#                  Carol=0x03cb4a2ce2fcfa4eadcdc08e10cee07b
+//#                  Dave=0xeadf5eda5e7d5b9eea4a119df5dc9b26
+//#      --private-keys Bob=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
+//#                     Carol=49fd8b5fa77fdb08ec2a8e1cab8d864ac353e4c013f191b3e6bb5e79d3e5a67d
+//#                     Dave=80942c213a3ab47091dfb6979326784856f46aad26c4946aea4f9f0c5c041a79
+//// Old syntax for reference, delete it after fixing this test
 //! account: alice, 1000000GAS, 0, validator
-
 // Create three end user miner accounts
 //! account: bob, 1000000GAS, 0
 //! account: carol, 1000000GAS, 0
 //! account: dave, 1000000GAS, 0 // Dave will not mine above threshold
 
 // Bob, Carol, Dave are end-users running the Carpe app, and submitting miner proofs.
-// He is the only one in the epoch submitting proofs. He should get the entirety of the Identity Subsidy pool avaialable (one validator's worth)
+// He is the only one in the epoch submitting proofs. He should get the entirety
+// of the Identity Subsidy pool avaialable (one validator's worth)
 
 //  0. Initialize Bob's miner state with a first proof
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         TowerState::test_helper_init_val(
             &sender,
             TestFixtures::easy_chal(),
@@ -27,13 +34,12 @@ script {
     }
 }
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         TowerState::test_helper_init_val(
             &sender,
             TestFixtures::easy_chal(),
@@ -45,13 +51,12 @@ script {
 }
 
 
-//! new-transaction
-//! sender: dave
+//# run --admin-script --signers DiemRoot Dave
 script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         TowerState::test_helper_init_val(
             &sender,
             TestFixtures::easy_chal(),
@@ -66,14 +71,13 @@ script {
 // 2. Make sure there are validator subsidies available.
 // so we need Alice to be a Case 1 validator so that there is a subsidy to be paid to validator set.
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Mock;
     use DiemFramework::TowerState;
     use DiemFramework::Debug::print;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
       TowerState::test_epoch_reset_counter(&vm);
       TowerState::test_helper_mock_reconfig(&vm, @Alice);
       TowerState::test_helper_mock_reconfig(&vm, @Bob);
@@ -102,17 +106,13 @@ script {
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 61000000
-//! round: 15
+//# block --proposer Alice --time 61000000 --round 15
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {  
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
@@ -121,7 +121,7 @@ script {
     use DiemFramework::Debug::print;
     use DiemFramework::TowerState;
 
-    fun main(_vm: signer) {
+    fun main(_vm: signer, _: signer) {
         // We are in a new epoch.
         print(&TowerState::get_fullnode_proofs_in_epoch());
         print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());

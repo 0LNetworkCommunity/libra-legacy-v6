@@ -1,14 +1,12 @@
-//// frank is a fullnode
-//! account: frank, 1000000GAS, 0
+//# init --validators Frank
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::FullnodeSubsidy;
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         let old_account_bal = DiemAccount::balance<GAS>(@Frank);
         let value = FullnodeSubsidy::distribute_fullnode_subsidy(&vm, @Frank, 10);
         let new_account_bal = DiemAccount::balance<GAS>(@Frank);

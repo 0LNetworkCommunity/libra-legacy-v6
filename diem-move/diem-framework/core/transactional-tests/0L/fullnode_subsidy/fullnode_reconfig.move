@@ -1,20 +1,19 @@
-//! account: alice, 1000000GAS, 0, validator
-//! account: bob, 1000000GAS, 0
-
+//# init --validators Alice
+//#      --addresses Bob=0x4b7653f6566a52c9b496f245628a69a0
+//#      --private-keys Bob=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
 
 // Bob is an end-user running the Carpe app, and submitting miner proofs.
-// He is the only one in the epoch submitting proofs. He should get the entirety of the Identity Subsidy pool avaialable (one validator's worth)
-
+// He is the only one in the epoch submitting proofs. He should get the entirety
+// of the Identity Subsidy pool avaialable (one validator's worth)
 
 // 1. Initialize Bob's miner state with a first proof
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         TowerState::test_helper_init_val(
             &sender,
             TestFixtures::easy_chal(),
@@ -25,14 +24,10 @@ script {
     }
 }
 
-
-
-
 // 1. Reset all counters and make sure there are validator subsidies available.
 // We need Alice to be a Case 1 validator so that there is a subsidy to be paid to validator set.
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Mock;
     use DiemFramework::TowerState;
@@ -40,7 +35,7 @@ script {
     use DiemFramework::NodeWeight;
     use DiemFramework::GAS::GAS;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
       // Test suite makes all validators have 1 fullnode proof when starting.
       // need to reset to avoid confusion.
       TowerState::test_epoch_reset_counter(&vm);
@@ -57,14 +52,9 @@ script {
 }
 //check: EXECUTED
 
-
-
-
-
 // 3. Mock Bob (the end-user) submitting proofs above threshold.
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     // use DiemFramework::DiemSystem;
     use DiemFramework::TowerState;
@@ -74,7 +64,7 @@ script {
     // use DiemFramework::NodeWeight;
 
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         print(&TowerState::get_fullnode_proofs_in_epoch());
         print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
         
@@ -108,17 +98,13 @@ script {
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 61000000
-//! round: 15
+//# block --proposer Alice --time 61000000 --round 15
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {  
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
@@ -126,7 +112,7 @@ script {
     use DiemFramework::Globals;
     use DiemFramework::Debug::print;
 
-    fun main(_vm: signer) {
+    fun main(_vm: signer, _: signer) {
         // We are in a new epoch.
 
         // we expect that Bob receives the share that one validator would get.

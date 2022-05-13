@@ -1,19 +1,22 @@
+//# init --validators Alice
+//#      --addresses Bob=0x4b7653f6566a52c9b496f245628a69a0
+//#      --private-keys Bob=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
+//// Old syntax for reference, delete it after fixing this test
 //! account: alice, 1000000GAS, 0, validator
 //! account: bob, 1000000GAS, 0
 
-
 // Bob is an end-user running the Carpe app, and submitting miner proofs.
-// He is the only one in the epoch submitting proofs. He should get the entirety of the Identity Subsidy pool avaialable (one validator's worth)
+// He is the only one in the epoch submitting proofs. He should get the entirety
+// of the Identity Subsidy pool available (one validator's worth)
 
 //  0. Initialize Bob's miner state with a first proof
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         TowerState::test_helper_init_miner(
             &sender,
             TestFixtures::easy_chal(),
@@ -28,24 +31,21 @@ script {
 // 2. Make sure there are validator subsidies available.
 // so we need Alice to be a Case 1 validator so that there is a subsidy to be paid to validator set.
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Mock;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
       Mock::mock_case_1(&vm, @Alice);
     }
 }
 //check: EXECUTED
 
 
+// 3. Mock Bob (the end-user) submitting proofs above threshold.
 
 
-// // 3. Mock Bob (the end-user) submitting proofs above threshold.
-
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::TowerState;
@@ -53,8 +53,7 @@ script {
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
 
-
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         // confirm bob is not a validator
         assert!(DiemSystem::is_validator(@Alice), 735706);
         assert!(!DiemSystem::is_validator(@Bob), 735707);
@@ -78,21 +77,17 @@ script {
         print(&TowerState::get_count_in_epoch(@Bob));
         print(&TowerState::get_count_above_thresh_in_epoch(@Bob));
 
-        
         // Since the threshold in test suite is 1 proof, all the 10 are counted above threshold.
         assert!(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 10, 735710);
 
         print(&DiemAccount::balance<GAS>(@Bob));
         print(&DiemAccount::balance<GAS>(@Alice));
-
-        
     }
 }
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Testnet;
 
@@ -118,10 +113,10 @@ script {
 //////////////////////////////////////////////
 
 
-// TODO: This is failing. Must be a test harness issue with prod settings also in _meta_epoch_prod.move
+// TODO: This is failing. Must be a test harness issue with prod settings
+ //      also in _meta_epoch_prod.move
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {  
     // use DiemFramework::GAS::GAS;
     // use DiemFramework::DiemAccount;
@@ -129,7 +124,7 @@ script {
     // use DiemFramework::Globals;
     use DiemFramework::Debug::print;
 
-    fun main(_vm: signer) {
+    fun main() {
         // We are in a new epoch.
         print(&12121212121212);
         // // we expect that Bob receives the share that one validator would get.
