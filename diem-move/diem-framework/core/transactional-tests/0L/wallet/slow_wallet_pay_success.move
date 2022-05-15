@@ -3,8 +3,7 @@
 //! account: carol, 10GAS,
 
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
 use DiemFramework::DiemAccount;
 fun main(vm: signer) {

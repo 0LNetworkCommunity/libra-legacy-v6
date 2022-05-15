@@ -1,16 +1,14 @@
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
+//# init --validators Alice Bob
 
 // The data will be initialized and operated all through alice's account
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Stats;
     use Std::Vector;
     use DiemFramework::EpochBoundary;
 
-    fun main(vm: signer){
+    fun main(vm: signer, _: signer){
       let vm = &vm;
       // Check that after a reconfig the counter is reset, and archived in history.
       assert!(Stats::node_current_props(vm, @Alice) == 0, 7357008014001);

@@ -3,8 +3,7 @@
 //! account: carol, 10GAS,
 
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
 use DiemFramework::DiemAccount;
 use DiemFramework::DiemConfig;
@@ -28,7 +27,7 @@ fun main(vm: signer) {
 script {
 use DiemFramework::GAS::GAS;
 use DiemFramework::DiemAccount;
-fun main(_account: signer) {
+fun main() {
     assert!(DiemAccount::unlocked_amount(@Alice) == 0, 735703);
     assert!(DiemAccount::balance<GAS>(@Bob) == 10, 735704);
 }

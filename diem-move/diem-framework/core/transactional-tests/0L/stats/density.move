@@ -9,8 +9,7 @@
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use Std::Vector;
     use DiemFramework::Stats;

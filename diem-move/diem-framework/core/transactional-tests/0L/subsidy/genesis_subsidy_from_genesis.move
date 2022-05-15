@@ -1,14 +1,13 @@
 // Do not add validators here, the settings added here will overwrite the genesis defaults which is what we are checking for.
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
     use DiemFramework::ValidatorConfig;
 
-    fun main(_account: signer) {
+    fun main() {
         let num_validators = DiemSystem::validator_set_size();
         let index = 0;
         while (index < num_validators) {

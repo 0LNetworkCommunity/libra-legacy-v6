@@ -1,8 +1,5 @@
+//# init --validators Alice Bob Carol Dave
 // Module to test bulk validator updates function in DiemSystem.move
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
-//! account: carol, 1000000, 0, validator
-//! account: dave, 1000000, 0, validator
 
 // Test to check the current validator list . Then trigger update to the list 
 // of validators, then re-run it. 
@@ -10,15 +7,13 @@
 // This avoids an error when a reconfig function happens before the first epoch 
 // is completed.
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
-    
     use DiemFramework::DiemSystem;
     use Std::Vector;
     use DiemFramework::ValidatorUniverse;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         // Tests on initial size of validators 
         assert!(DiemSystem::validator_set_size() == 4, 73570080010001);
         assert!(DiemSystem::is_validator(@Alice), 73570080010002);

@@ -1,7 +1,6 @@
 //! account: alice, 1000000, 0 , validator
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::Subsidy;
   use DiemFramework::Globals;

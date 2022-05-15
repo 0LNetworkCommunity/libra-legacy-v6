@@ -1,8 +1,7 @@
 // Adding new validator epoch info
 //! account: bob, 100000 ,0, validator
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script{
 use DiemFramework::ValidatorUniverse;
 use Std::Vector;
@@ -18,8 +17,7 @@ fun main(vm: signer) {
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script{
 use DiemFramework::ValidatorUniverse;
 use Std::Vector;

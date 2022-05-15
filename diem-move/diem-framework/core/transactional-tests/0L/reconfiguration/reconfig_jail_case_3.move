@@ -1,31 +1,25 @@
+//# init --validators Alice Bob Carol Dave Eve Frank
+
 // Testing if EVE a CASE 3 Validator gets dropped.
 
 // ALICE is CASE 1
-//! account: alice, 1000000, 0, validator
 // BOB is CASE 1
-//! account: bob, 1000000, 0, validator
 // CAROL is CASE 1
-//! account: carol, 1000000, 0, validator
 // DAVE is CASE 1
-//! account: dave, 1000000, 0, validator
 // EVE is CASE 3
-//! account: eve, 1000000, 0, validator
 // FRANK is CASE 2
-//! account: frank, 1000000, 0, validator
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
+//# block --proposer Alice --time 1 --round 0
+
 //! NewBlockEvent
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
     use DiemFramework::ValidatorConfig;
 
-    fun main(sender: signer) {
+    fun main(sender: signer, _: signer) {
         // Transfer enough coins to operators
         let oper_bob = ValidatorConfig::get_operator(@Bob);
         let oper_eve = ValidatorConfig::get_operator(@Eve);
@@ -43,13 +37,12 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::TowerState;
     use DiemFramework::AutoPay;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         AutoPay::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. 
@@ -60,13 +53,12 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
     use DiemFramework::AutoPay;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         AutoPay::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. 
@@ -77,13 +69,12 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::TowerState;
     use DiemFramework::AutoPay;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         AutoPay::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. 
@@ -94,13 +85,12 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: dave
+//# run --admin-script --signers DiemRoot Dave
 script {
     use DiemFramework::TowerState;
     use DiemFramework::AutoPay;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         AutoPay::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. 
@@ -111,13 +101,12 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: eve
+//# run --admin-script --signers DiemRoot Eve
 script {
     use DiemFramework::TowerState;
     use DiemFramework::AutoPay;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         AutoPay::enable_autopay(&sender);
 
         // Miner is the only one that can update their mining stats. 
@@ -128,14 +117,13 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Stats;
     use Std::Vector;
     use DiemFramework::DiemSystem;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         let voters = Vector::singleton<address>(@Alice);
         Vector::push_back<address>(&mut voters, @Bob);
         Vector::push_back<address>(&mut voters, @Carol);
@@ -159,22 +147,18 @@ script {
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 61000000
-//! round: 15
+//# block --proposer Alice --time 61000000 --round 15
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::DiemConfig;
 
-    fun main(_account: signer) {
+    fun main() {
         // We are in a new epoch.
         assert!(DiemConfig::get_current_epoch() == 2, 7357008009008);
         // Tests on initial size of validators 

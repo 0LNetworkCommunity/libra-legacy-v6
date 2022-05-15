@@ -2,8 +2,7 @@
 
 // Check if genesis subsidies have been distributed
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
 use DiemFramework::Subsidy;
 use DiemFramework::DiemAccount;

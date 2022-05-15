@@ -28,8 +28,7 @@ script {
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;

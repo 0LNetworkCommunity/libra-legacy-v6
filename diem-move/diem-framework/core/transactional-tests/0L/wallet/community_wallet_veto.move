@@ -11,8 +11,7 @@
 
 // Set voting power of the validtors
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::TowerState;
     fun main(vm: signer) {
@@ -43,8 +42,7 @@ script {
 
 // check: EXECUTED
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::Wallet;
 
@@ -67,8 +65,7 @@ script {
 
 // check: EXECUTED
 
-//! new-transaction
-//! sender: dave
+//# run --admin-script --signers DiemRoot Dave
 script {
     use DiemFramework::Wallet;
 

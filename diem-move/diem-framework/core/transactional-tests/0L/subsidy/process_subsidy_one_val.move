@@ -24,8 +24,7 @@ script {
 //check: EXECUTED
 
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::TowerState;
     fun main(sender: signer) {
@@ -36,8 +35,7 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   // 
   // use DiemFramework::Subsidy;
@@ -75,8 +73,7 @@ script {
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::Subsidy;
   use DiemFramework::GAS::GAS;

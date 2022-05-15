@@ -6,8 +6,7 @@
 // META: transfers between bob and carol (not slow wallets) works fine.
 // Note this test also exists standalone as _meta_pay_from. But keep a transaction here for comprehension.
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 script {
 use DiemFramework::GAS::GAS;
 use DiemFramework::DiemAccount;

@@ -1,25 +1,19 @@
+//# init --validators Alice Bob Carol Dave Eve
+
 // Case 1: Validators are compliant. 
 // This test is to check if validators are present after the first epoch.
 // Here EPOCH-LENGTH = 15 Blocks.
 // NOTE: This test will fail with Staging and Production Constants, only for Debug - due to epoch length.
 
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
-//! account: carol, 1000000, 0, validator
-//! account: dave, 1000000, 0, validator
-//! account: eve, 1000000, 0, validator
+//# block --proposer Alice --time 1 --round 0
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
 //! NewBlockEvent
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
 
-    fun main(_account: signer) {
+    fun main() {
         // Tests on initial size of validators 
         assert!(DiemSystem::validator_set_size() == 5, 7357008012001);
         assert!(DiemSystem::is_validator(@Alice) == true, 7357008012002);
@@ -28,13 +22,11 @@ script {
 }
 // check: EXECUTED
 
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
 
-    fun main(_account: signer) {
+    fun main() {
         // Tests on initial size of validators 
         assert!(DiemSystem::validator_set_size() == 5, 7357008012004);
         assert!(DiemSystem::is_validator(@Alice) == true, 7357008012005);
@@ -43,14 +35,13 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use Std::Vector;
     use DiemFramework::Stats;
 
     // This is the the epoch boundary.
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         let voters = Vector::empty<address>();
         Vector::push_back<address>(&mut voters, @Alice);
         Vector::push_back<address>(&mut voters, @Bob);
@@ -72,22 +63,18 @@ script {
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 61000000
-//! round: 15
+//# block --proposer Alice --time 61000000 --round 15
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     
     use DiemFramework::DiemSystem;
     use DiemFramework::DiemConfig;
-    fun main(_account: signer) {
+    fun main() {
         assert!(DiemSystem::validator_set_size() == 5, 7357008012007);
         assert!(DiemConfig::get_current_epoch() == 2, 7357008012008);
     }

@@ -2,8 +2,7 @@
 //! account: alice, 100000 ,0, validator
 //! account: eve, 100000
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script{
 use DiemFramework::ValidatorUniverse;
 use Std::Vector;
@@ -19,8 +18,7 @@ fun main(vm: signer) {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: eve
+//# run --admin-script --signers DiemRoot Eve
 script{
 use DiemFramework::ValidatorUniverse;
 use DiemFramework::TestFixtures;
@@ -44,8 +42,7 @@ fun main(eve_sig: signer) {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script{
     use Std::Vector;
     use DiemFramework::ValidatorUniverse;

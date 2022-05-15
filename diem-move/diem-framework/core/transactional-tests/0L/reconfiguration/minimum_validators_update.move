@@ -1,23 +1,18 @@
+//# init --validators Alice Bob Carol Dave
+
 // This test is to check if validators are present after the first epoch.
 // Here EPOCH-LENGTH = 15 Blocks.
 // NOTE: This test will fail in test-net and Production, only for Debug - due to epoch length.
 
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
-//! account: carol, 1000000, 0, validator
-//! account: dave, 1000000, 0, validator
+//# block --proposer Alice --time 1 --round 0
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
 //! NewBlockEvent
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
 
-    fun main(_account: signer) {
+    fun main() {
         // Tests on initial size of validators 
         assert!(DiemSystem::validator_set_size() == 4, 7357008004001);
         assert!(DiemSystem::is_validator(@Alice) == true, 7357008004002);
@@ -25,25 +20,22 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
 
-    fun main(_account: signer) {
+    fun main() {
         // Tests on initial size of validators 
         assert!(DiemSystem::validator_set_size() == 4, 7357000180103);
     }
 }
 
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use Std::Vector;
     use DiemFramework::Stats;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _dr: signer) {
         let voters = Vector::empty<address>();
         Vector::push_back<address>(&mut voters, @Alice);
         Vector::push_back<address>(&mut voters, @Bob);
@@ -61,22 +53,17 @@ script {
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 61000000
-//! round: 15
+//# block --proposer Alice --time 61000000 --round 15
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
     
-    fun main(_account: signer) {
+    fun main() {
         // Tests on initial size of validators 
         assert!(DiemSystem::validator_set_size() == 4, 7357000180104);
         assert!(DiemSystem::is_validator(@Alice) == true, 7357000180105);        

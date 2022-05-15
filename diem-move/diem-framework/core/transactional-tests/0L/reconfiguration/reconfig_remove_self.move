@@ -1,24 +1,19 @@
+//# init --validators Alice Bob Carol
+
 // Testing if CAROL can successfully remove herself as a validator
 
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
 // CAROL will remove herself as a validator
-//! account: carol, 1000000, 0, validator
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
+//# block --proposer Alice --time 1 --round 0
+
 //! NewBlockEvent
 
 // Carol removes herself as a validator
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 stdlib_script::ValidatorScripts::leave
 // check: "Keep(EXECUTED)"
 
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     // use DiemFramework::TowerState;
     use DiemFramework::Stats;
@@ -26,7 +21,7 @@ script {
     // use DiemFramework::EpochBoundary;
     use DiemFramework::DiemSystem;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         // todo: change name to Mock epochs
         // TowerState::test_helper_set_epochs(&sender, 5);
         let voters = Vector::singleton<address>(@Alice);
@@ -53,22 +48,18 @@ script {
 
 
 ///// Trigger reconfiguration at 61 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 61000000
-//! round: 15
+//# block --proposer Alice --time 61000000 --round 15
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::DiemConfig;
 
-    fun main(_account: signer) {
+    fun main() {
         // We are in a new epoch.
         assert!(DiemConfig::get_current_epoch() == 2, 7357008011005);
         // Tests to ensure validator set size has indeed dropped
@@ -79,15 +70,13 @@ script {
 }
 //check: EXECUTED
 
-
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     // use DiemFramework::EpochBoundary;
     use Std::Vector;
     use DiemFramework::Stats;
     
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         // start a new epoch.
         let voters = Vector::singleton<address>(@Alice);
         Vector::push_back<address>(&mut voters, @Bob);
@@ -106,21 +95,17 @@ script {
 
 ///////////////////////////////////////////////
 ///// Trigger reconfiguration at 4 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 122000000
-//! round: 30
+//# block --proposer Alice --time 122000000 --round 30
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::DiemConfig;
-    fun main(_account: signer) {
+    fun main() {
         assert!(DiemConfig::get_current_epoch() == 3, 7357008011008);
 
         // carol is still not a validator because she has not rejoined. 
@@ -131,42 +116,36 @@ script {
 
 
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 script {
-use DiemFramework::TowerState;
-// use DiemFramework::DiemConfig;
-fun main(sender: signer) {
-    // Mock some mining so carol can send rejoin tx
-    TowerState::test_helper_mock_mining(&sender, 100);
-}
+    use DiemFramework::TowerState;
+    // use DiemFramework::DiemConfig;
+    fun main(_dr: signer, sender: signer) {
+        // Mock some mining so carol can send rejoin tx
+        TowerState::test_helper_mock_mining(&sender, 100);
+    }
 }
 
 // Carol SENDS JOIN TX to rejoin validator set. 
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 stdlib_script::ValidatorScripts::join
 // check: "Keep(EXECUTED)"
 
 
 ///////////////////////////////////////////////
 ///// Trigger reconfiguration at 4 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 183000000
-//! round: 45
+//# block --proposer Alice --time 183000000 --round 45
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::DiemConfig;
-    fun main(_account: signer) {
+    fun main() {
         assert!(DiemConfig::get_current_epoch() == 4, 7357008011010);
 
         // Carol is a validator once more

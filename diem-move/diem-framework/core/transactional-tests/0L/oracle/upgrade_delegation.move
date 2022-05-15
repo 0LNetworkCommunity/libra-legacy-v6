@@ -1,7 +1,6 @@
 //# init --validators Alice Bob Charlie Jim Lucy Thomas
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::TowerState;
     use DiemFramework::NodeWeight;

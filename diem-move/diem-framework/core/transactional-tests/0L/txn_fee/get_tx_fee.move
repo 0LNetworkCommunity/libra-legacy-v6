@@ -1,7 +1,6 @@
 //! account: alice, 1, 0, validator
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::TransactionFee;
 

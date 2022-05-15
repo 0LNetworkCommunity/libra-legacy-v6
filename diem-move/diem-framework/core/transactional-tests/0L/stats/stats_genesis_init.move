@@ -5,8 +5,7 @@
 
 // The data will be initialized and operated all through alice's account
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Stats;
 

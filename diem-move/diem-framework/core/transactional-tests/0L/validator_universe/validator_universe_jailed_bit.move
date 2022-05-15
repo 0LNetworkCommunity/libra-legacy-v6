@@ -17,8 +17,7 @@ fun main(eve_sig: signer) {
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script{
 use DiemFramework::ValidatorUniverse;
 // use Std::Signer;

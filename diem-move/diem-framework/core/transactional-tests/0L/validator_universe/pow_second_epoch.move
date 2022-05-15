@@ -9,13 +9,12 @@
 //! account: dave, 1000000, 0, validator
 
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     
     use DiemFramework::DiemSystem;
     use DiemFramework::NodeWeight;
-    fun main(_account: signer) {
+    fun main() {
         // Tests on initial size of validators 
         assert!(DiemSystem::validator_set_size() == 4, 7357220101011000);
         assert!(DiemSystem::is_validator(@Alice) == true, 7357220101021000);
@@ -26,8 +25,7 @@ script {
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use Std::Vector;
     use DiemFramework::Stats;
@@ -59,13 +57,12 @@ script {
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     
     use DiemFramework::DiemSystem;
     use DiemFramework::NodeWeight;
-    fun main(_account: signer) {
+    fun main() {
         // Tests on initial size of validators 
         assert!(DiemSystem::validator_set_size() == 4, 7357220101041000);
         assert!(DiemSystem::is_validator(@Alice) == true, 7357220101051000);

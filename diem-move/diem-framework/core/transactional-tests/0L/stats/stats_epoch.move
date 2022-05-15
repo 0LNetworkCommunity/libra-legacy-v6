@@ -12,8 +12,7 @@
 //! proposer: alice
 //! block-time: 1
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Stats;
 
@@ -37,8 +36,7 @@ script {
 //! block-time: 2
 
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use Std::Vector;
     use DiemFramework::Stats;
@@ -87,8 +85,7 @@ script {
 //////////////////////////////////////////////
 
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Stats;
     // use Std::Vector;

@@ -21,8 +21,7 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use Std::Vector;
   use DiemFramework::Stats;

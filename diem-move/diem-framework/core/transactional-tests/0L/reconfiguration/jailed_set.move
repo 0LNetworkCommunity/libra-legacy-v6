@@ -1,24 +1,16 @@
+//# init --validators Alice Bob Carol Dave Eve Frank
+
 // Test that both cases 3 and 4 are jailed.
 
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
-//! account: carol, 1000000, 0, validator
-//! account: dave, 1000000, 0, validator
-//! account: eve, 1000000, 0, validator
-//! account: frank, 1000000, 0, validator
+//# block --proposer Alice --time 1 --round 0
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
 //! NewBlockEvent
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
-
     use DiemFramework::TowerState;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         // Alice mines (case 1)
         // "Sender" is the only one that can update her mining stats. 
         // Hence this first transaction.
@@ -29,11 +21,10 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: eve
+//# run --admin-script --signers DiemRoot Eve
 script {
     use DiemFramework::TowerState;
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         // Eve mines (case 3)
         TowerState::test_helper_mock_mining(&sender, 5);
         assert!(TowerState::get_count_in_epoch(@Eve) == 5, 7357008003002);
@@ -41,15 +32,14 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Stats;
     use Std::Vector;
     use DiemFramework::Cases;
     use DiemFramework::DiemSystem;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         let vm = &vm;
         let voters = Vector::singleton<address>(@Alice);
         let i = 1;
