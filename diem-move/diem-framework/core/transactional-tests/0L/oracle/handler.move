@@ -1,15 +1,14 @@
+//# init --validators Alice
+
 // run with language/move-lang/functional-tests> cargo test handler
 
-//! account: alice, 1000000, 0, validator
-
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::Oracle;
     use Std::Vector;
     use DiemFramework::Upgrade;
 
-    fun main(sender: signer){
+    fun main(_dr: signer, sender: signer){
         let id = 1;
         let data = b"hello";
         Oracle::handler(&sender, id, data);

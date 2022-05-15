@@ -1,20 +1,14 @@
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
-//! account: charlie, 1000000, 0, validator
+//# init --validators Alice Bob Charlie
 
-//! block-prologue
-//! proposer: bob
-//! block-time: 1
-//! round: 1
+//# block --proposer Bob --time 1 --round 1
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
   use DiemFramework::Upgrade;
 
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
       let id = 1;
       let data = b"hello";
       Oracle::handler(&sender, id, data);
@@ -29,14 +23,13 @@ script {
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
   use DiemFramework::Upgrade;
 
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
       let id = 1;
       let data = b"WHATEVER"; // different vote
       Oracle::handler(&sender, id, data);
@@ -50,46 +43,41 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: charlie
+//# run --admin-script --signers DiemRoot Charlie
 script {
-  use DiemFramework::Oracle;
-  use DiemFramework::Upgrade;
+    use DiemFramework::Oracle;
+    use DiemFramework::Upgrade;
 
-  fun main(sender: signer){
-      let id = 1;
-      let data = b"hello";
-      Oracle::handler(&sender, id, data);
+    fun main(_dr: signer, sender: signer){
+        let id = 1;
+        let data = b"hello";
+        Oracle::handler(&sender, id, data);
 
-      assert!(Upgrade::has_upgrade() == false, 735705); 
-  }
+        assert!(Upgrade::has_upgrade() == false, 735705); 
+    }
 }
 // check: EXECUTED
 
-//! block-prologue
-//! proposer: bob
-//! block-time: 2
-//! round: 2
+//# block --proposer Bob --time 2 --round 2
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
-  use DiemFramework::Upgrade;
-  use Std::Vector;
+    use DiemFramework::Upgrade;
+    use Std::Vector;
 
-  fun main(){
-    let (upgraded_version, payload, voters, height) = 
-      Upgrade::retrieve_latest_history();
+    fun main(){
+        let (upgraded_version, payload, voters, height) = 
+          Upgrade::retrieve_latest_history();
 
-    let validators = Vector::empty<address>();
-    Vector::push_back(&mut validators, @Alice);
-    Vector::push_back(&mut validators, @Charlie);
+        let validators = Vector::empty<address>();
+        Vector::push_back(&mut validators, @Alice);
+        Vector::push_back(&mut validators, @Charlie);
 
-    assert!(Upgrade::has_upgrade(), 735706); 
-    assert!(upgraded_version == 0, 735707);
-    assert!(payload == b"hello", 735708);
-    assert!(Vector::compare(&voters, &validators), 735709);
-    assert!(height == 2, 735710);
-  }
+        assert!(Upgrade::has_upgrade(), 735706); 
+        assert!(upgraded_version == 0, 735707);
+        assert!(payload == b"hello", 735708);
+        assert!(Vector::compare(&voters, &validators), 735709);
+        assert!(height == 2, 735710);
+    }
 }
 // check: EXECUTED

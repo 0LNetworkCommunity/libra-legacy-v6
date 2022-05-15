@@ -1,15 +1,12 @@
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
-//! account: charlie, 1000000, 0, validator
+//# init --validators Alice Bob Charlie
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
   use DiemFramework::Upgrade;
 
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
       let id = 1;
       let data = b"hello";
       Oracle::handler(&sender, id, data);
@@ -33,14 +30,13 @@ script {
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
   use DiemFramework::Upgrade;
 
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
       let id = 1;
       let data = b"bello";
       Oracle::handler(&sender, id, data);
@@ -54,13 +50,12 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: charlie
+//# run --admin-script --signers DiemRoot Charlie
 script {
   use DiemFramework::Oracle;
   use DiemFramework::Upgrade;
 
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
       let id = 1;
       let data = b"hello";
       Oracle::handler(&sender, id, *&data);
@@ -70,14 +65,13 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::Oracle;
   use DiemFramework::Upgrade;
   use Std::Vector;
   
-  fun main(sender: signer){
+  fun main(sender: signer, _: signer){
       let data = b"hello";
       Oracle::check_upgrade(&sender);
 
@@ -92,7 +86,7 @@ script {
       let validators = Vector::empty<address>();
       Vector::push_back(&mut validators, @Alice);
       Vector::push_back(&mut validators, @Charlie);
-      assert!(Vector::compare(&voters, &validators), 7357123401011000);
+      assert!(Vector::compare<address>(&voters, &validators), 7357123401011000);
   }
 }
 // check: EXECUTED

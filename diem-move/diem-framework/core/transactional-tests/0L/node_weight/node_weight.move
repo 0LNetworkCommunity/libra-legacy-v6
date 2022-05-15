@@ -1,17 +1,12 @@
-//! account: alice, 1, 0, validator
-//! account: bob, 1, 0, validator
-//! account: carol, 1, 0, validator
-//! account: dave, 1, 0, validator
-//! account: eve, 1, 0, validator
+//# init --validators Alice Bob Carol Dave Eve
 
 // All nodes except Eve mined above threshold. 
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::TowerState;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
@@ -22,12 +17,11 @@ script {
 //check: EXECUTED
 
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
@@ -37,12 +31,11 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::TowerState;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
@@ -52,12 +45,11 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: dave
+//# run --admin-script --signers DiemRoot Dave
 script {
     use DiemFramework::TowerState;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
@@ -67,15 +59,14 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use Std::Vector;
     use DiemFramework::NodeWeight;
     use DiemFramework::ValidatorUniverse;
     use DiemFramework::TowerState;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         // Base Case: If validator universe vector length is less than the 
         // validator set size limit (N), return vector itself.
         // N equals to the vector length.

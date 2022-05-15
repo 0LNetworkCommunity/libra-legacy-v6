@@ -1,39 +1,30 @@
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
-//! account: carol, 1000000, 0, validator
-//! account: dave, 1000000, 0, validator
-//! account: eve, 1000000, 0, validator
+//# init --validators Alice Bob Carol Dave Eve
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::TowerState;
     use DiemFramework::NodeWeight;
-    fun main(sender: signer) {
-        TowerState::test_helper_set_weight_vm(&sender, @Alice, 10);
+    fun main(dr: signer, _: signer) {
+        TowerState::test_helper_set_weight_vm(&dr, @Alice, 10);
         assert!(NodeWeight::proof_of_weight(@Alice) == 10, 7357300101011088);
-        TowerState::test_helper_set_weight_vm(&sender, @Bob, 10);
+        TowerState::test_helper_set_weight_vm(&dr, @Bob, 10);
         assert!(NodeWeight::proof_of_weight(@Bob) == 10, 7357300101011088);
-        TowerState::test_helper_set_weight_vm(&sender, @Carol, 10);
+        TowerState::test_helper_set_weight_vm(&dr, @Carol, 10);
         assert!(NodeWeight::proof_of_weight(@Carol) == 10, 7357300101011088);
-        TowerState::test_helper_set_weight_vm(&sender, @Dave, 31);
+        TowerState::test_helper_set_weight_vm(&dr, @Dave, 31);
         assert!(NodeWeight::proof_of_weight(@Dave) == 31, 7357300101011088);
-        TowerState::test_helper_set_weight_vm(&sender, @Eve, 31);
+        TowerState::test_helper_set_weight_vm(&dr, @Eve, 31);
         assert!(NodeWeight::proof_of_weight(@Eve) == 31, 7357300101011088);
     }
 }
 //check: EXECUTED
 
-
-
-
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
   use DiemFramework::Upgrade;
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
       let id = 1;
       let data = b"bello";
       Oracle::handler(&sender, id, data);
@@ -49,13 +40,12 @@ script {
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
   use DiemFramework::Upgrade;
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
       let id = 1;
       let data = b"bello";
       Oracle::handler(&sender, id, data);
@@ -70,14 +60,13 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: carol
+//# run --admin-script --signers DiemRoot Carol
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
   use DiemFramework::Upgrade;
-  use DiemFramework::Hash;
-  fun main(sender: signer){
+  use Std::Hash;
+  fun main(_dr: signer, sender: signer){
       let id = 2;
       let data = b"bello";
       let hash = Hash::sha2_256(data);
@@ -105,13 +94,12 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: dave
+//# run --admin-script --signers DiemRoot Dave
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
   use DiemFramework::Upgrade;
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
       let id = 1;
       let data = b"hello";
       Oracle::handler(&sender, id, data);
@@ -137,14 +125,13 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: eve
+//# run --admin-script --signers DiemRoot Eve
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
   use DiemFramework::Upgrade;
-  use DiemFramework::Hash;
-  fun main(sender: signer){
+  use Std::Hash;
+  fun main(_dr: signer, sender: signer){
       let id = 2;
       let data = b"hello";
       let hash = Hash::sha2_256(data);
@@ -170,5 +157,3 @@ script {
   }
 }
 // check: EXECUTED
-
-

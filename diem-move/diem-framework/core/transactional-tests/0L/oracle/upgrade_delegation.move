@@ -1,17 +1,11 @@
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
-//! account: charlie, 1000000, 0, validator
-//! account: jim, 1000000, 0, validator
-//! account: lucy, 1000000, 0, validator
-//! account: thomas, 1000000, 0, validator
-
+//# init --validators Alice Bob Charlie Jim Lucy Thomas
 
 //! new-transaction
 //! sender: diemroot
 script {
     use DiemFramework::TowerState;
     use DiemFramework::NodeWeight;
-    fun main(sender: signer) {
+    fun main(sender: signer, _: signer) {
         TowerState::test_helper_set_weight_vm(&sender, @Alice, 10);
         assert!(NodeWeight::proof_of_weight(@Alice) == 10, 7357300101011088);
         TowerState::test_helper_set_weight_vm(&sender, @Bob, 10);
@@ -28,11 +22,10 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: lucy
+//# run --admin-script --signers DiemRoot Lucy
 script {
   use DiemFramework::Oracle;
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       Oracle::enable_delegation(&sender);
     }
@@ -40,11 +33,10 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: jim
+//# run --admin-script --signers DiemRoot Jim
 script {
   use DiemFramework::Oracle;
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       Oracle::enable_delegation(&sender);
       Oracle::delegate_vote(&sender, @Lucy);
@@ -54,11 +46,10 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::Oracle;
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       Oracle::enable_delegation(&sender);
     }
@@ -66,11 +57,10 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: thomas
+//# run --admin-script --signers DiemRoot Thomas
 script {
   use DiemFramework::Oracle;
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       Oracle::enable_delegation(&sender);
       Oracle::delegate_vote(&sender, @Alice);
@@ -80,11 +70,10 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: charlie
+//# run --admin-script --signers DiemRoot Charlie
 script {
   use DiemFramework::Oracle;
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       Oracle::enable_delegation(&sender);
       Oracle::delegate_vote(&sender, @Lucy);
@@ -94,11 +83,10 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: charlie
+//# run --admin-script --signers DiemRoot Charlie
 script {
   use DiemFramework::Oracle;
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       Oracle::remove_delegate_vote(&sender);
       assert!(Oracle::check_number_delegates(@Lucy) == 1, 5);
@@ -107,13 +95,12 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
   use DiemFramework::Upgrade;
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 1;
       let data = b"bello";
@@ -132,13 +119,12 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
   use DiemFramework::Upgrade;
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 1;
       let data = b"hello";
@@ -156,15 +142,12 @@ script {
 // check: EXECUTED
 
 
-
-
-//! new-transaction
-//! sender: thomas
+//# run --admin-script --signers DiemRoot Thomas
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
-  use DiemFramework::Hash;
-  fun main(sender: signer){
+  use Std::Hash;
+  fun main(_dr: signer, sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       //already voted, must ensure vote not counted again
       let id = 2;
@@ -181,14 +164,13 @@ script {
 
 
 
-//! new-transaction
-//! sender: lucy
+//# run --admin-script --signers DiemRoot Lucy
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
   use DiemFramework::Upgrade;
-  use DiemFramework::Hash;
-  fun main(sender: signer){
+  use Std::Hash;
+  fun main(_dr: signer, sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 2;
       let data = b"hello";
@@ -208,12 +190,11 @@ script {
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: jim
+//# run --admin-script --signers DiemRoot Jim
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
-  fun main(sender: signer){
+  fun main(_dr: signer, sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 1;
       let data = b"hello";
@@ -227,14 +208,13 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: charlie
+//# run --admin-script --signers DiemRoot Charlie
 script {
   use DiemFramework::Oracle;
   use Std::Vector;
   use DiemFramework::Upgrade;
-  use DiemFramework::Hash;
-  fun main(sender: signer){
+  use Std::Hash;
+  fun main(_dr: signer, sender: signer){
     if (Oracle::delegation_enabled_upgrade()) {
       let id = 2;
       let data = b"hello";
@@ -251,18 +231,9 @@ script {
 }
 // check: EXECUTED
 
+//# block --proposer Bob --time 1 --round 2
 
-
-
-// //! block-prologue
-// //! proposer: bob
-// //! block-time: 1
-// //! round: 2
-
-// //! block-prologue
-// //! proposer: bob
-// //! block-time: 2
-// //! round: 2
+//# block --proposer Bob --time 2 --round 2
 
 // //! new-transaction
 // //! sender: diemroot

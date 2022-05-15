@@ -1,19 +1,14 @@
-// In this test only alice mines.
+//# init --validators Alice Bob Carol Dave Eve
 
-//! account: alice, 1, 0, validator
-//! account: bob, 1, 0, validator
-//! account: carol, 1, 0, validator
-//! account: dave, 1, 0, validator
-//! account: eve, 1, 0, validator
+// In this test only alice mines.
 
 // All nodes except Eve mined above threshold. 
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::TowerState;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
 
@@ -23,15 +18,14 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use Std::Vector;
     use DiemFramework::NodeWeight;
     use DiemFramework::ValidatorUniverse;
     use DiemFramework::TowerState;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         let vm = &vm;
 
         // Base Case: If validator universe vector length is less than the 
@@ -69,7 +63,6 @@ script {
 
         // Check eve IS on that list.
         assert!(Vector::contains<address>(&top_n_is_equal, &@Eve), 7357140102081000);
-
     }
 }
 // check: EXECUTED
