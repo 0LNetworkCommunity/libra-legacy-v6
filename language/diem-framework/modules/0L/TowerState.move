@@ -88,9 +88,15 @@ module TowerState {
     }
 
     struct VDFDifficulty has key {
+
+      // current epoch number of iterations (difficulty) of vdf
       difficulty: u64,
-      // Security parameter for VDF
+      // current epoch security parameter for VDF
       security: u64,
+      // previous epoch's difficulty. Allowance for all validtors on first proof of epoch
+      prev_diff: u64,
+      // allowance for first proof.
+      prev_sec: u64,
     }
 
     // Create the difficulty struct
@@ -99,6 +105,8 @@ module TowerState {
       move_to<VDFDifficulty>(vm, VDFDifficulty {
         difficulty: 5000000,
         security: 512,
+        prev_diff: 5000000,
+        prev_sec: 512,
       });
     }
 
@@ -508,7 +516,57 @@ module TowerState {
       state.fullnode_proofs_in_epoch_above_thresh = 0;
     }
 
+    //////////////////////
+    ///  Experimental  ///
+    /////////////////////
 
+
+    // EXPERIMENTAL: this is a test to see if we can get a plausible RNG from the VDF proofs, to use in low-stakes scenarios.
+    // THIS IS AN EXPERIMENT, IT WILL BREAK. DON'T USE FOR ANYTHING SERIOUS.
+    // We want to see where it breaks.
+    // the first use case is to change the VDF difficulty parameter by tiny margins, in order to make it difficult to stockpile VDFs in a previous epoch, but not change the security properties.
+    // the goal is to push all the RNG work to all the tower miners in the network, and minimize compute on the Move side
+    public fun toy_rng(seed: u64, iters: u64): u64 acquires TowerList, TowerProofHistory {
+      // Get the list of all miners L
+      // Pick a tower miner  (M) from the seed position 1/(N) of the list of miners.
+      let l = get_miner_list();
+
+      // the length will keep incrementing through the epoch. The last miner can know what the starting position will be. There could be a race to be the last validator to augment the set and bias the initial shuffle.
+      let len = Vector::length(&l);
+
+      if (len == 0) return 0;
+
+      let n = 0;
+
+      let i = 0;
+      
+      while (i < iters) {
+        if (seed > len) {
+            n = seed / len
+          } else if (len > seed) {
+            n = len / seed
+          } else {
+            n = 0;
+          };
+        
+        // return zero so the user knows of the error, instead of returning anything halfway though the iters.
+        if (n == 0) return 0;
+        // take the first bit (B) from their last proof hash.
+        let miner_addr = Vector::borrow<address>(&l, n);
+        
+        let vec = if (exists<TowerProofHistory>(*miner_addr)) {
+          *&borrow_global<TowerProofHistory>(*miner_addr).previous_proof_hash
+        } else {
+          return 0
+        };
+        
+        n = (Vector::pop_back(&mut vec) as u64);
+
+        i = i + 1;
+      };
+
+      n
+    }
 
 
     //////////////////////
