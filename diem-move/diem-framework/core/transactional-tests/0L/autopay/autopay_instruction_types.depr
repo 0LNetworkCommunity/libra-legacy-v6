@@ -134,8 +134,7 @@ use DiemFramework::GAS::GAS;
 
 
 // alice commits to paying jim 5% of her worth per epoch
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::AutoPay2;
   use Std::Signer;

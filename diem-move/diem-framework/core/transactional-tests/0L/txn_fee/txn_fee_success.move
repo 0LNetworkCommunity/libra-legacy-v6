@@ -10,8 +10,7 @@
 // BOB is CASE 4
 //! account: dave, 1000000GAS, 0, validator
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::TowerState;
 

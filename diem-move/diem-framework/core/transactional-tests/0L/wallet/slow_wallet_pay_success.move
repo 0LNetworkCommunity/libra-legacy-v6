@@ -18,8 +18,7 @@ fun main(vm: signer, _: signer) {
 
 // Successful unlock and transfer.
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
 use DiemFramework::GAS::GAS;
 use DiemFramework::DiemAccount;

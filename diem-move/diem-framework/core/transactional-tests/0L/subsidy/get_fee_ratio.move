@@ -1,8 +1,9 @@
+//# init --validators Alice
+//// Old syntax for reference, delete it after fixing this test
 //! account: alice, 1, 0, validator
 //! account: bob, 1, 0, validator
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::TowerState;
     fun main(sender: signer) {

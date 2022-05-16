@@ -2,8 +2,7 @@
 //! account: alice, 100000, 0, validator
 //! account: eve, 100000
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script{
 use DiemFramework::ValidatorUniverse;
 use Std::Signer;

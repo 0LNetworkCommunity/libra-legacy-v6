@@ -4,7 +4,6 @@
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
-  
   use DiemFramework::Subsidy;
   use Std::Vector;
   use DiemFramework::Stats;

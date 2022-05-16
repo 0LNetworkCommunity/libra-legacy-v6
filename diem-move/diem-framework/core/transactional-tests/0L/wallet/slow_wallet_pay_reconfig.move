@@ -13,8 +13,7 @@
 //////////////////////////////////////////////
 
 // This transaction should fail because alice is a slow wallet, and has no GAS unlocked.
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
 use DiemFramework::GAS::GAS;
 use DiemFramework::DiemAccount;

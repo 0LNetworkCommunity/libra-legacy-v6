@@ -4,8 +4,7 @@
 // 1. alice is onboarded as an end-user, and submits first proof (through Carpe app for example).
 
 // Alice Submit VDF Proof
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;
@@ -121,8 +120,7 @@ script {
 // 4. Alice finally sends a new miner proof, and the nominal epochs info is reset.
 
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;

@@ -2,8 +2,7 @@
 //! account: alice, 10000000GAS
 
 // Alice Submit VDF Proof
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;
@@ -28,8 +27,7 @@ script {
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;

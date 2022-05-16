@@ -21,8 +21,7 @@ fun main(vm: signer, _: signer) {
 }
 }
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 
 script {
 use DiemFramework::GAS::GAS;
@@ -37,8 +36,7 @@ fun main() {
 
 // Alice tries to send the payment anyways.
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
 use DiemFramework::GAS::GAS;
 use DiemFramework::DiemAccount;

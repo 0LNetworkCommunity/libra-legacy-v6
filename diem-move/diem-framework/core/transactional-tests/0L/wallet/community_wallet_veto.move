@@ -22,8 +22,7 @@ script {
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::Wallet;
     use Std::Vector;

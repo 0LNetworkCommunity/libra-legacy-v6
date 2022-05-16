@@ -69,8 +69,7 @@ fun main(lr: signer, bob_account: signer) {
 
 
 // creating the payment
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::AutoPay2;
   use Std::Signer;

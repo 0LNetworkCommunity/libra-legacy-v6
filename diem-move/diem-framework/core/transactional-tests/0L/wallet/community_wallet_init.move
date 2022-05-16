@@ -4,8 +4,7 @@
 //! account: alice, 1000000,
 
 
-//! new-transaction
-//! sender: alice
+//# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::Wallet;
     use Std::Vector;
