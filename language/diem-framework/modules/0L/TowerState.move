@@ -554,7 +554,7 @@ module TowerState {
     }
 
     //////////////////////
-    ///  Experimental  ///
+    //  Experimental  //
     /////////////////////
 
 
@@ -563,36 +563,50 @@ module TowerState {
     // We want to see where it breaks.
     // the first use case is to change the VDF difficulty parameter by tiny margins, in order to make it difficult to stockpile VDFs in a previous epoch, but not change the security properties.
     // the goal is to push all the RNG work to all the tower miners in the network, and minimize compute on the Move side
+    use 0x1::Debug::print;
+
     public fun toy_rng(seed: u64, iters: u64): u64 acquires TowerList, TowerProofHistory {
-      // a failed rng returns 0
-      let n = 0;
       // Get the list of all miners L
       // Pick a tower miner  (M) from the seed position 1/(N) of the list of miners.
       let l = get_miner_list();
-
+      print(&l);
       // the length will keep incrementing through the epoch. The last miner can know what the starting position will be. There could be a race to be the last validator to augment the set and bias the initial shuffle.
       let len = Vector::length(&l);
       if (len == 0) return 0;
+      print(&5555);
+
+      // start n with the seed index
+      let n = seed;
 
       let i = 0;
       while (i < iters) {
-        if (seed > len) { n = seed / len }
-              else if (len > seed) { n = len / seed } 
-              else { n = 0 };
+        print(&6666);
+        if (n > len) { n = n / len }
+          else if (len > n) { n = len / n } 
+          else { n = 0 };
         // return zero so the user knows of the error, instead of returning anything halfway though the iters.
         if (n == 0) return 0;
+
+        print(&n);
+        print(&l);
+
+        if (n > Vector::length<address>(&l)) return 0;
+
+        print(&666602);
         // take the first bit (B) from their last proof hash.
         let miner_addr = Vector::borrow<address>(&l, n);
-        
+  
+        print(&666603);
         let vec = if (exists<TowerProofHistory>(*miner_addr)) {
           *&borrow_global<TowerProofHistory>(*miner_addr).previous_proof_hash
         }
         else { return 0 };
-        
+        print(&666604);
         n = (Vector::pop_back(&mut vec) as u64);
-
+        print(&666605);
         i = i + 1;
       };
+      print(&8888);
 
       n
     }
