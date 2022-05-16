@@ -6,7 +6,7 @@ script{
 use DiemFramework::ValidatorUniverse;
 use Std::Vector;
 
-fun main(vm: signer) {
+fun main(vm: signer, _: signer) {
     let len = Vector::length<address>(
         &ValidatorUniverse::get_eligible_validators(&vm)
     );
@@ -22,7 +22,7 @@ script{
 use DiemFramework::ValidatorUniverse;
 use Std::Vector;
 
-fun main(vm: signer) {
+fun main(vm: signer, _: signer) {
     let len = Vector::length<address>(
         &ValidatorUniverse::get_eligible_validators(&vm)
     );

@@ -46,7 +46,7 @@ script {
   use DiemFramework::DiemAccount;
   use DiemFramework::Cases;
 
-  fun main(vm: signer) {
+  fun main(vm: signer, _: signer) {
     // check the case of a network density of 4 active validators.
 
     let vm = &vm;
@@ -83,7 +83,7 @@ script {
     use DiemFramework::Diem;
     use DiemFramework::DiemSystem;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         let vm = &vm;
         let coin = Diem::mint<GAS>(vm, 1000);
         TransactionFee::pay_fee(coin);

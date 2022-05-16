@@ -1,5 +1,4 @@
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
+//# init --validators Alice Bob
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {

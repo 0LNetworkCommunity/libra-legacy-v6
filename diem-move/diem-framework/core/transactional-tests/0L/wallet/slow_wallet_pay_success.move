@@ -6,7 +6,7 @@
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
 use DiemFramework::DiemAccount;
-fun main(vm: signer) {
+fun main(vm: signer, _: signer) {
     DiemAccount::slow_wallet_epoch_drip(&vm, 100);
     assert!(DiemAccount::unlocked_amount(@Alice) == 100, 735701);
 

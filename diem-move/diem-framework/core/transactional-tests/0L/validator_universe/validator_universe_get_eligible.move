@@ -7,7 +7,7 @@ use DiemFramework::ValidatorUniverse;
 use Std::Vector;
 
 
-fun main(vm: signer) {
+fun main(vm: signer, _: signer) {
     // NOTE: in functional and e2e tests the genesis block includes 3 validators.
     // this is set here anguage/tools/vm-genesis/src/lib.rs
     // ValidatorUniverse::add_validator(@0xDEADBEEF);

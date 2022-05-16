@@ -1,13 +1,10 @@
+//# init --validators Alice Bob Carol Dave
+
 // Case 1: Validators are compliant. 
 // This test is to check if validators are present after the first epoch.
 // Here EPOCH-LENGTH = 15 Blocks.
 // NOTE: This test will fail with Staging and Production Constants, 
 // only for Debug - due to epoch length.
-
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
-//! account: carol, 1000000, 0, validator
-//! account: dave, 1000000, 0, validator
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -15,7 +12,7 @@ script {
     use DiemFramework::Stats;
 
     // Assumes an epoch changed at round 15
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         let vm = &vm;
         assert!(Stats::node_current_props(vm, @Bob) == 0, 0);
         assert!(Stats::node_current_votes(vm, @Alice) == 0, 0);

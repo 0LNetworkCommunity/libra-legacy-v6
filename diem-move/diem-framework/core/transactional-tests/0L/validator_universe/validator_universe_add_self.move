@@ -9,7 +9,7 @@ use Std::Vector;
 // use DiemFramework::TestFixtures;
 // use DiemFramework::DiemAccount;
 
-fun main(vm: signer) {
+fun main(vm: signer, _: signer) {
     let len = Vector::length<address>(
         &ValidatorUniverse::get_eligible_validators(&vm)
     );
@@ -47,7 +47,7 @@ script{
     use Std::Vector;
     use DiemFramework::ValidatorUniverse;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         let len = Vector::length<address>(
             &ValidatorUniverse::get_eligible_validators(&vm
         ));

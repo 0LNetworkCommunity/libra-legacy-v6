@@ -21,7 +21,7 @@ fun main(eve_sig: signer) {
 script{
 use DiemFramework::ValidatorUniverse;
 // use Std::Signer;
-fun main(vm: signer) {
+fun main(vm: signer, _: signer) {
     // Test from genesis if not jailed and in universe
     ValidatorUniverse::jail(&vm, @Alice);
     assert!(ValidatorUniverse::is_jailed(@Alice), 73570001);

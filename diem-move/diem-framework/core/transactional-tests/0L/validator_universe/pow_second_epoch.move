@@ -3,8 +3,7 @@
 // TO DO: Genesis function call to have 15 round epochs.
 // NOTE: This test will fail in test-net and Production, only for Debug - due to epoch length.
 
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
+//# init --validators Alice Bob
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
 
@@ -30,7 +29,7 @@ script {
     use Std::Vector;
     use DiemFramework::Stats;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
         let voters = Vector::empty<address>();
         Vector::push_back<address>(&mut voters, @Alice);
         Vector::push_back<address>(&mut voters, @Bob);
@@ -48,10 +47,7 @@ script {
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration 61 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 61000000
-//! round: 15
+//# block --proposer Alice --time 61000000 --round 15
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent

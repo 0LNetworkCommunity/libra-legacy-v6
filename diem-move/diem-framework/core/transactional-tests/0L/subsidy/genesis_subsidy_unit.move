@@ -8,7 +8,7 @@ use DiemFramework::Subsidy;
 use DiemFramework::DiemAccount;
 use DiemFramework::GAS::GAS;
 
-fun main(vm: signer) {
+fun main(vm: signer, _: signer) {
     let old_account_bal = DiemAccount::balance<GAS>(@Alice);
     // Test suite starts with a minimum of 1 GAS.
     Subsidy::genesis(&vm);

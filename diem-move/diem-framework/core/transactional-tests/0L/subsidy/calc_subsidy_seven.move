@@ -1,18 +1,15 @@
+//# init --validators Alice
+
 // This test is to check if subsidy calculations are impacted by dummy node statistics.
 
-//! account: alice, 1000000, 0, validator
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
+//# block --proposer Alice --time 1 --round 0
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::Subsidy;
-
   use DiemFramework::Globals;
 
-  fun main(vm: signer) {
+  fun main(vm: signer, _: signer) {
     let expected_subsidy = Subsidy::subsidy_curve(
       Globals::get_subsidy_ceiling_gas(),
       7,

@@ -45,7 +45,7 @@ script {
   use DiemFramework::DiemAccount;
   use DiemFramework::Cases;
 
-  fun main(vm: signer) {
+  fun main(vm: signer, _: signer) {
     // check the case of a network density of 4 active validators.
 
     let vm = &vm;
@@ -80,7 +80,7 @@ script {
   use DiemFramework::DiemAccount;
   use DiemFramework::DiemSystem;
 
-  fun main(vm: signer) {
+  fun main(vm: signer, _: signer) {
     let (validators, _) = DiemSystem::get_fee_ratio(&vm, 0, 15);
     let subsidy_amount = 1000000;
     let mining_proofs = 5; // mocked above

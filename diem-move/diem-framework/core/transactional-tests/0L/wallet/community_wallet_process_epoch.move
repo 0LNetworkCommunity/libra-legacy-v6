@@ -26,10 +26,7 @@ script {
 
 //////////////////////////////////////////////
 //// Trigger reconfiguration at 61 seconds ///
-//! block-prologue
-//! proposer: alice
-//! block-time: 61000000
-//! round: 15
+//# block --proposer Alice --time 61000000 --round 15
 
 ////// TEST RECONFIGURATION IS HAPPENING /////
 // check: NewEpochEvent
@@ -37,9 +34,7 @@ script {
 
 //////////////////////////////////////////////
 //// Trigger reconfiguration again         ///
-//! block-prologue
-//! proposer: alice
-//! block-time: 125000000
+//# block --proposer Alice --time 1 --round 025000000
 //! round: 20
 
 ////// TEST RECONFIGURATION IS HAPPENING /////
@@ -49,9 +44,7 @@ script {
 
 //////////////////////////////////////////////
 //// Trigger reconfiguration again         ///
-//! block-prologue
-//! proposer: alice
-//! block-time: 190000000
+//# block --proposer Alice --time 1 --round 090000000
 //! round: 20
 
 ////// TEST RECONFIGURATION IS HAPPENING /////

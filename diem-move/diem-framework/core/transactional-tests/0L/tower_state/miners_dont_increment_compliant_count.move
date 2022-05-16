@@ -60,7 +60,7 @@ script {
     use DiemFramework::TowerState;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
       EpochBoundary::reconfigure(&vm, 100);
       
       // no change from before epoch boundary

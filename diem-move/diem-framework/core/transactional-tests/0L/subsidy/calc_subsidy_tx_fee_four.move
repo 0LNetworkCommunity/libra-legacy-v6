@@ -1,15 +1,6 @@
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
-//! account: carol, 1000000, 0, validator
-//! account: dave, 1000000, 0, validator
-//! account: eve, 1000000, 0, validator
-//! account: frank, 1000000, 0, validator
-//! account: gene, 1000000, 0, validator
+//# init --validators Alice Bob Carol Dave Eve Frank Gene
 
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
+//# block --proposer Alice --time 1 --round 0
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -22,7 +13,7 @@ script {
   use DiemFramework::Diem;
   use DiemFramework::Globals;
   
-  fun main(vm: signer) {
+  fun main(vm: signer, _: signer) {
     // check the case of a network density of 4 active validators.
 
     let vm = &vm;

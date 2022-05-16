@@ -1,5 +1,4 @@
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
+//# init --validators Alice Bob
 
 // The data will be initialized and operated all through alice's account
 
@@ -8,7 +7,7 @@ script {
     use DiemFramework::Stats;
     use Std::Vector;
 
-    fun main(vm: signer){
+    fun main(vm: signer, _: signer){
       let vm = &vm;
       // Checks that stats was initialized in genesis for Alice.
       let set = Vector::singleton(@Alice);

@@ -1,16 +1,12 @@
-//! account: alice, 1000000, 0, validator
+//# init --validators Alice
 
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
+//# block --proposer Alice --time 1 --round 0
 
 //# run --admin-script --signers DiemRoot DiemRoot
-script {
-  
+script {  
   use DiemFramework::Subsidy;
 
-  fun main(vm: signer) {
+  fun main(vm: signer, _: signer) {
     // assumes no tx fees were paid
     let (total, unit) = Subsidy::calculate_subsidy(&vm, 4);
     assert!(total == 296000000, 7357190101021000);

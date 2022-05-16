@@ -1,23 +1,18 @@
+//# init --validators Alice Bob Carol Dave
+
 // Case 1: Validators are compliant. 
 // This test is to check if validators are present after the first epoch.
 // Here EPOCH-LENGTH = 15 Blocks.
 // NOTE: This test will fail with Staging and Production Constants, only for Debug - due to epoch length.
 
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
-//! account: carol, 1000000, 0, validator
-//! account: dave, 1000000, 0, validator
-
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
+//# block --proposer Alice --time 1 --round 0
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Stats;
 
     // Assumes an epoch changed at round 15
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
       let vm = &vm;
       //proposals
       assert!(Stats::node_current_props(vm, @Alice) == 1, 0);
@@ -31,9 +26,7 @@ script {
 // check: EXECUTED
 
 ///////// ADD A NEW PROPOSAL /////
-//! block-prologue
-//! proposer: alice
-//! block-time: 2
+//# block --proposer Alice --time 2 --round 0
 
 
 //# run --admin-script --signers DiemRoot DiemRoot
@@ -41,7 +34,7 @@ script {
     use Std::Vector;
     use DiemFramework::Stats;
     // This is the the epoch boundary.
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
       let vm = &vm;
 
       assert!(Stats::node_current_props(vm, @Alice) == 2, 735700001);
@@ -75,10 +68,7 @@ script {
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 61000000
-//! round: 15
+//# block --proposer Alice --time 61000000 --round 15
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
@@ -89,7 +79,7 @@ script {
 script {
     use DiemFramework::Stats;
     // use Std::Vector;
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
       let vm = &vm;
       // Testing that reconfigure reset the counter for current epoch.
       assert!(!Stats::node_above_thresh(vm, @Alice, 16, 17), 735700010);

@@ -1,5 +1,4 @@
-//! account: alice, 1000000, 0, validator
-//! account: bob, 1000000, 0, validator
+//# init --validators Alice Bob
 
 // The data will be initialized and operated all through alice's account
 
@@ -8,7 +7,7 @@ script {
     use DiemFramework::Stats;
     use Std::Vector;
 
-    fun main(vm: signer){
+    fun main(vm: signer, _: signer){
       // Check that after a reconfig the counter is reset, and archived in history.
       
       let vm = &vm;
@@ -16,7 +15,6 @@ script {
       assert!(Stats::node_current_props(vm, @Bob) == 0, 7357190201021000);
       assert!(Stats::node_current_votes(vm, @Alice) == 0, 7357190201031000);
       assert!(Stats::node_current_votes(vm, @Bob) == 0, 7357190201041000);
-
 
       Stats::inc_prop(vm, @Alice);
       Stats::inc_prop(vm, @Alice);

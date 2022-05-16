@@ -35,7 +35,7 @@ script {
     use DiemFramework::Wallet;
     use Std::Vector;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
       let bob_balance = DiemAccount::balance<GAS>(@Bob);
       assert!(bob_balance == 1000000, 7357004);
 

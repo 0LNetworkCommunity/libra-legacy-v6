@@ -24,7 +24,7 @@ script {
     use DiemFramework::Wallet;
     use Std::Vector;
 
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
       Wallet::vm_remove_comm(&vm, @Alice);
       let list = Wallet::get_comm_list();
       assert!(Vector::length(&list) == 0, 7357002);

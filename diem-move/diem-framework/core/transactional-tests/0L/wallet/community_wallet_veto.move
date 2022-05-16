@@ -14,7 +14,7 @@
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::TowerState;
-    fun main(vm: signer) {
+    fun main(vm: signer, _: signer) {
       TowerState::test_helper_set_weight_vm(&vm, @Carol, 50);
       TowerState::test_helper_set_weight_vm(&vm, @Dave, 50);
     }

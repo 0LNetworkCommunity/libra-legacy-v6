@@ -32,7 +32,7 @@ script {
 // script {
 //     use DiemFramework::Wallet;
 
-//     fun main(vm: signer) {
+//     fun main(vm: signer, _: signer) {
 //       Wallet::init_comm_list(&vm);
 //     }
 // }

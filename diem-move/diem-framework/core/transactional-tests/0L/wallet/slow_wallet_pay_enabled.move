@@ -9,7 +9,7 @@ use DiemFramework::DiemAccount;
 use DiemFramework::DiemConfig;
 use DiemFramework::Testnet;
 use DiemFramework::EpochBoundary;
-fun main(vm: signer) {
+fun main(vm: signer, _: signer) {
     // transfers are always enabled on testnet, unsetting testnet would make transfers not work, unless the conditions are met.
     Testnet::remove_testnet(&vm);
     assert!(!DiemConfig::check_transfer_enabled(), 735701);
