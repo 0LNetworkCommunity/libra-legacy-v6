@@ -21,7 +21,9 @@ module TowerState {
     use 0x1::Vector;
 
     const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 14;
-
+    
+    // baseline for VDF tower difficulty which is slightly modulated based on a minimal RNG.
+    const DIFFICULTY_BASELINE: u64 = 5000000;
     /// A list of all miners' addresses 
     // reset at epoch boundary
     struct TowerList has key {
@@ -375,11 +377,28 @@ module TowerState {
       get_count_in_epoch(miner_addr) >= Globals::get_epoch_mining_thres_lower()
     }
 
+    fun epoch_param_reset(vm: &signer) acquires VDFDifficulty, TowerList, TowerProofHistory  {
+      CoreAddresses::assert_diem_root(vm);
+
+      let diff = borrow_global_mut<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
+
+      diff.prev_diff = diff.difficulty;
+      diff.prev_sec = diff.security;
+      
+      // NOTE: For now we are not changing the vdf security params.
+      if (!Testnet::is_testnet()) {
+        diff.difficulty = DIFFICULTY_BASELINE + toy_rng(20, 3);
+      }
+    }
+
     // Used at epoch boundary by vm to reset all validator's statistics.
     // Permissions: PUBLIC, ONLY VM.
-    public fun reconfig(vm: &signer, outgoing_validators: &vector<address>) acquires TowerProofHistory, TowerList, TowerCounter {
+    public fun reconfig(vm: &signer, outgoing_validators: &vector<address>) acquires TowerProofHistory, TowerList, TowerCounter, VDFDifficulty {
       // Check permissions
       CoreAddresses::assert_diem_root(vm);
+
+      // update the vdf parameters
+      epoch_param_reset(vm);
 
       // Iterate through validators and call update_metrics for each validator that had proofs this epoch
       let vals_len = Vector::length<address>(outgoing_validators); //TODO: These references are weird

@@ -10,7 +10,9 @@
 -  [Resource `TowerCounter`](#0x1_TowerState_TowerCounter)
 -  [Struct `Proof`](#0x1_TowerState_Proof)
 -  [Resource `TowerProofHistory`](#0x1_TowerState_TowerProofHistory)
+-  [Resource `VDFDifficulty`](#0x1_TowerState_VDFDifficulty)
 -  [Constants](#@Constants_0)
+-  [Function `init_difficulty`](#0x1_TowerState_init_difficulty)
 -  [Function `init_miner_list`](#0x1_TowerState_init_miner_list)
 -  [Function `init_tower_counter`](#0x1_TowerState_init_tower_counter)
 -  [Function `init_miner_list_and_stats`](#0x1_TowerState_init_miner_list_and_stats)
@@ -24,6 +26,7 @@
 -  [Function `verify_and_update_state`](#0x1_TowerState_verify_and_update_state)
 -  [Function `update_epoch_metrics_vals`](#0x1_TowerState_update_epoch_metrics_vals)
 -  [Function `node_above_thresh`](#0x1_TowerState_node_above_thresh)
+-  [Function `epoch_param_reset`](#0x1_TowerState_epoch_param_reset)
 -  [Function `reconfig`](#0x1_TowerState_reconfig)
 -  [Function `init_miner_state`](#0x1_TowerState_init_miner_state)
 -  [Function `first_challenge_includes_address`](#0x1_TowerState_first_challenge_includes_address)
@@ -31,6 +34,7 @@
 -  [Function `reset_rate_limit`](#0x1_TowerState_reset_rate_limit)
 -  [Function `increment_stats`](#0x1_TowerState_increment_stats)
 -  [Function `epoch_reset`](#0x1_TowerState_epoch_reset)
+-  [Function `toy_rng`](#0x1_TowerState_toy_rng)
 -  [Function `get_miner_list`](#0x1_TowerState_get_miner_list)
 -  [Function `get_tower_height`](#0x1_TowerState_get_tower_height)
 -  [Function `get_epochs_compliant`](#0x1_TowerState_get_epochs_compliant)
@@ -43,6 +47,7 @@
 -  [Function `get_fullnode_proofs_in_epoch_above_thresh`](#0x1_TowerState_get_fullnode_proofs_in_epoch_above_thresh)
 -  [Function `get_lifetime_proof_count`](#0x1_TowerState_get_lifetime_proof_count)
 -  [Function `danger_migrate_get_lifetime_proof_count`](#0x1_TowerState_danger_migrate_get_lifetime_proof_count)
+-  [Function `get_difficulty`](#0x1_TowerState_get_difficulty)
 -  [Function `test_helper_init_val`](#0x1_TowerState_test_helper_init_val)
 -  [Function `test_epoch_reset_counter`](#0x1_TowerState_test_epoch_reset_counter)
 -  [Function `test_helper_operator_submits`](#0x1_TowerState_test_helper_operator_submits)
@@ -349,9 +354,63 @@ the miner last created a new account
 
 </details>
 
+<a name="0x1_TowerState_VDFDifficulty"></a>
+
+## Resource `VDFDifficulty`
+
+
+
+<pre><code><b>struct</b> <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> has key
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>difficulty: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>security: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>prev_diff: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>prev_sec: u64</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
 <a name="@Constants_0"></a>
 
 ## Constants
+
+
+<a name="0x1_TowerState_DIFFICULTY_BASELINE"></a>
+
+
+
+<pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_DIFFICULTY_BASELINE">DIFFICULTY_BASELINE</a>: u64 = 5000000;
+</code></pre>
+
 
 
 <a name="0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION"></a>
@@ -362,6 +421,36 @@ the miner last created a new account
 </code></pre>
 
 
+
+<a name="0x1_TowerState_init_difficulty"></a>
+
+## Function `init_difficulty`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_init_difficulty">init_difficulty</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_init_difficulty">init_difficulty</a>(vm: &signer) {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+  move_to&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(vm, <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
+    difficulty: 5000000,
+    security: 512,
+    prev_diff: 5000000,
+    prev_sec: 512,
+  });
+}
+</code></pre>
+
+
+
+</details>
 
 <a name="0x1_TowerState_init_miner_list"></a>
 
@@ -642,15 +731,16 @@ Permissions: PUBLIC, ANYONE
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_commit_state">commit_state</a>(
   miner_sign: &signer,
   proof: <a href="TowerState.md#0x1_TowerState_Proof">Proof</a>
-) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>, <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
   // Get address, assumes the sender is the signer.
   <b>let</b> miner_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign);
 
   // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
   <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
     // Get vdf difficulty constant. Will be different in tests than in production.
-    <b>let</b> difficulty_constant = <a href="Globals.md#0x1_Globals_get_vdf_difficulty">Globals::get_vdf_difficulty</a>();
+    <b>let</b> (difficulty_constant, security) = <a href="TowerState.md#0x1_TowerState_get_difficulty">get_difficulty</a>();
     <b>assert</b>(&proof.difficulty == &difficulty_constant, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
+    <b>assert</b>(&proof.security == &security, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
   };
 
   // This may be the 0th proof of an end user that hasn't had tower state initialized
@@ -869,6 +959,40 @@ Checks to see if miner submitted enough proofs to be considered compliant
 
 </details>
 
+<a name="0x1_TowerState_epoch_param_reset"></a>
+
+## Function `epoch_param_reset`
+
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_epoch_param_reset">epoch_param_reset</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_epoch_param_reset">epoch_param_reset</a>(vm: &signer) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>  {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+
+  <b>let</b> diff = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+
+  diff.prev_diff = diff.difficulty;
+  diff.prev_sec = diff.security;
+
+  // NOTE: For now we are not changing the vdf security params.
+  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
+    diff.difficulty = <a href="TowerState.md#0x1_TowerState_DIFFICULTY_BASELINE">DIFFICULTY_BASELINE</a> + <a href="TowerState.md#0x1_TowerState_toy_rng">toy_rng</a>(20, 3);
+  }
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_TowerState_reconfig"></a>
 
 ## Function `reconfig`
@@ -884,9 +1008,12 @@ Checks to see if miner submitted enough proofs to be considered compliant
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_reconfig">reconfig</a>(vm: &signer, outgoing_validators: &vector&lt;address&gt;) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_reconfig">reconfig</a>(vm: &signer, outgoing_validators: &vector&lt;address&gt;) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>, <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
   // Check permissions
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+
+  // <b>update</b> the vdf parameters
+  <a href="TowerState.md#0x1_TowerState_epoch_param_reset">epoch_param_reset</a>(vm);
 
   // Iterate through validators and call update_metrics for each validator that had proofs this epoch
   <b>let</b> vals_len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(outgoing_validators); //TODO: These references are weird
@@ -1135,11 +1262,74 @@ Reset the tower counter at the end of epoch.
 
 </details>
 
+<a name="0x1_TowerState_toy_rng"></a>
+
+## Function `toy_rng`
+
+Experimental  ///
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_toy_rng">toy_rng</a>(seed: u64, iters: u64): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_toy_rng">toy_rng</a>(seed: u64, iters: u64): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
+  // Get the list of all miners L
+  // Pick a tower miner  (M) from the seed position 1/(N) of the list of miners.
+  <b>let</b> l = <a href="TowerState.md#0x1_TowerState_get_miner_list">get_miner_list</a>();
+
+  // the length will keep incrementing through the epoch. The last miner can know what the starting position will be. There could be a race <b>to</b> be the last validator <b>to</b> augment the set and bias the initial shuffle.
+  <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&l);
+
+  <b>if</b> (len == 0) <b>return</b> 0;
+
+  <b>let</b> n = 0;
+
+  <b>let</b> i = 0;
+
+  <b>while</b> (i &lt; iters) {
+    <b>if</b> (seed &gt; len) {
+        n = seed / len
+      } <b>else</b> <b>if</b> (len &gt; seed) {
+        n = len / seed
+      } <b>else</b> {
+        n = 0;
+      };
+
+    // <b>return</b> zero so the user knows of the error, instead of returning anything halfway though the iters.
+    <b>if</b> (n == 0) <b>return</b> 0;
+    // take the first bit (B) from their last proof hash.
+    <b>let</b> miner_addr = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&l, n);
+
+    <b>let</b> vec = <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(*miner_addr)) {
+      *&borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(*miner_addr).previous_proof_hash
+    } <b>else</b> {
+      <b>return</b> 0
+    };
+
+    n = (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_pop_back">Vector::pop_back</a>(&<b>mut</b> vec) <b>as</b> u64);
+
+    i = i + 1;
+  };
+
+  n
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_TowerState_get_miner_list"></a>
 
 ## Function `get_miner_list`
 
-Public Getters ///
+Getters     ///
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_miner_list">get_miner_list</a>(): vector&lt;address&gt;
@@ -1455,6 +1645,36 @@ Public Getters ///
     <b>return</b> (s.proofs_in_epoch, s.validator_proofs, s.fullnode_proofs)
   };
   (0,0,0)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_get_difficulty"></a>
+
+## Function `get_difficulty`
+
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_get_difficulty">get_difficulty</a>(): (u64, u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_get_difficulty">get_difficulty</a>(): (u64, u64) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
+  <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())) {
+    <b>let</b> v = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+    <b>return</b> (v.difficulty, v.security)
+  } <b>else</b> {
+    // we are probably in the middle of a migration
+    (5000000, 512)
+  }
 }
 </code></pre>
 
