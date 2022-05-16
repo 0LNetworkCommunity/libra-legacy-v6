@@ -48,7 +48,7 @@ use transaction_builder::encode_create_designated_dealer_script_function;
 
 //////// 0L ////////
 use ol_types::{config::IS_PROD, genesis_proof::GenesisMiningProof};
-use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
+use diem_global_constants::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -543,8 +543,8 @@ fn create_and_initialize_owners_operators(
                 MoveValue::Signer(owner_address),
                 MoveValue::vector_u8(preimage),
                 MoveValue::vector_u8(proof),
-                MoveValue::U64(delay_difficulty()), // TODO: make this part of genesis registration
-                MoveValue::U64(VDF_SECURITY_PARAM.into()),
+                MoveValue::U64(genesis_delay_difficulty()), // TODO: make this part of genesis registration
+                MoveValue::U64(GENESIS_VDF_SECURITY_PARAM.into()),
             ]),
         );
 

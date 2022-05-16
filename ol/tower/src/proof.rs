@@ -3,7 +3,7 @@
 use crate::next_proof::{NextProof, self};
 use crate::{backlog, delay::*, preimage::genesis_preimage};
 use anyhow::{bail, Error};
-use diem_global_constants::{delay_difficulty, VDF_SECURITY_PARAM};
+use diem_global_constants::{genesis_delay_difficulty, GENESIS_VDF_SECURITY_PARAM};
 use glob::glob;
 use ol_types::config::AppCfg;
 use ol_types::block::VDFProof;
@@ -14,7 +14,7 @@ use txs::tx_params::TxParams;
 pub const FILENAME: &str = "proof";
 
 // writes a JSON file with the first vdf proof
-fn mine_genesis(config: &AppCfg, difficulty: u64, security: u16) -> VDFProof {
+fn mine_genesis(config: &AppCfg, difficulty: u64, security: u64) -> VDFProof {
     println!("Mining Genesis Proof");
     let preimage = genesis_preimage(&config);
     let now = Instant::now();
@@ -36,8 +36,8 @@ fn mine_genesis(config: &AppCfg, difficulty: u64, security: u16) -> VDFProof {
 
 /// Mines genesis and writes the file
 pub fn write_genesis(config: &AppCfg) -> Result<VDFProof, Error> {
-    let difficulty = delay_difficulty();
-    let security = VDF_SECURITY_PARAM;
+    let difficulty = genesis_delay_difficulty();
+    let security = GENESIS_VDF_SECURITY_PARAM;
     let block = mine_genesis(config, difficulty, security);
     //TODO: check for overwriting file...
     write_json(&block, &config.get_block_dir())?;

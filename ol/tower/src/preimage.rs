@@ -1,7 +1,7 @@
 //! genesis preimage formatting.
 
 use byteorder::{LittleEndian, WriteBytesExt};
-use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
+use diem_global_constants::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
 use hex::decode;
 use ol::config::AppCfg;
 
@@ -34,12 +34,12 @@ pub fn genesis_preimage(cfg: &AppCfg) -> Vec<u8> {
 
     // DIFFICULTY_BYTES
     preimage
-        .write_u64::<LittleEndian>(delay_difficulty())
+        .write_u64::<LittleEndian>(genesis_delay_difficulty())
         .unwrap();
     
     // SECURITY_BYTES
     preimage
-        .write_u64::<LittleEndian>(VDF_SECURITY_PARAM.into())
+        .write_u64::<LittleEndian>(GENESIS_VDF_SECURITY_PARAM.into())
         .unwrap();
     
     // PIETRZAK

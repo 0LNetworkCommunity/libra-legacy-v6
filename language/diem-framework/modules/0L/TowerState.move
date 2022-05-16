@@ -573,7 +573,7 @@ module TowerState {
       // the length will keep incrementing through the epoch. The last miner can know what the starting position will be. There could be a race to be the last validator to augment the set and bias the initial shuffle.
       let len = Vector::length(&l);
       if (len == 0) return 0;
-      
+
       let i = 0;
       while (i < iters) {
         if (seed > len) { n = seed / len }
@@ -587,7 +587,7 @@ module TowerState {
         let vec = if (exists<TowerProofHistory>(*miner_addr)) {
           *&borrow_global<TowerProofHistory>(*miner_addr).previous_proof_hash
         }
-        else { eturn 0 };
+        else { return 0 };
         
         n = (Vector::pop_back(&mut vec) as u64);
 

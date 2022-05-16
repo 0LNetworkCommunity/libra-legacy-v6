@@ -20,7 +20,7 @@ pub struct VDFProof {
     /// The iterations of the circuit
     pub difficulty: Option<u64>, // option to make backwards compatible reads
     /// the security parameter of the proof.
-    pub security: Option<u16>,
+    pub security: Option<u64>,
 }
 
 impl VDFProof {
