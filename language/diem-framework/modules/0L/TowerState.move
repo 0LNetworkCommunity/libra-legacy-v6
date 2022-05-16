@@ -224,17 +224,14 @@ module TowerState {
     ) acquires TowerProofHistory, TowerList, TowerCounter, VDFDifficulty {
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
-      
-      // Skip this check on local tests, we need tests to send different difficulties.
-      if (!Testnet::is_testnet()){
-        // Get vdf difficulty constant. Will be different in tests than in production.
-        let (difficulty_constant, security) = get_difficulty();
-        assert(&proof.difficulty == &difficulty_constant, Errors::invalid_argument(130102));
-        assert(&proof.security == &security, Errors::invalid_argument(13010202));
-      };
+      let diff = borrow_global_mut<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
 
       // This may be the 0th proof of an end user that hasn't had tower state initialized
       if (!is_init(miner_addr)) {
+        
+        assert(&proof.difficulty == &diff.difficulty, Errors::invalid_argument(130102));
+        assert(&proof.security == &diff.security, Errors::invalid_argument(13010202));
+
         // check proof belongs to user.
         let (addr_in_proof, _) = VDF::extract_address_from_challenge(&proof.challenge);
         assert(addr_in_proof == Signer::address_of(miner_sign), Errors::requires_role(130112));
@@ -243,6 +240,27 @@ module TowerState {
         return
       };
 
+
+      // Skip this check on local tests, we need tests to send different difficulties.
+      if (!Testnet::is_testnet()){
+        // Get vdf difficulty constant. Will be different in tests than in production.
+        
+        // need to also give allowance for user's first proof in epoch to be in the last proof.
+        if (get_count_in_epoch(miner_addr) == 0) { 
+          // first proof in this epoch, can be either the previous difficulty or the current one
+          let is_diff = &proof.difficulty == &diff.difficulty ||
+          &proof.difficulty == &diff.prev_diff;
+
+          let is_sec = &proof.difficulty == &diff.security ||
+          &proof.difficulty == &diff.prev_sec;
+
+          assert(is_diff, Errors::invalid_argument(130102));
+          assert(is_sec, Errors::invalid_argument(13010202));
+        } else {
+          assert(&proof.difficulty == &diff.difficulty, Errors::invalid_argument(130102));
+          assert(&proof.security == &diff.security, Errors::invalid_argument(13010202));
+        };
+      };
       // Process the proof
       verify_and_update_state(miner_addr, proof, true);
     }
