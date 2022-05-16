@@ -564,28 +564,21 @@ module TowerState {
     // the first use case is to change the VDF difficulty parameter by tiny margins, in order to make it difficult to stockpile VDFs in a previous epoch, but not change the security properties.
     // the goal is to push all the RNG work to all the tower miners in the network, and minimize compute on the Move side
     public fun toy_rng(seed: u64, iters: u64): u64 acquires TowerList, TowerProofHistory {
+      // a failed rng returns 0
+      let n = 0;
       // Get the list of all miners L
       // Pick a tower miner  (M) from the seed position 1/(N) of the list of miners.
       let l = get_miner_list();
 
       // the length will keep incrementing through the epoch. The last miner can know what the starting position will be. There could be a race to be the last validator to augment the set and bias the initial shuffle.
       let len = Vector::length(&l);
-
       if (len == 0) return 0;
-
-      let n = 0;
-
-      let i = 0;
       
+      let i = 0;
       while (i < iters) {
-        if (seed > len) {
-            n = seed / len
-          } else if (len > seed) {
-            n = len / seed
-          } else {
-            n = 0;
-          };
-        
+        if (seed > len) { n = seed / len }
+              else if (len > seed) { n = len / seed } 
+              else { n = 0 };
         // return zero so the user knows of the error, instead of returning anything halfway though the iters.
         if (n == 0) return 0;
         // take the first bit (B) from their last proof hash.
@@ -593,9 +586,8 @@ module TowerState {
         
         let vec = if (exists<TowerProofHistory>(*miner_addr)) {
           *&borrow_global<TowerProofHistory>(*miner_addr).previous_proof_hash
-        } else {
-          return 0
-        };
+        }
+        else { eturn 0 };
         
         n = (Vector::pop_back(&mut vec) as u64);
 
