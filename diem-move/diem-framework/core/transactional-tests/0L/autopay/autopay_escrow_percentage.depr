@@ -17,8 +17,7 @@ module {{default}}::Holder {
 }
 
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::AccountLimits;
     use DiemFramework::CoreAddresses;
@@ -97,8 +96,7 @@ script {
 // check: EXECUTED
 
 // Checking balance before autopay module
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
@@ -141,8 +139,7 @@ script {
 //! round: 24
 ///////////////////////////////////////////////////
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
@@ -178,8 +175,7 @@ script {
 ///////////////////////////////////////////////////
 
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;

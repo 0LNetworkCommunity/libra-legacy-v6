@@ -1,9 +1,9 @@
-//! account: alice, 1000000GAS, 0, validator
-//! account: bob, 1000000GAS, 0
+//# init --validators Alice
+//#      --addresses Bob=0x4b7653f6566a52c9b496f245628a69a0
+//#      --private-keys Bob=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
 
-//! block-prologue
-//! proposer: alice
-//! block-time: 1
+//# block --proposer Alice --time 1 --round 0
+
 //! NewBlockEvent
 
 //# run --admin-script --signers DiemRoot Bob
@@ -15,7 +15,7 @@ script {
     use DiemFramework::TestFixtures;
     use DiemFramework::Debug::print;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         // Tests on initial size of validators
         assert!(DiemSystem::is_validator(@Alice), 7357300101021000);
         assert!(!DiemSystem::is_validator(@Bob), 7357300101031000);
@@ -45,17 +45,13 @@ script {
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
-//! block-prologue
-//! proposer: alice
-//! block-time: 61000000
-//! round: 15
+//# block --proposer Alice --time 61000000 --round 15
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {  
     // use DiemFramework::NodeWeight;
     use DiemFramework::GAS::GAS;
@@ -64,7 +60,7 @@ script {
     use DiemFramework::Globals;
     use DiemFramework::Debug::print;
 
-    fun main(_vm: signer) {
+    fun main() {
         // We are in a new epoch.
 
         let expected_subsidy = Subsidy::subsidy_curve(

@@ -19,8 +19,7 @@
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {  
     use DiemFramework::Debug::print;
     fun main(_vm: signer) {

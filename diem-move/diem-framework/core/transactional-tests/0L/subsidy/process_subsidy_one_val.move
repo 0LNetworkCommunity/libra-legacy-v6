@@ -1,19 +1,14 @@
+//# init --validators Alice Bob Carol Dave
+
 // ALICE is CASE 1
-//! account: alice, 1000000GAS, 0, validator
-
 // BOB is CASE 2
-//! account: bob, 1000000GAS, 0, validator
-
 // BOB is CASE 3
-//! account: carol, 1000000GAS, 0, validator
-
 // BOB is CASE 4
-//! account: dave, 1000000GAS, 0, validator
 
 //# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::TowerState;
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         //NOTE: Alice is Case 1, she validates and mines. Setting up mining.
         let mining_proofs = 5;
         TowerState::test_helper_mock_mining(&sender, mining_proofs);
@@ -26,7 +21,7 @@ script {
 //# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::TowerState;
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         let mining_proofs = 5;
       //NOTE: Carol is Case 3, she mines but does not validate. Setting up mining.
         TowerState::test_helper_mock_mining(&sender, mining_proofs);

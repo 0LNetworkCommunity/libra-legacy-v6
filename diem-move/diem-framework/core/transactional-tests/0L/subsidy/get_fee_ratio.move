@@ -1,4 +1,4 @@
-//# init --validators Alice
+//# init --validators Alice Bob
 //// Old syntax for reference, delete it after fixing this test
 //! account: alice, 1, 0, validator
 //! account: bob, 1, 0, validator
@@ -6,7 +6,7 @@
 //# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::TowerState;
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
     }
 }
@@ -15,7 +15,7 @@ script {
 //# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         TowerState::test_helper_mock_mining(&sender, 5);
     }
 }
@@ -25,7 +25,7 @@ script {
 script {
   use Std::Vector;
   use DiemFramework::Stats;
-  use DiemFramework::FixedPoint32;
+  use Std::FixedPoint32;
   use DiemFramework::DiemSystem;
 
   fun main(vm: signer, _: signer) {

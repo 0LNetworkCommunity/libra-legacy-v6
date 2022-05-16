@@ -10,8 +10,7 @@
 
 // test runs various autopay instruction types to ensure they are being executed as expected
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::AccountLimits;
     use DiemFramework::CoreAddresses;
@@ -34,8 +33,7 @@ use DiemFramework::GAS::GAS;
 }
 // check: "Keep(EXECUTED)"
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 //! execute-as: jim
 script {
 use DiemFramework::AccountLimits;
@@ -48,8 +46,7 @@ use DiemFramework::GAS::GAS;
 }
 // check: "Keep(EXECUTED)"
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 //! execute-as: lucy
 script {
 use DiemFramework::AccountLimits;
@@ -62,8 +59,7 @@ use DiemFramework::GAS::GAS;
 }
 // check: "Keep(EXECUTED)"
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 //! execute-as: paul
 script {
 use DiemFramework::AccountLimits;
@@ -76,8 +72,7 @@ use DiemFramework::GAS::GAS;
 }
 // check: "Keep(EXECUTED)"
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 //! execute-as: thomas
 script {
 use DiemFramework::AccountLimits;
@@ -90,8 +85,7 @@ use DiemFramework::GAS::GAS;
 }
 // check: "Keep(EXECUTED)"
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 //! execute-as: denice
 script {
 use DiemFramework::AccountLimits;
@@ -104,8 +98,7 @@ use DiemFramework::GAS::GAS;
 }
 // check: "Keep(EXECUTED)"
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 //! execute-as: carlos
 script {
 use DiemFramework::AccountLimits;
@@ -118,8 +111,7 @@ use DiemFramework::GAS::GAS;
 }
 // check: "Keep(EXECUTED)"
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 //! execute-as: eric
 script {
 use DiemFramework::AccountLimits;
@@ -238,8 +230,7 @@ script {
 //! round: 24
 ///////////////////////////////////////////////////
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::AutoPay2;
   use DiemFramework::DiemAccount;
@@ -308,8 +299,7 @@ script {
 //! round: 67
 ///////////////////////////////////////////////////
 
-//! new-transaction
-//! sender: diemroot
+//# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;

@@ -1,11 +1,11 @@
-//! account: alice, 1000000, 0 , validator
+//# init --validators Alice
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::Subsidy;
   use DiemFramework::Globals;
 
-  fun main(_vm: signer) {
+  fun main() {
     // expected subsidy for <= 4 should be the subsidy ceiling
 
     let expected_subsidy = Subsidy::subsidy_curve(
