@@ -5,8 +5,7 @@
 
 // Setup accounts.
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::MinerState;
     use DiemFramework::TestFixtures;
@@ -26,8 +25,7 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::MinerState;
     use DiemFramework::TestFixtures;

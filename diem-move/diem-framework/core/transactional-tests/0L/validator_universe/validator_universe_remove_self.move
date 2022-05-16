@@ -2,8 +2,7 @@
 //! account: bob, 100000 ,0, validator
 
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script{
 use DiemFramework::ValidatorUniverse;
 

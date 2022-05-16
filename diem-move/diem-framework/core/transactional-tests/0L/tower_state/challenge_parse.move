@@ -1,8 +1,7 @@
 
 //! account: dummy-prevents-genesis-reload, 100000 ,0, validator
 //! account: bob, 10000000GAS
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
     fun main() {
@@ -32,8 +31,7 @@ script {
 // check: EXECUTED
 
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
 

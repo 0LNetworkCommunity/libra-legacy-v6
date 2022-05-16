@@ -1,8 +1,7 @@
 //! account: alice, 1000GAS, 0, validator
 //! account: bob, 1000000GAS
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::DiemAccount;
   use Std::Vector;

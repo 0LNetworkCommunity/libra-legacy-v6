@@ -4,8 +4,7 @@
 // Bob Submits a CORRECT VDF Proof, and that updates the state.
 //! account: alice, 10000000GAS
 //! account: bob, 10000000GAS
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;

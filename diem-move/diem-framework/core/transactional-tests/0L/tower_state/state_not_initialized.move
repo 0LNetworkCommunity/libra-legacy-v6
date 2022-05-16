@@ -8,8 +8,7 @@
 // this tests at least that someone cannot send a transaction with someone else's genesis proof.
 
 // BOB Submits ALICE's GENESIS VDF Proof
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;

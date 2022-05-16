@@ -6,8 +6,7 @@
 //! block-time: 1
 //! NewBlockEvent
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::MinerState;

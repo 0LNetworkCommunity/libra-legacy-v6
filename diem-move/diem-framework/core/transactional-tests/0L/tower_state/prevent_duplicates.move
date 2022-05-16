@@ -4,8 +4,7 @@
 
 // Bob Submits a CORRECT VDF Proof, and that updates the state.
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;
@@ -27,8 +26,7 @@ script {
 // check: EXECUTED
 
 // Bob Submit the Duplicated CORRECT VDF Proof, which he just sent.
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;

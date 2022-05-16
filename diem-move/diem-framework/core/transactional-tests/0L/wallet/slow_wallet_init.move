@@ -2,8 +2,7 @@
 //! account: bob, 1000000GAS,
 
 // Tests that the slow wallet list at 0x0 is initialized at genesis, with validators (1)
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::DiemAccount;
     use Std::Vector;

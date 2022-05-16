@@ -12,8 +12,7 @@ script {
 }
 //check: EXECUTED
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
     fun main(sender: signer) {

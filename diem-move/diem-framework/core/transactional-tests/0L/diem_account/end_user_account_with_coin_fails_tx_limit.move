@@ -1,7 +1,6 @@
 //! account: bob, 10000000, 0, validator
 
-//! new-transaction
-//! sender: bob
+//# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
