@@ -36,6 +36,8 @@ diemdb = { path = "../../../storage/diemdb" }
 storage-interface = { path = "../../../storage/storage-interface" }
 diem-transaction-builder = { path = "../../../sdk/transaction-builder" }
 vm-genesis = { path = "../../../language/tools/vm-genesis" }
+reqwest = { version = "0.11.2", features = ["blocking", "json"], default_features = false }
+
 
 # //////// 0L ////////
 rustyline = "6.2.0"

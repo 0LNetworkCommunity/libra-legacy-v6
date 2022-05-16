@@ -8,17 +8,18 @@ use diem_json_rpc_types::views::TransactionView;
 use diem_transaction_builder::stdlib as transaction_builder;
 use ol_keys::{wallet, scheme::KeyScheme};
 use ol_types::{config::TxType, account::ValConfigs};
+use reqwest::Url;
 use crate::submit_tx::{TxError, maybe_submit, tx_params_wrapper};
 use crate::tx_params::TxParams;
-use std::{process::exit, net::Ipv4Addr};
+use std::process::exit;
 
 /// `IpAddrUpdate` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValConfigCmd {
     #[options(short = "v", help = "the validator's new ip address")]
-    val_ip: Option<Ipv4Addr>,
+    val_ip: Option<Url>,
     #[options(short = "f", help = "the fullnode of the validator's ip address")]
-    vfn_ip: Option<Ipv4Addr>,
+    vfn_ip: Option<Url>,
 }
 
 impl Runnable for ValConfigCmd {

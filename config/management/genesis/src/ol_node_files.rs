@@ -23,6 +23,7 @@ use ol_types::account::ValConfigs;
 use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
 use diem_crypto::x25519::PrivateKey;
+use reqwest::Url;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum NodeType {
@@ -60,7 +61,7 @@ pub struct Files {
     #[structopt(long, verbatim_doc_comment)]
     layout_path: Option<PathBuf>,
     #[structopt(long, verbatim_doc_comment)]
-    val_ip_address: Option<Ipv4Addr>,
+    val_base_url: Option<Url>,
     #[structopt(long, verbatim_doc_comment)]
     seed_peers_path: Option<PathBuf>,
 }
@@ -77,7 +78,7 @@ impl Files {
             &self.fullnode_only,
             self.seed_peers_path,
             &self.layout_path,
-            self.val_ip_address,
+            self.val_base_url,
         )
         .map_err(|e| {
             Error::ConfigError(format!(
@@ -98,7 +99,7 @@ pub fn onboard_helper_all_files(
     _fullnode_only: &bool,
     seed_peers_path: Option<PathBuf>,
     layout_path: &Option<PathBuf>,
-    val_ip_address: Option<Ipv4Addr>,
+    val_base_url: Option<Url>,
 ) -> Result<NodeConfig, anyhow::Error> {
     // TODO: Do we need github token path with public repo?
     let chain_id = ChainId::new(chain_id);
@@ -126,11 +127,11 @@ pub fn onboard_helper_all_files(
       Some(yaml)
     } else { None };
 
-    let vfn_ip_address = val_ip_address.clone();
+    let vfn_ip_address = val_base_url.clone();
     // This next step depends on genesis waypoint existing in key_store.
     make_all_profiles_yaml(
       output_dir,
-      val_ip_address.expect("missing an ip address for validator"),
+      val_base_url.expect("missing an ip address for validator"),
       vfn_ip_address, 
       seeds,
       namespace, 
@@ -157,8 +158,8 @@ fn update_genesis_waypoint_in_key_store(
 /// Make all the node configurations needed
 pub fn make_all_profiles_yaml(
     output_dir: PathBuf,
-    val_ip_address: Ipv4Addr,
-    vfn_ip_address: Option<Ipv4Addr>,
+    val_base_url: Url,
+    vfn_base_url: Option<Url>,
     seed_addr: Option<SeedAddresses>,
     namespace: &str,
     genesis_waypoint: Waypoint,
@@ -166,8 +167,8 @@ pub fn make_all_profiles_yaml(
 ) -> Result<NodeConfig, anyhow::Error> {
 
 
-    let config = make_val_file(output_dir.clone(), vfn_ip_address, namespace)?;
-    make_vfn_file(output_dir.clone(), val_ip_address, genesis_waypoint, namespace)?;
+    let config = make_val_file(output_dir.clone(), vfn_base_url, namespace)?;
+    make_vfn_file(output_dir.clone(), val_base_url, genesis_waypoint, namespace)?;
     make_fullnode_file(output_dir.clone(), seed_addr, genesis_waypoint)?;
 
     Ok(config)
@@ -178,7 +179,7 @@ pub fn make_all_profiles_yaml(
 pub fn make_val_file(
     output_dir: PathBuf,
     // val_ip_address: Ipv4Addr,
-    _vfn_ip_address: Option<Ipv4Addr>,
+    _vfn_ip_address: Option<Url>,
     namespace: &str,
 ) -> Result<NodeConfig, anyhow::Error> {
   // TODO: The validator's connection to VFN should be restricted to the vfn_ip_address
@@ -190,11 +191,11 @@ pub fn make_val_file(
 // helper to write a new validator.node.yaml file.
 pub fn make_vfn_file(
     output_dir: PathBuf,
-    val_ip_address: Ipv4Addr,
+    val_base_url: Url,
     gen_wp: Waypoint,
     namespace: &str,
 ) -> Result<(), anyhow::Error> {
-    let mut vfn = make_vfn_cfg(output_dir.clone(), gen_wp, val_ip_address, namespace)?;
+    let mut vfn = make_vfn_cfg(output_dir.clone(), gen_wp, val_base_url, namespace)?;
     write_yaml(output_dir.clone(), &mut vfn, NodeType::ValidatorFullNode)
 }
 
@@ -384,7 +385,7 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
 pub fn make_vfn_cfg(
     output_dir: PathBuf,
     waypoint: Waypoint,
-    val_ip_address: Ipv4Addr,
+    val_base_url: Url,
     namespace: &str,
 ) -> Result<NodeConfig, anyhow::Error> {
     let mut c = NodeConfig::default();
@@ -428,7 +429,7 @@ pub fn make_vfn_cfg(
     let seeds = encode_validator_seed_for_vfn_discovery(
       owner_address_as_fn_id, 
       p.public_key(), 
-      val_ip_address
+      val_base_url
     )?;
 
     // The seed for the VFN is the validator's ID on the private network.
@@ -472,12 +473,12 @@ pub fn make_vfn_cfg(
 fn encode_validator_seed_for_vfn_discovery(
     validator_account: AccountAddress,
     val_net_pubkey: PublicKey,
-    ip_address: Ipv4Addr,
+    base_url: Url,
 ) -> Result<PeerSet, Error> {
     // construct seed peer info, using the validator's ID it uses on the private network VALIDATOR_NETWORK_KEY
 
     let role = PeerRole::Validator;
-    let val_addr = ValConfigs::make_unencrypted_addr(&ip_address, val_net_pubkey, NetworkId::Private("vfn".to_owned()));
+    let val_addr = ValConfigs::make_unencrypted_addr(&base_url, val_net_pubkey, NetworkId::Private("vfn".to_owned()));
     let val_peer_data = Peer::from_addrs(role, vec![val_addr]);
 
     // The seed address for the VFN can only be the Validator's address.

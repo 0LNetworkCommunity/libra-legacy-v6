@@ -2018,6 +2018,7 @@ dependencies = [
  "ol-keys",
  "ol-types",
  "rand 0.8.4",
+ "reqwest 0.11.2",
  "rustyline 6.3.0",
  "serde",
  "serde_json",
