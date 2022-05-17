@@ -15,7 +15,7 @@ use crate::{
     state_replication::StateComputer,
     util::time_service::TimeService,
 };
-use anyhow::{bail, ensure, format_err, Context};
+use anyhow::{anyhow, bail, ensure, format_err, Context};
 use consensus_types::{
     block::Block, executed_block::ExecutedBlock, quorum_cert::QuorumCert, sync_info::SyncInfo,
     timeout_certificate::TimeoutCertificate,
@@ -220,7 +220,8 @@ impl BlockStore {
                 finality_proof,
             )
             .await
-            .expect("Failed to persist commit");
+            .map_err(|_| anyhow!("Failed to persist commit"))?;
+
         update_counters_for_committed_blocks(&blocks_to_commit);
         let current_round = self.root().round();
         let committed_round = block_to_commit.round();
