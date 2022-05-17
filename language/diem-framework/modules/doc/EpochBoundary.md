@@ -16,6 +16,7 @@
 <pre><code><b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
 <b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="Burn.md#0x1_Burn">0x1::Burn</a>;
+<b>use</b> <a href="Cases.md#0x1_Cases">0x1::Cases</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
@@ -206,7 +207,11 @@
 
 
 <pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt; {
+    print(&99999999999999);
+
     // Propose upcoming validator set:
+    // Get validators we know <b>to</b> be in consensus correctly: Case1 and Case2
+    // Only expand the amount of seats so that the new set has a max of 25% unproven nodes. I.e. nodes that were not in the previous epoch and we have stats on.
 
     // in emergency admin roles set the validator set
     // there may be a recovery set <b>to</b> be used.
@@ -217,31 +222,77 @@
       <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&recovery_vals) &gt; 0) <b>return</b> recovery_vals;
     };
 
-    // save all the eligible list, before the jailing removes them.
-    <b>let</b> proposed_set = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>();
+
+    // find good new validators
+    // limit the amount of validators so that the new set doesn't have
+    // 25% of nodes that we don't know their current performance.
+
+    <b>let</b> previous_set = <a href="DiemSystem.md#0x1_DiemSystem_get_val_set_addr">DiemSystem::get_val_set_addr</a>();
+    <b>let</b> proven_nodes = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
+
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&previous_set)) {
+        <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&previous_set, i);
+        <b>let</b> case = <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_now);
+        // <b>let</b> mined_last_epoch = <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr);
+        // TODO: temporary until jailing is enabled.
+        <b>if</b> (
+          // TODO: We should <b>include</b> CASE 2
+          (case == 1 || case == 2) &&
+          // case == 1 &&
+          <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
+        ) {
+            <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proven_nodes, addr);
+        };
+        i = i+ 1;
+    };
+
+    <b>let</b> len_proven_nodes = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proven_nodes);
+    <b>let</b> max_unproven_nodes = len_proven_nodes / 6;
+    print(&len_proven_nodes);
+    print(&max_unproven_nodes);
+    // start from the proven nodes
+    <b>let</b> proposed_set = proven_nodes;
+
 
     <b>let</b> top_accounts = <a href="NodeWeight.md#0x1_NodeWeight_top_n_accounts">NodeWeight::top_n_accounts</a>(
         vm, <a href="Globals.md#0x1_Globals_get_max_validators_per_set">Globals::get_max_validators_per_set</a>()
     );
 
+    // we also need <b>to</b> explicitly filter those which did not do work.
     <b>let</b> jailed_set = <a href="DiemSystem.md#0x1_DiemSystem_get_jailed_set">DiemSystem::get_jailed_set</a>(vm, height_start, height_now);
 
+    print(&top_accounts);
+    print(&jailed_set);
 
-
+    // <b>let</b> jailed_set = <a href="DiemSystem.md#0x1_DiemSystem_get_jailed_set">DiemSystem::get_jailed_set</a>(vm, height_start, height_now);
+    // find the top unproven nodes and add <b>to</b> the proposed set
     <b>let</b> i = 0;
-    <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&top_accounts)) {
+    <b>while</b> (
+      i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&top_accounts) &&
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proposed_set) &lt; len_proven_nodes + max_unproven_nodes
+    ) {
         <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&top_accounts, i);
         <b>let</b> mined_last_epoch = <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr);
-        // TODO: temporary until jailing is enabled.
+
+        print(&addr);
+
         <b>if</b> (
-            !<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&jailed_set, &addr) &&
+            // ignore those already on list
+            !<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&proposed_set, &addr) &&
+            // jail the current validators which did not perform.
+            !<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&jailed_set, &addr) &&
+            // check the unproven node has done a minimum of work
             mined_last_epoch &&
             <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
         ) {
+            print(&901);
             <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proposed_set, addr);
         };
         i = i+ 1;
     };
+
+    print(&proposed_set);
 
 
     // If the cardinality of validator_set in the next epoch is less than 4,
@@ -291,7 +342,6 @@
     // Migrate <a href="TowerState.md#0x1_TowerState">TowerState</a> list from elegible.
     <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &outgoing_compliant);
 
-    print(&99999999999999);
 
     // process community wallets
     <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">DiemAccount::process_community_wallets</a>(vm, <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());

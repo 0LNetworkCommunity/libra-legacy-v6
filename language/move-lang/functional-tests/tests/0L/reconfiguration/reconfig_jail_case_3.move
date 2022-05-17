@@ -28,11 +28,11 @@ script {
     use 0x1::DiemSystem;
 
     fun main(vm: signer) {
-        Mock::mock_case_1(&vm, @{{alice}});
-        Mock::mock_case_1(&vm, @{{bob}});
-        Mock::mock_case_1(&vm, @{{carol}});
-        Mock::mock_case_1(&vm, @{{dave}});
-        Mock::mock_case_1(&vm, @{{eve}});
+        Mock::mock_case_1(&vm, @{{alice}}, 0, 15);
+        Mock::mock_case_1(&vm, @{{bob}}, 0, 15);
+        Mock::mock_case_1(&vm, @{{carol}}, 0, 15);
+        Mock::mock_case_1(&vm, @{{dave}}, 0, 15);
+        Mock::mock_case_1(&vm, @{{eve}}, 0, 15);
 
         /// Frank will mine, but not sign
 
@@ -44,21 +44,6 @@ script {
     }
 }
 //check: EXECUTED
-
-// //! new-transaction
-// //! sender: frank
-// script {    
-//     use 0x1::TowerState;
-//     use 0x1::Signer;
-//     use 0x1::AutoPay;
-
-//     fun main(sender: signer) {
-//         AutoPay::enable_autopay(&sender);
-//         TowerState::test_helper_mock_mining(&sender, 5);
-//         assert(TowerState::get_count_in_epoch(Signer::address_of(&sender)) == 5, 73570001);
-//     }
-// }
-// //check: EXECUTED
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////

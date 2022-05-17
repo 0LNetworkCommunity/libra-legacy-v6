@@ -106,6 +106,7 @@ before and after every transaction.
 -  [Function `unlocked_amount`](#0x1_DiemAccount_unlocked_amount)
 -  [Function `get_slow_list`](#0x1_DiemAccount_get_slow_list)
 -  [Function `test_helper_create_signer`](#0x1_DiemAccount_test_helper_create_signer)
+-  [Function `test_remove_slow`](#0x1_DiemAccount_test_remove_slow)
 -  [Module Specification](#@Module_Specification_4)
     -  [Access Control](#@Access_Control_5)
         -  [Key Rotation Capability](#@Key_Rotation_Capability_6)
@@ -6332,6 +6333,40 @@ inflation by x% per day from the start of network.
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
     <b>assert</b>(is_testnet(), 120102011021);
     <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(addr)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_test_remove_slow"></a>
+
+## Function `test_remove_slow`
+
+should only by called by testnet, once a slow wallet, always a slow wallet.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_test_remove_slow">test_remove_slow</a>(vm: &signer, addr: address)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_test_remove_slow">test_remove_slow</a>(vm: &signer, addr: address) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_SlowWalletList">SlowWalletList</a>, <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+    <b>assert</b>(is_testnet(), 120102011021);
+
+    <b>let</b> l = borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount_SlowWalletList">SlowWalletList</a>&gt;(<a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm));
+    <b>let</b> (found, i) = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&l.list, &addr);
+    <b>if</b> (found) {
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> l.list, i);
+    };
+
+    <b>let</b> _ = borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a>&gt;(addr);
 }
 </code></pre>
 

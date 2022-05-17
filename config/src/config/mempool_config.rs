@@ -40,21 +40,18 @@ pub struct MempoolConfig {
 impl Default for MempoolConfig {
     fn default() -> MempoolConfig {
         MempoolConfig {
-            shared_mempool_tick_interval_ms: 500, //////// 0L ////////
-            shared_mempool_backoff_interval_ms: 30_000,
-            shared_mempool_batch_size: 50, //////// 0L //////// smaller batches for lower memory footprint. VDF proofs are expensive
-            shared_mempool_ack_timeout_ms: 10_000, //////// 0L //////// the peer may need more time to ack a broadcast in cases of network overload.
+            shared_mempool_tick_interval_ms: 5_000, //////// 0L //////// 
+            shared_mempool_backoff_interval_ms: 3_000, //////// 0L ////////
+            shared_mempool_batch_size: 100,
+            shared_mempool_ack_timeout_ms: 2_000,
             shared_mempool_max_concurrent_inbound_syncs: 2,
-            // 0L TODO: Maybe this should be infinity? Never stop broadcasting to peer? For state sync this should be infinity, not sure about shared mempool.
-            max_broadcasts_per_peer: 100, /////// 0L ////////
+            max_broadcasts_per_peer: 5, //////// 0L ////////
             mempool_snapshot_interval_secs: 180,
-            // 0L TODO: Change this
-            capacity: 250, //////// 0L //////// EXPERIMENTAL reduce the mempool size, VDF txs create a backlog
-            capacity_per_user: 1, //////// 0L //////// no reason for a given user to be able to submit more than txs to mempool.
-            default_failovers: 3, // this only applies to fullnodes
-            system_transaction_timeout_secs: 30, //////// 0L //////// system transaction expiry. A tx should not remain in pool for more than 30 secs
-            // 0L TODO: change this
-            system_transaction_gc_interval_ms: 1000, //////// 0L //////// Garbage collection shoul happen frequently. More frequently than tx timeouts
+            capacity: 1_000, ///////// 0L //////// Reduce size of mempool due to VDF cost.
+            capacity_per_user: 1, // no reason for a given user to be ablet to submit more than tree txs to mempool.
+            default_failovers: 3,
+            system_transaction_timeout_secs: 1000, //////// 0L //////// transacitons should timeout under this time
+            system_transaction_gc_interval_ms: 1000, /////// 0L //////// increase rate of GC
         }
     }
 }
