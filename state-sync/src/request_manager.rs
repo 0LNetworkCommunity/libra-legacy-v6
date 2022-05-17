@@ -154,7 +154,7 @@ impl RequestManager {
           &peer.raw_network_id().to_string(),
           &peer.peer_id().to_string(),
         ])
-        .observe(0);
+        .observe(0.0);
 
         info!(LogSchema::new(LogEntry::LostPeer).peer(&peer));
 
