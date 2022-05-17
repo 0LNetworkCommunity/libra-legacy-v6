@@ -154,6 +154,7 @@ fn gen_ack_response(
         // 0L TODO: when is backoff submitted when mempool is full.
         if submission_status.0.code == MempoolStatusCode::MempoolIsFull {
             dbg!("mempool is full, responding to peer with backoff.");
+            counters::SELF_REQUEST_BACKOFF.inc();
             backoff = true;
         }
         if is_txn_retryable(submission_status) {

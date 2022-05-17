@@ -148,7 +148,7 @@ async fn handle_consensus_request<V>(
     let _timer =
         counters::task_spawn_latency_timer(counters::CONSENSUS_REQUEST_LABEL, counters::SPAWN_LABEL);
     // This timer measures how long it took for the task to go from scheduled to started.
-    let task_start_timer =
+    let _task_start_timer =
         counters::task_spawn_latency_timer(counters::CONSENSUS_REQUEST_LABEL, counters::START_LABEL);
 
     bounded_executor

@@ -344,3 +344,25 @@ pub static MAIN_LOOP: Lazy<DurationHistogram> = Lazy::new(|| {
         .unwrap(),
     )
 });
+
+//////// 0L ////////
+
+/// Number of disabled peer events
+pub static DISABLE_PEER_EVENT: Lazy<IntGaugeVec> = Lazy::new(|| {
+    register_int_gauge_vec!(
+        "diem_state_sync_disable_peer_event",
+        "Number of times a disconnection event happened",
+        &["network"]
+    )
+    .unwrap()
+});
+
+/// The score of the remote state sync peers.
+pub static SYNC_PEER_SCORE: Lazy<HistogramVec> = Lazy::new(|| {
+    register_histogram_vec!(
+        "diem_state_sync_peer_score",
+        "Score of the peer",
+        &["network", "peer"]
+    )
+    .unwrap()
+});

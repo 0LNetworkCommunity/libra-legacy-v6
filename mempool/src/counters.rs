@@ -56,7 +56,7 @@ pub const RECONFIG_EVENT_LABEL: &str = "reconfig";
 pub const PEER_BROADCAST_EVENT_LABEL: &str = "peer_broadcast";
 
 //////// 0L ////////
-pub const CONSENSUS_REQUEST_LABEL: &str = "consensu_request";
+pub const CONSENSUS_REQUEST_LABEL: &str = "consensus_request";
 
 
 // task spawn stage labels
@@ -452,4 +452,16 @@ pub static MAIN_LOOP: Lazy<DurationHistogram> = Lazy::new(|| {
         )
         .unwrap(),
     )
+});
+
+
+
+//////// 0L ////////
+/// Counter for my node 
+pub static SELF_REQUEST_BACKOFF: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "diem_mempool_self_request_backoff",
+        "Number of times my node requested backoff"
+    )
+    .unwrap()
 });

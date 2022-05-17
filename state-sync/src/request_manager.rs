@@ -144,6 +144,17 @@ impl RequestManager {
 
     pub fn disable_peer(&mut self, peer: &PeerNetworkId) -> Result<(), Error> {
         error!("disable_peer {:?}", &peer);
+        //////// 0L ////////
+        counters::DISABLE_PEER_EVENT
+            .with_label_values(&[&peer.raw_network_id().to_string()])
+            .inc();
+        
+        counters::SYNC_PEER_SCORE
+        .with_label_values(&[
+          &peer.raw_network_id().to_string(),
+          &peer.peer_id().to_string(),
+        ])
+        .observe(0);
 
         info!(LogSchema::new(LogEntry::LostPeer).peer(&peer));
 
@@ -151,7 +162,7 @@ impl RequestManager {
             counters::ACTIVE_UPSTREAM_PEERS
                 .with_label_values(&[&peer.raw_network_id().to_string()])
                 .dec();
-            self.peer_scores.remove(peer);
+            self.peer_scores.remove(peer);            
         } else {
             warn!(LogSchema::new(LogEntry::LostPeerNotKnown).peer(&peer));
         }
@@ -189,6 +200,13 @@ impl RequestManager {
                 }
             };
             *score = new_score;
+
+            counters::SYNC_PEER_SCORE
+            .with_label_values(&[
+                &peer.raw_network_id().to_string(),
+                &peer.peer_id().to_string(),
+            ])
+            .observe(*score);
 
             error!("update peer score: {:?} with update_type {:?}, old score: {:?}, new score: {:?}", &peer, &update_type, &old_score, &score);
 
