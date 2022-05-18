@@ -1,12 +1,9 @@
+//# init --validators Alice Bob Carol Dave
+
 // This test is to check if new epoch is triggered at end of 15 blocks.
 // Here EPOCH-LENGTH = 15 Blocks.
 // TO DO: Genesis function call to have 15 round epochs.
 // NOTE: This test will fail in test-net and Production, only for Debug - due to epoch length.
-
-//# init --validators Alice Bob
-//! account: carol, 1000000, 0, validator
-//! account: dave, 1000000, 0, validator
-
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {

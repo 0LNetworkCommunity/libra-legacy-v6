@@ -1,6 +1,8 @@
+//# init --validators Alice
+//#      --addresses Eve=0x03cb4a2ce2fcfa4eadcdc08e10cee07b
+//#      --private-keys Eve=49fd8b5fa77fdb08ec2a8e1cab8d864ac353e4c013f191b3e6bb5e79d3e5a67d
+
 // Adding new validator epoch info
-//! account: alice, 100000 ,0, validator
-//! account: eve, 100000
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script{
@@ -25,7 +27,7 @@ use DiemFramework::TestFixtures;
 use DiemFramework::TowerState;
 // use DiemFramework::FullnodeState;
 
-fun main(eve_sig: signer) {
+fun main(_dr: signer, eve_sig: signer) {
     let eve_sig = &eve_sig;
     TowerState::init_miner_state(
         eve_sig,

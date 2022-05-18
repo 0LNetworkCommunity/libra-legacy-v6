@@ -1,10 +1,13 @@
+//# init --validators Alice 
+  // todo: Should we do this test without validators? See previous Move version of this file.
+
 // NOTE: TEST SETUP: If you add a "validator", functional tests will add 
 // only that validator to genesis.
 // By default 0L tests load 3 random validators on genesis. This is slow. 
 // So adding a dummy validator will only run the initialize_miners once 
 // instead of three times, and speeds up testing.
 
-//! new-transaction
+//# run --admin-script --signers DiemRoot DiemRoot
 script{
   use DiemFramework::VDF;
   use DiemFramework::TestFixtures;

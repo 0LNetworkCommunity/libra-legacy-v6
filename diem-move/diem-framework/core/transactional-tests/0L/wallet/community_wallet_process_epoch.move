@@ -1,14 +1,13 @@
-// Todo: These GAS values have no effect, all accounts start with 1M GAS
-//! account: alice, 1000000GAS, 0, validator
-//! account: bob,   1000000GAS, 0
-
+//# init --validators Alice
+//#      --addresses Bob=0x4b7653f6566a52c9b496f245628a69a0
+//#      --private-keys Bob=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
 
 //# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::Wallet;
     use Std::Vector;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
       Wallet::set_comm(&sender);
       let list = Wallet::get_comm_list();
 
@@ -33,8 +32,7 @@ script {
 
 //////////////////////////////////////////////
 //// Trigger reconfiguration again         ///
-//# block --proposer Alice --time 1 --round 025000000
-//! round: 20
+//# block --proposer Alice --time 125000000 --round 20
 
 ////// TEST RECONFIGURATION IS HAPPENING /////
 // check: NewEpochEvent
@@ -43,7 +41,7 @@ script {
 
 //////////////////////////////////////////////
 //// Trigger reconfiguration again         ///
-//# block --proposer Alice --time 1 --round 090000000
+//# block --proposer Alice --time 190000000 --round 20
 //! round: 20
 
 ////// TEST RECONFIGURATION IS HAPPENING /////
@@ -55,7 +53,7 @@ script {
 script {
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
-    fun main(_vm: signer) {
+    fun main() {
       let bob_balance = DiemAccount::balance<GAS>(@Bob);
       assert!(bob_balance == 1000100, 7357005);
     }

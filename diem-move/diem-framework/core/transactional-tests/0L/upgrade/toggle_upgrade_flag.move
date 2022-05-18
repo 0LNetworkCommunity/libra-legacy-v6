@@ -1,5 +1,5 @@
 //# init --validators Alice 
-  // todo: Should we do this test without validators? See previous diem version.
+  // todo: Should we do this test without validators? See previous Move version of this file.
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {

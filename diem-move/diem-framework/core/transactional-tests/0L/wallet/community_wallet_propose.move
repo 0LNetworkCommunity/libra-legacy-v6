@@ -1,14 +1,14 @@
-///// Setting up the test fixtures for the transactions below. The tags below create validators alice and bob, giving them 1000000 GAS coins.
-
 //# init --validators Alice Bob
 
+///// Setting up the test fixtures for the transactions below. 
+///// The tags below create validators alice and bob, giving them 1000000 GAS coins.
 
 //# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::Wallet;
     use Std::Vector;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
       Wallet::set_comm(&sender);
       let list = Wallet::get_comm_list();
 
@@ -19,5 +19,4 @@ script {
       assert!(Wallet::transfer_is_proposed(uid), 7357003);
     }
 }
-
 // check: EXECUTED

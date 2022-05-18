@@ -1,6 +1,6 @@
-//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
+//# init --validators DummyPreventsGenesisReload
 
-//! new-transaction
+//# run --admin-script --signers DiemRoot DiemRoot
 script{
   use DiemFramework::VDF;
   use DiemFramework::TestFixtures;
