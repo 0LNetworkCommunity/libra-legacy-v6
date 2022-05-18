@@ -60,48 +60,40 @@ pub fn convert_prologue_error(
             VMStatus::Error(StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION)
         }
         VMStatus::MoveAbort(location, code) => {
-            let new_major_status = match error_split(code) {
-                (INVALID_STATE, EACCOUNT_FROZEN) => StatusCode::SENDING_ACCOUNT_FROZEN,
+            let new_major_status = match code {
+                (EACCOUNT_FROZEN) => StatusCode::SENDING_ACCOUNT_FROZEN,
                 // Invalid authentication key
-                (INVALID_ARGUMENT, EBAD_ACCOUNT_AUTHENTICATION_KEY) => StatusCode::INVALID_AUTH_KEY,
+                (EBAD_ACCOUNT_AUTHENTICATION_KEY) => StatusCode::INVALID_AUTH_KEY,
                 // Sequence number too old
-                (INVALID_ARGUMENT, ESEQUENCE_NUMBER_TOO_OLD) => StatusCode::SEQUENCE_NUMBER_TOO_OLD,
+                (ESEQUENCE_NUMBER_TOO_OLD) => StatusCode::SEQUENCE_NUMBER_TOO_OLD,
                 // Sequence number too new
-                (INVALID_ARGUMENT, ESEQUENCE_NUMBER_TOO_NEW) => StatusCode::SEQUENCE_NUMBER_TOO_NEW,
+                (ESEQUENCE_NUMBER_TOO_NEW) => StatusCode::SEQUENCE_NUMBER_TOO_NEW,
                 // Sequence number too new
-                (INVALID_ARGUMENT, EACCOUNT_DOES_NOT_EXIST) => {
+                (EACCOUNT_DOES_NOT_EXIST) => {
                     StatusCode::SENDING_ACCOUNT_DOES_NOT_EXIST
                 }
                 // Can't pay for transaction gas deposit/fee
-                (INVALID_ARGUMENT, ECANT_PAY_GAS_DEPOSIT) => {
+                (ECANT_PAY_GAS_DEPOSIT) => {
                     StatusCode::INSUFFICIENT_BALANCE_FOR_TRANSACTION_FEE
                 }
-                (INVALID_ARGUMENT, ETRANSACTION_EXPIRED) => StatusCode::TRANSACTION_EXPIRED,
-                (INVALID_ARGUMENT, EBAD_CHAIN_ID) => StatusCode::BAD_CHAIN_ID,
-                (INVALID_STATE, ESCRIPT_NOT_ALLOWED) => StatusCode::UNKNOWN_SCRIPT,
-                (INVALID_STATE, EMODULE_NOT_ALLOWED) => StatusCode::INVALID_MODULE_PUBLISHER,
-                (INVALID_ARGUMENT, EINVALID_WRITESET_SENDER) => StatusCode::REJECTED_WRITE_SET,
+                (ETRANSACTION_EXPIRED) => StatusCode::TRANSACTION_EXPIRED,
+                (EBAD_CHAIN_ID) => StatusCode::BAD_CHAIN_ID,
+                (ESCRIPT_NOT_ALLOWED) => StatusCode::UNKNOWN_SCRIPT,
+                (EMODULE_NOT_ALLOWED) => StatusCode::INVALID_MODULE_PUBLISHER,
+                (EINVALID_WRITESET_SENDER) => StatusCode::REJECTED_WRITE_SET,
                 // Sequence number will overflow
-                (LIMIT_EXCEEDED, ESEQUENCE_NUMBER_TOO_BIG) => StatusCode::SEQUENCE_NUMBER_TOO_BIG,
+                (ESEQUENCE_NUMBER_TOO_BIG) => StatusCode::SEQUENCE_NUMBER_TOO_BIG,
                 // The gas currency is not registered as a TransactionFee currency
-                (INVALID_ARGUMENT, EBAD_TRANSACTION_FEE_CURRENCY) => {
+                (EBAD_TRANSACTION_FEE_CURRENCY) => {
                     StatusCode::BAD_TRANSACTION_FEE_CURRENCY
                 }
-                (INVALID_ARGUMENT, ESECONDARY_KEYS_ADDRESSES_COUNT_MISMATCH) => {
+                (ESECONDARY_KEYS_ADDRESSES_COUNT_MISMATCH) => {
                     StatusCode::SECONDARY_KEYS_ADDRESSES_COUNT_MISMATCH
                 }
-                (category, reason) => {
-                    log_context.alert();
-                    error!(
-                        *log_context,
-                        "[diem_vm] Unexpected prologue Move abort: {:?}::{:?} (Category: {:?} Reason: {:?})",
-                        location, code, category, reason,
-                    );
-
-                    // TODO: Improve error reporting for devs https://github.com/OLSF/libra/issues/760
-                    return Err(VMStatus::Error(
-                        StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION,
-                    ));
+                (code) => {
+                    // 0L: don't throw an error here, as 0L may have added error codes. If you see this line, this file should be updated to include the new error
+                    eprintln!("[diem_vm] Unexpected prologue Move abort: Location: {:?} Code: {:?}", location, code,);
+                    StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION
                 }
             };
             VMStatus::Error(new_major_status)
