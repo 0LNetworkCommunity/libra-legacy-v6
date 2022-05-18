@@ -1,3 +1,8 @@
+//# init --validators DummyPreventsGenesisReload
+//#      --addresses Alice=0x2e3a0b7a741dae873bf0f203a82dfd52
+//#      --private-keys Alice=e1acb70a23dba96815db374b86c5ae96d6a9bc5fff072a7a8e55a1c27c1852d8
+
+//// Old syntax for reference, delete it after fixing this test
 //! account: dummy-prevents-genesis-reload, 100000 ,0, validator
 //! account: alice, 10000000GAS
 
@@ -10,8 +15,7 @@ script {
     // SIMULATES A MINER 0 PROOF ADDED IN GENESIS (proof_0.json)
     // The first transaction should succeed, but the second sends a valid 
     // vdf proof but is not matched to previous proof. 
-    fun main(sender: signer) {
-
+    fun main(_dr: signer, sender: signer) {
         let height_after = 0;
 
         TowerState::test_helper_init_val(
@@ -37,14 +41,13 @@ script {
     use DiemFramework::TestFixtures;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         assert!(TowerState::test_helper_get_height(@Alice) == 0, 10008001);
         let height_after = 1;
         
         let proof = TowerState::create_proof_blob(
             // a correct pair, but does not match the previous proof alice sent.
             TestFixtures::easy_chal(),
-            
             TestFixtures::easy_sol(),
             TestFixtures::easy_difficulty(),
             TestFixtures::security(),

@@ -5,12 +5,12 @@ script {
   use DiemFramework::Upgrade;
   use Std::Vector;
 
-  fun main(sender: signer) {
+  fun main(dr: signer, _: signer) {
     let validators = Vector::empty<address>();
     Vector::push_back(&mut validators, @Alice);
     Vector::push_back(&mut validators, @Bob);
 
-    Upgrade::record_history(&sender, 0, x"1234", *&validators, 200);
+    Upgrade::record_history(&dr, 0, x"1234", *&validators, 200);
     
     let (upgraded_version, payload, voters, height) = Upgrade::retrieve_latest_history();
     assert!(upgraded_version == 0, 1);

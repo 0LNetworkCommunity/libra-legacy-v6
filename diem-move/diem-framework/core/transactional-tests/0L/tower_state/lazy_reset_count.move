@@ -1,3 +1,8 @@
+//# init --validators Bob
+//#      --addresses Alice=0x2e3a0b7a741dae873bf0f203a82dfd52
+//#      --private-keys Alice=e1acb70a23dba96815db374b86c5ae96d6a9bc5fff072a7a8e55a1c27c1852d8
+
+//// Old syntax for reference, delete it after fixing this test
 //! account: bob, 100000, 0, validator
 //! account: alice, 10000000GAS
 
@@ -12,7 +17,7 @@ script {
     use DiemFramework::Debug::print;
 
     // SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
       print(&DiemConfig::get_current_epoch());
 
         TowerState::init_miner_state(
@@ -41,18 +46,13 @@ script {
 
 // 2. one epoch with no mining from alice. Should not change nominal count.
 
-
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
-//! block-prologue
-//! proposer: bob
-//! block-time: 61000000
-//! round: 15
+//# block --proposer Bob --time 61000000 --round 15
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
-
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -61,7 +61,7 @@ script {
     use DiemFramework::Debug::print;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
-    fun main(_: signer) {
+    fun main() {
       print(&DiemConfig::get_current_epoch());
       print(&TowerState::get_count_in_epoch(@Alice));
       
@@ -72,20 +72,15 @@ script {
 
       // but the helpers know  the actual count in epoch is 0.
       assert!(TowerState::get_count_in_epoch(@Alice) == 0, 735703);
-      
-
     }
 }
 
-
-// 3. ONCE AGAIN. Just to be sure. Add one epoch with no mining from alice. Should not change nominal count.
+// 3. ONCE AGAIN. Just to be sure. Add one epoch with no mining from alice. 
+// Should not change nominal count.
 
 //////////////////////////////////////////////
-///// Trigger reconfiguration at 61 seconds ////
-//! block-prologue
-//! proposer: bob
-//! block-time: 125000000
-//! round: 30
+///// Trigger reconfiguration at 125 seconds ////
+//# block --proposer Bob --time 125000000 --round 30
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
@@ -99,7 +94,7 @@ script {
     use DiemFramework::Debug::print;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
-    fun main(_: signer) {
+    fun main() {
       print(&DiemConfig::get_current_epoch());
       print(&TowerState::get_count_in_epoch(@Alice));
     
@@ -111,8 +106,6 @@ script {
 
       // but the helpers know  the actual count in epoch is 0.
       assert!(TowerState::get_count_in_epoch(@Alice) == 0, 735706);
-      
-
     }
 }
 
@@ -128,7 +121,7 @@ script {
     use DiemFramework::Debug::print;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
       let before = TowerState::get_tower_height(@Alice);
 
         print(&before);

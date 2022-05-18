@@ -1,20 +1,15 @@
+//# init --validators Alice Bob Carol Dave
+
 // ALICE is CASE 1
-//! account: alice, 1000000GAS, 0, validator
-
 // BOB is CASE 2
-//! account: bob, 1000000GAS, 0, validator
-
-// BOB is CASE 3
-//! account: carol, 1000000GAS, 0, validator
-
-// BOB is CASE 4
-//! account: dave, 1000000GAS, 0, validator
+// CAROL is CASE 3
+// DAVE is CASE 4
 
 //# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::TowerState;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
       //NOTE: Alice is Case 1, she validates and mines. Setting up mining.
         TowerState::test_helper_mock_mining(&sender, 5);
 
@@ -26,7 +21,7 @@ script {
 //# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::TowerState;
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
       //NOTE: Carol is Case 3, she mines but does not validate. Setting up mining.
         TowerState::test_helper_mock_mining(&sender, 5);
 
@@ -59,10 +54,10 @@ script {
       i = i + 1;
     };
 
-    assert!(DiemAccount::balance<GAS>(@Alice) == 1000000, 7357190102011000);
-    assert!(DiemAccount::balance<GAS>(@Bob) == 1000000, 7357190102021000);
-    assert!(DiemAccount::balance<GAS>(@Carol) == 1000000, 7357190102031000);
-    assert!(DiemAccount::balance<GAS>(@Dave) == 1000000, 7357190102041000);
+    assert!(DiemAccount::balance<GAS>(@Alice) == 10000000, 7357190102011000);
+    assert!(DiemAccount::balance<GAS>(@Bob) == 10000000, 7357190102021000);
+    assert!(DiemAccount::balance<GAS>(@Carol) == 10000000, 7357190102031000);
+    assert!(DiemAccount::balance<GAS>(@Dave) == 10000000, 7357190102041000);
 
     assert!(Cases::get_case(vm, @Alice, 0, 15) == 1, 7357190102051000);
     assert!(Cases::get_case(vm, @Bob, 0, 15) == 2, 7357190102061000);
@@ -93,10 +88,10 @@ script {
         //TODO: The fee ratio is unused in this proposal.
         Subsidy::process_fees(vm, &validators);
 
-        assert!(DiemAccount::balance<GAS>(@Alice) == 1001000, 7357190103021000);
-        assert!(DiemAccount::balance<GAS>(@Bob) == 1000000, 7357190103031000);
-        assert!(DiemAccount::balance<GAS>(@Carol) == 1000000, 7357190103041000);
-        assert!(DiemAccount::balance<GAS>(@Dave) == 1000000, 7357190103051000);
+        assert!(DiemAccount::balance<GAS>(@Alice) == 10001000, 7357190103021000);
+        assert!(DiemAccount::balance<GAS>(@Bob) == 10000000, 7357190103031000);
+        assert!(DiemAccount::balance<GAS>(@Carol) == 10000000, 7357190103041000);
+        assert!(DiemAccount::balance<GAS>(@Dave) == 10000000, 7357190103051000);
     }
 }
 // check: EXECUTED

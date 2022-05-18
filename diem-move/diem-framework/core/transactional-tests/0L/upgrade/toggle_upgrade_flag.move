@@ -1,11 +1,14 @@
+//# init --validators Alice 
+  // todo: Should we do this test without validators? See previous diem version.
+
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Upgrade;
 
-    fun main(sender: signer) {
+    fun main(dr: signer, _: signer) {
         assert!(Upgrade::has_upgrade() == false, 1);
 
-        Upgrade::set_update(&sender, x"1234");
+        Upgrade::set_update(&dr, x"1234");
         assert!(Upgrade::has_upgrade() == true, 1);
         assert!(Upgrade::get_payload() == x"1234", 1);
     }
