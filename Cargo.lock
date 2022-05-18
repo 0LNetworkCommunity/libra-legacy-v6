@@ -5495,6 +5495,7 @@ version = "0.1.0"
 dependencies = [
  "diem-crypto",
  "diem-global-constants",
+ "diem-metrics",
  "diem-types",
  "diem-workspace-hack",
  "ethers",

@@ -70,3 +70,11 @@ pub static TXN_GAS_USAGE: Lazy<Histogram> =
 pub static CRITICAL_ERRORS: Lazy<IntCounter> = Lazy::new(|| {
     register_int_counter!("diem_vm_critical_errors", "Number of critical errors").unwrap()
 });
+
+pub static EXECUTOR_SINGLE_TX_LATENCY: Lazy<Histogram> = Lazy::new(|| {
+    register_histogram!(
+        "diem_vm_executor_single_tx_latency",
+        "Latency to execute a single transaction in the VM"
+    )
+        .unwrap()
+});

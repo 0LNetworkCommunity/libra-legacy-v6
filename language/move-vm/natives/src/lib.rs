@@ -14,6 +14,7 @@ pub mod signer;
 pub mod vector;
 
 //////// 0L ////////
+pub mod counters;
 pub mod vdf;
 pub mod ol_decimal;
 pub mod ol_hash;
