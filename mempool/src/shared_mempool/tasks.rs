@@ -117,7 +117,7 @@ pub(crate) async fn process_transaction_broadcast<V>(
     V: TransactionValidation,
 {
   warn!("process_transaction_broadcast from other node {:?}", &peer);
-
+    counters::TASKS_PROCESS_TX_BROADCAST_EVENT.inc();
     timer.stop_and_record();
     let _timer = counters::process_txn_submit_latency_timer(
         peer.raw_network_id().as_str(),
@@ -394,7 +394,8 @@ pub(crate) async fn process_consensus_request<V: TransactionValidation>(
     smp: SharedMempool<V>,
     req: ConsensusRequest
 ) {
-  dbg!("process_consensus_request");
+  debug!("process_consensus_request");
+    counters::TASKS_PROCESS_CONSENSUS_REQUEST_EVENT.inc();
     // Start latency timer
     let start_time = Instant::now();
     debug!(LogSchema::event_log(LogEntry::Consensus, LogEvent::Received).consensus_msg(&req));

@@ -288,7 +288,8 @@ impl RequestManager {
 
         let peers = self.pick_peers();
         if peers.is_empty() {
-            dbg!("no statesync available peers");
+            debug!("no statesync available peers");
+            counters::STATE_SYNC_NO_AVAILABLE_PEERS.inc();
             warn!(log.event(LogEvent::MissingPeers));
             return Err(Error::NoAvailablePeers(
                 "No peers to send chunk request to".into(),
@@ -501,6 +502,11 @@ impl RequestManager {
         error!("request timed out, length: {:?}, peers {:?}", &self.request_timeout, &peers_to_penalize);
 
         for peer in peers_to_penalize.iter() {
+            counters::STATE_SYNC_VERSION_REQUEST_TIMEOUT.with_label_values(&[
+                    &peer.raw_network_id().to_string(),
+                    &peer.peer_id().to_string()
+                ])
+                .inc();
             self.update_score(peer, PeerScoreUpdateType::TimeOut);
         }
 
@@ -926,7 +932,14 @@ mod tests {
         validator: &PeerNetworkId,
         peer_role: PeerRole,
     ) {
-        dbg!("adding validator to state sync", &validator);
+        debug!("adding validator to state sync: {:?}", &validator);
+        counters::STATE_SYNC_ADDING_VALIDATOR_TO_STATE_SYNC
+                .with_label_values(&[
+                &validator.raw_network_id().to_string(),
+                &validator.peer_id().to_string()
+            ])
+            .inc();
+
         let connection_metadata = ConnectionMetadata::mock_with_role_and_origin(
             validator.peer_id(),
             peer_role,
