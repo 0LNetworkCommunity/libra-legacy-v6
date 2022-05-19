@@ -16,7 +16,7 @@ script {
     use DiemFramework::TestFixtures;
 
     // SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         TowerState::test_helper_init_val(
             &sender,
             TestFixtures::alice_0_easy_chal(),
@@ -36,7 +36,7 @@ script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         assert!(TowerState::test_helper_get_height(@Alice) == 0, 10008001);
         let height_after = 1;
         let proof = TowerState::create_proof_blob(
