@@ -514,3 +514,11 @@ pub static TASKS_PROCESS_CONSENSUS_REQUEST_EVENT: Lazy<IntCounter> = Lazy::new(|
         .unwrap()
 });
 
+pub static PEER_MANAGER_PEER_REQUESTED_BACKOFF: Lazy<IntCounterVec> = Lazy::new(|| {
+    register_int_counter_vec!(
+        "diem_mempool_peer_requested_backoff",
+        "Number of backoff requests from peers",
+        &["network", "peer"]
+    )
+        .unwrap()
+});
