@@ -336,10 +336,7 @@ script {
 }
 
 // EVE SENDS JOIN TX
-
-//# run --admin-script --signers DiemRoot Eve
-stdlib_script::ValidatorScripts::join
-// check: "Keep(EXECUTED)"
+//# run --signers Eve -- 0x1::ValidatorScripts::join
 
 ///////////////////////////////////////////////
 ///// Trigger reconfiguration at 4 seconds ////

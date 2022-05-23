@@ -1,4 +1,4 @@
-//# run --admin-script --signers DiemRoot DiemRoot
-//! args: 13
-stdlib_script::DemoScripts::demo_e2e
-// check: "Keep(EXECUTED)"
+//# init --validators Dummy
+
+//# run --signers DiemRoot --args 13
+//#     -- 0x1::DemoScripts::demo_e2e

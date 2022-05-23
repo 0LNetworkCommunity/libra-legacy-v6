@@ -1,0 +1,55 @@
+processed 13 tasks
+
+task 1 'block'. lines 7-11:
+Events:
+{
+    key:     0c0000000000000000000000000000000000000000000000
+    seq_num: 0
+    type:    0x1::DiemBlock::NewBlockEvent
+    data:    "000000000000000006505ccd81e562b524d8f656abd92a15000100000000000000"
+}
+
+task 4 'block'. lines 49-53:
+Events:
+{
+    key:     0c0000000000000000000000000000000000000000000000
+    seq_num: 1
+    type:    0x1::DiemBlock::NewBlockEvent
+    data:    "0f0000000000000006505ccd81e562b524d8f656abd92a150040c9a20300000000"
+}
+{
+    key:     040000000000000000000000000000000000000000000000
+    seq_num: 1
+    type:    0x1::DiemConfig::NewEpochEvent
+    data:    "0200000000000000"
+}
+
+task 7 'block'. lines 96-100:
+Events:
+{
+    key:     0c0000000000000000000000000000000000000000000000
+    seq_num: 2
+    type:    0x1::DiemBlock::NewBlockEvent
+    data:    "1e0000000000000006505ccd81e562b524d8f656abd92a15008092450700000000"
+}
+{
+    key:     040000000000000000000000000000000000000000000000
+    seq_num: 2
+    type:    0x1::DiemConfig::NewEpochEvent
+    data:    "0300000000000000"
+}
+
+task 11 'block'. lines 131-135:
+Events:
+{
+    key:     0c0000000000000000000000000000000000000000000000
+    seq_num: 3
+    type:    0x1::DiemBlock::NewBlockEvent
+    data:    "2d0000000000000006505ccd81e562b524d8f656abd92a1500c05be80a00000000"
+}
+{
+    key:     040000000000000000000000000000000000000000000000
+    seq_num: 3
+    type:    0x1::DiemConfig::NewEpochEvent
+    data:    "0400000000000000"
+}

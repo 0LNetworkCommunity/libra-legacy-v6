@@ -9,9 +9,7 @@
 //! NewBlockEvent
 
 // Carol removes herself as a validator
-//# run --admin-script --signers DiemRoot Carol
-stdlib_script::ValidatorScripts::leave
-// check: "Keep(EXECUTED)"
+//# run --signers Carol -- 0x1::ValidatorScripts::leave
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -115,7 +113,6 @@ script {
 //check: EXECUTED
 
 
-
 //# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::TowerState;
@@ -127,11 +124,7 @@ script {
 }
 
 // Carol SENDS JOIN TX to rejoin validator set. 
-
-//# run --admin-script --signers DiemRoot Carol
-stdlib_script::ValidatorScripts::join
-// check: "Keep(EXECUTED)"
-
+//# run --signers Carol -- 0x1::ValidatorScripts::join
 
 ///////////////////////////////////////////////
 ///// Trigger reconfiguration at 4 seconds ////
@@ -154,6 +147,3 @@ script {
     }
 }
 //check: EXECUTED
-
-
-
