@@ -8,8 +8,7 @@ address 0x1 {
 // File Prefix for errors: 1201 used for OL errors
 
 module DiemAccount {
-    friend 0x1::MigrateAutoPayBal;
-    friend 0x1::MigrateVouch;
+    friend 0x1::MigrateJail;
     friend 0x1::MakeWhole;
 
     use 0x1::AccountFreezing;
@@ -262,7 +261,7 @@ module DiemAccount {
     // This is necessary for migrating user state, when a new struct needs to be created.
     // This is restricted by `friend` visibility, which is defined above as the 0x1::MigrateAutoPayBal module for a one-time use.
     // language/changes/1-friend-visibility.md
-    public(friend) fun scary_wtf_create_signer(vm: &signer, addr: address): signer {
+    public(friend) fun scary_create_signer_for_migrations(vm: &signer, addr: address): signer {
         CoreAddresses::assert_diem_root(vm);
         create_signer(addr)
     }

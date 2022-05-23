@@ -38,6 +38,20 @@ address 0x1 {
 
     }
 
+    public fun init(val_sig: &signer) {
+      let addr = Signer::address_of(val_sig);
+      if (!exists<Jail>(addr)) {
+        move_to<Jail>(val_sig, Jail {
+          is_jailed: false,
+          lifetime_jailed: 0,
+          lifetime_vouchees_jailed: 0,
+          consecutive_failure_to_rejoin: 0,
+
+        });
+      }
+    }
+
+
     public fun is_jailed(validator: address): bool acquires Jail {
       if (!exists<Jail>(validator)) {
         return false
