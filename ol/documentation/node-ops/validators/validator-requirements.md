@@ -48,4 +48,4 @@ If the choice is to send to community wallets, an algorithm is used based on the
 
 The details are here: https://github.com/OLSF/libra/blob/main/ol/documentation/accounts/match_burn.md
 
-Note: If a validator does not have the funds to pay the 'Cost to Exist' fee, it will NOT affect the qualification into the the active set. The validator is graced.
+Note: If a validator does not have the funds to pay the 'Cost to Exist' fee at the beginning of an epoch, it will NOT affect the qualification into the the active set of the said epoch. The validator is graced.
