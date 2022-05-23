@@ -83,7 +83,42 @@ address 0x1 {
       };
     }
 
-    /////// Test helpers ////////
+    public fun sort_by_jail(vec_address: vector<address>): vector<address> acquires Jail {
+
+      // Sorting the accounts vector based on value (weights).
+      // Bubble sort algorithm
+      let length = Vector::length(&vec_address);
+
+      let i = 0;
+      while (i < length){
+        let j = 0;
+        while(j < length-i-1){
+
+          let value_j = get_failure_to_join(*Vector::borrow(&vec_address, j));
+          let value_jp1 = get_failure_to_join(*Vector::borrow(&vec_address, j));
+
+          if(value_j > value_jp1){
+            Vector::swap<address>(&mut vec_address, j, j+1);
+          };
+          j = j + 1;
+        };
+        i = i + 1;
+      };
+
+      vec_address
+    }
+
+    ///////// GETTERS //////////
+
+    public fun get_failure_to_join(addr: address): u64 acquires Jail {
+      if (exists<Jail>(addr)) {
+        return borrow_global<Jail>(addr).consecutive_failure_to_rejoin
+      };
+      0
+    }
+
+
+    /////// TEST HELPERS ////////
     public fun exists_jail(addr: address): bool {
       exists<Jail>(addr)
     }

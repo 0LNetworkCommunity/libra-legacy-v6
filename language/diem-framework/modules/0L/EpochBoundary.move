@@ -29,6 +29,7 @@ module EpochBoundary {
     use 0x1::StagingNet;
     use 0x1::RecoveryMode;
     use 0x1::Cases;
+    use 0x1::Jail;
 
     use 0x1::Debug::print;
 
@@ -178,15 +179,19 @@ module EpochBoundary {
         let proposed_set = proven_nodes;
 
 
+        // get all eligble accounts by consensus weight
         let top_accounts = NodeWeight::top_n_accounts(
             vm, Globals::get_max_validators_per_set()
         );
 
-        // we also need to explicitly filter those which did not do work.
-        let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
+        // sort by jail index, prioritizes nodes joining that aren't currently struggling to stay in the validator set.
+        let top_accounts = Jail::sort_by_jail(top_accounts);
+
+        // // we also need to explicitly filter those which did not do work.
+        // let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
 
         print(&top_accounts);
-        print(&jailed_set);
+        // print(&jailed_set);
 
         // let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
         // find the top unproven nodes and add to the proposed set
@@ -204,7 +209,7 @@ module EpochBoundary {
                 // ignore those already on list
                 !Vector::contains<address>(&proposed_set, &addr) &&
                 // jail the current validators which did not perform.
-                !Vector::contains<address>(&jailed_set, &addr) &&
+                !Jail::is_jailed(addr) &&
                 // check the unproven node has done a minimum of work
                 mined_last_epoch &&
                 Audit::val_audit_passing(addr)
