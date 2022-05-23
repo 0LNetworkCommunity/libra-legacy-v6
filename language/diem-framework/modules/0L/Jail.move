@@ -6,6 +6,16 @@
 // File Prefix for errors: 1001
 ///////////////////////////////////////////////////////////////////////////
 
+
+// The objective of the jail module is to allow a validator to do necessary maintenanance on the node before attempting to rejoin the validator set before they are ready.
+// The jail module also incorporates some non-monetary reputation staking features of Vouch, which cannot be included in that module due to code cyclical dependencies.
+// Summary:
+// If Alice fails to validate at the threshold necessary (is either a Case 1, or Case 2), then her Jail state gets updated, with is_jailed=true. This means she cannot re-enter the validator set, until someone that vouched for Alice (Bob) sends an un_jail transaction. Bob has interest in seeing Alice rejoin and be performing since Bob's Jail state also gets updated based on Alice's performance.
+// On Bob's Jail card there is a lifetime_vouchees_jailed, every time Alice (because Bob has vouched for her) gets marked for jail, this number gets incremented on Bob's state too.
+// It is recursive. If Alice is vouching for Carol, and Carol gets a Jail term. Then both Alice, and Bob will have lifetime_vouchees_jailed incremented. Even if Carol and Bob never met.
+// Not included in this code, but included in Vouch, is the logic for the deposit the Vouchers put on the Vouchee accounts. So besides the permanent mark on the account, Bob will lose the deposit.
+
+
 address 0x1 {
   module Jail {
     use 0x1::CoreAddresses;
@@ -16,16 +26,16 @@ address 0x1 {
 
     struct Jail has key {
         is_jailed: bool,
-        
-        // validator that was jailed and qualified to enter the set, but fails to complete epoch.
-        // this resets as soon as they rejoin successfully.
-        // this counter is used for ordering prospective validators entering a set.
-        consecutive_failed_to_rejoin: u64,
         // number of times the validator was dropped from set. Does not reset.
         lifetime_jailed: u64,
         // number of times a downstream validator this user has vouched for has been jailed.
         // this is recursive. So if a validator I vouched for, vouched for a third validator that failed, this number gets incremented.
         lifetime_vouchees_jailed: u64,
+        // validator that was jailed and qualified to enter the set, but fails to complete epoch.
+        // this resets as soon as they rejoin successfully.
+        // this counter is used for ordering prospective validators entering a set.
+        consecutive_failure_to_rejoin: u64,
+
     }
 
     public fun is_jailed(validator: address): bool acquires Jail {
@@ -43,13 +53,13 @@ address 0x1 {
       let j = borrow_global_mut<Jail>(validator);
       j.is_jailed = true;
       j.lifetime_jailed = j.lifetime_jailed + 1;
-      j.consecutive_failed_to_rejoin = j.consecutive_failed_to_rejoin + 1;
+      j.consecutive_failure_to_rejoin = j.consecutive_failure_to_rejoin + 1;
     }
 
     public fun remove_consecutive_fail(vm: &signer, validator: address) acquires Jail{
       CoreAddresses::assert_vm(vm);
       let j = borrow_global_mut<Jail>(validator);
-      j.consecutive_failed_to_rejoin = 0;
+      j.consecutive_failure_to_rejoin = 0;
 
     }
 
