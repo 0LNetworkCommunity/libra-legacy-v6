@@ -26,6 +26,10 @@ address 0x1 {
         is_jailed: bool
     }
 
+    struct JailCount has key {
+        failed_on_enter: u64
+    }
+
     // Genesis function to initialize ValidatorUniverse struct in 0x0.
     // This is triggered in new epoch by Configuration in Genesis.move
     // Function code: 01 Prefix: 220101
