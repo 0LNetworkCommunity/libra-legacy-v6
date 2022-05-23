@@ -36,10 +36,14 @@ In addition, the active validators must vote at least on 5% of the blocks during
 
 # Inactive validators
 
-All validators (active AND inactive) are paying a fee called '_entry fee_' for the _privilege_ of being a validator.
-The entry fee is 50% of the validator payment, for example, let's assume validator are being paid 20k coins every validator will pay 10k at the begining of the epoch.
-Therefore, inactive validators will be paying the entry fee but not receiving the payment for not being active.
+All validators (active AND inactive) are paying a fee called '_cost to exist_' for the _privilege_ of being a validator.
+The cost is 50% of the validator payment, for example, let's assume validator are being paid 20k coins every validator will pay 10k at the begining of the epoch.
+Therefore, inactive validators will be paying the 'cost to exist' fee but not receiving the payment for not being active.
 
-# Entry fee
+# Cost To Exist
 
-The entry fees collected are redistributed to community wallets, hence replacing the autopay mechanism **partially**. The community wallets are not receiving an equal pay from these fee. Their share is equivalent to the amount validators are giving through their autopay. The community wallets receiving the most donations will receive a biggest chunk of the entry fees as additionnal income source. 
+Validators, whether active or inactive, burn a set amount of coins at the start of the epoch. For 0L system burns, a user can set their burn preferences, whether to be a pure burn, or recycle the coins to community wallets.
+
+If the choice is to send to community wallets, an algorithm is used based on the time-weighted donations to those wallets. In practice, community wallets that receive the most donations (autopay or direct) will also receive a greater share of the recycled burns.
+
+The details are here: https://github.com/OLSF/libra/blob/main/ol/documentation/accounts/match_burn.md
