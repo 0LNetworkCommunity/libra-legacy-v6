@@ -47,3 +47,5 @@ Validators, whether active or inactive, burn a set amount of coins at the start 
 If the choice is to send to community wallets, an algorithm is used based on the time-weighted donations to those wallets. In practice, community wallets that receive the most donations (autopay or direct) will also receive a greater share of the recycled burns.
 
 The details are here: https://github.com/OLSF/libra/blob/main/ol/documentation/accounts/match_burn.md
+
+Note: If a validator does not have the funds to pay the 'Cost to Exist' fee, it will NOT affect the qualification into the the active set. The validator is graced.
