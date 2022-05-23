@@ -49,6 +49,7 @@ module DiemAccount {
     use 0x1::Receipts;
     use 0x1::Ancestry;
     use 0x1::Vouch;
+    use 0x1::Jail;
     use 0x1::Debug::print;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
@@ -620,6 +621,7 @@ module DiemAccount {
         // User can join validator universe list, but will only join if 
         // the mining is above the threshold in the preceeding period.
         ValidatorUniverse::add_self(&new_signer);
+        Jail::init(&new_signer);
 
         make_account(new_signer, auth_key_prefix);
         make_account(new_op_account, op_auth_key_prefix);
@@ -735,7 +737,8 @@ module DiemAccount {
         );
         // User can join validator universe list, but will only join if 
         // the mining is above the threshold in the preceeding period.
-        ValidatorUniverse::add_self(&new_signer);        
+        ValidatorUniverse::add_self(&new_signer);
+        Jail::init(&new_signer);
         
         // no need to make the owner address.
 
