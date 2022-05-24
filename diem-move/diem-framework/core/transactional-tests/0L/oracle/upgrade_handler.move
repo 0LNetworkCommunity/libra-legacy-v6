@@ -69,6 +69,7 @@ script {
 script {
   use DiemFramework::Oracle;
   use DiemFramework::Upgrade;
+  use DiemFramework::VectorHelper;
   use Std::Vector;
   
   fun main(sender: signer, _: signer){
@@ -86,7 +87,7 @@ script {
       let validators = Vector::empty<address>();
       Vector::push_back(&mut validators, @Alice);
       Vector::push_back(&mut validators, @Charlie);
-      assert!(Vector::compare<address>(&voters, &validators), 7357123401011000);
+      assert!(VectorHelper::compare<address>(&voters, &validators), 7357123401011000);
   }
 }
 // check: EXECUTED

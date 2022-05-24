@@ -64,6 +64,7 @@ script {
 script {
     use DiemFramework::Upgrade;
     use Std::Vector;
+    use DiemFramework::VectorHelper;
 
     fun main(){
         let (upgraded_version, payload, voters, height) = 
@@ -76,7 +77,7 @@ script {
         assert!(Upgrade::has_upgrade(), 735706); 
         assert!(upgraded_version == 0, 735707);
         assert!(payload == b"hello", 735708);
-        assert!(Vector::compare(&voters, &validators), 735709);
+        assert!(VectorHelper::compare(&voters, &validators), 735709);
         assert!(height == 2, 735710);
     }
 }

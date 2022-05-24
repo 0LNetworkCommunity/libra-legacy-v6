@@ -247,7 +247,7 @@ script {
 //     Vector::push_back(&mut validators, @Charlie);
 //     assert!(upgraded_version == 0, 7357123401011000);
 //     assert!(payload == b"hello", 7357123401011000);
-//     assert!(Vector::compare(&voters, &validators), 7357123401011000);
+//     assert!(VectorHelper::compare(&voters, &validators), 7357123401011000);
 //     assert!(height == 1, 7357123401011000);
 //   }
 // }

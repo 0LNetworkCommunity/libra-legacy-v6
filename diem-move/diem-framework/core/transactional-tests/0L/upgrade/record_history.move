@@ -4,6 +4,7 @@
 script {
   use DiemFramework::Upgrade;
   use Std::Vector;
+  use DiemFramework::VectorHelper;
 
   fun main(dr: signer, _: signer) {
     let validators = Vector::empty<address>();
@@ -15,7 +16,7 @@ script {
     let (upgraded_version, payload, voters, height) = Upgrade::retrieve_latest_history();
     assert!(upgraded_version == 0, 1);
     assert!(payload == x"1234", 1);
-    assert!(Vector::compare(&voters, &validators), 1);
+    assert!(VectorHelper::compare(&voters, &validators), 1);
     assert!(height == 200, 1);
   }
 }

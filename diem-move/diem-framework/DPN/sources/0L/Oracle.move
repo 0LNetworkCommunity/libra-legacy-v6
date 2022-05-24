@@ -12,6 +12,7 @@ address DiemFramework {
     use DiemFramework::DiemBlock;
     use Std::Hash;
     use DiemFramework::NodeWeight;
+    use DiemFramework::VectorHelper;
 
       //possible vote types
       const VOTE_TYPE_ONE_FOR_ONE: u8 = 0;
@@ -204,7 +205,7 @@ address DiemFramework {
         let len = Vector::length(vote_counts);
         while (i < len) {
             let entry = Vector::borrow_mut(vote_counts, i);
-            if (Vector::compare(&entry.hash, &data_hash)) {
+            if (VectorHelper::compare(&entry.hash, &data_hash)) {
               Vector::push_back(&mut entry.validators, validator);
               entry.total_weight = entry.total_weight + vote_weight;
               return
@@ -222,7 +223,7 @@ address DiemFramework {
         let len = Vector::length(vote_counts);
         while (i < len) {
             let entry = Vector::borrow_mut(vote_counts, i);
-            if (Vector::compare(&entry.hash, &data)) {
+            if (VectorHelper::compare(&entry.hash, &data)) {
               Vector::push_back(&mut entry.validators, validator);
               entry.total_weight = entry.total_weight + vote_weight;
               return true
