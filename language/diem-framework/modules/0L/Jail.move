@@ -2,7 +2,7 @@
 // 0L Module
 // Jail
 ///////////////////////////////////////////////////////////////////////////
-// Stores all the validators who submitted a vdf proof.
+// Controllers for keeping non-performing validators out of the set.
 // File Prefix for errors: 1001
 ///////////////////////////////////////////////////////////////////////////
 
@@ -109,7 +109,7 @@ address 0x1 {
         while(j < length-i-1){
 
           let value_j = get_failure_to_join(*Vector::borrow(&vec_address, j));
-          let value_jp1 = get_failure_to_join(*Vector::borrow(&vec_address, j));
+          let value_jp1 = get_failure_to_join(*Vector::borrow(&vec_address, j + 1));
 
           if(value_j > value_jp1){
             Vector::swap<address>(&mut vec_address, j, j+1);

@@ -27,17 +27,6 @@ address 0x1 {
         is_jailed: bool
     }
 
-    struct Jail has key {
-        is_jailed: bool,
-        // number of times the validator was dropped from set. Does not reset.
-        lifetime_jailed: u64,
-        // validator that was jailed and qualified to enter the set, but fails to complete epoch.
-        // this resets as soon as they rejoin successfully.
-        // this counter is used for ordering prospective validators entering a set.
-        consecutive_failed_to_rejoin: u64,
-
-    }
-
     // Genesis function to initialize ValidatorUniverse struct in 0x0.
     // This is triggered in new epoch by Configuration in Genesis.move
     // Function code: 01 Prefix: 220101
