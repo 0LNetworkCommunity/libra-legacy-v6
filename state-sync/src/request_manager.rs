@@ -279,7 +279,7 @@ impl RequestManager {
         if let Some(network_level) = new_multicast_network_level {
             self.update_multicast_network_level(network_level, None);
         }
-        dbg!(&chosen_peers);
+        debug!("{:?}", &chosen_peers);
         chosen_peers
     }
 

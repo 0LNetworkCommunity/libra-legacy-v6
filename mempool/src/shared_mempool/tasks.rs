@@ -83,9 +83,9 @@ pub(crate) async fn process_client_transaction_submission<V>(
 ) where
     V: TransactionValidation,
 { 
-    dbg!("new transaction", &transaction);
-    dbg!("new transaction", &transaction.sender());
-    dbg!("new transaction", &transaction.sequence_number());
+    debug!("new transaction: {:?}", &transaction);
+    debug!("new transaction sender: {:?}", &transaction.sender());
+    debug!("new transaction seq number: {:?}", &transaction.sequence_number());
 
     timer.stop_and_record();
     let _timer =
@@ -157,7 +157,7 @@ fn gen_ack_response(
 
         // 0L TODO: when is backoff submitted when mempool is full.
         if submission_status.0.code == MempoolStatusCode::MempoolIsFull {
-            dbg!("mempool is full, responding to peer with backoff.");
+            debug!("mempool is full, responding to peer with backoff.");
             counters::SELF_REQUEST_BACKOFF.inc();
             backoff = true;
         }
@@ -451,7 +451,7 @@ pub(crate) async fn process_consensus_request<V: TransactionValidation>(
     };
     let latency = start_time.elapsed();
     
-    dbg!("mempool_service latency", &latency);
+    debug!("mempool_service latency: {:?}", &latency);
 
 
     counters::mempool_service_latency(counter_label, result, latency);

@@ -605,7 +605,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         )
         .await
         {
-          dbg!("statesync commit to mempool failed with mempool_commit_timeout_ms expired");
+          debug!("statesync commit to mempool failed with mempool_commit_timeout_ms expired");
             counters::COMMIT_FLOW_FAIL
                 .with_label_values(&[counters::FROM_MEMPOOL_LABEL])
                 .inc();

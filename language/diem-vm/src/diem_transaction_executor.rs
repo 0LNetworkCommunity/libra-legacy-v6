@@ -512,8 +512,8 @@ impl DiemVM {
             .map(|_return_vals| ())
             .or_else(|e| {
                 println!("error here\n");
-                dbg!(&proposer);
-                dbg!(&previous_vote);
+                debug!("proposer: {:?}", &proposer);
+                debug!("previous vote: {:?}", &previous_vote);
 
                 expect_only_successful_execution(e, BLOCK_PROLOGUE.as_str(), log_context)
             })?;
@@ -779,14 +779,14 @@ impl DiemVM {
 
             match &txn {
                 PreprocessedTransaction::UserTransaction(t) => {
-                  dbg!(&t.sequence_number());
+                  debug!("tx sequence number: {:?}", &t.sequence_number());
                 },
                 _ => {},
             };
-            dbg!("tx sender", &sender);
+            debug!("tx sender: {:?}", &sender);
             let latency = start_time.elapsed();
             metric_single_tx_lat.observe_duration();
-            dbg!("single tx latency", &latency);
+            debug!("single tx latency: {:?}", &latency);
 
             if !output.status().is_discarded() {
                 data_cache.push_write_set(output.write_set());
