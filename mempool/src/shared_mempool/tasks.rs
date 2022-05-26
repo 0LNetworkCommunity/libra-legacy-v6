@@ -83,9 +83,9 @@ pub(crate) async fn process_client_transaction_submission<V>(
 ) where
     V: TransactionValidation,
 { 
-    dbg!("new transaction", &transaction);
-    dbg!("new transaction", &transaction.sender());
-    dbg!("new transaction", &transaction.sequence_number());
+    debug!("new transaction: {:?}", &transaction);
+    debug!("new transaction sender: {:?}", &transaction.sender());
+    debug!("new transaction seq number: {:?}", &transaction.sequence_number());
 
     timer.stop_and_record();
     let _timer =
@@ -117,7 +117,7 @@ pub(crate) async fn process_transaction_broadcast<V>(
     V: TransactionValidation,
 {
   warn!("process_transaction_broadcast from other node {:?}", &peer);
-
+    counters::TASKS_PROCESS_TX_BROADCAST_EVENT.inc();
     timer.stop_and_record();
     let _timer = counters::process_txn_submit_latency_timer(
         peer.raw_network_id().as_str(),
@@ -157,7 +157,7 @@ fn gen_ack_response(
 
         // 0L TODO: when is backoff submitted when mempool is full.
         if submission_status.0.code == MempoolStatusCode::MempoolIsFull {
-            dbg!("mempool is full, responding to peer with backoff.");
+            debug!("mempool is full, responding to peer with backoff.");
             counters::SELF_REQUEST_BACKOFF.inc();
             backoff = true;
         }
@@ -394,7 +394,8 @@ pub(crate) async fn process_consensus_request<V: TransactionValidation>(
     smp: SharedMempool<V>,
     req: ConsensusRequest
 ) {
-  dbg!("process_consensus_request");
+  debug!("process_consensus_request");
+    counters::TASKS_PROCESS_CONSENSUS_REQUEST_EVENT.inc();
     // Start latency timer
     let start_time = Instant::now();
     debug!(LogSchema::event_log(LogEntry::Consensus, LogEvent::Received).consensus_msg(&req));
@@ -450,7 +451,7 @@ pub(crate) async fn process_consensus_request<V: TransactionValidation>(
     };
     let latency = start_time.elapsed();
     
-    dbg!("mempool_service latency", &latency);
+    debug!("mempool_service latency: {:?}", &latency);
 
 
     counters::mempool_service_latency(counter_label, result, latency);

@@ -73,12 +73,14 @@ pub(crate) async fn coordinator<V>(
         let _timer = counters::MAIN_LOOP.start_timer();
         ::futures::select! {
             (msg, callback) = client_events.select_next_some() => {
-                dbg!("handle_client_event");
+                debug!("handle_client_event");
+                counters::COORDINATOR_HANDLE_CLIENT_EVENT.inc();
                 handle_client_event(&mut smp, &bounded_executor, msg, callback).await;
             },
             // 0L TODO: execute mempool tasks in a bounded execution with capacity.
             msg = consensus_requests.select_next_some() => {
-              dbg!("process_consensus_request");
+              debug!("process_consensus_request");
+              counters::COORDINATOR_HANDLE_CONSENSUS_EVENT.inc();
               //////// 0L ////////
               // The goal here is to put consensus requests also in a Tokio Semaphore (diem BoundedExecutor) where we can control the amount of workers and put backpressure.
 
@@ -86,11 +88,13 @@ pub(crate) async fn coordinator<V>(
                 // tasks::process_consensus_request(&smp.mempool, msg).await;
             }
             msg = state_sync_requests.select_next_some() => {
-                dbg!("state_sync_requests");
+                debug!("state_sync_requests");
+                counters::COORDINATOR_HANDLE_STATE_SYNC_EVENT.inc();
                 handle_state_sync_request(&mut smp, msg);
             }
             config_update = mempool_reconfig_events.select_next_some() => {
-                dbg!("handle_mempool_reconfig_event");
+                debug!("handle_mempool_reconfig_event");
+                counters::COORDINATOR_HANDLE_MEMPOOL_RECONFIG_EVENT.inc();
                 handle_mempool_reconfig_event(&mut smp, &bounded_executor, config_update).await;
             },
             (peer, backoff) = scheduled_broadcasts.select_next_some() => {

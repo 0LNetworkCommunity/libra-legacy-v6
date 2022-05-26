@@ -442,6 +442,10 @@ impl PeerManager {
         // as a backoff broadcast.
         // This ensures backpressure request from remote peer is honored at least once.
         if backoff {
+            counters::PEER_MANAGER_PEER_REQUESTED_BACKOFF.with_label_values(&[
+                &peer.raw_network_id().to_string(),
+                &peer.peer_id().to_string(),
+            ]).inc();
             error!("Peer requested backoff: {:?}", &peer);
             sync_state.broadcast_info.backoff_mode = true;
         }

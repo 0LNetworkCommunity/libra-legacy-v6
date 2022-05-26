@@ -167,7 +167,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
                 msg = self.client_events.select_next_some() => {
                     match msg {
                         CoordinatorMessage::SyncRequest(request) => {
-                           dbg!("sync request");
+                           debug!("sync request");
                             let _timer = counters::PROCESS_COORDINATOR_MSG_LATENCY
                                 .with_label_values(&[counters::SYNC_MSG_LABEL])
                                 .start_timer();
@@ -177,7 +177,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
                             }
                         }
                         CoordinatorMessage::CommitNotification(notification) => {
-                          dbg!("CommitNotification");
+                          debug!("CommitNotification");
 
                             let _timer = counters::PROCESS_COORDINATOR_MSG_LATENCY
                                 .with_label_values(&[counters::COMMIT_MSG_LABEL])
@@ -188,12 +188,14 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
                             }
                         }
                         CoordinatorMessage::GetSyncState(callback) => {
-                          dbg!("GetSyncState");
+                          debug!("GetSyncState");
+                            counters::GET_SYNC_STATE.inc();
 
                             let _ = self.get_sync_state(callback);
                         }
                         CoordinatorMessage::WaitForInitialization(cb_sender) => {
-                            dbg!("WaitForInitialization");
+                            debug!("WaitForInitialization");
+                            counters::WAIT_FOR_INIT.inc();
 
                             if let Err(e) = self.wait_for_initialization(cb_sender) {
                                 error!(LogSchema::new(LogEntry::Waypoint).error(&e));
@@ -209,8 +211,9 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
                             }
                         }
                         Event::LostPeer(metadata) => {
-                            dbg!("received event lost peer");
+                            debug!("received event lost peer");
 
+                            // prometheus metric is handled in process_lost_peer
                             if let Err(e) = self.process_lost_peer(network_id, metadata.remote_peer_id) {
                                 error!(LogSchema::new(LogEntry::LostPeer).error(&e));
                             }
@@ -255,6 +258,13 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
     ) -> Result<(), Error> {
         error!("lost peer: {:?}", &peer_id);
         let peer = PeerNetworkId(network_id, peer_id);
+
+        counters::STATE_SYNC_LOST_PEER.with_label_values(&[
+                &peer.raw_network_id().to_string(),
+                &peer.peer_id().to_string()
+            ])
+            .inc();
+
         self.request_manager.disable_peer(&peer)
     }
 
@@ -348,7 +358,8 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         if self.is_initialized() {
             Self::send_initialization_callback(cb_sender)?;
         } else {
-            dbg!("start statesync initialization listener");
+            debug!("start statesync initialization listener");
+            counters::STATE_SYNC_INIT_LISTENER_STARTED.inc();
             self.initialization_listener = Some(cb_sender);
         }
 
@@ -360,7 +371,8 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
     /// Note: when processing a sync request, state sync assumes that it's the only one
     /// modifying storage, i.e., consensus is not trying to commit transactions concurrently.
     fn process_sync_request(&mut self, request: SyncRequest) -> Result<(), Error> {
-        dbg!("processing state sync request");
+        debug!("processing state sync request");
+        counters::STATE_SYNC_PROCESS_STATE_SYNC_REQUEST.inc();
 
         fail_point!("state_sync::process_sync_request_message", |_| {
             Err(crate::error::Error::UnexpectedError(
@@ -593,7 +605,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         )
         .await
         {
-          dbg!("statesync commit to mempool failed with mempool_commit_timeout_ms expired");
+          debug!("statesync commit to mempool failed with mempool_commit_timeout_ms expired");
             counters::COMMIT_FLOW_FAIL
                 .with_label_values(&[counters::FROM_MEMPOOL_LABEL])
                 .inc();
@@ -681,7 +693,15 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         // 0L todo: don't penalize validators. Validators should always try to connect to others.
         
         if let Err(error) = self.verify_chunk_request_is_valid(&request) {
-            dbg!("statesync penalizing peer {:?}", &peer);
+            debug!("statesync penalizing peer {:?}", &peer);
+
+            counters::STATE_SYNC_PENALIZE_PEER
+                .with_label_values(&[
+                    &peer.raw_network_id().to_string(),
+                    &peer.peer_id().to_string()
+                ])
+                .inc();
+
             self.request_manager.process_invalid_chunk_request(&peer);
             return Err(error);
         }
@@ -773,7 +793,8 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         // requestor) add the request to the subscriptions to be handled when this node catches up.
         let local_version = self.local_state.committed_version();
         if local_version <= request.known_version {
-            dbg!("this node local veresion is less than known_version. Adding req to subscription.");
+            debug!("this node local version is less than known_version. Adding req to subscription.");
+            counters::STATE_SYNC_LOCAL_VERSION_NOT_UP_TO_DATE.inc();
 
             let expiration_time = SystemTime::now().checked_add(Duration::from_millis(timeout));
             if let Some(time) = expiration_time {
@@ -1605,10 +1626,11 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
         known_epoch: u64,
         target: TargetType,
     ) -> Result<(), Error> {
-        dbg!("sending chunk request with");
+        debug!("sending chunk request with");
         if self.request_manager.no_available_peers() {
-            dbg!("no available peers");
-            
+            debug!("no available peers");
+            counters::STATE_SYNC_NO_AVAILABLE_PEERS.inc();
+
             warn!(LogSchema::event_log(
                 LogEntry::SendChunkRequest,
                 LogEvent::MissingPeers

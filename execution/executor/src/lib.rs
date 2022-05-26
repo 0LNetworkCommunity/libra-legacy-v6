@@ -618,7 +618,7 @@ impl<V: VMExecutor> ChunkExecutor for Executor<V> {
         
         let latency = start_time.elapsed();
         metrics_timer_vl.observe_duration();
-        dbg!("verify_chunk latency", &latency);
+        debug!("verify_chunk latency: {:?}", &latency);
 
         // 3. Execute transactions.
         
@@ -632,7 +632,7 @@ impl<V: VMExecutor> ChunkExecutor for Executor<V> {
 
         let latency = start_time.elapsed();
         metrics_timer_el.observe_duration();
-        dbg!("execute_chunk latency", &latency);
+        debug!("execute_chunk latency: {:?}", &latency);
 
 
         // temp time the transaction execution.
@@ -657,7 +657,7 @@ impl<V: VMExecutor> ChunkExecutor for Executor<V> {
 
         let latency = start_time.elapsed();
         metrics_timer_stxl.observe_duration();
-        dbg!("save_transactions latency", &latency);
+        debug!("save_transactions latency: {:?}", &latency);
 
         // 5. Cache maintenance.
         let output_trees = output.executed_trees().clone();
