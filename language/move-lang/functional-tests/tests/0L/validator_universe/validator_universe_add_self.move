@@ -7,10 +7,8 @@
 script{
 use 0x1::ValidatorUniverse;
 use 0x1::Vector;
-// use 0x1::TestFixtures;
-// use 0x1::DiemAccount;
 
-fun main(vm: signer) {
+fun main(_vm: signer) {
     let len = Vector::length<address>(
         &ValidatorUniverse::get_eligible_validators()
     );
@@ -25,7 +23,6 @@ script{
 use 0x1::ValidatorUniverse;
 use 0x1::TestFixtures;
 use 0x1::TowerState;
-// use 0x1::FullnodeState;
 
 fun main(eve_sig: signer) {
     let eve_sig = &eve_sig;
@@ -50,7 +47,7 @@ script{
     use 0x1::Vector;
     use 0x1::ValidatorUniverse;
 
-    fun main(vm: signer) {
+    fun main(_vm: signer) {
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators());
         assert(len == 2, 73570);
     }

@@ -89,7 +89,7 @@ script {
     use 0x1::DiemSystem;
     use 0x1::ValidatorUniverse;
     use 0x1::Vector;
-    fun main(vm: signer) {
+    fun main(_vm: signer) {
         // Tests on initial size of validators
         // New validator is not in this set.
         assert(DiemSystem::validator_set_size() == 6, 7357000180101);
@@ -159,7 +159,7 @@ script {
     use 0x1::ValidatorUniverse;
     use 0x1::Vector;
     use 0x1::Debug::print;
-    fun main(vm: signer) {
+    fun main(_vm: signer) {
         // Tests on initial size of validators
         print(&DiemSystem::validator_set_size());
         assert(DiemSystem::validator_set_size() == 7, 7357000200301);
