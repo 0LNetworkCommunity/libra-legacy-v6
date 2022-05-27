@@ -96,7 +96,7 @@ module Burn {
       }
     } else {
 
-      send(vm, payer, value);
+      burn(vm, payer, value);
     };
   }
 
