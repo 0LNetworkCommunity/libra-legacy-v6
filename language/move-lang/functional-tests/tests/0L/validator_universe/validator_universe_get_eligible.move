@@ -14,7 +14,7 @@ fun main(vm: signer) {
     // ValidatorUniverse::add_validator(@0xDEADBEEF);
     // let validators_in_genesis = 4;
     let len = Vector::length<address>(
-        &ValidatorUniverse::get_eligible_validators(&vm)
+        &ValidatorUniverse::get_eligible_validators()
     );
 
     assert(len == 1, 100001);

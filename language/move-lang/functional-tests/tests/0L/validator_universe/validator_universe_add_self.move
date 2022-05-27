@@ -12,7 +12,7 @@ use 0x1::Vector;
 
 fun main(vm: signer) {
     let len = Vector::length<address>(
-        &ValidatorUniverse::get_eligible_validators(&vm)
+        &ValidatorUniverse::get_eligible_validators()
     );
     assert(len == 1, 73570);
 }
@@ -51,9 +51,7 @@ script{
     use 0x1::ValidatorUniverse;
 
     fun main(vm: signer) {
-        let len = Vector::length<address>(
-            &ValidatorUniverse::get_eligible_validators(&vm
-        ));
+        let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators());
         assert(len == 2, 73570);
     }
 }
