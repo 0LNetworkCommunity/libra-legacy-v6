@@ -154,6 +154,10 @@ module EpochBoundary {
         let previous_set = DiemSystem::get_val_set_addr();
         let proven_nodes = Vector::empty<address>();
 
+        // TODO: Can we deduplicate this loop.
+        // Iterate through the previous validator set, so we can count how big the set expansion should be.
+        // Take advantage of this loop to Jail the nodes that need to be jailed.
+
         let i = 0;
         while (i < Vector::length<address>(&previous_set)) {
             let addr = *Vector::borrow(&previous_set, i);
@@ -167,6 +171,10 @@ module EpochBoundary {
               Audit::val_audit_passing(addr)
             ) {
                 Vector::push_back(&mut proven_nodes, addr);
+                // also reset the jail counter for any successful unjails
+                Jail::remove_consecutive_fail(vm, addr);
+            } else {
+              Jail::jail(vm, addr);
             };
             i = i+ 1;
         };
@@ -199,7 +207,8 @@ module EpochBoundary {
         let i = 0;
         while (
           i < Vector::length(&top_accounts) && 
-          Vector::length(&proposed_set) < len_proven_nodes + max_unproven_nodes
+          Vector::length(&proposed_set) < len_proven_nodes + max_unproven_nodes &&
+          Vector::length(&proposed_set) < Globals::get_max_validators_per_set()
         ) {
             let addr = *Vector::borrow(&top_accounts, i);
             let mined_last_epoch = TowerState::node_above_thresh(addr);
