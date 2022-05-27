@@ -59,8 +59,6 @@ address 0x1 {
       borrow_global<Jail>(validator).is_jailed
     }
 
-    use 0x1::Debug::print;
-
     public fun jail(vm: &signer, validator: address) acquires Jail{
       CoreAddresses::assert_vm(vm);
 
@@ -69,9 +67,9 @@ address 0x1 {
         j.is_jailed = true;
         j.lifetime_jailed = j.lifetime_jailed + 1;
         j.consecutive_failure_to_rejoin = j.consecutive_failure_to_rejoin + 1;
-      } else {
-        print(&65656565656);
-      }
+      };
+
+      inc_voucher_jail(validator);
     }
 
     public fun remove_consecutive_fail(vm: &signer, validator: address) acquires Jail {
@@ -87,7 +85,7 @@ address 0x1 {
       let voucher = Signer::address_of(sender);
 
       let buddies = Vouch::buddies_in_set(addr);
-      print(&buddies);
+      // print(&buddies);
       let (is_found, _idx) = Vector::index_of(&buddies, &voucher);
       assert(is_found, 100103);
 
@@ -126,6 +124,19 @@ address 0x1 {
       };
 
       vec_address
+    }
+
+    fun inc_voucher_jail(addr: address) acquires Jail {
+      let buddies = Vouch::get_buddies(addr);
+      let i = 0;
+      while (i < Vector::length(&buddies)) {
+        let voucher = *Vector::borrow(&buddies, i);
+        if (exists<Jail>(voucher)) {
+          let v = borrow_global_mut<Jail>(voucher);
+          v.lifetime_vouchees_jailed = v.lifetime_vouchees_jailed + 1;
+        };
+        i = i + 1;
+      }
     }
 
     ///////// GETTERS //////////
