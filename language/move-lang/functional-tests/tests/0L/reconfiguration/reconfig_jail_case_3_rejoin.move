@@ -77,11 +77,14 @@ script {
     use 0x1::DiemSystem;
     use 0x1::DiemConfig;
     use 0x1::Mock;
+    use 0x1::Debug::print;
 
     fun main(vm: signer) {
         // We are in a new epoch.
         assert(DiemConfig::get_current_epoch() == 2, 7357008008009);
         // Tests on initial size of validators 
+        print(&99999999999999);
+        print(&DiemSystem::validator_set_size());
         assert(DiemSystem::validator_set_size() == 6, 7357008008010);
         assert(DiemSystem::is_validator(@{{eve}}) == false, 7357008008011);
 
