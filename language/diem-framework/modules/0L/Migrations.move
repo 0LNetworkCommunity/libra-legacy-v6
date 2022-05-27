@@ -103,7 +103,7 @@ module MigrateJail {
   public fun do_it(vm: &signer) {
     CoreAddresses::assert_diem_root(vm);
     if (!Migrations::has_run(UID)) {
-      let enabled_accounts = ValidatorUniverse::get_eligible_validators(vm);
+      let enabled_accounts = ValidatorUniverse::get_eligible_validators();
       let i = 0;
       let len = Vector::length<address>(&enabled_accounts);
       while (i < len) {

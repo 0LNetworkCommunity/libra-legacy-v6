@@ -148,7 +148,7 @@ address 0x1 {
       assert(vm_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190104));
 
       // Get eligible validators list
-      let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
+      let genesis_validators = ValidatorUniverse::get_eligible_validators();
       let len = Vector::length(&genesis_validators);
       // ten coins for validator, sufficient for first epoch of transactions,
       // and an extra which the validator will send to operator.

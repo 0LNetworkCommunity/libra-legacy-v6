@@ -180,6 +180,7 @@ module EpochBoundary {
 
 
         // get all eligble accounts by consensus weight
+        // TODO: Don't filter here
         let top_accounts = NodeWeight::top_n_accounts(
             vm, Globals::get_max_validators_per_set()
         );
@@ -282,7 +283,7 @@ module EpochBoundary {
           !StagingNet::is_staging_net() &&
           DiemConfig::get_current_epoch() > 185
         ) {
-          &ValidatorUniverse::get_eligible_validators(vm)
+          &ValidatorUniverse::get_eligible_validators()
         } else {
           proposed_set
         };

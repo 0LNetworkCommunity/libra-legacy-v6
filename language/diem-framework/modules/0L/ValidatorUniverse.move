@@ -67,8 +67,8 @@ address 0x1 {
 
     // A simple public function to query the EligibleValidators.
     // Function code: 03 Prefix: 220103
-    public fun get_eligible_validators(vm: &signer): vector<address> acquires ValidatorUniverse {
-      assert(Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(220103));
+    public fun get_eligible_validators(): vector<address> acquires ValidatorUniverse {
+
       let state = borrow_global<ValidatorUniverse>(CoreAddresses::DIEM_ROOT_ADDRESS());
       *&state.validators
     }
