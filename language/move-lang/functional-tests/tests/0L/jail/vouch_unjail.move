@@ -22,22 +22,6 @@
 //! NewBlockEvent
 
 //! new-transaction
-//! sender: diemroot
-script {
-    // use 0x1::DiemAccount;
-    // use 0x1::GAS::GAS;
-    use 0x1::Jail;
-
-    fun main(vm: signer) {
-      
-      Jail::jail(&vm, @{{eve}});
-      assert(Jail::is_jailed(@{{eve}}), 7357001);
-    }
-}
-//check: EXECUTED
-
-
-//! new-transaction
 //! sender: eve
 script {
     use 0x1::TowerState;
@@ -54,10 +38,34 @@ script {
 //! sender: alice
 script {
     use 0x1::Vouch;
-    use 0x1::Jail;
 
     fun main(sender: signer) {
       Vouch::vouch_for(&sender, @{{eve}});
+    }
+}
+
+//! new-transaction
+//! sender: diemroot
+script {
+    use 0x1::Jail;
+
+    fun main(vm: signer) {
+      
+      Jail::jail(&vm, @{{eve}});
+      assert(Jail::is_jailed(@{{eve}}), 7357001);
+      assert(Jail::get_vouchee_jail(@{{alice}}) > 0, 7357002);
+    }
+}
+//check: EXECUTED
+
+
+//! new-transaction
+//! sender: alice
+script {
+    use 0x1::Jail;
+
+    fun main(sender: signer) {
+      
       Jail::vouch_unjail(&sender, @{{eve}});
       assert(!Jail::is_jailed(@{{eve}}), 7357001);
     }

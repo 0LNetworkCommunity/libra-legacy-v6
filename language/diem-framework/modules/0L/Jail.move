@@ -148,6 +148,13 @@ address 0x1 {
       0
     }
 
+    public fun get_vouchee_jail(addr: address): u64 acquires Jail {
+      if (exists<Jail>(addr)) {
+        return borrow_global<Jail>(addr).lifetime_vouchees_jailed
+      };
+      0
+    }
+
 
     /////// TEST HELPERS ////////
     public fun exists_jail(addr: address): bool {
