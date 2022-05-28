@@ -1,5 +1,18 @@
 //! account: bob, 10000000, 0, validator
 
+
+// Set up the test difficulty for dynamic vdf
+
+//! new-transaction
+//! sender: diemroot
+script {
+  use 0x1::TowerState;
+  use 0x1::TestFixtures;
+    fun main(vm: signer) {
+      TowerState::test_set_vdf_difficulty(&vm, TestFixtures::easy_difficulty(), TestFixtures::security());
+    }
+}
+
 // 1. create an end-user account for eve.
 
 //! new-transaction

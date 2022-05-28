@@ -104,12 +104,14 @@ module TowerState {
     // Create the difficulty struct
     public fun init_difficulty(vm: &signer) {
       CoreAddresses::assert_diem_root(vm);
-      move_to<VDFDifficulty>(vm, VDFDifficulty {
-        difficulty: 5000000,
-        security: 512,
-        prev_diff: 5000000,
-        prev_sec: 512,
-      });
+      if (!exists<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+        move_to<VDFDifficulty>(vm, VDFDifficulty {
+          difficulty: 5000000,
+          security: 512,
+          prev_diff: 5000000,
+          prev_sec: 512,
+        });
+      }
     }
 
 
@@ -961,6 +963,15 @@ module TowerState {
       
       let s = borrow_global<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
       s.lifetime_proofs
+    }
+
+    public fun test_set_vdf_difficulty(vm: &signer, diff: u64, sec: u64) acquires VDFDifficulty {
+      assert(Testnet::is_testnet(), Errors::invalid_state(130113));
+      CoreAddresses::assert_vm(vm);
+      
+      let s = borrow_global_mut<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
+      s.difficulty = diff;
+      s.security = sec;
     }
 
     public fun test_danger_destroy_tower_counter(vm: &signer) acquires TowerCounter {
