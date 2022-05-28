@@ -71,6 +71,7 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
@@ -734,17 +735,14 @@ Permissions: PUBLIC, ANYONE
 ) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>, <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
   // Get address, assumes the sender is the signer.
   <b>let</b> miner_addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign);
-
-  // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
-  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
-    // Get vdf difficulty constant. Will be different in tests than in production.
-    <b>let</b> (difficulty_constant, security) = <a href="TowerState.md#0x1_TowerState_get_difficulty">get_difficulty</a>();
-    <b>assert</b>(&proof.difficulty == &difficulty_constant, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
-    <b>assert</b>(&proof.security == &security, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
-  };
+  <b>let</b> diff = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
 
   // This may be the 0th proof of an end user that hasn't had tower state initialized
   <b>if</b> (!<a href="TowerState.md#0x1_TowerState_is_init">is_init</a>(miner_addr)) {
+
+    <b>assert</b>(&proof.difficulty == &diff.difficulty, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
+    <b>assert</b>(&proof.security == &diff.security, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
+
     // check proof belongs <b>to</b> user.
     <b>let</b> (addr_in_proof, _) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(&proof.challenge);
     <b>assert</b>(addr_in_proof == <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130112));
@@ -753,6 +751,27 @@ Permissions: PUBLIC, ANYONE
     <b>return</b>
   };
 
+
+  // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
+  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
+    // Get vdf difficulty constant. Will be different in tests than in production.
+
+    // need <b>to</b> also give allowance for user's first proof in epoch <b>to</b> be in the last proof.
+    <b>if</b> (<a href="TowerState.md#0x1_TowerState_get_count_in_epoch">get_count_in_epoch</a>(miner_addr) == 0) {
+      // first proof in this epoch, can be either the previous difficulty or the current one
+      <b>let</b> is_diff = &proof.difficulty == &diff.difficulty ||
+      &proof.difficulty == &diff.prev_diff;
+
+      <b>let</b> is_sec = &proof.difficulty == &diff.security ||
+      &proof.difficulty == &diff.prev_sec;
+
+      <b>assert</b>(is_diff, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
+      <b>assert</b>(is_sec, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
+    } <b>else</b> {
+      <b>assert</b>(&proof.difficulty == &diff.difficulty, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
+      <b>assert</b>(&proof.security == &diff.security, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
+    };
+  };
   // Process the proof
   <a href="TowerState.md#0x1_TowerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
 }
@@ -1266,7 +1285,6 @@ Reset the tower counter at the end of epoch.
 
 ## Function `toy_rng`
 
-Experimental  ///
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_toy_rng">toy_rng</a>(seed: u64, iters: u64): u64
@@ -1282,40 +1300,44 @@ Experimental  ///
   // Get the list of all miners L
   // Pick a tower miner  (M) from the seed position 1/(N) of the list of miners.
   <b>let</b> l = <a href="TowerState.md#0x1_TowerState_get_miner_list">get_miner_list</a>();
-
+  print(&l);
   // the length will keep incrementing through the epoch. The last miner can know what the starting position will be. There could be a race <b>to</b> be the last validator <b>to</b> augment the set and bias the initial shuffle.
   <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&l);
-
   <b>if</b> (len == 0) <b>return</b> 0;
+  print(&5555);
 
-  <b>let</b> n = 0;
+  // start n <b>with</b> the seed index
+  <b>let</b> n = seed;
 
   <b>let</b> i = 0;
-
   <b>while</b> (i &lt; iters) {
-    <b>if</b> (seed &gt; len) {
-        n = seed / len
-      } <b>else</b> <b>if</b> (len &gt; seed) {
-        n = len / seed
-      } <b>else</b> {
-        n = 0;
-      };
-
+    print(&6666);
+    <b>if</b> (n &gt; len) { n = n / len }
+      <b>else</b> <b>if</b> (len &gt; n) { n = len / n }
+      <b>else</b> { n = 0 };
     // <b>return</b> zero so the user knows of the error, instead of returning anything halfway though the iters.
     <b>if</b> (n == 0) <b>return</b> 0;
+
+    print(&n);
+    print(&l);
+
+    <b>if</b> (n &gt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&l)) <b>return</b> 0;
+
+    print(&666602);
     // take the first bit (B) from their last proof hash.
     <b>let</b> miner_addr = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&l, n);
 
+    print(&666603);
     <b>let</b> vec = <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(*miner_addr)) {
       *&borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(*miner_addr).previous_proof_hash
-    } <b>else</b> {
-      <b>return</b> 0
-    };
-
+    }
+    <b>else</b> { <b>return</b> 0 };
+    print(&666604);
     n = (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_pop_back">Vector::pop_back</a>(&<b>mut</b> vec) <b>as</b> u64);
-
+    print(&666605);
     i = i + 1;
   };
+  print(&8888);
 
   n
 }
