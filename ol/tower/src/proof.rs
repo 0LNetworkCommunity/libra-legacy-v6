@@ -247,6 +247,9 @@ fn create_fixtures() {
 #[test]
 fn test_mine_once() {
     use hex::decode;
+    use diem_crypto::HashValue;
+    use diem_types::ol_vdf_difficulty::VDFDifficulty;
+
     // if no file is found, the block height is 0
     let mut configs_fixture = test_make_configs_fixture();
     configs_fixture.workspace.block_dir = "test_blocks_temp_2".to_owned();
