@@ -34,7 +34,8 @@ script {
 
 
 // 2. Make sure there are validator subsidies available.
-// so we need Alice to be a Case 1 validator so that there is a subsidy to be paid to validator set.
+// so we need Alice to be a Case 1 validator so that there is a subsidy
+// to be paid to validator set.
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -109,7 +110,8 @@ script {
         print(&DiemAccount::balance<GAS>(@Bob));
         print(&DiemAccount::balance<GAS>(@Alice));
 
-        // bob gets the entire identity pool (equivalent to one FIFTH of the validator subsidy)
+        // bob gets the entire identity pool (equivalent to one FIFTH
+        // of the validator subsidy)
         assert!(DiemAccount::balance<GAS>(@Bob) == ending_balance, 735711);
 
     }

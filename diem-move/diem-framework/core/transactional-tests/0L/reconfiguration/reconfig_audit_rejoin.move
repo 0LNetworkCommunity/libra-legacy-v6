@@ -84,7 +84,7 @@ script {
     use DiemFramework::TowerState;
     use DiemFramework::AutoPay;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
         AutoPay::enable_autopay(&sender);
         
         // Miner is the only one that can update their mining stats. Hence this first transaction.

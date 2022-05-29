@@ -69,7 +69,8 @@ script {
 
 
 // 2. Make sure there are validator subsidies available.
-// so we need Alice to be a Case 1 validator so that there is a subsidy to be paid to validator set.
+// so we need Alice to be a Case 1 validator so that there is a subsidy
+// to be paid to validator set.
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -86,7 +87,8 @@ script {
 
 
       // Mock the end-users submitting proofs above threshold.
-      // Add 12: make it so that +2 gets above threshold so that 10 are counted as above thresh.
+      // Add 12: make it so that +2 gets above threshold so that 10 are
+      // counted as above thresh.
       TowerState::test_helper_mock_mining_vm(&vm, @Bob, 12);
       TowerState::test_helper_mock_mining_vm(&vm, @Carol, 12);
       TowerState::test_helper_mock_mining_vm(&vm, @Dave, 1);
@@ -131,7 +133,8 @@ script {
         // we expect that Bob receives the share that one validator would get.
         let expected_subsidy = Subsidy::subsidy_curve(
           Globals::get_subsidy_ceiling_gas(),
-          1, // alice is the only validator (but below 4 the reward is the same in testnet: 296000000)
+          1, // alice is the only validator (but below 4 the reward is
+             // the same in testnet: 296000000)
           Globals::get_max_validators_per_set(),
         );
 
