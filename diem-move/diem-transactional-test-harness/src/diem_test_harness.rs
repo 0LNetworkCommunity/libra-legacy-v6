@@ -828,9 +828,13 @@ impl<'a> MoveTestAdapter<'a> for DiemTestAdapter<'a> {
 
         /////// 0L /////////
         // storage.add_write_set(GENESIS_CHANGE_SET_FRESH.write_set());
-        let val_size = task_opt.as_ref().unwrap().command.1.validators.as_ref().unwrap().len();
+        let validators = task_opt.as_ref().unwrap().command.1.validators.as_ref();
+        let mut val_size = None;
+        if validators.is_some() { 
+            val_size = Some(validators.as_ref().unwrap().len()) 
+        }
         storage.add_write_set(
-            generate_genesis_change_set_for_testing_ol(GenesisOptions::Fresh, Some(val_size)).write_set()
+            generate_genesis_change_set_for_testing_ol(GenesisOptions::Fresh, val_size).write_set()
         );
 
         // Builtin private key mapping
