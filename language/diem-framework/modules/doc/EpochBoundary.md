@@ -5,11 +5,6 @@
 
 
 
--  [Resource `DebugMode`](#0x1_EpochBoundary_DebugMode)
--  [Function `init_debug`](#0x1_EpochBoundary_init_debug)
--  [Function `remove_debug`](#0x1_EpochBoundary_remove_debug)
--  [Function `is_debug`](#0x1_EpochBoundary_is_debug)
--  [Function `get_debug_vals`](#0x1_EpochBoundary_get_debug_vals)
 -  [Function `reconfigure`](#0x1_EpochBoundary_reconfigure)
 -  [Function `process_fullnodes`](#0x1_EpochBoundary_process_fullnodes)
 -  [Function `process_validators`](#0x1_EpochBoundary_process_validators)
@@ -21,6 +16,7 @@
 <pre><code><b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
 <b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="Burn.md#0x1_Burn">0x1::Burn</a>;
+<b>use</b> <a href="Cases.md#0x1_Cases">0x1::Cases</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
@@ -31,6 +27,7 @@
 <b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
+<b>use</b> <a href="RecoveryMode.md#0x1_RecoveryMode">0x1::RecoveryMode</a>;
 <b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Subsidy.md#0x1_Subsidy">0x1::Subsidy</a>;
@@ -41,141 +38,6 @@
 </code></pre>
 
 
-
-<a name="0x1_EpochBoundary_DebugMode"></a>
-
-## Resource `DebugMode`
-
-
-
-<pre><code><b>struct</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> has <b>copy</b>, drop, store, key
-</code></pre>
-
-
-
-<details>
-<summary>Fields</summary>
-
-
-<dl>
-<dt>
-<code>fixed_set: vector&lt;address&gt;</code>
-</dt>
-<dd>
-
-</dd>
-</dl>
-
-
-</details>
-
-<a name="0x1_EpochBoundary_init_debug"></a>
-
-## Function `init_debug`
-
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_init_debug">init_debug</a>(vm: &signer, vals: vector&lt;address&gt;)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_init_debug">init_debug</a>(vm: &signer, vals: vector&lt;address&gt;) {
-  <b>if</b> (!<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
-    move_to&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(vm, <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> {
-      fixed_set: vals
-    });
-  }
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_EpochBoundary_remove_debug"></a>
-
-## Function `remove_debug`
-
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_remove_debug">remove_debug</a>(vm: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_remove_debug">remove_debug</a>(vm: &signer) <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> {
-  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-  <b>if</b> (<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
-    _ = move_from&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
-  }
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_EpochBoundary_is_debug"></a>
-
-## Function `is_debug`
-
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>(): bool
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>(): bool {
-  <b>exists</b>&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_EpochBoundary_get_debug_vals"></a>
-
-## Function `get_debug_vals`
-
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_get_debug_vals">get_debug_vals</a>(): vector&lt;address&gt;
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_get_debug_vals">get_debug_vals</a>(): vector&lt;address&gt; <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>  {
-  <b>if</b> (<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
-    <b>let</b> d = borrow_global&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
-    *&d.fixed_set
-  } <b>else</b> {
-    <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;()
-  }
-}
-</code></pre>
-
-
-
-</details>
 
 <a name="0x1_EpochBoundary_reconfigure"></a>
 
@@ -192,7 +54,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>{
+<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
 
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm);
@@ -221,8 +83,11 @@
     <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>());
     print(&800800);
 
-    <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm,nominal_subsidy_per, &proposed_set);
-    print(&800900);
+    <b>if</b> (!<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()) {
+      <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm,nominal_subsidy_per, &proposed_set);
+      print(&800900);
+    };
+
 
     <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, outgoing_compliant_set, height_now);
     print(&801000);
@@ -273,7 +138,12 @@
           <b>let</b> count = <a href="TowerState.md#0x1_TowerState_get_count_above_thresh_in_epoch">TowerState::get_count_above_thresh_in_epoch</a>(addr);
 
           <b>let</b> miner_subsidy = count * proof_price;
-          <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_distribute_fullnode_subsidy">FullnodeSubsidy::distribute_fullnode_subsidy</a>(vm, addr, miner_subsidy);
+
+          // don't pay <b>while</b> we are in recovery mode, since that creates a frontrunning opportunity
+          <b>if</b> (!<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()){
+            <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_distribute_fullnode_subsidy">FullnodeSubsidy::distribute_fullnode_subsidy</a>(vm, addr, miner_subsidy);
+          }
+
         };
 
         k = k + 1;
@@ -308,7 +178,8 @@
 
     <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>&lt;address&gt;(&outgoing_compliant_set)) <b>return</b>;
 
-    <b>if</b> (subsidy_units &gt; 0) {
+    // don't pay <b>while</b> we are in recovery mode, since that creates a frontrunning opportunity
+    <b>if</b> (subsidy_units &gt; 0 && !<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()) {
         <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, &outgoing_compliant_set);
     };
 
@@ -335,39 +206,93 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt; <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>{
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;address&gt; {
+    print(&99999999999999);
+
     // Propose upcoming validator set:
+    // Get validators we know <b>to</b> be in consensus correctly: Case1 and Case2
+    // Only expand the amount of seats so that the new set has a max of 25% unproven nodes. I.e. nodes that were not in the previous epoch and we have stats on.
 
     // in emergency admin roles set the validator set
-    <b>if</b> (<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
-      <b>return</b> <a href="EpochBoundary.md#0x1_EpochBoundary_get_debug_vals">get_debug_vals</a>()
+    // there may be a recovery set <b>to</b> be used.
+    // <b>if</b> there is no rescue mission validators, just do usual procedure.
+
+    <b>if</b> (<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()) {
+      <b>let</b> recovery_vals = <a href="RecoveryMode.md#0x1_RecoveryMode_get_debug_vals">RecoveryMode::get_debug_vals</a>();
+      <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&recovery_vals) &gt; 0) <b>return</b> recovery_vals;
     };
 
-    // save all the eligible list, before the jailing removes them.
-    <b>let</b> proposed_set = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>();
+
+    // find good new validators
+    // limit the amount of validators so that the new set doesn't have
+    // 25% of nodes that we don't know their current performance.
+
+    <b>let</b> previous_set = <a href="DiemSystem.md#0x1_DiemSystem_get_val_set_addr">DiemSystem::get_val_set_addr</a>();
+    <b>let</b> proven_nodes = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
+
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&previous_set)) {
+        <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&previous_set, i);
+        <b>let</b> case = <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_now);
+        // <b>let</b> mined_last_epoch = <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr);
+        // TODO: temporary until jailing is enabled.
+        <b>if</b> (
+          // TODO: We should <b>include</b> CASE 2
+          (case == 1 || case == 2) &&
+          // case == 1 &&
+          <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
+        ) {
+            <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proven_nodes, addr);
+        };
+        i = i+ 1;
+    };
+
+    <b>let</b> len_proven_nodes = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proven_nodes);
+    <b>let</b> max_unproven_nodes = len_proven_nodes / 6;
+    print(&len_proven_nodes);
+    print(&max_unproven_nodes);
+    // start from the proven nodes
+    <b>let</b> proposed_set = proven_nodes;
+
 
     <b>let</b> top_accounts = <a href="NodeWeight.md#0x1_NodeWeight_top_n_accounts">NodeWeight::top_n_accounts</a>(
         vm, <a href="Globals.md#0x1_Globals_get_max_validators_per_set">Globals::get_max_validators_per_set</a>()
     );
 
+    // we also need <b>to</b> explicitly filter those which did not do work.
     <b>let</b> jailed_set = <a href="DiemSystem.md#0x1_DiemSystem_get_jailed_set">DiemSystem::get_jailed_set</a>(vm, height_start, height_now);
 
+    print(&top_accounts);
+    print(&jailed_set);
 
-
+    // <b>let</b> jailed_set = <a href="DiemSystem.md#0x1_DiemSystem_get_jailed_set">DiemSystem::get_jailed_set</a>(vm, height_start, height_now);
+    // find the top unproven nodes and add <b>to</b> the proposed set
     <b>let</b> i = 0;
-    <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&top_accounts)) {
+    <b>while</b> (
+      i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&top_accounts) &&
+      <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proposed_set) &lt; len_proven_nodes + max_unproven_nodes
+    ) {
         <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&top_accounts, i);
         <b>let</b> mined_last_epoch = <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr);
-        // TODO: temporary until jailing is enabled.
+
+        print(&addr);
+
         <b>if</b> (
-            !<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&jailed_set, &addr) &&
+            // ignore those already on list
+            !<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&proposed_set, &addr) &&
+            // jail the current validators which did not perform.
+            !<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;address&gt;(&jailed_set, &addr) &&
+            // check the unproven node has done a minimum of work
             mined_last_epoch &&
             <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
         ) {
+            print(&901);
             <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proposed_set, addr);
         };
         i = i+ 1;
     };
+
+    print(&proposed_set);
 
 
     // If the cardinality of validator_set in the next epoch is less than 4,
@@ -417,7 +342,6 @@
     // Migrate <a href="TowerState.md#0x1_TowerState">TowerState</a> list from elegible.
     <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &outgoing_compliant);
 
-    print(&99999999999999);
 
     // process community wallets
     <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">DiemAccount::process_community_wallets</a>(vm, <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
@@ -427,8 +351,8 @@
 
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
 
+    <a href="RecoveryMode.md#0x1_RecoveryMode_maybe_remove_debug_at_epoch">RecoveryMode::maybe_remove_debug_at_epoch</a>(vm);
     // Reconfig should be the last event.
-
     // Reconfigure the network
     <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
 

@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 // 0L Module
-// Epoch Prologue
+// Epoch Boundary
 ///////////////////////////////////////////////////////////////////////////
 // The prologue for transitioning to next epoch after every n blocks.
 // File Prefix for errors: 1800
@@ -27,46 +27,16 @@ module EpochBoundary {
     use 0x1::ValidatorUniverse;
     use 0x1::Testnet;
     use 0x1::StagingNet;
+    use 0x1::RecoveryMode;
+    use 0x1::Cases;
 
     use 0x1::Debug::print;
 
-    struct DebugMode has copy, key, drop, store{
-      fixed_set: vector<address>
-    }
 
-    // private function so that it can only be called by vm session.
-    // should never be used in production.
-    fun init_debug(vm: &signer, vals: vector<address>) {
-      if (!is_debug()) {
-        move_to<DebugMode>(vm, DebugMode {
-          fixed_set: vals
-        });
-      }
-    }
-
-    fun remove_debug(vm: &signer) acquires DebugMode {
-      CoreAddresses::assert_vm(vm);
-      if (is_debug()) {
-        _ = move_from<DebugMode>(CoreAddresses::VM_RESERVED_ADDRESS());
-      }
-    }
-
-    fun is_debug(): bool {
-      exists<DebugMode>(CoreAddresses::VM_RESERVED_ADDRESS())
-    }
-
-    fun get_debug_vals(): vector<address> acquires DebugMode  {
-      if (is_debug()) {
-        let d = borrow_global<DebugMode>(CoreAddresses::VM_RESERVED_ADDRESS());
-        *&d.fixed_set
-      } else {
-        Vector::empty<address>()
-      }
-    }
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
-    public fun reconfigure(vm: &signer, height_now: u64) acquires DebugMode{
+    public fun reconfigure(vm: &signer, height_now: u64) {
 
         CoreAddresses::assert_vm(vm);
         let height_start = Epoch::get_timer_height_start(vm);
@@ -95,8 +65,11 @@ module EpochBoundary {
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
         print(&800800);
 
-        proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
-        print(&800900);
+        if (!RecoveryMode::is_recovery()) {
+          proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
+          print(&800900);
+        };
+
 
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
         print(&801000);
@@ -128,7 +101,12 @@ module EpochBoundary {
               let count = TowerState::get_count_above_thresh_in_epoch(addr);
 
               let miner_subsidy = count * proof_price;
-              FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
+
+              // don't pay while we are in recovery mode, since that creates a frontrunning opportunity
+              if (!RecoveryMode::is_recovery()){ 
+                FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
+              }
+              
             };
 
             k = k + 1;
@@ -143,46 +121,101 @@ module EpochBoundary {
         
         if (Vector::is_empty<address>(&outgoing_compliant_set)) return;
 
-        if (subsidy_units > 0) {
+        // don't pay while we are in recovery mode, since that creates a frontrunning opportunity
+        if (subsidy_units > 0 && !RecoveryMode::is_recovery()) {
             Subsidy::process_subsidy(vm, subsidy_units, &outgoing_compliant_set);
         };
 
         Subsidy::process_fees(vm, &outgoing_compliant_set);
     }
 
-    fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> acquires DebugMode{
+    fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> {
+        print(&99999999999999);
+
         // Propose upcoming validator set:
+        // Get validators we know to be in consensus correctly: Case1 and Case2
+        // Only expand the amount of seats so that the new set has a max of 25% unproven nodes. I.e. nodes that were not in the previous epoch and we have stats on.
         
         // in emergency admin roles set the validator set
-        if (is_debug()) {
-          return get_debug_vals()
+        // there may be a recovery set to be used.
+        // if there is no rescue mission validators, just do usual procedure.
+        
+        if (RecoveryMode::is_recovery()) {
+          let recovery_vals = RecoveryMode::get_debug_vals();
+          if (Vector::length(&recovery_vals) > 0) return recovery_vals;
         };
 
-        // save all the eligible list, before the jailing removes them.
-        let proposed_set = Vector::empty();
+      
+        // find good new validators
+        // limit the amount of validators so that the new set doesn't have
+        // 25% of nodes that we don't know their current performance.
+
+        let previous_set = DiemSystem::get_val_set_addr();
+        let proven_nodes = Vector::empty<address>();
+
+        let i = 0;
+        while (i < Vector::length<address>(&previous_set)) {
+            let addr = *Vector::borrow(&previous_set, i);
+            let case = Cases::get_case(vm, addr, height_start, height_now);
+            // let mined_last_epoch = TowerState::node_above_thresh(addr);
+            // TODO: temporary until jailing is enabled.
+            if (
+              // TODO: We should include CASE 2
+              (case == 1 || case == 2) &&
+              // case == 1 &&
+              Audit::val_audit_passing(addr)
+            ) {
+                Vector::push_back(&mut proven_nodes, addr);
+            };
+            i = i+ 1;
+        };
+
+        let len_proven_nodes = Vector::length(&proven_nodes);
+        let max_unproven_nodes = len_proven_nodes / 6;
+        print(&len_proven_nodes);
+        print(&max_unproven_nodes);
+        // start from the proven nodes
+        let proposed_set = proven_nodes;
+
 
         let top_accounts = NodeWeight::top_n_accounts(
             vm, Globals::get_max_validators_per_set()
         );
 
+        // we also need to explicitly filter those which did not do work.
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
 
+        print(&top_accounts);
+        print(&jailed_set);
 
-
+        // let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
+        // find the top unproven nodes and add to the proposed set
         let i = 0;
-        while (i < Vector::length<address>(&top_accounts)) {
+        while (
+          i < Vector::length(&top_accounts) && 
+          Vector::length(&proposed_set) < len_proven_nodes + max_unproven_nodes
+        ) {
             let addr = *Vector::borrow(&top_accounts, i);
             let mined_last_epoch = TowerState::node_above_thresh(addr);
-            // TODO: temporary until jailing is enabled.
+            
+            print(&addr);
+
             if (
-                !Vector::contains(&jailed_set, &addr) && 
+                // ignore those already on list
+                !Vector::contains<address>(&proposed_set, &addr) &&
+                // jail the current validators which did not perform.
+                !Vector::contains<address>(&jailed_set, &addr) &&
+                // check the unproven node has done a minimum of work
                 mined_last_epoch &&
                 Audit::val_audit_passing(addr)
             ) {
+                print(&901);
                 Vector::push_back(&mut proposed_set, addr);
             };
             i = i+ 1;
         };
+
+        print(&proposed_set);
 
 
         // If the cardinality of validator_set in the next epoch is less than 4, 
@@ -212,7 +245,6 @@ module EpochBoundary {
         // Migrate TowerState list from elegible.
         TowerState::reconfig(vm, &outgoing_compliant);
         
-        print(&99999999999999);
 
         // process community wallets
         DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
@@ -222,8 +254,8 @@ module EpochBoundary {
 
         Epoch::reset_timer(vm, height_now);
 
+        RecoveryMode::maybe_remove_debug_at_epoch(vm);
         // Reconfig should be the last event.
-
         // Reconfigure the network
         DiemSystem::bulk_update_validators(vm, proposed_set);
 
@@ -243,7 +275,9 @@ module EpochBoundary {
         let vals_to_burn = if (
           !Testnet::is_testnet() &&
           !StagingNet::is_staging_net() &&
-          DiemConfig::get_current_epoch() > 185
+          DiemConfig::get_current_epoch() > 290 && // bump up to epoch 290 so people can discuss.
+          // only implement this burn at a steady state with 90/100 validator positions full. Will make the burn amount much smaller over time.
+          Vector::length<address>(proposed_set) > 90
         ) {
           &ValidatorUniverse::get_eligible_validators(vm)
         } else {

@@ -42,8 +42,22 @@ address 0x1 {
       if (!exists<Vouch>(val)) return;
 
       let v = borrow_global_mut<Vouch>(val);
-      Vector::push_back<address>(&mut v.vals, buddy_acc);
+      if (!Vector::contains(&v.vals, &buddy_acc)) { // prevent duplicates
+        Vector::push_back<address>(&mut v.vals, buddy_acc);
+      }
+    }
 
+    public fun revoke(buddy: &signer, val: address) acquires Vouch {
+      let buddy_acc = Signer::address_of(buddy);
+      assert(buddy_acc!=val, 12345); // TODO: Error code.
+
+      if (!exists<Vouch>(val)) return;
+
+      let v = borrow_global_mut<Vouch>(val);
+      let (found, i) = Vector::index_of(&v.vals, &buddy_acc);
+      if (found) {
+        Vector::remove(&mut v.vals, i);
+      };
     }
 
     public fun vm_migrate(vm: &signer, val: address, buddy_list: vector<address>) acquires Vouch {
@@ -138,7 +152,8 @@ address 0x1 {
       if (!exists<Vouch>(val)) return false;
 
       let len = Vector::length(&unrelated_buddies(val));
-      (len > 3) // TODO: move to Globals
+
+      (len >= 4) // TODO: move to Globals
     }
   }
 }

@@ -63,4 +63,5 @@ key_store.json
 
 *.swp
 
+# prevent mv files from being committed
 *.mv

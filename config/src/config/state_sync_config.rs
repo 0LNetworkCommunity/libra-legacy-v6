@@ -35,12 +35,12 @@ impl Default for StateSyncConfig {
             chunk_limit: 250, ///////// 0L ////////
             client_commit_timeout_ms: 5_000,
             long_poll_timeout_ms: 10_000,
-            max_chunk_limit: 1000,
+            max_chunk_limit: 1_000,
             max_timeout_ms: 120_000,
             mempool_commit_timeout_ms: 5_000,
             multicast_timeout_ms: 30_000,
-            sync_request_timeout_ms: 60_000,
-            tick_interval_ms: 500, //////// 0L ////////
+            sync_request_timeout_ms: 1_000, //////// 0L /////////
+            tick_interval_ms: 5000, //////// 0L ////////
         }
     }
 }

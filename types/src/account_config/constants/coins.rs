@@ -30,14 +30,18 @@ pub fn xus_tag() -> TypeTag {
 //////// 0L ////////
 pub static GAS_MODULE: Lazy<ModuleId> =
     Lazy::new(|| ModuleId::new(CORE_CODE_ADDRESS, GAS_IDENTIFIER.to_owned()));
-    
-pub fn gas_type_tag() -> TypeTag {
-    TypeTag::Struct(StructTag {
+
+pub fn gas_struct() -> StructTag {
+  StructTag {
         address: CORE_CODE_ADDRESS,
         module: from_currency_code_string(GAS_NAME).unwrap(),
         name: from_currency_code_string(GAS_NAME).unwrap(),
         type_params: vec![],
-    })
+    }
+}
+
+pub fn gas_type_tag() -> TypeTag {
+    TypeTag::Struct(gas_struct())
 }
 
 /// Return `Some(struct_name)` if `t` is a `StructTag` representing one of the current Diem coin
@@ -60,6 +64,7 @@ pub fn coin_name(t: &TypeTag) -> Option<String> {
         _ => None,
     }
 }
+
 
 #[test]
 fn coin_names() {

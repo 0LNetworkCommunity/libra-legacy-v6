@@ -1,13 +1,12 @@
 //! `backlog`
 
-use abscissa_core::{Command, config, FrameworkError, Options, Runnable};
+use abscissa_core::{Command, Options, Runnable};
 use diem_logger::{Level, Logger};
-use ol_types::config::AppCfg;
 use ol_types::config::TxType;
 use std::process::exit;
 use txs::tx_params::TxParams;
 
-use crate::{backlog, entrypoint, proof::*};
+use crate::{backlog, entrypoint};
 use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 
 /// `backlog` subcommand
