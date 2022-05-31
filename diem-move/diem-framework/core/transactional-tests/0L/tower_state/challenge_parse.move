@@ -1,10 +1,6 @@
-//# init --validators DummyPreventsGenesisReload
-//#      --addresses Bob=0x4b7653f6566a52c9b496f245628a69a0
-//#      --private-keys Bob=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
-
-//// Old syntax for reference, delete it after fixing this test
-//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
-//! account: bob, 10000000GAS
+//# init --validators DummyPreventsGenesisReload --parent-vasps Bob
+// DummyPreventsGenesisReload: validator with 10M GAS
+// Bob:                    non-validator with  1M GAS
 
 // todo: fix this first: native_extract_address_from_challenge()
 // https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs

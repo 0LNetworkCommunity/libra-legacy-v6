@@ -1,10 +1,6 @@
-//# init --validators DummyPreventsGenesisReload
-//#      --addresses Alice=0x2e3a0b7a741dae873bf0f203a82dfd52
-//#      --private-keys Alice=e1acb70a23dba96815db374b86c5ae96d6a9bc5fff072a7a8e55a1c27c1852d8
-
-//// Old syntax for reference, delete it after fixing this test
-//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
-//! account: alice, 10000000GAS
+//# init --validators DummyPreventsGenesisReload --parent-vasps Alice
+// DummyPreventsGenesisReload: validator with 10M GAS
+// Alice:                  non-validator with  1M GAS
 
 // Alice Submit VDF Proof
 //# run --admin-script --signers DiemRoot Alice

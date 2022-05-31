@@ -1,10 +1,6 @@
-//# init --validators Bob
-//#      --addresses Alice=0x2e3a0b7a741dae873bf0f203a82dfd52
-//#      --private-keys Alice=e1acb70a23dba96815db374b86c5ae96d6a9bc5fff072a7a8e55a1c27c1852d8
-
-//// Old syntax for reference, delete it after fixing this test
-//! account: bob, 100000, 0, validator
-//! account: alice, 10000000GAS
+//# init --validators Bob --parent-vasps Alice
+// Bob:       validator with 10M GAS
+// Alice: non-validator with  1M GAS
 
 // 1. alice is onboarded as an end-user, and submits first proof (through Carpe app for example).
 
@@ -39,7 +35,6 @@ script {
         assert!(TowerState::get_count_in_epoch(@Alice) == 1, 735703);
         // the nominal count will match the expected count in epoch.
         assert!(TowerState::test_helper_get_nominal_count(@Alice) == 1, 735704);
-
     }
 }
 // check: EXECUTED
@@ -86,7 +81,6 @@ script {
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemConfig;
@@ -111,7 +105,6 @@ script {
 
 
 // 4. Alice finally sends a new miner proof, and the nominal epochs info is reset.
-
 
 //# run --admin-script --signers DiemRoot Alice
 script {
@@ -157,5 +150,3 @@ script {
     }
 }
 // check: EXECUTED
-
-

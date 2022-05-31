@@ -1,18 +1,18 @@
-//# init --validators DummyPreventsGenesisReload
-//#      --addresses Bob=0x4b7653f6566a52c9b496f245628a69a0
-//#      --private-keys Bob=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
+//# init --validators DummyPreventsGenesisReload --parent-vasps Bob
+// DummyPreventsGenesisReload: validator  with 10M GAS
+// Bob:                    non-validator with  1M GAS
 
-//// Old syntax for reference, delete it after fixing this test
-//! account: dummy-prevents-genesis-reload, 100000, 0, validator
-//! account: bob, 10000000GAS
+// todo: fix this first: native_extract_address_from_challenge()
+// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
 
 // Scenario: Alice is NOT a validator, and has not mined before. 
 // she tries to submit proof_0.json the genesis proof without any TowerState
 // being initialized. The tx should abort.
 
-// TODO: THERE'S NO CLEAR WAY TO TEST THE AFFIRMATIVE CASE OF THIS in functional test suite
-// The accounts created above have random addresses, and we need fixed addresses in the proof preimage.
-// this tests at least that someone cannot send a transaction with someone else's genesis proof.
+// TODO: THERE'S NO CLEAR WAY TO TEST THE AFFIRMATIVE CASE OF THIS in
+// functional test suite. The accounts created above have random addresses,
+// and we need fixed addresses in the proof preimage. This tests at least that
+// someone cannot send a transaction with someone else's genesis proof.
 
 // BOB Submits ALICE's GENESIS VDF Proof
 //# run --admin-script --signers DiemRoot Bob

@@ -1,13 +1,6 @@
-//# init --validators DummyPreventsGenesisReload
-//#      --addresses Alice=0x2e3a0b7a741dae873bf0f203a82dfd52
-//#      --private-keys Alice=e1acb70a23dba96815db374b86c5ae96d6a9bc5fff072a7a8e55a1c27c1852d8
-
-//// Old syntax for reference, delete it after fixing this test
-//! account: dummy-prevents-genesis-reload, 100000 ,0, validator
-//! account: alice, 10000000GAS
-
-// todo: fix this first: native_extract_address_from_challenge()
-// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
+//# init --validators DummyPreventsGenesisReload --parent-vasps Alice
+// DummyPreventsGenesisReload: validator with 10M GAS
+// Alice:                  non-validator with  1M GAS
 
 // Alice Submit VDF Proof
 //# run --admin-script --signers DiemRoot Alice
@@ -52,4 +45,3 @@ script {
     }
 }
 // check: EXECUTED
-

@@ -1,6 +1,6 @@
 processed 7 tasks
 
-task 2 'block'. lines 51-55:
+task 2 'block'. lines 46-50:
 Events:
 {
     key:     0c0000000000000000000000000000000000000000000000
@@ -15,7 +15,7 @@ Events:
     data:    "0200000000000000"
 }
 
-task 4 'block'. lines 83-87:
+task 4 'block'. lines 78-82:
 Events:
 {
     key:     0c0000000000000000000000000000000000000000000000
