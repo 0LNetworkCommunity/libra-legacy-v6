@@ -1,6 +1,6 @@
 //# init --parent-vasps Alice Bob Jim Carol
-// Alice, Jim are validators with 10M GAS
-// Bob, Carol are non-validators   1M GAS
+// Alice, Jim:     validators with 10M GAS
+// Bob, Carol: non-validators with  1M GAS
 
 // META: transfers between Bob and Carol (not slow wallets) works fine
 //# run --admin-script --signers DiemRoot Carol

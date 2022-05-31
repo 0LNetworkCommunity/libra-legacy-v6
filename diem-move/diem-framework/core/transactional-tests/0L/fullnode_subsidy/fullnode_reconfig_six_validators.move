@@ -1,14 +1,6 @@
-//# init --validators Alice Carol Dave Eve Frank Gertie
-//#      --addresses Bob=0x4b7653f6566a52c9b496f245628a69a0
-//#      --private-keys Bob=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
-//// Old syntax for reference, delete it after fixing this test
-//! account: alice, 1000000GAS, 0, validator
-//! account: bob, 1000000GAS, 0 // BOB will be the miner
-//! account: carol, 1000000GAS, 0, validator
-//! account: dave, 1000000GAS, 0, validator
-//! account: eve, 1000000GAS, 0, validator
-//! account: frank, 1000000GAS, 0, validator
-//! account: gertie, 1000000GAS, 0, validator
+//# init --parent-vasps Alice Bob Carol X Dave Y Eve Z Frank W Gertie
+// Alice, Carol, Dave, Eve, Frank, Gertie: validators with 10M GAS
+// Bob, X, Y, Z, W:                    non-validators with  1M GAS
 
 // WE need more than 4 miners so that the validator rewards are changed 
 // This test has 6 validators and one miner (Bob);
@@ -28,7 +20,6 @@ script {
         );
     }
 }
-
 
 // 2. Make sure there are validator subsidies available.
 // so we need Alice to be a Case 1 validator so that there is a subsidy to be paid to validator set.

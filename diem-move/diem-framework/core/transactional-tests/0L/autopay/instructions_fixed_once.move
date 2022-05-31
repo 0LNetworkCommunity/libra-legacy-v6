@@ -1,9 +1,6 @@
-//# init --validators Alice Bob Carol
-    // todo: Make them non-validators
-//// Old syntax for reference, delete it after fixing this test
-//! account: bob,   1000000GAS, 0, validator
-//! account: alice, 1000000GAS, 0
-//! account: carol, 1000000GAS, 0
+//# init --parent-vasps Bob Alice Sally Carol
+// Bob, Sally:       validators with 10M GAS
+// Alice, Carol: non-validators with  1M GAS
 
 // test runs various autopay instruction types to ensure they are being executed as expected
 
@@ -21,7 +18,7 @@ script {
 
 // check: EXECUTED
 
-// alice commits to paying carol 500 GAS at the next tick
+// Alice commits to paying carol 500 GAS at the next tick
 //# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::AutoPay;
@@ -58,7 +55,7 @@ script {
   use DiemFramework::AutoPay;
   fun main() {
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 9999500, 7357002);
+    assert!(ending_balance == 999500, 7357002);
     
     //Confirm the one-shot instruction was deleted
     let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(@Alice, 1);
@@ -95,11 +92,11 @@ script {
   fun main() {
     // no change, one-shot instruction is finished
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 9999500, 7357003);
+    assert!(ending_balance == 999500, 7357003);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@Carol);
-    assert!(ending_balance == 10000500, 7357004);
+    assert!(ending_balance == 1000500, 7357004);
   }
 }
 // check: EXECUTED

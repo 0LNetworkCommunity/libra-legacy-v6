@@ -1,13 +1,11 @@
-//# init --validators Shashank Bob
-    // todo: Make them non-validators
-//// Old syntax for reference, delete it after fixing this test
-//! account: shashank, 100
-//! account: bob, 100
+//# init --parent-vasps Dave Alice Sally Bob
+// Dave, Sally:     validators with 10M GAS
+// Alice, Bob:  non-validators with  1M GAS
 
 // We are trying to query a instruction which doesnot exist in the network
 
 // Create instruction and retrieve it
-//# run --admin-script --signers DiemRoot Shashank
+//# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::AutoPay;
   use Std::Signer;
@@ -21,7 +19,7 @@ script {
     );
     // If autopay instruction doesn't exists, it returns (@0x0, 0, 0)
     assert!(type == 0, 1);
-    assert!(payee == {{@0x0}}, 1);
+    assert!(payee == @0x0, 1);
     assert!(end_epoch == 0, 1);
     assert!(percentage == 0, 1);
   }

@@ -1,7 +1,4 @@
 //# init --validators Alice Bob
-//// Old syntax for reference, delete it after fixing this test
-//! account: alice, 1, 0, validator
-//! account: bob, 1, 0, validator
 
 //# run --admin-script --signers DiemRoot Alice
 script {

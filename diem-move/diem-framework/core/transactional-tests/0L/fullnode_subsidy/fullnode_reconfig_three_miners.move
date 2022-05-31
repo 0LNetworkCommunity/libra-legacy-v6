@@ -1,16 +1,9 @@
-//# init --validators Alice
-//#      --addresses Bob=0x4b7653f6566a52c9b496f245628a69a0
-//#                  Carol=0x03cb4a2ce2fcfa4eadcdc08e10cee07b
-//#                  Dave=0xeadf5eda5e7d5b9eea4a119df5dc9b26
-//#      --private-keys Bob=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
-//#                     Carol=49fd8b5fa77fdb08ec2a8e1cab8d864ac353e4c013f191b3e6bb5e79d3e5a67d
-//#                     Dave=80942c213a3ab47091dfb6979326784856f46aad26c4946aea4f9f0c5c041a79
-//// Old syntax for reference, delete it after fixing this test
-//! account: alice, 1000000GAS, 0, validator
-// Create three end user miner accounts
-//! account: bob, 1000000GAS, 0
-//! account: carol, 1000000GAS, 0
-//! account: dave, 1000000GAS, 0 // Dave will not mine above threshold
+//# init --parent-vasps Alice Bob X Dave Y Carol
+// Alice, X, Y:          validators with 10M GAS
+// Bob, Dave, Carol: non-validators with  1M GAS
+
+// Bob, Dave, Carol: three end user miner accounts
+// Dave will not mine above threshold
 
 // Bob, Carol, Dave are end-users running the Carpe app, and submitting miner proofs.
 // He is the only one in the epoch submitting proofs. He should get the entirety
@@ -50,7 +43,6 @@ script {
     }
 }
 
-
 //# run --admin-script --signers DiemRoot Dave
 script {
     use DiemFramework::TowerState;
@@ -66,7 +58,6 @@ script {
         );
     }
 }
-
 
 // 2. Make sure there are validator subsidies available.
 // so we need Alice to be a Case 1 validator so that there is a subsidy
@@ -85,7 +76,6 @@ script {
       TowerState::test_helper_mock_reconfig(&vm, @Carol);
       TowerState::test_helper_mock_reconfig(&vm, @Dave);
 
-
       // Mock the end-users submitting proofs above threshold.
       // Add 12: make it so that +2 gets above threshold so that 10 are
       // counted as above thresh.
@@ -103,8 +93,6 @@ script {
     }
 }
 //check: EXECUTED
-
-
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////

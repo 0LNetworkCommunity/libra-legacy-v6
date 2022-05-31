@@ -1,9 +1,6 @@
-//# init --validators Alice Bob Carol
-    // todo: Make them non-validators
-//// Old syntax for reference, delete it after fixing this test
-//! account: carol, 1GAS
-//! account: bob, 1GAS
-//! account: alice, 1GAS
+//# init --parent-vasps Dave Alice Jim Carol Sally Bob
+// Jim, Sally       :     validators with 10M GAS
+// Alice, Carol, Bob: non-validators with  1M GAS
 
 // We test creation of autopay, retiriving it using same and different accounts
 // Finally, we also test deleting of autopay
@@ -13,6 +10,7 @@
 script {
   use DiemFramework::AutoPay;
   use Std::Signer;
+
   fun main(_dr: signer, sender: signer) {
     let sender = &sender;
     AutoPay::enable_autopay(sender);
@@ -34,6 +32,7 @@ script {
 script {
   use DiemFramework::AutoPay;
   use Std::Signer;
+
   fun main(_dr: signer, sender: signer) {
     assert!(AutoPay::is_enabled(Signer::address_of(&sender)), 0);
     AutoPay::create_instruction(&sender, 2, 0, @Alice, 4, 5);

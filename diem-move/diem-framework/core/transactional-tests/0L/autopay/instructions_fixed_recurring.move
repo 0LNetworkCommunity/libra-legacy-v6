@@ -1,9 +1,6 @@
-//# init --validators Alice Bob Carol
-    // todo: Make them non-validators
-//// Old syntax for reference, delete it after fixing this test
-//! account: alice, 2000000GAS, 0 
-//! account: bob,   1000000GAS, 0, validator
-//! account: carol, 1000000GAS, 0
+//# init --parent-vasps Bob Alice Sally Carol
+// Bob, Sally:       validators with 10M GAS
+// Alice, Carol: non-validators with  1M GAS
 
 // test runs various autopay instruction types to ensure they are being executed as expected
 
@@ -20,11 +17,12 @@ script {
 }
 // check: EXECUTED
 
-// alice commits to paying carol 200 GAS per epoch
+// Alice commits to paying carol 200 GAS per epoch
 //# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::AutoPay;
   use Std::Signer;
+
   fun main(_dr: signer, sender: signer) {
     let sender = &sender;
     AutoPay::enable_autopay(sender);
@@ -55,7 +53,7 @@ script {
   use DiemFramework::GAS::GAS;
   fun main() {
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 9999800, 7357002);
+    assert!(ending_balance == 999800, 7357002);
   }
 }
 // check: EXECUTED
@@ -82,14 +80,15 @@ script {
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
+
   fun main() {
     // alice will have paid 5% on the 10000 she received last epoch
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 9999600, 7357003);
+    assert!(ending_balance == 999600, 7357003);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@Carol);
-    assert!(ending_balance == 10000400, 7357004);
+    assert!(ending_balance == 1000400, 7357004);
   }
 }
 // check: EXECUTED

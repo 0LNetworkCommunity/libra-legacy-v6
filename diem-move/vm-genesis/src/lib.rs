@@ -869,7 +869,7 @@ pub struct TestValidator {
 impl TestValidator {
     pub fn new_test_set(count: Option<usize>) -> Vec<TestValidator> {
         let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([1u8; 32]);
-        (0..count.unwrap_or(4)) //////// 0L ////////
+        (0..count.unwrap_or(6)) //////// 0L ////////
             .map(|idx| TestValidator::gen(idx, &mut rng))
             .collect()
     }

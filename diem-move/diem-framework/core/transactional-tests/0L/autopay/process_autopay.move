@@ -1,8 +1,6 @@
-//# init --validators Alice Bob
-    // todo: Make them non-validators
-//// Old syntax for reference, delete it after fixing this test
-//! account: alice, 1000000GAS
-//! account: bob, 10000GAS
+//# init --parent-vasps Dave Alice Sally Bob
+// Dave, Sally:     validators with 10M GAS
+// Alice, Bob:  non-validators with  1M GAS
 
 // We test processing of autopay at differnt epochs and balance transfers
 // Finally, we also check the end_epoch functionality of autopay
@@ -11,6 +9,7 @@
 script {
   use DiemFramework::AutoPay;
   use Std::Signer;
+
   fun main(_dr: signer, sender: signer) {
     let sender = &sender;    
     AutoPay::enable_autopay(sender);
@@ -59,10 +58,11 @@ script {
   use DiemFramework::AutoPay;
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
+
   fun main(dr:signer, _account: signer) {
     let alice_balance = DiemAccount::balance<GAS>(@Alice);
     let bob_balance = DiemAccount::balance<GAS>(@Bob);
-    assert!(alice_balance == 10000000, 7357007);
+    assert!(alice_balance == 1000000, 7357007);
     AutoPay::process_autopay(&dr);
     
     let alice_balance_after = DiemAccount::balance<GAS>(@Alice);

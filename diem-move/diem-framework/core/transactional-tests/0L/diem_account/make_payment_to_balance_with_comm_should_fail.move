@@ -1,12 +1,9 @@
-//# init --validators Alice
-//#      --addresses Bob=0x4b7653f6566a52c9b496f245628a69a0
-//#                  Carol=0xeadf5eda5e7d5b9eea4a119df5dc9b26
-//#      --private-keys Bob=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
-//#                     Carol=80942c213a3ab47091dfb6979326784856f46aad26c4946aea4f9f0c5c041a79
-//// Old syntax for reference, delete it after fixing this test
-//! account: alice, 1000GAS, 0, validator
-//! account: bob, 1000000GAS // the slow wallet
-//! account: carol, 0GAS     // the community wallet
+//# init --parent-vasps Alice Bob Jim Carol
+// Alice, Jim:     validators with 10M GAS
+// Bob, Carol: non-validators with  1M GAS
+
+// Bob, the slow wallet
+// Carol, the community wallet
 
 // Community wallets cannot use the slow wallet transfer scripts
 
@@ -16,11 +13,11 @@ script {
   use Std::Vector;
 
   fun main(_dr: signer, bob: signer) {
-    // BOB Sets wallet to slow wallet
+    // Genesis creates 6 validators by default which are already slow wallets,
+    // adding Bob
     DiemAccount::set_slow(&bob);
     let list = DiemAccount::get_slow_list();
-    // alice, the validator, is already a slow wallet, adding bob
-    assert!(Vector::length<address>(&list) == 2, 735701);
+    assert!(Vector::length<address>(&list) == 7, 7357001);
   }
 }
 // check: EXECUTED
@@ -33,7 +30,7 @@ script {
   fun main(_dr: signer, carol: signer) {
     Wallet::set_comm(&carol);
     let list = Wallet::get_comm_list();
-    assert!(Vector::length(&list) == 1, 7357001);
+    assert!(Vector::length(&list) == 1, 7357002);
   }
 }
 // check: EXECUTED
@@ -51,4 +48,4 @@ script {
         DiemAccount::restore_withdraw_capability(with_cap);
   }
 }
-// check: ABORTED
+//check: ABORTED

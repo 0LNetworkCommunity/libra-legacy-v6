@@ -1,10 +1,6 @@
-//# init --validators Alice
-//#      --addresses Bob=0x4b7653f6566a52c9b496f245628a69a0
-//#      --private-keys Bob=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
-
-//// Old syntax for reference, delete it after fixing this test
-//! account: alice, 1, 0, validator
-//! account: bob, 1, 0
+//# init --validators Alice --parent-vasps Bob
+// Alice:     validator with 10M GAS
+// Bob:   non-validator with  1M GAS
 
 // 1. test the validator count.
 
@@ -112,4 +108,3 @@ script {
     }
 }
 //check: EXECUTED
-

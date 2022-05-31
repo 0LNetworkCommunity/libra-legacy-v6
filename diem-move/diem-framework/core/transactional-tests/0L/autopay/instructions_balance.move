@@ -1,5 +1,7 @@
-//# init --validators Alice Bob Jim
-    // todo: Make them non-validators
+//# init --parent-vasps Bob Alice Sally Jim
+// Bob, Sally:     validators with 10M GAS
+// Alice, Jim: non-validators with  1M GAS
+
 //// Old syntax for reference, delete it after fixing this test
 //! account: alice, 10000000GAS, 0
 //! account: bob,   1000000GAS, 0, validator
@@ -26,6 +28,7 @@ script {
 script {
   use DiemFramework::AutoPay;
   use Std::Signer;
+
   fun main(_dr: signer, sender: signer) {
     let sender = &sender;
     AutoPay::enable_autopay(sender);
@@ -59,6 +62,14 @@ script {
 ///////////////////////////////////////////////////
 //# block --proposer Bob --time 31000000 --round 23
 
+// Weird. This next block needs to be added here otherwise
+// the prologue above does not run.
+///////////////////////////////////////////////////
+///// Trigger Autopay Tick at 31 secs /////
+///// i.e. 1 second after 1/2 epoch   /////
+///////////////////////////////////////////////////
+//# block --proposer Bob --time 32000000 --round 24
+
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
@@ -66,7 +77,7 @@ script {
 
   fun main() {
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 9500001, 735705);
+    assert!(ending_balance == 950001, 735705);
   }
 }
 // check: EXECUTED
@@ -96,11 +107,11 @@ script {
 
   fun main() {
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 9025001, 735711);
+    assert!(ending_balance == 902501, 735711);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@Jim);
-    assert!(ending_balance == 10974999, 735712);
+    assert!(ending_balance == 1974999, 735712);
   }
 }
 // check: EXECUTED

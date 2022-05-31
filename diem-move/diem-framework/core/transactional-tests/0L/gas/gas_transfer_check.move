@@ -1,9 +1,6 @@
-//# init --validators Alice
-//#      --addresses Bob=0x4b7653f6566a52c9b496f245628a69a0
-//#      --private-keys Bob=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
-//// Old syntax for reference, delete it after fixing this test
-//! account: alice, 100, 0, validator
-//! account: bob, 100, 0
+//# init --parent-vasps Alice Bob
+// Alice:     validators with 10M GAS
+// Bob:   non-validators with  1M GAS
 
 // Transfers between accounts is disabled
 //# run --admin-script --signers DiemRoot Alice
@@ -17,8 +14,8 @@ script {
         Testnet::remove_testnet(&account);
         let with_cap = DiemAccount::extract_withdraw_capability(&account);
         DiemAccount::pay_from<GAS>(&with_cap, @Bob, 10, x"", x"");
-        assert!(DiemAccount::balance<GAS>(@Alice) == 0, 0);
-        assert!(DiemAccount::balance<GAS>(@Bob) == 10, 1);
+        assert!(DiemAccount::balance<GAS>(@Alice) == 9999990, 0);
+        assert!(DiemAccount::balance<GAS>(@Bob) == 1000010, 1);
         DiemAccount::restore_withdraw_capability(with_cap);
     }
 }

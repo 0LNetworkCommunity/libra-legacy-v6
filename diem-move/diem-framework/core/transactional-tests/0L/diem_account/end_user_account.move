@@ -1,7 +1,6 @@
-//# init --validators Bob
-    // todo: Make Bob non-validator
-//// Old syntax for reference, delete it after fixing this test
-//! account: bob, 10000000, 0
+//# init --parent-vasps Dave Bob
+// Dave:     validators with 10M GAS
+// Bob:  non-validators with  1M GAS
 
 // todo: fix this first: native_extract_address_from_challenge()
 // https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
