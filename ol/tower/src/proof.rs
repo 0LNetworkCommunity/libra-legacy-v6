@@ -74,7 +74,7 @@ pub fn mine_once(
 
 
 /// Write block to file
-pub fn mine_and_submit(config: &mut AppCfg, tx_params: TxParams, local_mode: bool) -> Result<(), Error> {
+pub fn mine_and_submit(config: &mut AppCfg, tx_params: TxParams, local_mode: bool, swarm_path: Option<PathBuf> ) -> Result<(), Error> {
     // // get the location of this miner's blocks
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
@@ -84,9 +84,11 @@ pub fn mine_and_submit(config: &mut AppCfg, tx_params: TxParams, local_mode: boo
         // the default behavior is to fetch info from the chain to produce the next proof, including dynamic params for VDF difficulty.
         // if the user is offline, they must use local mode
         // however the user may end up using stale config proofs if the epoch changes and the params are different now.
+
+        dbg!("loop");
         let next = match local_mode {
             true => next_proof::get_next_proof_params_from_local(config)?,
-            false => next_proof::get_next_proof_from_chain(config)?,
+            false => next_proof::get_next_proof_from_chain(config, swarm_path.clone())?,
         };
 
         println!("Mining VDF Proof # {}", next.next_height);

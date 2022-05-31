@@ -1,5 +1,7 @@
 //! next proof
 
+use std::path::PathBuf;
+
 use anyhow::{Error, bail};
 use diem_crypto::HashValue;
 use diem_types::{ol_vdf_difficulty::VDFDifficulty, account_address::AccountAddress};
@@ -35,15 +37,19 @@ pub fn get_next_proof_params_from_local(config: &AppCfg) -> Result<NextProof, Er
 /// includes global parameters for difficulty
 /// and individual parameters like tower height and the preimage (previous proof hash)
 pub fn get_next_proof_from_chain(
-    config: &mut AppCfg
+    config: &mut AppCfg,
+    swarm_path: Option<PathBuf>
 ) -> Result<NextProof, Error> {
-    let client = pick_client(None, config)?;
+    dbg!("pick_client");
+    let client = pick_client(swarm_path, config)?;
 
+    dbg!("get_account_state");
     // get the user's tower state from chain.
     let ts = client.get_account_state(config.profile.account)?.get_miner_state()?;
 
     if let Some(t) = ts {
         let a = client.get_account_state(AccountAddress::ZERO)?;
+        dbg!(&a);
         if let Some(diff) = a.get_tower_params()? {
             return Ok(NextProof {
                 diff,

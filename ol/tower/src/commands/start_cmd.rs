@@ -73,7 +73,7 @@ impl Runnable for StartCmd {
             cfg.clone(),
             url,
             waypoint,
-            swarm_path,
+            swarm_path.clone(),
             swarm_persona,
             TxType::Miner,
             is_operator,
@@ -101,7 +101,7 @@ impl Runnable for StartCmd {
 
         if !self.backlog_only {
             // Steady state.
-            let result = mine_and_submit(&mut cfg, tx_params, self.local);
+            let result = mine_and_submit(&mut cfg, tx_params, self.local, swarm_path);
             match result {
                 Ok(_val) => {}
                 Err(err) => {
