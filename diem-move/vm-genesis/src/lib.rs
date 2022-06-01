@@ -48,7 +48,7 @@ use transaction_builder::encode_create_designated_dealer_script_function;
 
 //////// 0L ////////
 use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
-use ol_types::genesis_proof::GenesisMiningProof;
+pub use ol_types::genesis_proof::GenesisMiningProof;
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];

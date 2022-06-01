@@ -43,10 +43,10 @@ diem-temppath = { path = "../crates/diem-temppath", optional = true }
 diem-workspace-hack = { version = "0.1", path = "../crates/diem-workspace-hack" }
 executor = { path = "../execution/executor" , optional = true}
 executor-types = { path = "../execution/executor-types" , optional = true}
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
-move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce", optional = true }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a", optional = true }
 network = { path = "../network" }
-move-resource-viewer = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
+move-resource-viewer = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
 scratchpad = { path = "../storage/scratchpad", optional = true }
 storage-interface = { path = "../storage/storage-interface" }
 thiserror = "1.0.24"
@@ -72,7 +72,7 @@ diem-framework-releases= { path = "../diem-move/diem-framework/DPN/releases" }
 vm-genesis = { path = "../diem-move/vm-genesis" }
 executor = { path = "../execution/executor" }
 executor-types = { path = "../execution/executor-types" }
-move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
+move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
 diem-transaction-builder = { path = "../sdk/transaction-builder" }
 diem-sdk = { path = "../sdk" }
 scratchpad = { path = "../storage/scratchpad", features = ["fuzzing"] }

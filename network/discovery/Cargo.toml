@@ -28,7 +28,7 @@ diem-secure-storage = { path = "../../secure/storage" }
 diem-network-address-encryption = {path = "../../config/management/network-address-encryption"}
 diem-types = {path = "../../types"}
 diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
 network = {path = "../../network"}
 short-hex-str = { path = "../../crates/short-hex-str" }
 

@@ -12,16 +12,11 @@
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-// todo: Comment and check pragma are conflicting, which one is correct?
-// This transaction should fail because alice is a slow wallet, and has no GAS unlocked.
 //# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
     fun main(_dr: signer, account: signer) {
-        use DiemFramework::Debug::print;
-        print(&11);
-
         assert!(DiemAccount::unlocked_amount(@Alice) == 10, 735701);
         assert!(DiemAccount::balance<GAS>(@Bob) == 1000000, 735701);
 

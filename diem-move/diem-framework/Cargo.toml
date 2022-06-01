@@ -10,25 +10,25 @@ license = "Apache-2.0"
 publish = false
 
 [dependencies]
-move-bytecode-verifier = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
-move-abigen = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
-move-docgen = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
-move-command-line-common = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
-move-errmapgen = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
-move-compiler = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
-move-prover = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
+move-bytecode-verifier = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-abigen = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-docgen = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-command-line-common = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-errmapgen = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-compiler = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-prover = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
 diem-crypto = { path = "../../crates/diem-crypto" }
 diem-types = { path = "../../types" }
 diem-workspace-hack = { path = "../../crates/diem-workspace-hack" }
-move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
+move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
 transaction-builder-generator = { path = "../transaction-builder-generator" }
-move-stdlib = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
-move-symbol-pool = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
-move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
-move-vm-runtime = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
-move-package = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
-move-bytecode-utils = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
+move-stdlib = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-symbol-pool = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-vm-runtime = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-package = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-bytecode-utils = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
 
 bcs = "0.1.2"
 anyhow = "1.0.52"
@@ -45,8 +45,8 @@ tempfile = "3.2.0"
 [dev-dependencies]
 datatest-stable = "0.1.1"
 diem-vm = { path = "../../diem-move/diem-vm" }
-move-cli = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
-move-unit-test = { git = "https://github.com/OLSF/move-0L", rev = "087148a083076ddbb8b55ed0db343d235ab27cce" }
+move-cli = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-unit-test = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
 diem-transactional-test-harness = { path = "../diem-transactional-test-harness" }
 
 dir-diff = "0.3.2"
