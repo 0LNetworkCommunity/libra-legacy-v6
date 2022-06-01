@@ -179,23 +179,40 @@ impl Backup {
 
         let version = version_opt.unwrap_or(self.waypoint.unwrap().version());
 
-        let restore_path_for_txs = if version_opt.is_some() {
+        
+
+        // NOTE: First restore the Epoch before restoring a higher version in the epoch.
+        restore_epoch(db_path, restore_path.to_str().unwrap(), verbose)?;
+
+        restore_transaction(db_path, self.restore_path.to_owned().to_str().unwrap(), verbose)?;
+
+        restore_snapshot(
+            db_path,
+            self.restore_path.to_owned().to_str().unwrap(),
+            &version,
+            verbose,
+        )?;
+
+        // Restore an advanced version in the epoch
+        
+        let restore_path_for_version = if version_opt.is_some() {
             self.restore_path.to_owned().join(version.to_string())
         } else {
             get_heighest_version_path(self.restore_path.clone())
                 .unwrap_or(self.restore_path.clone())
         };
 
-        restore_epoch(db_path, restore_path.to_str().unwrap(), verbose)?;
 
-        restore_transaction(db_path, restore_path_for_txs.to_str().unwrap(), verbose)?;
+        restore_transaction(db_path, restore_path_for_version.to_str().unwrap(), verbose)?;
 
         restore_snapshot(
             db_path,
-            restore_path_for_txs.to_str().unwrap(),
+            restore_path_for_version.to_str().unwrap(),
             &version,
             verbose,
         )?;
+
+
 
         Ok(())
     }
