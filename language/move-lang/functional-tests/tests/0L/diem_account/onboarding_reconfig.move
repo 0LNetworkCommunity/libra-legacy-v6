@@ -89,13 +89,13 @@ script {
     use 0x1::DiemSystem;
     use 0x1::ValidatorUniverse;
     use 0x1::Vector;
-    fun main(vm: signer) {
+    fun main(_vm: signer) {
         // Tests on initial size of validators
         // New validator is not in this set.
         assert(DiemSystem::validator_set_size() == 6, 7357000180101);
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000180102);
         assert(!DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180103);
-        let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(&vm));
+        let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators());
         // Is in validator universe
         assert(len == 7, 7357000180104);
       }
@@ -141,7 +141,7 @@ script {
         
         TowerState::test_helper_mock_mining_vm(vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 20);
 
-        let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(vm));
+        let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators());
         assert(len == 7 , 7357000180206);
 
         EpochBoundary::reconfigure(vm, 15); // reconfigure at height 15
@@ -159,13 +159,13 @@ script {
     use 0x1::ValidatorUniverse;
     use 0x1::Vector;
     use 0x1::Debug::print;
-    fun main(vm: signer) {
+    fun main(_vm: signer) {
         // Tests on initial size of validators
         print(&DiemSystem::validator_set_size());
         assert(DiemSystem::validator_set_size() == 7, 7357000200301);
         assert(DiemSystem::is_validator(@{{alice}}) == true, 7357000200302);
         assert(DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000200303);
-        let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators(&vm));
+        let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators());
         assert(len == 7, 7357000200304);
       }
 }

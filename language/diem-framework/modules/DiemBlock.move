@@ -34,10 +34,14 @@ module DiemBlock {
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
     use 0x1::Migrations;
+<<<<<<< HEAD
     use 0x1::TowerState;
     // use 0x1::MigrateAutoPayBal;
     // use 0x1::MakeWhole;
     // use 0x1::MigrateVouch;
+=======
+    use 0x1::MigrateJail;
+>>>>>>> main
 
     struct BlockMetadata has key {
         /// Height of the current block
@@ -124,7 +128,8 @@ module DiemBlock {
           // safety. Maybe init Migration struct
           Migrations::init(&vm);
           TowerState::init_difficulty(&vm);
-        };
+          MigrateJail::do_it(&vm);
+        };    
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::DIEM_ROOT_ADDRESS());
         DiemTimestamp::update_global_time(&vm, proposer, timestamp);

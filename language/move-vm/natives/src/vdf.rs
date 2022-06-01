@@ -11,7 +11,7 @@ use move_vm_types::{
     natives::function::{native_gas, NativeContext, NativeResult},
     values::{Reference, Value},
 };
-use std::{collections::VecDeque, time::Instant};
+use std::{collections::VecDeque};
 use std::convert::TryFrom;
 use move_binary_format::errors::{PartialVMError, PartialVMResult};
 use smallvec::smallvec;
@@ -25,7 +25,7 @@ pub fn verify(
     mut arguments: VecDeque<Value>,
 ) -> PartialVMResult<NativeResult> {
     // temporary logging.
-    let start_time = Instant::now();
+    // let start_time = Instant::now();
     let metric_timer = MOVE_VM_NATIVE_VERIFY_VDF_LATENCY.start_timer();
 
     if arguments.len() != 4 {
@@ -71,9 +71,9 @@ pub fn verify(
     let return_values = smallvec![Value::bool(result.is_ok())];
 
     // temporary logging
-    let latency = start_time.elapsed();
+    // let latency = start_time.elapsed();
     metric_timer.observe_duration();
-    dbg!("vdf verification latency", &latency);
+    // dbg!("vdf verification latency", &latency);
 
     Ok(NativeResult::ok(cost, return_values))
 }
