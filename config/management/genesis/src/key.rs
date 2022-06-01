@@ -1,8 +1,9 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+use consensus_types::safety_data::SafetyData;
 use diem_crypto::ed25519::Ed25519PublicKey;
-use diem_global_constants::{GENESIS_WAYPOINT, OPERATOR_ACCOUNT, OWNER_ACCOUNT, WAYPOINT};
+use diem_global_constants::{GENESIS_WAYPOINT, OPERATOR_ACCOUNT, OWNER_ACCOUNT, WAYPOINT, SAFETY_DATA};
 use diem_management::{
     config::ConfigPath,
     error::Error,
@@ -91,6 +92,16 @@ pub fn set_owner_key(path: &PathBuf, namespace: &str, account: AccountAddress) {
 
 }
 
+//////// 0L /////////
+pub fn reset_safety_data(path: &PathBuf, namespace: &str) {
+    let mut storage = diem_secure_storage::Storage::OnDiskStorage(
+        OnDiskStorage::new(path.join("key_store.json").to_owned())
+    );
+    let key = &format!("{}/{}", namespace, SAFETY_DATA);
+    storage
+      .set(key, SafetyData::new(0, 0, 0, None))
+      .unwrap();
+}
 
 //////// 0L /////////
 pub fn set_waypoint(path: &PathBuf, namespace: &str, waypoint: Waypoint) {

@@ -67,6 +67,13 @@ pub fn fast_forward_db(
 
     println!("\nCreating fullnode.node.yaml to home path");
     backup.create_fullnode_yaml()?;
+
+    println!("\nResetting Safety Data in key_store.json\n");
+    diem_genesis_tool::key::reset_safety_data(
+      &backup.home_path,
+      &backup.node_namespace
+    );
+
     Ok(())
 }
 #[derive(Serialize, Deserialize)]
@@ -206,8 +213,6 @@ impl Backup {
             &version,
             verbose,
         )?;
-
-
 
         Ok(())
     }
