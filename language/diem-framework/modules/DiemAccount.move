@@ -8,8 +8,7 @@ address 0x1 {
 // File Prefix for errors: 1201 used for OL errors
 
 module DiemAccount {
-    friend 0x1::MigrateAutoPayBal;
-    friend 0x1::MigrateVouch;
+    friend 0x1::MigrateJail;
     friend 0x1::MakeWhole;
 
     use 0x1::AccountFreezing;
@@ -50,6 +49,7 @@ module DiemAccount {
     use 0x1::Receipts;
     use 0x1::Ancestry;
     use 0x1::Vouch;
+    use 0x1::Jail;
     use 0x1::Debug::print;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
@@ -262,7 +262,7 @@ module DiemAccount {
     // This is necessary for migrating user state, when a new struct needs to be created.
     // This is restricted by `friend` visibility, which is defined above as the 0x1::MigrateAutoPayBal module for a one-time use.
     // language/changes/1-friend-visibility.md
-    public(friend) fun scary_wtf_create_signer(vm: &signer, addr: address): signer {
+    public(friend) fun scary_create_signer_for_migrations(vm: &signer, addr: address): signer {
         CoreAddresses::assert_diem_root(vm);
         create_signer(addr)
     }
@@ -621,6 +621,7 @@ module DiemAccount {
         // User can join validator universe list, but will only join if 
         // the mining is above the threshold in the preceeding period.
         ValidatorUniverse::add_self(&new_signer);
+        Jail::init(&new_signer);
 
         make_account(new_signer, auth_key_prefix);
         make_account(new_op_account, op_auth_key_prefix);
@@ -736,7 +737,8 @@ module DiemAccount {
         );
         // User can join validator universe list, but will only join if 
         // the mining is above the threshold in the preceeding period.
-        ValidatorUniverse::add_self(&new_signer);        
+        ValidatorUniverse::add_self(&new_signer);
+        Jail::init(&new_signer);
         
         // no need to make the owner address.
 
@@ -753,6 +755,8 @@ module DiemAccount {
 
         Ancestry::init(sender, &new_signer);
         Vouch::init(&new_signer);
+        Vouch::vouch_for(sender, new_account_address);
+
         set_slow(&new_signer);
         new_account_address
     }
@@ -2888,6 +2892,7 @@ module DiemAccount {
         emits msg to handle;
     }
 
+    /// NOTE: in 0L this is only used for test harness
     /// Create a Validator account
     public fun create_validator_account(
         dr_account: &signer,
@@ -2900,11 +2905,21 @@ module DiemAccount {
         Roles::new_validator_role(dr_account, &new_account);
         Event::publish_generator(&new_account);
         ValidatorConfig::publish(&new_account, dr_account, human_name);
-        add_currencies_for_account<GAS>(&new_account, false); /////// 0L /////////
+        //////// 0L ////////
+        add_currencies_for_account<GAS>(&new_account, false);
+
+        //////// end 0L ////////
         make_account(new_account, auth_key_prefix);
 
         let new_account = create_signer(new_account_address);
+
+        //////// 0L ////////
         set_slow(&new_account);
+        Jail::init(&new_account);
+        // ValidatorUniverse::add_self(&new_account);
+        // Vouch::init(&new_account);
+        //////// end 0L ////////
+
     }
 
     spec create_validator_account {

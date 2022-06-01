@@ -48,6 +48,7 @@ script {
 script {
     use 0x1::TowerState;
     use 0x1::AutoPay;
+    use 0x1::Jail;
 
     fun main(sender: signer) {
         AutoPay::enable_autopay(&sender);
@@ -55,6 +56,8 @@ script {
         // Miner is the only one that can update her mining stats. Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
         assert(TowerState::get_count_in_epoch(@{{eve}}) == 5, 7357180102011000);
+
+        assert(!Jail::is_jailed(@{{eve}}), 7357180102011001);
     }
 }
 //check: EXECUTED
@@ -77,11 +80,14 @@ script {
     use 0x1::DiemSystem;
     use 0x1::DiemConfig;
     use 0x1::Mock;
+    use 0x1::Debug::print;
 
     fun main(vm: signer) {
         // We are in a new epoch.
         assert(DiemConfig::get_current_epoch() == 2, 7357008008009);
         // Tests on initial size of validators 
+        print(&99999999999999);
+        print(&DiemSystem::validator_set_size());
         assert(DiemSystem::validator_set_size() == 6, 7357008008010);
         assert(DiemSystem::is_validator(@{{eve}}) == false, 7357008008011);
 
@@ -102,10 +108,24 @@ script {
 //! sender: eve
 script {
     use 0x1::TowerState;
+    use 0x1::Vouch;
 
     fun main(sender: signer) {
         // Mock some mining so Eve can send rejoin tx
         TowerState::test_helper_mock_mining(&sender, 100);
+        Vouch::init(&sender);
+    }
+}
+
+//! new-transaction
+//! sender: alice
+script {
+    use 0x1::Vouch;
+    use 0x1::Jail;
+
+    fun main(sender: signer) {
+      Vouch::vouch_for(&sender, @{{eve}});
+      Jail::vouch_unjail(&sender, @{{eve}});
     }
 }
 
@@ -119,8 +139,6 @@ script {
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
-
-
 
 //! new-transaction
 //! sender: diemroot
