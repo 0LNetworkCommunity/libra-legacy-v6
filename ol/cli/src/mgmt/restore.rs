@@ -149,23 +149,28 @@ impl Backup {
 
     /// Restore Backups
     pub fn restore_backup(&self, verbose: bool, version_opt: Option<u64>) -> Result<(), Error>{
+        dbg!(&version_opt);
+
         let db_path = &self.home_path.join("db/");
 
         let restore_path = self.restore_path.clone(); 
         
-        let restore_path_for_txs = if version_opt.is_some() {
+        let version  = version_opt.unwrap_or(self.waypoint.unwrap().version());
+
+        let restore_path_for_txs = if version_opt.is_some() { 
           self.restore_path
           .to_owned()
-          .join(version_opt.unwrap().to_string())
+          .join(version.to_string())
         } else {
-          restore_path.clone()
+          self.restore_path.clone()
         };
 
-
-        let height = &self.waypoint.unwrap().version();
         restore_epoch(db_path, restore_path.to_str().unwrap(), verbose)?;
+
         restore_transaction(db_path, restore_path_for_txs.to_str().unwrap(), verbose)?;
-        restore_snapshot(db_path, restore_path_for_txs.to_str().unwrap(), height, verbose)?;
+
+        restore_snapshot(db_path, restore_path_for_txs.to_str().unwrap(), &version, verbose)?;
+
         Ok(())
     }
 
@@ -340,12 +345,12 @@ pub fn restore_transaction(
     db_path: &PathBuf, restore_path: &str, verbose: bool
 ) -> Result<(), Error> {
   
-    let glob_format = &format!("{}/**/transaction.manifest", restore_path);
+    let glob_format = &format!("{}/*/transaction.manifest", restore_path);
     let manifest_path = match glob(glob_format)
-      .expect("Failed to read glob pattern")
-      .next() {
-        Some(Ok(p)) => p,
-        _ => bail!("no path found for {:?}", glob_format)
+    .expect("Failed to read glob pattern")
+    .next() {
+      Some(Ok(p)) => p,
+      _ => bail!("no path found for {:?}", glob_format)
     };
 
     if !manifest_path.exists() {
@@ -354,6 +359,8 @@ pub fn restore_transaction(
     }
 
     let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
+
+    dbg!(&manifest_path);
 
     let mut child = Command::new("db-restore")
         .arg("--target-db-dir")
@@ -382,7 +389,7 @@ pub fn restore_snapshot(
     db_path: &PathBuf, restore_path: &str, epoch_height: &u64, verbose: bool
 ) -> Result<(), Error> {
     let manifest_path = glob(
-        &format!("{}/**/state.manifest", restore_path)
+        &format!("{}/*/state.manifest", restore_path)
     ).expect("could not find state.manifest in archive").next().unwrap()?;
 
     let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
