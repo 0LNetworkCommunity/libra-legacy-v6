@@ -4,8 +4,8 @@ use std::path::PathBuf;
 
 use anyhow::{Error, bail};
 use diem_crypto::HashValue;
-use diem_types::{ol_vdf_difficulty::VDFDifficulty, account_address::AccountAddress};
-use ol::{config::AppCfg, node::client::pick_client};
+use diem_types::{ol_vdf_difficulty::VDFDifficulty};
+use ol::{config::AppCfg, node::{client::pick_client, node::Node}};
 use crate::proof;
 /// container for the next proof parameters to be fed to VDF prover.
 pub struct NextProof {
@@ -25,6 +25,8 @@ pub fn get_next_proof_params_from_local(config: &AppCfg) -> Result<NextProof, Er
     let diff = VDFDifficulty {
         difficulty: current_local_block.difficulty(),
         security: current_local_block.security.unwrap(),
+        prev_diff: current_local_block.difficulty(),
+        prev_sec: current_local_block.security.unwrap(),
     };
     Ok(NextProof {
         diff,
@@ -40,24 +42,56 @@ pub fn get_next_proof_from_chain(
     config: &mut AppCfg,
     swarm_path: Option<PathBuf>
 ) -> Result<NextProof, Error> {
+    // dbg!("pick_client");
+    let client = pick_client(swarm_path.clone(), config)?;
+
+    dbg!("get user tower state");
+
+    // TODO: we are picking Client twice
+    let diff = get_difficulty_from_chain(config, swarm_path)?;
+  
+    // // get the user's tower state from chain.
+    let ts = client
+      .get_account_state(config.profile.account)?
+      .get_miner_state()?;
+
+      if let Some(t) = ts {
+            Ok(NextProof {
+          diff,
+          next_height: t.verified_tower_height + 1,
+          preimage: t.previous_proof_hash,
+      })
+      } else {
+        bail!("cannot get tower resource for account")
+      }
+}
+
+/// Get the VDF difficulty from chain.
+pub fn get_difficulty_from_chain(config: &mut AppCfg, swarm_path: Option<PathBuf>) -> anyhow::Result<VDFDifficulty> {
+
     dbg!("pick_client");
-    let client = pick_client(swarm_path, config)?;
+    let client = pick_client(swarm_path.clone(), config)?;
 
     dbg!("get_account_state");
-    // get the user's tower state from chain.
-    let ts = client.get_account_state(config.profile.account)?.get_miner_state()?;
 
-    if let Some(t) = ts {
-        let a = client.get_account_state(AccountAddress::ZERO)?;
+    let mut n = Node::new(client, config, swarm_path.is_some());
+    
+    n.refresh_onchain_state();
+
+    
+
+    // // get the user's tower state from chain.
+    // let ts = client.get_account_state(config.profile.account)?.get_miner_state()?;
+
+    if let Some(a) = n.chain_state {
+
+        // let a = client.get_account_state(AccountAddress::ZERO)?;
         dbg!(&a);
+        dbg!(&a.get_diem_version());
         if let Some(diff) = a.get_tower_params()? {
-            return Ok(NextProof {
-                diff,
-                next_height: t.verified_tower_height + 1,
-                preimage: t.previous_proof_hash,
-            });
+            return Ok(diff)
         }
         bail!("could not get this epoch's VDF params from chain.")
     }
-    bail!("could not get tower state for accout: {}", config.profile.account)
+    bail!("could not get account state for 0x0")
 }

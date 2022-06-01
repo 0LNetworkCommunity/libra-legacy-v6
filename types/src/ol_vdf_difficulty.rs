@@ -21,6 +21,10 @@ pub struct VDFDifficulty {
     pub difficulty: u64,
     /// Security parameter for VDF
     pub security: u64,
+    /// Previous epoch's difficulty
+    pub prev_diff: u64,
+    /// Previous epoch's security param
+    pub prev_sec: u64,
 }
 
 
@@ -52,7 +56,7 @@ impl VDFDifficulty {
 }
 
 impl MoveStructType for VDFDifficulty {
-    const MODULE_NAME: &'static IdentStr = ident_str!("Tower");
+    const MODULE_NAME: &'static IdentStr = ident_str!("TowerState");
     const STRUCT_NAME: &'static IdentStr = ident_str!("VDFDifficulty");
 }
 
@@ -62,7 +66,9 @@ impl Default for VDFDifficulty {
     fn default() -> Self {
         Self { 
           difficulty: 5_000_000,  // historical value from genesis
-          security: 2048, // historical value from genesis 
+          security: 512, // historical value from genesis 
+          prev_diff: 5_000_000,
+          prev_sec: 512,
         }
     }
 }
