@@ -83,9 +83,9 @@ pub(crate) async fn process_client_transaction_submission<V>(
 ) where
     V: TransactionValidation,
 { 
-    dbg!("new transaction", &transaction);
-    dbg!("new transaction", &transaction.sender());
-    dbg!("new transaction", &transaction.sequence_number());
+    debug!("new transaction: {:?}", &transaction);
+    debug!("new transaction sender: {:?}", &transaction.sender());
+    debug!("new transaction seq number: {:?}", &transaction.sequence_number());
 
     timer.stop_and_record();
     let _timer =
@@ -116,6 +116,8 @@ pub(crate) async fn process_transaction_broadcast<V>(
 ) where
     V: TransactionValidation,
 {
+  warn!("process_transaction_broadcast from other node {:?}", &peer);
+    counters::TASKS_PROCESS_TX_BROADCAST_EVENT.inc();
     timer.stop_and_record();
     let _timer = counters::process_txn_submit_latency_timer(
         peer.raw_network_id().as_str(),
@@ -129,7 +131,9 @@ pub(crate) async fn process_transaction_broadcast<V>(
         .network_senders
         .get_mut(&peer.network_id())
         .expect("[shared mempool] missing network sender");
-    if let Err(e) = network_sender.send_to(peer.peer_id(), ack_response) {
+    if let Err(e) = network_sender.send_to(peer.peer_id(), ack_response.clone()) {
+        error!("process_transaction_broadcast network error, {:?}, message: {:?}", &peer, &ack_response);
+
         counters::network_send_fail_inc(counters::ACK_TXNS);
         error!(
             LogSchema::event_log(LogEntry::BroadcastACK, LogEvent::NetworkSendFail)
@@ -150,7 +154,11 @@ fn gen_ack_response(
     let mut retry = false;
     for r in results.into_iter() {
         let submission_status = r.1;
+
+        // 0L TODO: when is backoff submitted when mempool is full.
         if submission_status.0.code == MempoolStatusCode::MempoolIsFull {
+            debug!("mempool is full, responding to peer with backoff.");
+            counters::SELF_REQUEST_BACKOFF.inc();
             backoff = true;
         }
         if is_txn_retryable(submission_status) {
@@ -230,7 +238,7 @@ where
             if let Ok(sequence_number) = seq_numbers[idx] {
                 if t.sequence_number() == sequence_number {
                     return Some((t, sequence_number));
-                } else if t.sequence_number() > sequence_number{
+                } else if t.sequence_number() > sequence_number{ // discard transactions that are too new.
                     statuses.push((
         
                         t,
@@ -381,7 +389,13 @@ pub(crate) async fn process_state_sync_request(
     counters::mempool_service_latency(counters::COMMIT_STATE_SYNC_LABEL, result, latency);
 }
 
-pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req: ConsensusRequest) {
+
+pub(crate) async fn process_consensus_request<V: TransactionValidation>(
+    smp: SharedMempool<V>,
+    req: ConsensusRequest
+) {
+  debug!("process_consensus_request");
+    counters::TASKS_PROCESS_CONSENSUS_REQUEST_EVENT.inc();
     // Start latency timer
     let start_time = Instant::now();
     debug!(LogSchema::event_log(LogEntry::Consensus, LogEvent::Received).consensus_msg(&req));
@@ -394,7 +408,7 @@ pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req:
                 .collect();
             let mut txns;
             {
-                let mut mempool = mempool.lock();
+                let mut mempool = smp.mempool.lock();
                 // gc before pulling block as extra protection against txns that may expire in consensus
                 // Note: this gc operation relies on the fact that consensus uses the system time to determine block timestamp
                 let curr_time = diem_infallible::duration_since_epoch();
@@ -417,7 +431,7 @@ pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req:
                 counters::COMMIT_CONSENSUS_LABEL,
                 transactions.len(),
             );
-            reject_txns(mempool, transactions).await;
+            reject_txns(&smp.mempool, transactions).await;
             (
                 ConsensusResponse::CommitResponse(),
                 callback,
@@ -437,7 +451,7 @@ pub(crate) async fn process_consensus_request(mempool: &Mutex<CoreMempool>, req:
     };
     let latency = start_time.elapsed();
     
-    dbg!("mempool_service latency", &latency);
+    debug!("mempool_service latency: {:?}", &latency);
 
 
     counters::mempool_service_latency(counter_label, result, latency);
