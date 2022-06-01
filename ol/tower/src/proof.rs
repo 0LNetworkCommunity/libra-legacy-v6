@@ -85,7 +85,6 @@ pub fn mine_and_submit(config: &mut AppCfg, tx_params: TxParams, local_mode: boo
         // if the user is offline, they must use local mode
         // however the user may end up using stale config proofs if the epoch changes and the params are different now.
 
-        dbg!("loop");
         let next = match local_mode {
             true => next_proof::get_next_proof_params_from_local(config)?,
             false => next_proof::get_next_proof_from_chain(config, swarm_path.clone())?,
@@ -148,7 +147,7 @@ pub fn get_highest_block(blocks_dir: &PathBuf) -> Result<(VDFProof, PathBuf), Er
 
             if let Some(b) = &max_block {
                 if blocknumber > b.height {
-                    max_block = Some(b.to_owned());
+                    max_block = Some(block);
                     max_block_path = Some(entry);
                 }
             } else {
@@ -228,7 +227,6 @@ fn create_fixtures() {
         // also create mnemonic
         let mut mnemonic_path = PathBuf::from(save_to.clone());
         mnemonic_path.push("owner.mnem");
-        dbg!(&mnemonic_path);
         let mut file = fs::File::create(&mnemonic_path).expect("Could not create file");
         file.write_all(mnemonic_string.as_bytes())
             .expect("Could not write mnemonic");

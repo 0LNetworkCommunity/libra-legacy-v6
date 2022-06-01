@@ -32,7 +32,9 @@ pub fn process_backlog(
     // Getting local state height
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
+
     let (current_local_proof, _current_block_path) = get_highest_block(&blocks_dir)?;
+
     let current_proof_number = current_local_proof.height;
     // if let Some(current_proof_number) = current_local_proof {
         info!("Local tower height: {:?}", current_proof_number);

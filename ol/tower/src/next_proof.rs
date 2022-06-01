@@ -45,7 +45,7 @@ pub fn get_next_proof_from_chain(
     // dbg!("pick_client");
     let client = pick_client(swarm_path.clone(), config)?;
 
-    dbg!("get user tower state");
+    // dbg!("get user tower state");
 
     // TODO: we are picking Client twice
     let diff = get_difficulty_from_chain(config, swarm_path)?;
@@ -69,10 +69,10 @@ pub fn get_next_proof_from_chain(
 /// Get the VDF difficulty from chain.
 pub fn get_difficulty_from_chain(config: &mut AppCfg, swarm_path: Option<PathBuf>) -> anyhow::Result<VDFDifficulty> {
 
-    dbg!("pick_client");
+    // dbg!("pick_client");
     let client = pick_client(swarm_path.clone(), config)?;
 
-    dbg!("get_account_state");
+    // dbg!("get_account_state");
 
     let mut n = Node::new(client, config, swarm_path.is_some());
     
@@ -86,8 +86,8 @@ pub fn get_difficulty_from_chain(config: &mut AppCfg, swarm_path: Option<PathBuf
     if let Some(a) = n.chain_state {
 
         // let a = client.get_account_state(AccountAddress::ZERO)?;
-        dbg!(&a);
-        dbg!(&a.get_diem_version());
+        // dbg!(&a);
+        // dbg!(&a.get_diem_version());
         if let Some(diff) = a.get_tower_params()? {
             return Ok(diff)
         }
