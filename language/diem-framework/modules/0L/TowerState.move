@@ -105,12 +105,22 @@ module TowerState {
     public fun init_difficulty(vm: &signer) {
       CoreAddresses::assert_diem_root(vm);
       if (!exists<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS())) {
-        move_to<VDFDifficulty>(vm, VDFDifficulty {
-          difficulty: 5000000,
-          security: 512,
-          prev_diff: 5000000,
-          prev_sec: 512,
-        });
+        if Testnet::is_testnet() {
+          move_to<VDFDifficulty>(vm, VDFDifficulty {
+            difficulty: 100,
+            security: 512,
+            prev_diff: 100,
+            prev_sec: 512,
+          });
+        } else {
+          move_to<VDFDifficulty>(vm, VDFDifficulty {
+            difficulty: 5000000,
+            security: 512,
+            prev_diff: 5000000,
+            prev_sec: 512,
+          });
+        }
+
       }
     }
 
