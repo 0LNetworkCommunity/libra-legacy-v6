@@ -177,10 +177,7 @@ impl Backup {
 
         let restore_path = self.restore_path.clone();
 
-        let version = version_opt.unwrap_or(self.waypoint.unwrap().version());
-
-        
-
+      
         // NOTE: First restore the Epoch before restoring a higher version in the epoch.
         restore_epoch(db_path, restore_path.to_str().unwrap(), verbose)?;
 
@@ -189,19 +186,17 @@ impl Backup {
         restore_snapshot(
             db_path,
             self.restore_path.to_owned().to_str().unwrap(),
-            &version,
+            &self.waypoint.unwrap().version(),
             verbose,
         )?;
 
         // Restore an advanced version in the epoch
         
-        let restore_path_for_version = if version_opt.is_some() {
-            self.restore_path.to_owned().join(version.to_string())
-        } else {
-            get_heighest_version_path(self.restore_path.clone())
-                .unwrap_or(self.restore_path.clone())
-        };
+        let version = version_opt.unwrap_or(get_heighest_version(restore_path)?);
 
+        let restore_path_for_version = self.restore_path.to_owned().join(version.to_string());
+
+        dbg!(&restore_path_for_version);
 
         restore_transaction(db_path, restore_path_for_version.to_str().unwrap(), verbose)?;
 
@@ -487,13 +482,12 @@ pub fn restore_snapshot(
     Ok(())
 }
 
-fn get_heighest_version_path(restore_path: PathBuf) -> anyhow::Result<PathBuf> {
+fn get_heighest_version(restore_path: PathBuf) -> anyhow::Result<u64> {
     let paths = glob(&format!("{}/*", restore_path.to_str().unwrap()))
         .expect("could not find state.manifest in archive");
 
     let mut highest = 0u64;
-    let mut highest_path: Option<PathBuf> = None;
-    // let paths = fs::read_dir("./").unwrap();
+    // let mut highest_path: Option<PathBuf> = None;
 
     for path in paths {
         let p = path.unwrap();
@@ -506,15 +500,15 @@ fn get_heighest_version_path(restore_path: PathBuf) -> anyhow::Result<PathBuf> {
                     println!("Name: {:?}", num);
                     if num > highest {
                         highest = num;
-                        highest_path = Some(p);
                     }
                 }
                 Err(_) => {}
             }
         }
     }
-    if let Some(path) = highest_path {
-        return Ok(path);
+
+    if highest > 0 {
+        return Ok(highest); 
     }
     bail!("No versioned manifest path found in: {:?}", restore_path);
 }
