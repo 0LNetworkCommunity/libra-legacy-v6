@@ -97,7 +97,7 @@ pub fn mine_and_submit(
 
     // If there are NO files in path, mine the genesis proof.
     if current_block_number.is_none() {
-        bail!("ERROR: Genesis proof_0.json not found.");
+        bail!("ERROR: no valid proof found.");
     } else {
         // the max block that has been succesfully submitted to client
         let mut mining_height = current_block_number.unwrap() + 1;

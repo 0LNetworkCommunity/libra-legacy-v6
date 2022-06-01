@@ -56,6 +56,7 @@ Configs exist: {configs}
 DB restored: {restored}
 Web monitor: {web_running}
 Is synced: {synced}
+Local DB Version: {version}
 Sync delay: {delay}
 Node running: {node}
 Tower running: {miner}
@@ -67,6 +68,7 @@ In validator set: {in_set}
                 restored = node.vitals.items.db_restored,
                 web_running = node.vitals.items.web_running,
                 synced = node.vitals.items.is_synced,
+                version = node.vitals.items.sync_height,
                 delay = node.vitals.items.sync_delay,
                 node = node.vitals.items.node_running,
                 miner = node.vitals.items.miner_running,

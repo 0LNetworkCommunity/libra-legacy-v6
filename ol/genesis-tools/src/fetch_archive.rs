@@ -10,7 +10,7 @@ pub fn wait_for_archive(epoch: Option<u64>) -> Result<()>{
   loop {
     // check every 60 secs.
     thread::sleep(time::Duration::from_millis(60_000));
-    match fast_forward_db(true, epoch) {
+    match fast_forward_db(true, epoch, None) {
       Ok(_) => return Ok(()),
       Err(_) => print!("."),
     };
