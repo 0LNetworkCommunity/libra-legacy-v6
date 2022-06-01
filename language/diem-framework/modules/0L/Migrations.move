@@ -87,88 +87,124 @@ module Migrations {
   }
 }
 
-/// # Summary 
-/// Module to migrate the tower statistics from TowerState to TowerCounter
-module MigrateTowerCounter {
-  use 0x1::TowerState;
-  use 0x1::Migrations;
-  use 0x1::CoreAddresses;
-
-  const UID:u64 = 1;
-  // Migration to migrate all wallets to be slow wallets
-  public fun migrate_tower_counter(vm: &signer) {
-    CoreAddresses::assert_diem_root(vm);
-    if (!Migrations::has_run(UID)) {
-      let (global, val, fn) = TowerState::danger_migrate_get_lifetime_proof_count();
-      TowerState::init_tower_counter(vm, global, val, fn);
-      Migrations::push(vm, UID, b"MigrateTowerCounter");
-    };
-  }
-
-}
 
 /// # Summary 
-/// Module to migrate the tower statistics from TowerState to TowerCounter
-module MigrateAutoPayBal {
-  use 0x1::AutoPay;
-  use 0x1::DiemAccount;
-  use 0x1::CoreAddresses;
-  use 0x1::Vector;
-  use 0x1::Migrations;
-
-  const UID:u64 = 2;
-  // Migration to migrate all wallets to be slow wallets
-  public fun do_it(vm: &signer) {
-    CoreAddresses::assert_diem_root(vm);
-    if (!Migrations::has_run(UID)) {
-      let enabled_accounts = AutoPay::get_enabled();
-      let i = 0;
-      let len = Vector::length<address>(&enabled_accounts);
-      while (i < len) {
-        let addr = Vector::borrow(&enabled_accounts, i);
-        let account_sig = DiemAccount::scary_wtf_create_signer(vm, *addr);
-        AutoPay::enable_autopay(&account_sig);
-        AutoPay::migrate_instructions(&account_sig);
-
-        i = i + 1;
-      };
-
-
-      Migrations::push(vm, UID, b"MigrateAutoPayBal");
-    };
-  }
-}
-
-
-/// # Summary 
-/// Module to migrate the tower statistics from TowerState to TowerCounter
-module MigrateVouch {
+/// Initializes the Jail structs
+module MigrateJail {
   use 0x1::ValidatorUniverse;
-  use 0x1::Vouch;
+  use 0x1::Jail;
   use 0x1::DiemAccount;
   use 0x1::CoreAddresses;
   use 0x1::Vector;
   use 0x1::Migrations;
 
-  const UID:u64 = 3;
+  const UID:u64 = 4;
   // Migration to migrate all wallets to be slow wallets
   public fun do_it(vm: &signer) {
     CoreAddresses::assert_diem_root(vm);
     if (!Migrations::has_run(UID)) {
-      let enabled_accounts = ValidatorUniverse::get_eligible_validators(vm);
+      let enabled_accounts = ValidatorUniverse::get_eligible_validators();
       let i = 0;
       let len = Vector::length<address>(&enabled_accounts);
       while (i < len) {
         let addr = Vector::borrow(&enabled_accounts, i);
-        let account_sig = DiemAccount::scary_wtf_create_signer(vm, *addr);
-        Vouch::init(&account_sig);
+        let account_sig = DiemAccount::scary_create_signer_for_migrations(vm, *addr);
+        Jail::init(&account_sig);
         i = i + 1;
       };
 
 
-      Migrations::push(vm, UID, b"MigrateVouch");
+      Migrations::push(vm, UID, b"MigrateJail");
     };
   }
 }
 
 }
+
+
+/////////////////////////////////////////////////////
+// # LEAVE HERE FOR REFERENCE. Previous Migrations //
+/////////////////////////////////////////////////////
+
+// // # Summary 
+// // Module to migrate the tower statistics from TowerState to TowerCounter
+// module MigrateTowerCounter {
+//   use 0x1::TowerState;
+//   use 0x1::Migrations;
+//   use 0x1::CoreAddresses;
+
+//   const UID:u64 = 1;
+//   // Migration to migrate all wallets to be slow wallets
+//   public fun migrate_tower_counter(vm: &signer) {
+//     CoreAddresses::assert_diem_root(vm);
+//     if (!Migrations::has_run(UID)) {
+//       let (global, val, fn) = TowerState::danger_migrate_get_lifetime_proof_count();
+//       TowerState::init_tower_counter(vm, global, val, fn);
+//       Migrations::push(vm, UID, b"MigrateTowerCounter");
+//     };
+//   }
+
+// }
+
+// Module to migrate the tower statistics from TowerState to TowerCounter
+// module MigrateAutoPayBal {
+//   use 0x1::AutoPay;
+//   use 0x1::DiemAccount;
+//   use 0x1::CoreAddresses;
+//   use 0x1::Vector;
+//   use 0x1::Migrations;
+
+//   const UID:u64 = 2;
+//   // Migration to migrate all wallets to be slow wallets
+//   public fun do_it(vm: &signer) {
+//     CoreAddresses::assert_diem_root(vm);
+//     if (!Migrations::has_run(UID)) {
+//       let enabled_accounts = AutoPay::get_enabled();
+//       let i = 0;
+//       let len = Vector::length<address>(&enabled_accounts);
+//       while (i < len) {
+//         let addr = Vector::borrow(&enabled_accounts, i);
+//         let account_sig = DiemAccount::scary_create_signer_for_migrations(vm, *addr);
+//         AutoPay::enable_autopay(&account_sig);
+//         AutoPay::migrate_instructions(&account_sig);
+
+//         i = i + 1;
+//       };
+
+
+//       Migrations::push(vm, UID, b"MigrateAutoPayBal");
+//     };
+//   }
+// }
+
+
+// // # Here for reference
+// // Initializes the Vouch structs
+// module MigrateVouch {
+//   use 0x1::ValidatorUniverse;
+//   use 0x1::Vouch;
+//   use 0x1::DiemAccount;
+//   use 0x1::CoreAddresses;
+//   use 0x1::Vector;
+//   use 0x1::Migrations;
+
+//   const UID:u64 = 3;
+//   // Migration to migrate all wallets to be slow wallets
+//   public fun do_it(vm: &signer) {
+//     CoreAddresses::assert_diem_root(vm);
+//     if (!Migrations::has_run(UID)) {
+//       let enabled_accounts = ValidatorUniverse::get_eligible_validators(vm);
+//       let i = 0;
+//       let len = Vector::length<address>(&enabled_accounts);
+//       while (i < len) {
+//         let addr = Vector::borrow(&enabled_accounts, i);
+//         let account_sig = DiemAccount::scary_create_signer_for_migrations(vm, *addr);
+//         Vouch::init(&account_sig);
+//         i = i + 1;
+//       };
+
+
+//       Migrations::push(vm, UID, b"MigrateVouch");
+//     };
+//   }
+// }
