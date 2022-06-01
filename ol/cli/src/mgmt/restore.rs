@@ -1,22 +1,31 @@
 //! `restore` functions
 
-use std::{env, io::Write, process::Stdio};
-use abscissa_core::{status_ok};
+use crate::application::app_config;
+use abscissa_core::status_ok;
+use anyhow::{anyhow, bail, Error};
 use diem_global_constants::WAYPOINT;
+use diem_secure_storage::KVStorage;
+use diem_secure_storage::{self, Namespaced, OnDiskStorage};
+use diem_types::waypoint::Waypoint;
+use glob::glob;
 use once_cell::sync::Lazy;
 use reqwest;
-use anyhow::{Error, bail, anyhow};
-use glob::glob;
-use serde::{Serialize, Deserialize};
-use std::{fs::{self, File}, io::{self}, path::{PathBuf}, process::Command};
-use crate::application::app_config;
-use diem_secure_storage::{self, Namespaced, OnDiskStorage};
-use diem_types::{waypoint::Waypoint};
-use diem_secure_storage::KVStorage;
+use serde::{Deserialize, Serialize};
+use std::{
+    env,
+    io::Write,
+    process::{exit, Stdio},
+};
+use std::{
+    fs::{self, File},
+    io::{self},
+    path::PathBuf,
+    process::Command,
+};
 
 const GITHUB_ORG: &str = "OLSF";
 /// Check if we are in testnet mode
-pub static GITHUB_REPO: Lazy<&str> = Lazy::new(||{
+pub static GITHUB_REPO: Lazy<&str> = Lazy::new(|| {
     if *IS_DEVNET {
         "dev-epoch-archive"
     } else {
@@ -25,22 +34,26 @@ pub static GITHUB_REPO: Lazy<&str> = Lazy::new(||{
 });
 
 /// Are we restoring devnet database
-pub static IS_DEVNET: Lazy<bool> = Lazy::new(||{  
+pub static IS_DEVNET: Lazy<bool> = Lazy::new(|| {
     match env::var("TEST") {
         Ok(val) => {
             match val.as_str() {
-                "y" =>  true,
+                "y" => true,
                 // if anything else is set by user is false
-                _ => false 
+                _ => false,
             }
         }
         // default to prod if nothig is set
-        _ => false
+        _ => false,
     }
 });
 
 /// Restore database from archive
-pub fn fast_forward_db(verbose: bool, epoch: Option<u64>) -> Result<(), Error>{
+pub fn fast_forward_db(
+    verbose: bool,
+    epoch: Option<u64>,
+    version_opt: Option<u64>,
+) -> Result<(), Error> {
     let mut backup = Backup::new(epoch);
 
     println!("fetching latest epoch backup from epoch archive");
@@ -50,10 +63,17 @@ pub fn fast_forward_db(verbose: bool, epoch: Option<u64>) -> Result<(), Error>{
     backup.set_waypoint()?;
 
     println!("\nRestoring db from archive to home path");
-    backup.restore_backup(verbose)?;
-    
+    backup.restore_backup(verbose, version_opt)?;
+
     println!("\nCreating fullnode.node.yaml to home path");
     backup.create_fullnode_yaml()?;
+
+    println!("\nResetting Safety Data in key_store.json\n");
+    diem_genesis_tool::key::reset_safety_data(
+      &backup.home_path,
+      &backup.node_namespace
+    );
+
     Ok(())
 }
 #[derive(Serialize, Deserialize)]
@@ -69,11 +89,7 @@ struct GithubFile {
 }
 
 // Name your user agent after the app
-static APP_USER_AGENT: &str = concat!(
-env!("CARGO_PKG_NAME"),
-"/",
-env!("CARGO_PKG_VERSION"),
-);
+static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
 
 /// Backup metadata
 #[derive(Debug)]
@@ -92,16 +108,20 @@ impl Backup {
     pub fn new(epoch: Option<u64>) -> Self {
         let conf = app_config().to_owned();
         let (restore_epoch, archive_url) = if let Some(e) = epoch {
-          (e, get_archive_url(e).unwrap())
+            (e, get_archive_url(e).unwrap())
         } else {
-          get_highest_epoch_archive().expect(
-            &format!("could not find an archive tar.gz backup at url: {}", GITHUB_REPO.clone())
-          )
+            get_highest_epoch_archive().expect(&format!(
+                "could not find an archive tar.gz backup at url: {}",
+                GITHUB_REPO.clone()
+            ))
         };
 
-        let restore_path = conf.workspace.node_home.join(format!("restore/{}", restore_epoch));
+        let restore_path = conf
+            .workspace
+            .node_home
+            .join(format!("restore/{}", restore_epoch));
         fs::create_dir_all(&restore_path).unwrap();
-        
+
         println!("DB fast forward to epoch: {}", &restore_epoch);
 
         Backup {
@@ -109,59 +129,100 @@ impl Backup {
             archive_url,
             home_path: conf.workspace.node_home.clone(),
             restore_path: restore_path.clone(),
-            archive_path: conf.workspace.node_home.join(format!("restore/restore-{}.tar.gz", restore_epoch)),
+            archive_path: conf
+                .workspace
+                .node_home
+                .join(format!("restore/restore-{}.tar.gz", restore_epoch)),
             waypoint: None,
             node_namespace: conf.format_oper_namespace(), // NOTE: needs to match namespace used in ol/onboard and config/management/genesis
         }
     }
     /// Fetch backups
-    pub fn fetch_backup(&self, verbose: bool) -> Result<(), Error> {    
-      let mut resp = reqwest::blocking::get(&self.archive_url).expect(
-        "epoch archive http request failed"
-      );
-      let mut out = File::create(&self.archive_path).expect("cannot create tar.gz archive");
-      io::copy(&mut resp, &mut out).expect("failed to write to tar.gz archive");
-      println!("fetched archive file, copied to {:?}", &self.home_path.join("restore/"));      
-      
-      let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
-      let restore_dir = &self.home_path.join("restore/");
+    pub fn fetch_backup(&self, verbose: bool) -> Result<(), Error> {
+        let mut resp =
+            reqwest::blocking::get(&self.archive_url).expect("epoch archive http request failed");
+        let mut out = File::create(&self.archive_path).expect("cannot create tar.gz archive");
+        io::copy(&mut resp, &mut out).expect("failed to write to tar.gz archive");
+        println!(
+            "fetched archive file, copied to {:?}",
+            &self.home_path.join("restore/")
+        );
 
-      let mut child = Command::new("tar")
-      .arg("-xf")
-      .arg(&self.archive_path)
-      .arg("-C")
-      .arg(restore_dir)
-      .stdout(stdio_cfg)
-      .spawn()
-      .expect(&format!("failed to extract archive {:?} into {:?}", &self.archive_path, restore_dir));
+        let stdio_cfg = if verbose {
+            Stdio::inherit()
+        } else {
+            Stdio::null()
+        };
+        let restore_dir = &self.home_path.join("restore/");
 
+        let mut child = Command::new("tar")
+            .arg("-xf")
+            .arg(&self.archive_path)
+            .arg("-C")
+            .arg(restore_dir)
+            .stdout(stdio_cfg)
+            .spawn()
+            .expect(&format!(
+                "failed to extract archive {:?} into {:?}",
+                &self.archive_path, restore_dir
+            ));
 
-      let ecode = child.wait().expect("failed to wait on child");
+        let ecode = child.wait().expect("failed to wait on child");
 
-      assert!(ecode.success());
+        assert!(ecode.success());
 
+        status_ok!("\nArchive downloaded", "\n...........................\n");
 
-      status_ok!("\nArchive downloaded", "\n...........................\n");
-
-
-      Ok(())
+        Ok(())
     }
 
     /// Restore Backups
-    pub fn restore_backup(&self, verbose: bool) -> Result<(), Error>{
+    pub fn restore_backup(&self, verbose: bool, version_opt: Option<u64>) -> Result<(), Error> {
+        dbg!(&version_opt);
+
         let db_path = &self.home_path.join("db/");
-        let restore_path = self.restore_path.to_str().unwrap();
-        let height = &self.waypoint.unwrap().version();
-        restore_epoch(db_path, restore_path, verbose)?;
-        restore_transaction(db_path, restore_path, verbose)?;
-        restore_snapshot(db_path, restore_path, height, verbose)?;
+
+        let restore_path = self.restore_path.clone();
+
+      
+        // NOTE: First restore the Epoch before restoring a higher version in the epoch.
+        restore_epoch(db_path, restore_path.to_str().unwrap(), verbose)?;
+
+        restore_transaction(db_path, self.restore_path.to_owned().to_str().unwrap(), verbose)?;
+
+        restore_snapshot(
+            db_path,
+            self.restore_path.to_owned().to_str().unwrap(),
+            &self.waypoint.unwrap().version(),
+            verbose,
+        )?;
+
+        // Restore an advanced version in the epoch
+        
+        let version = version_opt.unwrap_or(get_heighest_version(restore_path)?);
+
+        let restore_path_for_version = self.restore_path.to_owned().join(version.to_string());
+
+        dbg!(&restore_path_for_version);
+
+        restore_transaction(db_path, restore_path_for_version.to_str().unwrap(), verbose)?;
+
+        restore_snapshot(
+            db_path,
+            restore_path_for_version.to_str().unwrap(),
+            &version,
+            verbose,
+        )?;
+
         Ok(())
     }
 
     /// parse waypoint from manifest
     pub fn parse_manifest_waypoint(&mut self) -> Result<Waypoint, Error> {
         let manifest_path = self.restore_path.to_str().unwrap();
-        for entry in glob(&format!("{}/**/epoch_ending.manifest", manifest_path)).expect("Failed to read glob pattern") {
+        for entry in glob(&format!("{}/**/epoch_ending.manifest", manifest_path))
+            .expect("Failed to read glob pattern")
+        {
             match entry {
                 Ok(path) => {
                     println!("{:?}", path.display());
@@ -169,33 +230,28 @@ impl Backup {
                     let p: Manifest = serde_json::from_str(&data).unwrap();
                     let waypoint = p.waypoints[0];
                     self.waypoint = Some(waypoint);
-                    return Ok(waypoint)
-                },
+                    return Ok(waypoint);
+                }
                 Err(e) => {
                     println!("{:?}", e);
-                    return Err(Error::from(e))
-                },
+                    return Err(Error::from(e));
+                }
             }
-            
         }
 
         Err(Error::msg("no manifest found"))
-
     }
 
     /// Write Waypoint
-    pub fn set_waypoint(&mut self) -> Result<Waypoint, Error>{
-
+    pub fn set_waypoint(&mut self) -> Result<Waypoint, Error> {
         let waypoint = self.parse_manifest_waypoint().unwrap();
-        let storage = diem_secure_storage::Storage::OnDiskStorage(
-            OnDiskStorage::new(self.home_path.join("key_store.json").to_owned())
-        );
-        let mut ns_storage = diem_secure_storage::Storage::NamespacedStorage(
-            Namespaced::new(
-                self.node_namespace.clone(),
-                Box::new(storage),
-            )
-        );
+        let storage = diem_secure_storage::Storage::OnDiskStorage(OnDiskStorage::new(
+            self.home_path.join("key_store.json").to_owned(),
+        ));
+        let mut ns_storage = diem_secure_storage::Storage::NamespacedStorage(Namespaced::new(
+            self.node_namespace.clone(),
+            Box::new(storage),
+        ));
         // ns_storage.set(GENESIS_WAYPOINT, waypoint)?;
         ns_storage.set(WAYPOINT, waypoint)?;
 
@@ -205,17 +261,16 @@ impl Backup {
         Ok(waypoint)
     }
     /// Creates a fullnode yaml file with restore waypoint.
-    pub fn create_fullnode_yaml(&self) -> Result<(), Error>{
-
+    pub fn create_fullnode_yaml(&self) -> Result<(), Error> {
         let yaml = if *IS_DEVNET {
             devnet_yaml(
-            &self.home_path.to_str().expect("no home path provided"), 
-            &self.waypoint.expect("no waypoint provided").to_string()
+                &self.home_path.to_str().expect("no home path provided"),
+                &self.waypoint.expect("no waypoint provided").to_string(),
             )
         } else {
             prod_yaml(
-            &self.home_path.to_str().expect("no home path provided"), 
-            &self.waypoint.expect("no waypoint provided").to_string()
+                &self.home_path.to_str().expect("no home path provided"),
+                &self.waypoint.expect("no waypoint provided").to_string(),
             )
         };
 
@@ -223,76 +278,85 @@ impl Backup {
         let mut file = File::create(yaml_path)?;
         file.write_all(&yaml.as_bytes())?;
 
-        println!("fullnode yaml created, file saved to: {:?}", yaml_path.to_str().unwrap());
-        status_ok!("\nFullnode config written", "\n...........................\n");
+        println!(
+            "fullnode yaml created, file saved to: {:?}",
+            yaml_path.to_str().unwrap()
+        );
+        status_ok!(
+            "\nFullnode config written",
+            "\n...........................\n"
+        );
 
         Ok(())
     }
 }
 
-
 fn get_highest_epoch_archive() -> Result<(u64, String), Error> {
     let client = reqwest::blocking::Client::builder()
-    .user_agent(APP_USER_AGENT)
-    .build()?;
+        .user_agent(APP_USER_AGENT)
+        .build()?;
 
-    let request_url = format!("https://api.github.com/repos/{owner}/{repo}/contents/",
-                              owner = GITHUB_ORG.clone(),
-                              repo = GITHUB_REPO.clone());
+    let request_url = format!(
+        "https://api.github.com/repos/{owner}/{repo}/contents/",
+        owner = GITHUB_ORG.clone(),
+        repo = GITHUB_REPO.clone()
+    );
     let response = client.get(&request_url).send()?;
 
     let files: Vec<GithubFile> = response.json()?;
-    let mut filter: Vec<u64> = files.into_iter()
-    .filter(|file|{
-        file.file_type == "dir"
-    })
-    .map(|file| {
-        // true
-        file.name.parse::<u64>().unwrap_or(0)
-    })
-    .collect();
+    let mut filter: Vec<u64> = files
+        .into_iter()
+        .filter(|file| file.file_type == "dir")
+        .map(|file| {
+            // true
+            file.name.parse::<u64>().unwrap_or(0)
+        })
+        .collect();
     filter.sort();
     let highest_epoch = filter.pop().unwrap();
     // TODO: Change to new directory structure
-    Ok(
-        (
-          highest_epoch, 
-          format!(
+    Ok((
+        highest_epoch,
+        format!(
             "https://raw.githubusercontent.com/{owner}/{repo}/main/{highest_epoch}.tar.gz",
             owner = GITHUB_ORG.clone(),
             repo = GITHUB_REPO.clone(),
             highest_epoch = highest_epoch.to_string(),
-          )
-        )
-    )
+        ),
+    ))
 }
 
 fn get_archive_url(epoch: u64) -> Result<String, Error> {
-    Ok( 
-      format!(
+    Ok(format!(
         "https://raw.githubusercontent.com/{owner}/{repo}/main/{epoch}.tar.gz",
         owner = GITHUB_ORG.clone(),
         repo = GITHUB_REPO.clone(),
         epoch = epoch.to_string(),
-      )
-    )
+    ))
 }
 
 /// Restores transaction epoch backups
-pub fn restore_epoch(
-    db_path: &PathBuf, restore_path: &str, verbose: bool
-) -> Result<(), Error> {
-    let manifest_path = glob(
-        &format!("{}/**/epoch_ending.manifest", restore_path)
-    ).expect("Failed to read glob pattern").next().unwrap()?;
-    
+pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, verbose: bool) -> Result<(), Error> {
+    let glob_format = &format!("{}/**/epoch_ending.manifest", restore_path);
+    let manifest_path = match glob(glob_format)
+        .expect("Failed to read glob pattern")
+        .next()
+    {
+        Some(Ok(p)) => p,
+        _ => bail!("no path found for {:?}", glob_format),
+    };
+
     if !manifest_path.exists() {
-      let msg = format!("manifest path does not exist at: {:?}", &manifest_path);
-      println!("{}", &msg);
-      bail!(msg);
+        let msg = format!("manifest path does not exist at: {:?}", &manifest_path);
+        println!("{}", &msg);
+        bail!(msg);
     }
 
-    let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
+    let stdio_cfg = if verbose {
+        Stdio::inherit()
+    } else {
+        Stdio::null()
+    };
 
     let mut child = Command::new("db-restore")
         .arg("--target-db-dir")
@@ -305,31 +369,57 @@ pub fn restore_epoch(
         .arg(restore_path)
         .stdout(stdio_cfg)
         .spawn()
-        .map_err(|_| {anyhow!("ERROR: could not find the db-restore executable, is it installed?")})?;
-        // .expect("failed to execute child");
+        .map_err(|_| {
+            anyhow!("ERROR: could not find the db-restore executable, is it installed?")
+        })?;
+    // .expect("failed to execute child");
 
     let ecode = child.wait()?;
 
     assert!(ecode.success());
-    
+
     println!(
-        "epoch metadata restored from epoch archive, files saved to: {:?}", 
+        "epoch metadata restored from epoch archive, files saved to: {:?}",
         restore_path
     );
-    status_ok!("\nEpoch metadata restored", "\n...........................\n");
+    status_ok!(
+        "\nEpoch metadata restored",
+        "\n...........................\n"
+    );
 
     Ok(())
 }
 
 /// Restores transaction type backups
 pub fn restore_transaction(
-    db_path: &PathBuf, restore_path: &str, verbose: bool
+    db_path: &PathBuf,
+    restore_path: &str,
+    verbose: bool,
 ) -> Result<(), Error> {
-    let manifest_path = glob(
-        &format!("{}/**/transaction.manifest", restore_path)
-    ).expect("Failed to read glob pattern").next().unwrap()?;
+    let glob_format = &format!("{}/*/transaction.manifest", restore_path);
+    let manifest_path = match glob(glob_format)
+        .expect("Failed to read glob pattern")
+        .next()
+    {
+        Some(Ok(p)) => p,
+        _ => bail!("no path found for {:?}", glob_format),
+    };
 
-    let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
+    if !manifest_path.exists() {
+        println!(
+            "ERROR: cannot find manifest path: {}",
+            manifest_path.to_str().unwrap()
+        );
+        exit(1);
+    }
+
+    let stdio_cfg = if verbose {
+        Stdio::inherit()
+    } else {
+        Stdio::null()
+    };
+
+    dbg!(&manifest_path);
 
     let mut child = Command::new("db-restore")
         .arg("--target-db-dir")
@@ -346,7 +436,7 @@ pub fn restore_transaction(
     let ecode = child.wait()?;
 
     assert!(ecode.success());
-    
+
     println!("transactions restored from epoch archive,");
     status_ok!("\nTransactions restored", "\n...........................\n");
 
@@ -355,13 +445,21 @@ pub fn restore_transaction(
 
 /// Restores snapshot type backups
 pub fn restore_snapshot(
-    db_path: &PathBuf, restore_path: &str, epoch_height: &u64, verbose: bool
+    db_path: &PathBuf,
+    restore_path: &str,
+    epoch_height: &u64,
+    verbose: bool,
 ) -> Result<(), Error> {
-    let manifest_path = glob(
-        &format!("{}/**/state.manifest", restore_path)
-    ).expect("could not find state.manifest in archive").next().unwrap()?;
+    let manifest_path = glob(&format!("{}/*/state.manifest", restore_path))
+        .expect("could not find state.manifest in archive")
+        .next()
+        .unwrap()?;
 
-    let stdio_cfg = if verbose { Stdio::inherit() } else { Stdio::null() };
+    let stdio_cfg = if verbose {
+        Stdio::inherit()
+    } else {
+        Stdio::null()
+    };
 
     let mut child = Command::new("db-restore")
         .arg("--target-db-dir")
@@ -381,17 +479,49 @@ pub fn restore_snapshot(
 
     assert!(ecode.success());
     println!("state snapshot restored from epoch archive,");
-    status_ok!("\nState snapshot restored", "\n...........................\n");
+    status_ok!(
+        "\nState snapshot restored",
+        "\n...........................\n"
+    );
 
-    Ok(())    
+    Ok(())
 }
 
+fn get_heighest_version(restore_path: PathBuf) -> anyhow::Result<u64> {
+    let paths = glob(&format!("{}/*", restore_path.to_str().unwrap()))
+        .expect("could not find state.manifest in archive");
 
+    let mut highest = 0u64;
+    // let mut highest_path: Option<PathBuf> = None;
+
+    for path in paths {
+        let p = path.unwrap();
+
+        if p.is_dir() {
+            let dirname = p.components().into_iter().last().unwrap();
+            let d = dirname.as_os_str();
+            match d.to_str().unwrap().parse::<u64>() {
+                Ok(num) => {
+                    println!("Name: {:?}", num);
+                    if num > highest {
+                        highest = num;
+                    }
+                }
+                Err(_) => {}
+            }
+        }
+    }
+
+    if highest > 0 {
+        return Ok(highest); 
+    }
+    bail!("No versioned manifest path found in: {:?}", restore_path);
+}
 
 fn prod_yaml(home_path: &str, waypoint: &str) -> String {
     format!(
-// NOTE: With yaml formatting Be aware of indents, two spaces
-r#"
+        // NOTE: With yaml formatting Be aware of indents, two spaces
+        r#"
 base:
   data_dir: "{home_path}"
   role: "full_node"
@@ -444,11 +574,10 @@ upstream:
     )
 }
 
-
 fn devnet_yaml(home_path: &str, waypoint: &str) -> String {
     format!(
-// NOTE: With yaml formatting Be aware of indents, two spaces
-r#"
+        // NOTE: With yaml formatting Be aware of indents, two spaces
+        r#"
 base:
   data_dir: "{home_path}"
   role: "full_node"
