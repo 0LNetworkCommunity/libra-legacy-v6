@@ -424,6 +424,15 @@ the miner last created a new account
 
 
 
+<a name="0x1_TowerState_SECURITY_BASELINE"></a>
+
+
+
+<pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_SECURITY_BASELINE">SECURITY_BASELINE</a>: u64 = 512;
+</code></pre>
+
+
+
 <a name="0x1_TowerState_init_difficulty"></a>
 
 ## Function `init_difficulty`
@@ -753,8 +762,8 @@ Permissions: PUBLIC, ANYONE
   // This may be the 0th proof of an end user that hasn't had tower state initialized
   <b>if</b> (!<a href="TowerState.md#0x1_TowerState_is_init">is_init</a>(miner_addr)) {
 
-    <b>assert</b>(&proof.difficulty == &diff.difficulty, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
-    <b>assert</b>(&proof.security == &diff.security, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
+    <b>assert</b>(&proof.difficulty == &<a href="TowerState.md#0x1_TowerState_DIFFICULTY_BASELINE">DIFFICULTY_BASELINE</a> , <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
+    <b>assert</b>(&proof.security == &<a href="TowerState.md#0x1_TowerState_SECURITY_BASELINE">SECURITY_BASELINE</a>, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
 
     // check proof belongs <b>to</b> user.
     <b>let</b> (addr_in_proof, _) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(&proof.challenge);

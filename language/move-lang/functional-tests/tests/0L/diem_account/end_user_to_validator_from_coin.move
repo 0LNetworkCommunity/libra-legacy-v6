@@ -60,9 +60,6 @@ fun main(sender: signer) {
   // with a challenge and proof not yet submitted to the chain.
   let challenge = TestFixtures::eve_0_easy_chal();
   let solution = TestFixtures::eve_0_easy_sol();
-  // // Parse key and check
-  // let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
-  // assert(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 7357401001);
 
   DiemAccount::create_validator_account_with_proof(
       &sender,

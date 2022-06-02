@@ -65,4 +65,4 @@ key_store.json
 
 # prevent mv files from being committed
 *.mv
-language/diem-framework/releases
+language/diem-framework/releases/

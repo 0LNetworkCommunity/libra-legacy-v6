@@ -21,10 +21,6 @@ module TowerState {
     use 0x1::Vector;
 
     const EPOCHS_UNTIL_ACCOUNT_CREATION: u64 = 14;
-    
-    // baseline for VDF tower difficulty which is slightly modulated based on a minimal RNG.
-    const DIFFICULTY_BASELINE: u64 = 5000000;
-    const SECURITY_BASELINE: u64 = 512;
 
     /// A list of all miners' addresses 
     // reset at epoch boundary
@@ -243,8 +239,8 @@ module TowerState {
       // This may be the 0th proof of an end user that hasn't had tower state initialized
       if (!is_init(miner_addr)) {
         
-        assert(&proof.difficulty == &DIFFICULTY_BASELINE, Errors::invalid_argument(130102));
-        assert(&proof.security == &SECURITY_BASELINE, Errors::invalid_argument(13010202));
+        assert(&proof.difficulty == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_argument(130102));
+        assert(&proof.security == &Globals::get_vdf_security_baseline(), Errors::invalid_argument(13010202));
 
         // check proof belongs to user.
         let (addr_in_proof, _) = VDF::extract_address_from_challenge(&proof.challenge);
@@ -300,8 +296,8 @@ module TowerState {
       // Check vdf difficulty constant. Will be different in tests than in production.
       // Skip this check on local tests, we need tests to send differentdifficulties.
       if (!Testnet::is_testnet()){
-        assert(&proof.difficulty == &Globals::get_vdf_difficulty(), Errors::invalid_argument(130105));
-        assert(&proof.security == &Globals::get_vdf_security(), Errors::invalid_state(130106));
+        assert(&proof.difficulty == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_argument(130105));
+        assert(&proof.security == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_state(130106));
       };
       
       // Process the proof
@@ -419,7 +415,7 @@ module TowerState {
       
       // NOTE: For now we are not changing the vdf security params.
       if (!Testnet::is_testnet()) {
-        diff.difficulty = DIFFICULTY_BASELINE + toy_rng(20, 3);
+        diff.difficulty = Globals::get_vdf_difficulty_baseline() + toy_rng(20, 3);
       }
     }
 
@@ -818,7 +814,7 @@ module TowerState {
       // Check vdf difficulty constant. Will be different in tests than in production.
       // Skip this check on local tests, we need tests to send different difficulties.
       if (!Testnet::is_testnet()){ // todo: remove?
-        assert(&proof.difficulty == &Globals::get_vdf_difficulty(), Errors::invalid_state(130117));
+        assert(&proof.difficulty == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_state(130117));
       };
 
       verify_and_update_state(miner_addr, proof, true);
