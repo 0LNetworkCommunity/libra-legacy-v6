@@ -67,6 +67,7 @@
 -  [Function `test_helper_set_weight`](#0x1_TowerState_test_helper_set_weight)
 -  [Function `test_mock_depr_tower_stats`](#0x1_TowerState_test_mock_depr_tower_stats)
 -  [Function `test_get_liftime_proofs`](#0x1_TowerState_test_get_liftime_proofs)
+-  [Function `test_set_vdf_difficulty`](#0x1_TowerState_test_set_vdf_difficulty)
 -  [Function `test_danger_destroy_tower_counter`](#0x1_TowerState_test_danger_destroy_tower_counter)
 
 
@@ -440,12 +441,24 @@ the miner last created a new account
 
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_init_difficulty">init_difficulty</a>(vm: &signer) {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
-  move_to&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(vm, <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
-    difficulty: 5000000,
-    security: 512,
-    prev_diff: 5000000,
-    prev_sec: 512,
-  });
+  <b>if</b> (!<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())) {
+    <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
+      move_to&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(vm, <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
+        difficulty: 100,
+        security: 512,
+        prev_diff: 100,
+        prev_sec: 512,
+      });
+    } <b>else</b> {
+      move_to&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(vm, <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
+        difficulty: 5000000,
+        security: 512,
+        prev_diff: 5000000,
+        prev_sec: 512,
+      });
+    }
+
+  }
 }
 </code></pre>
 
@@ -2282,6 +2295,35 @@ Getters     ///
 
   <b>let</b> s = borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
   s.lifetime_proofs
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TowerState_test_set_vdf_difficulty"></a>
+
+## Function `test_set_vdf_difficulty`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_set_vdf_difficulty">test_set_vdf_difficulty</a>(vm: &signer, diff: u64, sec: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_test_set_vdf_difficulty">test_set_vdf_difficulty</a>(vm: &signer, diff: u64, sec: u64) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
+  <b>assert</b>(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130113));
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+
+  <b>let</b> s = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
+  s.difficulty = diff;
+  s.security = sec;
 }
 </code></pre>
 

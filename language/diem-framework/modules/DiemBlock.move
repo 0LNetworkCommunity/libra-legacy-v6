@@ -34,14 +34,8 @@ module DiemBlock {
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
     use 0x1::Migrations;
-<<<<<<< HEAD
     use 0x1::TowerState;
-    // use 0x1::MigrateAutoPayBal;
-    // use 0x1::MakeWhole;
-    // use 0x1::MigrateVouch;
-=======
     use 0x1::MigrateJail;
->>>>>>> main
 
     struct BlockMetadata has key {
         /// Height of the current block

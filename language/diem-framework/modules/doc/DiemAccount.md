@@ -26,7 +26,7 @@ before and after every transaction.
 -  [Resource `SlowWallet`](#0x1_DiemAccount_SlowWallet)
 -  [Resource `SlowWalletList`](#0x1_DiemAccount_SlowWalletList)
 -  [Constants](#@Constants_0)
--  [Function `scary_wtf_create_signer`](#0x1_DiemAccount_scary_wtf_create_signer)
+-  [Function `scary_create_signer_for_migrations`](#0x1_DiemAccount_scary_create_signer_for_migrations)
 -  [Function `new_escrow`](#0x1_DiemAccount_new_escrow)
 -  [Function `process_escrow`](#0x1_DiemAccount_process_escrow)
 -  [Function `initialize_escrow`](#0x1_DiemAccount_initialize_escrow)
@@ -141,6 +141,7 @@ before and after every transaction.
 <b>use</b> <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
+<b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="Receipts.md#0x1_Receipts">0x1::Receipts</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
@@ -1137,13 +1138,13 @@ important to the semantics of the system.
 
 
 
-<a name="0x1_DiemAccount_scary_wtf_create_signer"></a>
+<a name="0x1_DiemAccount_scary_create_signer_for_migrations"></a>
 
-## Function `scary_wtf_create_signer`
+## Function `scary_create_signer_for_migrations`
 
 
 
-<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_scary_wtf_create_signer">scary_wtf_create_signer</a>(vm: &signer, addr: address): signer
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_scary_create_signer_for_migrations">scary_create_signer_for_migrations</a>(vm: &signer, addr: address): signer
 </code></pre>
 
 
@@ -1152,7 +1153,7 @@ important to the semantics of the system.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_scary_wtf_create_signer">scary_wtf_create_signer</a>(vm: &signer, addr: address): signer {
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_scary_create_signer_for_migrations">scary_create_signer_for_migrations</a>(vm: &signer, addr: address): signer {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
     <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(addr)
 }
@@ -1623,6 +1624,7 @@ Initialize this module. This is only callable from genesis.
     // User can join validator universe list, but will only join <b>if</b>
     // the mining is above the threshold in the preceeding period.
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(&new_signer);
+    <a href="Jail.md#0x1_Jail_init">Jail::init</a>(&new_signer);
 
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_op_account, op_auth_key_prefix);
@@ -1752,6 +1754,7 @@ Initialize this module. This is only callable from genesis.
     // User can join validator universe list, but will only join <b>if</b>
     // the mining is above the threshold in the preceeding period.
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(&new_signer);
+    <a href="Jail.md#0x1_Jail_init">Jail::init</a>(&new_signer);
 
     // no need <b>to</b> make the owner address.
 
@@ -1768,6 +1771,8 @@ Initialize this module. This is only callable from genesis.
 
     <a href="Ancestry.md#0x1_Ancestry_init">Ancestry::init</a>(sender, &new_signer);
     <a href="Vouch.md#0x1_Vouch_init">Vouch::init</a>(&new_signer);
+    <a href="Vouch.md#0x1_Vouch_vouch_for">Vouch::vouch_for</a>(sender, new_account_address);
+
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_signer);
     new_account_address
 }
@@ -5679,6 +5684,7 @@ Epilogue for WriteSet trasnaction
 
 ## Function `create_validator_account`
 
+NOTE: in 0L this is only used for test harness
 Create a Validator account
 
 
@@ -5702,11 +5708,21 @@ Create a Validator account
     <a href="Roles.md#0x1_Roles_new_validator_role">Roles::new_validator_role</a>(dr_account, &new_account);
     <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_account);
     <a href="ValidatorConfig.md#0x1_ValidatorConfig_publish">ValidatorConfig::publish</a>(&new_account, dr_account, human_name);
-    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_account, <b>false</b>); /////// 0L /////////
+    //////// 0L ////////
+    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_account, <b>false</b>);
+
+    //////// end 0L ////////
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_account, auth_key_prefix);
 
     <b>let</b> new_account = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
+
+    //////// 0L ////////
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_account);
+    <a href="Jail.md#0x1_Jail_init">Jail::init</a>(&new_account);
+    // <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(&new_account);
+    // <a href="Vouch.md#0x1_Vouch_init">Vouch::init</a>(&new_account);
+    //////// end 0L ////////
+
 }
 </code></pre>
 
