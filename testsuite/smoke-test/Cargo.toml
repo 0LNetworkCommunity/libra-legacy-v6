@@ -30,9 +30,9 @@ diem-rest-client = { path = "../../crates/diem-rest-client" }
 diem-temppath = { path = "../../crates/diem-temppath" }
 diem-transaction-builder = { path = "../../sdk/transaction-builder" }
 diem-transaction-replay = { path = "../../diem-move/transaction-replay" }
-move-command-line-common = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
-move-ir-compiler = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
-move-stdlib = { git = "https://github.com/OLSF/move-0L", rev = "ab8d1dc313b747f813ecc42a388edc198311f14a" }
+move-command-line-common = { git = "https://github.com/OLSF/move-0L", rev = "86a9cfd1f0ace08c8c4220f7927e112c1f990945" }
+move-ir-compiler = { git = "https://github.com/OLSF/move-0L", rev = "86a9cfd1f0ace08c8c4220f7927e112c1f990945" }
+move-stdlib = { git = "https://github.com/OLSF/move-0L", rev = "86a9cfd1f0ace08c8c4220f7927e112c1f990945" }
 diem-types = { path = "../../types" }
 forge = { path = "../forge" }
 diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
