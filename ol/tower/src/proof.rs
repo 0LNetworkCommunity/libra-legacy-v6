@@ -276,6 +276,8 @@ fn test_mine_once() {
       diff: VDFDifficulty {
         difficulty: 100,
         security: 512,
+        prev_diff: 100,
+        prev_sec: 512,
       }
     };
 
