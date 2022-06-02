@@ -132,6 +132,11 @@ pub fn encode_genesis_change_set(
         type_params: vec![],
     });
 
+    if !*IS_PROD {
+        initialize_testnet(&mut session, &log_context);
+    }
+    //////// 0L end ////////
+
     create_and_initialize_main_accounts(
         &mut session,
         &log_context,
@@ -141,26 +146,15 @@ pub fn encode_genesis_change_set(
         &xdx_ty,
         chain_id,
     );
-    //////// 0L ////////
-    // println!("OK create_and_initialize_main_accounts =============== ");
 
-    if !*IS_PROD {
-        initialize_testnet(&mut session, &log_context);
-    }
-    //////// 0L end ////////
-
-    // generate the genesis WriteSet
     create_and_initialize_owners_operators(
         &mut session,
         &log_context,
         &operator_assignments,
         &operator_registrations,
     );
-    //////// 0L ////////
-    // println!("OK create_and_initialize_owners_operators =============== ");
 
     distribute_genesis_subsidy(&mut session, &log_context);
-    // println!("OK Genesis subsidy =============== ");
 
     fund_operators(&mut session, &log_context, &operator_assignments);
     //////// 0L end ////////
