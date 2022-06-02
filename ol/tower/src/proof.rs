@@ -75,10 +75,9 @@ pub fn mine_once(
 
 /// Write block to file
 pub fn mine_and_submit(config: &mut AppCfg, tx_params: TxParams, local_mode: bool, swarm_path: Option<PathBuf> ) -> Result<(), Error> {
-    // // get the location of this miner's blocks
+    // get the location of this miner's blocks
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
-    // let (current_local_block, _) = get_highest_block(&blocks_dir)?;
 
     loop {
         // the default behavior is to fetch info from the chain to produce the next proof, including dynamic params for VDF difficulty.
@@ -108,9 +107,7 @@ pub fn mine_and_submit(config: &mut AppCfg, tx_params: TxParams, local_mode: boo
             }
         }
 
-        // next_height = block.height + 1;
     }
-    // }
 }
 
 fn write_json(block: &VDFProof, blocks_dir: &PathBuf) -> Result<(), std::io::Error> {

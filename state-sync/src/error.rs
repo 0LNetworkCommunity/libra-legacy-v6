@@ -49,7 +49,7 @@ pub enum Error {
     ReceivedWrongChunkType(String),
     #[error("Received a oneshot::canceled event as the sender of a channel was dropped: {0}")]
     SenderDroppedError(String),
-    #[error("Synced beyond the target version. Synced version: {0}, target version: {1}")]
+    #[error("Synced beyond the target version. DB already at the version requested. Synced version: {0}, target version: {1}")] //////// 0L ////////
     SyncedBeyondTarget(Version, Version),
     #[error("State sync is uninitialized! Error: {0}")]
     UninitializedError(String),
