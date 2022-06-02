@@ -67,5 +67,10 @@ pub fn check(path: PathBuf) -> bool {
         &format!("could not parse manifest in {:?}", &path)
     );
 
-    delay::verify(&user_data.block_zero.preimage, &user_data.block_zero.proof, genesis_delay_difficulty(), GENESIS_VDF_SECURITY_PARAM)
+    delay::verify(
+      &user_data.block_zero.preimage,
+      &user_data.block_zero.proof,
+      genesis_delay_difficulty(),
+      GENESIS_VDF_SECURITY_PARAM as u16
+    )
 }

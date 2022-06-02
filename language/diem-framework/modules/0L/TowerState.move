@@ -24,6 +24,8 @@ module TowerState {
     
     // baseline for VDF tower difficulty which is slightly modulated based on a minimal RNG.
     const DIFFICULTY_BASELINE: u64 = 5000000;
+    const SECURITY_BASELINE: u64 = 512;
+
     /// A list of all miners' addresses 
     // reset at epoch boundary
     struct TowerList has key {
@@ -241,8 +243,8 @@ module TowerState {
       // This may be the 0th proof of an end user that hasn't had tower state initialized
       if (!is_init(miner_addr)) {
         
-        assert(&proof.difficulty == &diff.difficulty, Errors::invalid_argument(130102));
-        assert(&proof.security == &diff.security, Errors::invalid_argument(13010202));
+        assert(&proof.difficulty == &DIFFICULTY_BASELINE, Errors::invalid_argument(130102));
+        assert(&proof.security == &SECURITY_BASELINE, Errors::invalid_argument(13010202));
 
         // check proof belongs to user.
         let (addr_in_proof, _) = VDF::extract_address_from_challenge(&proof.challenge);
