@@ -28,7 +28,7 @@
 - TWO unix hosts, one for Validator Node, and one for the Private Fullnode ("VFN").
 0L code targets Ubuntu 20.4
 - Recommended specs:
-  - Validator: 250G harddrive, 8 core CPU, 16G RAM
+  - Validator: 300GB SSD harddrive, 8 core CPU, 16G RAM
   - VFN: 100G storage, 8 core CPU, 16G RAM
 - Separate static IP addresses for the machines, or appropriate DNS mapping.
 
@@ -49,7 +49,7 @@ Note: this node does not serve transactions, and does not participate in consens
 The following ports must be open: 6178, 6179
 
 - 6178 is for the the PUBLIC fullnode network. This is how the public nodes that will be serving JSON-RPC on the network will receive data and submit transactions to the network.
-- 6179 is for the private validator fullnode network ("VFN"), it should only ollow traffic from the Validator node IP address above.
+- 6179 is for the private validator fullnode network ("VFN"), it should only allow traffic from the Validator node IP address above.
 
 ## High-level steps
 
@@ -429,7 +429,7 @@ This command will tell you the sync state of a RUNNING local node: `db-backup on
 
 ## 7. Restart validator node in `validator` mode
 
-Once the network is in sync, sufficient mining has been done (20 proofs per epoch/day) and you received the 4 vouches, you are eligible to enter the
+Once the network is in sync, sufficient mining has been done (8 proofs per epoch/day) and you received the 4 vouches, you are eligible to enter the
 validator set.
 
 Once in the validator set, the node can connect to other validators and sign blocks.
