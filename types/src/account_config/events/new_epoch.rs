@@ -13,6 +13,12 @@ pub struct NewEpochEvent {
 }
 
 impl NewEpochEvent {
+    //////// 0L ////////
+    pub fn new(epoch: u64) -> Self {
+      NewEpochEvent { epoch }
+    }
+    //////// end 0L ////////
+
     pub fn epoch(&self) -> u64 {
         self.epoch
     }

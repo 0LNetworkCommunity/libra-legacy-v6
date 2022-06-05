@@ -94,12 +94,19 @@ address 0x1 {
       // deduct transaction fees from guaranteed minimum.
       if (guaranteed_minimum > txn_fee_amount ){
         subsidy = guaranteed_minimum - txn_fee_amount;
+
+        if (subsidy > subsidy_ceiling_gas) {
+          subsidy = subsidy_ceiling_gas
+        };
         // return global subsidy and subsidy per node.
         // TODO: we are doing this computation twice at reconfigure time.
         if ((subsidy > network_density) && (network_density > 0)) {
           subsidy_per_node = subsidy/network_density;
         };
       };
+
+
+
       (subsidy, subsidy_per_node)
     }
 
@@ -141,7 +148,7 @@ address 0x1 {
       assert(vm_addr == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190104));
 
       // Get eligible validators list
-      let genesis_validators = ValidatorUniverse::get_eligible_validators(vm_sig);
+      let genesis_validators = ValidatorUniverse::get_eligible_validators();
       let len = Vector::length(&genesis_validators);
       // ten coins for validator, sufficient for first epoch of transactions,
       // and an extra which the validator will send to operator.

@@ -143,13 +143,26 @@ impl RequestManager {
     }
 
     pub fn disable_peer(&mut self, peer: &PeerNetworkId) -> Result<(), Error> {
+        error!("disable_peer {:?}", &peer);
+        //////// 0L ////////
+        counters::DISABLE_PEER_EVENT
+            .with_label_values(&[&peer.raw_network_id().to_string()])
+            .inc();
+        
+        counters::SYNC_PEER_SCORE
+        .with_label_values(&[
+          &peer.raw_network_id().to_string(),
+          &peer.peer_id().to_string(),
+        ])
+        .observe(0.0);
+
         info!(LogSchema::new(LogEntry::LostPeer).peer(&peer));
 
         if self.peer_scores.contains_key(peer) {
             counters::ACTIVE_UPSTREAM_PEERS
                 .with_label_values(&[&peer.raw_network_id().to_string()])
                 .dec();
-            self.peer_scores.remove(peer);
+            self.peer_scores.remove(peer);            
         } else {
             warn!(LogSchema::new(LogEntry::LostPeerNotKnown).peer(&peer));
         }
@@ -158,11 +171,16 @@ impl RequestManager {
     }
 
     pub fn no_available_peers(&self) -> bool {
+        if self.peer_scores.is_empty() {
+          error!("no available peers");
+        };
         self.peer_scores.is_empty()
     }
 
     fn update_score(&mut self, peer: &PeerNetworkId, update_type: PeerScoreUpdateType) {
+
         if let Some(score) = self.peer_scores.get_mut(peer) {
+
             let old_score = *score;
             let new_score = match update_type {
                 PeerScoreUpdateType::Success => {
@@ -182,6 +200,16 @@ impl RequestManager {
                 }
             };
             *score = new_score;
+
+            counters::SYNC_PEER_SCORE
+            .with_label_values(&[
+                &peer.raw_network_id().to_string(),
+                &peer.peer_id().to_string(),
+            ])
+            .observe(*score);
+
+            error!("update peer score: {:?} with update_type {:?}, old score: {:?}, new score: {:?}", &peer, &update_type, &old_score, &score);
+
         }
     }
 
@@ -251,7 +279,7 @@ impl RequestManager {
         if let Some(network_level) = new_multicast_network_level {
             self.update_multicast_network_level(network_level, None);
         }
-
+        debug!("{:?}", &chosen_peers);
         chosen_peers
     }
 
@@ -260,6 +288,8 @@ impl RequestManager {
 
         let peers = self.pick_peers();
         if peers.is_empty() {
+            debug!("no statesync available peers");
+            counters::STATE_SYNC_NO_AVAILABLE_PEERS.inc();
             warn!(log.event(LogEvent::MissingPeers));
             return Err(Error::NoAvailablePeers(
                 "No peers to send chunk request to".into(),
@@ -453,6 +483,7 @@ impl RequestManager {
     /// Checks whether the request sent with known_version = `version` has timed out
     /// Returns true if such a request timed out (or does not exist), else false.
     pub fn has_request_timed_out(&mut self, version: u64) -> Result<bool, Error> {
+        
         let last_request_time = self.get_last_request_time(version).unwrap_or(UNIX_EPOCH);
 
         let timeout = is_timeout(last_request_time, self.request_timeout);
@@ -467,7 +498,15 @@ impl RequestManager {
                 return Ok(timeout);
             }
         };
+
+        error!("request timed out, length: {:?}, peers {:?}", &self.request_timeout, &peers_to_penalize);
+
         for peer in peers_to_penalize.iter() {
+            counters::STATE_SYNC_VERSION_REQUEST_TIMEOUT.with_label_values(&[
+                    &peer.raw_network_id().to_string(),
+                    &peer.peer_id().to_string()
+                ])
+                .inc();
             self.update_score(peer, PeerScoreUpdateType::TimeOut);
         }
 
@@ -893,6 +932,14 @@ mod tests {
         validator: &PeerNetworkId,
         peer_role: PeerRole,
     ) {
+        debug!("adding validator to state sync: {:?}", &validator);
+        counters::STATE_SYNC_ADDING_VALIDATOR_TO_STATE_SYNC
+                .with_label_values(&[
+                &validator.raw_network_id().to_string(),
+                &validator.peer_id().to_string()
+            ])
+            .inc();
+
         let connection_metadata = ConnectionMetadata::mock_with_role_and_origin(
             validator.peer_id(),
             peer_role,

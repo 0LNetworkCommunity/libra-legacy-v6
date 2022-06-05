@@ -344,3 +344,109 @@ pub static MAIN_LOOP: Lazy<DurationHistogram> = Lazy::new(|| {
         .unwrap(),
     )
 });
+
+//////// 0L ////////
+
+/// Number of disabled peer events
+pub static DISABLE_PEER_EVENT: Lazy<IntGaugeVec> = Lazy::new(|| {
+    register_int_gauge_vec!(
+        "diem_state_sync_disable_peer_event",
+        "Number of times a disconnection event happened",
+        &["network"]
+    )
+    .unwrap()
+});
+
+/// The score of the remote state sync peers.
+pub static SYNC_PEER_SCORE: Lazy<HistogramVec> = Lazy::new(|| {
+    register_histogram_vec!(
+        "diem_state_sync_peer_score",
+        "Score of the peer",
+        &["network", "peer"]
+    )
+    .unwrap()
+});
+
+pub static GET_SYNC_STATE: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "diem_state_sync_get_sync_state",
+        "Number of times sync state was retrieved"
+    )
+        .unwrap()
+});
+
+pub static WAIT_FOR_INIT: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "diem_state_sync_wait_for_init",
+        "Number of times sync state was waiting for initialization"
+    )
+        .unwrap()
+});
+
+pub static STATE_SYNC_INIT_LISTENER_STARTED: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "diem_state_sync_init_listener_started",
+        "Number of times sync state started the initialization listener"
+    )
+        .unwrap()
+});
+
+pub static STATE_SYNC_PROCESS_STATE_SYNC_REQUEST: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "diem_state_sync_process_state_sync_request",
+        "Number of times sync state processed a state sync request"
+    )
+        .unwrap()
+});
+
+pub static STATE_SYNC_PENALIZE_PEER: Lazy<IntCounterVec> = Lazy::new(|| {
+    register_int_counter_vec!(
+        "diem_state_sync_penalize_peer",
+        "Number of times sync state penalized a peer",
+        &["network", "peer"]
+    )
+        .unwrap()
+});
+
+pub static STATE_SYNC_LOCAL_VERSION_NOT_UP_TO_DATE: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "diem_state_sync_local_version_not_up_to_date",
+        "Number of times sync state detected that the local version was not up-to-date"
+    )
+        .unwrap()
+});
+
+pub static STATE_SYNC_NO_AVAILABLE_PEERS: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "diem_state_sync_no_available_peers",
+        "Number of times sync state detected no available peers to sync with"
+    )
+        .unwrap()
+});
+
+pub static STATE_SYNC_VERSION_REQUEST_TIMEOUT: Lazy<IntCounterVec> = Lazy::new(|| {
+    register_int_counter_vec!(
+        "diem_state_sync_version_request_timeout",
+        "Number of times sync state received a timeout while requesting version information",
+        &["network", "peer"]
+    )
+        .unwrap()
+});
+
+pub static STATE_SYNC_ADDING_VALIDATOR_TO_STATE_SYNC: Lazy<IntCounterVec> = Lazy::new(|| {
+    register_int_counter_vec!(
+        "diem_state_sync_adding_validator_to_state_sync",
+        "Number of times sync state added a validator to state sync",
+        &["network", "peer"]
+    )
+        .unwrap()
+});
+
+pub static STATE_SYNC_LOST_PEER: Lazy<IntCounterVec> = Lazy::new(|| {
+    register_int_counter_vec!(
+        "diem_state_sync_lost_peer",
+        "Number of times sync state lost a peer",
+        &["network", "peer"]
+    )
+        .unwrap()
+});

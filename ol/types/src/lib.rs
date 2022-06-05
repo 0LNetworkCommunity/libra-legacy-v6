@@ -21,3 +21,6 @@ pub mod wallet;
 pub mod genesis_proof;
 pub mod fixtures;
 pub mod rpc_playlist;
+pub mod epoch_timer;
+pub mod gas_resource;
+pub mod makewhole_resource;

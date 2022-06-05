@@ -73,21 +73,36 @@ pub(crate) async fn coordinator<V>(
         let _timer = counters::MAIN_LOOP.start_timer();
         ::futures::select! {
             (msg, callback) = client_events.select_next_some() => {
+                debug!("handle_client_event");
+                counters::COORDINATOR_HANDLE_CLIENT_EVENT.inc();
                 handle_client_event(&mut smp, &bounded_executor, msg, callback).await;
             },
+            // 0L TODO: execute mempool tasks in a bounded execution with capacity.
             msg = consensus_requests.select_next_some() => {
-                tasks::process_consensus_request(&smp.mempool, msg).await;
+              debug!("process_consensus_request");
+              counters::COORDINATOR_HANDLE_CONSENSUS_EVENT.inc();
+              //////// 0L ////////
+              // The goal here is to put consensus requests also in a Tokio Semaphore (diem BoundedExecutor) where we can control the amount of workers and put backpressure.
+
+              handle_consensus_request(&mut smp, &bounded_executor, msg).await;
+                // tasks::process_consensus_request(&smp.mempool, msg).await;
             }
             msg = state_sync_requests.select_next_some() => {
+                debug!("state_sync_requests");
+                counters::COORDINATOR_HANDLE_STATE_SYNC_EVENT.inc();
                 handle_state_sync_request(&mut smp, msg);
             }
             config_update = mempool_reconfig_events.select_next_some() => {
+                debug!("handle_mempool_reconfig_event");
+                counters::COORDINATOR_HANDLE_MEMPOOL_RECONFIG_EVENT.inc();
                 handle_mempool_reconfig_event(&mut smp, &bounded_executor, config_update).await;
             },
             (peer, backoff) = scheduled_broadcasts.select_next_some() => {
                 tasks::execute_broadcast(peer, backoff, &mut smp, &mut scheduled_broadcasts, executor.clone());
             },
             (network_id, event) = events.select_next_some() => {
+                // dbg!("handle_event", &event.);
+
                 handle_event(&executor, &bounded_executor, &mut scheduled_broadcasts, &mut smp, network_id, event).await;
             },
             complete => break,
@@ -121,6 +136,27 @@ async fn handle_client_event<V>(
             callback,
             task_start_timer,
         ))
+        .await;
+}
+
+//////// 0L ////////
+async fn handle_consensus_request<V>(
+    smp: &mut SharedMempool<V>,
+    bounded_executor: &BoundedExecutor,
+    msg: ConsensusRequest,
+) where
+    V: TransactionValidation,
+{
+    // This timer measures how long it took for the bounded executor to *schedule* the
+    // task.
+    let _timer =
+        counters::task_spawn_latency_timer(counters::CONSENSUS_REQUEST_LABEL, counters::SPAWN_LABEL);
+    // This timer measures how long it took for the task to go from scheduled to started.
+    let _task_start_timer =
+        counters::task_spawn_latency_timer(counters::CONSENSUS_REQUEST_LABEL, counters::START_LABEL);
+
+    bounded_executor
+        .spawn(tasks::process_consensus_request(smp.clone(), msg))
         .await;
 }
 

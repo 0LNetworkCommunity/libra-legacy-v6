@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use anyhow::Result;
+
 use diem_types::{
     account_address::AccountAddress,
     account_config::diem_root_address,
-    transaction::{Script, WriteSetPayload},
+    transaction::{Script, TransactionArgument, WriteSetPayload},
 };
+
 use handlebars::Handlebars;
+
 use move_lang::{compiled_unit::CompiledUnit, shared::Flags};
+
 use serde::Serialize;
 use std::{collections::HashMap, io::Write, path::PathBuf};
 use tempfile::NamedTempFile;
@@ -101,6 +105,22 @@ pub fn encode_halt_network_payload() -> WriteSetPayload {
             compile_script(script.to_str().unwrap().to_owned()),
             vec![],
             vec![],
+        ),
+        execute_as: diem_root_address(),
+    }
+}
+
+//////// 0L ////////
+pub fn script_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPayload {
+    println!("\nencode_bulk_update_vals_payload");
+    let mut script = template_path();
+    script.push("bulk_update.move");
+
+    WriteSetPayload::Script {
+        script: Script::new(
+            compile_script(script.to_str().unwrap().to_owned()),
+            vec![],
+            vec![TransactionArgument::AddressVector(vals)],
         ),
         execute_as: diem_root_address(),
     }

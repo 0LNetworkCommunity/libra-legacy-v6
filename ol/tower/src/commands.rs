@@ -3,11 +3,13 @@
 pub mod start_cmd;
 mod version_cmd;
 mod zero_cmd;
+mod backlog_cmd;
 
 use self::{
     start_cmd::StartCmd,
     version_cmd::VersionCmd,
     zero_cmd::ZeroCmd,
+    backlog_cmd::BacklogCmd
 };
 use ol_types::config::AppCfg;
 use abscissa_core::{
@@ -33,6 +35,10 @@ pub enum MinerCmd {
     /// The `start` subcommand
     #[options(help = "start mining blocks")]
     Start(StartCmd),
+
+    /// The `backlog` subcommand
+    #[options(help = "show and submit proofs in backlog")]
+    Backlog(BacklogCmd),
 
     /// The `version` subcommand
     #[options(help = "display version information")]

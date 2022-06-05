@@ -10,9 +10,10 @@ use diem_types::{
 
 use diem_writeset_generator::{
     create_release, encode_custom_script, encode_halt_network_payload,
-    encode_remove_validators_payload, release_flow::artifacts::load_latest_artifact,
-    verify_release,
+    encode_remove_validators_payload, ol_writesets::*,
+    release_flow::artifacts::load_latest_artifact, script_bulk_update_vals_payload, verify_release,
 };
+
 use move_binary_format::CompiledModule;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -24,9 +25,21 @@ struct Opt {
     /// Path to the output serialized bytes
     #[structopt(long, short, parse(from_os_str))]
     output: Option<PathBuf>,
+
+    #[structopt(long, short, parse(from_os_str))]
+    db: Option<PathBuf>,
     /// Output as serialized WriteSet payload. Set this flag if this payload is submitted to AOS portal.
     #[structopt(long)]
     output_payload: bool,
+
+    /// what block height to set in the recovery writeset
+    #[structopt(long, short)]
+    block_height: Option<u64>,
+
+    /// at what epoch to end the recovery mode
+    #[structopt(long, short)]
+    recovery_epoch: Option<u64>,
+
     #[structopt(subcommand)]
     cmd: Command,
 }
@@ -36,6 +49,35 @@ enum Command {
     /// List of addresses to remove from validator set
     #[structopt(name = "remove-validators")]
     RemoveValidators { addresses: Vec<AccountAddress> },
+    /// List of addresses to remove from validator set
+    #[structopt(name = "update-validators")]
+    UpdateValidators { addresses: Vec<AccountAddress> },
+    #[structopt(name = "update-stdlib")]
+    UpdateStdlib {},
+    #[structopt(name = "rescue")]
+    Rescue { addresses: Vec<AccountAddress>},
+    #[structopt(name = "recovery")]
+    RecoveryMode { addresses: Vec<AccountAddress> },
+    // #[structopt(name = "hotfix")]
+    // Hotfix { addresses: Vec<AccountAddress> },
+    #[structopt(name = "boundary")]
+    Boundary { addresses: Vec<AccountAddress> },
+    #[structopt(name = "ancestry")]
+    Ancestry { ancestry_file: PathBuf },
+    #[structopt(name = "migrate")]
+    Migrate {
+        ancestry_file: PathBuf,
+        makewhole_file: PathBuf,
+        addresses: Vec<AccountAddress>,
+    },
+    #[structopt(name = "reconfig")]
+    Reconfig {},
+    #[structopt(name = "time")]
+    Timestamp {},
+    #[structopt(name = "testnet")]
+    Testnet {},
+    #[structopt(name = "epoch-time")]
+    EpochTime {},
     /// Block the execution of any transaction in the network
     #[structopt(name = "halt-network")]
     HaltNetwork,
@@ -46,6 +88,7 @@ enum Command {
         args: String,
         execute_as: Option<AccountAddress>,
     },
+
     /// Create a release writeset by comparing local Diem Framework against a remote blockchain state.
     #[structopt(name = "create-release")]
     CreateDiemFrameworkRelease {
@@ -109,6 +152,62 @@ fn main() -> Result<()> {
     let opt = Opt::from_args();
     let payload = match opt.cmd {
         Command::RemoveValidators { addresses } => encode_remove_validators_payload(addresses),
+        //////// 0L ////////
+        Command::Boundary { addresses } => ol_writeset_force_boundary(
+            opt.db.unwrap(),
+            addresses,
+            opt.block_height.expect("need to provide --block-height"),
+        ),
+        Command::UpdateValidators { addresses } => script_bulk_update_vals_payload(addresses),
+
+        Command::UpdateStdlib {} => ol_writeset_stdlib_upgrade(
+            opt.db.unwrap(),
+            opt.block_height.expect("need to provide --block-height"),
+        ),
+        Command::Reconfig {} => ol_create_reconfig_payload(
+            opt.db.unwrap(),
+            opt.block_height.expect("need to provide --block-height"),
+        ),
+        Command::Rescue { addresses } => ol_writset_encode_rescue(opt.db.unwrap(), addresses, opt.recovery_epoch),
+        Command::Timestamp {} => ol_writset_update_timestamp(
+            opt.db.unwrap(),
+            opt.block_height.expect("need to provide --block-height"),
+        ),
+        Command::Testnet {} => ol_writeset_set_testnet(
+            opt.db.unwrap(),
+            opt.block_height.expect("need to provide --block-height"),
+        ),
+        Command::RecoveryMode { addresses } => ol_writeset_recovery_mode(
+            opt.db.unwrap(),
+            addresses,
+            opt.recovery_epoch
+                .expect("need to provide --recovery-epoch"),
+        ),
+        Command::EpochTime {} => ol_writeset_update_epoch_time(
+            opt.db.unwrap(),
+            opt.block_height.expect("need to provide --block-height"),
+        ),
+        Command::Ancestry { ancestry_file } => ol_writeset_ancestry(opt.db.unwrap(), ancestry_file),
+        Command::Migrate {
+            ancestry_file,
+            makewhole_file,
+            addresses,
+        } => ol_writset_encode_migrations(
+            opt.db.unwrap(),
+            ancestry_file,
+            makewhole_file,
+            addresses,
+            opt.block_height.expect("need to provide --block-height"),
+            opt.recovery_epoch
+                .expect("need to provide --recovery-epoch"),
+        ),
+        // Command::Hotfix { addresses } => ol_writeset_hotfix(
+        //     opt.db.unwrap(),
+        //     addresses,
+        //     opt.recovery_epoch.expect("need to provide --recovery-epoch")
+        //   ),
+
+        //////// end 0L ////////
         Command::HaltNetwork => encode_halt_network_payload(),
         Command::BuildCustomScript {
             script_name,

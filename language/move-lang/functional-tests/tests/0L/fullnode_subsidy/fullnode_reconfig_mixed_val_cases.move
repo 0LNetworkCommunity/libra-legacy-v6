@@ -51,13 +51,13 @@ script {
       TowerState::test_helper_mock_reconfig(&vm, @{{frank}});
       TowerState::test_helper_mock_reconfig(&vm, @{{gertie}});
 
-      Mock::mock_case_1(&vm, @{{alice}});
-      Mock::mock_case_1(&vm, @{{carol}});
-      Mock::mock_case_1(&vm, @{{dave}});
-      Mock::mock_case_1(&vm, @{{eve}});
-      Mock::mock_case_1(&vm, @{{frank}});
+      Mock::mock_case_1(&vm, @{{alice}}, 0, 15);
+      Mock::mock_case_1(&vm, @{{carol}}, 0, 15);
+      Mock::mock_case_1(&vm, @{{dave}}, 0, 15);
+      Mock::mock_case_1(&vm, @{{eve}}, 0, 15);
+      Mock::mock_case_1(&vm, @{{frank}}, 0, 15);
       // gertie will BE CASE 2
-      Mock::mock_case_2(&vm, @{{gertie}});
+      Mock::mock_case_2(&vm, @{{gertie}}, 0, 15);
 
       // Mock the end-users submitting proofs above threshold.
       // Add 13: make it so that +2 gets above threshold 

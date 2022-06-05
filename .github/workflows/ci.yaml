@@ -11,7 +11,7 @@ jobs:
     name: Functional Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/cache@v2.1.6
         with:
           path: |
@@ -38,7 +38,7 @@ jobs:
     name: 0L tools Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/cache@v2.1.6
         with:
           path: |
@@ -67,7 +67,7 @@ jobs:
     name: E2E Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/cache@v2.1.6
         with:
           path: |
@@ -96,7 +96,7 @@ jobs:
   #   runs-on: ubuntu-latest
   #   # needs: compile
   #   steps:
-  #     - uses: actions/checkout@v2
+  #     - uses: actions/checkout@v3
   #     # Uses the cache done in the parent job (compile) with the same "key"
   #     - uses: actions/cache@v2.1.6
   #       with:
@@ -112,7 +112,7 @@ jobs:
 #     runs-on: ubuntu-latest
 #     # needs: compile
 #     steps:
-#       - uses: actions/checkout@v2
+#       - uses: actions/checkout@v3
 #       # Uses the cache done in the parent job (compile) with the same "key"
 #       - uses: actions/cache@v2.1.6
 #         with:
@@ -128,7 +128,7 @@ jobs:
   #   name: Compile and Cache
   #   runs-on: ubuntu-latest
   #   steps:
-  #     - uses: actions/checkout@v2
+  #     - uses: actions/checkout@v3
   #   # Sets up a cache to be used on other subsequent jobs.
   #   # subsequent jobs must use the "needs" field and reference this job.id "compile".
   #     - uses: actions/cache@v2.1.6

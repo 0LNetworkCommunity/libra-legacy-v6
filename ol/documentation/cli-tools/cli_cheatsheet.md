@@ -41,6 +41,16 @@ Optionally passing a different path.
 txs oracle-upgrade -f <path to stdlib.mv>
 ```
 
+### Set your account's burn preferences
+
+For any system coin burns (e.g. validator epoch cost), you can optionally send the to-be-burnt coins to an index of community wallets dynamically created by the system.
+
+The burn preferences default to a pure burn if no option is set. To repurpose the burn you can do so with the command line:
+
+```
+txs burn-pref --community
+```
+
 ### Sending an Autopay tx
 
 ### Batch
