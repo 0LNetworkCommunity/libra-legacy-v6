@@ -111,7 +111,7 @@ address 0x2 {
 module Test {
     use 0x1::Signer;
 
-    struct Resource { i: u64 } has key
+    struct Resource has key { i: u64 }
 
     public fun publish(account: &signer) {
         move_to(account, Resource { i: 10 })
