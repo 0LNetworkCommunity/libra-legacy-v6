@@ -69,7 +69,7 @@ Let's first start out with a simple script that prints its `signer`:
 script {
 use 0x1::Debug;
 fun main(account: signer) {
-    Debug::print(account)
+    Debug::print(&account);
 }
 }
 ```
@@ -78,7 +78,7 @@ Place this in a file named `debug_script.move` under `src/scripts` and try
 
 ```shell
 $ move run src/scripts/debug_script.move --signers 0xf
-[debug] (&) { 0000000000000000000000000000000F }
+[move print] (&) { 0000000000000000000000000000000F }
 ```
 
 The `--signers 0xf` argument indicates which account address(es) have signed
