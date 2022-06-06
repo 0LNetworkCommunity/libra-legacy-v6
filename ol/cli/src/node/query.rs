@@ -27,6 +27,11 @@ pub enum QueryType {
         /// account to query txs of
         account: AccountAddress,
     },
+    /// Unlocked Account balance
+    UnlockedBalance {
+        /// account to query txs of
+        account: AccountAddress,
+    },
     /// Epoch and waypoint
     Epoch,
     /// Network block height
@@ -114,6 +119,21 @@ impl Node {
                     }
                     Ok(None) => format!("No account {} found on chain, account", account),
                     Err(e) => format!("Chain query error: {:?}", e),
+                }
+            }
+            UnlockedBalance { account } => {
+                // account
+                match self.get_annotate_account_blob(account) {
+                    Ok((Some(r), _)) => {
+                        if !is_slow_wallet(&r) {
+                            format!("Error, account is not a slow wallet")
+                        }else{
+                            let value = find_value_from_state(&r, "DiemAccount".to_string(), "SlowWallet".to_string(), "unlocked".to_string());
+                            value.unwrap().to_string()
+                        }
+                    }
+                    Err(e) => format!("Error retrieving unlocked balance. Message: {:#?}", e),
+                    _ => format!("Error, cannot find account state for {:#?}", account),
                 }
             }
             BlockHeight => self.refresh_chain_info()?.0.height.to_string(),

@@ -24,6 +24,9 @@ pub struct QueryCmd {
     #[options(short = "b", help = "balance")]
     balance: bool,
 
+    #[options(short = "u", help = "unlocked balance")]
+    unlocked_balance: bool,
+
     #[options(no_short, help = "blockheight")]
     blockheight: bool,
     
@@ -91,6 +94,10 @@ impl Runnable for QueryCmd {
         if self.balance {
             query_type = QueryType::Balance{account};
             display = "BALANCE";
+        }
+        else if self.unlocked_balance {
+            query_type = QueryType::UnlockedBalance{account};
+            display = "UNLOCKED BALANCE";
         }
         else if self.blockheight {
             query_type = QueryType::BlockHeight;
