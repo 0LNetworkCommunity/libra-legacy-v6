@@ -2,16 +2,24 @@
 // Dave:     validators with 10M GAS
 // Bob:  non-validators with  1M GAS
 
-// todo: fix this first: native_extract_address_from_challenge()
-// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
-
 //# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::TestFixtures;
   use DiemFramework::GAS::GAS;
 
-  fun main(_dr: signer, sender: signer) {
+  fun main(dr: signer, sender: signer) {
+
+    // Make Bob's balance more than 1M
+    DiemAccount::vm_make_payment_no_limit<GAS>(
+      @Dave,
+      @Bob,
+      100,
+      x"",
+      x"",
+      &dr
+    );
+
     // Scenario: Bob, an existing user, is sending a transaction for Eve, 
     // with a challenge and proof not yet submitted to the chain.
     // This proof will create a new account, with the preimage data.

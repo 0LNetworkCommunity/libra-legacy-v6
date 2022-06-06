@@ -476,8 +476,8 @@ module DiemFramework::DiemAccount {
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
-        add_currencies_for_account<GAS>(&new_signer, false);
         make_account(&new_signer, auth_key_prefix);
+        add_currencies_for_account<GAS>(&new_signer, false);
 
         onboarding_gas_transfer<GAS>(sender, new_account_address, BOOTSTRAP_COIN_VALUE);
         // Init the miner state
@@ -499,8 +499,8 @@ module DiemFramework::DiemAccount {
     ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount, SlowWallet {
         let new_signer = create_signer(new_account);
         Roles::new_user_role_with_proof(&new_signer);
-        add_currencies_for_account<GAS>(&new_signer, false);
         make_account(&new_signer, new_account_authkey_prefix);
+        add_currencies_for_account<GAS>(&new_signer, false);
 
         // if the initial coin sent is the minimum amount, don't check transfer limits.
         if (value <= BOOTSTRAP_COIN_VALUE) {
@@ -582,10 +582,10 @@ module DiemFramework::DiemAccount {
           )
         };
 
-        // TODO: Perhaps this needs to be moved to the epoch boundary, so that it is only the VM which can escalate these privileges.
+        // TODO: Perhaps this needs to be moved to the epoch boundary, 
+        // so that it is only the VM which can escalate these privileges.
         Roles::new_validator_role_with_proof(&new_signer, &create_signer(@DiemRoot));
         ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
-        add_currencies_for_account<GAS>(&new_signer, false);
 
         // This also verifies the VDF proof, which we use to rate limit account creation.
         TowerState::init_miner_state(&new_signer, challenge, solution, difficulty, security);
@@ -594,7 +594,6 @@ module DiemFramework::DiemAccount {
         let new_op_account = create_signer(op_address);
         Roles::new_validator_operator_role_with_proof(&new_op_account);
         ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
-        add_currencies_for_account<GAS>(&new_op_account, false);
         // Link owner to OP
         ValidatorConfig::set_operator(&new_signer, op_address);
         // OP sends network info to Owner config"
@@ -611,7 +610,10 @@ module DiemFramework::DiemAccount {
         ValidatorUniverse::add_self(&new_signer);
 
         make_account(&new_signer, auth_key_prefix);
+        add_currencies_for_account<GAS>(&new_signer, false);
+
         make_account(&new_op_account, op_auth_key_prefix);
+        add_currencies_for_account<GAS>(&new_op_account, false);
 
         TowerState::reset_rate_limit(sender);
 
@@ -701,7 +703,6 @@ module DiemFramework::DiemAccount {
         let new_op_account = create_signer(op_address);
         Roles::new_validator_operator_role_with_proof(&new_op_account);
         ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
-        add_currencies_for_account<GAS>(&new_op_account, false);
 
         // Link owner to OP
         ValidatorConfig::set_operator(&new_signer, op_address);
@@ -721,6 +722,7 @@ module DiemFramework::DiemAccount {
 
         // make_account(new_signer, auth_key_prefix);
         make_account(&new_op_account, op_auth_key_prefix);
+        add_currencies_for_account<GAS>(&new_op_account, false);
 
         TowerState::reset_rate_limit(sender);
         // the miner who is upgrading may have coins, but better safe...

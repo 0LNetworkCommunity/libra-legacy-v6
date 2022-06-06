@@ -19,7 +19,7 @@ script {
     // with a challenge and proof not yet submitted to the chain.
     let challenge = TestFixtures::eve_0_easy_chal();
     let solution = TestFixtures::eve_0_easy_sol();
-    // // Parse key and check
+    // Parse key and check
     let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
     assert!(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 7357401001);
     
@@ -58,7 +58,7 @@ script {
 
   fun main(vm: signer, _: signer) {
     let eve_addr = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
-    /// set the fullnode proof price to 0, to check if onboarding subsidy is given.
+    // set the fullnode proof price to 0, to check if onboarding subsidy is given.
     EpochBoundary::reconfigure(&vm, 10); 
       // need to remove testnet for this test, since testnet does not ratelimit 
       // account creation.
@@ -82,12 +82,12 @@ script {
 
   fun main(vm: signer, _: signer) {
     let eve_addr = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
-    /// mock mining above threshold.
+    // mock mining above threshold.
     TowerState::test_helper_mock_mining_vm(&vm, eve_addr, 100);
   }
 }
 
-/// Validator is done sycning the node, and sends join transaction.
+// Validator is done sycning the node, and sends join transaction.
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -119,8 +119,8 @@ script {
 
   fun main() {
     let eve_addr = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
-    /// set the fullnode proof price to 0, to check if onboarding subsidy is given.
-    /// mock mining above threshold.
+    // set the fullnode proof price to 0, to check if onboarding subsidy is given.
+    // mock mining above threshold.
     assert!(ValidatorUniverse::exists_jailedbit(eve_addr), 7357401008);
     assert!(ValidatorUniverse::is_in_universe(eve_addr), 7357401009);
     assert!(!ValidatorUniverse::is_jailed(eve_addr), 7357401010);

@@ -1,9 +1,4 @@
 //# init --validators Bob
-//// Old syntax for reference, delete it after fixing this test
-//! account: bob, 3000000, 0, validator
-
-// todo: fix this first: native_extract_address_from_challenge()
-// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
 
 //# run --admin-script --signers DiemRoot Bob
 script {
@@ -83,7 +78,7 @@ script {
     // Bob's balance should have gone down by 2M microgas, because he sent 1 GAS
     // each to Eve's operator and owner.
 
-    assert!(DiemAccount::balance<GAS>(@Bob) == 1000000, 73571301011000);
+    assert!(DiemAccount::balance<GAS>(@Bob) == 8000000, 73571301011000);
   }
 }
 // check: EXECUTED

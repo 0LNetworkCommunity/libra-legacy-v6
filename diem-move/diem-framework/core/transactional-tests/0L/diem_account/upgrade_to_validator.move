@@ -1,8 +1,5 @@
 //# init --validators Bob
 
-// todo: fix this first: native_extract_address_from_challenge()
-// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
-
 //# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::DiemAccount;
@@ -86,7 +83,7 @@ script {
 
   fun main(vm: signer, _: signer) {
     let eve_addr = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
-    /// set the fullnode proof price to 0, to check if onboarding subsidy is given.
+    // set the fullnode proof price to 0, to check if onboarding subsidy is given.
     // FullnodeSubsidy::test_set_fullnode_fixtures(&vm, 0, 0, 0, 0, 0);
     EpochBoundary::reconfigure(&vm, 10); 
       // need to remove testnet for this test, since testnet does not ratelimit 

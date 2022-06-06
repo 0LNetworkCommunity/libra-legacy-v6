@@ -2,9 +2,6 @@
 // DummyPreventsGenesisReload: validator with 10M GAS
 // Bob:                    non-validator with  1M GAS
 
-// todo: fix this first: native_extract_address_from_challenge()
-// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
-
 //# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
@@ -32,8 +29,6 @@ script {
         TowerState::first_challenge_includes_address(new_account_address, &challenge);
     }
 }
-// check: EXECUTED
-
 
 //# run --admin-script --signers DiemRoot Bob
 script {
@@ -48,4 +43,3 @@ script {
         TowerState::first_challenge_includes_address(new_account_address, &challenge);
     }
 }
-// check: ABORTED

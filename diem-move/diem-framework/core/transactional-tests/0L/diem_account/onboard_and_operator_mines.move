@@ -1,11 +1,6 @@
 //# init --validators Alice
 // Module to test bulk validator updates function in DiemSystem.move
 // NOTE: enough balance for onboarding gas transfer.
-//// Old syntax for reference, delete it after fixing this test
-//! account: alice, 3000000, 0, validator
-
-// todo: fix this first: native_extract_address_from_challenge()
-// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
 
 //# run --admin-script --signers DiemRoot Alice
 script {
@@ -50,7 +45,7 @@ script {
   use DiemFramework::TestFixtures;
 
   // SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
-  fun main(_: signer) { 
+  fun main() { 
     let eve = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
     let oper = @0xfa72817f1b5aab94658238ddcdc08010;
 

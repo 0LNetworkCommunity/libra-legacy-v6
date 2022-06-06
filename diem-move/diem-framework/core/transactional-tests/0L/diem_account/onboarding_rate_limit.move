@@ -1,9 +1,6 @@
 //# init --validators Alice
 // Module to test bulk validator updates function in DiemSystem.move
 
-// todo: fix this first: native_extract_address_from_challenge()
-// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
-
 //# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::DiemAccount;
@@ -41,10 +38,11 @@ script {
     // Check the account has the Validator role
     assert!(Roles::assert_validator_addr(parsed_address), 7357130101011000);
     assert!(ValidatorConfig::is_valid(parsed_address), 7357130101021000);
+
+    // Todo: Why 0? Validators get 1'000_000 when they are created
     // Check the account exists and the balance is 0
     assert!(DiemAccount::balance<GAS>(parsed_address) == 0, 7357130101031000);
     let sender_addr = Signer::address_of(&sender);
     assert!(TowerState::can_create_val_account(sender_addr) == false, 7357130101041000);
   }
 }
-//check: ABORTED
