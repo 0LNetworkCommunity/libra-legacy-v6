@@ -4,12 +4,11 @@ use dialoguer::{Confirm, Input};
 use diem_crypto::HashValue;
 use diem_global_constants::NODE_HOME;
 use glob::glob;
-use hex::encode;
 use std::{fs, net::Ipv4Addr, path::PathBuf};
 
 use crate::{
     block::VDFProof,
-    config::{AppCfg, IS_TEST},
+    config::IS_TEST,
 };
 
 /// interact with user to get the home path for files
@@ -186,7 +185,7 @@ fn swarm_home(mut swarm_path: PathBuf, swarm_persona: Option<String>) -> PathBuf
 }
 
 // helper to parse the existing blocks in the miner's path. This function receives any path. Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
-fn find_last_legacy_block(blocks_dir: &PathBuf) -> Result<VDFProof, Error> {
+fn _find_last_legacy_block(blocks_dir: &PathBuf) -> Result<VDFProof, Error> {
     let mut max_block: Option<u64> = None;
     let mut max_block_path = None;
     // iterate through all json files in the directory.
@@ -221,6 +220,6 @@ fn find_last_legacy_block(blocks_dir: &PathBuf) -> Result<VDFProof, Error> {
         bail!("cannot find a legacy block in: {:?}", blocks_dir)
     }
 }
-fn hash_last_proof(proof: &Vec<u8>) -> Vec<u8> {
+fn _hash_last_proof(proof: &Vec<u8>) -> Vec<u8> {
     HashValue::sha3_256_of(proof).to_vec()
 }
