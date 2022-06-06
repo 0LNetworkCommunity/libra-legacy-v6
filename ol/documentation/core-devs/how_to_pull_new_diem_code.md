@@ -30,12 +30,12 @@ pub const XDX_IDENTIFIER: &IdentStr = ident_str!(XDX_NAME);
 - [ ] Note: `cargo c` can be used instead of `cargo b` for quick iteration
 - [ ] Resolve all Move modules and transaction scripts build errors. Build with `ol\utils\build-stdlib.sh`
 - [ ] Resolve all Rust build errors/warnings for all packages again ->  `cargo b --all` and `cargo b --all-targets`
-- [ ] Get all move-lang-functional-tests build & pass -> `PRETTY=1 cargo test -p move-lang-functional-tests -- 0L/ > /opt/27.jul.21.txt 2>&1` (Hint: start w/ `chained_from_genesis` or `persistence`)
+- [ ] Get all move-lang-functional-tests build & pass -> `PRETTY=1 NODE_ENV="test" cargo test -p move-lang-functional-tests -- 0L/ > /opt/27.jul.21.txt 2>&1` (Hint: start w/ `chained_from_genesis` or `persistence`)
 ```
 Hint: Tests should use 0L coin "GAS" 
 ```
 
-- [ ] Get all e2e tests build & pass -> `PRETTY=1 cargo test -p language-e2e-testsuite -- --nocapture ol_`
+- [ ] Get all e2e tests build & pass -> `PRETTY=1 NODE_ENV="test" cargo test -p language-e2e-testsuite -- --nocapture ol_`
 
 - [ ] Make sure we have 0L patched SALT and test `val_config_ip_address` in `ol/types/src/account.rs` is passing
 
