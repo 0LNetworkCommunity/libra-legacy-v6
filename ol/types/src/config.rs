@@ -136,7 +136,7 @@ impl AppCfg {
     pub fn init_app_configs(
         authkey: AuthenticationKey,
         account: AccountAddress,
-        _upstream_peer: &Option<Url>,
+        upstream_peer: &Option<Url>,
         config_path: &Option<PathBuf>,
         base_epoch: &Option<u64>,
         base_waypoint: &Option<Waypoint>,
@@ -168,6 +168,9 @@ impl AppCfg {
         default_config.workspace.node_home =
             config_path.clone().unwrap_or_else(|| what_home(None, None));
 
+        if let Some(u) = upstream_peer {
+          default_config.profile.upstream_nodes = vec![u.to_owned()]
+        };
         // Add link to previous tower
         // if !*IS_TEST {
         //     default_config.profile.tower_link = add_tower(&default_config);
