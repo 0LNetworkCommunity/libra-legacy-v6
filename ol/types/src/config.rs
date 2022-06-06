@@ -136,7 +136,7 @@ impl AppCfg {
     pub fn init_app_configs(
         authkey: AuthenticationKey,
         account: AccountAddress,
-        upstream_peer: &Option<Url>,
+        _upstream_peer: &Option<Url>,
         config_path: &Option<PathBuf>,
         base_epoch: &Option<u64>,
         base_waypoint: &Option<Waypoint>,
@@ -189,18 +189,11 @@ impl AppCfg {
             default_config.chain_info.base_epoch = *base_epoch;
             default_config.chain_info.base_waypoint = *base_waypoint;
         } else {
-            if let Some(url) = upstream_peer {
-                default_config.profile.upstream_nodes = vec![url.to_owned()];
-                let mut web_monitor_url = url.clone();
-                let (e, w) = bootstrap_waypoint_from_upstream(&mut web_monitor_url).unwrap();
-                default_config.chain_info.base_epoch = Some(e);
-                default_config.chain_info.base_waypoint = Some(w);
-            } else {
-                default_config.chain_info.base_epoch = None;
-                default_config.chain_info.base_waypoint = None;
-                println!("WARN: No --epoch or --waypoint or upstream --url passed. This should only be done at genesis. If that's not correct either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
-                // exit(1);
-            }
+
+          default_config.chain_info.base_epoch = None;
+          default_config.chain_info.base_waypoint = None;
+          println!("WARN: No --epoch or --waypoint or upstream --url passed. This should only be done at genesis. If that's not correct either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
+
         }
 
         // skip questionnaire if CI
