@@ -108,11 +108,17 @@ pub fn what_vfn_ip() -> Result<Ipv4Addr, Error> {
         return Ok("0.0.0.0".parse::<Ipv4Addr>()?);
     }
 
-    let input: String = Input::new()
-        .with_prompt("Enter the IP address of the node")
-        .interact_text()?;
+    let txt = "Will you set up Fullnode configs now? If not that's ok but you'll need to submit a transaction later to update on-chain peer discovery info";
+    let ip = match Confirm::new().with_prompt(txt).interact().unwrap() {
+        true => {
+          let input: String = Input::new()
+            .with_prompt("Enter the IP address of the VFN node")
+            .interact_text()?;
 
-    let ip = input.parse::<Ipv4Addr>()?;
+          input.parse::<Ipv4Addr>()?
+        },
+        false => "0.0.0.0".parse::<Ipv4Addr>()?
+    };
 
     Ok(ip)
 }
@@ -123,44 +129,47 @@ pub fn what_statement() -> String {
         return "test".to_owned();
     }
     Input::new()
-        .with_prompt("Enter a (fun) statement to go into your first transaction")
+        .with_prompt("Enter a (fun) statement to go into your first transaction. This also creates entropy for your first proof")
         .interact_text()
         .expect(
             "We need some text unique to you which will go into your the first proof of your tower",
         )
 }
 
-/// interact with user to get a statement
-pub fn add_tower(config: &AppCfg) -> Option<String> {
-    let legacy_blocks_path = config.workspace.node_home.join("blocks");
-    let txt = "(optional) want to link to another tower's last hash?";
-    match Confirm::new().with_prompt(txt).interact().unwrap() {
-        false => None,
-        true => {
-            if let Some(block) = find_last_legacy_block(&legacy_blocks_path).ok() {
-                let hash = hash_last_proof(&block.proof);
-                let hash_string = encode(hash);
-                let txt = format!("Use this hash as your tower link? {} ", &hash_string);
-                match Confirm::new().with_prompt(txt).interact().unwrap() {
-                    true => Some(hash_string),
-                    false => Input::new()
-                        .with_prompt("Enter hash of last proof data")
-                        .interact_text()
-                        .ok(),
-                }
-            } else {
-                println!(
-                    "could not find any legacy proofs in usual location: {:?}",
-                    &legacy_blocks_path
-                );
-                Input::new()
-                    .with_prompt("Enter hash of last proof data")
-                    .interact_text()
-                    .ok()
-            }
-        }
-    }
-}
+// deprecated 
+
+// interact with user to get a statement
+// pub fn add_tower(config: &AppCfg) -> Option<String> {
+//     let legacy_blocks_path = config.workspace.node_home.join("blocks");
+//     let txt = "(optional) want to link to another tower's last hash?";
+//     match Confirm::new().with_prompt(txt).interact().unwrap() {
+//         false => None,
+//         true => {
+//             if let Some(block) = find_last_legacy_block(&legacy_blocks_path).ok() {
+//                 let hash = hash_last_proof(&block.proof);
+//                 let hash_string = encode(hash);
+//                 let txt = format!("Use this hash as your tower link? {} ", &hash_string);
+//                 match Confirm::new().with_prompt(txt).interact().unwrap() {
+//                     true => Some(hash_string),
+//                     false => Input::new()
+//                         .with_prompt("Enter hash of last proof data")
+//                         .interact_text()
+//                         .ok(),
+//                 }
+//             } else {
+//                 println!(
+//                     "could not find any legacy proofs in usual location: {:?}",
+//                     &legacy_blocks_path
+//                 );
+//                 Input::new()
+//                     .with_prompt("Enter hash of last proof data")
+//                     .interact_text()
+//                     .ok()
+//             }
+//         }
+//     }
+// }
+
 /// returns node_home
 /// usually something like "/root/.0L"
 /// in case of swarm like "....../swarm_temp/0" for alice

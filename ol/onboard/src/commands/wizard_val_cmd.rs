@@ -3,7 +3,6 @@
 #![allow(clippy::never_loop)]
 
 use super::genesis_files_cmd;
-use crate::entrypoint;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use diem_genesis_tool::ol_node_files;
