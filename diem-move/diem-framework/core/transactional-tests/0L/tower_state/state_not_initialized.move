@@ -2,9 +2,6 @@
 // DummyPreventsGenesisReload: validator  with 10M GAS
 // Bob:                    non-validator with  1M GAS
 
-// todo: fix this first: native_extract_address_from_challenge()
-// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
-
 // Scenario: Alice is NOT a validator, and has not mined before. 
 // she tries to submit proof_0.json the genesis proof without any TowerState
 // being initialized. The tx should abort.
@@ -35,4 +32,3 @@ script {
         assert!(verified_tower_height_after == 0, 7357001);
     }
 }
-//check: VMExecutionFailure(ABORTED 

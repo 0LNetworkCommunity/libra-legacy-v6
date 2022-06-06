@@ -601,14 +601,14 @@ checksum = "e3b5ca7a04898ad4bcd41c90c5285445ff5b791899bb1b0abdd2a2aa791211d7"
 [[package]]
 name = "bytecode-interpreter-crypto"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "curve25519-dalek-fiat",
  "ed25519-dalek-fiat",
  "sha2 0.9.9",
  "sha3 0.9.1",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
@@ -1021,7 +1021,7 @@ dependencies = [
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
  "futures",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "serde 1.0.137",
  "thiserror",
  "tokio 1.18.2",
@@ -1487,7 +1487,7 @@ dependencies = [
  "generate-key",
  "hex 0.4.3",
  "log",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "rand 0.8.4",
  "structopt",
  "tokio 1.18.2",
@@ -1528,7 +1528,7 @@ dependencies = [
  "diem-vm",
  "diem-workspace-hack 0.1.0",
  "move-cli",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "structopt",
 ]
 
@@ -1575,7 +1575,7 @@ dependencies = [
  "hex 0.4.3",
  "hyper",
  "mempool-notifications",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-resource-viewer",
  "once_cell",
  "percent-encoding",
@@ -1600,8 +1600,8 @@ dependencies = [
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
  "hex 0.4.3",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-resource-viewer",
  "serde 1.0.137",
  "serde_json",
@@ -1618,7 +1618,7 @@ dependencies = [
  "diem-crypto 0.0.3",
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "serde 1.0.137",
  "serde_json",
  "structopt",
@@ -1648,7 +1648,7 @@ dependencies = [
  "diem-workspace-hack 0.1.0",
  "hex 0.4.3",
  "ipnet",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "proptest",
  "reqwest",
  "serde 1.0.137",
@@ -1848,7 +1848,7 @@ dependencies = [
  "diem-workspace-hack 0.1.0",
  "framework-releases",
  "include_dir",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-command-line-common",
  "once_cell",
 ]
@@ -1893,13 +1893,13 @@ dependencies = [
  "include_dir",
  "log",
  "move-abigen",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-utils",
  "move-bytecode-verifier",
  "move-cli",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-docgen",
  "move-errmapgen",
  "move-package",
@@ -1929,7 +1929,7 @@ dependencies = [
  "diem-workspace-hack 0.1.0",
  "framework-releases",
  "include_dir",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-verifier",
  "move-command-line-common",
  "once_cell",
@@ -1969,8 +1969,8 @@ dependencies = [
  "executor-types",
  "hex 0.4.3",
  "language-e2e-tests",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-vm-types",
  "network",
  "once_cell",
@@ -2116,7 +2116,7 @@ dependencies = [
  "generate-key",
  "hex 0.4.3",
  "hyper",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-resource-viewer",
  "move-vm-types",
  "network",
@@ -2148,7 +2148,7 @@ dependencies = [
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
  "hex 0.4.3",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "num-derive",
  "num-traits 0.2.15",
  "ol-types",
@@ -2484,8 +2484,8 @@ dependencies = [
  "anyhow",
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-resource-viewer",
 ]
 
@@ -2502,7 +2502,7 @@ dependencies = [
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
  "hex 0.4.3",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "reqwest",
  "serde 1.0.137",
  "serde_json",
@@ -2529,7 +2529,7 @@ dependencies = [
  "diem-transaction-builder",
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "rand_core 0.6.3",
  "serde 1.0.137",
 ]
@@ -2638,7 +2638,7 @@ dependencies = [
  "bcs",
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "once_cell",
  "proptest",
  "proptest-derive",
@@ -2662,10 +2662,10 @@ dependencies = [
  "diemdb",
  "difference",
  "hex 0.4.3",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-cli",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-vm-runtime",
  "move-vm-test-utils",
  "move-vm-types",
@@ -2691,10 +2691,10 @@ dependencies = [
  "either",
  "hex 0.4.3",
  "language-e2e-tests",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-transactional-test-runner",
  "once_cell",
  "rand 0.8.4",
@@ -2717,8 +2717,8 @@ dependencies = [
  "hex 0.4.3",
  "itertools",
  "mirai-annotations",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
- "move-read-write-set-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-read-write-set-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "once_cell",
  "proptest",
  "proptest-derive",
@@ -2772,7 +2772,7 @@ dependencies = [
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
  "diemdb",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "scratchpad",
  "storage-interface",
 ]
@@ -2813,9 +2813,9 @@ dependencies = [
  "diem-workspace-hack 0.1.0",
  "fail",
  "mirai-annotations",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-utils",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-stdlib",
  "move-vm-runtime",
  "move-vm-types",
@@ -2975,10 +2975,10 @@ dependencies = [
  "diemdb",
  "handlebars",
  "hex 0.4.3",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-verifier",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-vm-runtime",
  "move-vm-test-utils",
  "move-vm-types",
@@ -3010,7 +3010,7 @@ dependencies = [
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
  "itertools",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "num-derive",
  "num-traits 0.2.15",
  "num-variants",
@@ -3309,7 +3309,7 @@ dependencies = [
  "executor-test-helpers",
  "futures",
  "itertools",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "serde 1.0.137",
  "storage-interface",
  "thiserror",
@@ -3373,7 +3373,7 @@ dependencies = [
  "executor-types",
  "fail",
  "itertools",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-ir-compiler",
  "once_cell",
  "proptest",
@@ -3626,12 +3626,12 @@ dependencies = [
  "diem-workspace-hack 0.1.0",
  "include_dir",
  "log",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-utils",
  "move-bytecode-verifier",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-package",
  "move-vm-runtime",
  "move-vm-types",
@@ -3767,7 +3767,7 @@ dependencies = [
  "diem-crypto-derive 0.0.3",
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "network",
  "rand 0.8.4",
  "serde 1.0.137",
@@ -3824,8 +3824,8 @@ dependencies = [
  "diem-resource-viewer",
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-vm-test-utils",
  "structopt",
  "vm-genesis",
@@ -4625,9 +4625,9 @@ dependencies = [
  "diem-writeset-generator",
  "goldenfile",
  "hex 0.4.3",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-ir-compiler",
  "move-vm-runtime",
  "move-vm-types",
@@ -4659,9 +4659,9 @@ dependencies = [
  "diem-writeset-generator",
  "hex 0.4.3",
  "language-e2e-tests",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-verifier",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-ir-compiler",
  "move-vm-runtime",
  "move-vm-types",
@@ -4935,7 +4935,7 @@ checksum = "c9be0862c1b3f26a88803c4a49de6889c10e608b3ee9344e6ef5b45fb37ad3d1"
 [[package]]
 name = "move-abigen"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "bcs",
@@ -4943,27 +4943,27 @@ dependencies = [
  "log",
  "move-bytecode-verifier",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-model",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-binary-format"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "mirai-annotations",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "once_cell",
  "proptest",
  "proptest-derive",
  "ref-cast",
  "serde 1.0.137",
  "variant_count",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
@@ -4984,62 +4984,62 @@ dependencies = [
 [[package]]
 name = "move-borrow-graph"
 version = "0.0.1"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "mirai-annotations",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-bytecode-source-map"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "bcs",
  "codespan-reporting",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-ir-types",
  "move-symbol-pool",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-bytecode-utils"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "petgraph 0.5.1",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-bytecode-verifier"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "mirai-annotations",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-borrow-graph",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "petgraph 0.5.1",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-bytecode-viewer"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-source-map",
  "move-command-line-common",
  "move-disassembler",
@@ -5048,13 +5048,13 @@ dependencies = [
  "structopt",
  "termion",
  "tui",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-cli"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5063,14 +5063,14 @@ dependencies = [
  "difference",
  "include_dir",
  "itertools",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-source-map",
  "move-bytecode-utils",
  "move-bytecode-verifier",
  "move-bytecode-viewer",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-coverage",
  "move-disassembler",
  "move-errmapgen",
@@ -5091,13 +5091,13 @@ dependencies = [
  "structopt",
  "tempfile",
  "walkdir",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-command-line-common"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "difference",
@@ -5105,25 +5105,25 @@ dependencies = [
  "serde 1.0.137",
  "sha2 0.9.9",
  "walkdir",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-compiler"
 version = "0.0.1"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "bcs",
  "codespan-reporting",
  "difference",
  "hex 0.4.3",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-borrow-graph",
  "move-bytecode-source-map",
  "move-bytecode-verifier",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-ir-to-bytecode",
  "move-ir-types",
  "move-symbol-pool",
@@ -5133,13 +5133,13 @@ dependencies = [
  "structopt",
  "tempfile",
  "walkdir",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-core-types"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5152,7 +5152,7 @@ dependencies = [
  "ref-cast",
  "serde 1.0.137",
  "serde_bytes",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
@@ -5175,48 +5175,48 @@ dependencies = [
 [[package]]
 name = "move-coverage"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "bcs",
  "codespan",
  "colored",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-source-map",
  "move-bytecode-verifier",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-ir-types",
  "once_cell",
  "petgraph 0.5.1",
  "serde 1.0.137",
  "structopt",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-disassembler"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "colored",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-source-map",
  "move-bytecode-verifier",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-coverage",
  "move-ir-types",
  "structopt",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-docgen"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "codespan",
@@ -5230,97 +5230,97 @@ dependencies = [
  "once_cell",
  "regex",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-errmapgen"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "bcs",
  "log",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-model",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-ir-compiler"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "bcs",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-source-map",
  "move-bytecode-verifier",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-ir-to-bytecode",
  "move-ir-types",
  "move-symbol-pool",
  "serde_json",
  "structopt",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-ir-to-bytecode"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "codespan-reporting",
  "log",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-source-map",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-ir-to-bytecode-syntax",
  "move-ir-types",
  "move-symbol-pool",
  "ouroboros",
  "thiserror",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-ir-to-bytecode-syntax"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "hex 0.4.3",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-ir-types",
  "move-symbol-pool",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-ir-types"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "hex 0.4.3",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-symbol-pool",
  "once_cell",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-model"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "codespan",
@@ -5328,12 +5328,12 @@ dependencies = [
  "internment",
  "itertools",
  "log",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-source-map",
  "move-bytecode-verifier",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-disassembler",
  "move-ir-types",
  "move-symbol-pool",
@@ -5341,24 +5341,24 @@ dependencies = [
  "once_cell",
  "regex",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-package"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "bcs",
  "colored",
  "move-abigen",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-source-map",
  "move-bytecode-utils",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-docgen",
  "move-errmapgen",
  "move-model",
@@ -5373,13 +5373,13 @@ dependencies = [
  "tempfile",
  "toml",
  "walkdir",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-prover"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5392,10 +5392,10 @@ dependencies = [
  "itertools",
  "log",
  "move-abigen",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-docgen",
  "move-errmapgen",
  "move-ir-types",
@@ -5412,13 +5412,13 @@ dependencies = [
  "simplelog",
  "tokio 1.18.2",
  "toml",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-prover-boogie-backend"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5427,9 +5427,9 @@ dependencies = [
  "futures",
  "itertools",
  "log",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-model",
  "move-stackless-bytecode",
  "num",
@@ -5441,19 +5441,19 @@ dependencies = [
  "serde_json",
  "tera",
  "tokio 1.18.2",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-read-write-set-types"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
@@ -5471,78 +5471,78 @@ dependencies = [
 [[package]]
 name = "move-resource-viewer"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "bcs",
  "hex 0.4.3",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-vm-types",
  "once_cell",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-stackless-bytecode"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "codespan",
  "codespan-reporting",
  "im",
  "itertools",
  "log",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-borrow-graph",
  "move-bytecode-verifier",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-ir-to-bytecode",
  "move-model",
- "move-read-write-set-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-read-write-set-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "num",
  "once_cell",
  "paste",
  "petgraph 0.5.1",
  "serde 1.0.137",
  "serde_json",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-stackless-bytecode-interpreter"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "bytecode-interpreter-crypto",
  "codespan-reporting",
  "itertools",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-model",
  "move-stackless-bytecode",
  "move-vm-runtime",
  "num",
  "serde 1.0.137",
  "structopt",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-stdlib"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "diem-types 0.0.3 (git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30)",
  "hex 0.4.3",
  "log",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-docgen",
  "move-errmapgen",
  "move-prover",
@@ -5554,33 +5554,33 @@ dependencies = [
  "smallvec 1.8.0",
  "vdf 0.1.0 (git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30)",
  "walkdir",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-symbol-pool"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "once_cell",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-transactional-test-runner"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "colored",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-source-map",
  "move-bytecode-utils",
  "move-cli",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-disassembler",
  "move-ir-compiler",
  "move-ir-types",
@@ -5596,21 +5596,21 @@ dependencies = [
  "regex",
  "structopt",
  "tempfile",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-unit-test"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
  "colored",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-utils",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-model",
  "move-resource-viewer",
  "move-stackless-bytecode-interpreter",
@@ -5621,54 +5621,54 @@ dependencies = [
  "rayon",
  "regex",
  "structopt",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-vm-runtime"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "fail",
  "mirai-annotations",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-verifier",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-vm-types",
  "once_cell",
  "parking_lot 0.11.2",
  "sha3 0.9.1",
  "tracing",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-vm-test-utils"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-vm-runtime",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "move-vm-types"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "bcs",
  "mirai-annotations",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "once_cell",
  "proptest",
  "serde 1.0.137",
  "sha2 0.9.9",
  "smallvec 1.8.0",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
@@ -5839,7 +5839,7 @@ dependencies = [
  "diem-workspace-hack 0.1.0",
  "event-notifications",
  "futures",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "netcore",
  "network",
  "once_cell",
@@ -6160,8 +6160,8 @@ dependencies = [
  "handlebars",
  "hex 0.4.3",
  "machine-ip",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-resource-viewer",
  "move-vm-types",
  "nix 0.24.1",
@@ -6205,7 +6205,7 @@ dependencies = [
  "diem-wallet",
  "futures",
  "gumdrop 0.8.1",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "ol",
  "ol-keys",
  "ol-types",
@@ -6245,7 +6245,7 @@ dependencies = [
  "glob",
  "hex 0.4.3",
  "machine-ip",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "num-format",
  "ol-keys",
  "once_cell",
@@ -7082,31 +7082,31 @@ dependencies = [
 [[package]]
 name = "read-write-set"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-utils",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-model",
- "move-read-write-set-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-read-write-set-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-resource-viewer",
  "move-stackless-bytecode",
  "read-write-set-dynamic",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
 name = "read-write-set-dynamic"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "anyhow",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-utils",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
- "move-read-write-set-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-read-write-set-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
 ]
 
 [[package]]
@@ -8107,10 +8107,10 @@ dependencies = [
  "hex 0.4.3",
  "include_dir",
  "move-abigen",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-cli",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-package",
  "move-unit-test",
  "once_cell",
@@ -8455,7 +8455,7 @@ dependencies = [
  "itertools",
  "mempool-notifications",
  "memsocket",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "netcore",
  "network",
  "network-builder",
@@ -8561,7 +8561,7 @@ dependencies = [
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
  "itertools",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "parking_lot 0.11.2",
  "scratchpad",
  "serde 1.0.137",
@@ -8623,7 +8623,7 @@ dependencies = [
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
  "futures",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "network",
  "once_cell",
  "serde 1.0.137",
@@ -8719,7 +8719,7 @@ dependencies = [
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
  "hex 0.4.3",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "rand 0.8.4",
  "serde 1.0.137",
  "serde_json",
@@ -9240,7 +9240,7 @@ dependencies = [
  "gumdrop 0.7.0",
  "hex 0.4.3",
  "machine-ip",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "ol",
  "ol-keys",
  "ol-types",
@@ -9358,7 +9358,7 @@ dependencies = [
  "diem-types 0.0.3",
  "diem-workspace-hack 0.1.0",
  "heck",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "regex",
  "serde-generate",
  "serde-reflection",
@@ -9496,7 +9496,7 @@ dependencies = [
  "glob",
  "gumdrop 0.7.0",
  "hex 0.4.3",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-resource-viewer",
  "ol",
  "ol-keys",
@@ -9801,10 +9801,10 @@ dependencies = [
  "diem-vm",
  "diem-workspace-hack 0.1.0",
  "hex 0.4.3",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-bytecode-utils",
  "move-bytecode-verifier",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "move-vm-runtime",
  "move-vm-types",
  "ol-types",
@@ -9832,7 +9832,7 @@ dependencies = [
  "executor",
  "executor-test-helpers",
  "fail",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945)",
+ "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
  "rand 0.8.4",
  "scratchpad",
  "storage-interface",
@@ -10129,7 +10129,7 @@ dependencies = [
 [[package]]
 name = "workspace-hack"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=86a9cfd1f0ace08c8c4220f7927e112c1f990945#86a9cfd1f0ace08c8c4220f7927e112c1f990945"
+source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
 dependencies = [
  "arrayvec 0.5.2",
  "block-buffer 0.9.0",

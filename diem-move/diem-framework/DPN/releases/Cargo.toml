@@ -11,12 +11,12 @@ publish = false
 
 
 [dependencies]
-move-bytecode-verifier = { git = "https://github.com/OLSF/move-0L", rev = "86a9cfd1f0ace08c8c4220f7927e112c1f990945" }
-move-command-line-common = { git = "https://github.com/OLSF/move-0L", rev = "86a9cfd1f0ace08c8c4220f7927e112c1f990945" }
+move-bytecode-verifier = { git = "https://github.com/OLSF/move-0L", rev = "9fa5ae30621027777c3a5776871b5760d95c9fdc" }
+move-command-line-common = { git = "https://github.com/OLSF/move-0L", rev = "9fa5ae30621027777c3a5776871b5760d95c9fdc" }
 diem-crypto = { path = "../../../../crates/diem-crypto" }
 diem-types = { path = "../../../../types" }
 diem-workspace-hack = { path = "../../../../crates/diem-workspace-hack" }
-move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "86a9cfd1f0ace08c8c4220f7927e112c1f990945" }
+move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "9fa5ae30621027777c3a5776871b5760d95c9fdc" }
 framework-releases = { path = "../../releases" }
 
 anyhow = "1.0.52"
@@ -25,4 +25,4 @@ bcs = "0.1.2"
 once_cell = "1.7.2"
 
 [dev-dependencies]
-move-bytecode-verifier = { git = "https://github.com/OLSF/move-0L", rev = "86a9cfd1f0ace08c8c4220f7927e112c1f990945" }
+move-bytecode-verifier = { git = "https://github.com/OLSF/move-0L", rev = "9fa5ae30621027777c3a5776871b5760d95c9fdc" }
