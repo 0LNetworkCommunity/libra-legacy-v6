@@ -113,11 +113,12 @@ impl AppCfg {
         }
     }
 
-    /// format the standard namespace for 0L validator
+    /// format the standard namespace for 0L OPERATOR
     pub fn format_oper_namespace(&self) -> String {
       format!("{}-oper", self.profile.account.to_hex())
     }
 
+    /// format the standard namespace for 0L OWNER
     pub fn format_owner_namespace(&self) -> String {
       self.profile.account.to_hex()
     }

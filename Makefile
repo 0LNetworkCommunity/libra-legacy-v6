@@ -229,9 +229,9 @@ gen-register:
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
-	# TODO: implement the forking workflow for dev genesis?
-	#@echo Making pull request to genesis coordination repo
-	#make gen-make-pull
+# TODO: implement the forking workflow for dev genesis?
+# @echo Making pull request to genesis coordination repo
+# make gen-make-pull
 
 init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
