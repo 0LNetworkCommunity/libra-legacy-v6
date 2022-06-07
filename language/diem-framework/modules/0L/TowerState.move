@@ -414,8 +414,10 @@ module TowerState {
       diff.prev_sec = diff.security;
       
       // NOTE: For now we are not changing the vdf security params.
-      if (!Testnet::is_testnet()) {
+      if (Testnet::is_testnet()) {
         diff.difficulty = Globals::get_vdf_difficulty_baseline() + toy_rng(20, 3);
+        // diff.difficulty = Globals::get_vdf_difficulty_baseline() + 1;
+       
       }
     }
 
@@ -578,11 +580,13 @@ module TowerState {
     public fun toy_rng(seed: u64, iters: u64): u64 acquires TowerList, TowerProofHistory {
       // Get the list of all miners L
       // Pick a tower miner  (M) from the seed position 1/(N) of the list of miners.
+      print(&77777777);
+
       let l = get_miner_list();
       print(&l);
       // the length will keep incrementing through the epoch. The last miner can know what the starting position will be. There could be a race to be the last validator to augment the set and bias the initial shuffle.
       let len = Vector::length(&l);
-      if (len == 0) return 0;
+      // if (len == 0) return 0;
       print(&5555);
 
       // start n with the seed index
@@ -591,27 +595,37 @@ module TowerState {
       let i = 0;
       while (i < iters) {
         print(&6666);
-        if (n > len) { n = n / len }
-          else if (len > n) { n = len / n } 
-          else { n = 0 };
+        print(&i);
+        // make sure we get an n smaller than list of validators
+        // abort if loops too much
+        let k = 0;
+        while (n > len) {
+          if (k > 1000) return 0;
+          n = n / len;
+          k = k + 1;
+        };
+        // if (n >= len) { n = n / len };
         // return zero so the user knows of the error, instead of returning anything halfway though the iters.
-        if (n == 0) return 0;
+        // if (n == 0) return 0;
 
         print(&n);
-        print(&l);
+        print(&len);
 
-        if (n > Vector::length<address>(&l)) return 0;
+        if (len <= n) return 0;
 
         print(&666602);
-        // take the first bit (B) from their last proof hash.
         let miner_addr = Vector::borrow<address>(&l, n);
   
         print(&666603);
         let vec = if (exists<TowerProofHistory>(*miner_addr)) {
           *&borrow_global<TowerProofHistory>(*miner_addr).previous_proof_hash
-        }
-        else { return 0 };
+        } else { return 0 };
+
+        print(&vec);
+
         print(&666604);
+        // take the last bit (B) from their last proof hash.
+
         n = (Vector::pop_back(&mut vec) as u64);
         print(&666605);
         i = i + 1;
@@ -726,7 +740,7 @@ module TowerState {
       (0,0,0)
     }
 
-    fun get_difficulty(): (u64, u64) acquires VDFDifficulty {
+    public fun get_difficulty(): (u64, u64) acquires VDFDifficulty {
       if (exists<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS())) {
         let v = borrow_global_mut<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
         return (v.difficulty, v.security)
