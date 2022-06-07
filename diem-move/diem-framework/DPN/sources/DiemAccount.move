@@ -520,8 +520,6 @@ module DiemFramework::DiemAccount {
             restore_withdraw_capability(with_cap);
             new_account
         }
-
-        
     }
 
     /////// 0L ////////

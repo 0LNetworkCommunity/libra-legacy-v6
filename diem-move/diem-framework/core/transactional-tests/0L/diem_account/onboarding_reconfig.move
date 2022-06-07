@@ -5,9 +5,6 @@
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
 
-// todo: fix this first: native_extract_address_from_challenge()
-// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
-
 //# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::DiemAccount;
@@ -21,7 +18,7 @@ script {
     // with a challenge and proof from eve's block_0
     let challenge = TestFixtures::eve_0_easy_chal();
     let solution = TestFixtures::eve_0_easy_sol();
-    // // Parse key and check
+    // Parse key and check
     let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
     assert!(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
 
@@ -44,7 +41,6 @@ script {
         x"1ee7", // human_name: vector<u8>,
     );
     assert!(ValidatorConfig::is_valid(eve_addr), 7357130101031000);
-
   }
 }
 //check: EXECUTED

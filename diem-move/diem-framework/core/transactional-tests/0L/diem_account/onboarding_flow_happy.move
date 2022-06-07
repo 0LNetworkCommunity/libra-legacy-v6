@@ -1,9 +1,4 @@
 //# init --validators Bob
-//// Old syntax for reference, delete it after fixing this test
-//! account: bob, 4000000, 0, validator
-
-// todo: fix this first: native_extract_address_from_challenge()
-// https://github.com/OLSF/move-0L/blob/v6/language/move-stdlib/src/natives/ol_vdf.rs
 
 //# run --admin-script --signers DiemRoot Bob
 script {
