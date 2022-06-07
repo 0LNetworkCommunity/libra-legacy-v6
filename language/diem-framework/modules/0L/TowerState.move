@@ -586,7 +586,7 @@ module TowerState {
       print(&l);
       // the length will keep incrementing through the epoch. The last miner can know what the starting position will be. There could be a race to be the last validator to augment the set and bias the initial shuffle.
       let len = Vector::length(&l);
-      // if (len == 0) return 0;
+      if (len == 0) return 0;
       print(&5555);
 
       // start n with the seed index
