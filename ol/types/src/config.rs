@@ -118,6 +118,11 @@ impl AppCfg {
       format!("{}-oper", self.profile.account.to_hex())
     }
 
+    pub fn format_owner_namespace(&self) -> String {
+      self.profile.account.to_hex()
+    }
+    
+
     /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self) -> PathBuf {
         let mut home = self.workspace.node_home.clone();
