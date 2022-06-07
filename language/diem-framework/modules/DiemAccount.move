@@ -1273,17 +1273,6 @@ module DiemAccount {
             Errors::limit_exceeded(EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET)
         );
         /////// 0L /////////
-        // Slow wallet transfers disabled by default, enabled when epoch is 1000
-        // At that point slow wallets receive 1,000 coins unlocked per day.
-        // if (is_slow(sender_addr) && !DiemConfig::check_transfer_enabled() ) {
-        //   // if transfers are not enabled for slow wallets
-        //   // then the tx should fail
-        //     assert(
-        //         false, 
-        //         Errors::limit_exceeded(ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE)
-        //     );
-        // };
-        // Abort if we already extracted the unique withdraw capability for this account.
         assert(
             !delegated_withdraw_capability(sender_addr),
             Errors::invalid_state(EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED)
@@ -1335,64 +1324,6 @@ module DiemAccount {
         aborts_if !delegated_withdraw_capability(cap_addr) with Errors::INVALID_STATE;
         ensures spec_holds_own_withdraw_cap(cap_addr);
     }
-
-    // TODO: We don't use this any longer for autopay. Check.
-
-    // /////// 0L /////////
-    // // 0L function for AutoPay module
-    // // 0L error suffix 120101
-    // public fun vm_make_payment<Token: store>(
-    //     payer : address,
-    //     payee: address,
-    //     amount: u64,
-    //     metadata: vector<u8>,
-    //     metadata_signature: vector<u8>,
-    //     vm: &signer
-    // ) acquires DiemAccount , Balance, AccountOperationsCapability, AutopayEscrow, CumulativeDeposits, SlowWallet { //////// 0L ////////
-    //     if (Signer::address_of(vm) != CoreAddresses::DIEM_ROOT_ADDRESS()) return;
-    //     if (amount == 0) return;
-
-    //     // Check payee can receive funds in this currency.
-    //     if (!exists<Balance<Token>>(payee)) return; 
-    //     // assert(exists<Balance<Token>>(payee), Errors::not_published(EROLE_CANT_STORE_BALANCE));
-
-    //     // Check there is a payer
-    //     if (!exists_at(payer)) return; 
-    //     // assert(exists_at(payer), Errors::not_published(EACCOUNT));
-
-    //     // Check the payer is in possession of withdraw token.
-    //     if (delegated_withdraw_capability(payer)) return; 
-
-    //     let (max_withdraw, withdrawal_allowed) = AccountLimits::max_withdrawal<Token>(payer);
-    //     if (!withdrawal_allowed) return;
-
-    //     // VM can extract the withdraw token.
-    //     let account = borrow_global_mut<DiemAccount>(payer);
-    //     let cap = Option::extract(&mut account.withdraw_capability);
-
-    //     let transfer_now = 
-    //         if (max_withdraw >= amount) { 
-    //             amount 
-    //         } else {
-    //             max_withdraw
-    //         };
-    //     let transfer_later = amount - transfer_now;
-    //     if (transfer_now > 0) {
-    //         pay_from<Token>(
-    //             &cap,
-    //             payee,
-    //             transfer_now,
-    //             metadata,
-    //             metadata_signature
-    //         );
-    //     };
-
-    //     if (transfer_later > 0) {
-    //         new_escrow<Token>(vm, payer, payee, transfer_later);
-    //     };
-
-    //     restore_withdraw_capability(cap);
-    // }
 
     //////// 0L ////////
     public fun process_community_wallets(
@@ -1556,8 +1487,13 @@ module DiemAccount {
         );
         // in case of slow wallet update the tracker
         if (is_slow(*&cap.account_address)) {
-          update_unlocked_tracker(*&cap.account_address, amount);
+          decrease_unlocked_tracker(*&cap.account_address, amount);
+        };
 
+        // if a payee is a slow wallet and is receiving funds from ordinary or another slow wallet's unlocked funds, it counts toward unlocked coins.
+        // the exceptional case is community wallets, which funds don't count toward unlocks.
+        if (is_slow(*&payee) && !Wallet::is_comm(*&cap.account_address)) {
+          increase_unlocked_tracker(*&payee, amount);
         };
 
         
@@ -3369,10 +3305,15 @@ module DiemAccount {
     }
 
     // NOTE: danger, this is a private function that should only be called with account capability or VM.
-    fun update_unlocked_tracker(payer: address, amount: u64) acquires SlowWallet {
+    fun decrease_unlocked_tracker(payer: address, amount: u64) acquires SlowWallet {
       let s = borrow_global_mut<SlowWallet>(payer);
       s.transferred = s.transferred + amount;
       s.unlocked = s.unlocked - amount;
+    }
+
+    fun increase_unlocked_tracker(recipient: address, amount: u64) acquires SlowWallet {
+      let s = borrow_global_mut<SlowWallet>(recipient);
+      s.unlocked = s.unlocked + amount;
     }
 
     ///////// SLOW GETTERS ////////
