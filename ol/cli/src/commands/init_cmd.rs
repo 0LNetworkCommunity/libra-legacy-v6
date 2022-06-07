@@ -112,6 +112,7 @@ impl Runnable for InitCmd {
                   println!("ERROR: could not update files 0L.toml, and key_store.json with waypoint, message: {:?}", e.to_string());
                 }
             }
+            return;
         }
 
         if let Some(url) = self.rpc_playlist.as_ref() {
@@ -186,7 +187,7 @@ impl Runnable for InitCmd {
                             exit(1);
                         }
                     }
-                    // return
+                    return;
                 }
                 Err(e) => {
                     println!(
@@ -196,8 +197,6 @@ impl Runnable for InitCmd {
                     exit(1);
                 }
             };
-
-            exit(0);
         }
 
         // create files for VFN
@@ -435,17 +434,16 @@ fn update_waypoint(mut app_cfg: AppCfg, waypoint_opt: Option<Waypoint>,  swarm_p
     let new_waypoint = match waypoint_opt {
         Some(w) => w,
         None => {
-            let is_swarm = swarm_path.is_some();
             let client = client::pick_client(swarm_path, &mut app_cfg)?;
 
-            let mut node = Node::new(client, &app_cfg, is_swarm);
-
-            node.waypoint()?
+            match client.get_waypoint_state()? {
+                Some(wv) => wv.waypoint,
+                None => bail!("could not get waypoint view from chain"),
+            }
         }
     };
-
+    
     // set the 0L.toml file waypoint
-
     app_cfg.chain_info.base_waypoint = Some(new_waypoint);
     app_cfg.save_file()?;
 
