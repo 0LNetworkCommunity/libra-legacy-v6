@@ -488,7 +488,7 @@ this for example with [logrotate](https://linux.die.net/man/8/logrotate) or [mul
 Here is an example how you can establish log rotation with [multilog](https://manpages.debian.org/stretch/daemontools/multilog.8.en.html)
 for the `diem-node` and the `tower` app. Note: This only works on debian based systems, but ubuntu is recommended for this setup anyways.
 
-1. Install daemontools (multilog is part ): `apt-get install daemontools`
+1. Install daemontools (multilog is a part of daemontools): `apt-get install daemontools`
 2. Example on how to start the diem-node in fullnode mode with log rotation:
 
     ```bash
