@@ -1,4 +1,7 @@
-//! account: alice, 1000000, 0, validator
+//! account: alice, 100000000, 0, validator
+//! account: bob, 1000000, 0, validator
+//! account: carol, 1000000, 0, validator
+//! account: dave, 1000000, 0, validator
 
 // Tests the prologue reconfigures based on wall clock
 
@@ -15,10 +18,10 @@ script {
     // use 0x1::Debug::print;
 
     fun main(_sender: signer) {
-        let (a, b) = TowerState::get_difficulty();
+        let (diff, sec) = TowerState::get_difficulty();
         // check the state started with the testnet defaults
-        assert(a==100, 735701);
-        assert(b==512, 735701);
+        assert(diff==100, 735701);
+        assert(sec==512, 735702);
     }
 }
 //check: EXECUTED
@@ -41,13 +44,14 @@ script {
 //! sender: diemroot
 script {
     use 0x1::TowerState;
-    use 0x1::Debug::print;
+    // use 0x1::Debug::print;
 
     fun main(_sender: signer) {
-        let (a, b) = TowerState::get_difficulty();
+        let (diff, sec) = TowerState::get_difficulty();
         // check the state started with the testnet defaults
-        print(&a);
-        print(&b);
+        assert(diff==216, 735703);
+        assert(sec==512, 735704);
+
     }
 }
 //check: EXECUTED

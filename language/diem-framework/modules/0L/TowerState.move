@@ -415,7 +415,7 @@ module TowerState {
       
       // NOTE: For now we are not changing the vdf security params.
       if (Testnet::is_testnet()) {
-        diff.difficulty = Globals::get_vdf_difficulty_baseline() + toy_rng(20, 3);
+        diff.difficulty = Globals::get_vdf_difficulty_baseline() + toy_rng(3, 2);
         // diff.difficulty = Globals::get_vdf_difficulty_baseline() + 1;
        
       }
