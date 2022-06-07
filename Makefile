@@ -108,7 +108,7 @@ install: mv-bin bin-path
 	cp -f ${SOURCE}/target/release/onboard ${USER_BIN_PATH}/onboard
 
 bin-path:
-	@if (cat ~/.bashrc | grep '~/bin:') ; then \
+	@if (cat ~/.bashrc | grep ${USER_BIN_PATH}) ; then \
 		echo "OK .bashrc correctly configured with PATH=~/bin" ; \
 	else \
 		echo -n "WARN Your .bashrc doesn't seem to have ~/bin as a search path. Append .bashrc with PATH=~/bin:$$PATH ? (y/n) " ; \
