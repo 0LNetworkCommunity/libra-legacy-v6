@@ -1,10 +1,28 @@
-//# init --validators Alice
-//#      --addresses Bob=0x4b7653f6566a52c9b496f245628a69a0
-//#      --private-keys Bob=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
+//# init --validators Alice --parent-vasps Bob
+// Alice:     validators with 10M GAS
 
 // Bob is an end-user running the Carpe app, and submitting miner proofs.
 // He is the only one in the epoch submitting proofs. He should get the entirety
 // of the Identity Subsidy pool avaialable (one validator's worth)
+
+// Create Bob's account 
+
+//# run --admin-script --signers DiemRoot Alice
+script {
+    use DiemFramework::DiemAccount;
+    use DiemFramework::GAS::GAS;
+
+    fun main(_dr: signer, sender: signer) {
+        DiemAccount::create_user_account_with_coin(
+            &sender,
+            @Bob,
+            x"2bffcbd0e9016013cb8ca78459f69d2f",
+            1000000,
+        );
+        assert!(DiemAccount::exists_at(@Bob), 7357001);
+        assert!(DiemAccount::balance<GAS>(@Bob) == 1000000, 7357002);
+    }
+}
 
 // 1. Initialize Bob's miner state with a first proof
 
@@ -24,8 +42,9 @@ script {
     }
 }
 
-// 1. Reset all counters and make sure there are validator subsidies available.
-// We need Alice to be a Case 1 validator so that there is a subsidy to be paid to validator set.
+// 2. Reset all counters and make sure there are validator subsidies available.
+// We need Alice to be a Case 1 validator so that there is a subsidy to be paid
+// to validator set.
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -46,11 +65,10 @@ script {
       Mock::mock_case_1(&vm, @Alice);
       assert!(TowerState::get_count_in_epoch(@Alice) == 10, 735701);
       // print(&TowerState::get_count_in_epoch(@Alice));
-      assert!(DiemAccount::balance<GAS>(@Alice) == 1000000, 735704);
+      assert!(DiemAccount::balance<GAS>(@Alice) == 9000000, 735704);
       assert!(NodeWeight::proof_of_weight(@Alice) == 10, 735705);
     }
 }
-//check: EXECUTED
 
 // 3. Mock Bob (the end-user) submitting proofs above threshold.
 
@@ -63,12 +81,10 @@ script {
     use DiemFramework::DiemAccount;
     // use DiemFramework::NodeWeight;
 
-
     fun main(_dr: signer, sender: signer) {
         print(&TowerState::get_fullnode_proofs_in_epoch());
         print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
         
-
         // Bob has one proof from init above
         assert!(TowerState::get_fullnode_proofs_in_epoch() == 0, 735706);
         // there should be no proofs above threshold at this point.
@@ -82,19 +98,15 @@ script {
 
         print(&TowerState::get_count_in_epoch(@Bob));
         print(&TowerState::get_count_above_thresh_in_epoch(@Bob));
-
         
-        // Since the threshold in test suite is 1 proof, all the 10 are counted above threshold.
+        // Since the threshold in test suite is 1 proof, all the 10 are
+        // counted above threshold.
         assert!(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 10, 735708);
 
         print(&DiemAccount::balance<GAS>(@Bob));
         print(&DiemAccount::balance<GAS>(@Alice));
-
-        
     }
 }
-// check: EXECUTED
-
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
@@ -118,7 +130,8 @@ script {
         // we expect that Bob receives the share that one validator would get.
         let expected_subsidy = Subsidy::subsidy_curve(
           Globals::get_subsidy_ceiling_gas(),
-          1, // alice is the only validator (but below 4 the reward is the same in testnet: 296000000)
+          1, // alice is the only validator (but below 4 the reward is the same
+             // in testnet: 296000000)
           Globals::get_max_validators_per_set(),
         );
 
@@ -135,4 +148,3 @@ script {
         assert!(DiemAccount::balance<GAS>(@Bob) == ending_balance, 735711);  
     }
 }
-//check: EXECUTED
