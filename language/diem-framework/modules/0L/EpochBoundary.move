@@ -203,7 +203,7 @@ module EpochBoundary {
             print(&case);
 
             if (
-                // ignore those already on list
+                // ignore proven nodes already on list
                 !Vector::contains<address>(&proposed_set, &addr) &&
                 // jail the current validators which did not perform.
                 !Jail::is_jailed(addr) &&
