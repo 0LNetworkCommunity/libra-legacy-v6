@@ -73,6 +73,7 @@ pub fn process_backlog(
                             "WARN: could not fetch TX status, aborting. Message: {:?} ",
                             e
                         );
+                        // evaluate type of error and maybe garbage collect
                         return Err(e);
                     }
                 };
