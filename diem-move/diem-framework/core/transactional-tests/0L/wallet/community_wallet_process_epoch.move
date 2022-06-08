@@ -1,6 +1,6 @@
-//# init --validators Alice
-//#      --addresses Bob=0x4b7653f6566a52c9b496f245628a69a0
-//#      --private-keys Bob=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
+//# init --parent-vasps Alice Bob
+// Alice:     validators with 10M GAS
+// Bob:   non-validators with  1M GAS
 
 //# run --admin-script --signers DiemRoot Alice
 script {
@@ -18,9 +18,6 @@ script {
       assert!(Wallet::transfer_is_proposed(uid), 7357003);
     }
 }
-
-// check: EXECUTED
-
 
 //////////////////////////////////////////////
 //// Trigger reconfiguration at 61 seconds ///
@@ -58,5 +55,3 @@ script {
       assert!(bob_balance == 1000100, 7357005);
     }
 }
-
-// check: EXECUTED
