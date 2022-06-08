@@ -243,9 +243,15 @@ impl Node {
 
         let one_val_stat = stats.get_validator_current_stats(v.account_address().clone())?;
 
-        let val_config = self.get_validator_config(v.account_address().clone())?;
+        let val_config_opt = match self.get_validator_config(v.account_address().clone()){
+            Ok(v) => Some(v),
+            Err(_) => None,
+        };
 
-        let autopay = self.get_autopay_view(v.account_address().clone())?;
+        let autopay_opt = match self.get_autopay_view(v.account_address().clone()) {
+            Ok(a) => Some(a),
+            Err(_) => None,
+        };
 
         let ports = get_ports_status(&validator_ip);
 
@@ -268,8 +274,8 @@ impl Node {
             
             vote_count_in_epoch: one_val_stat.vote_count,
             prop_count_in_epoch: one_val_stat.prop_count,
-            validator_config: Some(val_config),
-            autopay: Some(autopay),
+            validator_config: val_config_opt,
+            autopay: autopay_opt,
             note: dict.get_note_for_address(*v.account_address()),
         })
     }
