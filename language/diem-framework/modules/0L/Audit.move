@@ -11,7 +11,7 @@ address 0x1 {
     use 0x1::AutoPay;
     use 0x1::TowerState;
     use 0x1::Testnet;
-    use 0x1::Vouch;
+    // use 0x1::Vouch;
 
     use 0x1::Debug::print;
 
@@ -34,8 +34,8 @@ address 0x1 {
       if (!DiemAccount::is_slow(val)) return false;
       print(&111110004);
 
-      if (!Vouch::unrelated_buddies_above_thresh(val)) return false;
-      print(&111110005);
+      // if (!Vouch::unrelated_buddies_above_thresh(val)) return false;
+      // print(&111110005);
 
       true
     }
