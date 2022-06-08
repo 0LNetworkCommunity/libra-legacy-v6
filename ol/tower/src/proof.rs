@@ -90,6 +90,7 @@ pub fn mine_and_submit(config: &mut AppCfg, tx_params: TxParams, local_mode: boo
         };
 
         println!("Mining VDF Proof # {}", next.next_height);
+        println!("difficulty: {}, security: {}", next.diff.difficulty, next.diff.security);
 
         let block = mine_once(&config,next)?;
 

@@ -604,13 +604,9 @@ module TowerState {
           n = n / len;
           k = k + 1;
         };
-        // if (n >= len) { n = n / len };
-        // return zero so the user knows of the error, instead of returning anything halfway though the iters.
-        // if (n == 0) return 0;
-
         print(&n);
         print(&len);
-
+        // double check
         if (len <= n) return 0;
 
         print(&666602);
