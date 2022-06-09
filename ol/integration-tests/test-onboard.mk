@@ -132,8 +132,7 @@ check-tx:
 
 check-account-created: 
 # checks if there is any mention of BOB's account as a payee on EVE's account
-	PERSONA=alice make -f ${MAKE_FILE} resources | grep -e 'balance'
-
+	PERSONA=alice make -f ${MAKE_FILE} resources | grep -e 'previous_proof_hash'
 	
 check-autopay:
 # swarm accounts start with a balance of 10, check that the balance increases
