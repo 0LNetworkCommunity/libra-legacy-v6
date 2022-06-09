@@ -14,7 +14,8 @@ use txs::submit_tx::{eval_tx_status, TxError};
 use txs::tx_params::TxParams;
 
 use crate::commit_proof::commit_proof_tx;
-use crate::EPOCH_MINING_THRES_UPPER;
+use crate::garbage_collection::resubmit_and_gc_if_fails;
+use crate::{EPOCH_MINING_THRES_UPPER, tower_errors};
 use crate::proof::{FILENAME, get_highest_block};
 
 /// Submit a backlog of blocks that may have been mined while network is offline.
@@ -65,15 +66,21 @@ pub fn process_backlog(
                 let block: VDFProof =
                     serde_json::from_reader(reader).map_err(|e| Error::from(e))?;
 
-                let view = commit_proof_tx(&tx_params, block)?;
+                let view = commit_proof_tx(&tx_params, block.clone())?;
                 match eval_tx_status(view) {
                     Ok(_) => {}
                     Err(e) => {
                         warn!(
                             "WARN: could not fetch TX status, aborting. Message: {:?} ",
-                            e
+                            &e
                         );
                         // evaluate type of error and maybe garbage collect
+                        match tower_errors::parse_error(&e) {
+                            tower_errors::TowerError::WrongDifficulty => resubmit_and_gc_if_fails(config, tx_params, block),
+                            tower_errors::TowerError::Discontinuity => resubmit_and_gc_if_fails(config, tx_params, block),
+                            tower_errors::TowerError::Invalid => resubmit_and_gc_if_fails(config, tx_params, block),
+                            _ => {},
+                        }
                         return Err(e);
                     }
                 };

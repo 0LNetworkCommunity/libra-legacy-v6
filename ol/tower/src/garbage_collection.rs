@@ -4,8 +4,15 @@ use std::{path::PathBuf, fs, time::SystemTime};
 use anyhow::bail;
 use diem_crypto::HashValue;
 use ol::config::AppCfg;
+use ol_types::block::VDFProof;
+use txs::tx_params::TxParams;
 use crate::{next_proof, proof};
 
+
+
+pub fn resubmit_and_gc_if_fails(cfg: &AppCfg, tx_params: &TxParams, proof: VDFProof) {
+  todo!()
+}
 
 /// check remaining proofs in backlog.
 /// if they all fail, move the list to a trash file
