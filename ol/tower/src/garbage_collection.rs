@@ -1,6 +1,6 @@
 //! garbage collection
 
-use std::path::PathBuf;
+use std::{path::PathBuf, fs, time::SystemTime};
 
 use anyhow::bail;
 use diem_crypto::HashValue;
@@ -58,6 +58,17 @@ pub fn collect_subsequent_proofs(bad_proof_path: PathBuf, block_dir: PathBuf) ->
 }
 
 /// take list of proofs and save in garbage file
-pub fn put_in_trash() -> anyhow::Result<()> {
-  todo!()
+pub fn put_in_trash(to_trash: Vec<PathBuf>, cfg: AppCfg) -> anyhow::Result<()> {
+  let vdf_path: PathBuf = cfg.workspace.block_dir.parse()?;
+  let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?;
+  let new_dir = vdf_path.join(now.as_secs().to_string());
+  fs::create_dir_all(&new_dir)?;
+
+  to_trash.into_iter()
+  .for_each(|f| {
+    fs::copy(&f, &new_dir).unwrap();
+    fs::remove_file(&f).unwrap();
+  });
+  
+  Ok(())
 }
