@@ -4,14 +4,55 @@ use std::{path::PathBuf, fs, time::SystemTime};
 use anyhow::bail;
 use diem_crypto::HashValue;
 use ol::config::AppCfg;
-use ol_types::block::VDFProof;
-use txs::tx_params::TxParams;
 use crate::{next_proof, proof};
 
 
+/// Start the GC for a proof that is known bad
+pub fn gc_failed_proof(cfg: &AppCfg, bad_proof_path: PathBuf) -> anyhow::Result<()> {
+  println!("bad proof found at {}. Will collect subsequent proofs and move to vdf proof archive", bad_proof_path.to_str().unwrap());
+  if let Some(v) = collect_subsequent_proofs(bad_proof_path, cfg.get_block_dir())? {
+    put_in_trash(v, cfg)?;
+  }
+  Ok(())
+}
 
-pub fn resubmit_and_gc_if_fails(cfg: &AppCfg, tx_params: &TxParams, proof: VDFProof) {
-  todo!()
+
+/// collect all the proofs after a given height, inclusive of the given height
+pub fn collect_subsequent_proofs(bad_proof_path: PathBuf, block_dir: PathBuf) -> anyhow::Result<Option<Vec<PathBuf>>> {
+    let bad_proof = proof::parse_block_file(&bad_proof_path)?;
+
+    let highest_local = proof::get_highest_block(&block_dir)?.0.height;
+
+    // something is wrong with file list
+    if highest_local < bad_proof.height { bail!("highest local proof is lower than bad proof, looks like a filename and height don't match for: {}", &bad_proof_path.to_str().unwrap())};
+    // check if the next proof nonce that the chain expects has already been mined.
+    let mut vec_trash: Vec<PathBuf> = vec![];
+    let mut i = bad_proof.height;
+    while i < highest_local {
+      let (_, file) = proof::find_proof_number(i, &block_dir)?;
+      vec_trash.push(file);
+      i += 1;
+    }
+    Ok(Some(vec_trash))
+}
+
+/// take list of proofs and save in garbage file
+pub fn put_in_trash(to_trash: Vec<PathBuf>, cfg: &AppCfg) -> anyhow::Result<()> {
+  let vdf_path: PathBuf = cfg.workspace.block_dir.parse()?;
+  let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?;
+  let new_dir = vdf_path.join(now.as_secs().to_string());
+  fs::create_dir_all(&new_dir)?;
+
+  println!("placing {} files in trash at {}", to_trash.len(), new_dir.to_str().unwrap());
+
+
+  to_trash.into_iter()
+  .for_each(|f| {
+    fs::copy(&f, &new_dir).unwrap();
+    fs::remove_file(&f).unwrap();
+  });
+  
+  Ok(())
 }
 
 /// check remaining proofs in backlog.
@@ -41,39 +82,4 @@ pub fn find_first_discontinous_proof(cfg: AppCfg, swarm_path: Option<PathBuf>) -
 
   Ok(None)
 
-}
-
-/// collect all the proofs after a given height, inclusive of the given height
-pub fn collect_subsequent_proofs(bad_proof_path: PathBuf, block_dir: PathBuf) -> anyhow::Result<Option<Vec<PathBuf>>> {
-    let bad_proof = proof::parse_block_file(&bad_proof_path)?;
-
-    let highest_local = proof::get_highest_block(&block_dir)?.0.height;
-
-    // something is wrong with file list
-    if highest_local < bad_proof.height { bail!("highest local proof is lower than bad proof, looks like a filename and height don't match for: {}", &bad_proof_path.to_str().unwrap())};
-    // check if the next proof nonce that the chain expects has already been mined.
-    let mut vec_trash: Vec<PathBuf> = vec![];
-    let mut i = bad_proof.height;
-    while i < highest_local {
-      let (_, file) = proof::find_proof_number(i, &block_dir)?;
-      vec_trash.push(file);
-      i += 1;
-    }
-    Ok(Some(vec_trash))
-}
-
-/// take list of proofs and save in garbage file
-pub fn put_in_trash(to_trash: Vec<PathBuf>, cfg: AppCfg) -> anyhow::Result<()> {
-  let vdf_path: PathBuf = cfg.workspace.block_dir.parse()?;
-  let now = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH)?;
-  let new_dir = vdf_path.join(now.as_secs().to_string());
-  fs::create_dir_all(&new_dir)?;
-
-  to_trash.into_iter()
-  .for_each(|f| {
-    fs::copy(&f, &new_dir).unwrap();
-    fs::remove_file(&f).unwrap();
-  });
-  
-  Ok(())
 }

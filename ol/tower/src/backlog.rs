@@ -14,7 +14,7 @@ use txs::submit_tx::{eval_tx_status, TxError};
 use txs::tx_params::TxParams;
 
 use crate::commit_proof::commit_proof_tx;
-use crate::garbage_collection::resubmit_and_gc_if_fails;
+use crate::garbage_collection::gc_failed_proof;
 use crate::{EPOCH_MINING_THRES_UPPER, tower_errors};
 use crate::proof::{FILENAME, get_highest_block};
 
@@ -76,9 +76,9 @@ pub fn process_backlog(
                         );
                         // evaluate type of error and maybe garbage collect
                         match tower_errors::parse_error(&e) {
-                            tower_errors::TowerError::WrongDifficulty => resubmit_and_gc_if_fails(config, tx_params, block),
-                            tower_errors::TowerError::Discontinuity => resubmit_and_gc_if_fails(config, tx_params, block),
-                            tower_errors::TowerError::Invalid => resubmit_and_gc_if_fails(config, tx_params, block),
+                            tower_errors::TowerError::WrongDifficulty => gc_failed_proof(config, path)?,
+                            tower_errors::TowerError::Discontinuity => gc_failed_proof(config, path)?,
+                            tower_errors::TowerError::Invalid => gc_failed_proof(config, path)?,
                             _ => {},
                         }
                         return Err(e);
