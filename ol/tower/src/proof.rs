@@ -179,6 +179,27 @@ pub fn parse_block_file(path: &PathBuf) -> Result<VDFProof, Error> {
     }
 }
 
+/// Parse a proof_x.json file and return a VDFProof
+pub fn find_proof_number(num: u64, blocks_dir: &PathBuf) -> Result<(VDFProof, PathBuf), Error> {
+    let file = PathBuf::from(&format!(
+                            "{}/{}_{}.json",
+                            blocks_dir.display(),
+                            FILENAME,
+                            num.to_string()
+                          ));
+    match parse_block_file(&file) {
+        Ok(p) => {
+          if p.height == num {
+            return Ok((p, file))
+          } else {
+            bail!("file {} does not contain proof height {}, found {} instead", file.to_str().unwrap(), num, p.height);
+          }
+        },
+        Err(e) => Err(e),
+    }
+}
+
+
 /// find the most recent proof on disk
 pub fn get_latest_proof(config: &AppCfg) -> Result<VDFProof, Error> {
     let (_current_block_number, current_block_path) = get_highest_block(&config.get_block_dir())?;
