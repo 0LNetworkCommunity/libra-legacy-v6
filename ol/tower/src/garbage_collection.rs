@@ -2,6 +2,7 @@
 
 use std::path::PathBuf;
 
+use anyhow::bail;
 use diem_crypto::HashValue;
 use ol::config::AppCfg;
 
@@ -20,11 +21,16 @@ pub fn find_first_discontinous_proof(cfg: AppCfg, swarm_path: Option<PathBuf>) -
   // check if the next proof nonce that the chain expects has already been mined.
 
   let mut i = p.next_height;
+  let mut preimage = p.preimage;
   while i < highest_local {
-    let (proof, file) = proof::find_proof_number(p.next_height, &block_dir)?;
-        if p.preimage != HashValue::sha3_256_of(&proof.proof).to_vec() {
+    
+    let (proof, file) = proof::find_proof_number(i, &block_dir)?;
+    let next_preimage = HashValue::sha3_256_of(&proof.proof).to_vec();
+        if preimage != next_preimage {
         return Ok(Some(file));
     }
+    preimage = next_preimage;
+    
     i += 1;
   }
 
@@ -32,10 +38,23 @@ pub fn find_first_discontinous_proof(cfg: AppCfg, swarm_path: Option<PathBuf>) -
 
 }
 
-/// if a proof can't be verified this epoch, the subsequent proofs will not be valid.
-pub fn find_proofs_chain_with_deprecated_params() -> Option<Vec<PathBuf>> {
-  // start from last known proof on chain.
-  todo!()
+/// collect all the proofs after a given height, inclusive of the given height
+pub fn collect_subsequent_proofs(bad_proof_path: PathBuf, block_dir: PathBuf) -> anyhow::Result<Option<Vec<PathBuf>>> {
+    let bad_proof = proof::parse_block_file(&bad_proof_path)?;
+
+    let highest_local = proof::get_highest_block(&block_dir)?.0.height;
+
+    // something is wrong with file list
+    if highest_local < bad_proof.height { bail!("highest local proof is lower than bad proof, looks like a filename and height don't match for: {}", &bad_proof_path.to_str().unwrap())};
+    // check if the next proof nonce that the chain expects has already been mined.
+    let mut vec_trash: Vec<PathBuf> = vec![];
+    let mut i = bad_proof.height;
+    while i < highest_local {
+      let (_, file) = proof::find_proof_number(i, &block_dir)?;
+      vec_trash.push(file);
+      i += 1;
+    }
+    Ok(Some(vec_trash))
 }
 
 /// take list of proofs and save in garbage file
