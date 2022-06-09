@@ -20,7 +20,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::dialogue::{add_tower, what_home, what_ip, what_statement, what_vfn_ip};
+use crate::dialogue::{what_home, what_ip, what_statement, what_vfn_ip};
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 
@@ -112,10 +112,16 @@ impl AppCfg {
         }
     }
 
-    /// format the standard namespace for 0L validator
+    /// format the standard namespace for 0L OPERATOR
     pub fn format_oper_namespace(&self) -> String {
       format!("{}-oper", self.profile.account.to_hex())
     }
+
+    /// format the standard namespace for 0L OWNER
+    pub fn format_owner_namespace(&self) -> String {
+      self.profile.account.to_hex()
+    }
+    
 
     /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self) -> PathBuf {
@@ -167,10 +173,13 @@ impl AppCfg {
         default_config.workspace.node_home =
             config_path.clone().unwrap_or_else(|| what_home(None, None));
 
+        if let Some(u) = upstream_peer {
+          default_config.profile.upstream_nodes = vec![u.to_owned()]
+        };
         // Add link to previous tower
-        if !*IS_TEST {
-            default_config.profile.tower_link = add_tower(&default_config);
-        }
+        // if !*IS_TEST {
+        //     default_config.profile.tower_link = add_tower(&default_config);
+        // }
 
         if source_path.is_some() {
             // let source_path = what_source();
@@ -188,18 +197,11 @@ impl AppCfg {
             default_config.chain_info.base_epoch = *base_epoch;
             default_config.chain_info.base_waypoint = *base_waypoint;
         } else {
-            if let Some(url) = upstream_peer {
-                default_config.profile.upstream_nodes = vec![url.to_owned()];
-                let mut web_monitor_url = url.clone();
-                let (e, w) = bootstrap_waypoint_from_upstream(&mut web_monitor_url).unwrap();
-                default_config.chain_info.base_epoch = Some(e);
-                default_config.chain_info.base_waypoint = Some(w);
-            } else {
-                default_config.chain_info.base_epoch = None;
-                default_config.chain_info.base_waypoint = None;
-                println!("WARN: No --epoch or --waypoint or upstream --url passed. This should only be done at genesis. If that's not correct either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
-                // exit(1);
-            }
+
+          default_config.chain_info.base_epoch = None;
+          default_config.chain_info.base_waypoint = None;
+          println!("WARN: No --epoch or --waypoint or upstream --url passed. This should only be done at genesis. If that's not correct either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
+
         }
 
         // skip questionnaire if CI

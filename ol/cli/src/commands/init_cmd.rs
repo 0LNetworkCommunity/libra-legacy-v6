@@ -105,59 +105,15 @@ impl Runnable for InitCmd {
         let is_swarm = *&entry_args.swarm_path.is_some();
 
         if self.update_waypoint {
-            // TODO: will need to update the key_store.json file with waypoint info.
-            if let Some(w) = self.waypoint {
-                app_cfg.chain_info.base_waypoint = Some(w);
-                match app_cfg.save_file() {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("could not save config file, exiting. Message: {:?}", e);
-                        exit(1)
-                    }
-                }
-                return;
-            };
-            let client = match client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg) {
-                Ok(c) => c,
-                Err(e) => {
-                    println!(
-                        "Could not connect to a fullnode with JSON API, exiting. Message: {:?}",
-                        e
-                    );
-                    exit(1);
-                }
-            };
-
-            let mut node = Node::new(client, &app_cfg, is_swarm);
-
-            match node.waypoint() {
-                Ok(w) => {
-                    key::set_waypoint(
-                        &app_cfg.workspace.node_home,
-                        &app_cfg.profile.account.to_string(),
-                        w,
-                    );
-                    key::set_genesis_waypoint(
-                        &app_cfg.workspace.node_home,
-                        &app_cfg.profile.account.to_string(),
-                        w,
-                    );
-
-                    app_cfg.chain_info.base_waypoint = Some(w);
-                    match app_cfg.save_file() {
-                        Ok(_) => {}
-                        Err(e) => {
-                            println!("could not save config file, exiting. Message: {:?}", e);
-                            exit(1)
-                        }
-                    }
-                    return;
-                }
-                Err(e) => {
-                    println!("Could not find a waypoint, exiting. Message: {:?}", e);
-                    exit(1);
+            match update_waypoint(app_cfg.clone(), self.waypoint, entry_args.swarm_path.clone()) {
+                Ok(_) => {
+                  println!("waypoint updated successfully in files 0L.toml, and key_store.json");
+                },
+                Err(e ) => {
+                  println!("ERROR: could not update files 0L.toml, and key_store.json with waypoint, message: {:?}", e.to_string());
                 }
             }
+            return;
         }
 
         if let Some(url) = self.rpc_playlist.as_ref() {
@@ -232,7 +188,7 @@ impl Runnable for InitCmd {
                             exit(1);
                         }
                     }
-                    // return
+                    return;
                 }
                 Err(e) => {
                     println!(
@@ -242,8 +198,6 @@ impl Runnable for InitCmd {
                     exit(1);
                 }
             };
-
-            exit(0);
         }
 
         // create files for VFN
@@ -451,7 +405,9 @@ pub fn initialize_val_key_store(
 ) -> Result<(), Error> {
     let home_dir = &app_cfg.workspace.node_home;
     let keys = KeyScheme::new(wallet);
-    let namespace = app_cfg.format_oper_namespace();
+    let namespace = app_cfg.format_owner_namespace();
+    let oper_namespace = app_cfg.format_oper_namespace();
+
     let way = way_opt.unwrap_or(
         "0:c12c01d2ac6deb028567c9a9c816ca3fe53fab9c461e4eab2f89125f975b63c3"
             .parse()
@@ -459,10 +415,10 @@ pub fn initialize_val_key_store(
     );
 
     init::key_store_init(home_dir, &namespace, keys, is_genesis);
-    key::set_operator_key(home_dir, &namespace);
-    key::set_owner_key(home_dir, &namespace, app_cfg.profile.account);
-    key::set_genesis_waypoint(home_dir, &namespace, way.clone());
-    key::set_waypoint(home_dir, &namespace, way);
+    key::set_operator_key(home_dir, &oper_namespace);
+    key::set_owner_key(home_dir, &oper_namespace, app_cfg.profile.account);
+    key::set_genesis_waypoint(home_dir, &oper_namespace, way.clone());
+    key::set_waypoint(home_dir, &oper_namespace, way);
 
     Ok(())
 }
@@ -474,4 +430,38 @@ impl config::Override<AppCfg> for InitCmd {
     fn override_config(&self, config: AppCfg) -> Result<AppCfg, FrameworkError> {
         Ok(config)
     }
+}
+
+/// helper to update waypoint from a known waypoint or query an upstream node for current waypoint
+fn update_waypoint(mut app_cfg: AppCfg, waypoint_opt: Option<Waypoint>,  swarm_path: Option<PathBuf>) -> anyhow::Result<Waypoint> {
+    let new_waypoint = match waypoint_opt {
+        Some(w) => w,
+        None => {
+            let client = client::pick_client(swarm_path, &mut app_cfg)?;
+
+            match client.get_waypoint_state()? {
+                Some(wv) => wv.waypoint,
+                None => bail!("could not get waypoint view from chain"),
+            }
+        }
+    };
+    
+    // set the 0L.toml file waypoint
+    app_cfg.chain_info.base_waypoint = Some(new_waypoint);
+    app_cfg.save_file()?;
+
+    // Set the key_store.json file's waypoint
+    key::set_waypoint(
+        &app_cfg.workspace.node_home,
+        &app_cfg.profile.account.to_string(),
+        new_waypoint,
+    );
+
+    key::set_genesis_waypoint(
+        &app_cfg.workspace.node_home,
+        &app_cfg.profile.account.to_string(),
+        new_waypoint,
+    );
+
+    Ok(new_waypoint)
 }
