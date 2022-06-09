@@ -1,11 +1,9 @@
 //! garbage collection
 
 use std::{path::PathBuf, fs, time::SystemTime};
-
 use anyhow::bail;
 use diem_crypto::HashValue;
 use ol::config::AppCfg;
-
 use crate::{next_proof, proof};
 
 
