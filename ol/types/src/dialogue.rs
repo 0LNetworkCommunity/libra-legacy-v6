@@ -78,7 +78,7 @@ pub fn what_ip() -> Result<Ipv4Addr, Error> {
       });
 
     if *IS_TEST {
-        return Ok("127.0.0.1".parse().unwrap());
+        return Ok(system_ip);
     }
 
     let txt = &format!(
