@@ -3,7 +3,6 @@
 #![allow(clippy::never_loop)]
 
 use super::genesis_files_cmd;
-use crate::entrypoint;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use diem_genesis_tool::ol_node_files;
@@ -12,7 +11,7 @@ use diem_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::block::VDFProof;
-use ol_types::config::IS_TEST;
+use ol_types::config::{IS_TEST, bootstrap_waypoint_from_upstream};
 use ol_types::fixtures;
 use ol_types::{account::ValConfigs, config::TxType, pay_instruction::PayInstruction};
 use reqwest::Url;
@@ -52,9 +51,9 @@ pub struct ValWizardCmd {
     upstream_peer: Option<Url>,
     #[options(help = "If validator is building from source")]
     source_path: Option<PathBuf>,
-    #[options(short = "w", help = "If validator is building from source")]
+    #[options(short = "w", help = "Explicitly set the waypoint")]
     waypoint: Option<Waypoint>,
-    #[options(short = "e", help = "If validator is building from source")]
+    #[options(short = "e", help = "Explicitly set the epoch")]
     epoch: Option<u64>,
     #[options(help = "For testing in ci, use genesis.blob fixtures")]
     ci: bool,
@@ -74,32 +73,40 @@ impl Runnable for ValWizardCmd {
           println!("\nYour first 0L proof-of-work will also be mined now. Expect this take at least 30 minutes on modern CPUs.\n");
         }
 
-        let entry_args = entrypoint::get_args();
+        // let entry_args = entrypoint::get_args();
 
         // Get credentials from prompt
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
 
-        let upstream_peer = if *&self.genesis_ceremony {
-            None
+         
+        let (epoch, waypoint) = if self.epoch.is_none() && self.waypoint.is_none() {
+           
+          if let Some(mut u) = self.template_url.clone() {
+            println!("attempting to bootstap current waypoint and epoch from --template-url");
+            match bootstrap_waypoint_from_upstream(&mut u) {
+                Ok((e, w)) => (Some(e), Some(w)),
+                Err(_) => {
+                  println!("No epoch or waypoint found from template URL, continuing without setting. Otherwise explicitly set --epoch and --waypoint");
+                  (self.epoch, self.waypoint)
+                },
+            }
+          } else {
+            (self.epoch, self.waypoint)
+          }
         } else {
-            let mut upstream = self.upstream_peer.clone().unwrap_or_else(|| {
-              self.template_url.clone().unwrap_or_else(|| {
-                  print!("ERROR: Must set a URL to query chain. Use --upstream-peer of --template-url, exiting.");
-                  exit(1)  
-              })
-            });
-            upstream.set_port(Some(8080)).unwrap();
-            println!("Setting upstream peer URL to: {:?}", &upstream.as_str());
-            Some(upstream)
+          (self.epoch, self.waypoint)
         };
+        
+
+        let rpc_node = self.upstream_peer.clone().unwrap_or(Url::parse("http://localhost:8080").unwrap());
 
         let app_config = AppCfg::init_app_configs(
             authkey,
             account,
-            &upstream_peer,
+            &Some(rpc_node),
             &self.home_path,
-            &self.epoch,
-            &self.waypoint,
+            &epoch,
+            &waypoint,
             &self.source_path,
             None,
             None,
@@ -114,29 +121,13 @@ impl Runnable for ValWizardCmd {
 
         status_ok!("\nApp configs written", "\n...........................\n");
 
-        if let Some(url) = &self.template_url {
-            let mut url = url.to_owned();
-            url.set_port(Some(3030)).unwrap(); //web port
-            save_template(&url.join("account.json").unwrap(), home_path);
-            // get autopay
-            status_ok!("\nTemplate saved", "\n...........................\n");
-        }
-
-        // Use any autopay instructions
-        // TODO: simplify signature
-        let (autopay_batch, autopay_signed) = get_autopay_batch(
-            &self.template_url,
-            &self.autopay_file,
-            home_path,
-            &app_config,
-            &wallet,
-            entry_args.swarm_path.as_ref().is_some(),
-            *&self.genesis_ceremony,
-        );
-        status_ok!(
-            "\nAutopay transactions signed",
-            "\n...........................\n"
-        );
+        // if let Some(url) = &self.template_url {
+        //     let mut url = url.to_owned();
+        //     url.set_port(Some(3030)).unwrap(); //web port
+        //     save_template(&url.join("account.json").unwrap(), home_path);
+        //     // get autopay
+        //     status_ok!("\nAccount Template saved", "\n...........................\n");
+        // }
 
         // Initialize Validator Keys
         // this also sets a genesis waypoint if one was provide, e.g. from an upstream peer.
@@ -174,8 +165,8 @@ impl Runnable for ValWizardCmd {
             &self.output_path,
             wallet,
             Some(app_config.clone()),
-            autopay_batch,
-            autopay_signed,
+            None,
+            None,
         );
         status_ok!(
             "\nAccount manifest written",
@@ -308,8 +299,8 @@ pub fn write_account_json(
 }
 
 fn get_genesis_and_make_node_files(cmd: &ValWizardCmd, home_path: &PathBuf, _base_waypoint: Option<Waypoint>, cfg: &AppCfg) {
-  // The default behavior is to fetch the genesis from a github repo.
-  // if this is not possible then the user should have set a prebuilt genesis path.
+    // The default behavior is to fetch the genesis from a github repo.
+    // if this is not possible then the user should have set a prebuilt genesis path.
 
     // in case of CI copy
    let genesis_blob_path =  if cmd.ci {

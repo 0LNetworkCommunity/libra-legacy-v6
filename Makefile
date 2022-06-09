@@ -28,8 +28,7 @@ CARGO_ARGS = --release
 # testnet automation settings
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
-MNEM = $(shell cat ol/
-fixtures/mnemonic/${NS}.mnem)
+MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 CARGO_ARGS = --locked # just keeping this from doing --release mode, while in testnet mode.
 GITHUB_USER = OLSF
 endif
@@ -109,7 +108,7 @@ install: mv-bin bin-path
 	cp -f ${SOURCE}/target/release/onboard ${USER_BIN_PATH}/onboard
 
 bin-path:
-	@if (cat ~/.bashrc | grep '~/bin:') ; then \
+	@if (cat ~/.bashrc | grep ${USER_BIN_PATH}) ; then \
 		echo "OK .bashrc correctly configured with PATH=~/bin" ; \
 	else \
 		echo -n "WARN Your .bashrc doesn't seem to have ~/bin as a search path. Append .bashrc with PATH=~/bin:$$PATH ? (y/n) " ; \
@@ -230,8 +229,9 @@ gen-register:
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
-	@echo Making pull request to genesis coordination repo
-	make gen-make-pull
+# TODO: implement the forking workflow for dev genesis?
+# @echo Making pull request to genesis coordination repo
+# make gen-make-pull
 
 init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
