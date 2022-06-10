@@ -220,7 +220,7 @@ impl<T: ExecutorProxyTrait> StateSyncCoordinator<T> {
                         }
                         Event::Message(peer_id, message) => {
                             if let Err(e) = self.process_chunk_message(network_id.clone(), peer_id, message).await {
-                                error!(LogSchema::new(LogEntry::ProcessChunkMessage).error(&e));
+                                info!(LogSchema::new(LogEntry::ProcessChunkMessage).error(&e));
                             }
                         }
                         unexpected_event => {
