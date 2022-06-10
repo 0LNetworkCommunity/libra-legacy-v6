@@ -26,4 +26,3 @@ script {
         assert!(DiemAccount::balance<GAS>(@Bob) == 1000005, 735701);
     }
 }
-// check: EXECUTED

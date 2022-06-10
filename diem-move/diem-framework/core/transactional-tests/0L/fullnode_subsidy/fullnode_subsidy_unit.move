@@ -1,4 +1,6 @@
-//# init --validators Frank
+//# init --parent-vasps Alice Frank
+// Alice:     validators with 10M GAS
+// Frank: non-validators with  1M GAS
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {

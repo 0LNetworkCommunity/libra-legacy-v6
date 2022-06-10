@@ -14,8 +14,6 @@ script {
         TowerState::test_helper_mock_mining(&sender, mining_proofs);
     }
 }
-//check: EXECUTED
-
 
 //# run --admin-script --signers DiemRoot Carol
 script {
@@ -27,7 +25,6 @@ script {
 
     }
 }
-//check: EXECUTED
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -50,11 +47,11 @@ script {
       Stats::process_set_votes(vm, &validators);
       i = i + 1;
     };
-
-    assert!(DiemAccount::balance<GAS>(@Alice) == 1000000, 7357190102011000);
-    assert!(DiemAccount::balance<GAS>(@Bob) == 1000000, 7357190102021000);
-    assert!(DiemAccount::balance<GAS>(@Carol) == 1000000, 7357190102031000);
-    assert!(DiemAccount::balance<GAS>(@Dave) == 1000000, 7357190102041000);
+    let validator_init_balance = 10000000;
+    assert!(DiemAccount::balance<GAS>(@Alice) == validator_init_balance, 7357190102011000);
+    assert!(DiemAccount::balance<GAS>(@Bob) == validator_init_balance, 7357190102021000);
+    assert!(DiemAccount::balance<GAS>(@Carol) == validator_init_balance, 7357190102031000);
+    assert!(DiemAccount::balance<GAS>(@Dave) == validator_init_balance, 7357190102041000);
 
     assert!(Cases::get_case(vm, @Alice, 0, 15) == 1, 7357190102051000);
     assert!(Cases::get_case(vm, @Bob, 0, 15) == 4, 7357190102061000);
@@ -62,8 +59,6 @@ script {
     assert!(Cases::get_case(vm, @Dave, 0, 15) == 4, 7357190102081000);
   }
 }
-// check: EXECUTED
-
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -79,17 +74,19 @@ script {
     let mining_proofs = 5;
     let refund_to_operator = 4336 * mining_proofs;  
     Subsidy::process_subsidy(&vm, subsidy_amount, &validators);
+    let validator_init_balance = 10000000;
     assert!(
-      DiemAccount::balance<GAS>(@Alice) == 1000000 + subsidy_amount/2 - refund_to_operator, 
+      DiemAccount::balance<GAS>(@Alice) == 
+        validator_init_balance + subsidy_amount/2 - refund_to_operator, 
       7357190102091000
     );
 
-    assert!(DiemAccount::balance<GAS>(@Bob) == 1000000, 7357190102101000);
+    assert!(DiemAccount::balance<GAS>(@Bob) == validator_init_balance, 7357190102101000);
     assert!(
-      DiemAccount::balance<GAS>(@Carol) == 1000000 + subsidy_amount/2 - refund_to_operator,
+      DiemAccount::balance<GAS>(@Carol) ==
+        validator_init_balance + subsidy_amount/2 - refund_to_operator,
       7357190102111000
     );
-    assert!(DiemAccount::balance<GAS>(@Dave) == 1000000, 7357190102121000);
+    assert!(DiemAccount::balance<GAS>(@Dave) == validator_init_balance, 7357190102121000);
   }
 }
-// check: EXECUTED

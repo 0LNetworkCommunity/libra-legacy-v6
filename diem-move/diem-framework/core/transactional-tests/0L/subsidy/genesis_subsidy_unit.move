@@ -16,6 +16,6 @@ script {
         assert!(new_account_bal > old_account_bal, 73570001);
         // two coins are added at genesis, one for validator
         // and a second which will go to operator.
-        assert!(new_account_bal == 12000000, 73570002);
+        assert!(new_account_bal == 21000000, 73570002);
     }
 }
