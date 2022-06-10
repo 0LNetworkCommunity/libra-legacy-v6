@@ -413,7 +413,7 @@ set-waypoint:
 		jq -r '. | with_entries(select(.key|match("-oper/genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/genesis_waypoint; \
 	fi
 
-	cargo r -p ol -- init --update-waypoint --waypoint $(shell echo ${DATA_PATH}/client_waypoint)
+	cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/client_waypoint)
 
 	@echo client_waypoint:
 	@cat ${DATA_PATH}/client_waypoint
@@ -568,6 +568,6 @@ fork-config:
 	cargo run -p onboard -- fork -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
 
 # start node from files
-fork-start: 
+fork-start:
 	rm -rf ~/.0L/db
 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
