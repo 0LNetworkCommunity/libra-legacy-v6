@@ -86,7 +86,13 @@ pub fn mine_and_submit(config: &mut AppCfg, tx_params: TxParams, local_mode: boo
 
         let next = match local_mode {
             true => next_proof::get_next_proof_params_from_local(config)?,
-            false => next_proof::get_next_proof_from_chain(config, swarm_path.clone())?,
+            false => match next_proof::get_next_proof_from_chain(config, swarm_path.clone()) {
+                Ok(n) => n,
+                // failover to local mode, if no onchain data can be found.
+                // TODO: this is important for migrating to the new protocol.
+                // in future versions we should remove this since we may be producing bad proofs, and users should explicitly choose to use local mode.
+                Err(_) => next_proof::get_next_proof_params_from_local(config)?,
+            },
         };
 
         println!("Mining VDF Proof # {}", next.next_height);
