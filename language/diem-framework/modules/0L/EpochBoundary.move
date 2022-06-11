@@ -30,6 +30,7 @@ module EpochBoundary {
     use 0x1::RecoveryMode;
     use 0x1::Cases;
     use 0x1::Jail;
+    use 0x1::Vouch;
 
     use 0x1::Debug::print;
 
@@ -161,7 +162,6 @@ module EpochBoundary {
               case < 3 &&
               Audit::val_audit_passing(addr)
             ) {
-                // Vector::push_back(&mut proven_nodes, addr);
                 len_proven_nodes = len_proven_nodes + 1;
                 // also reset the jail counter for any successful unjails
                 Jail::remove_consecutive_fail(vm, addr);
@@ -203,7 +203,7 @@ module EpochBoundary {
             print(&case);
 
             if (
-                // ignore those already on list
+                // ignore proven nodes already on list
                 !Vector::contains<address>(&proposed_set, &addr) &&
                 // jail the current validators which did not perform.
                 !Jail::is_jailed(addr) &&
@@ -211,7 +211,9 @@ module EpochBoundary {
                 // case 2 get grace
                 (case < 3 || mined_last_epoch) &&
                 // do the remaining configuration checks, incl vouching
-                Audit::val_audit_passing(addr)
+                Audit::val_audit_passing(addr) &&
+                // when being onboarded or being un-jailed check if the vouches are sufficient. I.e. don't do this check if the validator has proven themselves in the previous round. If your vouchers fall out of the set, you may also fall out, and this chain reaction would cause instability in the network.
+                Vouch::unrelated_buddies_above_thresh(addr)
             ) {
                 print(&99990901);
                 Vector::push_back(&mut proposed_set, addr);

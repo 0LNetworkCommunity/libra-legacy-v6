@@ -26,7 +26,11 @@
         </tr>
       <tbody>
         <tr>
-          <td class="uk-text-uppercase">validator</td>
+          {#if account.is_in_validator_set}
+            <td class="uk-text-uppercase">validator</td>
+          {:else}
+            <td class="uk-text-uppercase">user</td>
+          {/if}
           <td class="uk-text-truncate">{account.address}</td>
           <td class="uk-text-right">{formatBalance(account.balance)}</td>
         </tr>
