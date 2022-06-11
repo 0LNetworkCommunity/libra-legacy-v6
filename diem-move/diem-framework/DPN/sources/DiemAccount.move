@@ -507,7 +507,8 @@ module DiemFramework::DiemAccount {
             onboarding_gas_transfer<GAS>(sender, new_account, value);
             new_account
         }
-        // otherwise, if the onboarder wants to send more, then it must respect the transfer limits.
+        // otherwise, if the onboarder wants to send more, then it must respect
+        // the transfer limits.
         else {
             let with_cap = extract_withdraw_capability(sender);
             pay_from<GAS>(
