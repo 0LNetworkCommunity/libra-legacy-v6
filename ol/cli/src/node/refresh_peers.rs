@@ -15,6 +15,7 @@ impl Node {
     pub fn refresh_fullnode_seeds(&mut self) -> Result<SeedAddresses, Error> {
         let mut seed_addr = SeedAddresses::default();
 
+        self.refresh_onchain_state();
         if let Some(account_state) = &self.chain_state {
             match account_state.get_validator_set() {
                 Ok(Some(v)) => {
