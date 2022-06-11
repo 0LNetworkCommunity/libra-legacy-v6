@@ -594,6 +594,17 @@ fn create_and_initialize_owners_operators(
             ]),
         );
 
+        exec_function(
+            session,
+            log_context,
+            "Vouch",
+            "init",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(owner_address)
+            ]),
+        );
+
         let mut vals = all_vals.clone();
         vals.retain(|el|{ el != &owner_address});
         exec_function(
