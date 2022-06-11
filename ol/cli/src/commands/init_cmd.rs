@@ -163,7 +163,7 @@ impl Runnable for InitCmd {
             };
 
             let mut node = Node::new(client, &app_cfg, is_swarm);
-
+            
             match node.refresh_fullnode_seeds() {
                 Ok(s) => {
                     match serde_yaml::to_string(&s) {
