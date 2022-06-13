@@ -455,7 +455,8 @@ debug:
 #### TESTNET #####
 # The testnet is started using the same tools as genesis to have a faithful reproduction of a network from a clean slate.
 
-# 1. The first thing necessary is initializing testnet genesis validators.
+# 1. The first thing necessary is initializing testnet genesis validators. All genesis nodes need to set up environment variables for their namespace/personas e.g. NS=alice. Also the TEST=y mode must be set, as well as a chain environment e.g. NODE_ENV=test. These settings must be done manually, preferably in .bashrc
+
 # 2. Next those validators will register config data to a github repo OLSD/dev-genesis. Note: there could be github http errors, if validators attempt to write the same resource simultaneously
 
 # THESE STEPS ARE ACHIEVED WITH `make testnet-setup-register-val`
@@ -478,7 +479,7 @@ testnet-validator-init-wizard: clear fix
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
 	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --chain-id 1 --genesis-ceremony
 
-# Do the genesis ceremony registration
+# Do the genesis ceremony registration, this includes the step testnet-validator-init-wizard
 testnet-setup-register-val:  testnet-validator-init-wizard gen-register
 # Do a dev genesis on each node after EVERY NODE COMPLETED registration.
 
