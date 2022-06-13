@@ -3,8 +3,9 @@
 
 use diem_github_client::Client;
 use diem_management::{config::ConfigPath, error::Error, secure_backend::SharedBackend};
-use std::process::exit;
+use std::{process::exit, path::PathBuf, fs::File};
 use structopt::StructOpt;
+use std::io::prelude::*;
 
 /// Note, it is implicitly expected that the storage supports
 /// a namespace but one has not been set.
@@ -24,6 +25,8 @@ pub struct CreateGenesisRepo {
     pub pull_request_user: Option<String>,
     #[structopt(long)]
     pub delete_repo_user: Option<String>,
+    #[structopt(long)]
+    pub publish_genesis: Option<PathBuf>,
 }
 
 impl CreateGenesisRepo {
@@ -47,6 +50,23 @@ impl CreateGenesisRepo {
                         .read_token()
                         .expect("could not get github token"),
                 );
+
+                if let Some(p) = self.publish_genesis {
+                  
+
+                  let mut file = File::open(&p)
+                  .expect("cannot read file");
+
+                  let mut bytes = Vec::new();
+                  file.read_to_end(&mut bytes).expect("could not read file");
+                  let base64_encoded = base64::encode(bytes);
+
+                  let repo_file_path = format!("/genesis/{}", p.file_name().unwrap().to_str().unwrap());
+
+                  github.put(&repo_file_path, &base64_encoded).expect("could not put file in github repo");
+
+                  return Ok("published genesis.blob and genesis_waypoint.txt to genesis repo.".to_string());
+                }
                 // Make a pull request of the the forked repo, back to the genesis coordination repository.
                 if let Some(user) = self.pull_request_user {
                     match github.make_genesis_pull_request(&config.repository_owner, &config.repository, &user) {
