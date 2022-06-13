@@ -36,7 +36,7 @@ endif
 # Registration params
 REMOTE = 'backend=github;repository_owner=${GITHUB_USER};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
 
-GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC};branch=master'
 
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
@@ -452,71 +452,64 @@ debug:
 	make smoke-onboard <<< $$'${MNEM}'
  
 
-##### DEVNET TESTS #####
+#### TESTNET #####
+# The testnet is started using the same tools as genesis to have a faithful reproduction of a network from a clean slate.
 
-devnet: clear fix dev-wizard dev-genesis start
-# runs a smoke test from fixtures. 
-# Uses genesis blob from fixtures, assumes 3 validators, and test settings.
-# This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
+# 1. The first thing necessary is initializing testnet genesis validators.
+# 2. Next those validators will register config data to a github repo OLSD/dev-genesis. Note: there could be github http errors, if validators attempt to write the same resource simultaneously
 
-dev-join: clear fix fix-genesis dev-wizard
-# REQUIRES MOCK GIT INFRASTRUCTURE: OLSF/dev-genesis OLSF/dev-epoch-archive
-# see `devnet-archive` below 
-# We want to simulate the onboarding/new validator fetching genesis files from the mock archive: dev-genesis-archive
+# THESE STEPS ARE ACHIEVED WITH `make testnet-setup-register-val`
 
-# mock restore backups from dev-epoch-archive
-	rm -rf ~/.0L/restore
-# restore from MOCK archive OLSF/dev-epoch-archive
-	cargo r -p ol -- restore
+# 3. Wait. All genesis nodes need to complete registration. Otherwise buidling a genesis.blob (the first block), will fail.
+# 4. Each genesis node builds the genesis file locally, and submits to the github repo. (this remote genesis file is what subsequent non-genesis validators will use to bootstrap their db).
+# 5. Genesis validators can start their nodes.
+
+# THESE STEPS ARE ACHIEVED WITH  testnet-setup-make-genesis-files
+
+
+# 6. Assuming there is progress in the block production, subsequent validators can join.
+
+# THIS IS ACHIEVED WITH: testnet-onboard
+
+
+#### 1. TESTNET SETUP ####
+
+testnet-validator-init-wizard: clear fix
+#  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
+	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --chain-id 1 --genesis-ceremony
+
+# Do the genesis ceremony registration
+testnet-setup-register-val:  testnet-validator-init-wizard gen-register
+# Do a dev genesis on each node after EVERY NODE COMPLETED registration.
+
+# Makes the gensis file on each genesis validator, AND SAVES TO GITHUB so that other validators can be onboarded after genesis.
+testnet-setup-make-genesis-files: genesis set-waypoint
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--publish-genesis ${DATA_PATH}/genesis.blob \
+	--shared-backend ${GENESIS_REMOTE}
+
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--publish-genesis ${DATA_PATH}/genesis_waypoint.txt \
+	--shared-backend ${GENESIS_REMOTE}
+
+#### 2. TESTNET START ####
+
+# Do this to restart the network with new code. Assumes a registration has been completed, and the genesis validators are unchanged. If new IP addresses or number of genesis nodes changed, you must RERUN SETUP below.
+# - builds stdlib from source
+# - clears many of the home files
+# - adds fixtures
+# - initializes node configs
+# - rebuids genesis files and shares to github genesis repo
+# - starts node in validator mode
+testnet-start: stdlib clear fix testnet-validator-init-wizard testnet-setup-make-genesis-files start
+
+# For subsequent validators joining the testnet. This will fetch the genesis information saved
+testnet-onboard: clear fix
+	MNEM='${MNEM}' cargo run -p onboard -- val --github-org OLSF --repo dev-genesis --chain-id 1
 # start a node with fullnode.node.yaml configs
 	make start-full
 
-dev-wizard:
-#  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p onboard -- val --prebuilt-genesis ${DATA_PATH}/genesis.blob --skip-mining --chain-id 1 --genesis-ceremony
 
-#### DEVNET RESTART ####
-# usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
-
-# Do the ceremony: and also save the genesis fixtures, needs to happen before fix.
-dev-register: clear fix dev-wizard gen-register
-# Do a dev genesis on each node after EVERY NODE COMPLETED registration.
-dev-genesis: genesis dev-save-genesis fix-genesis
-
-#### DEVNET INFRA ####
-# To make reproducible devnet files.
-
-# Save the files to mock infrastructure i.e. devnet github
-dev-infra: dev-backup-archive dev-commit
-
-dev-save-genesis: set-waypoint
-	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/ol/devnet/genesis/${V}/
-	git add ${SOURCE}/ol/devnet/genesis/${V}/
-
-dev-backup-archive:
-	cd ${HOME}/dev-epoch-archive && make devnet-backup
-
-dev-commit:
-	git commit -a -m "save genesis fixtures to ${V}" | true
-	git push | true
-
-
-TAG=$(shell git tag -l "previous")
-clean-tags:
-	git push origin --delete ${TAG}
-	git tag -d ${TAG}
-	
-nuke-testnet:
-	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /vdf_proofs/proof_0.json
-
-	@if test -d ${DATA_PATH}; then \
-		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml vdf_proofs/proof_0.json ~/; \
-		cd ${DATA_PATH} && rm -rf *; \
-		cd ~ && cp github_token.txt autopay_batch.json set_layout.toml ${DATA_PATH}; \
-		cd ${DATA_PATH} && mkdir vdf_proofs;\
-		cd ~ && cp proof_0.json ${DATA_PATH}/vdf_proofs/; \
-	fi
-	
 
 ####### SWARM ########
 
@@ -571,3 +564,10 @@ fork-config:
 fork-start:
 	rm -rf ~/.0L/db
 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
+
+##### UTIL #####
+TAG=$(shell git tag -l "previous")
+clean-tags:
+	git push origin --delete ${TAG}
+	git tag -d ${TAG}
+	
