@@ -401,16 +401,12 @@ ifdef TEST
 	cp ./ol/devnet/set_layout_test.toml ${DATA_PATH}/set_layout.toml
 endif
 
-fix-genesis:
-	cp ./ol/devnet/genesis/${V}/genesis.blob ${DATA_PATH}/
-	cp ./ol/devnet/genesis/${V}/genesis_waypoint ${DATA_PATH}/
-
 
 #### HELPERS ####
 set-waypoint:
 	@if test -f ${DATA_PATH}/key_store.json; then \
 		jq -r '. | with_entries(select(.key|match("-oper/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \
-		jq -r '. | with_entries(select(.key|match("-oper/genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/genesis_waypoint; \
+		jq -r '. | with_entries(select(.key|match("-oper/genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/genesis_waypoint.txt; \
 	fi
 
 	cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/client_waypoint)
