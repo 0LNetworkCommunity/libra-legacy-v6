@@ -452,44 +452,35 @@ debug:
 	make smoke-onboard <<< $$'${MNEM}'
  
 
-##### DEVNET TESTS #####
+#### TESTNET #####
 
-devnet: clear fix dev-wizard dev-genesis start
-# runs a smoke test from fixtures. 
-# Uses genesis blob from fixtures, assumes 3 validators, and test settings.
-# This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
+# Do this to restart the network with new code. Assumes a registration has been completed, and the genesis validators are unchanged. If new IP addresses or number of genesis nodes changed, you must RERUN SETUP below.
+# - builds stdlib from source
+# - clears many of the home files
+# - adds fixtures
+# - initializes node configs
+# - rebuids genesis files and shares to github genesis repo
+# - starts node in validator mode
+testnet-start: stdlib clear fix testnet-validator-init-wizard testnet-setup-make-genesis-files start
 
-dev-join: clear fix fix-genesis dev-wizard
-# REQUIRES MOCK GIT INFRASTRUCTURE: OLSF/dev-genesis OLSF/dev-epoch-archive
-# see `devnet-archive` below 
-# We want to simulate the onboarding/new validator fetching genesis files from the mock archive: dev-genesis-archive
-
-# mock restore backups from dev-epoch-archive
-	rm -rf ~/.0L/restore
-# restore from MOCK archive OLSF/dev-epoch-archive
-	cargo r -p ol -- restore
+# For subsequent validators joining the testnet. This will fetch the genesis information saved
+testnet-onboard: clear fix
+	MNEM='${MNEM}' cargo run -p onboard -- val --github-org OLSF --repo dev-genesis --chain-id 1
 # start a node with fullnode.node.yaml configs
 	make start-full
 
-dev-wizard:
+#### TESTNET SETUP ####
+
+testnet-validator-init-wizard:
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p onboard -- val --prebuilt-genesis ${DATA_PATH}/genesis.blob --skip-mining --chain-id 1 --genesis-ceremony
+	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --chain-id 1 --genesis-ceremony
 
-#### DEVNET RESTART ####
-# usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
-
-# Do the ceremony: and also save the genesis fixtures, needs to happen before fix.
-dev-register: clear fix dev-wizard gen-register
+# Do the genesis ceremony registration
+testnet-setup-register-val: clear fix testnet-validator-init-wizard gen-register
 # Do a dev genesis on each node after EVERY NODE COMPLETED registration.
-dev-genesis: genesis dev-save-genesis fix-genesis
 
-#### DEVNET INFRA ####
-# To make reproducible devnet files.
-
-# Save the files to mock infrastructure i.e. devnet github
-dev-infra: dev-backup-archive dev-commit
-
-dev-save-genesis: set-waypoint
+# Makes the gensis file on each genesis validator, AND SAVES TO GITHUB so that other validators can be onboarded after genesis.
+testnet-setup-make-genesis-files: genesis set-waypoint
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
 	--publish-genesis ${DATA_PATH}/genesis.blob \
 	--shared-backend ${GENESIS_REMOTE}
@@ -497,31 +488,6 @@ dev-save-genesis: set-waypoint
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
 	--publish-genesis ${DATA_PATH}/genesis_waypoint.txt \
 	--shared-backend ${GENESIS_REMOTE}
-
-dev-backup-archive:
-	cd ${HOME}/dev-epoch-archive && make devnet-backup
-
-dev-commit:
-	git commit -a -m "save genesis fixtures to ${V}" | true
-	git push | true
-
-
-TAG=$(shell git tag -l "previous")
-clean-tags:
-	git push origin --delete ${TAG}
-	git tag -d ${TAG}
-	
-nuke-testnet:
-	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /vdf_proofs/proof_0.json
-
-	@if test -d ${DATA_PATH}; then \
-		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml vdf_proofs/proof_0.json ~/; \
-		cd ${DATA_PATH} && rm -rf *; \
-		cd ~ && cp github_token.txt autopay_batch.json set_layout.toml ${DATA_PATH}; \
-		cd ${DATA_PATH} && mkdir vdf_proofs;\
-		cd ~ && cp proof_0.json ${DATA_PATH}/vdf_proofs/; \
-	fi
-	
 
 ####### SWARM ########
 
@@ -576,3 +542,10 @@ fork-config:
 fork-start:
 	rm -rf ~/.0L/db
 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
+
+##### UTIL #####
+TAG=$(shell git tag -l "previous")
+clean-tags:
+	git push origin --delete ${TAG}
+	git tag -d ${TAG}
+	
