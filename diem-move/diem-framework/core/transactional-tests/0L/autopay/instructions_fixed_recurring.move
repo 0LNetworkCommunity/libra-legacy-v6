@@ -84,11 +84,11 @@ script {
   fun main() {
     // alice will have paid 5% on the 10000 she received last epoch
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 999600, 7357003);
+    assert!(ending_balance == 999800, 7357003);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@Carol);
-    assert!(ending_balance == 1000400, 7357004);
+    assert!(ending_balance == 1000200, 7357004);
   }
 }
 // check: EXECUTED

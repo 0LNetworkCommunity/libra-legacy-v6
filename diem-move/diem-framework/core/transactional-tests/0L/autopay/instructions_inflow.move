@@ -16,8 +16,6 @@ script {
   }
 }
 
-// check: EXECUTED
-
 //# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::AutoPay;
@@ -38,7 +36,6 @@ script {
     assert!(percentage == 500, 1);
   }
 }
-// check: EXECUTED
 
 ///////////////////////////////////////////////////
 ///// Trigger Autopay Tick at 31 secs /////
@@ -54,7 +51,7 @@ script {
   fun main(vm: signer, _account: signer) {
     // alice didn't receive any funds, so no change in balance, so no payment sent
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 10000000, 7357002);
+    assert!(ending_balance == 1000000, 7357002);
 
     // add funds to alice account for next tick
     let coin = Diem::mint<GAS>(&vm, 10000);
@@ -67,10 +64,9 @@ script {
     );
 
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 10010000, 7357003);
+    assert!(ending_balance == 1010000, 7357003);
   }
 }
-// check: EXECUTED
 
 ///////////////////////////////////////////////////
 ///// Trigger Autopay Tick at 31 secs /////
@@ -97,11 +93,10 @@ script {
   fun main() {
     // alice will have paid 5% on the 10000 she received last epoch
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 10009501, 7357004);
+    assert!(ending_balance == 1009501, 7357004);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@Carol);
-    assert!(ending_balance == 10000499, 7357005);
+    assert!(ending_balance == 1000499, 7357005);
   }
 }
-// check: EXECUTED

@@ -2,26 +2,27 @@
 // Bob, Sally:     validators with 10M GAS
 // Alice, Jim: non-validators with  1M GAS
 
-//// Old syntax for reference, delete it after fixing this test
-//! account: alice, 10000000GAS, 0
-//! account: bob,   1000000GAS, 0, validator
-//! account: jim,   1000000GAS, 0
-
 // Test runs various autopay instruction types to ensure they are being
 // executed as expected
 
 //# run --admin-script --signers DiemRoot Jim
 script {
     use DiemFramework::Wallet;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::GAS::GAS;
     use Std::Vector;
 
-  fun main(_dr: signer, sender: signer) {
+  fun main(dr: signer, sender: signer) {
       Wallet::set_comm(&sender);
       let list = Wallet::get_comm_list();
       assert!(Vector::length(&list) == 1, 7357001);
+
+      // Alice to have 10M
+			DiemAccount::vm_make_payment_no_limit<GAS>(
+			  @Bob, @Alice, 9000000, x"", x"", &dr
+			);      
     }
 }
-// check: EXECUTED
 
 // alice commits to paying jim 5% of her worth per epoch
 //# run --admin-script --signers DiemRoot Alice
@@ -53,8 +54,6 @@ script {
     assert!(percentage == 500, 735704);
   }
 }
-// check: EXECUTED
-
 
 ///////////////////////////////////////////////////
 ///// Trigger Autopay Tick at 31 secs /////
@@ -77,7 +76,7 @@ script {
 
   fun main() {
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 950001, 735705);
+    assert!(ending_balance == 9500001, 735705);
   }
 }
 // check: EXECUTED
@@ -107,11 +106,10 @@ script {
 
   fun main() {
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 902501, 735711);
+    assert!(ending_balance == 9025001, 735711);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@Jim);
     assert!(ending_balance == 1974999, 735712);
   }
 }
-// check: EXECUTED

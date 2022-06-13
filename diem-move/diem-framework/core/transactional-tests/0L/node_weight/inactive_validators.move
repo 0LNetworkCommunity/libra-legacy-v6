@@ -1,6 +1,6 @@
 //# init --validators Alice Bob Carol Dave Eve
 
-// In this test only alice mines.
+// In this test only Alice mines.
 
 // All nodes except Eve mined above threshold. 
 

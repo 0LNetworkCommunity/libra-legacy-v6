@@ -561,8 +561,8 @@ impl DiemVMImpl {
 
                 // publish the agreed stdlib
                 let new_stdlib = import_stdlib(&payload)
-                    .map_err(|_|{ 
-                        println!("faliled to import stdlib"); 
+                    .map_err(|err|{ 
+                        println!("faliled to import stdlib: {}", err); 
                         VMStatus::Error(StatusCode::STDLIB_UPGRADE_ERROR)
                       })?;
                 let mut counter = 0;

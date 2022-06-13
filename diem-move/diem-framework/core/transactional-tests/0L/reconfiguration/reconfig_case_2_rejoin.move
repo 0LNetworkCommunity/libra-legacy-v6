@@ -186,8 +186,7 @@ script {
         assert!(DiemConfig::get_current_epoch() == 2, 7357008006011);
         // Tests on initial size of validators 
         assert!(DiemSystem::validator_set_size() == 5, 7357008006012);
-        assert!(DiemSystem::is_validator(@Frank)
-         == false, 7357180105031000);
+        assert!(DiemSystem::is_validator(@Frank) == false, 7357180105031000);
     }
 }
 //check: EXECUTED

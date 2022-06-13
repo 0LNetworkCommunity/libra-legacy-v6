@@ -1,0 +1,55 @@
+processed 9 tasks
+
+task 3 'block'. lines 48-48:
+Events:
+{
+    key:     010000000000000010ada1ba839f77cfc5266ab28e1fa52f
+    seq_num: 0
+    type:    0x1::DiemAccount::SentPaymentEvent
+    data:    "c80000000000000003474153c8ee0daf3968fe8ac4d0096d75edbdd4076175746f706179"
+}
+{
+    key:     0000000000000000c8ee0daf3968fe8ac4d0096d75edbdd4
+    seq_num: 1
+    type:    0x1::DiemAccount::ReceivedPaymentEvent
+    data:    "c8000000000000000347415310ada1ba839f77cfc5266ab28e1fa52f076175746f706179"
+}
+{
+    key:     0c0000000000000000000000000000000000000000000000
+    seq_num: 0
+    type:    0x1::DiemBlock::NewBlockEvent
+    data:    "170000000000000006505ccd81e562b524d8f656abd92a1500c005d90100000000"
+}
+
+task 5 'block'. lines 65-70:
+Events:
+{
+    key:     0c0000000000000000000000000000000000000000000000
+    seq_num: 1
+    type:    0x1::DiemBlock::NewBlockEvent
+    data:    "410000000000000006505ccd81e562b524d8f656abd92a150040c9a20300000000"
+}
+{
+    key:     040000000000000000000000000000000000000000000000
+    seq_num: 1
+    type:    0x1::DiemConfig::NewEpochEvent
+    data:    "0200000000000000"
+}
+
+task 6 'block'. lines 71-76:
+Events:
+{
+    key:     0c0000000000000000000000000000000000000000000000
+    seq_num: 2
+    type:    0x1::DiemBlock::NewBlockEvent
+    data:    "420000000000000006505ccd81e562b524d8f656abd92a150000cf7b0500000000"
+}
+
+task 7 'block'. lines 77-77:
+Events:
+{
+    key:     0c0000000000000000000000000000000000000000000000
+    seq_num: 3
+    type:    0x1::DiemBlock::NewBlockEvent
+    data:    "430000000000000006505ccd81e562b524d8f656abd92a150040118b0500000000"
+}

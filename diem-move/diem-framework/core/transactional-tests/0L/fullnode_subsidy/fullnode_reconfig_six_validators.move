@@ -22,7 +22,8 @@ script {
 }
 
 // 2. Make sure there are validator subsidies available.
-// so we need Alice to be a Case 1 validator so that there is a subsidy to be paid to validator set.
+// so we need Alice to be a Case 1 validator so that there is a subsidy
+// to be paid to validator set.
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -39,7 +40,6 @@ script {
       TowerState::test_helper_mock_reconfig(&vm, @Frank);
       TowerState::test_helper_mock_reconfig(&vm, @Gertie);
 
-
       Mock::mock_case_1(&vm, @Alice);
       Mock::mock_case_1(&vm, @Carol);
       Mock::mock_case_1(&vm, @Dave);
@@ -48,13 +48,12 @@ script {
       Mock::mock_case_1(&vm, @Gertie);
 
       // Mock the end-users submitting proofs above threshold.
-      // Add 12: make it so that +2 gets above threshold so that 10 are counted as above thresh.
+      // Add 12: make it so that +2 gets above threshold so that 10 are
+      // counted as above thresh.
       TowerState::test_helper_mock_mining_vm(&vm, @Bob, 12);
     }
 }
 //check: EXECUTED
-
-
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
@@ -86,14 +85,14 @@ script {
 
         print(&expected_subsidy_for_six);
 
-        let ending_balance = starting_balance + expected_subsidy_for_six/6;
+        let ending_balance = starting_balance + expected_subsidy_for_six / 6;
 
         print(&DiemAccount::balance<GAS>(@Bob));
         print(&DiemAccount::balance<GAS>(@Alice));
 
-        // bob gets the entire identity pool (equivalent to one sixth of the validator subsidy)
+        // bob gets the entire identity pool (equivalent to one sixth of
+        // the validator subsidy)
         assert!(DiemAccount::balance<GAS>(@Bob) == ending_balance, 735711);
-
     }
 }
 //check: EXECUTED

@@ -230,9 +230,9 @@ script {
 }
 // check: EXECUTED
 
-//# block --proposer Bob --time 1 --round 2
+// //# block --proposer Bob --time 1 --round 2
 
-//# block --proposer Bob --time 2 --round 2
+// //# block --proposer Bob --time 2 --round 2
 
 // //! new-transaction
 // //! sender: diemroot
