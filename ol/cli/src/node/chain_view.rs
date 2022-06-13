@@ -92,6 +92,8 @@ pub struct ValidatorView {
     pub validator_config: Option<ValidatorConfigView>,
     /// autopay instructions
     pub autopay: Option<AutoPayView>,
+    /// burn preferences
+    pub burn_to_community: bool,
     /// note
     pub note: String,
 }
@@ -204,7 +206,7 @@ impl Node {
     }
 
     fn format_validator_info(
-        &self,
+        &mut self,
         v: &ValidatorInfo,
         dict: &AccountDictionary,
         stats: &ValidatorsStatsResource
@@ -253,6 +255,21 @@ impl Node {
             Err(_) => None,
         };
 
+        let burn_to_community = match self.query(super::query::QueryType::MoveValue {
+           account: v.account_address().clone(),
+           module_name: "Burn".to_string(),
+           struct_name: "BurnPreference".to_string(),
+           key_name: "send_community".to_string(),
+        }) {
+            Ok(res) => {
+              match res.parse::<bool>() {
+                Ok(b) => b,
+                Err(_) => false,
+            }
+            },
+            Err(_) => false,
+        };
+
         let ports = get_ports_status(&validator_ip);
 
         Ok(ValidatorView {
@@ -276,6 +293,7 @@ impl Node {
             prop_count_in_epoch: one_val_stat.prop_count,
             validator_config: val_config_opt,
             autopay: autopay_opt,
+            burn_to_community,
             note: dict.get_note_for_address(*v.account_address()),
         })
     }

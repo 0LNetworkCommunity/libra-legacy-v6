@@ -174,7 +174,7 @@ impl Node {
 
     /// Return a full Move-annotated account resource struct
     pub fn get_annotate_account_blob(
-        &mut self,
+        &self,
         account: AccountAddress,
     ) -> Result<(Option<AnnotatedAccountStateBlob>, Version)> {
         let (blob, ver) = self.client.get_account_state_blob(&account)?;
@@ -248,7 +248,7 @@ impl Node {
           seq_start.unwrap_or(0), 
           event_handle.count()
         )
-    }    
+    }
 }
 
 /// get balance from AccountView
