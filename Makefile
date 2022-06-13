@@ -453,6 +453,46 @@ debug:
  
 
 #### TESTNET #####
+# The testnet is started using the same tools as genesis to have a faithful reproduction of a network from a clean slate.
+
+# 1. The first thing necessary is initializing testnet genesis validators.
+# 2. Next those validators will register config data to a github repo OLSD/dev-genesis. Note: there could be github http errors, if validators attempt to write the same resource simultaneously
+
+# THESE STEPS ARE ACHIEVED WITH `make testnet-setup-register-val`
+
+# 3. Wait. All genesis nodes need to complete registration. Otherwise buidling a genesis.blob (the first block), will fail.
+# 4. Each genesis node builds the genesis file locally, and submits to the github repo. (this remote genesis file is what subsequent non-genesis validators will use to bootstrap their db).
+# 5. Genesis validators can start their nodes.
+
+# THESE STEPS ARE ACHIEVED WITH  testnet-setup-make-genesis-files
+
+
+# 6. Assuming there is progress in the block production, subsequent validators can join.
+
+# THIS IS ACHIEVED WITH: testnet-onboard
+
+
+#### 1. TESTNET SETUP ####
+
+testnet-validator-init-wizard: clear fix
+#  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
+	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --chain-id 1 --genesis-ceremony
+
+# Do the genesis ceremony registration
+testnet-setup-register-val:  testnet-validator-init-wizard gen-register
+# Do a dev genesis on each node after EVERY NODE COMPLETED registration.
+
+# Makes the gensis file on each genesis validator, AND SAVES TO GITHUB so that other validators can be onboarded after genesis.
+testnet-setup-make-genesis-files: genesis set-waypoint
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--publish-genesis ${DATA_PATH}/genesis.blob \
+	--shared-backend ${GENESIS_REMOTE}
+
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--publish-genesis ${DATA_PATH}/genesis_waypoint.txt \
+	--shared-backend ${GENESIS_REMOTE}
+
+#### 2. TESTNET START ####
 
 # Do this to restart the network with new code. Assumes a registration has been completed, and the genesis validators are unchanged. If new IP addresses or number of genesis nodes changed, you must RERUN SETUP below.
 # - builds stdlib from source
@@ -469,25 +509,7 @@ testnet-onboard: clear fix
 # start a node with fullnode.node.yaml configs
 	make start-full
 
-#### TESTNET SETUP ####
 
-testnet-validator-init-wizard:
-#  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --chain-id 1 --genesis-ceremony
-
-# Do the genesis ceremony registration
-testnet-setup-register-val: clear fix testnet-validator-init-wizard gen-register
-# Do a dev genesis on each node after EVERY NODE COMPLETED registration.
-
-# Makes the gensis file on each genesis validator, AND SAVES TO GITHUB so that other validators can be onboarded after genesis.
-testnet-setup-make-genesis-files: genesis set-waypoint
-	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
-	--publish-genesis ${DATA_PATH}/genesis.blob \
-	--shared-backend ${GENESIS_REMOTE}
-
-	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
-	--publish-genesis ${DATA_PATH}/genesis_waypoint.txt \
-	--shared-backend ${GENESIS_REMOTE}
 
 ####### SWARM ########
 
