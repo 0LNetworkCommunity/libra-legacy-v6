@@ -36,7 +36,7 @@ endif
 # Registration params
 REMOTE = 'backend=github;repository_owner=${GITHUB_USER};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
 
-GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC};branch=master'
 
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
@@ -490,8 +490,13 @@ dev-genesis: genesis dev-save-genesis fix-genesis
 dev-infra: dev-backup-archive dev-commit
 
 dev-save-genesis: set-waypoint
-	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/ol/devnet/genesis/${V}/
-	git add ${SOURCE}/ol/devnet/genesis/${V}/
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--publish-genesis ${DATA_PATH}/genesis.blob \
+	--shared-backend ${GENESIS_REMOTE}
+
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--publish-genesis ${DATA_PATH}/genesis_waypoint.txt \
+	--shared-backend ${GENESIS_REMOTE}
 
 dev-backup-archive:
 	cd ${HOME}/dev-epoch-archive && make devnet-backup

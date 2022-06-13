@@ -18,9 +18,9 @@ pub struct CreateGenesisRepo {
     #[structopt(flatten)]
     pub backend: SharedBackend,
     #[structopt(long)]
-    pub repo_owner: String,
+    pub repo_owner: Option<String>,
     #[structopt(long)]
-    pub repo_name: String,
+    pub repo_name: Option<String>,
     #[structopt(long)]
     pub pull_request_user: Option<String>,
     #[structopt(long)]
@@ -44,7 +44,7 @@ impl CreateGenesisRepo {
                 let github = Client::new(
                     config.repository_owner.clone(),
                     config.repository.clone(),
-                    config.branch.unwrap_or("main".to_string()),
+                    config.branch.unwrap_or("master".to_string()),
                     config
                         .token
                         .read_token()
@@ -61,11 +61,11 @@ impl CreateGenesisRepo {
                   file.read_to_end(&mut bytes).expect("could not read file");
                   let base64_encoded = base64::encode(bytes);
 
-                  let repo_file_path = format!("/genesis/{}", p.file_name().unwrap().to_str().unwrap());
+                  let repo_file_path = format!("genesis/{}", p.file_name().unwrap().to_str().unwrap());
 
                   github.put(&repo_file_path, &base64_encoded).expect("could not put file in github repo");
 
-                  return Ok("published genesis.blob and genesis_waypoint.txt to genesis repo.".to_string());
+                  return Ok(format!("published file to genesis repo at {:?}", &repo_file_path));
                 }
                 // Make a pull request of the the forked repo, back to the genesis coordination repository.
                 if let Some(user) = self.pull_request_user {
@@ -88,8 +88,8 @@ impl CreateGenesisRepo {
                     }
                 } else {
                 // Fork the genesis coordination repo into a personal repo
-                    match github.fork_genesis_repo(&self.repo_owner, &self.repo_name) {
-                        Ok(_) => Ok(format!("Created new repo {}", &self.repo_name)),
+                    match github.fork_genesis_repo(&self.repo_owner.unwrap(), &self.repo_name.as_ref().unwrap()) {
+                        Ok(_) => Ok(format!("Created new repo {}", &self.repo_name.unwrap())),
                         Err(e) => Err(Error::StorageWriteError(
                             "github",
                             "fork genesis repo",
@@ -105,3 +105,4 @@ impl CreateGenesisRepo {
         }
     }
 }
+
