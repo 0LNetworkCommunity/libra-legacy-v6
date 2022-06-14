@@ -1,0 +1,4 @@
+processed 3 tasks
+
+task 2 'run'. lines 21-22:
+Error: Failed to execute transaction. VMStatus: status ABORTED of type Execution with sub status 30002

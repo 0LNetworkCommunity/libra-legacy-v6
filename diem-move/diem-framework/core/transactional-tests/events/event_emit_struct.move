@@ -17,9 +17,9 @@ module Alice::M {
 
 //# run --admin-script --signers DiemRoot Alice --show-events
 script {
-use Alice::M;
+    use Alice::M;
 
-fun main(_dr: signer, account: signer) {
-    M::emit_event(&account);
-}
+    fun main(_dr: signer, account: signer) {
+        M::emit_event(&account);
+    }
 }

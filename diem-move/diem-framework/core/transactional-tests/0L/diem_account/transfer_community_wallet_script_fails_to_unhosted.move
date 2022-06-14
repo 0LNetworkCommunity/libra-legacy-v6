@@ -17,15 +17,6 @@ script {
     assert!(Vector::length(&list) == 1, 7357001);
   }
 }
-// check: EXECUTED
 
-// todo: why is this panicking?
-//# run --signers Carol --args @Bob 1 b"thanks for your service"
+//# run --signers Carol --args @Bob 1 b"thanks_for_your_service"
 //#     -- 0x1::TransferScripts::community_transfer
-
-//// Old syntax for reference, delete it after fixing this test
-//! new-transaction
-//! sender: carol
-//! args: {{bob}}, 1, b"thanks for your service"
-stdlib_script::TransferScripts::community_transfer
-// check: ABORTED

@@ -19,8 +19,6 @@ module TestFixtures{
       512
     }
 
-
-
     public fun easy_chal(): vector<u8> {
       assert!(Testnet::is_testnet(), 130102014010);
       x"aa"
