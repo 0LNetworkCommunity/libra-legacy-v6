@@ -41,16 +41,16 @@ module TransferScripts {
         // by multiplying by COIN_SCALING_FACTOR.
         let value = unscaled_value * Globals::get_coin_scaling_factor();
         let sender_addr = Signer::address_of(&sender);
-        assert!(Wallet::is_comm(sender_addr), 0);
+        assert!(Wallet::is_comm(sender_addr), 30001);
 
         // confirm the destination account has a slow wallet
         // TODO: this check only happens in this script since there's 
         // a circular dependecy issue with DiemAccount and Wallet which impedes
         // checking in Wallet module
-        assert!(DiemAccount::is_slow(destination), 1);
+        assert!(DiemAccount::is_slow(destination), 30002);
 
         let uid = Wallet::new_timed_transfer(&sender, destination, value, memo);
-        assert!(Wallet::transfer_is_proposed(uid), 2);
+        assert!(Wallet::transfer_is_proposed(uid), 30003);
     }
 }
 }

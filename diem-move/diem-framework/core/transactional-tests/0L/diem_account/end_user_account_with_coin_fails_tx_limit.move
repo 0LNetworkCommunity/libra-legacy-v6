@@ -1,11 +1,11 @@
-//! account: bob, 10000000, 0, validator
+//# init --validators Bob
 
 //# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
 
-  fun main(sender: signer) {
+  fun main(_dr: signer, sender: signer) {
     // Some fake account.
 
     let new_account: address = @0x3DC18D1CF61FAAC6AC70E3A63F062E4A;
