@@ -461,7 +461,7 @@ debug:
 # 4. Each genesis node builds the genesis file locally, and submits to the github repo. (this remote genesis file is what subsequent non-genesis validators will use to bootstrap their db).
 # 5. Genesis validators can start their nodes.
 
-# THESE STEPS ARE ACHIEVED WITH  testnet-genesis
+# THESE STEPS ARE ACHIEVED WITH  `make testnet`
 
 
 # 6. Assuming there is progress in the block production, subsequent validators can join.
