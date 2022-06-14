@@ -415,7 +415,12 @@ module TowerState {
       
       // NOTE: For now we are not changing the vdf security params.
       if (Testnet::is_testnet()) {
-        diff.difficulty = Globals::get_vdf_difficulty_baseline() + toy_rng(3, 2);
+        // VDF proofs must be even numbers.
+        let rng =  toy_rng(3, 2);
+        if rng > 0 {
+          rng = rng * 2;
+        }
+        diff.difficulty = Globals::get_vdf_difficulty_baseline() + rng;
         // diff.difficulty = Globals::get_vdf_difficulty_baseline() + 1;
        
       }
