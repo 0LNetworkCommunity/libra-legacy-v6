@@ -498,7 +498,7 @@ testnet-genesis: genesis set-waypoint
 # - initializes node configs
 # - rebuids genesis files and shares to github genesis repo
 # - starts node in validator mode
-testnet: clear fix testnet-init testnet-setup-make-genesis-files start
+testnet: clear fix testnet-init testnet-genesis start
 
 # For subsequent validators joining the testnet. This will fetch the genesis information saved
 testnet-onboard: clear fix
