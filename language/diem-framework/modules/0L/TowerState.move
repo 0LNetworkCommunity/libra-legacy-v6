@@ -417,9 +417,9 @@ module TowerState {
       if (Testnet::is_testnet()) {
         // VDF proofs must be even numbers.
         let rng =  toy_rng(3, 2);
-        if rng > 0 {
+        if (rng > 0) {
           rng = rng * 2;
-        }
+        };
         diff.difficulty = Globals::get_vdf_difficulty_baseline() + rng;
         // diff.difficulty = Globals::get_vdf_difficulty_baseline() + 1;
        
