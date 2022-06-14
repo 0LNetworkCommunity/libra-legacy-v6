@@ -290,7 +290,7 @@ verify-gen:
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
-genesis:
+genesis: stdlib
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
 	--chain-id ${CHAIN_ID} \
 	--validator-backend ${LOCAL} \
@@ -455,13 +455,13 @@ debug:
 
 # 2. Next those validators will register config data to a github repo OLSD/dev-genesis. Note: there could be github http errors, if validators attempt to write the same resource simultaneously
 
-# THESE STEPS ARE ACHIEVED WITH `make testnet-setup-register-val`
+# THESE STEPS ARE ACHIEVED WITH `make testnet-register`
 
 # 3. Wait. All genesis nodes need to complete registration. Otherwise buidling a genesis.blob (the first block), will fail.
 # 4. Each genesis node builds the genesis file locally, and submits to the github repo. (this remote genesis file is what subsequent non-genesis validators will use to bootstrap their db).
 # 5. Genesis validators can start their nodes.
 
-# THESE STEPS ARE ACHIEVED WITH  testnet-setup-make-genesis-files
+# THESE STEPS ARE ACHIEVED WITH  testnet-genesis
 
 
 # 6. Assuming there is progress in the block production, subsequent validators can join.
@@ -471,16 +471,16 @@ debug:
 
 #### 1. TESTNET SETUP ####
 
-testnet-validator-init-wizard: clear fix
+testnet-init: clear fix
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
 	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --chain-id 1 --genesis-ceremony
 
 # Do the genesis ceremony registration, this includes the step testnet-validator-init-wizard
-testnet-setup-register-val:  testnet-validator-init-wizard gen-register
+testnet-register:  testnet-init gen-register
 # Do a dev genesis on each node after EVERY NODE COMPLETED registration.
 
 # Makes the gensis file on each genesis validator, AND SAVES TO GITHUB so that other validators can be onboarded after genesis.
-testnet-setup-make-genesis-files: genesis set-waypoint
+testnet-genesis: genesis set-waypoint
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
 	--publish-genesis ${DATA_PATH}/genesis.blob \
 	--shared-backend ${GENESIS_REMOTE}
@@ -498,7 +498,7 @@ testnet-setup-make-genesis-files: genesis set-waypoint
 # - initializes node configs
 # - rebuids genesis files and shares to github genesis repo
 # - starts node in validator mode
-testnet-start: stdlib clear fix testnet-validator-init-wizard testnet-setup-make-genesis-files start
+testnet: clear fix testnet-init testnet-setup-make-genesis-files start
 
 # For subsequent validators joining the testnet. This will fetch the genesis information saved
 testnet-onboard: clear fix
