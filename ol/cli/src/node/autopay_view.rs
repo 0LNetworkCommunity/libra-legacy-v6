@@ -29,7 +29,7 @@ pub struct PayeeStats {
 
 impl Node {
     /// Get all percentage recurring payees stats
-    pub fn get_autopay_watch_list(&mut self, vals: Vec<ValidatorView>) -> Option<Vec<PayeeStats>> {
+    pub fn get_autopay_watch_list(&self, vals: Vec<ValidatorView>) -> Option<Vec<PayeeStats>> {
         let mut payees: HashMap<AccountAddress, PayeeSums> = HashMap::new();
         let mut total: u64 = 0;
 

@@ -9,9 +9,15 @@ use diem_types::{
 };
 use ol_types::{autopay::AutoPayView, validator_config::ValidatorConfigView};
 
-use super::{node::Node, dictionary::AccountDictionary, autopay_view::PayeeStats};
+use super::{autopay_view::PayeeStats, dictionary::AccountDictionary, node::Node};
 use serde::{Deserialize, Serialize};
-use std::{convert::TryFrom};
+use std::{
+    collections::HashMap,
+    convert::TryFrom,
+    net::{IpAddr, SocketAddr, TcpStream},
+    str::FromStr,
+    time::Duration,
+};
 
 /// name of chain info key for db
 pub const CHAIN_INFO_DB_KEY: &str = "chain_info";
@@ -56,10 +62,16 @@ pub struct ValidatorView {
     pub pub_key: String,
     /// voting power
     pub voting_power: u64,
+    /// full node full ip
+    pub vfn_full_ip: String,
     /// full node ip
-    pub full_node_ip: String,
+    pub vfn_ip: String,
+    /// validator full ip
+    pub validator_full_ip: String,
     /// validator ip
     pub validator_ip: String,
+    /// ports status
+    pub ports_status: HashMap<String, bool>,
     /// tower height
     pub tower_height: u64,
     /// tower epoch
@@ -80,6 +92,8 @@ pub struct ValidatorView {
     pub validator_config: Option<ValidatorConfigView>,
     /// autopay instructions
     pub autopay: Option<AutoPayView>,
+    /// burn preferences
+    pub burn_to_community: bool,
     /// note
     pub note: String,
 }
@@ -113,7 +127,7 @@ impl Node {
         };
         let mut cs = ChainView::default();
 
-        // TODO: Uncomment this if the tools are not fetch up to date info  
+        // TODO: Uncomment this if the tools are not fetch up to date info
         // self.client.update_and_verify_state_proof()?;
 
         cs.waypoint = Some(self.client.get_waypoint()?.into_inner().unwrap().waypoint);
@@ -180,7 +194,7 @@ impl Node {
             cs.validator_view = Some(validators.clone());
             cs.validators_stats = Some(validators_stats);
             cs.vals_config_stats = calc_config_stats(validators.clone()).ok();
-            cs.autopay_watch_list =  self.get_autopay_watch_list(validators.clone());
+            cs.autopay_watch_list = self.get_autopay_watch_list(validators.clone());
             cs.upgrade = self.client.get_oracle_upgrade_state()?.into_inner();
 
             self.vitals.chain_view = Some(cs.clone());
@@ -192,61 +206,86 @@ impl Node {
     }
 
     fn format_validator_info(
-      &mut self,
-      v: &ValidatorInfo,
-      dict: &AccountDictionary,
-      stats: &ValidatorsStatsResource
+        &mut self,
+        _v: &ValidatorInfo,
+        _dict: &AccountDictionary,
+        _stats: &ValidatorsStatsResource,
     ) -> Result<ValidatorView, Error> {
-    let full_node_ip = match v.config().fullnode_network_addresses() {
-        Ok(ips) => {
-            if ips.len() > 0 {
-                ips.last().unwrap().to_string()
-            } else {
-                "--".to_string()
-            }
-        }
-        Err(_) => "--".to_string(),
-    };
-    let validator_ip = match v.config().validator_network_addresses() {
-        Ok(ips) => {
-            if ips.len() > 0 {
-                match ips.get(0) {
-                    Some(netw_addr) => netw_addr.to_string(), // Todo: Needs review
-                    None => "--".to_string(),
-                }
-            } else {
-                "--".to_string()
-            }
-        }
-        Err(_) => "--".to_string(),
-    };
-    let ms  = self.client.get_miner_state(v.account_address().clone())?.into_inner().unwrap();
-    let one_val_stat = stats.get_validator_current_stats(v.account_address().clone());
-    let val_config_opt = self.get_validator_config(v.account_address().clone());
-    let autopay_opt = self.get_autopay_view(v.account_address().clone());
+        todo!()
+        // let vfn_full_ip = match v.config().fullnode_network_addresses() {
+        //     Ok(ips) => {
+        //         if ips.len() > 0 {
+        //             ips.last().unwrap().to_string()
+        //         } else {
+        //             "--".to_string()
+        //         }
+        //     }
+        //     Err(_) => "--".to_string(),
+        // };
 
-    Ok(ValidatorView {
-        account_address: v.account_address().to_string(),
-        voting_power: v.consensus_voting_power(),
-        full_node_ip,
-        pub_key: v.consensus_public_key().to_string(),
-        validator_ip,
+        // let vfn_ip = extract_ip(&vfn_full_ip);
 
-        tower_height: ms.verified_tower_height,
-        tower_epoch: ms.latest_epoch_mining,
-        count_proofs_in_epoch: ms.count_proofs_in_epoch,
-        epochs_validating_and_mining: ms.epochs_validating_and_mining,
-        contiguous_epochs_validating_and_mining: ms.contiguous_epochs_validating_and_mining,
-        epochs_since_last_account_creation: ms.epochs_since_last_account_creation,
-        
-        vote_count_in_epoch: one_val_stat.vote_count,
-        prop_count_in_epoch: one_val_stat.prop_count,
-        validator_config: val_config_opt,
-        autopay: autopay_opt,
-        note: dict.get_note_for_address(*v.account_address()),
-    })
-  }
+        // let validator_full_ip = match v.config().validator_network_addresses() {
+        //     Ok(ips) => {
+        //         if ips.len() > 0 {
+        //             match ips.get(0) {
+        //                 Some(netw_addr) => netw_addr.to_string(), // Todo: Needs review
+        //                 None => "--".to_string(),
+        //             }
+        //         } else {
+        //             "--".to_string()
+        //         }
+        //     }
+        //     Err(_) => "--".to_string(),
+        // };
+        // let validator_ip = extract_ip(&validator_full_ip);
+        // let ms = self.client.get_miner_state(v.account_address().clone())?.into_inner().unwrap();
+        // let one_val_stat = stats.get_validator_current_stats(v.account_address().clone());
+        // let val_config_opt = self.get_validator_config(v.account_address().clone());
+        // let autopay_opt = self.get_autopay_view(v.account_address().clone());
 
+        // // 0L todo: See get_annotate_account_blob
+        // // let burn_to_community = match self.get_annotate_account_blob(v.account_address().clone()) {
+        // //     Ok((Some(r), _)) => {
+        // //         match query::find_value_from_state(
+        // //             &r,
+        // //             "Burn".to_string(),
+        // //             "BurnPreference".to_string(),
+        // //             "send_community".to_string(),
+        // //         ) {
+        // //           Some(move_resource_viewer::AnnotatedMoveValue::Bool(b)) => *b,
+        // //           _ => false
+        // //         }
+                    
+        // //     }
+        // //     _ => false,
+        // // };
+
+        // let ports = get_ports_status(&validator_ip);
+
+        // Ok(ValidatorView {
+        //     account_address: v.account_address().to_string(),
+        //     voting_power: v.consensus_voting_power(),
+        //     vfn_full_ip,
+        //     vfn_ip,
+        //     pub_key: v.consensus_public_key().to_string(),
+        //     validator_full_ip,
+        //     validator_ip,
+        //     ports_status: ports,
+        //     tower_height: ms.verified_tower_height,
+        //     tower_epoch: ms.latest_epoch_mining,
+        //     count_proofs_in_epoch: ms.actual_count_proofs_in_epoch,
+        //     epochs_validating_and_mining: ms.epochs_validating_and_mining,
+        //     contiguous_epochs_validating_and_mining: ms.contiguous_epochs_validating_and_mining,
+        //     epochs_since_last_account_creation: ms.epochs_since_last_account_creation,
+        //     vote_count_in_epoch: one_val_stat.vote_count,
+        //     prop_count_in_epoch: one_val_stat.prop_count,
+        //     validator_config: val_config_opt,
+        //     autopay: autopay_opt,
+        //     burn_to_community: false, // burn_to_community,
+        //     note: dict.get_note_for_address(*v.account_address()),
+        // })
+    }
 }
 
 fn calc_config_stats(vals: Vec<ValidatorView>) -> Result<ValsConfigStats, Error> {
@@ -279,4 +318,41 @@ fn calc_config_stats(vals: Vec<ValidatorView>) -> Result<ValsConfigStats, Error>
         percent_vals_with_operator: count_operators as f64 / vals.len() as f64,
         percent_positive_balance_operators: count_positive_balance as f64 / vals.len() as f64,
     })
+}
+
+// 0L todo: remove "_" prefix later
+fn _get_ports_status(ip: &String) -> HashMap<String, bool> {
+    let mut result: HashMap<String, bool> = HashMap::new();
+    let ports = _get_ports_to_test();
+    for port in ports.iter() {
+        result.insert(port.to_string(), _scan_port(&ip, port));
+    }
+    result
+}
+
+fn _scan_port(ip: &String, port: &u16) -> bool {
+    let timeout = Duration::from_millis(200);
+    match IpAddr::from_str(ip) {
+        Ok(address) => {
+            let socket_address = SocketAddr::new(address, port.clone());
+            match TcpStream::connect_timeout(&socket_address, timeout) {
+                Ok(_) => true,
+                _ => false,
+            }
+        }
+        Err(_) => false,
+    }
+}
+
+fn _get_ports_to_test() -> Vec<u16> {
+    // TODO: default OR read from local file
+    vec![6180u16]
+}
+
+fn _extract_ip(full_ip: &String) -> String {
+    let split_str: Vec<&str> = full_ip.split('/').collect();
+    match split_str.get(2) {
+        Some(ip) => ip.to_string(),
+        None => full_ip.to_string(),
+    }
 }

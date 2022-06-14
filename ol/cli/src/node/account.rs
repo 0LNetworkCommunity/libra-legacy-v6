@@ -257,7 +257,7 @@ impl Node {
           seq_start.unwrap_or(0), 
           event_handle.count()
         )
-    }    
+    }
 }
 
 /// get balance from AccountView
