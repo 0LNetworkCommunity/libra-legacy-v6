@@ -439,8 +439,6 @@ module DiemFramework::DiemAccount {
         //     dr_account,
         //     copy dummy_auth_key_prefix,
         // );
-        //////// 0L ////////
-        // create_designated_dealer<GAS>(dr_account, @0xDD, copy dummy_auth_key_prefix, x"1ee7", true);
     }
 
     spec initialize {
@@ -478,8 +476,8 @@ module DiemFramework::DiemAccount {
         let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
         let new_signer = create_signer(new_account_address);
         Roles::new_user_role_with_proof(&new_signer);
-        add_currencies_for_account<GAS>(&new_signer, false);
         make_account(&new_signer, auth_key_prefix);
+        add_currencies_for_account<GAS>(&new_signer, false);
 
         onboarding_gas_transfer<GAS>(sender, new_account_address, BOOTSTRAP_COIN_VALUE);
         // Init the miner state
@@ -501,15 +499,16 @@ module DiemFramework::DiemAccount {
     ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount, SlowWallet {
         let new_signer = create_signer(new_account);
         Roles::new_user_role_with_proof(&new_signer);
-        add_currencies_for_account<GAS>(&new_signer, false);
         make_account(&new_signer, new_account_authkey_prefix);
+        add_currencies_for_account<GAS>(&new_signer, false);
 
         // if the initial coin sent is the minimum amount, don't check transfer limits.
         if (value <= BOOTSTRAP_COIN_VALUE) {
             onboarding_gas_transfer<GAS>(sender, new_account, value);
             new_account
         }
-        // otherwise, if the onboarder wants to send more, then it must respect the transfer limits.
+        // otherwise, if the onboarder wants to send more, then it must respect
+        // the transfer limits.
         else {
             let with_cap = extract_withdraw_capability(sender);
             pay_from<GAS>(
@@ -522,8 +521,6 @@ module DiemFramework::DiemAccount {
             restore_withdraw_capability(with_cap);
             new_account
         }
-
-        
     }
 
     /////// 0L ////////
@@ -584,10 +581,10 @@ module DiemFramework::DiemAccount {
           )
         };
 
-        // TODO: Perhaps this needs to be moved to the epoch boundary, so that it is only the VM which can escalate these privileges.
+        // TODO: Perhaps this needs to be moved to the epoch boundary, 
+        // so that it is only the VM which can escalate these privileges.
         Roles::new_validator_role_with_proof(&new_signer, &create_signer(@DiemRoot));
         ValidatorConfig::publish_with_proof(&new_signer, ow_human_name);
-        add_currencies_for_account<GAS>(&new_signer, false);
 
         // This also verifies the VDF proof, which we use to rate limit account creation.
         TowerState::init_miner_state(&new_signer, challenge, solution, difficulty, security);
@@ -596,7 +593,6 @@ module DiemFramework::DiemAccount {
         let new_op_account = create_signer(op_address);
         Roles::new_validator_operator_role_with_proof(&new_op_account);
         ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
-        add_currencies_for_account<GAS>(&new_op_account, false);
         // Link owner to OP
         ValidatorConfig::set_operator(&new_signer, op_address);
         // OP sends network info to Owner config"
@@ -613,7 +609,10 @@ module DiemFramework::DiemAccount {
         ValidatorUniverse::add_self(&new_signer);
 
         make_account(&new_signer, auth_key_prefix);
+        add_currencies_for_account<GAS>(&new_signer, false);
+
         make_account(&new_op_account, op_auth_key_prefix);
+        add_currencies_for_account<GAS>(&new_op_account, false);
 
         TowerState::reset_rate_limit(sender);
 
@@ -703,7 +702,6 @@ module DiemFramework::DiemAccount {
         let new_op_account = create_signer(op_address);
         Roles::new_validator_operator_role_with_proof(&new_op_account);
         ValidatorOperatorConfig::publish_with_proof(&new_op_account, op_human_name);
-        add_currencies_for_account<GAS>(&new_op_account, false);
 
         // Link owner to OP
         ValidatorConfig::set_operator(&new_signer, op_address);
@@ -723,6 +721,7 @@ module DiemFramework::DiemAccount {
 
         // make_account(new_signer, auth_key_prefix);
         make_account(&new_op_account, op_auth_key_prefix);
+        add_currencies_for_account<GAS>(&new_op_account, false);
 
         TowerState::reset_rate_limit(sender);
         // the miner who is upgrading may have coins, but better safe...
@@ -1511,9 +1510,6 @@ module DiemFramework::DiemAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWallet {
-
-        // use DiemFramework::Debug::print;
-
         /////// 0L /////////
         // check amount if it is a slow wallet
         if (is_slow(*&cap.account_address)) {
@@ -1523,8 +1519,6 @@ module DiemFramework::DiemAccount {
             );
         };
 
-        // print(&11);
-
         deposit<Token>(
             *&cap.account_address,
             payee,
@@ -1533,9 +1527,6 @@ module DiemFramework::DiemAccount {
             metadata_signature,
             true
         );
-
-        // print(&12);
-
         /////// 0L /////////
         // in case of slow wallet update the tracker
         if (is_slow(*&cap.account_address)) {
@@ -1805,14 +1796,8 @@ module DiemFramework::DiemAccount {
         new_account: &signer,
         add_all_currencies: bool,
     ) {
-        // use DiemFramework::Debug::print;
-        // print(&90);
-
         let new_account_addr = Signer::address_of(new_account);
         add_currency<Token>(new_account);
-
-        // print(&91);
-
         if (add_all_currencies) {
             //////// 0L ////////
             // if (!exists<Balance<XUS>>(new_account_addr)) {
@@ -1822,7 +1807,6 @@ module DiemFramework::DiemAccount {
                 add_currency<GAS>(new_account);
             };
         };
-        // print(&92);
     }
 
     spec add_currencies_for_account {
@@ -2153,25 +2137,13 @@ module DiemFramework::DiemAccount {
         human_name: vector<u8>,
         add_all_currencies: bool,
     ) acquires AccountOperationsCapability {
-        use DiemFramework::Debug::print;
-        print(&60);
-        print(&Signer::address_of(creator_account));
-        print(&new_account_address);
-
-        // DiemTimestamp::assert_operating();
-        // Roles::assert_treasury_compliance(creator_account);// 0L
-        print(&exists_at(@0xDD));
-
+        DiemTimestamp::assert_operating();
+        Roles::assert_treasury_compliance(creator_account);
         let new_dd_account = create_signer(new_account_address);
-
-        print(&61);
-
         Roles::new_designated_dealer_role(creator_account, &new_dd_account);
-        print(&65);
         DesignatedDealer::publish_designated_dealer_credential<CoinType>(&new_dd_account, creator_account, add_all_currencies);
         DualAttestation::publish_credential(&new_dd_account, creator_account, human_name);
         make_account(&new_dd_account, auth_key_prefix);
-        print(&69);
         add_currencies_for_account<CoinType>(&new_dd_account, add_all_currencies)
     }
 
@@ -3084,23 +3056,16 @@ module DiemFramework::DiemAccount {
         auth_key_prefix: vector<u8>,
         human_name: vector<u8>,
     ) acquires AccountOperationsCapability, SlowWalletList { /////// 0L /////////
-        use DiemFramework::Debug::print;
-        print(&200);
         Roles::assert_diem_root(dr_account);
-        print(&201);
-        let new_account = create_signer(new_account_address);        
-        print(&202);
-        // The dr_account account is verified to have the diem root 
-        // role in `Roles::new_validator_role`
+        let new_account = create_signer(new_account_address);
+        // The dr_account account is verified to have the diem root role in `Roles::new_validator_role`
         Roles::new_validator_role(dr_account, &new_account);
-        print(&205);
         ValidatorConfig::publish(&new_account, dr_account, human_name);
         make_account(&new_account, auth_key_prefix);
         /////// 0L /////////
         add_currencies_for_account<GAS>(&new_account, false);
         let new_account = create_signer(new_account_address);
         set_slow(&new_account);
-        print(&210);
     }
     spec create_validator_account {
         pragma disable_invariants_in_body;
@@ -3557,12 +3522,6 @@ module DiemFramework::DiemAccount {
     }
 
     public fun set_slow(sig: &signer) acquires SlowWalletList {
-
-    //   use DiemFramework::Debug::print;
-    //   print(&80);
-    //   let addr = Signer::address_of(sig);
-    //   print(&addr);
-
       if (exists<SlowWalletList>(@0x0)) {
         let addr = Signer::address_of(sig);
         let list = get_slow_list();

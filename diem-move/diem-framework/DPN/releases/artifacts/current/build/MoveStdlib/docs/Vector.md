@@ -24,7 +24,6 @@ the return on investment didn't seem worth it for these simple functions.
 -  [Function `pop_back`](#0x1_Vector_pop_back)
 -  [Function `destroy_empty`](#0x1_Vector_destroy_empty)
 -  [Function `swap`](#0x1_Vector_swap)
--  [Function `compare`](#0x1_Vector_compare)
 -  [Function `singleton`](#0x1_Vector_singleton)
 -  [Function `reverse`](#0x1_Vector_reverse)
 -  [Function `append`](#0x1_Vector_append)
@@ -239,43 +238,6 @@ Aborts if <code>i</code>or <code>j</code> is out of bounds.
 
 
 <pre><code><b>native</b> <b>public</b> <b>fun</b> <a href="Vector.md#0x1_Vector_swap">swap</a>&lt;Element&gt;(v: &<b>mut</b> vector&lt;Element&gt;, i: u64, j: u64);
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_Vector_compare"></a>
-
-## Function `compare`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Vector.md#0x1_Vector_compare">compare</a>&lt;Element&gt;(a: &vector&lt;Element&gt;, b: &vector&lt;Element&gt;): bool
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Vector.md#0x1_Vector_compare">compare</a>&lt;Element&gt;(a: &vector&lt;Element&gt;, b: &vector&lt;Element&gt;): bool {
-    <b>let</b> i = 0;
-    <b>let</b> len_a = <a href="Vector.md#0x1_Vector_length">length</a>(a);
-    <b>let</b> len_b = <a href="Vector.md#0x1_Vector_length">length</a>(b);
-    <b>if</b> (len_a != len_b) { <b>return</b> <b>false</b> };
-    <b>while</b> (i &lt; len_a) {
-        <b>let</b> num_a = <a href="Vector.md#0x1_Vector_borrow">borrow</a>(a, i);
-        <b>let</b> num_b = <a href="Vector.md#0x1_Vector_borrow">borrow</a>(b, i);
-        <b>if</b> (num_a == num_b) {
-            i = i + 1;
-        } <b>else</b> {
-            <b>return</b> <b>false</b>
-        }
-    };
-    <b>true</b>
-}
 </code></pre>
 
 

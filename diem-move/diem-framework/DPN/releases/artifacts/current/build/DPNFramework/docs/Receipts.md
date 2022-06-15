@@ -171,13 +171,13 @@
     <b>return</b> (0, 0, 0)
   };
 
-  <b>let</b> r = <b>borrow_global</b>&lt;<a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(account);
-  <b>let</b> (found_it, i) = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&r.destination, &destination);
+  <b>let</b> receipt = <b>borrow_global</b>&lt;<a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(account);
+  <b>let</b> (found_it, i) = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&receipt.destination, &destination);
   <b>if</b> (!found_it) <b>return</b> (0, 0, 0);
 
-  <b>let</b> time = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&r.last_payment_timestamp, i);
-  <b>let</b> value = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&r.last_payment_value, i);
-  <b>let</b> cumu = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&r.cumulative, i);
+  <b>let</b> time = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&receipt.last_payment_timestamp, i);
+  <b>let</b> value = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&receipt.last_payment_value, i);
+  <b>let</b> cumu = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&receipt.cumulative, i);
 
   (*time, *value, *cumu)
 }

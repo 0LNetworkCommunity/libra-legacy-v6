@@ -397,10 +397,6 @@ module TowerState {
       difficulty: u64,
       security: u64
     ) acquires TowerProofHistory, TowerList, TowerCounter {
-
-      use DiemFramework::Debug::print;
-      print(&11);
-      print(&Signer::address_of(miner_sig));
       
       // NOTE Only Signer can update own state.
       // Should only happen once.
@@ -682,7 +678,7 @@ module TowerState {
       // Get address, assumes the sender is the signer.
       assert!(
         ValidatorConfig::get_operator(miner_addr) == operator_addr,
-        Errors::requires_address(130111)
+        Errors::requires_address(130119)
       );
       // Abort if not initialized.
       assert!(exists<TowerProofHistory>(miner_addr), Errors::not_published(130116));
@@ -813,7 +809,7 @@ module TowerState {
     public fun test_helper_previous_proof_hash(
       account: &signer
     ): vector<u8> acquires TowerProofHistory {
-      assert!(Testnet::is_testnet()== true, Errors::invalid_state(130128));
+      assert!(Testnet::is_testnet(), Errors::invalid_state(130128));
       let addr = Signer::address_of(account);
       *&borrow_global<TowerProofHistory>(addr).previous_proof_hash
     }

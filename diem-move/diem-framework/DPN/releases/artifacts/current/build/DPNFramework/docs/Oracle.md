@@ -44,6 +44,7 @@
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="Upgrade.md#0x1_Upgrade">0x1::Upgrade</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
+<b>use</b> <a href="VectorHelper.md#0x1_VectorHelper">0x1::VectorHelper</a>;
 </code></pre>
 
 
@@ -581,7 +582,7 @@
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(vote_counts);
   <b>while</b> (i &lt; len) {
       <b>let</b> entry = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>(vote_counts, i);
-      <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_compare">Vector::compare</a>(&entry.hash, &data_hash)) {
+      <b>if</b> (<a href="VectorHelper.md#0x1_VectorHelper_compare">VectorHelper::compare</a>(&entry.hash, &data_hash)) {
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> entry.validators, validator);
         entry.total_weight = entry.total_weight + vote_weight;
         <b>return</b>
@@ -618,7 +619,7 @@
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(vote_counts);
   <b>while</b> (i &lt; len) {
       <b>let</b> entry = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>(vote_counts, i);
-      <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_compare">Vector::compare</a>(&entry.hash, &data)) {
+      <b>if</b> (<a href="VectorHelper.md#0x1_VectorHelper_compare">VectorHelper::compare</a>(&entry.hash, &data)) {
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> entry.validators, validator);
         entry.total_weight = entry.total_weight + vote_weight;
         <b>return</b> <b>true</b>

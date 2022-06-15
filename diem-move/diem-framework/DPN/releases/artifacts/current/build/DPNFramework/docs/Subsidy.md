@@ -227,7 +227,7 @@
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&genesis_validators);
   // ten coins for validator, sufficient for first epoch of transactions,
   // and an extra which the validator will send <b>to</b> operator.
-  <b>let</b> subsidy = 11000000; // todo: 10 or 11? comment says different
+  <b>let</b> subsidy = 11000000;
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
     <b>let</b> node_address = *(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<b>address</b>&gt;(&genesis_validators, i));

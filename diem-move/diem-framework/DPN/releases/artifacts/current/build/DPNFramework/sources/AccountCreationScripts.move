@@ -199,13 +199,6 @@ module DiemFramework::AccountCreationScripts {
         auth_key_prefix: vector<u8>,
         human_name: vector<u8>
     ) {
-        // use DiemFramework::DiemSystem;
-        // use DiemFramework::ValidatorConfig;
-        // use DiemFramework::Debug::print;
-        // print(&100);
-        // if(DiemSystem::is_validator(new_account_address)) return; // 0L
-        // let config = ValidatorConfig::get_config(new_account_address);
-
         SlidingNonce::record_nonce_or_abort(&dr_account, sliding_nonce);
         DiemAccount::create_validator_operator_account(
             &dr_account,
@@ -302,12 +295,7 @@ module DiemFramework::AccountCreationScripts {
         auth_key_prefix: vector<u8>,
         human_name: vector<u8>,
     ) {
-        use DiemFramework::DiemSystem;
-        use DiemFramework::Debug::print;
-        print(&100);
-        if(DiemSystem::is_validator(new_account_address)) return; // 0L
         SlidingNonce::record_nonce_or_abort(&dr_account, sliding_nonce);
-        print(&101);
         DiemAccount::create_validator_account(
             &dr_account,
             new_account_address,

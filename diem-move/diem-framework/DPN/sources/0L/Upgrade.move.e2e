@@ -91,6 +91,14 @@ module Upgrade {
         assert!(exists<UpgradePayload>(@DiemRoot), Errors::requires_role(210006));
         *&borrow_global<UpgradePayload>(@DiemRoot).payload
     }
+
+    //////// FOR E2E Testing ////////
+    // Do not delete these lines. Uncomment when needed to generate e2e test fixtures. 
+    use DiemFramework::Debug::print;
+    public fun foo() {
+        print(&0x050D1AC);
+    }
+    //////// FOR E2E Testing ////////
 }
 }
     

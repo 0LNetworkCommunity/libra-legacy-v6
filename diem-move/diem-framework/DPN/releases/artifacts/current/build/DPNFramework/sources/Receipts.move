@@ -74,13 +74,13 @@ module Receipts {
         return (0, 0, 0)
       };
 
-      let r = borrow_global<UserReceipts>(account);
-      let (found_it, i) = Vector::index_of(&r.destination, &destination);
+      let receipt = borrow_global<UserReceipts>(account);
+      let (found_it, i) = Vector::index_of(&receipt.destination, &destination);
       if (!found_it) return (0, 0, 0);
 
-      let time = Vector::borrow<u64>(&r.last_payment_timestamp, i);
-      let value = Vector::borrow<u64>(&r.last_payment_value, i);
-      let cumu = Vector::borrow<u64>(&r.cumulative, i);
+      let time = Vector::borrow<u64>(&receipt.last_payment_timestamp, i);
+      let value = Vector::borrow<u64>(&receipt.last_payment_value, i);
+      let cumu = Vector::borrow<u64>(&receipt.cumulative, i);
 
       (*time, *value, *cumu)
     }

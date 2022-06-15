@@ -38,7 +38,10 @@
     destination: <b>address</b>,
     unscaled_value: u64,
 ) {
-    // IMPORTANT: the human representation of a value is unscaled. The user which expects <b>to</b> send 10 coins, will input that <b>as</b> an unscaled_value. This <b>script</b> converts it <b>to</b> the Move <b>internal</b> scale by multiplying by COIN_SCALING_FACTOR.
+    // IMPORTANT: the human representation of a value is unscaled.
+    // The user which expects <b>to</b> send 10 coins, will input that <b>as</b> an
+    // unscaled_value. This <b>script</b> converts it <b>to</b> the Move <b>internal</b> scale
+    // by multiplying by COIN_SCALING_FACTOR.
     <b>let</b> value = unscaled_value * <a href="Globals.md#0x1_Globals_get_coin_scaling_factor">Globals::get_coin_scaling_factor</a>();
     <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&sender);
     <b>let</b> sender_balance_pre = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender_addr);
@@ -78,19 +81,22 @@
     unscaled_value: u64,
     memo: vector&lt;u8&gt;,
 ) {
-    // IMPORTANT: the human representation of a value is unscaled. The user which expects <b>to</b> send 10 coins, will input that <b>as</b> an unscaled_value. This <b>script</b> converts it <b>to</b> the Move <b>internal</b> scale by multiplying by COIN_SCALING_FACTOR.
+    // IMPORTANT: the human representation of a value is unscaled.
+    // The user which expects <b>to</b> send 10 coins, will input that <b>as</b> an
+    // unscaled_value. This <b>script</b> converts it <b>to</b> the Move <b>internal</b> scale
+    // by multiplying by COIN_SCALING_FACTOR.
     <b>let</b> value = unscaled_value * <a href="Globals.md#0x1_Globals_get_coin_scaling_factor">Globals::get_coin_scaling_factor</a>();
     <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&sender);
-    <b>assert</b>!(<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(sender_addr), 0);
+    <b>assert</b>!(<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(sender_addr), 30001);
 
     // confirm the destination account <b>has</b> a slow wallet
     // TODO: this check only happens in this <b>script</b> since there's
     // a circular dependecy issue <b>with</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> and <a href="Wallet.md#0x1_Wallet">Wallet</a> which impedes
     // checking in <a href="Wallet.md#0x1_Wallet">Wallet</a> <b>module</b>
-    <b>assert</b>!(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(destination), 1);
+    <b>assert</b>!(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(destination), 30002);
 
     <b>let</b> uid = <a href="Wallet.md#0x1_Wallet_new_timed_transfer">Wallet::new_timed_transfer</a>(&sender, destination, value, memo);
-    <b>assert</b>!(<a href="Wallet.md#0x1_Wallet_transfer_is_proposed">Wallet::transfer_is_proposed</a>(uid), 2);
+    <b>assert</b>!(<a href="Wallet.md#0x1_Wallet_transfer_is_proposed">Wallet::transfer_is_proposed</a>(uid), 30003);
 }
 </code></pre>
 

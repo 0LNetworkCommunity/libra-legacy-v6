@@ -18,8 +18,6 @@ module DiemFramework::CoreAddresses {
 
     /// Assert that the account is the Diem root address.
     public fun assert_diem_root(account: &signer) {
-        // use DiemFramework::Debug::print;
-        // print(&100);
         assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_address(EDIEM_ROOT))
     }
     spec assert_diem_root {
@@ -35,10 +33,6 @@ module DiemFramework::CoreAddresses {
 
     /// Assert that the signer has the treasury compliance address.
     public fun assert_treasury_compliance(account: &signer) {
-        // use DiemFramework::Debug::print;
-        // print(&90);
-        // print(&@TreasuryCompliance);
-
         assert!(
             Signer::address_of(account) == @TreasuryCompliance,
             Errors::requires_address(ETREASURY_COMPLIANCE)

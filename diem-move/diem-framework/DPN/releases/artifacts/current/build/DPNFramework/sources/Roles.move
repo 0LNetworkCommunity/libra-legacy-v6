@@ -122,12 +122,8 @@ module DiemFramework::Roles {
         creating_account: &signer,
         new_account: &signer,
     ) acquires RoleId {
-        use DiemFramework::Debug::print;
-        print(&80);
         assert_diem_root(creating_account); /////// 0L /////////
-        print(&81);
         grant_role(new_account, DESIGNATED_DEALER_ROLE_ID);
-        print(&82);
     }
     spec new_designated_dealer_role {
         include AbortsIfNotTreasuryCompliance{account: creating_account};
@@ -251,16 +247,7 @@ module DiemFramework::Roles {
 
     /// Helper function to grant a role.
     fun grant_role(account: &signer, role_id: u64) {
-        use DiemFramework::Debug::print;
-        print(&300);
-        print(&Signer::address_of(account));
-        // print(&exists<RoleId>(Signer::address_of(account)));
-        print(&301);
-        // print(&exists<RoleId>(Signer::address_of(account)));
-        if(exists<RoleId>(Signer::address_of(account))) return; // 0L
-        print(&302);
         assert!(!exists<RoleId>(Signer::address_of(account)), Errors::already_published(EROLE_ID));
-        print(&309);
         move_to(account, RoleId { role_id });
     }
     spec grant_role {

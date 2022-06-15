@@ -283,17 +283,10 @@ pub fn create_upgrade_payload_fn() {
     let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
     module_path.push(STAGED_STDLIB_NAME);
     module_path.set_extension(STAGED_EXTENSION);
-    print!("{:?} ", &module_path);
-    // let modules: Vec<Vec<u8>> = modules_map
-    //     .values().into_iter()
-    //     .map(|compiled_module| {
-    //         let mut ser = Vec::new();
-    //         compiled_module.serialize(&mut ser).unwrap();
-    //         ser
-    //     })
-    //     .collect();
+    println!("0L: module_path: {:?}", module_path.to_str().unwrap());
+    println!("0L: cwd: {:?}", std::env::current_dir().unwrap().to_str());
     let modules = crate::module_blobs();
     let bytes = bcs::to_bytes(&modules).unwrap();
     let mut module_file = File::create(module_path).unwrap();
     module_file.write(&bytes).unwrap();
-    }
+}

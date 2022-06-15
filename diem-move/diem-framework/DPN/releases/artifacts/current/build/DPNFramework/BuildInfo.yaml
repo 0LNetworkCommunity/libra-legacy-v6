@@ -176,9 +176,6 @@ compiled_package_info:
       name: OracleScripts
     : DiemFramework
     ? address: "00000000000000000000000000000001"
-      name: OracleUpgradeFooTx
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
       name: ParallelExecutionConfig
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -275,6 +272,9 @@ compiled_package_info:
       name: Vector
     : Std
     ? address: "00000000000000000000000000000001"
+      name: VectorHelper
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Wallet
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -286,7 +286,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: BB16CAE5C3874949ED44AD2BB716EF8A124CB29B65C22C633AD77F45C6393DA6
+  source_digest: B0BA69CD60888A0C1294F5936F65B588686565B9A3BF324913A4AC7B08F049F7
   build_flags:
     dev_mode: false
     test_mode: false
