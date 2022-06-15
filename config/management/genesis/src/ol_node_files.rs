@@ -361,14 +361,18 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
     //////////////// CREATE CONFIGS FOR CONNECTING TO VFN PRIVATE NETWORK ////////////////
     // this is the only fullnode network a validator should connect to, so to be isolated from public.
 
-    // TODO: The validator's connection to VFN should be restricted to the vfn_ip_address
+    // TODO: The validator's connection to VFN should be restricted to the vfn_ip_address.
     let mut vfn_net = NetworkConfig::network_with_id(NetworkId::Private("vfn".to_string()));
     vfn_net.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;
+
+    let mut pub_net = NetworkConfig::network_with_id(NetworkId::Public);
+    vfn_net.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
     
     // This ID is how the Validator node identifies themselves on their private VFN network.
     // same ID as being used in the validator network.
     vfn_net.identity = network_id;
-    c.full_node_networks = vec![vfn_net.to_owned()];
+    pub_net.identity = network_id;
+    c.full_node_networks = vec![vfn_net.to_owned(), pub_net.to_owned()];
 
     // pick the order of the networks to connect to if the Validator network is not reachable.
     // TODO: Does this work for when the validator is not in the validator set? This has not worked int he past.
