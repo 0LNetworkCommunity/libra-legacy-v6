@@ -366,7 +366,7 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
     vfn_net.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;
 
     let mut pub_net = NetworkConfig::network_with_id(NetworkId::Public);
-    vfn_net.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
+    pub_net.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
     
     // This ID is how the Validator node identifies themselves on their private VFN network.
     // same ID as being used in the validator network.
