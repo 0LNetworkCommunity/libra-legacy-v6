@@ -370,7 +370,7 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
     
     // This ID is how the Validator node identifies themselves on their private VFN network.
     // same ID as being used in the validator network.
-    vfn_net.identity = network_id;
+    vfn_net.identity = network_id.clone();
     pub_net.identity = network_id;
     c.full_node_networks = vec![vfn_net.to_owned(), pub_net.to_owned()];
 
