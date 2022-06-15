@@ -78,7 +78,7 @@ cargo b tower
     Incr build: 23sec
 
     [FASTEST w/ rust 1.46 - current 0L default version]
-    // w/ 1) [build] rustflags = ["-C", "link-arg=-fuse-ld=zld"]
+    // w/ 1) [build] rustflags = ["-C", "link-arg=-fuse-ld=/usr/local/bin/zld"]
           2) # disable debug symbols for all packages except this one
     Full build: 4:32
     Incr build: 19s    
@@ -94,17 +94,23 @@ cargo b tower
     [FASTEST w/ rust 1.51]
     // rust 1.51 + 
           1) split-debuginfo = "unpacked"
-          2) [build] rustflags = ["-C", "link-arg=-fuse-ld=zld"]
+          2) [build] rustflags = ["-C", "link-arg=-fuse-ld=/usr/local/bin/zld"]
           3) # disable debug symbols for all packages except this one    
     Full build: 6:15
     Incr build: 7s
+
+    How to install zld?
+    brew install michaeleisel/zld/zld
+    Ref:
+    https://steipete.com/posts/zld-a-faster-linker/
+    https://github.com/michaeleisel/zld
 ```
 
 #### Related Configs: 
 ```
 .cargo/config
 [build] 
-rustflags = ["-C", "link-arg=-fuse-ld=zld"]
+rustflags = ["-C", "link-arg=-fuse-ld=/usr/local/bin/zld"]
 
 root cargo.toml 
 [profile.dev]
@@ -137,8 +143,8 @@ echo "export RUSTC_WRAPPER=sccache" >> ~/.bashrc
 source ~/.bashrc
 
 // macos 
-echo "export RUSTC_WRAPPER=sccache" >> ~/.profile
-source ~/.profile  
+echo -e "\nexport RUSTC_WRAPPER=sccache--" >> ~/.bash_profile
+source ~/.bash_profile  
 ```
 
 Use `sccache`  
