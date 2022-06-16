@@ -249,9 +249,9 @@ fn make_genesis_file(
         Some(path) => {
             // TODO: insert waypoint
             let gen_wp_path = path.parent().unwrap().join("genesis_waypoint.txt");
-            let wp: Waypoint =
-                fs::read_to_string(&gen_wp_path)?
-                    .parse().map_err(|_| anyhow::anyhow!("cannot parse genesis_waypoint.txt"))?;
+            let wp_string = fs::read_to_string(&gen_wp_path)?;
+            let wp: Waypoint = wp_string.trim().parse()
+                    .map_err(|_| anyhow::anyhow!("cannot parse genesis_waypoint.txt"))?;
             Ok((path.to_owned(), wp))
         }
         None => {
