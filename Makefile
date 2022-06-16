@@ -309,10 +309,6 @@ start:
 # run in foreground. Only for testing, use a daemon for net.
 	RUST_LOG=error cargo run -p diem-node -- --config ${DATA_PATH}/validator.node.yaml
 
-# Start a fullnode instead of a validator node
-start-full:
-	cargo run -p diem-node -- --config ${DATA_PATH}/fullnode.node.yaml
-
 daemon:
 	mkdir -p ~/.config/systemd/user/
 	cp ./ol/util/diem-node.service ~/.config/systemd/user/
@@ -461,7 +457,7 @@ debug:
 # 4. Each genesis node builds the genesis file locally, and submits to the github repo. (this remote genesis file is what subsequent non-genesis validators will use to bootstrap their db).
 # 5. Genesis validators can start their nodes.
 
-# THESE STEPS ARE ACHIEVED WITH  testnet-genesis
+# THESE STEPS ARE ACHIEVED WITH  `make testnet`
 
 
 # 6. Assuming there is progress in the block production, subsequent validators can join.
@@ -498,13 +494,13 @@ testnet-genesis: genesis set-waypoint
 # - initializes node configs
 # - rebuids genesis files and shares to github genesis repo
 # - starts node in validator mode
-testnet: clear fix testnet-init testnet-setup-make-genesis-files start
+testnet: clear fix testnet-init testnet-genesis start
 
 # For subsequent validators joining the testnet. This will fetch the genesis information saved
 testnet-onboard: clear fix
 	MNEM='${MNEM}' cargo run -p onboard -- val --github-org OLSF --repo dev-genesis --chain-id 1
 # start a node with fullnode.node.yaml configs
-	make start-full
+	make start
 
 
 
