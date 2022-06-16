@@ -1,6 +1,6 @@
 use std::{fmt::Debug, fs, net::Ipv4Addr, path::PathBuf, process::exit};
 
-use crate::{storage_helper::StorageHelper, seeds::SeedAddresses};
+use crate::{storage_helper::StorageHelper, seeds::{SeedAddresses, Seeds}};
 use diem_config::{
     config::OnDiskStorageConfig,
     config::SafetyRulesService,
@@ -105,7 +105,7 @@ pub fn onboard_helper_all_files(
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 
-    let (_genesis_path, genesis_waypoint) = make_genesis_file(
+    let (genesis_path, genesis_waypoint) = make_genesis_file(
         &output_dir,
         prebuilt_genesis,
         &repo,
@@ -124,7 +124,9 @@ pub fn onboard_helper_all_files(
       let file_string = fs::read_to_string(&p)?;
       let yaml: SeedAddresses = serde_yaml::from_str(&file_string)?;
       Some(yaml)
-    } else { None };
+    } else {
+      Seeds::new(genesis_path).get_network_peers_info().ok()
+    };
 
     let vfn_ip_address = val_ip_address.clone();
     // This next step depends on genesis waypoint existing in key_store.
@@ -164,9 +166,9 @@ pub fn make_all_profiles_yaml(
     genesis_waypoint: Waypoint,
     // _fullnode_only: bool,
 ) -> Result<NodeConfig, anyhow::Error> {
+    // fullnodes need seed peers, try to extract from the genesis file as a starting place.
 
-
-    let config = make_val_file(output_dir.clone(), vfn_ip_address, namespace)?;
+    let config = make_val_file(output_dir.clone(), seed_addr.clone(), vfn_ip_address, namespace)?;
     make_vfn_file(output_dir.clone(), val_ip_address, genesis_waypoint, namespace)?;
     make_fullnode_file(output_dir.clone(), seed_addr, genesis_waypoint)?;
 
@@ -177,12 +179,12 @@ pub fn make_all_profiles_yaml(
 // helper to write a new validator.node.yaml file.
 pub fn make_val_file(
     output_dir: PathBuf,
-    // val_ip_address: Ipv4Addr,
+    seed_addr: Option<SeedAddresses>,
     _vfn_ip_address: Option<Ipv4Addr>,
     namespace: &str,
 ) -> Result<NodeConfig, anyhow::Error> {
   // TODO: The validator's connection to VFN should be restricted to the vfn_ip_address
-    let mut val = make_validator_cfg(output_dir.clone(), namespace)?;
+    let mut val = make_validator_cfg(output_dir.clone(), namespace, seed_addr)?;
     write_yaml(output_dir.clone(), &mut val, NodeType::Validator)?;
     Ok(val)
 }
@@ -312,7 +314,7 @@ pub fn make_fullnode_cfg(
     Ok(c)
 }
 
-fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig, anyhow::Error> {
+fn make_validator_cfg(output_dir: PathBuf, namespace: &str, seed_addresses: Option<SeedAddresses>) -> Result<NodeConfig, anyhow::Error> {
     // TODO: make the validator node have mutual authentication with VFN.
     // for that it will need to get the Peer object of the VFN after the identity has been created
     // by default the VFN identity is random.
@@ -372,6 +374,12 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
     // same ID as being used in the validator network.
     vfn_net.identity = network_id.clone();
     pub_net.identity = network_id;
+
+    if let Some(s) = seed_addresses {
+      vfn_net.seed_addrs = s.clone();
+      pub_net.seed_addrs = s;
+    }
+    
     c.full_node_networks = vec![vfn_net.to_owned(), pub_net.to_owned()];
 
     // pick the order of the networks to connect to if the Validator network is not reachable.
