@@ -4,45 +4,49 @@ ifndef SOURCE_PATH
 SOURCE_PATH = ${HOME}/code/libra/
 endif
 
-FIXTURES_PATH = ${SOURCE_PATH}ol/fixtures/upgrade_payload/
+LIBRA_PATH = ${SOURCE_PATH}
+FIXTURES_PATH = ${LIBRA_PATH}/ol/fixtures/upgrade_payload/
+DF_SRC_PATH = ${LIBRA_PATH}/diem-move/diem-framework/DPN/sources/
+DF_PATH = ${LIBRA_PATH}/diem-move/diem-framework/
 
+# Create foo_stdlib.mv which contains"foo" symbol(fn)
 fixtures: rename-files stdlib check-foo copy reverse-rename stdlib-again
 
 stdlib:
-	cd ${SOURCE_PATH} && cargo run --release -p diem-framework -- --create-upgrade-payload
+	cd ${DF_PATH} && cargo r --release -- --create-upgrade-payload
 
 stdlib-again:
 # TODO: can't run recipes twice?
-	cd ${SOURCE_PATH} && cargo run --release -p diem-framework -- --create-upgrade-payload
-
+	cd ${DF_PATH} && cargo r --release -- --create-upgrade-payload
 
 rename-files:
 # Module rename
-	mv ${SOURCE_PATH}/diem-move/diem-framework/DPN/sources/0L/Upgrade.move ${SOURCE_PATH}/diem-move/diem-framework/DPN/sources/0L/Upgrade.move.temp
-
-	mv ${SOURCE_PATH}/diem-move/diem-framework/DPN/sources/0L/Upgrade.move.e2e ${SOURCE_PATH}/diem-move/diem-framework/DPN/sources/0L/Upgrade.move
+	mv ${DF_SRC_PATH}/0L/Upgrade.move ${DF_SRC_PATH}/0L/Upgrade.move.temp
+	mv ${DF_SRC_PATH}/0L/Upgrade.move.e2e ${DF_SRC_PATH}/0L/Upgrade.move
 
 # transaction script rename
-	mv ${SOURCE_PATH}diem-move/diem-framework/DPN/sources/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move.e2e ${SOURCE_PATH}diem-move/diem-framework/DPN/sources/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move
+	mv ${DF_SRC_PATH}/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move.e2e \
+	   ${DF_SRC_PATH}/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move
 
 check-foo:
 # checks the foo function exists in the compile
-	grep ${SOURCE_PATH}/language/diem-framework/staged/stdlib.mv -e foo
+	grep ${DF_PATH}/staged/stdlib.mv -e foo
 
 copy:
-	cp ${SOURCE_PATH}/language/diem-framework/staged/stdlib.mv ${FIXTURES_PATH}/foo_stdlib.mv
+	cp ${DF_PATH}/staged/stdlib.mv ${FIXTURES_PATH}/foo_stdlib.mv
 
-# cp ${SOURCE_PATH}/language/diem-framework/releases/artifacts/current/script_abis/ol_e2e_test_upgrade_foo_tx/ol_oracle_upgrade_foo_tx.abi ${FIXTURES_PATH}/tx_scripts/ol_oracle_upgrade_foo_tx.abi
+# cp ${DF_PATH}/releases/artifacts/current/script_abis/ol_e2e_test_upgrade_foo_tx/ol_oracle_upgrade_foo_tx.abi \ 
+#    ${FIXTURES_PATH}/tx_scripts/ol_oracle_upgrade_foo_tx.abi
 
-# cp ${SOURCE_PATH}/language/diem-framework/releases/artifacts/current/script_abis/ol_e2e_test_upgrade_foo_tx/ol_oracle_upgrade_foo_tx.abi ${FIXTURES_PATH}/tx_scripts/ol_oracle_upgrade_foo_tx.abi
+# cp ${DF_PATH}/releases/artifacts/current/script_abis/ol_e2e_test_upgrade_foo_tx/ol_oracle_upgrade_foo_tx.abi ${FIXTURES_PATH}/tx_scripts/ol_oracle_upgrade_foo_tx.abi
 
-# cp ${SOURCE_PATH}/language/diem-framework/releases/artifacts/current/modules/*_OracleUpgradeFooTx.mv ${FIXTURES_PATH}/tx_scripts/
+# cp ${DF_PATH}/releases/artifacts/current/modules/*_OracleUpgradeFooTx.mv ${FIXTURES_PATH}/tx_scripts/
 
 reverse-rename:
 # Module rename
-	mv ${SOURCE_PATH}/diem-move/diem-framework/DPN/sources/0L/Upgrade.move ${SOURCE_PATH}/diem-move/diem-framework/DPN/sources/0L/Upgrade.move.e2e
-	
-	mv ${SOURCE_PATH}/diem-move/diem-framework/DPN/sources/0L/Upgrade.move.temp ${SOURCE_PATH}/diem-move/diem-framework/DPN/sources/0L/Upgrade.move
+	mv ${DF_SRC_PATH}/0L/Upgrade.move ${DF_SRC_PATH}/0L/Upgrade.move.e2e
+	mv ${DF_SRC_PATH}/0L/Upgrade.move.temp ${DF_SRC_PATH}/0L/Upgrade.move
 
 # transaction script rename
-	mv ${SOURCE_PATH}diem-move/diem-framework/DPN/sources/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move ${SOURCE_PATH}diem-move/diem-framework/DPN/sources/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move.e2e
+	mv ${DF_SRC_PATH}/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move \
+	   ${DF_SRC_PATH}/0L_transaction_scripts/ol_e2e_test_upgrade_foo_tx.move.e2e

@@ -858,6 +858,10 @@ pub enum ScriptFunctionCall {
         sliding_nonce: u64,
     },
 
+    IsValidatorScr {
+        addr: AccountAddress,
+    },
+
     Join {},
 
     Leave {},
@@ -2092,6 +2096,7 @@ impl ScriptFunctionCall {
             InitializeDiemConsensusConfig { sliding_nonce } => {
                 encode_initialize_diem_consensus_config_script_function(sliding_nonce)
             }
+            IsValidatorScr { addr } => encode_is_validator_scr_script_function(addr),
             Join {} => encode_join_script_function(),
             Leave {} => encode_leave_script_function(),
             MinerstateCommit {
@@ -3463,6 +3468,18 @@ pub fn encode_initialize_diem_consensus_config_script_function(
         ident_str!("initialize_diem_consensus_config").to_owned(),
         vec![],
         vec![bcs::to_bytes(&sliding_nonce).unwrap()],
+    ))
+}
+
+pub fn encode_is_validator_scr_script_function(addr: AccountAddress) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("DiemSystem").to_owned(),
+        ),
+        ident_str!("is_validator_scr").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&addr).unwrap()],
     ))
 }
 
@@ -5336,6 +5353,18 @@ fn decode_initialize_diem_consensus_config_script_function(
     }
 }
 
+fn decode_is_validator_scr_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::IsValidatorScr {
+            addr: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_join_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
         Some(ScriptFunctionCall::Join {})
@@ -5942,6 +5971,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "SystemAdministrationScriptsinitialize_diem_consensus_config".to_string(),
             Box::new(decode_initialize_diem_consensus_config_script_function),
+        );
+        map.insert(
+            "DiemSystemis_validator_scr".to_string(),
+            Box::new(decode_is_validator_scr_script_function),
         );
         map.insert(
             "ValidatorScriptsjoin".to_string(),
