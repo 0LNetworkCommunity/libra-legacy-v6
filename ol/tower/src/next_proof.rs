@@ -4,8 +4,10 @@ use std::path::PathBuf;
 
 use anyhow::{Error, bail};
 use diem_crypto::HashValue;
+use diem_global_constants::genesis_delay_difficulty;
 use diem_types::{ol_vdf_difficulty::VDFDifficulty};
 use ol::{config::AppCfg, node::{client::pick_client, node::Node}};
+use ol_keys::wallet::IS_TEST;
 use crate::proof;
 /// container for the next proof parameters to be fed to VDF prover.
 pub struct NextProof {
@@ -15,6 +17,23 @@ pub struct NextProof {
     pub next_height: u64,
     ///
     pub preimage: Vec<u8>,
+}
+
+impl NextProof {
+  /// create a genesis proof
+  pub fn genesis_proof(preimage: Vec<u8>) -> Self {
+    let mut diff = VDFDifficulty::default(); 
+    
+    if *IS_TEST {
+      diff.difficulty = genesis_delay_difficulty()
+    }
+
+    NextProof {
+        diff,
+        next_height: 0,
+        preimage,
+    }
+  }
 }
 /// return the VDF difficulty expected and the next tower height
 pub fn get_next_proof_params_from_local(config: &AppCfg) -> Result<NextProof, Error> {
@@ -95,3 +114,4 @@ pub fn get_difficulty_from_chain(config: &mut AppCfg, swarm_path: Option<PathBuf
     }
     bail!("could not get account state for 0x0")
 }
+
