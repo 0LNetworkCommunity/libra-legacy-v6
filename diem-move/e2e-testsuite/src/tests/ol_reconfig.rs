@@ -20,9 +20,10 @@ use ol_types::fixtures;
 
 pub const LBR_NAME: &str = "GAS";
 
+// NOTE: Run with: 
+// `cargo xtest -p language-e2e-testsuite reconfig_bulk_update_test -- --nocapture`
 #[test]
 fn reconfig_bulk_update_test() {
-    // Run with: `cargo xtest -p language-e2e-testsuite reconfig_bulk_update_test -- --nocapture`
     let mut executor = FakeExecutor::from_genesis_file();
     let mut sequence_number = 1u64;
 
@@ -106,7 +107,7 @@ fn reconfig_bulk_update_test() {
 
     executor.new_block();
 
-    //////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
     // register validator config
     for i in 0..5 {
         executor.execute_and_apply(
@@ -129,7 +130,7 @@ fn reconfig_bulk_update_test() {
     }
     println!("--- registered validator configs");
 
-    //////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
     // Actually register the accounts as validators
     for i in 0..5 {
         executor.execute_and_apply(
@@ -166,9 +167,11 @@ fn reconfig_bulk_update_test() {
     println!("--- minerstate_helper_script executed successfully");
 
     // Fixture data for the VDF proof, using easy/test difficulty
-    // This assumes that it is a proof_1.json a SUBSEQUENT proof, to an already committed genesis proof.
+    // This assumes that it is a proof_1.json a SUBSEQUENT proof,
+    // to an already committed genesis proof.
     
-    // This test uses Alice's block_1 proof (../fixtures/proof_1.json.stage.alice), assuming she has participated in a genesis ceremony.
+    // This test uses Alice's block_1 proof (../fixtures/proof_1.json.stage.alice),
+    // assuming she has participated in a genesis ceremony.
 
     let block = fixtures::get_persona_block_one("alice", "test");
     let payload = transaction_builder::encode_minerstate_commit_script_function(
@@ -191,7 +194,7 @@ fn reconfig_bulk_update_test() {
     }
     println!("--- minerstate_commit executed successfully");
 
-    //////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
     // Construct the signed tx script for test setup.
     let output = executor.execute_and_apply(
         diem_root_data
