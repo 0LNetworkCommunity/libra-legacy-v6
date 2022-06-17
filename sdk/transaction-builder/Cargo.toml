@@ -16,7 +16,7 @@ once_cell = "1.7.2"
 serde = { version = "1.0.124", features = ["derive"] }
 
 #/////// 0L /////////
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "9fa5ae30621027777c3a5776871b5760d95c9fdc"}
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b"}
 diem-types = { path = "../../types", version = "0.0.3" }
 
 proptest = { version = "1.0.0", optional = true }
@@ -26,7 +26,7 @@ diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hac
 [dev-dependencies]
 proptest = "1.0.0"
 proptest-derive = "0.3.0"
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "9fa5ae30621027777c3a5776871b5760d95c9fdc", features = ["fuzzing"] }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b", features = ["fuzzing"] }
 
 [features]
 default = []

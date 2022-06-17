@@ -79,11 +79,11 @@ third-party = [
     # Exclude the fail crate because the failpoints feature should only be enabled
     # for certain builds.
     { name = "fail" },
-    { name = "move-binary-format", git = "https://github.com/OLSF/move-0L", rev = "9fa5ae30621027777c3a5776871b5760d95c9fdc" },
-    { name = "move-core-types", git = "https://github.com/OLSF/move-0L", rev = "9fa5ae30621027777c3a5776871b5760d95c9fdc" },
-    { name = "move-stdlib", git = "https://github.com/OLSF/move-0L", rev = "9fa5ae30621027777c3a5776871b5760d95c9fdc" },
-    { name = "move-vm-runtime", git = "https://github.com/OLSF/move-0L", rev = "9fa5ae30621027777c3a5776871b5760d95c9fdc" },
-    { name = "move-vm-types", git = "https://github.com/OLSF/move-0L", rev = "9fa5ae30621027777c3a5776871b5760d95c9fdc" },
+    { name = "move-binary-format", git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" },
+    { name = "move-core-types", git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" },
+    { name = "move-stdlib", git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" },
+    { name = "move-vm-runtime", git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" },
+    { name = "move-vm-types", git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" },
 ]
 
 # This follows the same syntax as CargoOptionsSummary in guppy.

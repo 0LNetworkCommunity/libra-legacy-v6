@@ -32,7 +32,7 @@ diemdb = { path = "../storage/diemdb", features = ["fuzzing"] }
 storage-service = { path = "../storage/storage-service" }
 diem-transaction-builder = { path = "../sdk/transaction-builder" }
 vm-genesis = { path = "../diem-move/vm-genesis" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "9fa5ae30621027777c3a5776871b5760d95c9fdc" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
 
 [features]
 default = []

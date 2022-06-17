@@ -34,8 +34,8 @@ diem-types = { path = "../types" }
 diem-workspace-hack = { version = "0.1", path = "../crates/diem-workspace-hack" }
 diem-api-types = { path = "./types", package = "diem-api-types" }
 storage-interface = { path = "../storage/storage-interface" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "9fa5ae30621027777c3a5776871b5760d95c9fdc" }
-move-resource-viewer = { git = "https://github.com/OLSF/move-0L", rev = "9fa5ae30621027777c3a5776871b5760d95c9fdc" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
+move-resource-viewer = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
 
 [dev-dependencies]
 rand = "0.8.3"

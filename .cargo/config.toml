@@ -13,3 +13,5 @@ nextest = "run --package x --bin x -- nextest"
 [target.'cfg(target_os = "linux")']
 # Dramatically increases the link performance for the eventbus
 rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+[target.'cfg(target_os = "macos")']
+rustflags = ["-C", "link-arg=-fuse-ld=/usr/local/bin/zld"]

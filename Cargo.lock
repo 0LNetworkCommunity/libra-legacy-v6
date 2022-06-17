@@ -69,9 +69,9 @@ name = "accumulator"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "diem-crypto 0.0.3",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
  "mirai-annotations",
  "proptest",
  "rand 0.8.4",
@@ -333,16 +333,16 @@ dependencies = [
  "byteorder",
  "bytes 1.1.0",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-infallible",
  "diem-jellyfish-merkle",
  "diem-logger",
  "diem-proptest-helpers",
  "diem-secure-push-metrics",
  "diem-temppath",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "executor",
  "executor-test-helpers",
@@ -376,12 +376,12 @@ dependencies = [
  "bcs",
  "bytes 1.1.0",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-logger",
  "diem-metrics",
  "diem-temppath",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "diemdb",
  "futures",
  "hyper",
@@ -559,7 +559,7 @@ checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 name = "bounded-executor"
 version = "0.1.0"
 dependencies = [
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "futures",
  "tokio 1.18.2",
 ]
@@ -601,14 +601,14 @@ checksum = "e3b5ca7a04898ad4bcd41c90c5285445ff5b791899bb1b0abdd2a2aa791211d7"
 [[package]]
 name = "bytecode-interpreter-crypto"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "curve25519-dalek-fiat",
  "ed25519-dalek-fiat",
  "sha2 0.9.9",
  "sha3 0.9.1",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
@@ -758,8 +758,8 @@ dependencies = [
  "anyhow",
  "diem-infallible",
  "diem-metrics",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "futures",
  "tokio 1.18.2",
 ]
@@ -862,7 +862,7 @@ dependencies = [
 [[package]]
 name = "classgroup"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30#c59b5ec242e5a1d8f3467dc254614eb28825bb30"
+source = "git+https://github.com/OLSF/libra?rev=aa1731ee1442c211b5f7a80bcb238fbc25b47408#aa1731ee1442c211b5f7a80bcb238fbc25b47408"
 dependencies = [
  "libc",
  "num-traits 0.2.15",
@@ -971,16 +971,16 @@ dependencies = [
  "consensus-notifications",
  "consensus-types",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-infallible",
  "diem-logger",
  "diem-mempool",
  "diem-metrics",
  "diem-secure-storage",
  "diem-temppath",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "event-notifications",
  "execution-correctness",
  "executor",
@@ -1017,11 +1017,11 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "claim",
- "diem-crypto 0.0.3",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
  "futures",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "serde 1.0.137",
  "thiserror",
  "tokio 1.18.2",
@@ -1033,11 +1033,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
- "diem-crypto 0.0.3",
- "diem-crypto-derive 0.0.3",
+ "diem-crypto",
+ "diem-crypto-derive",
  "diem-infallible",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "executor-types",
  "itertools",
  "mirai-annotations",
@@ -1120,7 +1120,7 @@ version = "0.1.0"
 dependencies = [
  "backtrace",
  "diem-logger",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "serde 1.0.137",
  "toml",
 ]
@@ -1399,14 +1399,14 @@ dependencies = [
  "channel",
  "claim",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-data-client",
  "diem-id-generator",
  "diem-infallible",
  "diem-logger",
  "diem-metrics",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "enum_dispatch",
  "futures",
  "network",
@@ -1439,11 +1439,11 @@ dependencies = [
  "anyhow",
  "bcs",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-temppath",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "executor",
  "storage-interface",
@@ -1465,7 +1465,7 @@ dependencies = [
  "diem-config",
  "diem-logger",
  "diem-metrics",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "reqwest",
  "serde 1.0.137",
  "serde_json",
@@ -1482,12 +1482,12 @@ dependencies = [
  "diem-json-rpc-types",
  "diem-sdk",
  "diem-transaction-builder",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "generate-key",
  "hex 0.4.3",
  "log",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "rand 0.8.4",
  "structopt",
  "tokio 1.18.2",
@@ -1526,9 +1526,9 @@ dependencies = [
  "datatest-stable",
  "diem-framework-releases",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "move-cli",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "structopt",
 ]
 
@@ -1553,7 +1553,7 @@ dependencies = [
  "bytes 1.1.0",
  "diem-api-types",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-framework-releases",
  "diem-genesis-tool",
  "diem-global-constants",
@@ -1564,9 +1564,9 @@ dependencies = [
  "diem-sdk",
  "diem-secure-storage",
  "diem-temppath",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "executor",
  "executor-types",
@@ -1575,7 +1575,7 @@ dependencies = [
  "hex 0.4.3",
  "hyper",
  "mempool-notifications",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-resource-viewer",
  "once_cell",
  "percent-encoding",
@@ -1595,13 +1595,13 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "bcs",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-transaction-builder",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "hex 0.4.3",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
+ "move-core-types",
  "move-resource-viewer",
  "serde 1.0.137",
  "serde_json",
@@ -1615,10 +1615,10 @@ dependencies = [
  "anyhow",
  "bcs",
  "diem-client",
- "diem-crypto 0.0.3",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
+ "move-core-types",
  "serde 1.0.137",
  "serde_json",
  "structopt",
@@ -1629,7 +1629,7 @@ name = "diem-bitvec"
 version = "0.1.0"
 dependencies = [
  "bcs",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "proptest",
  "proptest-derive",
  "serde 1.0.137",
@@ -1642,13 +1642,13 @@ version = "0.0.3"
 dependencies = [
  "anyhow",
  "bcs",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-json-rpc-types",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "hex 0.4.3",
  "ipnet",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "proptest",
  "reqwest",
  "serde 1.0.137",
@@ -1666,15 +1666,15 @@ name = "diem-config"
 version = "5.0.11"
 dependencies = [
  "bcs",
- "diem-crypto 0.0.3",
- "diem-crypto-derive 0.0.3",
+ "diem-crypto",
+ "diem-crypto-derive",
  "diem-global-constants",
  "diem-logger",
  "diem-network-address-encryption",
  "diem-secure-storage",
  "diem-temppath",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "get_if_addrs",
  "log",
  "mirai-annotations",
@@ -1697,8 +1697,8 @@ dependencies = [
  "bytes 1.1.0",
  "criterion",
  "curve25519-dalek-fiat",
- "diem-crypto-derive 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-crypto-derive",
+ "diem-workspace-hack",
  "digest 0.9.0",
  "ed25519-dalek-fiat",
  "hex 0.4.3",
@@ -1724,52 +1724,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "diem-crypto"
-version = "0.0.3"
-source = "git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30#c59b5ec242e5a1d8f3467dc254614eb28825bb30"
-dependencies = [
- "aes-gcm",
- "anyhow",
- "bcs",
- "bytes 1.1.0",
- "curve25519-dalek-fiat",
- "diem-crypto-derive 0.0.3 (git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30)",
- "diem-workspace-hack 0.1.0 (git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30)",
- "digest 0.9.0",
- "ed25519-dalek-fiat",
- "hex 0.4.3",
- "hkdf",
- "mirai-annotations",
- "once_cell",
- "rand 0.8.4",
- "rand_core 0.6.3",
- "serde 1.0.137",
- "serde-name",
- "serde_bytes",
- "sha2 0.9.9",
- "static_assertions",
- "thiserror",
- "tiny-keccak",
- "x25519-dalek-fiat",
-]
-
-[[package]]
 name = "diem-crypto-derive"
 version = "0.0.3"
 dependencies = [
  "anyhow",
- "diem-workspace-hack 0.1.0",
- "proc-macro2 1.0.39",
- "quote 1.0.18",
- "syn 1.0.95",
-]
-
-[[package]]
-name = "diem-crypto-derive"
-version = "0.0.3"
-source = "git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30#c59b5ec242e5a1d8f3467dc254614eb28825bb30"
-dependencies = [
- "diem-workspace-hack 0.1.0 (git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30)",
+ "diem-workspace-hack",
  "proc-macro2 1.0.39",
  "quote 1.0.18",
  "syn 1.0.95",
@@ -1784,14 +1743,14 @@ dependencies = [
  "channel",
  "claim",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-id-generator",
  "diem-infallible",
  "diem-logger",
  "diem-metrics",
  "diem-time-service",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "futures",
  "itertools",
  "maplit",
@@ -1810,7 +1769,7 @@ name = "diem-documentation-tool"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "once_cell",
  "regex",
  "serde 1.0.137",
@@ -1828,8 +1787,8 @@ dependencies = [
  "anyhow",
  "bcs",
  "diem-client",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "futures",
  "hex 0.4.3",
  "reqwest",
@@ -1843,12 +1802,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
- "diem-crypto 0.0.3",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
  "framework-releases",
  "include_dir",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-command-line-common",
  "once_cell",
 ]
@@ -1863,7 +1822,7 @@ dependencies = [
  "diem-infallible",
  "diem-logger",
  "diem-sdk",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "generate-key",
  "hex 0.4.3",
  "rand 0.8.4",
@@ -1884,22 +1843,22 @@ dependencies = [
  "bcs",
  "clap",
  "datatest-stable",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-transactional-test-harness",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "dir-diff",
  "include_dir",
  "log",
  "move-abigen",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-utils",
  "move-bytecode-verifier",
  "move-cli",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-docgen",
  "move-errmapgen",
  "move-package",
@@ -1924,12 +1883,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
- "diem-crypto 0.0.3",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
  "framework-releases",
  "include_dir",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-verifier",
  "move-command-line-common",
  "once_cell",
@@ -1940,7 +1899,7 @@ name = "diem-fuzz"
 version = "0.1.0"
 dependencies = [
  "diem-fuzzer",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "libfuzzer-sys",
  "once_cell",
 ]
@@ -1956,21 +1915,21 @@ dependencies = [
  "consensus",
  "consensus-types",
  "datatest-stable",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-jellyfish-merkle",
  "diem-json-rpc",
  "diem-mempool",
  "diem-proptest-helpers",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vault-client",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "executor",
  "executor-types",
  "hex 0.4.3",
  "language-e2e-tests",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
+ "move-core-types",
  "move-vm-types",
  "network",
  "once_cell",
@@ -1997,7 +1956,7 @@ dependencies = [
  "bcs",
  "consensus-types",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-framework-releases",
  "diem-github-client",
  "diem-global-constants",
@@ -2005,10 +1964,10 @@ dependencies = [
  "diem-network-address-encryption",
  "diem-secure-storage",
  "diem-temppath",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
  "diem-wallet",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "dirs",
  "executor",
@@ -2033,7 +1992,7 @@ name = "diem-github-client"
 version = "0.1.0"
 dependencies = [
  "base64",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "proxy",
  "serde 1.0.137",
  "serde_json",
@@ -2049,14 +2008,14 @@ version = "0.1.0"
 name = "diem-id-generator"
 version = "0.1.0"
 dependencies = [
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
 ]
 
 [[package]]
 name = "diem-infallible"
 version = "0.1.0"
 dependencies = [
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
 ]
 
 [[package]]
@@ -2066,12 +2025,12 @@ dependencies = [
  "anyhow",
  "bcs",
  "byteorder",
- "diem-crypto 0.0.3",
- "diem-crypto-derive 0.0.3",
+ "diem-crypto",
+ "diem-crypto-derive",
  "diem-infallible",
  "diem-metrics",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "itertools",
  "mirai-annotations",
  "num-derive",
@@ -2093,7 +2052,7 @@ dependencies = [
  "bcs",
  "diem-client",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-framework-releases",
  "diem-genesis-tool",
  "diem-id-generator",
@@ -2106,8 +2065,8 @@ dependencies = [
  "diem-sdk",
  "diem-temppath",
  "diem-transaction-builder",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "diemdb",
  "executor",
  "executor-types",
@@ -2116,7 +2075,7 @@ dependencies = [
  "generate-key",
  "hex 0.4.3",
  "hyper",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-resource-viewer",
  "move-vm-types",
  "network",
@@ -2143,12 +2102,12 @@ version = "0.0.3"
 dependencies = [
  "anyhow",
  "bcs",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-transaction-builder",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "hex 0.4.3",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "num-derive",
  "num-traits 0.2.15",
  "ol-types",
@@ -2166,7 +2125,7 @@ dependencies = [
  "crash-handler",
  "diem-client",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-genesis-tool",
  "diem-global-constants",
  "diem-json-rpc",
@@ -2176,9 +2135,9 @@ dependencies = [
  "diem-secure-storage",
  "diem-time-service",
  "diem-transaction-builder",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "executor",
  "executor-test-helpers",
@@ -2197,9 +2156,9 @@ dependencies = [
 name = "diem-keygen"
 version = "0.1.0"
 dependencies = [
- "diem-crypto 0.0.3",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
  "hex 0.4.3",
  "rand 0.8.4",
  "sha3 0.9.1",
@@ -2209,7 +2168,7 @@ dependencies = [
 name = "diem-log-derive"
 version = "0.1.0"
 dependencies = [
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "proc-macro2 1.0.39",
  "quote 1.0.18",
  "syn 1.0.95",
@@ -2223,7 +2182,7 @@ dependencies = [
  "chrono",
  "diem-infallible",
  "diem-log-derive",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "erased-serde",
  "hostname",
  "once_cell",
@@ -2241,16 +2200,16 @@ dependencies = [
  "anyhow",
  "bcs",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-global-constants",
  "diem-network-address-encryption",
  "diem-secure-storage",
  "diem-temppath",
  "diem-time-service",
  "diem-transaction-builder",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-wallet",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "dirs",
  "hex 0.4.3",
  "ol-keys",
@@ -2273,14 +2232,14 @@ dependencies = [
  "bounded-executor",
  "channel",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-id-generator",
  "diem-infallible",
  "diem-logger",
  "diem-metrics",
  "diem-proptest-helpers",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "enum_dispatch",
  "event-notifications",
  "fail",
@@ -2313,7 +2272,7 @@ dependencies = [
  "assert_approx_eq",
  "diem-logger",
  "diem-metrics-core",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "futures",
  "hyper",
  "once_cell",
@@ -2327,7 +2286,7 @@ dependencies = [
 name = "diem-metrics-core"
 version = "0.1.0"
 dependencies = [
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "prometheus",
 ]
 
@@ -2341,8 +2300,8 @@ dependencies = [
  "diem-infallible",
  "diem-logger",
  "diem-secure-storage",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "rand 0.8.4",
  "serde 1.0.137",
  "thiserror",
@@ -2361,7 +2320,7 @@ dependencies = [
  "debug-interface",
  "diem-api",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-data-client",
  "diem-framework-releases",
  "diem-genesis-tool",
@@ -2373,9 +2332,9 @@ dependencies = [
  "diem-secure-storage",
  "diem-temppath",
  "diem-time-service",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "event-notifications",
  "executor",
@@ -2409,7 +2368,7 @@ dependencies = [
  "bcs",
  "diem-client",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-global-constants",
  "diem-infallible",
  "diem-management",
@@ -2417,8 +2376,8 @@ dependencies = [
  "diem-secure-storage",
  "diem-temppath",
  "diem-transaction-builder",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "fallible",
  "futures",
  "hex 0.4.3",
@@ -2443,7 +2402,7 @@ dependencies = [
  "anyhow",
  "criterion",
  "crossbeam-queue",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "mvhashmap",
  "num_cpus",
  "once_cell",
@@ -2458,7 +2417,7 @@ name = "diem-proptest-helpers"
 version = "0.1.0"
 dependencies = [
  "crossbeam",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "proptest",
  "proptest-derive",
 ]
@@ -2470,7 +2429,7 @@ dependencies = [
  "diem-infallible",
  "diem-logger",
  "diem-metrics",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "futures",
  "pin-project",
  "tokio 1.18.2",
@@ -2482,10 +2441,10 @@ name = "diem-resource-viewer"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "diem-types",
+ "diem-workspace-hack",
+ "move-binary-format",
+ "move-core-types",
  "move-resource-viewer",
 ]
 
@@ -2497,12 +2456,12 @@ dependencies = [
  "bcs",
  "diem-api-types",
  "diem-client",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-json-rpc-types",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "hex 0.4.3",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "reqwest",
  "serde 1.0.137",
  "serde_json",
@@ -2515,7 +2474,7 @@ name = "diem-retrier"
 version = "0.1.0"
 dependencies = [
  "diem-logger",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "tokio 1.18.2",
 ]
 
@@ -2525,11 +2484,11 @@ version = "0.0.3"
 dependencies = [
  "bcs",
  "diem-client",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-transaction-builder",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "diem-types",
+ "diem-workspace-hack",
+ "move-core-types",
  "rand_core 0.6.3",
  "serde 1.0.137",
 ]
@@ -2541,7 +2500,7 @@ dependencies = [
  "diem-config",
  "diem-logger",
  "diem-secure-push-metrics",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "once_cell",
  "serde 1.0.137",
  "thiserror",
@@ -2553,7 +2512,7 @@ version = "0.1.0"
 dependencies = [
  "diem-logger",
  "diem-metrics-core",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "ureq",
 ]
 
@@ -2564,15 +2523,15 @@ dependencies = [
  "base64",
  "bcs",
  "chrono",
- "diem-crypto 0.0.3",
- "diem-crypto-derive 0.0.3",
+ "diem-crypto",
+ "diem-crypto-derive",
  "diem-github-client",
  "diem-infallible",
  "diem-logger",
  "diem-temppath",
  "diem-time-service",
  "diem-vault-client",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "enum_dispatch",
  "rand 0.8.4",
  "serde 1.0.137",
@@ -2585,9 +2544,9 @@ name = "diem-state-view"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "diem-crypto 0.0.3",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
 ]
 
 [[package]]
@@ -2596,11 +2555,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-framework-releases",
  "diem-logger",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "diemdb",
  "storage-interface",
  "structopt",
@@ -2611,7 +2570,7 @@ dependencies = [
 name = "diem-temppath"
 version = "0.1.0"
 dependencies = [
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "hex 0.4.3",
  "rand 0.8.4",
 ]
@@ -2621,7 +2580,7 @@ name = "diem-time-service"
 version = "0.1.0"
 dependencies = [
  "diem-infallible",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "enum_dispatch",
  "futures",
  "pin-project",
@@ -2636,9 +2595,9 @@ version = "0.0.3"
 dependencies = [
  "anyhow",
  "bcs",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "diem-types",
+ "diem-workspace-hack",
+ "move-core-types",
  "once_cell",
  "proptest",
  "proptest-derive",
@@ -2655,17 +2614,17 @@ dependencies = [
  "diem-framework-releases",
  "diem-resource-viewer",
  "diem-state-view",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-validator-interface",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "difference",
  "hex 0.4.3",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-cli",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-vm-runtime",
  "move-vm-test-utils",
  "move-vm-types",
@@ -2680,21 +2639,21 @@ dependencies = [
  "anyhow",
  "bcs",
  "datatest-stable",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-framework",
  "diem-keygen",
  "diem-state-view",
  "diem-transaction-builder",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "either",
  "hex 0.4.3",
  "language-e2e-tests",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-transactional-test-runner",
  "once_cell",
  "rand 0.8.4",
@@ -2711,47 +2670,19 @@ dependencies = [
  "bcs",
  "bytes 1.1.0",
  "chrono",
- "diem-crypto 0.0.3",
- "diem-crypto-derive 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-crypto",
+ "diem-crypto-derive",
+ "diem-workspace-hack",
  "hex 0.4.3",
  "itertools",
  "mirai-annotations",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
- "move-read-write-set-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
+ "move-read-write-set-types",
  "once_cell",
  "proptest",
  "proptest-derive",
  "rand 0.8.4",
  "regex",
- "serde 1.0.137",
- "serde_bytes",
- "serde_json",
- "sha2 0.9.9",
- "thiserror",
- "tiny-keccak",
-]
-
-[[package]]
-name = "diem-types"
-version = "0.0.3"
-source = "git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30#c59b5ec242e5a1d8f3467dc254614eb28825bb30"
-dependencies = [
- "aes-gcm",
- "anyhow",
- "bcs",
- "bytes 1.1.0",
- "chrono",
- "diem-crypto 0.0.3 (git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30)",
- "diem-crypto-derive 0.0.3 (git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30)",
- "diem-workspace-hack 0.1.0 (git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30)",
- "hex 0.4.3",
- "itertools",
- "mirai-annotations",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=ab8d1dc313b747f813ecc42a388edc198311f14a)",
- "move-read-write-set-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=ab8d1dc313b747f813ecc42a388edc198311f14a)",
- "once_cell",
- "rand 0.8.4",
  "serde 1.0.137",
  "serde_bytes",
  "serde_json",
@@ -2769,10 +2700,10 @@ dependencies = [
  "diem-client",
  "diem-config",
  "diem-state-view",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "diemdb",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "scratchpad",
  "storage-interface",
 ]
@@ -2783,10 +2714,10 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "chrono",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-proptest-helpers",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "native-tls",
  "once_cell",
  "proptest",
@@ -2802,20 +2733,20 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-framework",
  "diem-framework-releases",
  "diem-logger",
  "diem-metrics",
  "diem-parallel-executor",
  "diem-state-view",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "fail",
  "mirai-annotations",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-utils",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-stdlib",
  "move-vm-runtime",
  "move-vm-types",
@@ -2835,10 +2766,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "byteorder",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-temppath",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "hex 0.4.3",
  "hmac",
  "mirai-annotations",
@@ -2903,82 +2834,28 @@ dependencies = [
 ]
 
 [[package]]
-name = "diem-workspace-hack"
-version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30#c59b5ec242e5a1d8f3467dc254614eb28825bb30"
-dependencies = [
- "Inflector",
- "anyhow",
- "backtrace",
- "bitvec",
- "byteorder",
- "bytes 1.1.0",
- "cc",
- "chrono",
- "clap",
- "crossbeam-channel",
- "crossbeam-deque",
- "crossbeam-queue",
- "crossbeam-utils",
- "either",
- "futures",
- "futures-channel",
- "futures-core",
- "futures-io",
- "futures-sink",
- "futures-util",
- "hyper",
- "indexmap",
- "itertools",
- "libc",
- "log",
- "memchr",
- "num-integer",
- "num-traits 0.2.15",
- "plotters",
- "rand 0.8.4",
- "regex",
- "regex-automata",
- "reqwest",
- "rusty-fork",
- "serde 1.0.137",
- "serde_json",
- "standback",
- "subtle",
- "syn 1.0.95",
- "tiny-keccak",
- "tokio 1.18.2",
- "tokio-util 0.6.10",
- "toml",
- "tracing",
- "url",
- "warp",
- "zeroize",
-]
-
-[[package]]
 name = "diem-writeset-generator"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
- "diem-crypto 0.0.3",
- "diem-crypto-derive 0.0.3",
+ "diem-crypto",
+ "diem-crypto-derive",
  "diem-framework",
  "diem-framework-releases",
  "diem-state-view",
  "diem-transaction-replay",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-validator-interface",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "handlebars",
  "hex 0.4.3",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-verifier",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-vm-runtime",
  "move-vm-test-utils",
  "move-vm-types",
@@ -3000,17 +2877,17 @@ dependencies = [
  "bcs",
  "byteorder",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-infallible",
  "diem-jellyfish-merkle",
  "diem-logger",
  "diem-metrics",
  "diem-proptest-helpers",
  "diem-temppath",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "itertools",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "num-derive",
  "num-traits 0.2.15",
  "num-variants",
@@ -3029,9 +2906,9 @@ name = "diemsum"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "diem-crypto 0.0.3",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
  "diemdb",
  "serde 1.0.137",
  "serde_json",
@@ -3298,18 +3175,18 @@ dependencies = [
  "bcs",
  "channel",
  "claim",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-id-generator",
  "diem-infallible",
  "diem-temppath",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "executor-test-helpers",
  "futures",
  "itertools",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "serde 1.0.137",
  "storage-interface",
  "thiserror",
@@ -3325,7 +3202,7 @@ dependencies = [
  "bcs",
  "consensus-types",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-genesis-tool",
  "diem-global-constants",
  "diem-infallible",
@@ -3334,9 +3211,9 @@ dependencies = [
  "diem-secure-storage",
  "diem-temppath",
  "diem-transaction-builder",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "executor",
  "executor-test-helpers",
  "executor-types",
@@ -3355,7 +3232,7 @@ dependencies = [
  "bcs",
  "consensus-types",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-framework-releases",
  "diem-genesis-tool",
  "diem-infallible",
@@ -3365,15 +3242,15 @@ dependencies = [
  "diem-state-view",
  "diem-temppath",
  "diem-transaction-builder",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "executor-test-helpers",
  "executor-types",
  "fail",
  "itertools",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-ir-compiler",
  "once_cell",
  "proptest",
@@ -3394,7 +3271,7 @@ dependencies = [
  "chrono",
  "criterion",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-genesis-tool",
  "diem-infallible",
  "diem-jellyfish-merkle",
@@ -3402,9 +3279,9 @@ dependencies = [
  "diem-secure-push-metrics",
  "diem-temppath",
  "diem-transaction-builder",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "executor",
  "executor-types",
@@ -3427,13 +3304,13 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-genesis-tool",
  "diem-temppath",
  "diem-transaction-builder",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "executor",
  "executor-types",
@@ -3450,11 +3327,11 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-secure-net",
  "diem-state-view",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "scratchpad",
  "serde 1.0.137",
  "storage-interface",
@@ -3482,7 +3359,7 @@ checksum = "e88a8acf291dafb59c2d96e8f59828f3838bb1a70398823ade51a84de6a6deed"
 name = "fallible"
 version = "0.1.0"
 dependencies = [
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "thiserror",
 ]
 
@@ -3561,7 +3438,7 @@ dependencies = [
  "diem-sdk",
  "diem-secure-storage",
  "diem-transaction-builder",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "futures",
  "hyper",
  "hyper-proxy",
@@ -3595,7 +3472,7 @@ dependencies = [
  "anyhow",
  "diem-rest-client",
  "diem-sdk",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "forge",
  "itertools",
  "rand_core 0.6.3",
@@ -3622,16 +3499,16 @@ dependencies = [
  "anyhow",
  "bcs",
  "clap",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "include_dir",
  "log",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-utils",
  "move-bytecode-verifier",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-package",
  "move-vm-runtime",
  "move-vm-types",
@@ -3763,11 +3640,11 @@ dependencies = [
  "consensus",
  "consensus-types",
  "diem-config",
- "diem-crypto 0.0.3",
- "diem-crypto-derive 0.0.3",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "diem-crypto",
+ "diem-crypto-derive",
+ "diem-types",
+ "diem-workspace-hack",
+ "move-core-types",
  "network",
  "rand 0.8.4",
  "serde 1.0.137",
@@ -3781,9 +3658,9 @@ name = "generate-key"
 version = "0.1.0"
 dependencies = [
  "bcs",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-temppath",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "rand 0.8.4",
 ]
 
@@ -3822,10 +3699,10 @@ dependencies = [
  "bcs",
  "diem-framework-releases",
  "diem-resource-viewer",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "diem-types",
+ "diem-workspace-hack",
+ "move-binary-format",
+ "move-core-types",
  "move-vm-test-utils",
  "structopt",
  "vm-genesis",
@@ -4613,21 +4490,21 @@ dependencies = [
  "anyhow",
  "bcs",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-framework-releases",
  "diem-keygen",
  "diem-proptest-helpers",
  "diem-state-view",
  "diem-transaction-builder",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diem-writeset-generator",
  "goldenfile",
  "hex 0.4.3",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-ir-compiler",
  "move-vm-runtime",
  "move-vm-types",
@@ -4645,7 +4522,7 @@ name = "language-e2e-testsuite"
 version = "0.1.0"
 dependencies = [
  "bcs",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-framework-releases",
  "diem-global-constants",
  "diem-keygen",
@@ -4653,15 +4530,15 @@ dependencies = [
  "diem-parallel-executor",
  "diem-state-view",
  "diem-transaction-builder",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diem-writeset-generator",
  "hex 0.4.3",
  "language-e2e-tests",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-verifier",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-ir-compiler",
  "move-vm-runtime",
  "move-vm-types",
@@ -4831,9 +4708,9 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "claim",
- "diem-crypto 0.0.3",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
  "futures",
  "serde 1.0.137",
  "thiserror",
@@ -4846,7 +4723,7 @@ version = "0.1.0"
 dependencies = [
  "bytes 1.1.0",
  "diem-infallible",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "futures",
  "once_cell",
 ]
@@ -4935,7 +4812,7 @@ checksum = "c9be0862c1b3f26a88803c4a49de6889c10e608b3ee9344e6ef5b45fb37ad3d1"
 [[package]]
 name = "move-abigen"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "bcs",
@@ -4943,103 +4820,88 @@ dependencies = [
  "log",
  "move-bytecode-verifier",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-model",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-binary-format"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "mirai-annotations",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "once_cell",
  "proptest",
  "proptest-derive",
  "ref-cast",
  "serde 1.0.137",
  "variant_count",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
-]
-
-[[package]]
-name = "move-binary-format"
-version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?rev=ab8d1dc313b747f813ecc42a388edc198311f14a#ab8d1dc313b747f813ecc42a388edc198311f14a"
-dependencies = [
- "anyhow",
- "mirai-annotations",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=ab8d1dc313b747f813ecc42a388edc198311f14a)",
- "once_cell",
- "ref-cast",
- "serde 1.0.137",
- "variant_count",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=ab8d1dc313b747f813ecc42a388edc198311f14a)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-borrow-graph"
 version = "0.0.1"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "mirai-annotations",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-bytecode-source-map"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "bcs",
  "codespan-reporting",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-ir-types",
  "move-symbol-pool",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-bytecode-utils"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
+ "move-core-types",
  "petgraph 0.5.1",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-bytecode-verifier"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "mirai-annotations",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-borrow-graph",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "petgraph 0.5.1",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-bytecode-viewer"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-source-map",
  "move-command-line-common",
  "move-disassembler",
@@ -5048,13 +4910,13 @@ dependencies = [
  "structopt",
  "termion",
  "tui",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-cli"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5063,14 +4925,14 @@ dependencies = [
  "difference",
  "include_dir",
  "itertools",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-source-map",
  "move-bytecode-utils",
  "move-bytecode-verifier",
  "move-bytecode-viewer",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-coverage",
  "move-disassembler",
  "move-errmapgen",
@@ -5091,13 +4953,13 @@ dependencies = [
  "structopt",
  "tempfile",
  "walkdir",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-command-line-common"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "difference",
@@ -5105,25 +4967,25 @@ dependencies = [
  "serde 1.0.137",
  "sha2 0.9.9",
  "walkdir",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-compiler"
 version = "0.0.1"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "bcs",
  "codespan-reporting",
  "difference",
  "hex 0.4.3",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-borrow-graph",
  "move-bytecode-source-map",
  "move-bytecode-verifier",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-ir-to-bytecode",
  "move-ir-types",
  "move-symbol-pool",
@@ -5133,13 +4995,13 @@ dependencies = [
  "structopt",
  "tempfile",
  "walkdir",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-core-types"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "bcs",
@@ -5152,71 +5014,54 @@ dependencies = [
  "ref-cast",
  "serde 1.0.137",
  "serde_bytes",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
-]
-
-[[package]]
-name = "move-core-types"
-version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?rev=ab8d1dc313b747f813ecc42a388edc198311f14a#ab8d1dc313b747f813ecc42a388edc198311f14a"
-dependencies = [
- "anyhow",
- "bcs",
- "hex 0.4.3",
- "mirai-annotations",
- "once_cell",
- "rand 0.8.4",
- "ref-cast",
- "serde 1.0.137",
- "serde_bytes",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=ab8d1dc313b747f813ecc42a388edc198311f14a)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-coverage"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "bcs",
  "codespan",
  "colored",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-source-map",
  "move-bytecode-verifier",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-ir-types",
  "once_cell",
  "petgraph 0.5.1",
  "serde 1.0.137",
  "structopt",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-disassembler"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "colored",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-source-map",
  "move-bytecode-verifier",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-coverage",
  "move-ir-types",
  "structopt",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-docgen"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "codespan",
@@ -5230,97 +5075,97 @@ dependencies = [
  "once_cell",
  "regex",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-errmapgen"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "bcs",
  "log",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-model",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-ir-compiler"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "bcs",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-source-map",
  "move-bytecode-verifier",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-ir-to-bytecode",
  "move-ir-types",
  "move-symbol-pool",
  "serde_json",
  "structopt",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-ir-to-bytecode"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "codespan-reporting",
  "log",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-source-map",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-ir-to-bytecode-syntax",
  "move-ir-types",
  "move-symbol-pool",
  "ouroboros",
  "thiserror",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-ir-to-bytecode-syntax"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "hex 0.4.3",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-ir-types",
  "move-symbol-pool",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-ir-types"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "hex 0.4.3",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-symbol-pool",
  "once_cell",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-model"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "codespan",
@@ -5328,12 +5173,12 @@ dependencies = [
  "internment",
  "itertools",
  "log",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-source-map",
  "move-bytecode-verifier",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-disassembler",
  "move-ir-types",
  "move-symbol-pool",
@@ -5341,24 +5186,24 @@ dependencies = [
  "once_cell",
  "regex",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-package"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "bcs",
  "colored",
  "move-abigen",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-source-map",
  "move-bytecode-utils",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-docgen",
  "move-errmapgen",
  "move-model",
@@ -5373,13 +5218,13 @@ dependencies = [
  "tempfile",
  "toml",
  "walkdir",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-prover"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5392,10 +5237,10 @@ dependencies = [
  "itertools",
  "log",
  "move-abigen",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-docgen",
  "move-errmapgen",
  "move-ir-types",
@@ -5412,13 +5257,13 @@ dependencies = [
  "simplelog",
  "tokio 1.18.2",
  "toml",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-prover-boogie-backend"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -5427,9 +5272,9 @@ dependencies = [
  "futures",
  "itertools",
  "log",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-model",
  "move-stackless-bytecode",
  "num",
@@ -5441,108 +5286,95 @@ dependencies = [
  "serde_json",
  "tera",
  "tokio 1.18.2",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-read-write-set-types"
 version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
+ "move-core-types",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
-]
-
-[[package]]
-name = "move-read-write-set-types"
-version = "0.0.3"
-source = "git+https://github.com/OLSF/move-0L?rev=ab8d1dc313b747f813ecc42a388edc198311f14a#ab8d1dc313b747f813ecc42a388edc198311f14a"
-dependencies = [
- "anyhow",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=ab8d1dc313b747f813ecc42a388edc198311f14a)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=ab8d1dc313b747f813ecc42a388edc198311f14a)",
- "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=ab8d1dc313b747f813ecc42a388edc198311f14a)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-resource-viewer"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "bcs",
  "hex 0.4.3",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
+ "move-core-types",
  "move-vm-types",
  "once_cell",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-stackless-bytecode"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "codespan",
  "codespan-reporting",
  "im",
  "itertools",
  "log",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-borrow-graph",
  "move-bytecode-verifier",
  "move-command-line-common",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-ir-to-bytecode",
  "move-model",
- "move-read-write-set-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-read-write-set-types",
  "num",
  "once_cell",
  "paste",
  "petgraph 0.5.1",
  "serde 1.0.137",
  "serde_json",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-stackless-bytecode-interpreter"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "bytecode-interpreter-crypto",
  "codespan-reporting",
  "itertools",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
+ "move-core-types",
  "move-model",
  "move-stackless-bytecode",
  "move-vm-runtime",
  "num",
  "serde 1.0.137",
  "structopt",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-stdlib"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
- "diem-types 0.0.3 (git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30)",
  "hex 0.4.3",
  "log",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-docgen",
  "move-errmapgen",
  "move-prover",
@@ -5552,35 +5384,35 @@ dependencies = [
  "sha2 0.9.9",
  "sha3 0.9.1",
  "smallvec 1.8.0",
- "vdf 0.1.0 (git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30)",
+ "vdf 0.1.0 (git+https://github.com/OLSF/libra?rev=aa1731ee1442c211b5f7a80bcb238fbc25b47408)",
  "walkdir",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-symbol-pool"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "once_cell",
  "serde 1.0.137",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-transactional-test-runner"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "colored",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-source-map",
  "move-bytecode-utils",
  "move-cli",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-disassembler",
  "move-ir-compiler",
  "move-ir-types",
@@ -5596,21 +5428,21 @@ dependencies = [
  "regex",
  "structopt",
  "tempfile",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-unit-test"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
  "colored",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-utils",
  "move-command-line-common",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-model",
  "move-resource-viewer",
  "move-stackless-bytecode-interpreter",
@@ -5621,54 +5453,54 @@ dependencies = [
  "rayon",
  "regex",
  "structopt",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-vm-runtime"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "fail",
  "mirai-annotations",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-verifier",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-vm-types",
  "once_cell",
  "parking_lot 0.11.2",
  "sha3 0.9.1",
  "tracing",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-vm-test-utils"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
+ "move-core-types",
  "move-vm-runtime",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "move-vm-types"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "bcs",
  "mirai-annotations",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
+ "move-core-types",
  "once_cell",
  "proptest",
  "serde 1.0.137",
  "sha2 0.9.9",
  "smallvec 1.8.0",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
@@ -5693,7 +5525,7 @@ dependencies = [
 name = "mvhashmap"
 version = "0.1.0"
 dependencies = [
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "num_cpus",
  "once_cell",
  "proptest",
@@ -5731,8 +5563,8 @@ version = "0.1.0"
 dependencies = [
  "bytes 1.1.0",
  "diem-logger",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "futures",
  "memsocket",
  "pin-project",
@@ -5755,8 +5587,8 @@ dependencies = [
  "criterion",
  "diem-bitvec",
  "diem-config",
- "diem-crypto 0.0.3",
- "diem-crypto-derive 0.0.3",
+ "diem-crypto",
+ "diem-crypto-derive",
  "diem-id-generator",
  "diem-infallible",
  "diem-logger",
@@ -5764,8 +5596,8 @@ dependencies = [
  "diem-proptest-helpers",
  "diem-rate-limiter",
  "diem-time-service",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "futures",
  "futures-util",
  "hex 0.4.3",
@@ -5802,14 +5634,14 @@ dependencies = [
  "bcs",
  "channel",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-infallible",
  "diem-logger",
  "diem-network-address-encryption",
  "diem-secure-storage",
  "diem-time-service",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "event-notifications",
  "futures",
  "netcore",
@@ -5828,18 +5660,18 @@ dependencies = [
  "bcs",
  "channel",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-logger",
  "diem-metrics",
  "diem-network-address-encryption",
  "diem-secure-storage",
  "diem-temppath",
  "diem-time-service",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "event-notifications",
  "futures",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "netcore",
  "network",
  "once_cell",
@@ -6068,7 +5900,7 @@ dependencies = [
 name = "num-variants"
 version = "0.1.0"
 dependencies = [
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "proc-macro2 1.0.39",
  "quote 1.0.18",
  "syn 1.0.95",
@@ -6109,7 +5941,7 @@ dependencies = [
  "base64",
  "bech32",
  "diem-sdk",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "hex 0.4.3",
  "rand 0.8.4",
  "rand_core 0.6.3",
@@ -6142,14 +5974,14 @@ dependencies = [
  "dialoguer",
  "diem-client",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-genesis-tool",
  "diem-global-constants",
  "diem-json-rpc",
  "diem-resource-viewer",
  "diem-secure-storage",
  "diem-temppath",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-wallet",
  "diemdb",
  "dirs",
@@ -6160,8 +5992,8 @@ dependencies = [
  "handlebars",
  "hex 0.4.3",
  "machine-ip",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
+ "move-core-types",
  "move-resource-viewer",
  "move-vm-types",
  "nix 0.24.1",
@@ -6200,12 +6032,12 @@ dependencies = [
  "backup-cli",
  "backup-service",
  "bcs",
- "diem-crypto 0.0.3",
- "diem-types 0.0.3",
+ "diem-crypto",
+ "diem-types",
  "diem-wallet",
  "futures",
  "gumdrop 0.8.1",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "ol",
  "ol-keys",
  "ol-types",
@@ -6222,7 +6054,7 @@ name = "ol-keys"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-wallet",
  "once_cell",
  "rpassword",
@@ -6238,14 +6070,14 @@ dependencies = [
  "byteorder",
  "dialoguer",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-global-constants",
- "diem-types 0.0.3",
+ "diem-types",
  "dirs",
  "glob",
  "hex 0.4.3",
  "machine-ip",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "num-format",
  "ol-keys",
  "once_cell",
@@ -6278,10 +6110,10 @@ dependencies = [
  "bcs",
  "criterion",
  "dialoguer",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-genesis-tool",
  "diem-global-constants",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-wallet",
  "dirs",
  "gumdrop 0.7.0",
@@ -6872,7 +6704,7 @@ dependencies = [
 name = "proxy"
 version = "0.1.0"
 dependencies = [
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "ipnet",
 ]
 
@@ -7082,31 +6914,31 @@ dependencies = [
 [[package]]
 name = "read-write-set"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-utils",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-model",
- "move-read-write-set-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-read-write-set-types",
  "move-resource-viewer",
  "move-stackless-bytecode",
  "read-write-set-dynamic",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "workspace-hack",
 ]
 
 [[package]]
 name = "read-write-set-dynamic"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "anyhow",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-utils",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
- "move-read-write-set-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
- "workspace-hack 0.1.0 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
+ "move-read-write-set-types",
+ "workspace-hack",
 ]
 
 [[package]]
@@ -7518,7 +7350,7 @@ dependencies = [
  "crash-handler",
  "criterion",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-global-constants",
  "diem-infallible",
  "diem-logger",
@@ -7527,9 +7359,9 @@ dependencies = [
  "diem-secure-push-metrics",
  "diem-secure-storage",
  "diem-temppath",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vault-client",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "once_cell",
  "proptest",
  "rand 0.8.4",
@@ -7569,7 +7401,7 @@ dependencies = [
  "diem-logger",
  "diem-metrics",
  "diem-temppath",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "once_cell",
  "proptest",
  "rocksdb 0.17.0",
@@ -7594,11 +7426,11 @@ dependencies = [
  "arc-swap",
  "bitvec",
  "criterion",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-infallible",
  "diem-metrics",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "itertools",
  "once_cell",
  "proptest",
@@ -7614,12 +7446,12 @@ dependencies = [
  "anyhow",
  "byteorder",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-genesis-tool",
  "diem-infallible",
  "diem-logger",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "diemdb",
  "executor-types",
  "itertools",
@@ -7647,7 +7479,7 @@ dependencies = [
  "anyhow",
  "bcs",
  "diem-sdk",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "once_cell",
  "rand 0.8.4",
 ]
@@ -7693,11 +7525,11 @@ dependencies = [
  "bcs",
  "diem-client",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-logger",
  "diem-temppath",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "hex 0.4.3",
  "rand 0.8.4",
  "serde_yaml",
@@ -8073,7 +7905,7 @@ checksum = "43b2853a4d09f215c24cc5489c992ce46052d359b5109343cbafbf26bc62f8a3"
 name = "short-hex-str"
 version = "0.1.0"
 dependencies = [
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "hex 0.4.3",
  "mirai-annotations",
  "proptest",
@@ -8090,16 +7922,16 @@ dependencies = [
  "bcs",
  "diem-api-types",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-framework-releases",
  "diem-genesis-tool",
  "diem-infallible",
  "diem-json-rpc-types",
  "diem-node",
  "diem-sdk",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "directories",
  "forge",
@@ -8107,10 +7939,10 @@ dependencies = [
  "hex 0.4.3",
  "include_dir",
  "move-abigen",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-cli",
  "move-compiler",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-package",
  "move-unit-test",
  "once_cell",
@@ -8136,7 +7968,7 @@ version = "0.1.0"
 dependencies = [
  "diem-framework",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "move-stdlib",
  "move-unit-test",
 ]
@@ -8261,7 +8093,7 @@ dependencies = [
  "bcs",
  "debug-interface",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-events-fetcher",
  "diem-experimental-framework-releases",
  "diem-framework",
@@ -8282,10 +8114,10 @@ dependencies = [
  "diem-time-service",
  "diem-transaction-builder",
  "diem-transaction-replay",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-validator-interface",
  "diem-vault-client",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diem-writeset-generator",
  "forge",
  "futures",
@@ -8309,10 +8141,10 @@ name = "socket-bench-server"
 version = "0.1.0"
 dependencies = [
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-logger",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "futures",
  "memsocket",
  "netcore",
@@ -8363,15 +8195,15 @@ dependencies = [
  "consensus-notifications",
  "data-streaming-service",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-data-client",
  "diem-infallible",
  "diem-logger",
  "diem-temppath",
  "diem-time-service",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "event-notifications",
  "executor",
@@ -8396,15 +8228,15 @@ dependencies = [
  "consensus-notifications",
  "data-streaming-service",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-data-client",
  "diem-genesis-tool",
  "diem-infallible",
  "diem-temppath",
  "diem-time-service",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "event-notifications",
  "executor",
@@ -8431,7 +8263,7 @@ dependencies = [
  "claim",
  "consensus-notifications",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-framework-releases",
  "diem-genesis-tool",
  "diem-infallible",
@@ -8442,9 +8274,9 @@ dependencies = [
  "diem-temppath",
  "diem-time-service",
  "diem-transaction-builder",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "event-notifications",
  "executor",
@@ -8455,7 +8287,7 @@ dependencies = [
  "itertools",
  "mempool-notifications",
  "memsocket",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "netcore",
  "network",
  "network-builder",
@@ -8539,12 +8371,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-infallible",
  "diem-logger",
  "diem-secure-net",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "serde 1.0.137",
  "storage-interface",
 ]
@@ -8555,13 +8387,13 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-secure-net",
  "diem-state-view",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "itertools",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "parking_lot 0.11.2",
  "scratchpad",
  "serde 1.0.137",
@@ -8575,13 +8407,13 @@ dependencies = [
  "anyhow",
  "bcs",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-logger",
  "diem-metrics",
  "diem-secure-net",
  "diem-temppath",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "diemdb",
  "futures",
  "itertools",
@@ -8599,8 +8431,8 @@ dependencies = [
  "async-trait",
  "channel",
  "diem-config",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "network",
  "storage-service-types",
  "thiserror",
@@ -8617,13 +8449,13 @@ dependencies = [
  "channel",
  "claim",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-logger",
  "diem-metrics",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "futures",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "network",
  "once_cell",
  "serde 1.0.137",
@@ -8639,9 +8471,9 @@ version = "0.1.0"
 dependencies = [
  "claim",
  "diem-config",
- "diem-crypto 0.0.3",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-crypto",
+ "diem-types",
+ "diem-workspace-hack",
  "num-traits 0.2.15",
  "proptest",
  "serde 1.0.137",
@@ -8714,12 +8546,12 @@ name = "swiss-knife"
 version = "0.1.0"
 dependencies = [
  "bcs",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-transaction-builder",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "hex 0.4.3",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "rand 0.8.4",
  "serde 1.0.137",
  "serde_json",
@@ -8876,7 +8708,7 @@ dependencies = [
  "diem-operational-tool",
  "diem-rest-client",
  "diem-sdk",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "forge",
  "rand 0.8.4",
  "tokio 1.18.2",
@@ -9223,7 +9055,7 @@ dependencies = [
  "criterion",
  "diem-client",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-genesis-tool",
  "diem-global-constants",
  "diem-json-rpc-types",
@@ -9231,7 +9063,7 @@ dependencies = [
  "diem-management",
  "diem-secure-storage",
  "diem-transaction-builder",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-wallet",
  "diemdb",
  "dirs",
@@ -9240,7 +9072,7 @@ dependencies = [
  "gumdrop 0.7.0",
  "hex 0.4.3",
  "machine-ip",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "ol",
  "ol-keys",
  "ol-types",
@@ -9355,10 +9187,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "bcs",
- "diem-types 0.0.3",
- "diem-workspace-hack 0.1.0",
+ "diem-types",
+ "diem-workspace-hack",
  "heck",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "regex",
  "serde-generate",
  "serde-reflection",
@@ -9376,11 +9208,11 @@ dependencies = [
  "anyhow",
  "diem-client",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-logger",
  "diem-rest-client",
  "diem-sdk",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "futures",
  "generate-key",
  "itertools",
@@ -9480,7 +9312,7 @@ dependencies = [
  "dialoguer",
  "diem-client",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-genesis-tool",
  "diem-global-constants",
  "diem-json-rpc-types",
@@ -9488,7 +9320,7 @@ dependencies = [
  "diem-management",
  "diem-secure-storage",
  "diem-transaction-builder",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-wallet",
  "diemdb",
  "dirs",
@@ -9496,7 +9328,7 @@ dependencies = [
  "glob",
  "gumdrop 0.7.0",
  "hex 0.4.3",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-resource-viewer",
  "ol",
  "ol-keys",
@@ -9752,10 +9584,10 @@ dependencies = [
 [[package]]
 name = "vdf"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30#c59b5ec242e5a1d8f3467dc254614eb28825bb30"
+source = "git+https://github.com/OLSF/libra?rev=aa1731ee1442c211b5f7a80bcb238fbc25b47408#aa1731ee1442c211b5f7a80bcb238fbc25b47408"
 dependencies = [
  "bit-vec 0.5.1",
- "classgroup 0.1.0 (git+https://github.com/OLSF/libra?rev=c59b5ec242e5a1d8f3467dc254614eb28825bb30)",
+ "classgroup 0.1.0 (git+https://github.com/OLSF/libra?rev=aa1731ee1442c211b5f7a80bcb238fbc25b47408)",
  "num-traits 0.2.15",
  "sha2 0.8.2",
  "sha3 0.8.2",
@@ -9790,21 +9622,21 @@ dependencies = [
  "anyhow",
  "bcs",
  "diem-config",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-framework",
  "diem-framework-releases",
  "diem-global-constants",
  "diem-proptest-helpers",
  "diem-state-view",
  "diem-transaction-builder",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "hex 0.4.3",
- "move-binary-format 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-binary-format",
  "move-bytecode-utils",
  "move-bytecode-verifier",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "move-vm-runtime",
  "move-vm-types",
  "ol-types",
@@ -9821,18 +9653,18 @@ name = "vm-validator"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "diem-crypto 0.0.3",
+ "diem-crypto",
  "diem-state-view",
  "diem-temppath",
  "diem-transaction-builder",
- "diem-types 0.0.3",
+ "diem-types",
  "diem-vm",
- "diem-workspace-hack 0.1.0",
+ "diem-workspace-hack",
  "diemdb",
  "executor",
  "executor-test-helpers",
  "fail",
- "move-core-types 0.0.3 (git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc)",
+ "move-core-types",
  "rand 0.8.4",
  "scratchpad",
  "storage-interface",
@@ -10129,38 +9961,7 @@ dependencies = [
 [[package]]
 name = "workspace-hack"
 version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=9fa5ae30621027777c3a5776871b5760d95c9fdc#9fa5ae30621027777c3a5776871b5760d95c9fdc"
-dependencies = [
- "arrayvec 0.5.2",
- "block-buffer 0.9.0",
- "bstr",
- "byteorder",
- "codespan-reporting",
- "crossbeam-utils",
- "getrandom 0.2.6",
- "libc",
- "log",
- "memchr",
- "num-traits 0.2.15",
- "plotters",
- "proc-macro2 0.4.30",
- "proc-macro2 1.0.39",
- "quote 0.6.13",
- "quote 1.0.18",
- "rand_core 0.5.1",
- "regex",
- "regex-automata",
- "regex-syntax",
- "serde 1.0.137",
- "syn 0.15.44",
- "syn 1.0.95",
- "tracing-core",
-]
-
-[[package]]
-name = "workspace-hack"
-version = "0.1.0"
-source = "git+https://github.com/OLSF/move-0L?rev=ab8d1dc313b747f813ecc42a388edc198311f14a#ab8d1dc313b747f813ecc42a388edc198311f14a"
+source = "git+https://github.com/OLSF/move-0L?rev=3a174c09c397ee78df1ef7bd2f4ea4205711f69b#3a174c09c397ee78df1ef7bd2f4ea4205711f69b"
 dependencies = [
  "arrayvec 0.5.2",
  "block-buffer 0.9.0",
