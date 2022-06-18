@@ -53,6 +53,7 @@ pub fn fast_forward_db(
     verbose: bool,
     epoch: Option<u64>,
     version_opt: Option<u64>,
+    boundary_only: bool,
 ) -> Result<(), Error> {
     let mut backup = Backup::new(epoch);
 
@@ -63,16 +64,13 @@ pub fn fast_forward_db(
     backup.set_waypoint()?;
 
     println!("\nRestoring db from archive to home path");
-    backup.restore_backup(verbose, version_opt)?;
+    backup.restore_backup(verbose, version_opt, boundary_only)?;
 
     println!("\nCreating fullnode.node.yaml to home path");
     backup.create_fullnode_yaml()?;
 
     println!("\nResetting Safety Data in key_store.json\n");
-    diem_genesis_tool::key::reset_safety_data(
-      &backup.home_path,
-      &backup.node_namespace
-    );
+    diem_genesis_tool::key::reset_safety_data(&backup.home_path, &backup.node_namespace);
     println!("SUCCESS");
 
     Ok(())
@@ -178,18 +176,26 @@ impl Backup {
     }
 
     /// Restore Backups
-    pub fn restore_backup(&self, verbose: bool, version_opt: Option<u64>) -> Result<(), Error> {
+    pub fn restore_backup(
+        &self,
+        verbose: bool,
+        version_opt: Option<u64>,
+        boundary_only: bool,
+    ) -> Result<(), Error> {
         dbg!(&version_opt);
 
         let db_path = &self.home_path.join("db/");
 
         let restore_path = self.restore_path.clone();
 
-      
         // NOTE: First restore the Epoch before restoring a higher version in the epoch.
         restore_epoch(db_path, restore_path.to_str().unwrap(), verbose)?;
 
-        restore_transaction(db_path, self.restore_path.to_owned().to_str().unwrap(), verbose)?;
+        restore_transaction(
+            db_path,
+            self.restore_path.to_owned().to_str().unwrap(),
+            verbose,
+        )?;
 
         restore_snapshot(
             db_path,
@@ -199,21 +205,20 @@ impl Backup {
         )?;
 
         // Restore an advanced version in the epoch
-        
-        let version = version_opt.unwrap_or(get_heighest_version(restore_path)?);
+        if !boundary_only {
+            let version = version_opt.unwrap_or(get_heighest_version(restore_path)?);
 
-        let restore_path_for_version = self.restore_path.to_owned().join(version.to_string());
+            let restore_path_for_version = self.restore_path.to_owned().join(version.to_string());
 
-        dbg!(&restore_path_for_version);
+            restore_transaction(db_path, restore_path_for_version.to_str().unwrap(), verbose)?;
 
-        restore_transaction(db_path, restore_path_for_version.to_str().unwrap(), verbose)?;
-
-        restore_snapshot(
-            db_path,
-            restore_path_for_version.to_str().unwrap(),
-            &version,
-            verbose,
-        )?;
+            restore_snapshot(
+                db_path,
+                restore_path_for_version.to_str().unwrap(),
+                &version,
+                verbose,
+            )?;
+        }
 
         Ok(())
     }
@@ -514,7 +519,7 @@ fn get_heighest_version(restore_path: PathBuf) -> anyhow::Result<u64> {
     }
 
     if highest > 0 {
-        return Ok(highest); 
+        return Ok(highest);
     }
     bail!("No versioned manifest path found in: {:?}", restore_path);
 }
