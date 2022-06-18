@@ -85,6 +85,10 @@ pub struct InitCmd {
     /// Path to source code, for devs
     #[options(help = "Path to source code, for devs")]
     source_path: Option<PathBuf>,
+
+    /// reset the safety rules state in key_store.json
+    #[options(help = "reset the safety data in key_store.json to null")]
+    reset_safety: bool,
 }
 
 impl Runnable for InitCmd {
@@ -248,6 +252,14 @@ impl Runnable for InitCmd {
                 exit(1);
             });
             return;
+        }
+
+        if self.reset_safety {
+          diem_genesis_tool::key::reset_safety_data(
+            &app_cfg.workspace.node_home,
+            &app_cfg.format_owner_namespace()
+          );
+          exit(0)
         }
 
         /////////// Everything below requires mnemonic ////////

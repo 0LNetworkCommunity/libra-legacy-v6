@@ -73,6 +73,7 @@ pub fn fast_forward_db(
       &backup.home_path,
       &backup.node_namespace
     );
+    println!("SUCCESS");
 
     Ok(())
 }
