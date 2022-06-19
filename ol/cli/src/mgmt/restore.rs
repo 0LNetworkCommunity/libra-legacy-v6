@@ -53,7 +53,7 @@ pub fn fast_forward_db(
     verbose: bool,
     epoch: Option<u64>,
     version_opt: Option<u64>,
-    boundary_only: bool,
+    highest_version: bool,
 ) -> Result<(), Error> {
     let mut backup = Backup::new(epoch);
 
@@ -64,14 +64,13 @@ pub fn fast_forward_db(
     backup.set_waypoint()?;
 
     println!("\nRestoring db from archive to home path");
-    backup.restore_backup(verbose, version_opt, boundary_only)?;
+    backup.restore_backup(verbose, version_opt, highest_version)?;
 
     println!("\nCreating fullnode.node.yaml to home path");
     backup.create_fullnode_yaml()?;
 
     println!("\nResetting Safety Data in key_store.json\n");
     diem_genesis_tool::key::reset_safety_data(&backup.home_path, &backup.node_namespace);
-    println!("SUCCESS");
 
     Ok(())
 }
@@ -180,10 +179,8 @@ impl Backup {
         &self,
         verbose: bool,
         version_opt: Option<u64>,
-        boundary_only: bool,
+        highest_version: bool,
     ) -> Result<(), Error> {
-        dbg!(&version_opt);
-
         let db_path = &self.home_path.join("db/");
 
         let restore_path = self.restore_path.clone();
@@ -204,8 +201,10 @@ impl Backup {
             verbose,
         )?;
 
-        // Restore an advanced version in the epoch
-        if !boundary_only {
+        // Only restore a Version beyond the epoch boundary if explicitly requested
+        if highest_version || version_opt.is_some() {
+            println!("WARN: restoring a version beyond epoch boundary is EXPERIMENTAL");
+
             let version = version_opt.unwrap_or(get_heighest_version(restore_path)?);
 
             let restore_path_for_version = self.restore_path.to_owned().join(version.to_string());
