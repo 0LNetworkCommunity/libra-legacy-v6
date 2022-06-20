@@ -303,7 +303,7 @@ impl EpochManager {
         let mut safety_rules =
             MetricsSafetyRules::new(self.safety_rules_manager.client(), self.storage.clone());
         if let Err(error) = safety_rules.perform_initialize() {
-            error!(
+            panic!(
                 epoch = epoch,
                 error = error,
                 "Unable to initialize safety rules.",
