@@ -500,7 +500,7 @@ testnet: clear fix testnet-init testnet-genesis start
 testnet-onboard: clear fix
 	MNEM='${MNEM}' cargo run -p onboard -- val --github-org OLSF --repo dev-genesis --chain-id 1
 # start a node with fullnode.node.yaml configs
-	make start
+	cargo r -p diem-node -- -f ~/.0L/fullnode.node.yaml
 
 
 
