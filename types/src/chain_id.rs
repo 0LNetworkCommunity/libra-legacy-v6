@@ -25,7 +25,7 @@ pub enum NamedChain {
 }
 
 impl NamedChain {
-    fn str_to_chain_id(s: &str) -> Result<ChainId> {
+    pub fn str_to_chain_id(s: &str) -> Result<ChainId> { //////// 0L ////////
         // TODO implement custom macro that derives FromStr impl for enum (similar to diem/common/num-variants)
         let reserved_chain = match s {
             "MAINNET" => NamedChain::MAINNET,
@@ -140,7 +140,7 @@ impl Default for ChainId {
 
 impl FromStr for ChainId {
     type Err = Error;
-
+    
     fn from_str(s: &str) -> Result<Self> {
         ensure!(!s.is_empty(), "Cannot create chain ID from empty string");
         NamedChain::str_to_chain_id(s).or_else(|_err| {
