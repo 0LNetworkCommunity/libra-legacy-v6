@@ -25,20 +25,24 @@ pub enum NamedChain {
 }
 
 impl NamedChain {
+    pub fn str_to_named(s: &str) -> Result<Self> { //////// 0L ////////
+      let n = match s {
+          "MAINNET" => NamedChain::MAINNET,
+          "TESTNET" => NamedChain::TESTNET,
+          "DEVNET" => NamedChain::DEVNET,
+          "TESTING" => NamedChain::TESTING,
+          "PREMAINNET" => NamedChain::PREMAINNET,
+          "EXPERIMENTAL" => NamedChain::EXPERIMENTAL, //////// 0L ////////            
+          _ => {
+              return Err(format_err!("Not a reserved chain: {:?}", s));
+          }
+      };
+      Ok(n)
+    }
+
+
     pub fn str_to_chain_id(s: &str) -> Result<ChainId> { //////// 0L ////////
-        // TODO implement custom macro that derives FromStr impl for enum (similar to diem/common/num-variants)
-        let reserved_chain = match s {
-            "MAINNET" => NamedChain::MAINNET,
-            "TESTNET" => NamedChain::TESTNET,
-            "DEVNET" => NamedChain::DEVNET,
-            "TESTING" => NamedChain::TESTING,
-            "PREMAINNET" => NamedChain::PREMAINNET,
-            "EXPERIMENTAL" => NamedChain::EXPERIMENTAL, //////// 0L ////////            
-            _ => {
-                return Err(format_err!("Not a reserved chain: {:?}", s));
-            }
-        };
-        Ok(ChainId::new(reserved_chain.id()))
+        Ok(ChainId::new(Self::str_to_named(s)?.id()))
     }
 
     pub fn id(&self) -> u8 {
