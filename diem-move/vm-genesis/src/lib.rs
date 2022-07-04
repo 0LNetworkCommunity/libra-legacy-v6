@@ -194,7 +194,7 @@ pub fn encode_genesis_change_set(
 }
 
 // 0L todo diem-1.4.1: This fn is double checked.
-//                     But, still need third check/review from another person.
+//                     But, still needs third check/review from another person.
 // Reason, the diem `fn encode_genesis_change_set` which we copy and modify to
 // create this fn, changed significantly.
 //////// 0L ////////

@@ -32,11 +32,13 @@ fn reconfig_bulk_update_test() {
     // So, even though there are some validators already created, this test is
     // run with five new validators.
 
+    const NUMBER_OF_VALIDATORS: usize = 5;
+
     // Create some accounts to be able to call a tx script and be validators
     let diem_root = Account::new_diem_root();
     let mut validators = vec![];
-    dbg!(&100);
-    for _i in 0..5 {
+    
+    for _i in 0..NUMBER_OF_VALIDATORS {
         validators.push(Account::new());
     }
     println!("--- created new validator accounts");
@@ -53,7 +55,7 @@ fn reconfig_bulk_update_test() {
 
     let names = vec!["alice", "bob", "carol", "sha", "ram"];
     // Create a transaction allowing the accounts to serve as validators
-    for i in 0..5 {
+    for i in 0..NUMBER_OF_VALIDATORS {
         executor.execute_and_apply(
             diem_root_data
                 .account()
@@ -90,7 +92,7 @@ fn reconfig_bulk_update_test() {
     sequence_number += 1;
     println!("--- created operator account");
 
-    for i in 0..5 {
+    for i in 0..NUMBER_OF_VALIDATORS {
         // validators set operator
         executor.execute_and_apply(
             validators.get(i).unwrap()
@@ -109,7 +111,7 @@ fn reconfig_bulk_update_test() {
 
     ///////////////////////////////////////////////////////////////////////////
     // register validator config
-    for i in 0..5 {
+    for i in 0..NUMBER_OF_VALIDATORS {
         executor.execute_and_apply(
             operator_account
                 .transaction()
@@ -132,7 +134,7 @@ fn reconfig_bulk_update_test() {
 
     ///////////////////////////////////////////////////////////////////////////
     // Actually register the accounts as validators
-    for i in 0..5 {
+    for i in 0..NUMBER_OF_VALIDATORS {
         executor.execute_and_apply(
             diem_root_data
                 .account()
@@ -153,7 +155,7 @@ fn reconfig_bulk_update_test() {
 
     
     let payload = transaction_builder::encode_minerstate_helper_script_function();
-    for i in 0..5 {
+    for i in 0..NUMBER_OF_VALIDATORS {
         executor.execute_and_apply(
             validators
                 .get(i)
@@ -181,7 +183,7 @@ fn reconfig_bulk_update_test() {
         block.security.unwrap().into(),
     );
 
-    for i in 0..5 {
+    for i in 0..NUMBER_OF_VALIDATORS {
         executor.execute_and_apply(
             validators
                 .get(i)
