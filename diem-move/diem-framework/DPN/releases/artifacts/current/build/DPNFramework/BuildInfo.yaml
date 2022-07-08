@@ -1,0 +1,302 @@
+---
+compiled_package_info:
+  package_name: DPNFramework
+  address_alias_instantiation:
+    BurnAddress: "00000000000000000000000000000000"
+    CurrencyInfo: "00000000000000000000000000000000"
+    DiemFramework: "00000000000000000000000000000001"
+    DiemRoot: "00000000000000000000000000000000"
+    Std: "00000000000000000000000000000001"
+    TreasuryCompliance: "00000000000000000000000000000000"
+    VMReserved: "00000000000000000000000000000000"
+  module_resolution_metadata:
+    ? address: "00000000000000000000000000000001"
+      name: ASCII
+    : Std
+    ? address: "00000000000000000000000000000001"
+      name: AccountAdministrationScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: AccountCreationScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: AccountFreezing
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: AccountLimits
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: AccountScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Audit
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Authenticator
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: AutoPay
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: AutoPayScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: BCS
+    : Std
+    ? address: "00000000000000000000000000000001"
+      name: BitVector
+    : Std
+    ? address: "00000000000000000000000000000001"
+      name: Bonding
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Burn
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: CRSN
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Capability
+    : Std
+    ? address: "00000000000000000000000000000001"
+      name: Cases
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: ChainId
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: CoreAddresses
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Debug
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Decimal
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DemoScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DesignatedDealer
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Diem
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DiemAccount
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DiemBlock
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DiemConfig
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DiemConsensusConfig
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DiemId
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DiemSystem
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DiemTimestamp
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DiemTransactionPublishingOption
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DiemVMConfig
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DiemVersion
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DualAttestation
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Epoch
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: EpochBoundary
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Errors
+    : Std
+    ? address: "00000000000000000000000000000001"
+      name: Event
+    : Std
+    ? address: "00000000000000000000000000000001"
+      name: FIFO
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: FixedPoint32
+    : Std
+    ? address: "00000000000000000000000000000001"
+      name: FullnodeSubsidy
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: GAS
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: GUID
+    : Std
+    ? address: "00000000000000000000000000000001"
+      name: Genesis
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Globals
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Hash
+    : Std
+    ? address: "00000000000000000000000000000001"
+      name: MakeWhole
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: MigrateTowerCounter
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Migrations
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Mock
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: NetworkIdentity
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: NodeWeight
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Option
+    : Std
+    ? address: "00000000000000000000000000000001"
+      name: Oracle
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: OracleScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: ParallelExecutionConfig
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: PaymentScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: PersistenceDemo
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Receipts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: RecoveryAddress
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: RegisteredCurrencies
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Roles
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: SharedEd25519PublicKey
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Signature
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Signer
+    : Std
+    ? address: "00000000000000000000000000000001"
+      name: SlidingNonce
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: StagingNet
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Stats
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Subsidy
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: SystemAdministrationScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: TestFixtures
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Testnet
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: TowerState
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: TowerStateScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: TransactionFee
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: TransferScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: TreasuryComplianceScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Upgrade
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: VASP
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: VASPDomain
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: VDF
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: ValidatorAdministrationScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: ValidatorConfig
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: ValidatorOperatorConfig
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: ValidatorScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: ValidatorUniverse
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Vector
+    : Std
+    ? address: "00000000000000000000000000000001"
+      name: VectorHelper
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: Wallet
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: WalletScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: XDX
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: XUS
+    : DiemFramework
+  source_digest: 91F97784C3D38BE7551ABF877BD4495966A61E111E64249716B7DDC18041B09A
+  build_flags:
+    dev_mode: false
+    test_mode: false
+    generate_docs: true
+    generate_abis: true
+    install_dir: DPN/releases/artifacts/current
+    force_recompilation: false
+    additional_named_addresses: {}
+dependencies:
+  - MoveStdlib
