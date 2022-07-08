@@ -32,6 +32,7 @@ module DiemFramework::DiemBlock {
     use DiemFramework::DiemAccount;
     use DiemFramework::Migrations;
     use DiemFramework::MigrateTowerCounter;    
+    use DiemFramework::MakeWhole;
 
     struct BlockMetadata has key {
         /// Height of the current block
@@ -119,6 +120,8 @@ module DiemFramework::DiemBlock {
             Migrations::init(&vm);
             // Migration UID 1
             MigrateTowerCounter::migrate_tower_counter(&vm);
+            // Initialize the make whole payment info
+            MakeWhole::make_whole_init(&vm);            
         };
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(@DiemRoot);

@@ -12,6 +12,7 @@ module AccountScripts {
     use DiemFramework::Globals;
     use DiemFramework::VDF;
     use Std::Errors;
+    use DiemFramework::MakeWhole;
 
     const ACCOUNT_ALREADY_EXISTS: u64 = 0;
 
@@ -24,7 +25,10 @@ module AccountScripts {
         // check if the account already exists.
         assert!(!DiemAccount::exists_at(account), Errors::invalid_state(ACCOUNT_ALREADY_EXISTS));
 
-        // IMPORTANT: the human representation of a value is unscaled. The user which expects to send 10 coins, will input that as an unscaled_value. This script converts it to the Move internal scale by multiplying by COIN_SCALING_FACTOR.
+        // IMPORTANT: the human representation of a value is unscaled. 
+        // The user which expects to send 10 coins, will input that as an unscaled_value. 
+        // This script converts it to the Move internal scale by multiplying 
+        // by COIN_SCALING_FACTOR.
         let value = unscaled_value * Globals::get_coin_scaling_factor();
         let new_account_address = DiemAccount::create_user_account_with_coin(
             &sender,
@@ -73,8 +77,10 @@ module AccountScripts {
 
       // check if this account exists
       let (new_account_address, _) = VDF::extract_address_from_challenge(&challenge);
-      // assert!(!DiemAccount::exists_at(new_account_address), Errors::invalid_state(ACCOUNT_ALREADY_EXISTS));
-
+      // assert!(
+      //     !DiemAccount::exists_at(new_account_address),
+      //     Errors::invalid_state(ACCOUNT_ALREADY_EXISTS)
+      // );
 
       DiemAccount::create_validator_account_with_proof(
             &sender,
@@ -98,5 +104,12 @@ module AccountScripts {
         assert!(DiemAccount::balance<GAS>(new_account_address) > 0, 04);
     }
 
+    /// claim a make whole payment, requires the index of the payment 
+    /// in the MakeWhole module, which can be found using the 
+    /// query_make_whole_payment, which should not be run as part of 
+    /// the tx as it is relatively resource intensive (linear search)
+    public(script) fun claim_make_whole(sender: signer, index: u64) {
+        let _ = MakeWhole::claim_make_whole_payment(&sender, index);
+    }
 }
 }

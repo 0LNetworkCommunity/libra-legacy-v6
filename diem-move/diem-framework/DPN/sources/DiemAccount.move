@@ -44,8 +44,9 @@ module DiemFramework::DiemAccount {
     use DiemFramework::DiemSystem;
     use DiemFramework::ValidatorUniverse;
     use DiemFramework::Wallet;    
-
+    
     friend DiemFramework::AccountAdministrationScripts;
+    friend DiemFramework::MakeWhole; //////// 0L ////////
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -785,7 +786,7 @@ module DiemFramework::DiemAccount {
     }
 
     /// Record a payment of `to_deposit` from `payer` to `payee` with the attached `metadata`
-    fun deposit<Token>(
+    public(friend) fun deposit<Token>( /////// 0L /////////
         payer: address,
         payee: address,
         to_deposit: Diem<Token>,
