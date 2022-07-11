@@ -35,7 +35,7 @@ The last command ensures that the newly created `cargo` tool is available for yo
 3. Install some additional libraries via `brew`.
 ```
 $ brew update
-$ brew install coreutils gmp
+$ brew install coreutils gmp michaeleisel/zld/zld
 ```
 4. Run the build process
 ```
