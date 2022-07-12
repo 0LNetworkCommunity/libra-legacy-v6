@@ -29,7 +29,7 @@ CARGO_ARGS = --release
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
 MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
-CARGO_ARGS = --locked # just keeping this from doing --release mode, while in testnet mode.
+#CARGO_ARGS = --locked # just keeping this from doing --release mode, while in testnet mode.
 GITHUB_USER = OLSF
 endif
 
