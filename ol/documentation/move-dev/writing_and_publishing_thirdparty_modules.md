@@ -5,11 +5,11 @@ This guide will walk through the process of publishing, testing and verifying a 
 ## Functional Tests
 ---
 ### Testing
->The Move test runner leverages the Rust test infrastructure (cargo test) where we can run all tests, or filenames which match a keyword: e.g cargo test persist will run persistence_demo.move.
+>The Move test runner leverages the Rust test infrastructure (cargo test) where we can run all tests, or filenames which match a keyword: e.g cargo test persist will run persistence.move.
 
 Functional tests can be found in  ```<path/to/ol>/language/move-lang/functional_tests/test/move ```
 
-Functional tests for a move module are ran in a script. Move scripts and modules can be combined into a single file or separated. 
+Functional tests for a move module are ran in a script. Move scripts and modules can be combined into a single file or separated.
 
 **Combined Persistence-demo:**
 ```shell script
@@ -21,7 +21,7 @@ module {{default}}::PersistenceDemo{
         use Std::Vector;
         use Std::Signer;
        // use 0x1::Testnet::is_testnet;
-    
+
         // In Move the types for data storage are `resource struct`. Here a type State is being defined. Once a type is initialized in the global state, the resource is treated as if in-memory on the heap, the libra database is abstracted. The data is namespaced by an "access path" which includes the module name and user address. No special APIs are necessary for reading from the database, except permissioning each function which accesses a given struct, more below.
         struct State has key {
           hist: vector<u8>,
@@ -95,7 +95,7 @@ module {{default}}::PersistenceDemo{
 //! sender: alice
 script {
     use {{default}}::PersistenceDemo;
-    
+
     // This sender argument was populated by the test harness with a random address for `alice`, which can be accessed with sender variable or the helper `{alice}`
     fun main(sender: signer){ // alice's signer type added in tx.
       let sender = &sender;
@@ -178,7 +178,7 @@ Also see this for a more recent guide: [move-prover-guide](/ol/documentation/dev
 ---
 
 This is a step by step guide to verifying the demo.move module at diem/language/move-stdlib/demo/demo.move
-1. [Install move prover](/language/move-prover/doc/user/install.md) 
+1. [Install move prover](/language/move-prover/doc/user/install.md)
 > Note on the current version of Diem, Boogie 2.8.32 may need to be manually install to work
 2.  As mentioned above to run the prover use the command ```cargo run --release --quiet --package move-prover --``` or set an alias to this in your shell's configuration file
 3.  Move to the directory of demo.move
@@ -189,7 +189,7 @@ cd <full_path>/diem/language/move-stdlib/demo
 4. Run the script below to verify demo.move
 ```shell script
 cargo run --release --quiet --package move-prover -- --Dependency <full_path>/diem/language/move-stdlib demo.move
-``` 
-Dependencies refer to all preexisting modules used within demo.move, this path can also be preset in the configuration file. 
+```
+Dependencies refer to all preexisting modules used within demo.move, this path can also be preset in the configuration file.
 
 The solver will run and display results of the verification in terminal, the prover will also place the resulting boogie code in ```output.bpl```
