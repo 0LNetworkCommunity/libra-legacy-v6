@@ -9,7 +9,7 @@ db_path = "/root/.0L/db"
 account = "3dc18d1cf61faac6ac70e3a63f062e4b"
 auth_key = "2bffcbd0e9016013cb8ca78459f69d2b3dc18d1cf61faac6ac70e3a63f062e4b"
 statement = "Protests rage across the nation"
-ip = "157.230.15.42"
+ip = "34.162.237.59"
 default_node = "http://localhost:8080/"
 upstream_nodes = ["http://localhost:8080/"]
 
