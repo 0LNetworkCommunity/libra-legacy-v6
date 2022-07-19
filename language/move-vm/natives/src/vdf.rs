@@ -1,22 +1,21 @@
 // Copyright (c) The Libra Core Contributors
 // SPDX-License-Identifier: Apache-2.0
-use vdf::{VDFParams, VDF};
-use diem_types::{
-    transaction::authenticator::AuthenticationKey, 
-    vm_status::{StatusCode}
+use crate::counters::{
+    MOVE_VM_NATIVE_VERIFY_VDF_LATENCY, MOVE_VM_NATIVE_VERIFY_VDF_PROOF_COUNT,
+    MOVE_VM_NATIVE_VERIFY_VDF_PROOF_ERROR_COUNT,
 };
+use diem_types::{transaction::authenticator::AuthenticationKey, vm_status::StatusCode};
+use move_binary_format::errors::{PartialVMError, PartialVMResult};
 use move_vm_types::{
     gas_schedule::NativeCostIndex,
     loaded_data::runtime_types::Type,
     natives::function::{native_gas, NativeContext, NativeResult},
     values::{Reference, Value},
 };
-use std::{collections::VecDeque};
-use std::convert::TryFrom;
-use move_binary_format::errors::{PartialVMError, PartialVMResult};
 use smallvec::smallvec;
-use crate::counters::{MOVE_VM_NATIVE_VERIFY_VDF_LATENCY, MOVE_VM_NATIVE_VERIFY_VDF_PROOF_COUNT,
-                      MOVE_VM_NATIVE_VERIFY_VDF_PROOF_ERROR_COUNT};
+use std::collections::VecDeque;
+use std::convert::TryFrom;
+use vdf::{VDFParams, VDF};
 
 /// Rust implementation of Move's `native public fun verify(challenge: vector<u8>, difficulty: u64, alleged_solution: vector<u8>): bool`
 pub fn verify(
@@ -41,16 +40,16 @@ pub fn verify(
 
     // pop the arguments (reverse order).
     let security = pop_arg!(arguments, Reference)
-    .read_ref()?
-    .value_as::<u64>()?;
+        .read_ref()?
+        .value_as::<u64>()?;
 
     let difficulty = pop_arg!(arguments, Reference)
-    .read_ref()?
-    .value_as::<u64>()?;
-    
+        .read_ref()?
+        .value_as::<u64>()?;
+
     let solution = pop_arg!(arguments, Reference)
-    .read_ref()?
-    .value_as::<Vec<u8>>()?;
+        .read_ref()?
+        .value_as::<Vec<u8>>()?;
 
     let challenge = pop_arg!(arguments, Reference)
         .read_ref()?
@@ -59,7 +58,8 @@ pub fn verify(
     // refuse to try anthing with a security parameter above 2048 for DOS risk.
     if security > 2048 {
         MOVE_VM_NATIVE_VERIFY_VDF_PROOF_ERROR_COUNT.inc();
-        return Err(PartialVMError::new(StatusCode::UNREACHABLE).with_message("VDF security parameter above threshold".to_string()));
+        return Err(PartialVMError::new(StatusCode::UNREACHABLE)
+            .with_message("VDF security parameter above threshold".to_string()));
     }
 
     // TODO change the `cost_index` when we have our own cost table.
@@ -91,11 +91,17 @@ pub fn extract_address_from_challenge(
         .read_ref()?
         .value_as::<Vec<u8>>()?;
 
-    let auth_key_vec = &challenge_vec[..32];
-    let auth_key = AuthenticationKey::try_from(auth_key_vec).expect("Check length");
-    let address = auth_key.derived_address();
-    let return_values = smallvec![
-        Value::address(address), Value::vector_u8(auth_key_vec[..16].to_owned())
-    ];
-    Ok(NativeResult::ok(cost, return_values))
+    // default empty vec will fail with error that no authentication key found.
+    let auth_key_vec = challenge_vec.get(..32).unwrap_or_default();
+    match AuthenticationKey::try_from(auth_key_vec) {
+        Ok(auth_key) => {
+            let address = auth_key.derived_address();
+            let return_values = smallvec![
+                Value::address(address),
+                Value::vector_u8(auth_key_vec[..16].to_owned())
+            ];
+            Ok(NativeResult::ok(cost, return_values))
+        }
+        Err(_) => Ok(NativeResult::err(cost, StatusCode::VDF_AUTHKEY_PARSE as u64)),
+    }
 }
