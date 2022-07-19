@@ -406,29 +406,11 @@ the miner last created a new account
 ## Constants
 
 
-<a name="0x1_TowerState_DIFFICULTY_BASELINE"></a>
-
-
-
-<pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_DIFFICULTY_BASELINE">DIFFICULTY_BASELINE</a>: u64 = 5000000;
-</code></pre>
-
-
-
 <a name="0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION"></a>
 
 
 
 <pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_EPOCHS_UNTIL_ACCOUNT_CREATION">EPOCHS_UNTIL_ACCOUNT_CREATION</a>: u64 = 14;
-</code></pre>
-
-
-
-<a name="0x1_TowerState_SECURITY_BASELINE"></a>
-
-
-
-<pre><code><b>const</b> <a href="TowerState.md#0x1_TowerState_SECURITY_BASELINE">SECURITY_BASELINE</a>: u64 = 512;
 </code></pre>
 
 
@@ -762,8 +744,8 @@ Permissions: PUBLIC, ANYONE
   // This may be the 0th proof of an end user that hasn't had tower state initialized
   <b>if</b> (!<a href="TowerState.md#0x1_TowerState_is_init">is_init</a>(miner_addr)) {
 
-    <b>assert</b>(&proof.difficulty == &<a href="TowerState.md#0x1_TowerState_DIFFICULTY_BASELINE">DIFFICULTY_BASELINE</a> , <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
-    <b>assert</b>(&proof.security == &<a href="TowerState.md#0x1_TowerState_SECURITY_BASELINE">SECURITY_BASELINE</a>, <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
+    <b>assert</b>(&proof.difficulty == &<a href="Globals.md#0x1_Globals_get_vdf_difficulty_baseline">Globals::get_vdf_difficulty_baseline</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
+    <b>assert</b>(&proof.security == &<a href="Globals.md#0x1_Globals_get_vdf_security_baseline">Globals::get_vdf_security_baseline</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
 
     // check proof belongs <b>to</b> user.
     <b>let</b> (addr_in_proof, _) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(&proof.challenge);
@@ -835,8 +817,8 @@ Permissions: PUBLIC, ANYONE
   // Check vdf difficulty constant. Will be different in tests than in production.
   // Skip this check on local tests, we need tests <b>to</b> send differentdifficulties.
   <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
-    <b>assert</b>(&proof.difficulty == &<a href="Globals.md#0x1_Globals_get_vdf_difficulty">Globals::get_vdf_difficulty</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130105));
-    <b>assert</b>(&proof.security == &<a href="Globals.md#0x1_Globals_get_vdf_security">Globals::get_vdf_security</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130106));
+    <b>assert</b>(&proof.difficulty == &<a href="Globals.md#0x1_Globals_get_vdf_difficulty_baseline">Globals::get_vdf_difficulty_baseline</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130105));
+    <b>assert</b>(&proof.security == &<a href="Globals.md#0x1_Globals_get_vdf_difficulty_baseline">Globals::get_vdf_difficulty_baseline</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130106));
   };
 
   // Process the proof
@@ -1024,8 +1006,15 @@ Checks to see if miner submitted enough proofs to be considered compliant
   diff.prev_sec = diff.security;
 
   // NOTE: For now we are not changing the vdf security params.
-  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
-    diff.difficulty = <a href="TowerState.md#0x1_TowerState_DIFFICULTY_BASELINE">DIFFICULTY_BASELINE</a> + <a href="TowerState.md#0x1_TowerState_toy_rng">toy_rng</a>(20, 3);
+  <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
+    // <a href="VDF.md#0x1_VDF">VDF</a> proofs must be even numbers.
+    <b>let</b> rng =  <a href="TowerState.md#0x1_TowerState_toy_rng">toy_rng</a>(3, 2);
+    <b>if</b> (rng &gt; 0) {
+      rng = rng * 2;
+    };
+    diff.difficulty = <a href="Globals.md#0x1_Globals_get_vdf_difficulty_baseline">Globals::get_vdf_difficulty_baseline</a>() + rng;
+    // diff.difficulty = <a href="Globals.md#0x1_Globals_get_vdf_difficulty_baseline">Globals::get_vdf_difficulty_baseline</a>() + 1;
+
   }
 }
 </code></pre>
@@ -1321,6 +1310,8 @@ Reset the tower counter at the end of epoch.
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_toy_rng">toy_rng</a>(seed: u64, iters: u64): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
   // Get the list of all miners L
   // Pick a tower miner  (M) from the seed position 1/(N) of the list of miners.
+  print(&77777777);
+
   <b>let</b> l = <a href="TowerState.md#0x1_TowerState_get_miner_list">get_miner_list</a>();
   print(&l);
   // the length will keep incrementing through the epoch. The last miner can know what the starting position will be. There could be a race <b>to</b> be the last validator <b>to</b> augment the set and bias the initial shuffle.
@@ -1334,27 +1325,33 @@ Reset the tower counter at the end of epoch.
   <b>let</b> i = 0;
   <b>while</b> (i &lt; iters) {
     print(&6666);
-    <b>if</b> (n &gt; len) { n = n / len }
-      <b>else</b> <b>if</b> (len &gt; n) { n = len / n }
-      <b>else</b> { n = 0 };
-    // <b>return</b> zero so the user knows of the error, instead of returning anything halfway though the iters.
-    <b>if</b> (n == 0) <b>return</b> 0;
-
+    print(&i);
+    // make sure we get an n smaller than list of validators
+    // <b>abort</b> <b>if</b> loops too much
+    <b>let</b> k = 0;
+    <b>while</b> (n &gt; len) {
+      <b>if</b> (k &gt; 1000) <b>return</b> 0;
+      n = n / len;
+      k = k + 1;
+    };
     print(&n);
-    print(&l);
-
-    <b>if</b> (n &gt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;address&gt;(&l)) <b>return</b> 0;
+    print(&len);
+    // double check
+    <b>if</b> (len &lt;= n) <b>return</b> 0;
 
     print(&666602);
-    // take the first bit (B) from their last proof hash.
     <b>let</b> miner_addr = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;address&gt;(&l, n);
 
     print(&666603);
     <b>let</b> vec = <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(*miner_addr)) {
       *&borrow_global&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(*miner_addr).previous_proof_hash
-    }
-    <b>else</b> { <b>return</b> 0 };
+    } <b>else</b> { <b>return</b> 0 };
+
+    print(&vec);
+
     print(&666604);
+    // take the last bit (B) from their last proof hash.
+
     n = (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_pop_back">Vector::pop_back</a>(&<b>mut</b> vec) <b>as</b> u64);
     print(&666605);
     i = i + 1;
@@ -1702,7 +1699,7 @@ Getters     ///
 
 
 
-<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_get_difficulty">get_difficulty</a>(): (u64, u64)
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_difficulty">get_difficulty</a>(): (u64, u64)
 </code></pre>
 
 
@@ -1711,7 +1708,7 @@ Getters     ///
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_get_difficulty">get_difficulty</a>(): (u64, u64) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_get_difficulty">get_difficulty</a>(): (u64, u64) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
   <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>())) {
     <b>let</b> v = borrow_global_mut&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_VM_RESERVED_ADDRESS">CoreAddresses::VM_RESERVED_ADDRESS</a>());
     <b>return</b> (v.difficulty, v.security)
@@ -1846,7 +1843,7 @@ Getters     ///
   // Check vdf difficulty constant. Will be different in tests than in production.
   // Skip this check on local tests, we need tests <b>to</b> send different difficulties.
   <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){ // todo: remove?
-    <b>assert</b>(&proof.difficulty == &<a href="Globals.md#0x1_Globals_get_vdf_difficulty">Globals::get_vdf_difficulty</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130117));
+    <b>assert</b>(&proof.difficulty == &<a href="Globals.md#0x1_Globals_get_vdf_difficulty_baseline">Globals::get_vdf_difficulty_baseline</a>(), <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130117));
   };
 
   <a href="TowerState.md#0x1_TowerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);

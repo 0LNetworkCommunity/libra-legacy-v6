@@ -7,7 +7,7 @@ use diem_crypto::HashValue;
 use diem_global_constants::genesis_delay_difficulty;
 use diem_types::{ol_vdf_difficulty::VDFDifficulty};
 use ol::{config::AppCfg, node::{client::pick_client, node::Node}};
-use ol_keys::wallet::IS_TEST;
+use ol_types::config::IS_PROD;
 use crate::proof;
 /// container for the next proof parameters to be fed to VDF prover.
 pub struct NextProof {
@@ -24,7 +24,7 @@ impl NextProof {
   pub fn genesis_proof(preimage: Vec<u8>) -> Self {
     let mut diff = VDFDifficulty::default(); 
     
-    if *IS_TEST {
+    if !*IS_PROD {
       diff.difficulty = genesis_delay_difficulty()
     }
 
