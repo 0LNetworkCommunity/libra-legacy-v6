@@ -293,6 +293,7 @@ pub fn make_fullnode_cfg(
     c.set_data_dir(output_dir.clone());
     c.base.waypoint = WaypointConfig::FromConfig(waypoint);
     c.base.role = RoleType::FullNode;
+    c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
     // c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
     // prune window exists to prevent state snapshots from taking up too much space.
     c.storage.prune_window = Some(100_000);
