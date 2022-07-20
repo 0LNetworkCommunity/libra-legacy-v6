@@ -10,6 +10,8 @@ use ol::{config::AppCfg, node::{client::pick_client, node::Node}};
 use ol_types::config::IS_PROD;
 use crate::{proof, preimage};
 /// container for the next proof parameters to be fed to VDF prover.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+
 pub struct NextProof {
     ///
     pub diff: VDFDifficulty,
