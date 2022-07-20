@@ -8,7 +8,9 @@ use diem_global_constants::genesis_delay_difficulty;
 use diem_types::{ol_vdf_difficulty::VDFDifficulty};
 use ol::{config::AppCfg, node::{client::pick_client, node::Node}};
 use ol_types::config::IS_PROD;
+use serde::{Deserialize, Serialize};
 use crate::{proof, preimage};
+
 /// container for the next proof parameters to be fed to VDF prover.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 
