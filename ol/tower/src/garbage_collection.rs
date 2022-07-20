@@ -2,6 +2,7 @@
 
 use std::{path::PathBuf, fs, time::SystemTime};
 use anyhow::bail;
+use cli::diem_client::DiemClient;
 use diem_crypto::HashValue;
 use ol::config::AppCfg;
 use crate::{next_proof, proof};
@@ -57,11 +58,11 @@ pub fn put_in_trash(to_trash: Vec<PathBuf>, cfg: &AppCfg) -> anyhow::Result<()> 
 
 /// check remaining proofs in backlog.
 /// if they all fail, move the list to a trash file
-pub fn find_first_discontinous_proof(cfg: AppCfg, swarm_path: Option<PathBuf>) -> anyhow::Result<Option<PathBuf>> {
+pub fn find_first_discontinous_proof(cfg: AppCfg, client: DiemClient, swarm_path: Option<PathBuf>) -> anyhow::Result<Option<PathBuf>> {
   let block_dir = cfg.get_block_dir();
   let highest_local = proof::get_highest_block(&block_dir)?.0.height;
   // start from last known proof on chain.
-  let p = next_proof::get_next_proof_from_chain(&mut cfg.clone(), swarm_path)?;
+  let p = next_proof::get_next_proof_from_chain(&mut cfg.clone(), client, swarm_path)?;
 
   if highest_local < p.next_height { return Ok(None) };
   // check if the next proof nonce that the chain expects has already been mined.

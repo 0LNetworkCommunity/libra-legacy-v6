@@ -3,10 +3,11 @@
 use std::path::PathBuf;
 
 use anyhow::{Error, bail};
+use cli::diem_client::DiemClient;
 use diem_crypto::HashValue;
 use diem_global_constants::genesis_delay_difficulty;
 use diem_types::{ol_vdf_difficulty::VDFDifficulty};
-use ol::{config::AppCfg, node::{client::pick_client, node::Node}};
+use ol::{config::AppCfg, node::node::Node};
 use ol_types::config::IS_PROD;
 use serde::{Deserialize, Serialize};
 use crate::{proof, preimage};
@@ -64,18 +65,21 @@ pub fn get_next_proof_params_from_local(config: &AppCfg) -> Result<NextProof, Er
 /// and individual parameters like tower height and the preimage (previous proof hash)
 pub fn get_next_proof_from_chain(
     config: &mut AppCfg,
+    client: DiemClient,
     swarm_path: Option<PathBuf>
 ) -> Result<NextProof, Error> {
     // dbg!("pick_client");
-    let client = pick_client(swarm_path.clone(), config)?;
+    // let client = pick_client(swarm_path.clone(), config)?;
 
     // dbg!("get user tower state");
+    let mut n = Node::new(client, config, swarm_path.is_some());
 
+    n.refresh_onchain_state();
     // TODO: we are picking Client twice
-    let diff = get_difficulty_from_chain(config, swarm_path)?;
+    let diff = get_difficulty_from_chain(&n)?;
   
     // // get the user's tower state from chain.
-    let ts = client
+    let ts = n.client
       .get_account_state(config.profile.account)?
       .get_miner_state()?;
 
@@ -91,23 +95,23 @@ pub fn get_next_proof_from_chain(
 }
 
 /// Get the VDF difficulty from chain.
-pub fn get_difficulty_from_chain(config: &mut AppCfg, swarm_path: Option<PathBuf>) -> anyhow::Result<VDFDifficulty> {
+pub fn get_difficulty_from_chain(n: &Node) -> anyhow::Result<VDFDifficulty> {
 
     // dbg!("pick_client");
-    let client = pick_client(swarm_path.clone(), config)?;
+    // let client = pick_client(swarm_path.clone(), config)?;
 
     // dbg!("get_account_state");
 
-    let mut n = Node::new(client, config, swarm_path.is_some());
+    // let mut n = Node::new(client, config, swarm_path.is_some());
     
-    n.refresh_onchain_state();
+    
 
     
 
     // // get the user's tower state from chain.
     // let ts = client.get_account_state(config.profile.account)?.get_miner_state()?;
 
-    if let Some(a) = n.chain_state {
+    if let Some(a) = &n.chain_state {
 
         // let a = client.get_account_state(AccountAddress::ZERO)?;
         // dbg!(&a);
