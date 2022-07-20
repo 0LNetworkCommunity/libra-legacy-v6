@@ -360,7 +360,7 @@ fn test_mine_genesis() {
     assert_eq!(latest_block.height, 0, "test");
 
     // Test the expected proof is writtent to file correctly.
-    let correct_proof = "00292f460bffb29e5d3a7fe5fe7a560104b83a48a236a819812b33e5a3ef2ec266fff30541a78101b4e266358c965ac65830f955842c6dee22b103b50f4709a51655";
+    let correct_proof = "003bd51aaf75164d499dca73c79a57718fb5736b436d5195be1284550960f28e50002c4f00539cc53d8c0be2be7822bc32b1dc1edbde523b28ac7c8f4c6803bb5417";
     assert_eq!(hex::encode(&latest_block.proof), correct_proof, "test");
 
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());

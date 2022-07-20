@@ -28,7 +28,9 @@ pub fn genesis_preimage(cfg: &AppCfg) -> Vec<u8> {
     preimage.append(&mut padded_key_bytes);
 
     // CHAIN_ID_BYTES
+
     let mut padded_chain_id_bytes = padding(cfg.chain_info.chain_id.to_string().as_bytes().to_vec(), CHAIN_ID_BYTES);
+
 
     preimage.append(&mut padded_chain_id_bytes);
 
