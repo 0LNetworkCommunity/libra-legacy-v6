@@ -8,7 +8,7 @@ use diem_global_constants::genesis_delay_difficulty;
 use diem_types::{ol_vdf_difficulty::VDFDifficulty};
 use ol::{config::AppCfg, node::{client::pick_client, node::Node}};
 use ol_types::config::IS_PROD;
-use crate::proof;
+use crate::{proof, preimage};
 /// container for the next proof parameters to be fed to VDF prover.
 pub struct NextProof {
     ///
@@ -21,7 +21,8 @@ pub struct NextProof {
 
 impl NextProof {
   /// create a genesis proof
-  pub fn genesis_proof(preimage: Vec<u8>) -> Self {
+  pub fn genesis_proof(config: &AppCfg) -> Self {
+
     let mut diff = VDFDifficulty::default(); 
     
     if !*IS_PROD {
@@ -31,7 +32,7 @@ impl NextProof {
     NextProof {
         diff,
         next_height: 0,
-        preimage,
+        preimage: preimage::genesis_preimage(config),
     }
   }
 }
