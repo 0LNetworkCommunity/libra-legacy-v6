@@ -127,7 +127,7 @@ impl Node {
 
     /// Get validator config view
     pub fn get_validator_config(
-        &mut self, address: AccountAddress
+        &self, address: AccountAddress
     ) -> Option<ValidatorConfigView> {
         let state = self.get_account_state(address);
         match state {
@@ -152,7 +152,7 @@ impl Node {
     }
 
     /// Query if valid account has balance greater than zero
-    pub fn has_positive_balance(&mut self, address: AccountAddress) -> bool {
+    pub fn has_positive_balance(&self, address: AccountAddress) -> bool {
         match self.get_account_balance(address) {
             Some(v) => v > 0.0,
             None => false,
@@ -170,7 +170,7 @@ impl Node {
     }
 
     /// Get account balance
-    pub fn get_account_balance(&mut self, address: AccountAddress) -> Option<f64> {
+    pub fn get_account_balance(&self, address: AccountAddress) -> Option<f64> {
         match self.client.get_account(address) {
             Ok(response) => match response.into_inner() {
                 Some(account_view) => Some(get_balance(account_view)),
@@ -199,7 +199,7 @@ impl Node {
     // }
 
     /// get any account state with client
-    pub fn get_account_state(&mut self, address: AccountAddress) -> Result<AccountState, Error> {
+    pub fn get_account_state(&self, address: AccountAddress) -> Result<AccountState, Error> {
         let (blob, _ver) = self.client.get_account_state_blob(&address)?;
         if let Some(account_blob) = blob {
             match AccountState::try_from(&account_blob) {
