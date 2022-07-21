@@ -3,7 +3,6 @@
 //! account: carol, 1000000, 0, validator
 //! account: dave, 1000000, 0, validator
 
-// Tests the prologue reconfigures based on wall clock
 
 //! block-prologue
 //! proposer: alice
@@ -15,7 +14,6 @@
 //! sender: diemroot
 script {
     use 0x1::TowerState;
-    // use 0x1::Debug::print;
 
     fun main(_sender: signer) {
         let (diff, sec) = TowerState::get_difficulty();
@@ -48,8 +46,9 @@ script {
 
     fun main(_sender: signer) {
         let (diff, sec) = TowerState::get_difficulty();
+        // print(&diff);
         // check the state started with the testnet defaults
-        assert(diff==216, 735703);
+        assert(diff==332, 735703);
         assert(sec==512, 735704);
 
     }

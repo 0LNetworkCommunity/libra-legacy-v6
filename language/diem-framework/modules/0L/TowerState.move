@@ -421,7 +421,6 @@ module TowerState {
           rng = rng * 2;
         };
         diff.difficulty = Globals::get_vdf_difficulty_baseline() + rng;
-        // diff.difficulty = Globals::get_vdf_difficulty_baseline() + 1;
        
       }
     }
