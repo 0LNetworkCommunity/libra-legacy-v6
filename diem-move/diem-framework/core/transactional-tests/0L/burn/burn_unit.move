@@ -88,7 +88,7 @@ script {
   use DiemFramework::Burn;
 
     fun main(_dr: signer, sender: signer) {
-    Burn::set_send_community(&sender);
+    Burn::set_send_community(&sender, true);
   }
 }
 //////// SETS community send

@@ -120,14 +120,13 @@ module EpochBoundary {
         Burn::reset_ratios(vm);
         // LEAVE THIS CODE COMMENTED for future use
         // TODO: Make the burn value dynamic.
-        // let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
-        // let burn_value = Subsidy::subsidy_curve(
-        //   Globals::get_subsidy_ceiling_gas(),
-        //   incoming_count,
-        //   Globals::get_max_node_density()
-        // )/4;
-
-        let burn_value = 1000000; // TODO: switch to a variable cost, as above.
+        let incoming_count = Vector::length<address>(&top_accounts) - Vector::length<address>(&jailed_set);
+        let burn_value = Subsidy::subsidy_curve(
+          Globals::get_subsidy_ceiling_gas(),
+          incoming_count,
+          Globals::get_max_validators_per_set()
+        )/4;
+        // let burn_value = 1000000; // TODO: switch to a variable cost, as above.
 
         let i = 0;
         while (i < Vector::length<address>(&top_accounts)) {

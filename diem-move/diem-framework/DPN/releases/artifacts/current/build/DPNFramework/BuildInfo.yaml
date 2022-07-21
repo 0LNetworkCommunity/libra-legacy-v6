@@ -53,6 +53,9 @@ compiled_package_info:
       name: Burn
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: BurnScript
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: CRSN
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -289,7 +292,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 91F97784C3D38BE7551ABF877BD4495966A61E111E64249716B7DDC18041B09A
+  source_digest: 10031460DC97C3C32C3CACC6B2ECB78BD1BF65F61DEBB4CF3A725B52FAAF9CCF
   build_flags:
     dev_mode: false
     test_mode: false

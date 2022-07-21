@@ -2862,6 +2862,10 @@ pub enum ScriptFunctionCall {
         public_key: Bytes,
     },
 
+    SetBurnPref {
+        to_community: bool,
+    },
+
     /// # Summary
     /// Updates the gas constants stored on chain and used by the VM for gas
     /// metering. This transaction can only be sent from the Diem Root account.
@@ -3889,6 +3893,7 @@ impl ScriptFunctionCall {
             RotateSharedEd25519PublicKey { public_key } => {
                 encode_rotate_shared_ed25519_public_key_script_function(public_key)
             }
+            SetBurnPref { to_community } => encode_set_burn_pref_script_function(to_community),
             SetGasConstants {
                 sliding_nonce,
                 global_memory_per_byte_cost,
@@ -6051,6 +6056,18 @@ pub fn encode_rotate_shared_ed25519_public_key_script_function(
         ident_str!("rotate_shared_ed25519_public_key").to_owned(),
         vec![],
         vec![bcs::to_bytes(&public_key).unwrap()],
+    ))
+}
+
+pub fn encode_set_burn_pref_script_function(to_community: bool) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("BurnScript").to_owned(),
+        ),
+        ident_str!("set_burn_pref").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&to_community).unwrap()],
     ))
 }
 
@@ -9040,6 +9057,18 @@ fn decode_rotate_shared_ed25519_public_key_script_function(
     }
 }
 
+fn decode_set_burn_pref_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::SetBurnPref {
+            to_community: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_set_gas_constants_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9832,6 +9861,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "AccountAdministrationScriptsrotate_shared_ed25519_public_key".to_string(),
             Box::new(decode_rotate_shared_ed25519_public_key_script_function),
+        );
+        map.insert(
+            "BurnScriptset_burn_pref".to_string(),
+            Box::new(decode_set_burn_pref_script_function),
         );
         map.insert(
             "SystemAdministrationScriptsset_gas_constants".to_string(),
