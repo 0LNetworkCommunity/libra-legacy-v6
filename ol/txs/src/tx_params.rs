@@ -203,7 +203,7 @@ impl TxParams {
                 user_tx_timeout: 5_000,
             },
 
-            chain_id: ChainId::new(NamedChain::DEVNET.id()),
+            chain_id: ChainId::new(NamedChain::TESTING.id()),
             is_operator
         };
 
