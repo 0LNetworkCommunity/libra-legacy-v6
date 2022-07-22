@@ -369,7 +369,10 @@ pub fn initialize_host_swarm(
         })
     };
 
-    match copy(&source, target_file, &CopyOptions::new()) {
+    let mut options = CopyOptions::new();
+    options.overwrite = true;
+
+    match copy(&source, target_file, &options) {
         Err(why) => {
             println!("copy block failed: {:?}", why);
             bail!(why)
