@@ -98,6 +98,7 @@ impl Runnable for ForkCmd {
             &self.source_path,
             None,
             None,
+            &None, // defaults to mainnet
         )
         .unwrap_or_else(|e| {
           println!("could not create app configs, exiting. Message: {:?}", &e);

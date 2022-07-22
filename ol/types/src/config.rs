@@ -149,6 +149,7 @@ impl AppCfg {
         source_path: &Option<PathBuf>,
         statement: Option<String>,
         ip: Option<Ipv4Addr>,
+        network_id: &Option<NamedChain>,
     ) -> Result<AppCfg, Error> {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
@@ -181,6 +182,10 @@ impl AppCfg {
         // if !*IS_TEST {
         //     default_config.profile.tower_link = add_tower(&default_config);
         // }
+
+        if let Some(id) = network_id {
+          default_config.chain_info.chain_id = id.to_owned();
+        };
 
         if source_path.is_some() {
             // let source_path = what_source();

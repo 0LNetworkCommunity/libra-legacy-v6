@@ -62,6 +62,13 @@ impl NamedChain {
     }
 }
 
+impl FromStr for NamedChain { //////// 0L ////////
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::str_to_named(s)
+    }
+}
 /// Note: u7 in a u8 is uleb-compatible, and any usage of this should be aware
 /// that this field maybe updated to be uleb64 in the future
 #[derive(Clone, Copy, Deserialize, Eq, Hash, PartialEq, Serialize)]

@@ -1013,7 +1013,6 @@ Checks to see if miner submitted enough proofs to be considered compliant
       rng = rng * 2;
     };
     diff.difficulty = <a href="Globals.md#0x1_Globals_get_vdf_difficulty_baseline">Globals::get_vdf_difficulty_baseline</a>() + rng;
-    // diff.difficulty = <a href="Globals.md#0x1_Globals_get_vdf_difficulty_baseline">Globals::get_vdf_difficulty_baseline</a>() + 1;
 
   }
 }
