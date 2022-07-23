@@ -116,7 +116,15 @@ pub fn pick_client(swarm_path: Option<PathBuf>, config: &mut AppCfg) -> Result<D
     // check if is in sync
     let local_client = default_local_rpc(waypoint.clone())?;
 
-    let remote_client = find_a_remote_jsonrpc(config, waypoint.clone())?;
+
+    let remote_client = match find_a_remote_jsonrpc(config, waypoint.clone()) {
+        Ok(r) => r,
+        // If we can't connect to any remotes, return the local client.
+        Err(e) => {
+          println!("{:?}", e);
+          return Ok(local_client) 
+        },
+    }; 
     // compares to an upstream random remote client. If it is synced, use the local client as the default
     let mut node = Node::new(local_client, config, is_swarm);
     match node.check_sync()?.is_synced {
