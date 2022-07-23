@@ -202,8 +202,9 @@ impl Runnable for InitCmd {
 
             let namespace = app_cfg.format_oper_namespace();
             let output_dir = app_cfg.workspace.node_home.clone();
-            let seeds = pick_seed_peer(&mut app_cfg, entry_args.swarm_path.clone());
-            match ol_node_files::make_val_file(output_dir, seeds.ok(), None, &namespace) {
+            let seeds = if self.seed_peer { pick_seed_peer(&mut app_cfg, entry_args.swarm_path.clone()).ok() } else { None };
+
+            match ol_node_files::make_val_file(output_dir, seeds,None, &namespace) {
                 Ok(_) => {}
                 Err(e) => {
                     println!("Could not create file, exiting. Message: {:?}", e);
