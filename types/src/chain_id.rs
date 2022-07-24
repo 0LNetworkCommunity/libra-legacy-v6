@@ -32,7 +32,13 @@ impl NamedChain {
           "DEVNET" => NamedChain::DEVNET,
           "TESTING" => NamedChain::TESTING,
           "PREMAINNET" => NamedChain::PREMAINNET,
-          "EXPERIMENTAL" => NamedChain::EXPERIMENTAL, //////// 0L ////////            
+          "EXPERIMENTAL" => NamedChain::EXPERIMENTAL, //////// 0L ////////
+          "1" => NamedChain::MAINNET,
+          "2" => NamedChain::TESTNET,
+          "3" => NamedChain::DEVNET,
+          "4" => NamedChain::TESTING,
+          "5" => NamedChain::PREMAINNET,
+          "7" => NamedChain::EXPERIMENTAL, //////// 0L ////////         
           _ => {
               return Err(format_err!("Not a reserved chain: {:?}", s));
           }
