@@ -111,7 +111,7 @@ impl Runnable for ValWizardCmd {
             &self.source_path,
             None,
             None,
-            &cmd.chain_id,
+            &self.chain_id,
         )
         .unwrap_or_else(|e| {
           println!("could not create app configs, exiting. Message: {:?}", &e);
