@@ -21,6 +21,7 @@
     epochs_since_last_account_creation: Number;
     vote_count_in_epoch: Number;
     prop_count_in_epoch: Number;
+    burn_to_community: boolean;
   }
   
   let set: ValInfo[] = [];
@@ -31,6 +32,7 @@
     { label: "tower height", sortKey: "tower_height" },
     { label: "votes in epoch", sortKey: "vote_count_in_epoch" },
     { label: "props in epoch", sortKey: "prop_count_in_epoch" },
+    { label: "burn to comm", sortKey: "burn_to_community" },
   ];
   let sortOption: string = "voting_power";
   let sortOrder = 1;
@@ -108,6 +110,7 @@
               <td class="uk-text-right">{val.tower_height}</td>
               <td class="uk-text-right">{val.vote_count_in_epoch}</td>
               <td class="uk-text-right">{val.prop_count_in_epoch}</td>
+              <td class="uk-text-right">{val.burn_to_community}</td>
               <td>
                 <span uk-icon="icon: info" uk-toggle="target: #{modal_id}"></span>
               </td>
