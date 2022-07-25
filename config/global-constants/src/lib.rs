@@ -43,7 +43,6 @@ pub const DEFAULT_VAL_PORT: u64 = 6180;
 pub const DEFAULT_VFN_PORT: u64 = 6179;
 pub const DEFAULT_PUB_PORT: u64 = 6178;
 
-
 // TODO: make this lazy static.
 /// Switch settings between production and testing
 pub fn delay_difficulty() -> u64 {

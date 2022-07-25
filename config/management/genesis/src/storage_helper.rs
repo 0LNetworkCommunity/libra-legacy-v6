@@ -122,7 +122,6 @@ impl StorageHelper {
         let mut storage_oper = self.storage(format!("{}-oper", namespace.clone()));
 
         if is_genesis {
-          dbg!(&is_genesis);
             // Data needed for testnet, swarm, and genesis ceremony.
             let mut storage_root = self.storage("root".to_owned());
             let dummy_root = Ed25519PrivateKey::from_encoded_string(

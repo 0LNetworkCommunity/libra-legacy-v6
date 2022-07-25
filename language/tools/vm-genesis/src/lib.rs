@@ -487,6 +487,13 @@ fn create_and_initialize_owners_operators(
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
     // println!("0 ======== Create Owner Accounts");
+
+    let all_vals: Vec<AccountAddress> = operator_registrations.iter()
+    .map(|a|{
+      a.3
+    })
+    .collect();
+
     for (owner_key, owner_name, _op_assignment, genesis_proof, _operator) in operator_assignments {
         // TODO: Remove. Temporary Authkey for genesis, because accounts are being created from human names.
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
@@ -584,6 +591,32 @@ fn create_and_initialize_owners_operators(
             serialize_values(&vec![
                 MoveValue::Signer(diem_root_address),
                 MoveValue::Signer(owner_address),
+            ]),
+        );
+
+        exec_function(
+            session,
+            log_context,
+            "Vouch",
+            "init",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(owner_address)
+            ]),
+        );
+
+        let mut vals = all_vals.clone();
+        vals.retain(|el|{ el != &owner_address});
+        exec_function(
+            session,
+            log_context,
+            "Vouch",
+            "vm_migrate",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Address(owner_address),
+                MoveValue::vector_address(vals),
             ]),
         );
     }

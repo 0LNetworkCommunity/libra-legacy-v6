@@ -433,15 +433,6 @@ pub static STATE_SYNC_VERSION_REQUEST_TIMEOUT: Lazy<IntCounterVec> = Lazy::new(|
         .unwrap()
 });
 
-pub static STATE_SYNC_ADDING_VALIDATOR_TO_STATE_SYNC: Lazy<IntCounterVec> = Lazy::new(|| {
-    register_int_counter_vec!(
-        "diem_state_sync_adding_validator_to_state_sync",
-        "Number of times sync state added a validator to state sync",
-        &["network", "peer"]
-    )
-        .unwrap()
-});
-
 pub static STATE_SYNC_LOST_PEER: Lazy<IntCounterVec> = Lazy::new(|| {
     register_int_counter_vec!(
         "diem_state_sync_lost_peer",

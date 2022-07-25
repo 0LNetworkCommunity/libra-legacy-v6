@@ -58,7 +58,7 @@ fn spawn_process(
 
 impl Node {
     /// Start Node, as fullnode
-    pub fn start_node(&mut self, config_type: NodeMode, verbose: bool) -> Result<(), Error> {
+    pub fn start_node(&mut self, verbose: bool) -> Result<(), Error> {
         use BINARY_NODE as NODE;
         // if is running do nothing
         // TODO: Get another check of node running
@@ -72,10 +72,7 @@ impl Node {
         // Start as validator or fullnode
         let conf = app_config();
         let node_home = conf.workspace.node_home.to_str().unwrap();
-        let config_file_name = match config_type {
-            NodeMode::Validator => format!("{}validator.node.yaml", node_home),
-            NodeMode::Fullnode => format!("{}fullnode.node.yaml", node_home),
-        };
+        let config_file_name =  format!("{}validator.node.yaml", node_home);
 
         let child = if *IS_PROD {
             let args = vec!["--config", &config_file_name];

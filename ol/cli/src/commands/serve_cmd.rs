@@ -8,7 +8,7 @@ use abscissa_core::{Command, Options, Runnable};
 #[derive(Command, Debug, Options)]
 pub struct ServeCmd {
     /// Start healthcheck runner
-    #[options(short = "c", help = "start health check runner")]
+    #[options(short = "c", help = "deprecation notice: -c is no longer valid. Previously it was necessary if healthchecks were to be updated while server is running, but now we assume that is the intention of the user.")]
     run_checks: bool,
     /// Update the web files
     #[options(no_short, help = "update web files for server")]
@@ -32,8 +32,8 @@ impl Runnable for ServeCmd {
                 },
             };          
             let mut node = Node::new(client, &cfg, is_swarm);
-            server::init(&mut node, self.run_checks);
-            server::start_server(node, self.run_checks);
+            server::init(&mut node, true);
+            server::start_server(node, true);
         }
     }
 }

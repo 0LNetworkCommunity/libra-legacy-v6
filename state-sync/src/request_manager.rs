@@ -208,7 +208,7 @@ impl RequestManager {
             ])
             .observe(*score);
 
-            error!("update peer score: {:?} with update_type {:?}, old score: {:?}, new score: {:?}", &peer, &update_type, &old_score, &score);
+            info!("update peer score: {:?} with update_type {:?}, old score: {:?}, new score: {:?}", &peer, &update_type, &old_score, &score);
 
         }
     }
