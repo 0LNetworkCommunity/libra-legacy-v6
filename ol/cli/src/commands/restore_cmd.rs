@@ -21,8 +21,8 @@ pub struct RestoreCmd {
     #[options(short="v", help = "specify a version or height if there is more than one per archive")]
     version: Option<u64>,
 
-    #[options(short="h", help = "fetch the highest version available, of the latest epoch.")]
-    highest_version: bool,
+    #[options(short="l", help = "fetch the highest version available, of the latest epoch.")]
+    latest_version: bool,
 }
 
 impl Runnable for RestoreCmd {
