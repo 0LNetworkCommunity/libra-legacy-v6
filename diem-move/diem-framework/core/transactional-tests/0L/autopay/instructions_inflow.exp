@@ -1,6 +1,6 @@
-processed 9 tasks
+processed 10 tasks
 
-task 3 'block'. lines 44-44:
+task 4 'block'. lines 65-65:
 Events:
 {
     key:     0c0000000000000000000000000000000000000000000000
@@ -9,7 +9,7 @@ Events:
     data:    "170000000000000006505ccd81e562b524d8f656abd92a1500c005d90100000000"
 }
 
-task 5 'block'. lines 75-80:
+task 6 'block'. lines 96-101:
 Events:
 {
     key:     0c0000000000000000000000000000000000000000000000
@@ -24,7 +24,7 @@ Events:
     data:    "0200000000000000"
 }
 
-task 6 'block'. lines 81-86:
+task 7 'block'. lines 102-107:
 Events:
 {
     key:     010000000000000010ada1ba839f77cfc5266ab28e1fa52f
@@ -39,13 +39,25 @@ Events:
     data:    "f3010000000000000347415310ada1ba839f77cfc5266ab28e1fa52f076175746f706179"
 }
 {
+    key:     010000000000000010ada1ba839f77cfc5266ab28e1fa52f
+    seq_num: 1
+    type:    0x1::DiemAccount::SentPaymentEvent
+    data:    "e7030000000000000347415352d3c4e214124979700b1146ecc9b44d076175746f706179"
+}
+{
+    key:     000000000000000052d3c4e214124979700b1146ecc9b44d
+    seq_num: 1
+    type:    0x1::DiemAccount::ReceivedPaymentEvent
+    data:    "e7030000000000000347415310ada1ba839f77cfc5266ab28e1fa52f076175746f706179"
+}
+{
     key:     0c0000000000000000000000000000000000000000000000
     seq_num: 2
     type:    0x1::DiemBlock::NewBlockEvent
     data:    "420000000000000006505ccd81e562b524d8f656abd92a150000cf7b0500000000"
 }
 
-task 7 'block'. lines 87-87:
+task 8 'block'. lines 108-108:
 Events:
 {
     key:     0c0000000000000000000000000000000000000000000000

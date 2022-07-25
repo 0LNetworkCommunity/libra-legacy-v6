@@ -31,7 +31,7 @@ module DiemFramework::DiemBlock {
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
     use DiemFramework::Migrations;
-    use DiemFramework::MigrateTowerCounter;    
+    use DiemFramework::MigrateAutoPayBal;    
     use DiemFramework::MakeWhole;
 
     struct BlockMetadata has key {
@@ -118,8 +118,10 @@ module DiemFramework::DiemBlock {
         if (round == 3) {
             // safety. Maybe init Migration struct
             Migrations::init(&vm);
-            // Migration UID 1
-            MigrateTowerCounter::migrate_tower_counter(&vm);
+            // Migration UID 1 // DONE
+            // MigrateTowerCounter::migrate_tower_counter(&vm);
+            // migration UID 2
+            MigrateAutoPayBal::do_it(&vm);
             // Initialize the make whole payment info
             MakeWhole::make_whole_init(&vm);            
         };

@@ -1,6 +1,6 @@
-//# init --parent-vasps Bob Alice Sally Carol
-// Bob, Sally:       validators with 10M GAS
-// Alice, Carol: non-validators with  1M GAS
+//# init --parent-vasps Bob Alice Sally Carol X Eve
+// Bob, Sally, X:         validators with 10M GAS
+// Alice, Carol, Eve: non-validators with  1M GAS
 
 // test runs various autopay instruction types to ensure they are being executed as expected
 
@@ -16,6 +16,18 @@ script {
   }
 }
 
+//# run --admin-script --signers DiemRoot Eve
+script {
+  use DiemFramework::Wallet;
+  use Std::Vector;
+
+  fun main(_dr: signer, sender: signer) {
+    Wallet::set_comm(&sender);
+    let list = Wallet::get_comm_list();
+    assert!(Vector::length(&list) == 2, 7357007);
+  }
+}
+
 //# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::AutoPay;
@@ -25,7 +37,8 @@ script {
     AutoPay::enable_autopay(sender);
     assert!(AutoPay::is_enabled(Signer::address_of(sender)), 0);
     
-    AutoPay::create_instruction(sender, 1, 1, @Carol, 2, 500);
+    AutoPay::create_instruction(sender, 1, 1, @Carol, 2, 500); //5%
+    AutoPay::create_instruction(sender, 2, 1, @Eve, 2, 1000);  //10%
 
     let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
@@ -34,6 +47,14 @@ script {
     assert!(payee == @Carol, 1);
     assert!(end_epoch == 2, 1);
     assert!(percentage == 500, 1);
+
+    let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
+      Signer::address_of(sender), 2
+    );
+    assert!(type == 1, 2);
+    assert!(payee == @Eve, 2);
+    assert!(end_epoch == 2, 2);
+    assert!(percentage == 1000, 2);    
   }
 }
 
@@ -91,12 +112,15 @@ script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
   fun main() {
-    // alice will have paid 5% on the 10000 she received last epoch
+    // alice will have paid 15% on the 10000 she received last epoch
     let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 1009501, 7357004);
+    assert!(ending_balance == 1008502, 7357004);
 
     // check balance of recipients
     let ending_balance = DiemAccount::balance<GAS>(@Carol);
     assert!(ending_balance == 1000499, 7357005);
+
+    let ending_balance = DiemAccount::balance<GAS>(@Eve);
+    assert!(ending_balance == 1000999, 7357006);    
   }
 }

@@ -158,6 +158,9 @@ compiled_package_info:
       name: MakeWhole
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: MigrateAutoPayBal
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: MigrateTowerCounter
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -292,7 +295,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 10031460DC97C3C32C3CACC6B2ECB78BD1BF65F61DEBB4CF3A725B52FAAF9CCF
+  source_digest: 7AD3AD6721221F41FB165D43789543FA31556C6B98054B673241F2C1B6819F1A
   build_flags:
     dev_mode: false
     test_mode: false

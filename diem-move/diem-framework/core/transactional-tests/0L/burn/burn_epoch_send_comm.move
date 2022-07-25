@@ -16,7 +16,7 @@ script {
 
         TowerState::test_helper_mock_mining(&sender, 5);
         // set alice burn preferences as sending to community wallets.
-        Burn::set_send_community(&sender);
+        Burn::set_send_community(&sender, true);
         // validator needs to qualify for next epoch for the burn to register
         Audit::test_helper_make_passing(&sender);
         AutoPay::enable_autopay(&sender);
@@ -108,11 +108,13 @@ script {
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
+  use DiemFramework::Debug::print;
 
   fun main() {
-    // bob's community wallet increased after epoch change.
+    // bob's community wallet increased by 50% of subsidy after epoch change.
     let bal = DiemAccount::balance<GAS>(@Bob);
-    assert!(bal == 2100399, 7357004); // todo
+    print(&bal);
+    assert!(bal == 90359140, 7357004);    
   }
 }
 // check: EXECUTED

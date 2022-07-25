@@ -26,6 +26,7 @@ before and after every transaction.
 -  [Resource `SlowWallet`](#0x1_DiemAccount_SlowWallet)
 -  [Resource `SlowWalletList`](#0x1_DiemAccount_SlowWalletList)
 -  [Constants](#@Constants_0)
+-  [Function `scary_wtf_create_signer`](#0x1_DiemAccount_scary_wtf_create_signer)
 -  [Function `new_escrow`](#0x1_DiemAccount_new_escrow)
 -  [Function `process_escrow`](#0x1_DiemAccount_process_escrow)
 -  [Function `initialize_escrow`](#0x1_DiemAccount_initialize_escrow)
@@ -1143,6 +1144,31 @@ important to the semantics of the system.
 </code></pre>
 
 
+
+<a name="0x1_DiemAccount_scary_wtf_create_signer"></a>
+
+## Function `scary_wtf_create_signer`
+
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_scary_wtf_create_signer">scary_wtf_create_signer</a>(vm: &signer, addr: <b>address</b>): signer
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_scary_wtf_create_signer">scary_wtf_create_signer</a>(vm: &signer, addr: <b>address</b>): signer {
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+    <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(addr)
+}
+</code></pre>
+
+
+
+</details>
 
 <a name="0x1_DiemAccount_new_escrow"></a>
 

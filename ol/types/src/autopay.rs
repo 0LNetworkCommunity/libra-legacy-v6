@@ -20,6 +20,8 @@ use num_format::{Locale, ToFormattedString};
 pub struct AutoPayResource {
     ///
     pub payment: Vec<Payment>,
+    ///
+    pub prev_bal: u64,
 }
 
 /// Struct that represents a view for AutoPay resource
@@ -101,7 +103,7 @@ impl Payment {
 
 impl MoveStructType for AutoPayResource {
     const MODULE_NAME: &'static IdentStr = ident_str!("AutoPay");
-    const STRUCT_NAME: &'static IdentStr = ident_str!("Data");
+    const STRUCT_NAME: &'static IdentStr = ident_str!("UserAutoPay");
 }
 impl MoveResource for AutoPayResource {}
 
