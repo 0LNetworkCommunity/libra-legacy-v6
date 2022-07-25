@@ -35,8 +35,8 @@ jobs:
       - name: MINING
         run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-mining.mk test
 
-      - name: MINING ACROSS EPOCHS
-        run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-mining-epochs.mk test
+      # - name: MINING ACROSS EPOCHS
+      #   run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-mining-epochs.mk test
 
       - name: ONBOARD
         run: RUSTC_WRAPPER=sccache SOURCE_PATH=./ make -f ol/integration-tests/test-onboard.mk test
