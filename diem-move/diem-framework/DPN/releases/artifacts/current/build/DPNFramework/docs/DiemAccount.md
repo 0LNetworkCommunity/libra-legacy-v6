@@ -124,6 +124,7 @@ before and after every transaction.
 
 <pre><code><b>use</b> <a href="AccountFreezing.md#0x1_AccountFreezing">0x1::AccountFreezing</a>;
 <b>use</b> <a href="AccountLimits.md#0x1_AccountLimits">0x1::AccountLimits</a>;
+<b>use</b> <a href="Ancestry.md#0x1_Ancestry">0x1::Ancestry</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/BCS.md#0x1_BCS">0x1::BCS</a>;
 <b>use</b> <a href="CRSN.md#0x1_CRSN">0x1::CRSN</a>;
 <b>use</b> <a href="ChainId.md#0x1_ChainId">0x1::ChainId</a>;
@@ -156,6 +157,7 @@ before and after every transaction.
 <b>use</b> <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig">0x1::ValidatorOperatorConfig</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
+<b>use</b> <a href="Vouch.md#0x1_Vouch">0x1::Vouch</a>;
 <b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
 </code></pre>
 
@@ -1516,11 +1518,14 @@ Initialize this module. This is only callable from genesis.
     new_account: <b>address</b>,
     new_account_authkey_prefix: vector&lt;u8&gt;,
     value: u64,
-):<b>address</b> <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>, <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
+): <b>address</b> <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>, <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
     <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account);
     <a href="Roles.md#0x1_Roles_new_user_role_with_proof">Roles::new_user_role_with_proof</a>(&new_signer);
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(&new_signer, new_account_authkey_prefix);
     <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
+
+    <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account);
+    <a href="Ancestry.md#0x1_Ancestry_init">Ancestry::init</a>(sender, &new_signer);
 
     // <b>if</b> the initial coin sent is the minimum amount, don't check transfer limits.
     <b>if</b> (value &lt;= <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>) {
@@ -1651,6 +1656,8 @@ Initialize this module. This is only callable from genesis.
     <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, op_address, <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>);
 
     <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
+    <a href="Ancestry.md#0x1_Ancestry_init">Ancestry::init</a>(sender, &new_signer);
+    <a href="Vouch.md#0x1_Vouch_init">Vouch::init</a>(&new_signer);
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_signer);
 
     new_account_address
@@ -1772,6 +1779,9 @@ Initialize this module. This is only callable from genesis.
     // Transfer for operator <b>as</b> well
     <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, op_address, <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>);
     <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
+
+    <a href="Ancestry.md#0x1_Ancestry_init">Ancestry::init</a>(sender, &new_signer);
+    <a href="Vouch.md#0x1_Vouch_init">Vouch::init</a>(&new_signer);
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_signer);
     new_account_address
 }

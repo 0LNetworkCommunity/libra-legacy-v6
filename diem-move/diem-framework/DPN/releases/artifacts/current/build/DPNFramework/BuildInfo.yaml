@@ -29,6 +29,9 @@ compiled_package_info:
       name: AccountScripts
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: Ancestry
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Audit
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -284,6 +287,9 @@ compiled_package_info:
       name: VectorHelper
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: Vouch
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Wallet
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -295,7 +301,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 7AD3AD6721221F41FB165D43789543FA31556C6B98054B673241F2C1B6819F1A
+  source_digest: D7257A4D09520A622702A5CE7A23B936BF602AF04A79532C29D3DC4418C8F92A
   build_flags:
     dev_mode: false
     test_mode: false

@@ -14,6 +14,7 @@
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
+<b>use</b> <a href="Vouch.md#0x1_Vouch">0x1::Vouch</a>;
 </code></pre>
 
 
@@ -48,7 +49,7 @@
   // is a slow wallet
   <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(val)) <b>return</b> <b>false</b>;
 
-  // TODO: <b>has</b> network settings for validator
+  <b>if</b> (!<a href="Vouch.md#0x1_Vouch_unrelated_buddies_above_thresh">Vouch::unrelated_buddies_above_thresh</a>(val)) <b>return</b> <b>false</b>;
 
   <b>true</b>
 }

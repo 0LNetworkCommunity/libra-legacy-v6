@@ -45,7 +45,9 @@ module DiemFramework::DiemAccount {
     use DiemFramework::Receipts;
     use DiemFramework::DiemSystem;
     use DiemFramework::ValidatorUniverse;
-    use DiemFramework::Wallet;    
+    use DiemFramework::Wallet;
+    use DiemFramework::Ancestry;
+    use DiemFramework::Vouch;    
     
     friend DiemFramework::AccountAdministrationScripts;
     friend DiemFramework::MakeWhole; //////// 0L ////////
@@ -510,11 +512,14 @@ module DiemFramework::DiemAccount {
         new_account: address,
         new_account_authkey_prefix: vector<u8>,
         value: u64,
-    ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount, SlowWallet {
+    ): address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount, SlowWallet {
         let new_signer = create_signer(new_account);
         Roles::new_user_role_with_proof(&new_signer);
         make_account(&new_signer, new_account_authkey_prefix);
         add_currencies_for_account<GAS>(&new_signer, false);
+
+        let new_signer = create_signer(new_account);
+        Ancestry::init(sender, &new_signer);        
 
         // if the initial coin sent is the minimum amount, don't check transfer limits.
         if (value <= BOOTSTRAP_COIN_VALUE) {
@@ -636,6 +641,8 @@ module DiemFramework::DiemAccount {
         onboarding_gas_transfer<GAS>(sender, op_address, BOOTSTRAP_COIN_VALUE);
 
         let new_signer = create_signer(new_account_address);
+        Ancestry::init(sender, &new_signer);
+        Vouch::init(&new_signer);        
         set_slow(&new_signer);
 
         new_account_address
@@ -744,6 +751,9 @@ module DiemFramework::DiemAccount {
         // Transfer for operator as well
         onboarding_gas_transfer<GAS>(sender, op_address, BOOTSTRAP_COIN_VALUE);
         let new_signer = create_signer(new_account_address);
+    
+        Ancestry::init(sender, &new_signer);
+        Vouch::init(&new_signer);        
         set_slow(&new_signer);
         new_account_address
     }
