@@ -373,8 +373,8 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str, seed_addresses: Opti
     
     // This ID is how the Validator node identifies themselves on their private VFN network.
     // same ID as being used in the validator network.
-    vfn_net.identity = network_id.clone();
-    pub_net.identity = network_id;
+    // Note that the the public network has no setting, so that it is randomly generated. 
+    vfn_net.identity = network_id;
 
     if let Some(s) = seed_addresses {
       pub_net.seed_addrs = s;
