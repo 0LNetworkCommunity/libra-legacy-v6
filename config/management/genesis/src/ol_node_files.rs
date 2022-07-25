@@ -380,7 +380,7 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str, seed_addresses: Opti
       pub_net.seed_addrs = s;
     }
 
-    // pub_net.discovery_method = DiscoveryMethod::Onchain;
+    pub_net.discovery_method = DiscoveryMethod::Onchain;
     
     c.full_node_networks = vec![vfn_net.to_owned(), pub_net.to_owned()];
 
