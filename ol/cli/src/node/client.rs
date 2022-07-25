@@ -89,7 +89,7 @@ pub fn find_a_remote_jsonrpc(config: &AppCfg, waypoint: Waypoint) -> Result<Diem
         return make_client(Some(url_clean.to_owned()), waypoint);
     };
     Err(Error::msg(
-        "Cannot connect to any JSON RPC peers in the list of upstream_nodes in 0L.toml",
+        format!("Cannot connect to any JSON RPC peers in the list of upstream_nodes in 0L.toml {:?}", list)
     ))
 }
 

@@ -20,7 +20,7 @@ pub fn gc_failed_proof(cfg: &AppCfg, bad_proof_path: PathBuf) -> anyhow::Result<
 
 /// collect all the proofs after a given height, inclusive of the given height
 pub fn collect_subsequent_proofs(bad_proof_path: PathBuf, block_dir: PathBuf) -> anyhow::Result<Option<Vec<PathBuf>>> {
-    let bad_proof = proof::parse_block_file(&bad_proof_path)?;
+    let bad_proof = proof::parse_block_file(&bad_proof_path, true)?;
 
     let highest_local = proof::get_highest_block(&block_dir)?.0.height;
 

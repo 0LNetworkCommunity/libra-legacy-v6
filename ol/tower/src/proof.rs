@@ -89,7 +89,10 @@ pub fn mine_and_submit(
         let next = match local_mode {
             true => next_proof::get_next_proof_params_from_local(config)?,
             false => {
-                let client = client::find_a_remote_jsonrpc(&config, config.get_waypoint(swarm_path.clone())?)?;
+                let client = client::find_a_remote_jsonrpc(
+                    &config,
+                    config.get_waypoint(swarm_path.clone())?,
+                )?;
                 match next_proof::get_next_proof_from_chain(config, client, swarm_path.clone()) {
                     Ok(n) => n,
                     // failover to local mode, if no onchain data can be found.
@@ -152,7 +155,13 @@ pub fn get_highest_block(blocks_dir: &PathBuf) -> Result<(VDFProof, PathBuf), Er
         if let Ok(entry) = entry {
             // let file = fs::File::open(&entry).expect("Could not open block file");
             // let reader = BufReader::new(file);
-            let block: VDFProof = parse_block_file(&entry)?;
+            let block = match parse_block_file(&entry, false) {
+                Ok(v) => v,
+                Err(e) => {
+                  println!("could not parse the proof file: {}, skipping. Manually delete if this proof is not readable.", e.to_string());
+                  continue
+                },
+            };
 
             let blocknumber = block.height;
 
@@ -179,16 +188,19 @@ pub fn get_highest_block(blocks_dir: &PathBuf) -> Result<(VDFProof, PathBuf), Er
 }
 
 /// Parse a proof_x.json file and return a VDFProof
-pub fn parse_block_file(path: &PathBuf) -> Result<VDFProof, Error> {
+pub fn parse_block_file(path: &PathBuf, purge_if_bad: bool) -> Result<VDFProof, Error> {
     let block_file = fs::read_to_string(path)?;
 
     match serde_json::from_str(&block_file) {
         Ok(v) => Ok(v),
-        Err(e) => bail!(
-            "Could not read latest block file in path {:?}, message: {:?}",
-            &path,
-            e
-        ),
+        Err(e) => {
+            if purge_if_bad { fs::remove_file(&block_file)? }
+            bail!(
+                "Could not read latest block file in path {:?}, message: {:?}",
+                &path,
+                e
+            )
+        }
     }
 }
 
@@ -200,7 +212,7 @@ pub fn find_proof_number(num: u64, blocks_dir: &PathBuf) -> Result<(VDFProof, Pa
         FILENAME,
         num.to_string()
     ));
-    match parse_block_file(&file) {
+    match parse_block_file(&file, false) {
         Ok(p) => {
             if p.height == num {
                 return Ok((p, file));
@@ -218,10 +230,10 @@ pub fn find_proof_number(num: u64, blocks_dir: &PathBuf) -> Result<(VDFProof, Pa
 }
 
 /// find the most recent proof on disk
-pub fn get_latest_proof(config: &AppCfg) -> Result<VDFProof, Error> {
+pub fn get_latest_proof(config: &AppCfg, purge_if_bad: bool) -> Result<VDFProof, Error> {
     let (_current_block_number, current_block_path) = get_highest_block(&config.get_block_dir())?;
 
-    parse_block_file(&current_block_path)
+    parse_block_file(&current_block_path, purge_if_bad)
 }
 
 /* ////////////// */
