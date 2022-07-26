@@ -2,26 +2,21 @@
 pub mod genesis_files_cmd;
 pub mod version_cmd;
 // pub mod wizard_fn_cmd;
+pub mod fix_cmd;
+pub mod keygen_cmd;
+pub mod wizard_fork_cmd;
 pub mod wizard_user_cmd;
 pub mod wizard_val_cmd;
-pub mod wizard_fork_cmd;
-pub mod keygen_cmd;
-pub mod fix_cmd;
-
 
 use self::{
-    version_cmd::VersionCmd, wizard_user_cmd::UserWizardCmd,
+    fix_cmd::FixCmd, genesis_files_cmd::GenesisFilesCmd, keygen_cmd::KeygenCmd,
+    version_cmd::VersionCmd, wizard_fork_cmd::ForkCmd, wizard_user_cmd::UserWizardCmd,
     wizard_val_cmd::ValWizardCmd,
-    keygen_cmd::KeygenCmd,
-    fix_cmd::FixCmd,
-    wizard_fork_cmd::ForkCmd,
-    genesis_files_cmd::GenesisFilesCmd,
-
 };
-use abscissa_core::{Command, Configurable, Help, Options, Runnable};
-use std::path::PathBuf;
-use ol_types::config::AppCfg;
 use crate::entrypoint;
+use abscissa_core::{Command, Configurable, Help, Options, Runnable};
+use ol_types::config::AppCfg;
+use std::path::PathBuf;
 
 /// MinerApp Configuration Filename
 pub const CONFIG_FILE: &str = "0L.toml";
@@ -48,7 +43,6 @@ pub enum WizCmd {
     // /// The `fullnode` subcommand
     // #[options(help = "create all files for fullnode config")]
     // Fullnode(FnWizardCmd),
-
     /// The `keygen` subcommand
     #[options(help = "create new account and mnemonic")]
     Keygen(KeygenCmd),
@@ -64,7 +58,6 @@ pub enum WizCmd {
     /// The `genesis files` subcommand
     #[options(help = "fetch genesis.blob from a github repo")]
     GenesisFiles(GenesisFilesCmd),
-    
 }
 
 /// This trait allows you to define how application configuration is loaded.
