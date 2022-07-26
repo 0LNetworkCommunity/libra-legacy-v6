@@ -80,6 +80,16 @@ address 0x1 {
       }
     }
 
+    public fun self_unjail(sender: &signer) acquires Jail {
+      // only a validator can un-jail themselves.
+      let self = Signer::address_of(sender);
+
+      // check the node has been mining before unjailing.
+      assert(TowerState::node_above_thresh(self), 100104);
+      unjail(self);
+    }
+
+
     public fun vouch_unjail(sender: &signer, addr: address) acquires Jail {
       // only a validator can un-jail themselves.
       let voucher = Signer::address_of(sender);
@@ -94,7 +104,7 @@ address 0x1 {
       unjail(addr);
     }
 
-    // private function. User should not be able to unjail self.
+
     fun unjail(addr: address) acquires Jail {
       if (exists<Jail>(addr)) {
         borrow_global_mut<Jail>(addr).is_jailed = false;

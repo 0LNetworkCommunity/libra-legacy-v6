@@ -9,14 +9,14 @@ use diem_types::{
 };
 use ol_types::{autopay::AutoPayView, validator_config::ValidatorConfigView};
 
-use super::{node::Node, dictionary::AccountDictionary, autopay_view::PayeeStats};
+use super::{autopay_view::PayeeStats, dictionary::AccountDictionary, node::Node, query};
 use serde::{Deserialize, Serialize};
 use std::{
-    convert::TryFrom, 
     collections::HashMap,
+    convert::TryFrom,
     net::{IpAddr, SocketAddr, TcpStream},
+    str::FromStr,
     time::Duration,
-    str::FromStr
 };
 
 /// name of chain info key for db
@@ -92,6 +92,8 @@ pub struct ValidatorView {
     pub validator_config: Option<ValidatorConfigView>,
     /// autopay instructions
     pub autopay: Option<AutoPayView>,
+    /// burn preferences
+    pub burn_to_community: bool,
     /// note
     pub note: String,
 }
@@ -125,7 +127,7 @@ impl Node {
         };
         let mut cs = ChainView::default();
 
-        // TODO: Uncomment this if the tools are not fetch up to date info  
+        // TODO: Uncomment this if the tools are not fetch up to date info
         // self.client.update_and_verify_state_proof()?;
 
         cs.waypoint = self.client.waypoint().ok();
@@ -192,7 +194,7 @@ impl Node {
             cs.validator_view = Some(validators.clone());
             cs.validators_stats = Some(validators_stats);
             cs.vals_config_stats = calc_config_stats(validators.clone()).ok();
-            cs.autopay_watch_list =  self.get_autopay_watch_list(validators.clone());
+            cs.autopay_watch_list = self.get_autopay_watch_list(validators.clone());
             cs.upgrade = self.client.get_oracle_upgrade_state()?;
 
             self.vitals.chain_view = Some(cs.clone());
@@ -204,10 +206,10 @@ impl Node {
     }
 
     fn format_validator_info(
-        &self,
+        &mut self,
         v: &ValidatorInfo,
         dict: &AccountDictionary,
-        stats: &ValidatorsStatsResource
+        stats: &ValidatorsStatsResource,
     ) -> Result<ValidatorView, Error> {
         let vfn_full_ip = match v.config().fullnode_network_addresses() {
             Ok(ips) => {
@@ -223,27 +225,29 @@ impl Node {
         let vfn_ip = extract_ip(&vfn_full_ip);
 
         let validator_full_ip = match v.config().validator_network_addresses() {
-            Ok(ips) => {
-                ips.first()
-                    .unwrap()
-                    .clone()
-                    .decrypt(
-                        &diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
-                        &v.account_address().clone(), 
-                        0
-                    )?
-                    .to_string()
-            },
+            Ok(ips) => ips
+                .first()
+                .unwrap()
+                .clone()
+                .decrypt(
+                    &diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
+                    &v.account_address().clone(),
+                    0,
+                )?
+                .to_string(),
             Err(_) => "--".to_string(),
         };
 
         let validator_ip = extract_ip(&validator_full_ip);
 
-        let ms  = self.client.get_miner_state(&v.account_address().clone())?.unwrap();
+        let ms = self
+            .client
+            .get_miner_state(&v.account_address().clone())?
+            .unwrap();
 
         let one_val_stat = stats.get_validator_current_stats(v.account_address().clone())?;
 
-        let val_config_opt = match self.get_validator_config(v.account_address().clone()){
+        let val_config_opt = match self.get_validator_config(v.account_address().clone()) {
             Ok(v) => Some(v),
             Err(_) => None,
         };
@@ -251,6 +255,22 @@ impl Node {
         let autopay_opt = match self.get_autopay_view(v.account_address().clone()) {
             Ok(a) => Some(a),
             Err(_) => None,
+        };
+
+        let burn_to_community = match self.get_annotate_account_blob(v.account_address().clone()) {
+            Ok((Some(r), _)) => {
+                match query::find_value_from_state(
+                    &r,
+                    "Burn".to_string(),
+                    "BurnPreference".to_string(),
+                    "send_community".to_string(),
+                ) {
+                  Some(resource_viewer::AnnotatedMoveValue::Bool(b)) => *b,
+                  _ => false
+                }
+                    
+            }
+            _ => false,
         };
 
         let ports = get_ports_status(&validator_ip);
@@ -271,15 +291,15 @@ impl Node {
             epochs_validating_and_mining: ms.epochs_validating_and_mining,
             contiguous_epochs_validating_and_mining: ms.contiguous_epochs_validating_and_mining,
             epochs_since_last_account_creation: ms.epochs_since_last_account_creation,
-            
+
             vote_count_in_epoch: one_val_stat.vote_count,
             prop_count_in_epoch: one_val_stat.prop_count,
             validator_config: val_config_opt,
             autopay: autopay_opt,
+            burn_to_community,
             note: dict.get_note_for_address(*v.account_address()),
         })
     }
-
 }
 
 fn calc_config_stats(vals: Vec<ValidatorView>) -> Result<ValsConfigStats, Error> {
@@ -316,7 +336,7 @@ fn calc_config_stats(vals: Vec<ValidatorView>) -> Result<ValsConfigStats, Error>
 
 fn get_ports_status(ip: &String) -> HashMap<String, bool> {
     let mut result: HashMap<String, bool> = HashMap::new();
-    let ports = get_ports_to_test();     
+    let ports = get_ports_to_test();
     for port in ports.iter() {
         result.insert(port.to_string(), scan_port(&ip, port));
     }
@@ -330,10 +350,10 @@ fn scan_port(ip: &String, port: &u16) -> bool {
             let socket_address = SocketAddr::new(address, port.clone());
             match TcpStream::connect_timeout(&socket_address, timeout) {
                 Ok(_) => true,
-                _ => false
+                _ => false,
             }
-        },
-        Err(_) => false
+        }
+        Err(_) => false,
     }
 }
 
@@ -346,6 +366,6 @@ fn extract_ip(full_ip: &String) -> String {
     let split_str: Vec<&str> = full_ip.split('/').collect();
     match split_str.get(2) {
         Some(ip) => ip.to_string(),
-        None => full_ip.to_string()
+        None => full_ip.to_string(),
     }
 }

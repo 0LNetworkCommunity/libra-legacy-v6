@@ -26,7 +26,7 @@ impl Runnable for StartCmd {
         let client = match client::pick_client(args.swarm_path, &mut cfg) {
             Ok(c) => c,
             Err(e) => {
-              println!("ERROR: Could not create a client to connect to network, exiting. Message: {:?}", e );
+              println!("ERROR: Could not create a client to connect to network. Will not be able to send txs. Exiting. Message: {:?}", e );
               exit(1);
             },
         };

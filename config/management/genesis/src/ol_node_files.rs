@@ -368,17 +368,19 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str, seed_addresses: Opti
     vfn_net.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;
 
     let mut pub_net = NetworkConfig::network_with_id(NetworkId::Public);
-    pub_net.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_PUB_PORT).parse()?;
+    
+    pub_net.listen_address = format!("/ip4/127.0.0.1/tcp/{}", DEFAULT_PUB_PORT).parse()?; // Don't fullnode sync requests
     
     // This ID is how the Validator node identifies themselves on their private VFN network.
     // same ID as being used in the validator network.
-    vfn_net.identity = network_id.clone();
-    pub_net.identity = network_id;
+    // Note that the the public network has no setting, so that it is randomly generated. 
+    vfn_net.identity = network_id;
 
     if let Some(s) = seed_addresses {
-      vfn_net.seed_addrs = s.clone();
       pub_net.seed_addrs = s;
     }
+
+    pub_net.discovery_method = DiscoveryMethod::Onchain;
     
     c.full_node_networks = vec![vfn_net.to_owned(), pub_net.to_owned()];
 

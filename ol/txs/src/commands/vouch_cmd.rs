@@ -22,13 +22,6 @@ pub struct VouchCmd {
 
     #[options(short = "r", help = "set this address as part of your trusted set.")]
     revoke: bool,
-
-    #[options(
-        short = "j",
-        help = "mark a vouchee validator as unjailed. Validators can't unjail self."
-    )]
-    unjail: bool,
-
     #[options(
         short = "e",
         help = "enable the vouch struct on your account in case it hasn't on account creation."

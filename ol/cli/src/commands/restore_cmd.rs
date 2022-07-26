@@ -21,14 +21,14 @@ pub struct RestoreCmd {
     #[options(short="v", help = "specify a version or height if there is more than one per archive")]
     version: Option<u64>,
 
-    #[options(short="h", help = "fetch the highest version available, of the latest epoch.")]
-    highest_version: bool,
+    #[options(short="l", help = "fetch the highest version available, of the latest epoch.")]
+    latest_version: bool,
 }
 
 impl Runnable for RestoreCmd {
     /// Start the application.
     fn run(&self) {
-        match mgmt::restore::fast_forward_db(self.verbose, self.epoch, self.version, self.highest_version) {
+        match mgmt::restore::fast_forward_db(self.verbose, self.epoch, self.version, self.latest_version) {
             Ok(_) => {println!("SUCCESS")},
             Err(e) => println!("ERROR: could not complete db restore, message: {:?}", e),
         };
