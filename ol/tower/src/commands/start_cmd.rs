@@ -3,11 +3,11 @@
 use crate::{backlog, entrypoint, proof::*};
 use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
+use diem_logger::{Level, Logger};
 use ol_types::config::AppCfg;
 use ol_types::config::TxType;
-use txs::tx_params::TxParams;
 use std::process::exit;
-use diem_logger::{Level, Logger};
+use txs::tx_params::TxParams;
 
 /// `start` subcommand
 #[derive(Command, Default, Debug, Options)]
@@ -23,7 +23,7 @@ pub struct StartCmd {
     #[options(short = "s", help = "Skip backlog")]
     skip_backlog: bool,
 
-        /// Option for --backlog, only sends backlogged transactions.
+    /// Option for --backlog, only sends backlogged transactions.
     #[options(
         short = "l",
         help = "local mode, continues mining from last proof, without checking chain for params. Warning: may lead to discontinous proofs."
@@ -82,9 +82,9 @@ impl Runnable for StartCmd {
         ) {
             Ok(t) => t,
             Err(e) => {
-              println!("ERROR: could not get tx params, exiting. message: {:?}", e);
-              exit(0);
-            },
+                println!("ERROR: could not get tx params, exiting. message: {:?}", e);
+                exit(0);
+            }
         };
 
         // Check for, and submit backlog proofs.
