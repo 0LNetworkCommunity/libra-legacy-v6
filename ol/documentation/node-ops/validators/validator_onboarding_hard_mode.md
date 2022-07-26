@@ -17,6 +17,7 @@
     - [Return to validator machine](#return-to-validator-machine)
     - [Return to VFN](#return-to-vfn)
   - [7. Restart validator node in `validator` mode](#7-restart-validator-node-in-validator-mode)
+  - [Log Rotation](#log-rotation)
   - [[Optional] Establish metric exporter for centralized monitoring](#optional-establish-metric-exporter-for-centralized-monitoring)
   - [Onboarder Troubleshooting](#onboarder-troubleshooting)
   - [Onboarder instructions](#onboarder-instructions)
@@ -240,11 +241,13 @@ ulimit -n
 
 inside the [tmux](#tmux-basics) session start the node in fullnode mode.
 
+Consider using [log rotation](#log-rotation) to start the `diem-node`.
+
 ```bash
 # create log directory 
 mkdir ~/.0L/logs
 
-# start node 
+# start node
 diem-node --config ~/.0L/fullnode.node.yaml  >> ~/.0L/logs/node.log 2>&1
 ```
 
@@ -277,7 +280,9 @@ Before you start: You will need your mnemonic.
 tmux new -s tower
 ```
 
-5.2. From inside the [tmux](#tmux-basics) session, start the tower app:  
+5.2. From inside the [tmux](#tmux-basics) session, start the tower app:
+
+(Consider using [log rotation](#log-rotation) to start the `tower` app.)
 
 ```bash
 tower -o start >> ~/.0L/logs/tower.log 2>&1
@@ -394,6 +399,8 @@ ulimit -n
 
 inside the [tmux](#tmux-basics) session start the VFN in VFN mode.
 
+Consider using [log rotation](#log-rotation) to start the `diem-node`.
+
 ```bash
 # create log directory 
 mkdir ~/.0L/logs
@@ -459,7 +466,7 @@ optionally increase file descriptors limit, temporary fix for v4.2.8
 ulimit -n 100000
 ```
 
-then restart node with
+then restart node with (consider using [log rotation](#log-rotation) to start the `diem-node`)
 
 ```bash
 diem-node --config  ~/.0L/validator.node.yaml >> ~/.0L/logs/validator.log 2>&1
@@ -472,6 +479,31 @@ Once you have been on boarded you should see you public key in the list of valid
 ```bash
 ol serve -c
 ```
+
+## Log Rotation
+
+The size of the log files from the `diem-node` and the `tower` app can increase very fast. Please consider using log rotation. You can establish
+this for example with [logrotate](https://linux.die.net/man/8/logrotate) or [multilog](https://manpages.debian.org/stretch/daemontools/multilog.8.en.html).
+
+Here is an example how you can establish log rotation with [multilog](https://manpages.debian.org/stretch/daemontools/multilog.8.en.html)
+for the `diem-node` and the `tower` app. Note: This only works on debian based systems, but ubuntu is recommended for this setup anyways.
+
+1. Install daemontools (multilog is a part of daemontools): `apt-get install daemontools`
+2. Example on how to start the diem-node in fullnode mode with log rotation:
+
+    ```bash
+    diem-node --config ~/.0L/fullnode.node.yaml 2>&1 | multilog s104857600 n10 ~/.0L/logs/node
+    ```
+
+    This means the logs will be written to a folder `~/.0L/logs/node`. Everytime the current log file reaches the max size of 100MB (`s104857600` => 104857600 Bytes)
+    it will be rotated. After 10 rotations `n10` it will be deleted. This means only the latest 1GB of log entries are constantly available on the server.
+    Of course you can vary this settings to fit your specific needs.
+
+3. Example on how to start the `tower` app with log rotation:
+  
+    ```bash
+    tower -o start 2>&1 | multilog s104857600 n10 ~/.0L/logs/tower
+    ```
 
 ## [Optional] Establish metric exporter for centralized monitoring
 
