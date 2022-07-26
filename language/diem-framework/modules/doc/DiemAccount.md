@@ -26,7 +26,7 @@ before and after every transaction.
 -  [Resource `SlowWallet`](#0x1_DiemAccount_SlowWallet)
 -  [Resource `SlowWalletList`](#0x1_DiemAccount_SlowWalletList)
 -  [Constants](#@Constants_0)
--  [Function `scary_wtf_create_signer`](#0x1_DiemAccount_scary_wtf_create_signer)
+-  [Function `scary_create_signer_for_migrations`](#0x1_DiemAccount_scary_create_signer_for_migrations)
 -  [Function `new_escrow`](#0x1_DiemAccount_new_escrow)
 -  [Function `process_escrow`](#0x1_DiemAccount_process_escrow)
 -  [Function `initialize_escrow`](#0x1_DiemAccount_initialize_escrow)
@@ -101,7 +101,8 @@ before and after every transaction.
 -  [Function `vm_init_slow`](#0x1_DiemAccount_vm_init_slow)
 -  [Function `set_slow`](#0x1_DiemAccount_set_slow)
 -  [Function `slow_wallet_epoch_drip`](#0x1_DiemAccount_slow_wallet_epoch_drip)
--  [Function `update_unlocked_tracker`](#0x1_DiemAccount_update_unlocked_tracker)
+-  [Function `decrease_unlocked_tracker`](#0x1_DiemAccount_decrease_unlocked_tracker)
+-  [Function `increase_unlocked_tracker`](#0x1_DiemAccount_increase_unlocked_tracker)
 -  [Function `is_slow`](#0x1_DiemAccount_is_slow)
 -  [Function `unlocked_amount`](#0x1_DiemAccount_unlocked_amount)
 -  [Function `get_slow_list`](#0x1_DiemAccount_get_slow_list)
@@ -141,6 +142,7 @@ before and after every transaction.
 <b>use</b> <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
+<b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="Receipts.md#0x1_Receipts">0x1::Receipts</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
@@ -1137,13 +1139,13 @@ important to the semantics of the system.
 
 
 
-<a name="0x1_DiemAccount_scary_wtf_create_signer"></a>
+<a name="0x1_DiemAccount_scary_create_signer_for_migrations"></a>
 
-## Function `scary_wtf_create_signer`
+## Function `scary_create_signer_for_migrations`
 
 
 
-<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_scary_wtf_create_signer">scary_wtf_create_signer</a>(vm: &signer, addr: address): signer
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_scary_create_signer_for_migrations">scary_create_signer_for_migrations</a>(vm: &signer, addr: address): signer
 </code></pre>
 
 
@@ -1152,7 +1154,7 @@ important to the semantics of the system.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_scary_wtf_create_signer">scary_wtf_create_signer</a>(vm: &signer, addr: address): signer {
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_scary_create_signer_for_migrations">scary_create_signer_for_migrations</a>(vm: &signer, addr: address): signer {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
     <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(addr)
 }
@@ -1623,6 +1625,7 @@ Initialize this module. This is only callable from genesis.
     // User can join validator universe list, but will only join <b>if</b>
     // the mining is above the threshold in the preceeding period.
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(&new_signer);
+    <a href="Jail.md#0x1_Jail_init">Jail::init</a>(&new_signer);
 
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_signer, auth_key_prefix);
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_op_account, op_auth_key_prefix);
@@ -1752,6 +1755,7 @@ Initialize this module. This is only callable from genesis.
     // User can join validator universe list, but will only join <b>if</b>
     // the mining is above the threshold in the preceeding period.
     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(&new_signer);
+    <a href="Jail.md#0x1_Jail_init">Jail::init</a>(&new_signer);
 
     // no need <b>to</b> make the owner address.
 
@@ -1768,6 +1772,8 @@ Initialize this module. This is only callable from genesis.
 
     <a href="Ancestry.md#0x1_Ancestry_init">Ancestry::init</a>(sender, &new_signer);
     <a href="Vouch.md#0x1_Vouch_init">Vouch::init</a>(&new_signer);
+    <a href="Vouch.md#0x1_Vouch_vouch_for">Vouch::vouch_for</a>(sender, new_account_address);
+
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_signer);
     new_account_address
 }
@@ -2709,17 +2715,6 @@ the sender's account balance.
         <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)
     );
     /////// 0L /////////
-    // Slow wallet transfers disabled by default, enabled when epoch is 1000
-    // At that point slow wallets receive 1,000 coins unlocked per day.
-    // <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(sender_addr) && !DiemConfig::check_transfer_enabled() ) {
-    //   // <b>if</b> transfers are not enabled for slow wallets
-    //   // then the tx should fail
-    //     <b>assert</b>(
-    //         <b>false</b>,
-    //         <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE">ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE</a>)
-    //     );
-    // };
-    // Abort <b>if</b> we already extracted the unique withdraw capability for this account.
     <b>assert</b>(
         !<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(sender_addr),
         <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED">EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED</a>)
@@ -3052,8 +3047,13 @@ subject to the dual attestation protocol
     );
     // in case of slow wallet <b>update</b> the tracker
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&cap.account_address)) {
-      <a href="DiemAccount.md#0x1_DiemAccount_update_unlocked_tracker">update_unlocked_tracker</a>(*&cap.account_address, amount);
+      <a href="DiemAccount.md#0x1_DiemAccount_decrease_unlocked_tracker">decrease_unlocked_tracker</a>(*&cap.account_address, amount);
+    };
 
+    // <b>if</b> a payee is a slow wallet and is receiving funds from ordinary or another slow wallet's unlocked funds, it counts toward unlocked coins.
+    // the exceptional case is community wallets, which funds don't count toward unlocks.
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee) && !<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(*&cap.account_address)) {
+      <a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(*&payee, amount);
     };
 
 
@@ -5679,6 +5679,7 @@ Epilogue for WriteSet trasnaction
 
 ## Function `create_validator_account`
 
+NOTE: in 0L this is only used for test harness
 Create a Validator account
 
 
@@ -5702,11 +5703,21 @@ Create a Validator account
     <a href="Roles.md#0x1_Roles_new_validator_role">Roles::new_validator_role</a>(dr_account, &new_account);
     <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_publish_generator">Event::publish_generator</a>(&new_account);
     <a href="ValidatorConfig.md#0x1_ValidatorConfig_publish">ValidatorConfig::publish</a>(&new_account, dr_account, human_name);
-    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_account, <b>false</b>); /////// 0L /////////
+    //////// 0L ////////
+    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_account, <b>false</b>);
+
+    //////// end 0L ////////
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(new_account, auth_key_prefix);
 
     <b>let</b> new_account = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
+
+    //////// 0L ////////
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_account);
+    <a href="Jail.md#0x1_Jail_init">Jail::init</a>(&new_account);
+    // <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(&new_account);
+    // <a href="Vouch.md#0x1_Vouch_init">Vouch::init</a>(&new_account);
+    //////// end 0L ////////
+
 }
 </code></pre>
 
@@ -6206,13 +6217,13 @@ inflation by x% per day from the start of network.
 
 </details>
 
-<a name="0x1_DiemAccount_update_unlocked_tracker"></a>
+<a name="0x1_DiemAccount_decrease_unlocked_tracker"></a>
 
-## Function `update_unlocked_tracker`
+## Function `decrease_unlocked_tracker`
 
 
 
-<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_update_unlocked_tracker">update_unlocked_tracker</a>(payer: address, amount: u64)
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_decrease_unlocked_tracker">decrease_unlocked_tracker</a>(payer: address, amount: u64)
 </code></pre>
 
 
@@ -6221,10 +6232,35 @@ inflation by x% per day from the start of network.
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_update_unlocked_tracker">update_unlocked_tracker</a>(payer: address, amount: u64) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_decrease_unlocked_tracker">decrease_unlocked_tracker</a>(payer: address, amount: u64) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
   <b>let</b> s = borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a>&gt;(payer);
   s.transferred = s.transferred + amount;
   s.unlocked = s.unlocked - amount;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_increase_unlocked_tracker"></a>
+
+## Function `increase_unlocked_tracker`
+
+
+
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(recipient: address, amount: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(recipient: address, amount: u64) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
+  <b>let</b> s = borrow_global_mut&lt;<a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a>&gt;(recipient);
+  s.unlocked = s.unlocked + amount;
 }
 </code></pre>
 

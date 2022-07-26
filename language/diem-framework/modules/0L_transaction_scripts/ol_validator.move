@@ -7,9 +7,12 @@ module ValidatorScripts {
     use 0x1::Signer;
     use 0x1::ValidatorUniverse;
     use 0x1::Vector;
+    use 0x1::Jail;
 
     const NOT_ABOVE_THRESH_JOIN: u64 = 220101;
     const NOT_ABOVE_THRESH_ADD : u64 = 220102;
+    const VAL_NOT_FOUND : u64 = 220103;
+    const VAL_NOT_JAILED : u64 = 220104;
 
     // FOR E2E testing
     public(script) fun ol_reconfig_bulk_update_setup(
@@ -37,7 +40,7 @@ module ValidatorScripts {
         assert(DiemSystem::is_validator(alice) == true, 4);
     }
 
-    public(script) fun join(validator: signer) {
+    public(script) fun self_unjail(validator: signer) {
         let addr = Signer::address_of(&validator);
         // if is above threshold continue, or raise error.
         assert(
@@ -54,17 +57,36 @@ module ValidatorScripts {
         };
 
         // if is jailed, try to unjail
-        if (ValidatorUniverse::is_jailed(addr)) {
-            ValidatorUniverse::unjail_self(&validator);
+        if (Jail::is_jailed(addr)) {
+            Jail::self_unjail(&validator);
         };
     }
 
-    // public(script) fun leave(validator: signer) {
-    //     let addr = Signer::address_of(&validator);
-    //     if (ValidatorUniverse::is_in_universe(addr)) {
-    //         ValidatorUniverse::remove_self(&validator);
-    //     };
-    // }
+    public(script) fun voucher_unjail(voucher: signer, addr: address) {
+        // if is above threshold continue, or raise error.
+        assert(
+            TowerState::node_above_thresh(addr), 
+            Errors::invalid_state(NOT_ABOVE_THRESH_JOIN)
+        );
+        // if is not in universe, add back
+        assert(
+            TowerState::node_above_thresh(addr), 
+            Errors::invalid_state(VAL_NOT_FOUND)
+        );
+
+        assert(
+            TowerState::node_above_thresh(addr), 
+            Errors::invalid_state(VAL_NOT_FOUND)
+        );
+
+        assert(
+            Jail::is_jailed(addr), 
+            Errors::invalid_state(VAL_NOT_JAILED)
+        );
+        // if is jailed, try to unjail
+        Jail::vouch_unjail(&voucher, addr);
+    }
+
 
     public(script) fun val_add_self(validator: signer) {
         let validator = &validator;

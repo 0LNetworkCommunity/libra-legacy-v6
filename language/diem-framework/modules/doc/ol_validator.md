@@ -7,12 +7,14 @@
 
 -  [Constants](#@Constants_0)
 -  [Function `ol_reconfig_bulk_update_setup`](#0x1_ValidatorScripts_ol_reconfig_bulk_update_setup)
--  [Function `join`](#0x1_ValidatorScripts_join)
+-  [Function `self_unjail`](#0x1_ValidatorScripts_self_unjail)
+-  [Function `voucher_unjail`](#0x1_ValidatorScripts_voucher_unjail)
 -  [Function `val_add_self`](#0x1_ValidatorScripts_val_add_self)
 
 
 <pre><code><b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
+<b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
@@ -40,6 +42,24 @@
 
 
 <pre><code><b>const</b> <a href="ol_validator.md#0x1_ValidatorScripts_NOT_ABOVE_THRESH_JOIN">NOT_ABOVE_THRESH_JOIN</a>: u64 = 220101;
+</code></pre>
+
+
+
+<a name="0x1_ValidatorScripts_VAL_NOT_FOUND"></a>
+
+
+
+<pre><code><b>const</b> <a href="ol_validator.md#0x1_ValidatorScripts_VAL_NOT_FOUND">VAL_NOT_FOUND</a>: u64 = 220103;
+</code></pre>
+
+
+
+<a name="0x1_ValidatorScripts_VAL_NOT_JAILED"></a>
+
+
+
+<pre><code><b>const</b> <a href="ol_validator.md#0x1_ValidatorScripts_VAL_NOT_JAILED">VAL_NOT_JAILED</a>: u64 = 220104;
 </code></pre>
 
 
@@ -89,13 +109,13 @@
 
 </details>
 
-<a name="0x1_ValidatorScripts_join"></a>
+<a name="0x1_ValidatorScripts_self_unjail"></a>
 
-## Function `join`
+## Function `self_unjail`
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_join">join</a>(validator: signer)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_self_unjail">self_unjail</a>(validator: signer)
 </code></pre>
 
 
@@ -104,7 +124,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_join">join</a>(validator: signer) {
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_self_unjail">self_unjail</a>(validator: signer) {
     <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&validator);
     // <b>if</b> is above threshold <b>continue</b>, or raise error.
     <b>assert</b>(
@@ -121,9 +141,54 @@
     };
 
     // <b>if</b> is jailed, try <b>to</b> unjail
-    <b>if</b> (<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_jailed">ValidatorUniverse::is_jailed</a>(addr)) {
-        <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_unjail_self">ValidatorUniverse::unjail_self</a>(&validator);
+    <b>if</b> (<a href="Jail.md#0x1_Jail_is_jailed">Jail::is_jailed</a>(addr)) {
+        <a href="Jail.md#0x1_Jail_self_unjail">Jail::self_unjail</a>(&validator);
     };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ValidatorScripts_voucher_unjail"></a>
+
+## Function `voucher_unjail`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_voucher_unjail">voucher_unjail</a>(voucher: signer, addr: address)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_voucher_unjail">voucher_unjail</a>(voucher: signer, addr: address) {
+    // <b>if</b> is above threshold <b>continue</b>, or raise error.
+    <b>assert</b>(
+        <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr),
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="ol_validator.md#0x1_ValidatorScripts_NOT_ABOVE_THRESH_JOIN">NOT_ABOVE_THRESH_JOIN</a>)
+    );
+    // <b>if</b> is not in universe, add back
+    <b>assert</b>(
+        <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr),
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="ol_validator.md#0x1_ValidatorScripts_VAL_NOT_FOUND">VAL_NOT_FOUND</a>)
+    );
+
+    <b>assert</b>(
+        <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr),
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="ol_validator.md#0x1_ValidatorScripts_VAL_NOT_FOUND">VAL_NOT_FOUND</a>)
+    );
+
+    <b>assert</b>(
+        <a href="Jail.md#0x1_Jail_is_jailed">Jail::is_jailed</a>(addr),
+        <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="ol_validator.md#0x1_ValidatorScripts_VAL_NOT_JAILED">VAL_NOT_JAILED</a>)
+    );
+    // <b>if</b> is jailed, try <b>to</b> unjail
+    <a href="Jail.md#0x1_Jail_vouch_unjail">Jail::vouch_unjail</a>(&voucher, addr);
 }
 </code></pre>
 
