@@ -22,8 +22,7 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 NUM_NODES = 2
 
 START_TEXT = "To run the Diem CLI client"
-SUCCESS_TEXT = "Proof committed to chain"
-
+SUCCESS_TEXT = "Remote tower height: 10"
 
 test: swarm check-swarm start-mine check stop
 
