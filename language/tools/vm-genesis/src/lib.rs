@@ -48,7 +48,7 @@ use transaction_builder::encode_create_designated_dealer_script_function;
 
 //////// 0L ////////
 use ol_types::{config::IS_PROD, genesis_proof::GenesisMiningProof};
-use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
+use diem_global_constants::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -110,6 +110,8 @@ pub fn encode_genesis_change_set(
     vm_publishing_option: VMPublishingOption,
     chain_id: ChainId,
 ) -> ChangeSet {
+    dbg!(&chain_id);
+
     let mut stdlib_module_tuples: Vec<(ModuleId, &Vec<u8>)> = Vec::new();
     // create a data view for move_vm
     let mut state_view = GenesisStateView::new();
@@ -132,6 +134,11 @@ pub fn encode_genesis_change_set(
         type_params: vec![],
     });
 
+    if !*IS_PROD {
+        initialize_testnet(&mut session, &log_context);
+    }
+    //////// 0L end ////////
+
     create_and_initialize_main_accounts(
         &mut session,
         &log_context,
@@ -141,26 +148,15 @@ pub fn encode_genesis_change_set(
         &xdx_ty,
         chain_id,
     );
-    //////// 0L ////////
-    // println!("OK create_and_initialize_main_accounts =============== ");
 
-    if !*IS_PROD {
-        initialize_testnet(&mut session, &log_context);
-    }
-    //////// 0L end ////////
-
-    // generate the genesis WriteSet
     create_and_initialize_owners_operators(
         &mut session,
         &log_context,
         &operator_assignments,
         &operator_registrations,
     );
-    //////// 0L ////////
-    // println!("OK create_and_initialize_owners_operators =============== ");
 
     distribute_genesis_subsidy(&mut session, &log_context);
-    // println!("OK Genesis subsidy =============== ");
 
     fund_operators(&mut session, &log_context, &operator_assignments);
     //////// 0L end ////////
@@ -550,8 +546,8 @@ fn create_and_initialize_owners_operators(
                 MoveValue::Signer(owner_address),
                 MoveValue::vector_u8(preimage),
                 MoveValue::vector_u8(proof),
-                MoveValue::U64(delay_difficulty()), // TODO: make this part of genesis registration
-                MoveValue::U64(VDF_SECURITY_PARAM.into()),
+                MoveValue::U64(genesis_delay_difficulty()), // TODO: make this part of genesis registration
+                MoveValue::U64(GENESIS_VDF_SECURITY_PARAM.into()),
             ]),
         );
 

@@ -34,3 +34,5 @@ pub mod backlog;
 pub mod commit_proof;
 pub mod preimage;
 pub mod tower_errors;
+pub mod next_proof;
+pub mod garbage_collection;

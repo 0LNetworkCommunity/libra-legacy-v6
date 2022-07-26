@@ -16,7 +16,7 @@ use diem_genesis_tool::{
     seeds::{SeedAddresses, Seeds},
 };
 use diem_json_rpc_client::AccountAddress;
-use diem_types::transaction::authenticator::AuthenticationKey;
+use diem_types::{transaction::authenticator::AuthenticationKey, chain_id::NamedChain};
 use diem_types::waypoint::Waypoint;
 use diem_wallet::WalletLibrary;
 use fs_extra::file::{copy, CopyOptions};
@@ -32,6 +32,9 @@ pub struct InitCmd {
     #[options(help = "Create the 0L.toml file for 0L apps")]
     app: bool,
 
+    /// named id of the chain
+    #[options(help = "id of the chain")]
+    chain_id: Option<NamedChain>,
     /// For "app" option an upstream peer to use in 0L.toml
     #[options(help = "An upstream peer to use in 0L.toml")]
     rpc_peer: Option<Url>,
@@ -284,6 +287,8 @@ impl Runnable for InitCmd {
                             &None, // TODO: probably need an epoch option here.
                             &self.waypoint,
                             &self.source_path,
+                            &self.chain_id,
+
                         )
                         .unwrap_or_else(|e| {
                             println!(
@@ -316,6 +321,7 @@ pub fn initialize_app_cfg(
     epoch_opt: &Option<u64>,
     wp_opt: &Option<Waypoint>,
     source_path: &Option<PathBuf>,
+    network_id: &Option<NamedChain>,
 ) -> Result<AppCfg, Error> {
     let cfg = AppCfg::init_app_configs(
         authkey,
@@ -327,6 +333,7 @@ pub fn initialize_app_cfg(
         source_path,
         None,
         None,
+        network_id,
     )
     .unwrap_or_else(|e| {
         println!("could not create app configs, exiting. Message: {:?}", &e);
@@ -364,7 +371,10 @@ pub fn initialize_host_swarm(
         })
     };
 
-    match copy(&source, target_file, &CopyOptions::new()) {
+    let mut options = CopyOptions::new();
+    options.overwrite = true;
+
+    match copy(&source, target_file, &options) {
         Err(why) => {
             println!("copy block failed: {:?}", why);
             bail!(why)

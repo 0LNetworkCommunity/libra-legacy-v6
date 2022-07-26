@@ -638,6 +638,7 @@ pub enum StatusCode {
 
     //////// 0L /////////
     STDLIB_UPGRADE_ERROR = 9001,
+    VDF_AUTHKEY_PARSE = 9101,
     // A reserved status to represent an unknown vm status.
     // this is std::u64::MAX, but we can't pattern match on that, so put the hardcoded value in
     UNKNOWN_STATUS = 18446744073709551615,

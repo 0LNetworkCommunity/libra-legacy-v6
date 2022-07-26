@@ -5,9 +5,9 @@ use anyhow::{Error, bail};
 use vdf::{PietrzakVDFParams, VDF, VDFParams};
 
 /// Runs the VDF
-pub fn do_delay(preimage: &[u8], difficulty: u64, security: u16) -> Result<Vec<u8>, Error> {
+pub fn do_delay(preimage: &[u8], difficulty: u64, security: u64) -> Result<Vec<u8>, Error> {
     // Functions for running the VDF.
-    let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security).new();
+    let vdf: vdf::PietrzakVDF = PietrzakVDFParams(security as u16).new();
     match vdf.solve(preimage, difficulty) {
         Ok(proof) => Ok(proof),
         Err(e) => bail!(format!("ERROR: cannot solve VDF, message {:?}", e)),

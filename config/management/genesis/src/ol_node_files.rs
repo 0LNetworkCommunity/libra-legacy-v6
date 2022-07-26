@@ -18,7 +18,7 @@ use diem_global_constants::{
 };
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
 use diem_secure_storage::{CryptoStorage, KVStorage};
-use diem_types::{account_address::AccountAddress, chain_id::ChainId, waypoint::Waypoint};
+use diem_types::{account_address::AccountAddress, chain_id::{ChainId, NamedChain}, waypoint::Waypoint};
 use ol_types::account::ValConfigs;
 use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
@@ -45,7 +45,7 @@ pub struct Files {
     #[structopt(long)]
     repo: Option<String>,
     #[structopt(long)]
-    chain_id: u8,
+    chain_id: NamedChain,
     /// If specified, compares the internal state to that of a
     /// provided genesis. Note, that a waypont might diverge from
     /// the provided genesis after execution has begun.
@@ -90,7 +90,7 @@ impl Files {
 
 pub fn onboard_helper_all_files(
     output_dir: PathBuf,
-    chain_id: u8,
+    chain_name: NamedChain,
     github_org: Option<String>,
     repo: Option<String>,
     namespace: &str,
@@ -100,8 +100,8 @@ pub fn onboard_helper_all_files(
     layout_path: &Option<PathBuf>,
     val_ip_address: Option<Ipv4Addr>,
 ) -> Result<NodeConfig, anyhow::Error> {
-    // TODO: Do we need github token path with public repo?
-    let chain_id = ChainId::new(chain_id);
+
+  let chain_id = ChainId::new(chain_name.id()) ;
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 

@@ -82,6 +82,6 @@ impl Node {
                 None => {}
             }
         }
-        bail!("could not load backup_service_address from config.yaml")
+        bail!("could not load backup_service_address from node.yaml")
     }
 }

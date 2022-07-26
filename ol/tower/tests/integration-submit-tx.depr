@@ -101,8 +101,8 @@ pub fn integration_submit_tx() {
             blocks_dir.push(&config.workspace.block_dir);
 
 
-            let (current_block_number, _current_block_path) = tower::proof::parse_block_height(&blocks_dir);
-            let block_number_before_block = current_block_number.unwrap();
+            let (current_local_block, _current_block_path) = tower::proof::get_highest_block(&blocks_dir)?;
+            let block_number_before_block = current_local_block.height;
             
 
             println!("Check node sync before disabling port");
@@ -134,8 +134,8 @@ pub fn integration_submit_tx() {
             let test_timeout = Duration::from_secs(240); // To let the timeout happen and continue mining. 
             thread::sleep(test_timeout);
             
-            let (current_block_number, _current_block_path) = tower::proof::parse_block_height(&blocks_dir);
-            let block_number_after_unblock = current_block_number.unwrap();
+            let (current_block, _current_block_path) = tower::proof::get_highest_block(&blocks_dir)?;
+            let block_number_after_unblock = current_block.height;
             
             // Miner should have continued mining. +1 to consider atleast 2 blocks mined. 
             if block_number_after_unblock <= (block_number_before_block + 1) {
@@ -209,7 +209,7 @@ fn check_node_sync(tx_params: &TxParams, config: &AppCfg) -> Result<(), Error> {
 
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
-    let (current_block_number, _current_block_path) = tower::proof::parse_block_height(&blocks_dir);
+    let (current_block_number, _current_block_path) = tower::proof::get_highest_block(&blocks_dir);
     let current_block_number = current_block_number.unwrap() as i64;
     println!("Local tower height: {}", current_block_number);
 

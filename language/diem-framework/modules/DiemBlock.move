@@ -34,6 +34,7 @@ module DiemBlock {
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
     use 0x1::Migrations;
+    use 0x1::TowerState;
     use 0x1::MigrateJail;
 
     struct BlockMetadata has key {
@@ -116,10 +117,11 @@ module DiemBlock {
         };       
 
         // Do any pending migrations
-        // TODO: should this be round 2 (when upgrade writeset happens). May be a on off-by-one.
+        // TODO: should this be round 2 (when upgrade writeset happens). May be an off-by-one.
         if (round == 3){
           // safety. Maybe init Migration struct
           Migrations::init(&vm);
+          TowerState::init_difficulty(&vm);
           MigrateJail::do_it(&vm);
         };    
 

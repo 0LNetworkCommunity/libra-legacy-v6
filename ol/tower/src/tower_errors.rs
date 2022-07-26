@@ -89,7 +89,7 @@ impl TowerError {
 }
 
 /// get the Tower Error from TxError
-pub fn parse_error(tx_err: TxError) -> TowerError {
+pub fn parse_error(tx_err: &TxError) -> TowerError {
     match tx_err.abort_code {
         Some(404) => TowerError::NoClientCx,
         Some(1004) => TowerError::AccountDNE,
@@ -98,10 +98,10 @@ pub fn parse_error(tx_err: TxError) -> TowerError {
         Some(130109) => TowerError::Discontinuity,
         Some(130110) => TowerError::Invalid,
         _ => {
-            if let Some(tv) = tx_err.tx_view {
+            if let Some(tv) = &tx_err.tx_view {
                 match tv.vm_status {
                     diem_json_rpc_types::views::VMStatusView::OutOfGas => TowerError::OutOfGas,
-                    _ => TowerError::Other(tv.vm_status),
+                    _ => TowerError::Other(tv.vm_status.to_owned()),
                 }
             } else {
                 TowerError::Unknown
