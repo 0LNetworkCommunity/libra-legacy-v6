@@ -9,19 +9,24 @@ use crate::{
 };
 use abscissa_core::{Command, Options, Runnable};
 use diem_transaction_builder::stdlib as transaction_builder;
+use diem_types::account_address::AccountAddress;
 use ol_types::config::TxType;
 
 /// `CreateAccount` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ValSetCmd {
-    #[options(help = "add node to validator universe, i.e. make a candidate for validator set")]
-    join: bool,
     #[options(
-        help = "remove node from validator universe, i.e. cease being a candidate for validator set"
+        short = "j",
+        help = "mark a vouchee validator as unjailed. Validators can't unjail self."
     )]
-    leave: bool,
-    #[options(help = "add to val universe")]
-    add: bool,
+    unjail: bool,
+
+    #[options(
+        short = "a",
+        help = "address of a validator vouchee which the voucher is unjailing"
+    )]
+    vouchee: Option<AccountAddress>,
+
 }
 
 impl Runnable for ValSetCmd {
@@ -29,12 +34,10 @@ impl Runnable for ValSetCmd {
         let entry_args = entrypoint::get_args();
 
         let tx_params = tx_params_wrapper(TxType::Cheap).unwrap();
-        let script = if *&self.join {
-            transaction_builder::encode_join_script_function()
-        } else if *&self.add {
-            transaction_builder::encode_val_add_self_script_function()
+        let script = if let Some(addr) = *&self.vouchee {
+            transaction_builder::encode_voucher_unjail_script_function(addr)
         } else {
-            panic!("need to set --join or --leave flags")
+            transaction_builder::encode_self_unjail_script_function()
         };
 
         match maybe_submit(
@@ -50,7 +53,9 @@ impl Runnable for ValSetCmd {
               );
               exit(1);
             },
-            _ => {}
+            _ => {
+              println!("SUCCESS: unjail transaction submitted");
+            }
         }
     }
 }

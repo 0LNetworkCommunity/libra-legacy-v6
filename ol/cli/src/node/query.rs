@@ -27,6 +27,11 @@ pub enum QueryType {
         /// account to query txs of
         account: AccountAddress,
     },
+    /// Unlocked Account balance
+    UnlockedBalance {
+        /// account to query txs of
+        account: AccountAddress,
+    },
     /// Epoch and waypoint
     Epoch,
     /// Network block height
@@ -114,6 +119,21 @@ impl Node {
                     }
                     Ok(None) => format!("No account {} found on chain, account", account),
                     Err(e) => format!("Chain query error: {:?}", e),
+                }
+            }
+            UnlockedBalance { account } => {
+                // account
+                match self.get_annotate_account_blob(account) {
+                    Ok((Some(r), _)) => {
+                        if !is_slow_wallet(&r) {
+                            format!("Error, account is not a slow wallet")
+                        }else{
+                            let value = find_value_from_state(&r, "DiemAccount".to_string(), "SlowWallet".to_string(), "unlocked".to_string());
+                            value.unwrap().to_string()
+                        }
+                    }
+                    Err(e) => format!("Error retrieving unlocked balance. Message: {:#?}", e),
+                    _ => format!("Error, cannot find account state for {:#?}", account),
                 }
             }
             BlockHeight => self.refresh_chain_info()?.0.height.to_string(),
@@ -219,6 +239,17 @@ impl Node {
                 };
                 print
             }
+  //           Tower { account } => {
+  //             match self.get_account_state(account) {
+  //               Ok(a) => {
+  //                 let t: Option<TowerStateResource> = a.get_resource()?;
+                  
+                  
+  //               },
+  //               Err(_) => format!("No tower found at: {}", account)
+  // ,
+  //             }
+  //           }
             ValConfig { account } => {
                 // account
                 match self.get_account_state(account) {
@@ -247,7 +278,7 @@ impl Node {
                           cr.validator_config.unwrap().fullnode_network_addresses()?,
                         )
                       } else {
-                        format!("No validator configs cound at: {}", account)
+                        format!("No validator configs found at: {}", account)
                       }
                     },
                     Err(_) => format!("No validator configs cound at: {}", account),
@@ -365,16 +396,8 @@ pub fn is_slow_wallet(r: &AnnotatedAccountStateBlob) -> bool {
         slow_struct_name.to_string(),
         "unlocked".to_string(),
     );
-    if let Some(AnnotatedMoveValue::U64(0)) = unlocked {
-        let transferred = find_value_from_state(
-            &r,
-            slow_module_name.to_string(),
-            slow_struct_name.to_string(),
-            "transferred".to_string(),
-        );
-        if let Some(AnnotatedMoveValue::U64(0)) = transferred {
-            return true;
-        }
+    if !unlocked.is_none() {
+        return true;
     }
     false
 }
@@ -459,6 +482,7 @@ pub fn test_fixture_wallet_type(module_name: &str, struct_name: &str, value: Vec
     AnnotatedAccountStateBlob(s)
 }
 
+
 #[test]
 fn test_find_annotated_move_value() {
     let s = test_fixture_blob();
@@ -484,39 +508,9 @@ fn test_find_annotated_move_value() {
 fn test_is_slow_wallet_should_return_true() {
     let value = vec![
         (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0)),
-        (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(0))
     ];
     let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
     assert_eq!(true, is_slow_wallet(&s), "{}", s.to_string());
-}
-
-#[test]
-fn test_is_slow_wallet_should_return_false_with_wrong_unlocked() {
-    let value = vec![
-        (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(1)),
-        (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(0))
-    ];
-    let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
-    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
-}
-
-#[test]
-fn test_is_slow_wallet_should_return_false_with_wrong_transferred() {
-    let value = vec![
-        (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0)),
-        (Identifier::new("transferred").unwrap(), AnnotatedMoveValue::U64(1))
-    ];
-    let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
-    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
-}
-
-#[test]
-fn test_is_slow_wallet_should_return_false_if_missing_transferred() {
-    let value = vec![
-        (Identifier::new("unlocked").unwrap(), AnnotatedMoveValue::U64(0))
-    ];
-    let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
-    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
 }
 
 #[test]

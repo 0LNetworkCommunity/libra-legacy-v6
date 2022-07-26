@@ -9,7 +9,7 @@ use std::{convert::TryFrom, fmt, str::FromStr};
 /// When signing transactions for such chains, the numerical chain ID should still be used
 /// (e.g. MAINNET has numeric chain ID 1, TESTNET has chain ID 2, etc)
 #[repr(u8)]
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)] ///////// 0L ////////
 pub enum NamedChain {
     /// Users might accidentally initialize the ChainId field to 0, hence reserving ChainId 0 for accidental
     /// initialization.
@@ -25,20 +25,30 @@ pub enum NamedChain {
 }
 
 impl NamedChain {
-    fn str_to_chain_id(s: &str) -> Result<ChainId> {
-        // TODO implement custom macro that derives FromStr impl for enum (similar to diem/common/num-variants)
-        let reserved_chain = match s {
-            "MAINNET" => NamedChain::MAINNET,
-            "TESTNET" => NamedChain::TESTNET,
-            "DEVNET" => NamedChain::DEVNET,
-            "TESTING" => NamedChain::TESTING,
-            "PREMAINNET" => NamedChain::PREMAINNET,
-            "EXPERIMENTAL" => NamedChain::EXPERIMENTAL, //////// 0L ////////            
-            _ => {
-                return Err(format_err!("Not a reserved chain: {:?}", s));
-            }
-        };
-        Ok(ChainId::new(reserved_chain.id()))
+    pub fn str_to_named(s: &str) -> Result<Self> { //////// 0L ////////
+      let n = match s {
+          "MAINNET" => NamedChain::MAINNET,
+          "TESTNET" => NamedChain::TESTNET,
+          "DEVNET" => NamedChain::DEVNET,
+          "TESTING" => NamedChain::TESTING,
+          "PREMAINNET" => NamedChain::PREMAINNET,
+          "EXPERIMENTAL" => NamedChain::EXPERIMENTAL, //////// 0L ////////
+          "1" => NamedChain::MAINNET,
+          "2" => NamedChain::TESTNET,
+          "3" => NamedChain::DEVNET,
+          "4" => NamedChain::TESTING,
+          "5" => NamedChain::PREMAINNET,
+          "7" => NamedChain::EXPERIMENTAL, //////// 0L ////////         
+          _ => {
+              return Err(format_err!("Not a reserved chain: {:?}", s));
+          }
+      };
+      Ok(n)
+    }
+
+
+    pub fn str_to_chain_id(s: &str) -> Result<ChainId> { //////// 0L ////////
+        Ok(ChainId::new(Self::str_to_named(s)?.id()))
     }
 
     pub fn id(&self) -> u8 {
@@ -58,6 +68,13 @@ impl NamedChain {
     }
 }
 
+impl FromStr for NamedChain { //////// 0L ////////
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Self::str_to_named(s)
+    }
+}
 /// Note: u7 in a u8 is uleb-compatible, and any usage of this should be aware
 /// that this field maybe updated to be uleb64 in the future
 #[derive(Clone, Copy, Deserialize, Eq, Hash, PartialEq, Serialize)]
@@ -140,7 +157,7 @@ impl Default for ChainId {
 
 impl FromStr for ChainId {
     type Err = Error;
-
+    
     fn from_str(s: &str) -> Result<Self> {
         ensure!(!s.is_empty(), "Cannot create chain ID from empty string");
         NamedChain::str_to_chain_id(s).or_else(|_err| {

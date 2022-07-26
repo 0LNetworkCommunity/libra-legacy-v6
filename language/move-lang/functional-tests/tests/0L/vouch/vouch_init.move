@@ -37,3 +37,23 @@ script {
   }
 }
 // check: EXECUTED
+
+
+//! new-transaction
+//! sender: bob
+script {
+  
+  use 0x1::Vouch;
+  use 0x1::Vector;
+  use 0x1::Signer;
+  fun main(bob: signer) {
+    assert(Vouch::is_init(@{{alice}}), 7347004);
+
+    Vouch::revoke(&bob, @{{alice}});
+
+    let includes = Vector::contains(&Vouch::get_buddies(@{{alice}}), &Signer::address_of(&bob));
+
+    assert(!includes, 7357005);
+  }
+}
+// check: EXECUTED

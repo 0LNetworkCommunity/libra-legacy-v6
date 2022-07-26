@@ -72,7 +72,7 @@ prev-stdlib:
 
 
 init:
-	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init
+	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH} --chain-id TESTING
 	cp ${SWARM_TEMP}/0/0L.toml ${HOME}/.0L/0L.toml
 
 submit:

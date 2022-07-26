@@ -1,4 +1,4 @@
-# Provision a dev net
+# Provision a dev net (REX)
 
 # Quick start
 

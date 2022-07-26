@@ -9,11 +9,14 @@ use crate::{
     node::{client, node::Node},
 };
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
-use anyhow::{bail, Error};
+use anyhow::{bail, Error, anyhow};
 use dialoguer::Confirm;
-use diem_genesis_tool::{init, key, ol_node_files};
+use diem_genesis_tool::{
+    init, key, ol_node_files,
+    seeds::{SeedAddresses, Seeds},
+};
 use diem_json_rpc_client::AccountAddress;
-use diem_types::transaction::authenticator::AuthenticationKey;
+use diem_types::{transaction::authenticator::AuthenticationKey, chain_id::NamedChain};
 use diem_types::waypoint::Waypoint;
 use diem_wallet::WalletLibrary;
 use fs_extra::file::{copy, CopyOptions};
@@ -29,6 +32,9 @@ pub struct InitCmd {
     #[options(help = "Create the 0L.toml file for 0L apps")]
     app: bool,
 
+    /// named id of the chain
+    #[options(help = "id of the chain")]
+    chain_id: Option<NamedChain>,
     /// For "app" option an upstream peer to use in 0L.toml
     #[options(help = "An upstream peer to use in 0L.toml")]
     rpc_peer: Option<Url>,
@@ -82,6 +88,10 @@ pub struct InitCmd {
     /// Path to source code, for devs
     #[options(help = "Path to source code, for devs")]
     source_path: Option<PathBuf>,
+
+    /// reset the safety rules state in key_store.json
+    #[options(help = "reset the safety data in key_store.json to null")]
+    reset_safety: bool,
 }
 
 impl Runnable for InitCmd {
@@ -101,62 +111,22 @@ impl Runnable for InitCmd {
         // start with a default value, or read from file if already initialized
         let mut app_cfg = app_config().to_owned();
         let entry_args = entrypoint::get_args();
-        let is_swarm = *&entry_args.swarm_path.is_some();
+        // let is_swarm = *&entry_args.swarm_path.is_some();
 
         if self.update_waypoint {
-            // TODO: will need to update the key_store.json file with waypoint info.
-            if let Some(w) = self.waypoint {
-                app_cfg.chain_info.base_waypoint = Some(w);
-                match app_cfg.save_file() {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("could not save config file, exiting. Message: {:?}", e);
-                        exit(1)
-                    }
-                }
-                return;
-            };
-            let client = match client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg) {
-                Ok(c) => c,
-                Err(e) => {
-                    println!(
-                        "Could not connect to a fullnode with JSON API, exiting. Message: {:?}",
-                        e
-                    );
-                    exit(1);
-                }
-            };
-
-            let mut node = Node::new(client, &app_cfg, is_swarm);
-
-            match node.waypoint() {
-                Ok(w) => {
-                    key::set_waypoint(
-                        &app_cfg.workspace.node_home,
-                        &app_cfg.profile.account.to_string(),
-                        w,
-                    );
-                    key::set_genesis_waypoint(
-                        &app_cfg.workspace.node_home,
-                        &app_cfg.profile.account.to_string(),
-                        w,
-                    );
-
-                    app_cfg.chain_info.base_waypoint = Some(w);
-                    match app_cfg.save_file() {
-                        Ok(_) => {}
-                        Err(e) => {
-                            println!("could not save config file, exiting. Message: {:?}", e);
-                            exit(1)
-                        }
-                    }
-                    return;
+            match update_waypoint(
+                &mut app_cfg.clone(),
+                self.waypoint,
+                entry_args.swarm_path.clone(),
+            ) {
+                Ok(_) => {
+                    println!("waypoint updated successfully in files 0L.toml, and key_store.json");
                 }
                 Err(e) => {
-                    println!("Could not find a waypoint, exiting. Message: {:?}", e);
-                    exit(1);
+                    println!("ERROR: could not update files 0L.toml, and key_store.json with waypoint, message: {:?}", e.to_string());
                 }
             }
+            return;
         }
 
         if let Some(url) = self.rpc_playlist.as_ref() {
@@ -195,53 +165,11 @@ impl Runnable for InitCmd {
         // fetch a list of seed peers from the current on chain discovery
         // doesn't need mnemonic
         if self.seed_peer {
-            let client = match client::pick_client(entry_args.swarm_path.clone(), &mut app_cfg) {
-                Ok(c) => c,
-                Err(e) => {
-                    println!(
-                        "Could not connect to a fullnode with JSON API, exiting. Message: {:?}",
-                        e
-                    );
-                    exit(1);
-                }
-            };
+            let seed = pick_seed_peer(&mut app_cfg, entry_args.swarm_path.clone()).expect("could not find any seed peers");
 
-            let mut node = Node::new(client, &app_cfg, is_swarm);
-
-            match node.refresh_fullnode_seeds() {
-                Ok(s) => {
-                    match serde_yaml::to_string(&s) {
-                        Ok(y) => {
-                            let path = app_cfg.workspace.node_home.join("seed_fullnodes.yaml");
-                            match std::fs::write(&path, &y) {
-                                Ok(_) => {
-                                    println!("seed_fullnodes.yaml file written to: {:?}", &path)
-                                }
-                                Err(e) => {
-                                    println!(
-                                        "Could not write yaml file, exiting. Message: {:?}",
-                                        e
-                                    );
-                                    exit(1);
-                                }
-                            };
-                        }
-                        Err(e) => {
-                            println!("Could not serialize yaml, exiting. Message: {:?}", e);
-                            exit(1);
-                        }
-                    }
-                    // return
-                }
-                Err(e) => {
-                    println!(
-                        "Could not fetch seed peers from chain, exiting. Message: {:?}",
-                        e
-                    );
-                    exit(1);
-                }
-            };
-
+            let path = app_cfg.workspace.node_home.join("seed_fullnodes.yaml");
+            
+            write_seed_peers_file(&path, &seed).unwrap();
             exit(0);
         }
 
@@ -276,9 +204,10 @@ impl Runnable for InitCmd {
             // TODO: check we can open key-store file
 
             let namespace = app_cfg.format_oper_namespace();
-            let output_dir = app_cfg.workspace.node_home;
+            let output_dir = app_cfg.workspace.node_home.clone();
+            let seeds = if self.seed_peer { pick_seed_peer(&mut app_cfg, entry_args.swarm_path.clone()).ok() } else { None };
 
-            match ol_node_files::make_val_file(output_dir, None, &namespace) {
+            match ol_node_files::make_val_file(output_dir, seeds,None, &namespace) {
                 Ok(_) => {}
                 Err(e) => {
                     println!("Could not create file, exiting. Message: {:?}", e);
@@ -291,15 +220,15 @@ impl Runnable for InitCmd {
         // create files for public fullnode
         if self.fullnode {
             println!("Creating fullnode.node.yaml file.");
-
+            let seed = pick_seed_peer(&mut app_cfg, entry_args.swarm_path.clone()).ok();
             // TODO: check we can open key-store file
-            let output_dir = app_cfg.workspace.node_home;
+            let output_dir = app_cfg.workspace.node_home.clone();
             let gen_wp = app_cfg.chain_info.base_waypoint;
 
             // TODO: get seed addresses from file optionally
             // let seed = SeedAddresses::read_from_file(seed_peers_path);
 
-            match ol_node_files::make_fullnode_file(output_dir, None, gen_wp.unwrap_or_default()) {
+            match ol_node_files::make_fullnode_file(output_dir, seed, gen_wp.unwrap_or_default()) {
                 Ok(_) => {}
                 Err(e) => {
                     println!("Could not create file, exiting. Message: {:?}", e);
@@ -329,6 +258,14 @@ impl Runnable for InitCmd {
             return;
         }
 
+        if self.reset_safety {
+          diem_genesis_tool::key::reset_safety_data(
+            &app_cfg.workspace.node_home,
+            &app_cfg.format_owner_namespace()
+          );
+          exit(0)
+        }
+
         /////////// Everything below requires mnemonic ////////
         let (authkey, account, wallet) = wallet::get_account_from_prompt();
 
@@ -350,6 +287,8 @@ impl Runnable for InitCmd {
                             &None, // TODO: probably need an epoch option here.
                             &self.waypoint,
                             &self.source_path,
+                            &self.chain_id,
+
                         )
                         .unwrap_or_else(|e| {
                             println!(
@@ -382,6 +321,7 @@ pub fn initialize_app_cfg(
     epoch_opt: &Option<u64>,
     wp_opt: &Option<Waypoint>,
     source_path: &Option<PathBuf>,
+    network_id: &Option<NamedChain>,
 ) -> Result<AppCfg, Error> {
     let cfg = AppCfg::init_app_configs(
         authkey,
@@ -393,6 +333,7 @@ pub fn initialize_app_cfg(
         source_path,
         None,
         None,
+        network_id,
     )
     .unwrap_or_else(|e| {
         println!("could not create app configs, exiting. Message: {:?}", &e);
@@ -430,7 +371,10 @@ pub fn initialize_host_swarm(
         })
     };
 
-    match copy(&source, target_file, &CopyOptions::new()) {
+    let mut options = CopyOptions::new();
+    options.overwrite = true;
+
+    match copy(&source, target_file, &options) {
         Err(why) => {
             println!("copy block failed: {:?}", why);
             bail!(why)
@@ -448,7 +392,9 @@ pub fn initialize_val_key_store(
 ) -> Result<(), Error> {
     let home_dir = &app_cfg.workspace.node_home;
     let keys = KeyScheme::new(wallet);
-    let namespace = app_cfg.format_oper_namespace();
+    let namespace = app_cfg.format_owner_namespace();
+    let oper_namespace = app_cfg.format_oper_namespace();
+
     let way = way_opt.unwrap_or(
         "0:c12c01d2ac6deb028567c9a9c816ca3fe53fab9c461e4eab2f89125f975b63c3"
             .parse()
@@ -456,10 +402,10 @@ pub fn initialize_val_key_store(
     );
 
     init::key_store_init(home_dir, &namespace, keys, is_genesis);
-    key::set_operator_key(home_dir, &namespace);
-    key::set_owner_key(home_dir, &namespace, app_cfg.profile.account);
-    key::set_genesis_waypoint(home_dir, &namespace, way.clone());
-    key::set_waypoint(home_dir, &namespace, way);
+    key::set_operator_key(home_dir, &oper_namespace);
+    key::set_owner_key(home_dir, &oper_namespace, app_cfg.profile.account);
+    key::set_genesis_waypoint(home_dir, &oper_namespace, way.clone());
+    key::set_waypoint(home_dir, &oper_namespace, way);
 
     Ok(())
 }
@@ -470,5 +416,91 @@ impl config::Override<AppCfg> for InitCmd {
     // arguments.
     fn override_config(&self, config: AppCfg) -> Result<AppCfg, FrameworkError> {
         Ok(config)
+    }
+}
+
+/// helper to update waypoint from a known waypoint or query an upstream node for current waypoint
+fn update_waypoint(
+    app_cfg: &mut AppCfg,
+    waypoint_opt: Option<Waypoint>,
+    swarm_path: Option<PathBuf>,
+) -> anyhow::Result<Waypoint> {
+    let new_waypoint = match waypoint_opt {
+        Some(w) => w,
+        None => {
+            let client = client::pick_client(swarm_path, app_cfg)?;
+
+            match client.get_waypoint_state()? {
+                Some(wv) => wv.waypoint,
+                None => bail!("could not get waypoint view from chain"),
+            }
+        }
+    };
+
+    // set the 0L.toml file waypoint
+    app_cfg.chain_info.base_waypoint = Some(new_waypoint);
+    app_cfg.save_file()?;
+
+    // Set the key_store.json file's waypoint
+    key::set_waypoint(
+        &app_cfg.workspace.node_home,
+        &app_cfg.profile.account.to_string(),
+        new_waypoint,
+    );
+
+    key::set_genesis_waypoint(
+        &app_cfg.workspace.node_home,
+        &app_cfg.profile.account.to_string(),
+        new_waypoint,
+    );
+
+    Ok(new_waypoint)
+}
+
+fn pick_seed_peer(app_cfg: &mut AppCfg, swarm_path: Option<PathBuf>) -> anyhow::Result<SeedAddresses> {
+    match seed_peers_from_chain(app_cfg, swarm_path) {
+        Ok(s) => Ok(s),
+        Err(_) => {
+            println!("could not get seeds from chain, trying from genesis.blob");
+            let seed = Seeds::new(app_cfg.workspace.node_home.join("genesis.blob")).get_network_peers_info()
+            .map_err(|_| { anyhow!("could not parse seed peers from genesis.blob")})?;
+            Ok(seed)
+        }
+    }
+}
+
+fn seed_peers_from_chain(
+    app_cfg: &mut AppCfg,
+    swarm_path: Option<PathBuf>,
+) -> anyhow::Result<SeedAddresses> {
+    let client = client::pick_client(swarm_path.clone(), app_cfg)?;
+
+    let mut node = Node::new(client, &app_cfg, swarm_path.is_some());
+
+    let seeds = node.refresh_fullnode_seeds()?;
+
+    Ok(seeds)
+}
+
+fn write_seed_peers_file(path: &PathBuf, seeds: &SeedAddresses) -> anyhow::Result<()> {
+    match serde_yaml::to_string(&seeds) {
+        Ok(y) => {
+            match std::fs::write(&path, &y) {
+                Ok(_) => {
+                    println!("seed_fullnodes.yaml file written to: {:?}", &path);
+                    return Ok(());
+                }
+                Err(e) => {
+                    let m = format!("Could not write yaml file, exiting. Message: {:?}", e);
+                    println!("{}", &m);
+                    bail!(m)
+                }
+            };
+        }
+        Err(e) => {
+            let m = format!("Could not serialize yaml, exiting. Message: {:?}", e);
+            println!("{}", &m);
+            bail!(m)
+        }
     }
 }

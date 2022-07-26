@@ -28,14 +28,17 @@ EVE = 3DC18D1CF61FAAC6AC70E3A63F062E4B
 ONBOARD_FILE= ${DATA_PATH}/account.json
 
 START_TEXT = "To run the Diem CLI client"
-SUCCESS_TEXT = "User transactions successfully relayed"
+SUCCESS_TEXT = "Account created on chain"
 
 export
 
 # account.json fixtures generated with:
 # cargo r -p onboard -- --swarm-path ./whatever val --upstream-peer http://167.172.248.37/
 
-test: swarm check-swarm set-community create-json send-tx check-tx check-account-created check-autopay stop
+# test: swarm check-swarm set-community create-json send-tx check-tx check-account-created check-autopay stop
+
+test: swarm check-swarm create-json send-tx check-tx check-account-created stop
+
 # Testing the Onboarding of Eve, there are many steps, and it involved Eve (to be onboarded), Alice (the onboarder), and Bob, a community wallet Eve wants to donate to.
 
 # 1. swarm - start swarm with 2 nodes, Alice and Bob
@@ -61,8 +64,7 @@ stop:
 	killall diem-swarm diem-node tower ol txs cli | true
 
 init:
-	@echo INIT
-	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
+	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH} --chain-id TESTING
 
 create-json:
 	cp ${SOURCE_PATH}/ol/fixtures/autopay/alice.autopay_batch.json ${DATA_PATH}/autopay_batch.json
@@ -129,8 +131,7 @@ check-tx:
 
 check-account-created: 
 # checks if there is any mention of BOB's account as a payee on EVE's account
-	PERSONA=alice make -f ${MAKE_FILE} resources | grep -e 'payee'
-
+	PERSONA=alice make -f ${MAKE_FILE} resources | grep -e 'previous_proof_hash'
 	
 check-autopay:
 # swarm accounts start with a balance of 10, check that the balance increases

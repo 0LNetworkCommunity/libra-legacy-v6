@@ -48,7 +48,7 @@ use transaction_builder::encode_create_designated_dealer_script_function;
 
 //////// 0L ////////
 use ol_types::{config::IS_PROD, genesis_proof::GenesisMiningProof};
-use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
+use diem_global_constants::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -110,6 +110,8 @@ pub fn encode_genesis_change_set(
     vm_publishing_option: VMPublishingOption,
     chain_id: ChainId,
 ) -> ChangeSet {
+    dbg!(&chain_id);
+
     let mut stdlib_module_tuples: Vec<(ModuleId, &Vec<u8>)> = Vec::new();
     // create a data view for move_vm
     let mut state_view = GenesisStateView::new();
@@ -132,6 +134,11 @@ pub fn encode_genesis_change_set(
         type_params: vec![],
     });
 
+    if !*IS_PROD {
+        initialize_testnet(&mut session, &log_context);
+    }
+    //////// 0L end ////////
+
     create_and_initialize_main_accounts(
         &mut session,
         &log_context,
@@ -141,26 +148,15 @@ pub fn encode_genesis_change_set(
         &xdx_ty,
         chain_id,
     );
-    //////// 0L ////////
-    // println!("OK create_and_initialize_main_accounts =============== ");
 
-    if !*IS_PROD {
-        initialize_testnet(&mut session, &log_context);
-    }
-    //////// 0L end ////////
-
-    // generate the genesis WriteSet
     create_and_initialize_owners_operators(
         &mut session,
         &log_context,
         &operator_assignments,
         &operator_registrations,
     );
-    //////// 0L ////////
-    // println!("OK create_and_initialize_owners_operators =============== ");
 
     distribute_genesis_subsidy(&mut session, &log_context);
-    // println!("OK Genesis subsidy =============== ");
 
     fund_operators(&mut session, &log_context, &operator_assignments);
     //////// 0L end ////////
@@ -487,6 +483,13 @@ fn create_and_initialize_owners_operators(
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
     // println!("0 ======== Create Owner Accounts");
+
+    let all_vals: Vec<AccountAddress> = operator_registrations.iter()
+    .map(|a|{
+      a.3
+    })
+    .collect();
+
     for (owner_key, owner_name, _op_assignment, genesis_proof, _operator) in operator_assignments {
         // TODO: Remove. Temporary Authkey for genesis, because accounts are being created from human names.
         let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
@@ -543,8 +546,8 @@ fn create_and_initialize_owners_operators(
                 MoveValue::Signer(owner_address),
                 MoveValue::vector_u8(preimage),
                 MoveValue::vector_u8(proof),
-                MoveValue::U64(delay_difficulty()), // TODO: make this part of genesis registration
-                MoveValue::U64(VDF_SECURITY_PARAM.into()),
+                MoveValue::U64(genesis_delay_difficulty()), // TODO: make this part of genesis registration
+                MoveValue::U64(GENESIS_VDF_SECURITY_PARAM.into()),
             ]),
         );
 
@@ -584,6 +587,32 @@ fn create_and_initialize_owners_operators(
             serialize_values(&vec![
                 MoveValue::Signer(diem_root_address),
                 MoveValue::Signer(owner_address),
+            ]),
+        );
+
+        exec_function(
+            session,
+            log_context,
+            "Vouch",
+            "init",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(owner_address)
+            ]),
+        );
+
+        let mut vals = all_vals.clone();
+        vals.retain(|el|{ el != &owner_address});
+        exec_function(
+            session,
+            log_context,
+            "Vouch",
+            "vm_migrate",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Address(owner_address),
+                MoveValue::vector_address(vals),
             ]),
         );
     }

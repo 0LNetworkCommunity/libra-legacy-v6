@@ -28,6 +28,9 @@ module EpochBoundary {
     use 0x1::Testnet;
     use 0x1::StagingNet;
     use 0x1::RecoveryMode;
+    use 0x1::Cases;
+    use 0x1::Jail;
+    use 0x1::Vouch;
 
     use 0x1::Debug::print;
 
@@ -129,7 +132,11 @@ module EpochBoundary {
     }
 
     fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> {
+        print(&9999);
+
         // Propose upcoming validator set:
+        // Get validators we know to be in consensus correctly: Case1 and Case2
+        // Only expand the amount of seats so that the new set has a max of 25% unproven nodes. I.e. nodes that were not in the previous epoch and we have stats on.
         
         // in emergency admin roles set the validator set
         // there may be a recovery set to be used.
@@ -140,33 +147,83 @@ module EpochBoundary {
           if (Vector::length(&recovery_vals) > 0) return recovery_vals;
         };
 
-        // save all the eligible list, before the jailing removes them.
-        let proposed_set = Vector::empty();
+        // Process all the jail terms of the previous validator set
+        let previous_set = DiemSystem::get_val_set_addr();
 
-        let top_accounts = NodeWeight::top_n_accounts(
-            vm, Globals::get_max_validators_per_set()
-        );
-
-        let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
-
-
-
+        // Take advantage of this loop to get the expected size of the validator set that the new set doesn't have
+        // 25% of nodes that we don't know their current performance.
+        let len_proven_nodes = 0;
         let i = 0;
-        while (i < Vector::length<address>(&top_accounts)) {
-            let addr = *Vector::borrow(&top_accounts, i);
-            let mined_last_epoch = TowerState::node_above_thresh(addr);
-            // TODO: temporary until jailing is enabled.
+        while (i < Vector::length<address>(&previous_set)) {
+            let addr = *Vector::borrow(&previous_set, i);
+            let case = Cases::get_case(vm, addr, height_start, height_now);
             if (
-                !Vector::contains(&jailed_set, &addr) && 
-                mined_last_epoch &&
-                Audit::val_audit_passing(addr)
+              // we care about nodes that are performing consensus correctly, case 1 and 2.
+              case < 3 &&
+              Audit::val_audit_passing(addr)
             ) {
-                Vector::push_back(&mut proposed_set, addr);
+                len_proven_nodes = len_proven_nodes + 1;
+                // also reset the jail counter for any successful unjails
+                Jail::remove_consecutive_fail(vm, addr);
+            } else {
+              Jail::jail(vm, addr);
             };
             i = i+ 1;
         };
 
+        // let len_proven_nodes = Vector::length(&proven_nodes);
+        let max_unproven_nodes = len_proven_nodes / 6;
+        print(&len_proven_nodes);
+        print(&max_unproven_nodes);
+        // start from the proven nodes
 
+        // get all validators by consensus weight
+        let sorted_val_universe = NodeWeight::get_sorted_vals();
+
+        // sort by jail index, prioritizes nodes joining that aren't currently struggling to stay in the validator set.
+        let top_accounts = Jail::sort_by_jail(sorted_val_universe);
+        print(&top_accounts);
+
+        // loop through all accounts, sorted by jail status, and then by consensus power
+        let proposed_set = Vector::empty<address>();
+
+        let i = 0;
+        while (
+          // can't be more than index of accounts
+          i < Vector::length(&top_accounts) &&
+          // the new proposed set can only only expand by 15%
+          Vector::length(&proposed_set) < len_proven_nodes + max_unproven_nodes &&
+          // Validator set can only be as big as the maximum set size
+          Vector::length(&proposed_set) < Globals::get_max_validators_per_set()
+        ) {
+            let addr = *Vector::borrow(&top_accounts, i);
+            let mined_last_epoch = TowerState::node_above_thresh(addr);
+            let case = Cases::get_case(vm, addr, height_start, height_now);
+            print(&addr);
+            print(&case);
+
+            if (
+                // ignore proven nodes already on list
+                !Vector::contains<address>(&proposed_set, &addr) &&
+                // jail the current validators which did not perform.
+                !Jail::is_jailed(addr) &&
+                // if they are not a current case 1 or 2, then they are rejoining and need to have mining proofs.
+                // case 2 get grace
+                (case < 3 || mined_last_epoch) &&
+                // do the remaining configuration checks, incl vouching
+                Audit::val_audit_passing(addr) &&
+                // when being onboarded or being un-jailed check if the vouches are sufficient. I.e. don't do this check if the validator has proven themselves in the previous round. If your vouchers fall out of the set, you may also fall out, and this chain reaction would cause instability in the network.
+                Vouch::unrelated_buddies_above_thresh(addr)
+            ) {
+                print(&99990901);
+                Vector::push_back(&mut proposed_set, addr);
+            };
+            i = i + 1;
+        };
+
+        print(&proposed_set);
+
+        //////// Failover Rules ////////
         // If the cardinality of validator_set in the next epoch is less than 4, 
 
         // if we are failing to qualify anyone. Pick top 1/2 of validator set by proposals. They are probably online.
@@ -194,7 +251,6 @@ module EpochBoundary {
         // Migrate TowerState list from elegible.
         TowerState::reconfig(vm, &outgoing_compliant);
         
-        print(&99999999999999);
 
         // process community wallets
         DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
@@ -225,9 +281,11 @@ module EpochBoundary {
         let vals_to_burn = if (
           !Testnet::is_testnet() &&
           !StagingNet::is_staging_net() &&
-          DiemConfig::get_current_epoch() > 185
+          DiemConfig::get_current_epoch() > 290 && // bump up to epoch 290 so people can discuss.
+          // only implement this burn at a steady state with 90/100 validator positions full. Will make the burn amount much smaller over time.
+          Vector::length<address>(proposed_set) > 90
         ) {
-          &ValidatorUniverse::get_eligible_validators(vm)
+          &ValidatorUniverse::get_eligible_validators()
         } else {
           proposed_set
         };

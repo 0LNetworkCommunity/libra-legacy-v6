@@ -28,8 +28,7 @@ CARGO_ARGS = --release
 # testnet automation settings
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
-MNEM = $(shell cat ol/
-fixtures/mnemonic/${NS}.mnem)
+MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 CARGO_ARGS = --locked # just keeping this from doing --release mode, while in testnet mode.
 GITHUB_USER = OLSF
 endif
@@ -37,7 +36,7 @@ endif
 # Registration params
 REMOTE = 'backend=github;repository_owner=${GITHUB_USER};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
 
-GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
+GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC};branch=master'
 
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
@@ -109,7 +108,7 @@ install: mv-bin bin-path
 	cp -f ${SOURCE}/target/release/onboard ${USER_BIN_PATH}/onboard
 
 bin-path:
-	@if (cat ~/.bashrc | grep '~/bin:') ; then \
+	@if (cat ~/.bashrc | grep ${USER_BIN_PATH}) ; then \
 		echo "OK .bashrc correctly configured with PATH=~/bin" ; \
 	else \
 		echo -n "WARN Your .bashrc doesn't seem to have ~/bin as a search path. Append .bashrc with PATH=~/bin:$$PATH ? (y/n) " ; \
@@ -230,8 +229,9 @@ gen-register:
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
-	@echo Making pull request to genesis coordination repo
-	make gen-make-pull
+# TODO: implement the forking workflow for dev genesis?
+# @echo Making pull request to genesis coordination repo
+# make gen-make-pull
 
 init-test:
 	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
@@ -290,7 +290,7 @@ verify-gen:
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
-genesis:
+genesis: stdlib
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
 	--chain-id ${CHAIN_ID} \
 	--validator-backend ${LOCAL} \
@@ -308,10 +308,6 @@ genesis:
 start:
 # run in foreground. Only for testing, use a daemon for net.
 	RUST_LOG=error cargo run -p diem-node -- --config ${DATA_PATH}/validator.node.yaml
-
-# Start a fullnode instead of a validator node
-start-full:
-	cargo run -p diem-node -- --config ${DATA_PATH}/fullnode.node.yaml
 
 daemon:
 	mkdir -p ~/.config/systemd/user/
@@ -401,17 +397,15 @@ ifdef TEST
 	cp ./ol/devnet/set_layout_test.toml ${DATA_PATH}/set_layout.toml
 endif
 
-fix-genesis:
-	cp ./ol/devnet/genesis/${V}/genesis.blob ${DATA_PATH}/
-	cp ./ol/devnet/genesis/${V}/genesis_waypoint ${DATA_PATH}/
-
 
 #### HELPERS ####
 set-waypoint:
 	@if test -f ${DATA_PATH}/key_store.json; then \
 		jq -r '. | with_entries(select(.key|match("-oper/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \
-		jq -r '. | with_entries(select(.key|match("-oper/genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/genesis_waypoint; \
+		jq -r '. | with_entries(select(.key|match("-oper/genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/genesis_waypoint.txt; \
 	fi
+
+	cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/client_waypoint)
 
 	@echo client_waypoint:
 	@cat ${DATA_PATH}/client_waypoint
@@ -450,71 +444,65 @@ debug:
 	make smoke-onboard <<< $$'${MNEM}'
  
 
-##### DEVNET TESTS #####
+#### TESTNET #####
+# The testnet is started using the same tools as genesis to have a faithful reproduction of a network from a clean slate.
 
-devnet: clear fix dev-wizard dev-genesis start
-# runs a smoke test from fixtures. 
-# Uses genesis blob from fixtures, assumes 3 validators, and test settings.
-# This will work for validator nodes alice, bob, carol, and any fullnodes; 'eve'
+# 1. The first thing necessary is initializing testnet genesis validators. All genesis nodes need to set up environment variables for their namespace/personas e.g. NS=alice. Also the TEST=y mode must be set, as well as a chain environment e.g. NODE_ENV=test. These settings must be done manually, preferably in .bashrc
 
-dev-join: clear fix fix-genesis dev-wizard
-# REQUIRES MOCK GIT INFRASTRUCTURE: OLSF/dev-genesis OLSF/dev-epoch-archive
-# see `devnet-archive` below 
-# We want to simulate the onboarding/new validator fetching genesis files from the mock archive: dev-genesis-archive
+# 2. Next those validators will register config data to a github repo OLSD/dev-genesis. Note: there could be github http errors, if validators attempt to write the same resource simultaneously
 
-# mock restore backups from dev-epoch-archive
-	rm -rf ~/.0L/restore
-# restore from MOCK archive OLSF/dev-epoch-archive
-	cargo r -p ol -- restore
-# start a node with fullnode.node.yaml configs
-	make start-full
+# THESE STEPS ARE ACHIEVED WITH `make testnet-register`
 
-dev-wizard:
+# 3. Wait. All genesis nodes need to complete registration. Otherwise buidling a genesis.blob (the first block), will fail.
+# 4. Each genesis node builds the genesis file locally, and submits to the github repo. (this remote genesis file is what subsequent non-genesis validators will use to bootstrap their db).
+# 5. Genesis validators can start their nodes.
+
+# THESE STEPS ARE ACHIEVED WITH  `make testnet`
+
+
+# 6. Assuming there is progress in the block production, subsequent validators can join.
+
+# THIS IS ACHIEVED WITH: testnet-onboard
+
+
+#### 1. TESTNET SETUP ####
+
+testnet-init: clear fix
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p onboard -- val --prebuilt-genesis ${DATA_PATH}/genesis.blob --skip-mining --chain-id 1 --genesis-ceremony
+	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --chain-id 1 --genesis-ceremony
 
-#### DEVNET RESTART ####
-# usually do this on Alice, which has the dev-epoch-archive repo, and dev-genesis
-
-# Do the ceremony: and also save the genesis fixtures, needs to happen before fix.
-dev-register: clear fix dev-wizard gen-register
+# Do the genesis ceremony registration, this includes the step testnet-validator-init-wizard
+testnet-register:  testnet-init gen-register
 # Do a dev genesis on each node after EVERY NODE COMPLETED registration.
-dev-genesis: genesis dev-save-genesis fix-genesis
 
-#### DEVNET INFRA ####
-# To make reproducible devnet files.
+# Makes the gensis file on each genesis validator, AND SAVES TO GITHUB so that other validators can be onboarded after genesis.
+testnet-genesis: genesis set-waypoint
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--publish-genesis ${DATA_PATH}/genesis.blob \
+	--shared-backend ${GENESIS_REMOTE}
 
-# Save the files to mock infrastructure i.e. devnet github
-dev-infra: dev-backup-archive dev-commit
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--publish-genesis ${DATA_PATH}/genesis_waypoint.txt \
+	--shared-backend ${GENESIS_REMOTE}
 
-dev-save-genesis: set-waypoint
-	rsync -a ${DATA_PATH}/genesis* ${SOURCE}/ol/devnet/genesis/${V}/
-	git add ${SOURCE}/ol/devnet/genesis/${V}/
+#### 2. TESTNET START ####
 
-dev-backup-archive:
-	cd ${HOME}/dev-epoch-archive && make devnet-backup
+# Do this to restart the network with new code. Assumes a registration has been completed, and the genesis validators are unchanged. If new IP addresses or number of genesis nodes changed, you must RERUN SETUP below.
+# - builds stdlib from source
+# - clears many of the home files
+# - adds fixtures
+# - initializes node configs
+# - rebuids genesis files and shares to github genesis repo
+# - starts node in validator mode
+testnet: clear fix testnet-init testnet-genesis start
 
-dev-commit:
-	git commit -a -m "save genesis fixtures to ${V}" | true
-	git push | true
+# For subsequent validators joining the testnet. This will fetch the genesis information saved
+testnet-onboard: clear fix
+	MNEM='${MNEM}' cargo run -p onboard -- val --github-org OLSF --repo dev-genesis --chain-id 1
+# start a node with fullnode.node.yaml configs
+	cargo r -p diem-node -- -f ~/.0L/fullnode.node.yaml
 
 
-TAG=$(shell git tag -l "previous")
-clean-tags:
-	git push origin --delete ${TAG}
-	git tag -d ${TAG}
-	
-nuke-testnet:
-	@echo WIPING EVERYTHING but keeping: github_token.txt, autopay_batch.json, set_layout.toml, /vdf_proofs/proof_0.json
-
-	@if test -d ${DATA_PATH}; then \
-		cd ${DATA_PATH} && cp github_token.txt autopay_batch.json set_layout.toml vdf_proofs/proof_0.json ~/; \
-		cd ${DATA_PATH} && rm -rf *; \
-		cd ~ && cp github_token.txt autopay_batch.json set_layout.toml ${DATA_PATH}; \
-		cd ${DATA_PATH} && mkdir vdf_proofs;\
-		cd ~ && cp proof_0.json ${DATA_PATH}/vdf_proofs/; \
-	fi
-	
 
 ####### SWARM ########
 
@@ -566,6 +554,13 @@ fork-config:
 	cargo run -p onboard -- fork -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
 
 # start node from files
-fork-start: 
+fork-start:
 	rm -rf ~/.0L/db
 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
+
+##### UTIL #####
+TAG=$(shell git tag -l "previous")
+clean-tags:
+	git push origin --delete ${TAG}
+	git tag -d ${TAG}
+	

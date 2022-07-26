@@ -5,7 +5,7 @@ use diem_config::config::NodeConfig;
 use diem_global_constants::{CONFIG_FILE, NODE_HOME};
 use diem_types::{
     account_address::AccountAddress, transaction::authenticator::AuthenticationKey,
-    waypoint::Waypoint,
+    waypoint::Waypoint, chain_id::NamedChain,
 };
 use dirs;
 use once_cell::sync::Lazy;
@@ -20,7 +20,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::dialogue::{add_tower, what_home, what_ip, what_statement, what_vfn_ip};
+use crate::dialogue::{what_home, what_ip, what_statement, what_vfn_ip};
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 
@@ -113,10 +113,16 @@ impl AppCfg {
         }
     }
 
-    /// format the standard namespace for 0L validator
+    /// format the standard namespace for 0L OPERATOR
     pub fn format_oper_namespace(&self) -> String {
       format!("{}-oper", self.profile.account.to_hex())
     }
+
+    /// format the standard namespace for 0L OWNER
+    pub fn format_owner_namespace(&self) -> String {
+      self.profile.account.to_hex()
+    }
+    
 
     /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self) -> PathBuf {
@@ -143,6 +149,7 @@ impl AppCfg {
         source_path: &Option<PathBuf>,
         statement: Option<String>,
         ip: Option<Ipv4Addr>,
+        network_id: &Option<NamedChain>,
     ) -> Result<AppCfg, Error> {
         // TODO: Check if configs exist and warn on overwrite.
         let mut default_config = AppCfg::default();
@@ -168,10 +175,17 @@ impl AppCfg {
         default_config.workspace.node_home =
             config_path.clone().unwrap_or_else(|| what_home(None, None));
 
+        if let Some(u) = upstream_peer {
+          default_config.profile.upstream_nodes = vec![u.to_owned()]
+        };
         // Add link to previous tower
-        if !*IS_TEST {
-            default_config.profile.tower_link = add_tower(&default_config);
-        }
+        // if !*IS_TEST {
+        //     default_config.profile.tower_link = add_tower(&default_config);
+        // }
+
+        if let Some(id) = network_id {
+          default_config.chain_info.chain_id = id.to_owned();
+        };
 
         if source_path.is_some() {
             // let source_path = what_source();
@@ -189,18 +203,11 @@ impl AppCfg {
             default_config.chain_info.base_epoch = *base_epoch;
             default_config.chain_info.base_waypoint = *base_waypoint;
         } else {
-            if let Some(url) = upstream_peer {
-                default_config.profile.upstream_nodes = vec![url.to_owned()];
-                let mut web_monitor_url = url.clone();
-                let (e, w) = bootstrap_waypoint_from_upstream(&mut web_monitor_url).unwrap();
-                default_config.chain_info.base_epoch = Some(e);
-                default_config.chain_info.base_waypoint = Some(w);
-            } else {
-                default_config.chain_info.base_epoch = None;
-                default_config.chain_info.base_waypoint = None;
-                println!("WARN: No --epoch or --waypoint or upstream --url passed. This should only be done at genesis. If that's not correct either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
-                // exit(1);
-            }
+
+          default_config.chain_info.base_epoch = None;
+          default_config.chain_info.base_waypoint = None;
+          println!("WARN: No --epoch or --waypoint or upstream --url passed. This should only be done at genesis. If that's not correct either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
+
         }
 
         // skip questionnaire if CI
@@ -350,7 +357,7 @@ impl Default for Workspace {
 // #[serde(deny_unknown_fields)]
 pub struct ChainInfo {
     /// Chain that this work is being committed to
-    pub chain_id: String,
+    pub chain_id: NamedChain,
 
     /// Epoch from which the node started syncing
     pub base_epoch: Option<u64>,
@@ -363,13 +370,14 @@ pub struct ChainInfo {
 impl Default for ChainInfo {
     fn default() -> Self {
         Self {
-            chain_id: "1".to_string(),
+            chain_id: NamedChain::MAINNET,
             base_epoch: Some(0),
             // Mock Waypoint. Miner complains without.
             base_waypoint: Waypoint::from_str(BASE_WAYPOINT).ok(),
         }
     }
 }
+
 /// Miner profile to commit this work chain to a particular identity
 #[derive(Clone, Debug, Deserialize, Serialize)]
 // #[serde(deny_unknown_fields)]

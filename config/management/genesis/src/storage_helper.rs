@@ -119,7 +119,7 @@ impl StorageHelper {
         &self, namespace: String, keys: KeyScheme, is_genesis: bool
     ) {
         let mut storage_owner = self.storage(namespace.clone());
-        let mut storage_oper = self.storage(namespace.clone());
+        let mut storage_oper = self.storage(format!("{}-oper", namespace.clone()));
 
         if is_genesis {
             // Data needed for testnet, swarm, and genesis ceremony.

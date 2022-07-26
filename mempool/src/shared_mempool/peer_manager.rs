@@ -35,7 +35,7 @@ pub(crate) type PeerSyncStates = HashMap<PeerNetworkId, PeerSyncState>;
 /// State of last sync with peer:
 /// `timeline_id` is position in log of ready transactions
 /// `is_alive` - is connection healthy
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub(crate) struct PeerSyncState {
     pub timeline_id: u64,
     pub is_alive: bool,
@@ -81,7 +81,7 @@ impl Ord for BatchId {
 }
 
 /// Txn broadcast-related info for a given remote peer.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BroadcastInfo {
     // Sent broadcasts that have not yet received an ack.
     pub sent_batches: BTreeMap<BatchId, SystemTime>,
@@ -140,6 +140,7 @@ impl PeerManager {
 
     /// Disables a peer if it can be restarted, otherwise removes it
     pub fn disable_peer(&self, peer: PeerNetworkId) {
+        error!("shared mempool disable peer {:?}", &peer);
         // Remove all state on the peer, and start over
         self.peer_states.lock().remove(&peer);
         counters::active_upstream_peers(&peer.raw_network_id()).dec();
@@ -150,6 +151,7 @@ impl PeerManager {
 
     pub fn is_backoff_mode(&self, peer: &PeerNetworkId) -> bool {
         if let Some(state) = self.peer_states.lock().get(peer) {
+            warn!("shared mempool is in backoff mode for peer: {:?} ", &peer);
             state.broadcast_info.backoff_mode
         } else {
             // If we don't have sync state, we shouldn't backoff
@@ -165,6 +167,10 @@ impl PeerManager {
     ) where
         V: TransactionValidation,
     {
+
+      // dbg!("execute broadcast");
+      // dbg!(&self.peer_states);
+
         // Start timer for tracking broadcast latency.
         let start_time = Instant::now();
 
@@ -178,6 +184,7 @@ impl PeerManager {
 
         // Only broadcast to peers that are alive.
         if !state.is_alive {
+            error!("shared mempool peer is not alive: {:?}", &state.metadata);
             return;
         }
 
@@ -242,6 +249,7 @@ impl PeerManager {
                 // This helps rate-limit egress network bandwidth and not overload a remote peer or this
                 // node's Diem network sender.
                 if pending_broadcasts >= self.mempool_config.max_broadcasts_per_peer {
+                  error!("will stop broadcasting shared mempool to peer: {:?}", &peer);
                     return;
                 }
             }
@@ -370,6 +378,7 @@ impl PeerManager {
         let _ = std::mem::replace(&mut *prioritized_peers, peers);
     }
 
+    /// Node receives ack from peer.
     pub fn process_broadcast_ack(
         &self,
         peer: PeerNetworkId,
@@ -433,6 +442,11 @@ impl PeerManager {
         // as a backoff broadcast.
         // This ensures backpressure request from remote peer is honored at least once.
         if backoff {
+            counters::PEER_MANAGER_PEER_REQUESTED_BACKOFF.with_label_values(&[
+                &peer.raw_network_id().to_string(),
+                &peer.peer_id().to_string(),
+            ]).inc();
+            error!("Peer requested backoff: {:?}", &peer);
             sync_state.broadcast_info.backoff_mode = true;
         }
     }

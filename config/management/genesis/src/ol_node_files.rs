@@ -1,6 +1,6 @@
 use std::{fmt::Debug, fs, net::Ipv4Addr, path::PathBuf, process::exit};
 
-use crate::{storage_helper::StorageHelper, seeds::SeedAddresses};
+use crate::{storage_helper::StorageHelper, seeds::{SeedAddresses, Seeds}};
 use diem_config::{
     config::OnDiskStorageConfig,
     config::SafetyRulesService,
@@ -18,7 +18,7 @@ use diem_global_constants::{
 };
 use diem_management::{config::ConfigPath, error::Error, secure_backend::ValidatorBackend};
 use diem_secure_storage::{CryptoStorage, KVStorage};
-use diem_types::{account_address::AccountAddress, chain_id::ChainId, waypoint::Waypoint};
+use diem_types::{account_address::AccountAddress, chain_id::{ChainId, NamedChain}, waypoint::Waypoint};
 use ol_types::account::ValConfigs;
 use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
@@ -45,7 +45,7 @@ pub struct Files {
     #[structopt(long)]
     repo: Option<String>,
     #[structopt(long)]
-    chain_id: u8,
+    chain_id: NamedChain,
     /// If specified, compares the internal state to that of a
     /// provided genesis. Note, that a waypont might diverge from
     /// the provided genesis after execution has begun.
@@ -90,7 +90,7 @@ impl Files {
 
 pub fn onboard_helper_all_files(
     output_dir: PathBuf,
-    chain_id: u8,
+    chain_name: NamedChain,
     github_org: Option<String>,
     repo: Option<String>,
     namespace: &str,
@@ -100,12 +100,12 @@ pub fn onboard_helper_all_files(
     layout_path: &Option<PathBuf>,
     val_ip_address: Option<Ipv4Addr>,
 ) -> Result<NodeConfig, anyhow::Error> {
-    // TODO: Do we need github token path with public repo?
-    let chain_id = ChainId::new(chain_id);
+
+  let chain_id = ChainId::new(chain_name.id()) ;
 
     let storage_helper = StorageHelper::get_with_path(output_dir.clone());
 
-    let (_genesis_path, genesis_waypoint) = make_genesis_file(
+    let (genesis_path, genesis_waypoint) = make_genesis_file(
         &output_dir,
         prebuilt_genesis,
         &repo,
@@ -124,7 +124,9 @@ pub fn onboard_helper_all_files(
       let file_string = fs::read_to_string(&p)?;
       let yaml: SeedAddresses = serde_yaml::from_str(&file_string)?;
       Some(yaml)
-    } else { None };
+    } else {
+      Seeds::new(genesis_path).get_network_peers_info().ok()
+    };
 
     let vfn_ip_address = val_ip_address.clone();
     // This next step depends on genesis waypoint existing in key_store.
@@ -164,9 +166,9 @@ pub fn make_all_profiles_yaml(
     genesis_waypoint: Waypoint,
     // _fullnode_only: bool,
 ) -> Result<NodeConfig, anyhow::Error> {
+    // fullnodes need seed peers, try to extract from the genesis file as a starting place.
 
-
-    let config = make_val_file(output_dir.clone(), vfn_ip_address, namespace)?;
+    let config = make_val_file(output_dir.clone(), seed_addr.clone(), vfn_ip_address, namespace)?;
     make_vfn_file(output_dir.clone(), val_ip_address, genesis_waypoint, namespace)?;
     make_fullnode_file(output_dir.clone(), seed_addr, genesis_waypoint)?;
 
@@ -177,12 +179,12 @@ pub fn make_all_profiles_yaml(
 // helper to write a new validator.node.yaml file.
 pub fn make_val_file(
     output_dir: PathBuf,
-    // val_ip_address: Ipv4Addr,
+    seed_addr: Option<SeedAddresses>,
     _vfn_ip_address: Option<Ipv4Addr>,
     namespace: &str,
 ) -> Result<NodeConfig, anyhow::Error> {
   // TODO: The validator's connection to VFN should be restricted to the vfn_ip_address
-    let mut val = make_validator_cfg(output_dir.clone(), namespace)?;
+    let mut val = make_validator_cfg(output_dir.clone(), namespace, seed_addr)?;
     write_yaml(output_dir.clone(), &mut val, NodeType::Validator)?;
     Ok(val)
 }
@@ -247,9 +249,9 @@ fn make_genesis_file(
         Some(path) => {
             // TODO: insert waypoint
             let gen_wp_path = path.parent().unwrap().join("genesis_waypoint.txt");
-            let wp: Waypoint =
-                fs::read_to_string(&gen_wp_path)?
-                    .parse().map_err(|_| anyhow::anyhow!("cannot parse genesis_waypoint.txt"))?;
+            let wp_string = fs::read_to_string(&gen_wp_path)?;
+            let wp: Waypoint = wp_string.trim().parse()
+                    .map_err(|_| anyhow::anyhow!("cannot parse genesis_waypoint.txt"))?;
             Ok((path.to_owned(), wp))
         }
         None => {
@@ -291,8 +293,8 @@ pub fn make_fullnode_cfg(
     c.set_data_dir(output_dir.clone());
     c.base.waypoint = WaypointConfig::FromConfig(waypoint);
     c.base.role = RoleType::FullNode;
+    c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
     // c.execution.genesis_file_location = output_dir.clone().join("genesis.blob");
-    
     // prune window exists to prevent state snapshots from taking up too much space.
     c.storage.prune_window = Some(100_000);
     
@@ -312,7 +314,7 @@ pub fn make_fullnode_cfg(
     Ok(c)
 }
 
-fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig, anyhow::Error> {
+fn make_validator_cfg(output_dir: PathBuf, namespace: &str, seed_addresses: Option<SeedAddresses>) -> Result<NodeConfig, anyhow::Error> {
     // TODO: make the validator node have mutual authentication with VFN.
     // for that it will need to get the Peer object of the VFN after the identity has been created
     // by default the VFN identity is random.
@@ -361,14 +363,26 @@ fn make_validator_cfg(output_dir: PathBuf, namespace: &str) -> Result<NodeConfig
     //////////////// CREATE CONFIGS FOR CONNECTING TO VFN PRIVATE NETWORK ////////////////
     // this is the only fullnode network a validator should connect to, so to be isolated from public.
 
-    // TODO: The validator's connection to VFN should be restricted to the vfn_ip_address
+    // TODO: The validator's connection to VFN should be restricted to the vfn_ip_address.
     let mut vfn_net = NetworkConfig::network_with_id(NetworkId::Private("vfn".to_string()));
     vfn_net.listen_address = format!("/ip4/0.0.0.0/tcp/{}", DEFAULT_VFN_PORT).parse()?;
+
+    let mut pub_net = NetworkConfig::network_with_id(NetworkId::Public);
+    
+    pub_net.listen_address = format!("/ip4/127.0.0.1/tcp/{}", DEFAULT_PUB_PORT).parse()?; // Don't fullnode sync requests
     
     // This ID is how the Validator node identifies themselves on their private VFN network.
     // same ID as being used in the validator network.
+    // Note that the the public network has no setting, so that it is randomly generated. 
     vfn_net.identity = network_id;
-    c.full_node_networks = vec![vfn_net.to_owned()];
+
+    if let Some(s) = seed_addresses {
+      pub_net.seed_addrs = s;
+    }
+
+    pub_net.discovery_method = DiscoveryMethod::Onchain;
+    
+    c.full_node_networks = vec![vfn_net.to_owned(), pub_net.to_owned()];
 
     // pick the order of the networks to connect to if the Validator network is not reachable.
     // TODO: Does this work for when the validator is not in the validator set? This has not worked int he past.

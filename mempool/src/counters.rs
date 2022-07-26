@@ -55,6 +55,10 @@ pub const STATE_SYNC_EVENT_LABEL: &str = "state_sync";
 pub const RECONFIG_EVENT_LABEL: &str = "reconfig";
 pub const PEER_BROADCAST_EVENT_LABEL: &str = "peer_broadcast";
 
+//////// 0L ////////
+pub const CONSENSUS_REQUEST_LABEL: &str = "consensus_request";
+
+
 // task spawn stage labels
 pub const SPAWN_LABEL: &str = "spawn";
 pub const START_LABEL: &str = "start";
@@ -448,4 +452,73 @@ pub static MAIN_LOOP: Lazy<DurationHistogram> = Lazy::new(|| {
         )
         .unwrap(),
     )
+});
+
+
+
+//////// 0L ////////
+/// Counter for my node 
+pub static SELF_REQUEST_BACKOFF: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "diem_mempool_self_request_backoff",
+        "Number of times my node requested backoff"
+    )
+    .unwrap()
+});
+
+pub static COORDINATOR_HANDLE_CLIENT_EVENT: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "diem_mempool_coordinator_handle_client_event",
+        "Number of times a client event was handled in mempool"
+    )
+        .unwrap()
+});
+
+pub static COORDINATOR_HANDLE_CONSENSUS_EVENT: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "diem_mempool_coordinator_handle_consensus_event",
+        "Number of times a consensus event was handled in mempool"
+    )
+        .unwrap()
+});
+
+pub static COORDINATOR_HANDLE_STATE_SYNC_EVENT: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "diem_mempool_coordinator_handle_state_sync_event",
+        "Number of times a state-sync event was handled in mempool"
+    )
+        .unwrap()
+});
+
+pub static COORDINATOR_HANDLE_MEMPOOL_RECONFIG_EVENT: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "diem_mempool_coordinator_handle_mempool_reconfig_event",
+        "Number of times a mempool reconfiguration event was handled in mempool"
+    )
+        .unwrap()
+});
+
+pub static TASKS_PROCESS_TX_BROADCAST_EVENT: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "diem_mempool_tasks_process_tx_broadcast_event",
+        "Number of times a transaction broadcast event was handled in mempool"
+    )
+        .unwrap()
+});
+
+pub static TASKS_PROCESS_CONSENSUS_REQUEST_EVENT: Lazy<IntCounter> = Lazy::new(|| {
+    register_int_counter!(
+        "diem_mempool_tasks_process_consensus_request_event",
+        "Number of times a consensus request was processed in mempool"
+    )
+        .unwrap()
+});
+
+pub static PEER_MANAGER_PEER_REQUESTED_BACKOFF: Lazy<IntCounterVec> = Lazy::new(|| {
+    register_int_counter_vec!(
+        "diem_mempool_peer_requested_backoff",
+        "Number of backoff requests from peers",
+        &["network", "peer"]
+    )
+        .unwrap()
 });

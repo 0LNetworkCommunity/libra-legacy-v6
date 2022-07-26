@@ -114,6 +114,7 @@ module Genesis {
         // FullnodeSubsidy::init_fullnode_sub(dm_account);
         Oracle::initialize(dm_account);
         TowerState::init_miner_list_and_stats(dm_account);
+        TowerState::init_difficulty(dm_account);
         Wallet::init(dm_account);
         DiemAccount::vm_init_slow(dm_account);
         Migrations::init(dm_account);

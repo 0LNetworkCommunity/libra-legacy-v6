@@ -22,6 +22,7 @@ diem-workspace-hack = { path = "../../../common/workspace-hack" }
 move-core-types = { path = "../../move-core/types" }
 move-vm-types = { path = "../types" }
 move-binary-format = { path = "../../move-binary-format" }
+diem-metrics = { path = "../../../common/metrics" }
 
 ######### 0L ########
 diem-global-constants = { path = "../../../config/global-constants"}

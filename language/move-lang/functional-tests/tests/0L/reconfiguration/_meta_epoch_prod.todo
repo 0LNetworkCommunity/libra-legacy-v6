@@ -7,25 +7,28 @@
 //! block-time: 1
 //! round: 1
 
+//! new-transaction
+//! sender: diemroot
+script {
+
+    use 0x1::Testnet;
+
+    fun main(vm: signer) {
+      Testnet::remove_testnet(&vm);
+        
+    }
+}
+//check: EXECUTED
+
+
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
 //! block-prologue
 //! proposer: alice
-//! block-time: 864000000000
-//! round: 15
+//! block-time: 864100000000
+//! round: 1000000
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
 // check: NewEpochEvent
 //////////////////////////////////////////////
-
-//! new-transaction
-//! sender: diemroot
-script {  
-    use 0x1::Debug::print;
-    fun main(_vm: signer) {
-        // We are in a new epoch.
-        print(&12121212121212);
-    }
-}
-//check: EXECUTED

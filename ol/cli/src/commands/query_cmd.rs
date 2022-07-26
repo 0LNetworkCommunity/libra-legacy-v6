@@ -24,6 +24,9 @@ pub struct QueryCmd {
     #[options(short = "b", help = "balance")]
     balance: bool,
 
+    #[options(short = "u", help = "unlocked balance")]
+    unlocked_balance: bool,
+
     #[options(no_short, help = "blockheight")]
     blockheight: bool,
     
@@ -92,6 +95,10 @@ impl Runnable for QueryCmd {
             query_type = QueryType::Balance{account};
             display = "BALANCE";
         }
+        else if self.unlocked_balance {
+            query_type = QueryType::UnlockedBalance{account};
+            display = "UNLOCKED BALANCE";
+        }
         else if self.blockheight {
             query_type = QueryType::BlockHeight;
             display = "BLOCK HEIGHT";
@@ -159,7 +166,7 @@ impl Runnable for QueryCmd {
 }
 
 /// get wallet type
-pub fn get_wallet_type(account: AccountAddress, mut node: Node) -> WalletType {
+pub fn get_wallet_type(account: AccountAddress, node: Node) -> WalletType {
     match node.get_annotate_account_blob(account) {
         Ok((Some(r), _)) => {
             if is_slow_wallet(&r) {

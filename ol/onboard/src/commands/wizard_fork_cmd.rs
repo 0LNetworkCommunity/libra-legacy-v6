@@ -8,6 +8,7 @@ use crate::entrypoint;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use diem_genesis_tool::{ol_node_files, waypoint};
+use diem_types::chain_id::NamedChain;
 use diem_types::transaction::SignedTransaction;
 use diem_types::waypoint::Waypoint;
 use diem_wallet::WalletLibrary;
@@ -32,7 +33,7 @@ pub struct ForkCmd {
     #[options(help = "explicitly set home path instead of answer in wizard, for CI usually")]
     home_path: Option<PathBuf>,
     #[options(help = "id of the chain")]
-    chain_id: Option<u8>,
+    chain_id: Option<NamedChain>,
     #[options(help = "github org of genesis repo")]
     github_org: Option<String>,
     #[options(help = "repo with with genesis transactions")]
@@ -98,6 +99,7 @@ impl Runnable for ForkCmd {
             &self.source_path,
             None,
             None,
+            &None, // defaults to mainnet
         )
         .unwrap_or_else(|e| {
           println!("could not create app configs, exiting. Message: {:?}", &e);
@@ -159,7 +161,7 @@ impl Runnable for ForkCmd {
         // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
         ol_node_files::onboard_helper_all_files(
             home_dir.clone(),
-            self.chain_id.unwrap_or(1),
+            self.chain_id.unwrap_or(NamedChain::MAINNET),
             self.github_org.clone(),
             self.repo.clone(),
             &namespace,

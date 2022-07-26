@@ -47,6 +47,7 @@ serde_json = "1"
 diem-github-client = { path = "../../../secure/storage/github" }
 ol-types = {path = "../../../ol/types"}
 serde_yaml = "0.8.17"
+base64 = "0.13.0"
 
 [dev-dependencies]
 diem-config = { path = "../..", features = ["fuzzing"]}

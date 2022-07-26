@@ -10,7 +10,7 @@ use diem_crypto::{
 use diem_global_constants::OPERATOR_KEY;
 
 use diem_secure_storage::{CryptoStorage, Namespaced, OnDiskStorage, Storage};
-use diem_types::{account_address::AccountAddress, waypoint::Waypoint};
+use diem_types::{account_address::AccountAddress, waypoint::Waypoint, chain_id::NamedChain};
 use diem_types::{chain_id::ChainId, transaction::authenticator::AuthenticationKey};
 use ol::node::client::find_a_remote_jsonrpc;
 use ol_keys::{scheme::KeyScheme, wallet};
@@ -146,10 +146,10 @@ impl TxParams {
         let tx_cost = config.tx_configs.get_cost(tx_type);
 
         let chain_id = if is_swarm {
-            ChainId::new(4)
+            ChainId::new(NamedChain::TESTING.id())
         } else {
             // main net id
-            ChainId::new(1)
+            ChainId::new(config.chain_info.chain_id.id())
         };
 
         let tx_params = TxParams {
@@ -203,7 +203,7 @@ impl TxParams {
                 user_tx_timeout: 5_000,
             },
 
-            chain_id: ChainId::new(4),
+            chain_id: ChainId::new(NamedChain::TESTING.id()),
             is_operator
         };
 
@@ -266,11 +266,12 @@ impl TxParams {
             Some(w) => w,
             None => config.get_waypoint(None)?,
         };
+
         let chain_id = if is_swarm {
-            ChainId::new(4)
+            ChainId::new(NamedChain::TESTING.id())
         } else {
             // main net id
-            ChainId::new(1)
+            ChainId::new(config.chain_info.chain_id.id())
         };
 
         let tx_params = TxParams {

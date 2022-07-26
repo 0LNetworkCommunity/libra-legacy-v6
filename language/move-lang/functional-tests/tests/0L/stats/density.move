@@ -41,8 +41,8 @@ script {
 
         // Testing Above Threshold
         let i = 1;
-        while (i < 2) {
-            // Mock additional 2 blocks validated out of 500.
+        while (i < 200) {
+            // Mock additional 200 blocks validated out of 500.
             Stats::process_set_votes(vm, &voters);
             i = i + 1;
         };
