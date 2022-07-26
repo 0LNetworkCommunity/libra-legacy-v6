@@ -9,15 +9,15 @@ use crate::{
     node::{client, node::Node},
 };
 use abscissa_core::{config, Command, FrameworkError, Options, Runnable};
-use anyhow::{bail, Error, anyhow};
+use anyhow::{anyhow, bail, Error};
 use dialoguer::Confirm;
 use diem_genesis_tool::{
     init, key, ol_node_files,
     seeds::{SeedAddresses, Seeds},
 };
 use diem_json_rpc_client::AccountAddress;
-use diem_types::{transaction::authenticator::AuthenticationKey, chain_id::NamedChain};
 use diem_types::waypoint::Waypoint;
+use diem_types::{chain_id::NamedChain, transaction::authenticator::AuthenticationKey};
 use diem_wallet::WalletLibrary;
 use fs_extra::file::{copy, CopyOptions};
 use ol_keys::{scheme::KeyScheme, wallet};
@@ -165,10 +165,11 @@ impl Runnable for InitCmd {
         // fetch a list of seed peers from the current on chain discovery
         // doesn't need mnemonic
         if self.seed_peer {
-            let seed = pick_seed_peer(&mut app_cfg, entry_args.swarm_path.clone()).expect("could not find any seed peers");
+            let seed = pick_seed_peer(&mut app_cfg, entry_args.swarm_path.clone())
+                .expect("could not find any seed peers");
 
             let path = app_cfg.workspace.node_home.join("seed_fullnodes.yaml");
-            
+
             write_seed_peers_file(&path, &seed).unwrap();
             exit(0);
         }
@@ -205,9 +206,13 @@ impl Runnable for InitCmd {
 
             let namespace = app_cfg.format_oper_namespace();
             let output_dir = app_cfg.workspace.node_home.clone();
-            let seeds = if self.seed_peer { pick_seed_peer(&mut app_cfg, entry_args.swarm_path.clone()).ok() } else { None };
+            let seeds = if self.seed_peer {
+                pick_seed_peer(&mut app_cfg, entry_args.swarm_path.clone()).ok()
+            } else {
+                None
+            };
 
-            match ol_node_files::make_val_file(output_dir, seeds,None, &namespace) {
+            match ol_node_files::make_val_file(output_dir, seeds, None, &namespace) {
                 Ok(_) => {}
                 Err(e) => {
                     println!("Could not create file, exiting. Message: {:?}", e);
@@ -259,11 +264,11 @@ impl Runnable for InitCmd {
         }
 
         if self.reset_safety {
-          diem_genesis_tool::key::reset_safety_data(
-            &app_cfg.workspace.node_home,
-            &app_cfg.format_owner_namespace()
-          );
-          exit(0)
+            diem_genesis_tool::key::reset_safety_data(
+                &app_cfg.workspace.node_home,
+                &app_cfg.format_owner_namespace(),
+            );
+            exit(0)
         }
 
         /////////// Everything below requires mnemonic ////////
@@ -288,7 +293,6 @@ impl Runnable for InitCmd {
                             &self.waypoint,
                             &self.source_path,
                             &self.chain_id,
-
                         )
                         .unwrap_or_else(|e| {
                             println!(
@@ -457,13 +461,17 @@ fn update_waypoint(
     Ok(new_waypoint)
 }
 
-fn pick_seed_peer(app_cfg: &mut AppCfg, swarm_path: Option<PathBuf>) -> anyhow::Result<SeedAddresses> {
+fn pick_seed_peer(
+    app_cfg: &mut AppCfg,
+    swarm_path: Option<PathBuf>,
+) -> anyhow::Result<SeedAddresses> {
     match seed_peers_from_chain(app_cfg, swarm_path) {
         Ok(s) => Ok(s),
         Err(_) => {
             println!("could not get seeds from chain, trying from genesis.blob");
-            let seed = Seeds::new(app_cfg.workspace.node_home.join("genesis.blob")).get_network_peers_info()
-            .map_err(|_| { anyhow!("could not parse seed peers from genesis.blob")})?;
+            let seed = Seeds::new(app_cfg.workspace.node_home.join("genesis.blob"))
+                .get_network_peers_info()
+                .map_err(|_| anyhow!("could not parse seed peers from genesis.blob"))?;
             Ok(seed)
         }
     }

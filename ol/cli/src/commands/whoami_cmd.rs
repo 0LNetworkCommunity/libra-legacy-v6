@@ -9,7 +9,7 @@ use anyhow::{anyhow, Error};
 use diem_config::{config::NodeConfig, network_id::NetworkId};
 use diem_crypto::x25519;
 use ol_keys::{scheme::KeyScheme, wallet};
-use ol_types::{account::ValConfigs};
+use ol_types::account::ValConfigs;
 
 use crate::prelude::app_config;
 
@@ -24,7 +24,7 @@ impl Runnable for WhoamiCmd {
     /// Print version message
     fn run(&self) {
         let app_cfg = app_config().to_owned();
-        
+
         if let Some(f) = &self.check_yaml {
             display_id_in_file(f).unwrap_or_else(|e| {
                 println!("error reading yaml file: {:?}", &e);
@@ -52,9 +52,18 @@ impl Runnable for WhoamiCmd {
         println!("----- pub ed25519 keys -----\n");
         println!("key 0 Owner: {}\n", scheme.child_0_owner.get_public());
         println!("key 1 Operator: {}\n", scheme.child_1_operator.get_public());
-        println!("key 2 Val Network: {}\n", scheme.child_2_val_network.get_public());
-        println!("key 3 Pub FN Network: {}\n", scheme.child_3_fullnode_network.get_public());
-        println!("key 4 Consensus: {}\n", scheme.child_4_consensus.get_public());
+        println!(
+            "key 2 Val Network: {}\n",
+            scheme.child_2_val_network.get_public()
+        );
+        println!(
+            "key 3 Pub FN Network: {}\n",
+            scheme.child_3_fullnode_network.get_public()
+        );
+        println!(
+            "key 4 Consensus: {}\n",
+            scheme.child_4_consensus.get_public()
+        );
         println!("key 5 Executor: {}\n", scheme.child_5_executor.get_public());
 
         println!("----- pub x25519 network keys -----\n");
@@ -101,8 +110,8 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
 
     println!("We will use this machines external IP for display. Note that if you move this file the IP will display differently on another machine. ");
     let ip = get_my_ip().unwrap_or_else(|_| {
-      println!("could not get external IP, using 0.0.0.0 for display");
-      "0.0.0.0".parse().unwrap()
+        println!("could not get external IP, using 0.0.0.0 for display");
+        "0.0.0.0".parse().unwrap()
     });
 
     println!("\n ACTUAL NETWORK IDs IN {:?}\n", yaml_path.as_os_str());
@@ -112,11 +121,7 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
         let peer_id = &val_net.peer_id();
         let priv_key = &val_net.identity_key();
         let pub_key = priv_key.public_key();
-        let addr = ValConfigs::make_unencrypted_addr(
-            &ip,
-            pub_key,
-            NetworkId::Validator,
-        );
+        let addr = ValConfigs::make_unencrypted_addr(&ip, pub_key, NetworkId::Validator);
         println!("Address (encrypted) on VALIDATOR network\n");
         println!("{:?}:\n", &peer_id);
         println!("{:?}\n", &addr);
@@ -135,11 +140,7 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
                 let peer_id = &n.peer_id();
                 let priv_key = &n.identity_key();
                 let pub_key = priv_key.public_key();
-                let addr = ValConfigs::make_unencrypted_addr(
-                    &ip,
-                    pub_key,
-                    NetworkId::Validator,
-                );
+                let addr = ValConfigs::make_unencrypted_addr(&ip, pub_key, NetworkId::Validator);
                 println!("{:?}:\n", &peer_id);
                 println!("{:?}\n", &addr);
             }
@@ -164,7 +165,7 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
 }
 
 fn get_my_ip() -> Result<Ipv4Addr, Error> {
-   Ok( match reqwest::blocking::get("https://ifconfig.me") {
+    Ok(match reqwest::blocking::get("https://ifconfig.me") {
         Ok(resp) => {
             let ip_str = resp.text()?;
             ip_str.parse()?
@@ -173,6 +174,5 @@ fn get_my_ip() -> Result<Ipv4Addr, Error> {
             println!("couldn't detect external IP address, using 0.0.0.0 for display");
             "0.0.0.0".parse()?
         }
-    }
-  )
+    })
 }
