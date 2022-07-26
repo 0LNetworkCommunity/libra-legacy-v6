@@ -247,7 +247,7 @@ pub fn verify_proof<T: BigNum, V: ClassGroup<BigNum = T>>(
     y.serialize(&mut y_buf[..]).map_err(|_| ())?;
     let b = hash_prime(&[&x_buf[..], &y_buf[..]]);
     let mut r = T::from(0);
-    
+
     r.mod_powm(&T::from(2u64), &T::from(t), &b);
     proof.pow(b);
     x.pow(r);
