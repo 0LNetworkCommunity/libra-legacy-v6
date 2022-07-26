@@ -19,8 +19,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 /// The GAS coin resource
 pub struct GasResource {
-  ///
-  pub value: u64,
+    ///
+    pub value: u64,
 }
 
 impl GasResource {
@@ -37,11 +37,11 @@ impl GasResource {
     ///
     pub fn struct_tag() -> StructTag {
         StructTag {
-          address: CORE_CODE_ADDRESS,
-          name: GasResource::struct_identifier(),
-          module: GasResource::module_identifier(),
-          type_params: vec![xus_tag()],
-      }
+            address: CORE_CODE_ADDRESS,
+            name: GasResource::struct_identifier(),
+            module: GasResource::module_identifier(),
+            type_params: vec![xus_tag()],
+        }
     }
 
     ///

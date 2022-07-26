@@ -1,10 +1,8 @@
 //! validator config view for web monitor
 
-use diem_types::{
-    access_path::AccessPath,
-    account_config::constants:: CORE_CODE_ADDRESS,
-};
 use anyhow::Result;
+use diem_types::{access_path::AccessPath, account_config::constants::CORE_CODE_ADDRESS};
+use move_core_types::account_address::AccountAddress;
 use move_core_types::{
     ident_str,
     identifier::IdentStr,
@@ -12,8 +10,6 @@ use move_core_types::{
     move_resource::{MoveResource, MoveStructType},
 };
 use serde::{Deserialize, Serialize};
-use move_core_types::account_address::AccountAddress;
-
 
 //// TODO THIS IS DUPLICATED WITH types/src/validator_config.rs
 /// Please rename.
@@ -58,10 +54,7 @@ impl ValidatorConfigResource {
     }
     ///
     pub fn access_path(account: AccountAddress) -> AccessPath {
-        let resource_key = ResourceKey::new(
-            account,
-            ValidatorConfigResource::struct_tag(),
-        );
+        let resource_key = ResourceKey::new(account, ValidatorConfigResource::struct_tag());
         AccessPath::resource_access_path(resource_key)
     }
     ///
@@ -69,7 +62,7 @@ impl ValidatorConfigResource {
         AccessPath::resource_access_vec(ValidatorConfigResource::struct_tag())
     }
 
-    /// 
+    ///
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
         bcs::from_bytes(bytes).map_err(Into::into)
     }
@@ -78,7 +71,7 @@ impl ValidatorConfigResource {
     pub fn get_view(&self) -> ValidatorConfigView {
         ValidatorConfigView {
             operator_account: self.operator_account.clone(),
-            operator_has_balance: None
+            operator_has_balance: None,
         }
     }
 }
