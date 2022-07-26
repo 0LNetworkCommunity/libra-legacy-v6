@@ -11,7 +11,9 @@ use crate::tx_params::TxParams;
 pub fn get_epoch(tx_params: &TxParams) -> u64 {
     let client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint).unwrap();
 
-    let (blob, _version) = client.get_account_state_blob(&AccountAddress::ZERO).unwrap();
+    let (blob, _version) = client
+        .get_account_state_blob(&AccountAddress::ZERO)
+        .unwrap();
     if let Some(account_blob) = blob {
         let account_state = AccountState::try_from(&account_blob).unwrap();
         return account_state
