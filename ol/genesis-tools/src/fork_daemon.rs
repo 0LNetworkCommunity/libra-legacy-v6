@@ -6,8 +6,7 @@ use anyhow::Result;
 /// starts the daemon for the live fork.
 pub fn fork_daemon(epoch: Option<u64>) -> Result<()> {
     if !archive_exists() {
-      wait_for_archive(epoch)?;
-
+        wait_for_archive(epoch)?;
     };
     // generate_genesis_from_snapshot
     match restart() {
@@ -17,16 +16,15 @@ pub fn fork_daemon(epoch: Option<u64>) -> Result<()> {
 }
 
 fn _is_epoch() -> bool {
-  true
+    true
 }
 
 fn _create_backup() -> Result<()> {
-  Ok(())
-
+    Ok(())
 }
 
 fn archive_exists() -> bool {
-  true
+    true
 }
 /// restart node from new genesis.blob from archive
 pub fn restart() -> Result<()> {
