@@ -5,7 +5,7 @@
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemAccount;
-    use DiemFramework::DiemConfig;
+    // use DiemFramework::DiemConfig;
     use DiemFramework::Testnet;
     use DiemFramework::EpochBoundary;
 
@@ -13,7 +13,7 @@ script {
         // transfers are always enabled on testnet, unsetting testnet would make transfers
         // not work, unless the conditions are met.
         Testnet::remove_testnet(&vm);
-        assert!(!DiemConfig::check_transfer_enabled(), 735701);
+        // assert!(!DiemConfig::check_transfer_enabled(), 735701);
         assert!(DiemAccount::unlocked_amount(@Alice) == 0, 735702);
 
         // TODO: simulate epoch boundary with testsuite directives. 
@@ -29,9 +29,12 @@ script {
 script {
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
+    use DiemFramework::Debug::print;
 
     fun main() {
-        assert!(DiemAccount::unlocked_amount(@Alice) == 0, 735703);
+        print(&777);
+        print(&DiemAccount::unlocked_amount(@Alice));
+        assert!(DiemAccount::unlocked_amount(@Alice) == 1000000000, 735703);
         assert!(DiemAccount::balance<GAS>(@Bob) == 1000000, 735704);
     }
 }
@@ -50,5 +53,4 @@ script {
         DiemAccount::restore_withdraw_capability(with_cap);
     }
 }
-// check: ABORTED
-// Error: Transaction discarded. VMStatus: status ABORTED of type Execution with sub status 120127
+// check: EXECUTED

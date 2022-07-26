@@ -9,7 +9,7 @@ module DiemFramework::DiemConfig {
     use Std::Errors;
     use Std::Event;
     use Std::Signer;
-    use DiemFramework::Testnet;    
+    // use DiemFramework::Testnet;
     friend DiemFramework::DiemVersion;
     friend DiemFramework::RegisteredCurrencies;
     friend DiemFramework::DiemTransactionPublishingOption;
@@ -516,11 +516,11 @@ module DiemFramework::DiemConfig {
     }
 
     //////// 0L ////////
-    public fun check_transfer_enabled(): bool acquires Configuration {
-        if(Testnet::is_testnet()){
-            true
-        } else {
-            get_current_epoch() > TRANSFER_ENABLED_EPOCH
-        }
-    }
+    // public fun check_transfer_enabled(): bool acquires Configuration {
+    //     if(Testnet::is_testnet()){
+    //         true
+    //     } else {
+    //         get_current_epoch() > TRANSFER_ENABLED_EPOCH
+    //     }
+    // }
 }

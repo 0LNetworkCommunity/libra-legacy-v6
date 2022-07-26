@@ -1279,14 +1279,14 @@ module DiemFramework::DiemAccount {
         );
         // Slow wallet transfers disabled by default, enabled when epoch is 1000
         // At that point slow wallets receive 1,000 coins unlocked per day.
-        if (is_slow(sender_addr) && !DiemConfig::check_transfer_enabled() ) {
-          // if transfers are not enabled for slow wallets
-          // then the tx should fail
-            assert!(
-                false, 
-                Errors::limit_exceeded(ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE)
-            );
-        };
+        // if (is_slow(sender_addr) && !DiemConfig::check_transfer_enabled() ) {
+        //   // if transfers are not enabled for slow wallets
+        //   // then the tx should fail
+        //     assert!(
+        //         false, 
+        //         Errors::limit_exceeded(ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE)
+        //     );
+        // };
         
         // Abort if we already extracted the unique withdraw capability for this account.
         assert!(

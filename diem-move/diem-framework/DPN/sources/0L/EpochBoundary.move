@@ -47,10 +47,10 @@ module EpochBoundary {
         let proposed_set = propose_new_set(vm, height_start, height_now);
         
         // Update all slow wallet limits
-        if (DiemConfig::check_transfer_enabled()) {
-            DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
-            // update_validator_withdrawal_limit(vm);
-        };
+        // if (DiemConfig::check_transfer_enabled()) {
+        //     DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock());
+        //     // update_validator_withdrawal_limit(vm);
+        // };
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now)
     }
 
