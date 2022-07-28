@@ -71,9 +71,10 @@ pub fn find_a_remote_jsonrpc(config: &AppCfg) -> Result<DiemClient, Error> {
     if let Some(url_clean) = url {
         return make_client(Some(url_clean.to_owned()));
     };
-    Err(Error::msg(
-        format!("Cannot connect to any JSON RPC peers in the list of upstream_nodes in 0L.toml {:?}", list)
-    ))
+    Err(Error::msg(format!(
+        "Cannot connect to any JSON RPC peers in the list of upstream_nodes in 0L.toml {:?}",
+        list
+    )))
 }
 
 /// the default client will be the first option in the list.
@@ -100,12 +101,10 @@ pub fn pick_client(swarm_path: Option<PathBuf>, config: &mut AppCfg) -> Result<D
     let remote_client = find_a_remote_jsonrpc(config)?;
     // compares to an upstream random remote client. If it is synced, use the local client as the default
     let mut node = Node::new(local_client, config, is_swarm);
-    match node.check_sync(){
-        Ok(a) => { 
-          match a.is_synced {
+    match node.check_sync() {
+        Ok(a) => match a.is_synced {
             true => Ok(node.client),
             false => Ok(remote_client),
-          }
         },
         _ => Ok(remote_client),
     }

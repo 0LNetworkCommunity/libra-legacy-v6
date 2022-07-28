@@ -10,8 +10,8 @@ use diem_types::{
     // transaction::Version // 0L todo
 };
 use ol_types::{
-    autopay::{AutoPayResource, AutoPayView}, 
-    validator_config::{ValidatorConfigResource, ValidatorConfigView}
+    autopay::{AutoPayResource, AutoPayView},
+    validator_config::{ValidatorConfigResource, ValidatorConfigView},
 };
 // use diem_resource_viewer::{AnnotatedAccountStateBlob}; // 0L todo
 // use move_resource_viewer::MoveValueAnnotator; // 0L todo
@@ -44,7 +44,7 @@ impl OwnerAccountView {
             is_in_validator_set: false,
             autopay: None,
             operator_account: None,
-            operator_balance: None,            
+            operator_balance: None,
         }
     }
 
@@ -52,7 +52,7 @@ impl OwnerAccountView {
     pub fn has_autopay_not_empty(&self) -> bool {
         match &self.autopay {
             Some(autopay) => autopay.payments.len() > 0,
-            None => false
+            None => false,
         }
     }
 
@@ -65,33 +65,29 @@ impl OwnerAccountView {
     pub fn has_operator_positive_balance(&self) -> bool {
         match self.operator_balance {
             Some(balance) => balance > 0.0,
-            None => false
+            None => false,
         }
-    }    
+    }
 }
 
 impl Node {
     /// fetch new account info
-    pub fn refresh_account_info(&mut self) -> Option<&OwnerAccountView>{
+    pub fn refresh_account_info(&mut self) -> Option<&OwnerAccountView> {
         match self.get_account_view() {
             Some(av) => {
                 self.vitals.account_view.balance = get_balance(av);
-                self.vitals.account_view.is_in_validator_set = 
-                    self.is_in_validator_set();
-                self.vitals.account_view.autopay = 
+                self.vitals.account_view.is_in_validator_set = self.is_in_validator_set();
+                self.vitals.account_view.autopay =
                     self.get_autopay_view(self.vitals.account_view.address);
-                let operator = 
-                    self.get_validator_operator_account(
-                        self.vitals.account_view.address
-                    );
+                let operator =
+                    self.get_validator_operator_account(self.vitals.account_view.address);
                 self.vitals.account_view.operator_account = operator;
                 if let Some(a) = operator {
-                    self.vitals.account_view.operator_balance = 
-                        self.get_account_balance(a);
+                    self.vitals.account_view.operator_balance = self.get_account_balance(a);
                 }
                 Some(&self.vitals.account_view)
             }
-            None => None
+            None => None,
         }
     }
 
@@ -105,49 +101,47 @@ impl Node {
     pub fn get_autopay_view(&mut self, account: AccountAddress) -> Option<AutoPayView> {
         let state = self.get_account_state(account);
         match state {
-            Ok(state) => match state.get_resource_impl::<AutoPayResource>(
-                AutoPayResource::resource_path().as_slice()
-            ) {
+            Ok(state) => match state
+                .get_resource_impl::<AutoPayResource>(AutoPayResource::resource_path().as_slice())
+            {
                 Ok(Some(res)) => Some(self.enrich_note(res.get_view())),
                 Ok(None) => None,
-                Err(_) => None
-            }
-            Err(_) => None
+                Err(_) => None,
+            },
+            Err(_) => None,
         }
     }
 
     /// Enrich with notes from dictionary file
     fn enrich_note(&mut self, mut autopay: AutoPayView) -> AutoPayView {
         let dic = self.load_account_dictionary();
-        for payment in autopay.payments.iter_mut()  {
+        for payment in autopay.payments.iter_mut() {
             payment.note = Some(dic.get_note_for_address(payment.payee));
-        }        
+        }
         autopay
     }
 
     /// Get validator config view
-    pub fn get_validator_config(
-        &self, address: AccountAddress
-    ) -> Option<ValidatorConfigView> {
+    pub fn get_validator_config(&self, address: AccountAddress) -> Option<ValidatorConfigView> {
         let state = self.get_account_state(address);
         match state {
             Ok(state) => match state.get_resource_impl::<ValidatorConfigResource>(
-                ValidatorConfigResource::resource_path().as_slice()
+                ValidatorConfigResource::resource_path().as_slice(),
             ) {
                 Ok(Some(res)) => {
                     let mut view = res.get_view();
-                    
+
                     let operator = view.operator_account;
                     if operator.is_some() {
-                        view.operator_has_balance = 
+                        view.operator_has_balance =
                             Some(self.has_positive_balance(operator.unwrap()))
                     }
                     Some(view)
-                },
+                }
                 Ok(None) => None,
-                Err(_) => None
-            }
-            Err(_) => None
+                Err(_) => None,
+            },
+            Err(_) => None,
         }
     }
 
@@ -161,11 +155,12 @@ impl Node {
 
     /// Get operator account addres from validator
     pub fn get_validator_operator_account(
-        &mut self, address: AccountAddress
+        &mut self,
+        address: AccountAddress,
     ) -> Option<AccountAddress> {
         match self.get_validator_config(address) {
             Some(config) => config.operator_account,
-            None => None
+            None => None,
         }
     }
 
@@ -175,8 +170,8 @@ impl Node {
             Ok(response) => match response.into_inner() {
                 Some(account_view) => Some(get_balance(account_view)),
                 None => None,
-            }
-            Err(_) => None
+            },
+            Err(_) => None,
         }
     }
 
@@ -203,10 +198,12 @@ impl Node {
         let (blob, _ver) = self.client.get_account_state_blob(&address)?;
         if let Some(account_blob) = blob {
             match AccountState::try_from(&account_blob) {
-                Ok(a) =>  Ok(a),
-                Err(e) => Err(Error::msg(format!("could not fetch account state. Message: {:?}", e))),
+                Ok(a) => Ok(a),
+                Err(e) => Err(Error::msg(format!(
+                    "could not fetch account state. Message: {:?}",
+                    e
+                ))),
             }
-            
         } else {
             Err(Error::msg("connection to client"))
         }
@@ -219,17 +216,15 @@ impl Node {
     ) -> Result<Option<(EventHandle, EventHandle)>, Error> {
         match self.get_account_state(account) {
             Ok(account_state) => {
-              let handles = account_state
-              .get_diem_account_resource()?
-              .map(|resource| {
-                (
-                    resource.sent_events().clone(),
-                    resource.received_events().clone(),
-                )
-              });
-              Ok(handles)
-            },
-            Err(_) =>  Err(Error::msg("cannot get payment event handles"))
+                let handles = account_state.get_diem_account_resource()?.map(|resource| {
+                    (
+                        resource.sent_events().clone(),
+                        resource.received_events().clone(),
+                    )
+                });
+                Ok(handles)
+            }
+            Err(_) => Err(Error::msg("cannot get payment event handles")),
         }
     }
 
@@ -240,22 +235,28 @@ impl Node {
         start: u64,
         limit: u64,
     ) -> Result<Vec<EventView>> {
-        Ok(self.client.get_events(*event_key, start, limit).unwrap().into_inner())
+        Ok(self
+            .client
+            .get_events(*event_key, start, limit)
+            .unwrap()
+            .into_inner())
     }
 
     /// get all events associated with an EventHandle
     // change this to async and do paging.
     pub fn get_handle_events(
-        &mut self, event_handle: &EventHandle, seq_start: Option<u64>
+        &mut self,
+        event_handle: &EventHandle,
+        seq_start: Option<u64>,
     ) -> Result<Vec<EventView>> {
         if event_handle.count() == 0 {
             return Ok(vec![]);
         }
         // TODO: how to get the highest sequence number available in the database.
         self.get_events(
-          event_handle.key(), 
-          seq_start.unwrap_or(0), 
-          event_handle.count()
+            event_handle.key(),
+            seq_start.unwrap_or(0),
+            event_handle.count(),
         )
     }
 }

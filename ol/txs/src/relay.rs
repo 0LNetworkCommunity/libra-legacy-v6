@@ -4,9 +4,9 @@
 use std::path::PathBuf;
 
 use crate::{
-  save_tx,
-  submit_tx::{tx_params_wrapper, wait_for_tx},
-  tx_params::TxParams,
+    save_tx,
+    submit_tx::{tx_params_wrapper, wait_for_tx},
+    tx_params::TxParams,
 };
 use anyhow::Error;
 use diem_client::BlockingClient as DiemClient;
@@ -21,7 +21,7 @@ pub fn relay_tx(
     // original_signer: AccountAddress,
 ) -> Result<TransactionView, Error> {
     let mut client = DiemClient::new(tx_params.url.clone());
-  
+
     let original_signer = txn.sender();
     // let chain_id = ChainId::new(client.get_metadata().unwrap().chain_id);
     let account_state = client.get_account(original_signer)?.into_inner();
@@ -64,16 +64,16 @@ pub fn relay_batch(batch_tx: &Vec<SignedTransaction>, tx_params: &TxParams) -> R
 
 /// submit transaction from a file with batch of signed transactions
 pub fn relay_from_file(path: PathBuf) -> Result<(), Error> {
-  //NOTE: Cost does not affect relaying, that's determined in original tx
-  let tx_params = tx_params_wrapper(TxType::Mgmt).expect("could not get tx parameters");
-  match save_tx::read_tx_from_file(path) {
-    Ok(batch) => {
-      batch.into_iter().for_each(|tx| {
-        relay_tx(&tx_params, tx).unwrap();
-      });
+    //NOTE: Cost does not affect relaying, that's determined in original tx
+    let tx_params = tx_params_wrapper(TxType::Mgmt).expect("could not get tx parameters");
+    match save_tx::read_tx_from_file(path) {
+        Ok(batch) => {
+            batch.into_iter().for_each(|tx| {
+                relay_tx(&tx_params, tx).unwrap();
+            });
 
-      Ok(())
+            Ok(())
+        }
+        Err(e) => Err(e),
     }
-    Err(e) => Err(e),
-  }
 }

@@ -158,9 +158,9 @@ pub fn get_highest_block(blocks_dir: &PathBuf) -> Result<(VDFProof, PathBuf), Er
             let block = match parse_block_file(&entry, false) {
                 Ok(v) => v,
                 Err(e) => {
-                  println!("could not parse the proof file: {}, skipping. Manually delete if this proof is not readable.", e.to_string());
-                  continue
-                },
+                    println!("could not parse the proof file: {}, skipping. Manually delete if this proof is not readable.", e.to_string());
+                    continue;
+                }
             };
 
             let blocknumber = block.height;

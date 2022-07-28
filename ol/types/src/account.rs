@@ -3,13 +3,11 @@ use crate::{block::VDFProof, config::IS_TEST};
 use dialoguer::Confirm;
 use diem_config::network_id::NetworkId;
 use diem_crypto::x25519::PublicKey;
-use diem_global_constants::{DEFAULT_VAL_PORT, DEFAULT_VFN_PORT, DEFAULT_PUB_PORT};
+use diem_global_constants::{DEFAULT_PUB_PORT, DEFAULT_VAL_PORT, DEFAULT_VFN_PORT};
 use diem_types::{
-    account_address::AccountAddress, 
-    network_address::{
-        NetworkAddress, 
-    }, 
-    transaction::{SignedTransaction, TransactionPayload}
+    account_address::AccountAddress,
+    network_address::NetworkAddress,
+    transaction::{SignedTransaction, TransactionPayload},
 };
 
 use crate::pay_instruction::PayInstruction;
@@ -17,7 +15,7 @@ use anyhow::{self, bail};
 use hex::{decode, encode};
 use ol_keys::scheme::KeyScheme;
 use serde::{de::Error, Deserialize, Deserializer, Serialize, Serializer};
-use std::{fs::File, io::Write, path::PathBuf, process::exit, net::Ipv4Addr};
+use std::{fs::File, io::Write, net::Ipv4Addr, path::PathBuf, process::exit};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 /// Configuration data necessary to initialize a validator.
@@ -88,17 +86,14 @@ impl ValConfigs {
         autopay_instructions: Option<Vec<PayInstruction>>,
         autopay_signed: Option<Vec<SignedTransaction>>,
     ) -> Self {
-
         let owner_address = keys.child_0_owner.get_address();
-        
+
         let val_pubkey =
             PublicKey::from_ed25519_public_bytes(&keys.child_2_val_network.get_public().to_bytes())
-            .unwrap();
+                .unwrap();
 
-        
-        let val_addr_for_val_net = ValConfigs::make_unencrypted_addr(
-            &val_ip_address, val_pubkey, NetworkId::Validator
-        );
+        let val_addr_for_val_net =
+            ValConfigs::make_unencrypted_addr(&val_ip_address, val_pubkey, NetworkId::Validator);
 
         // 0L todo diem-1.4.1: No "encrypt()"
         // let encrypted_addr =  val_addr_for_val_net.clone().encrypt(
@@ -112,9 +107,8 @@ impl ValConfigs {
         //   .expect("unable to encrypt network address");
 
         // For the private VFN Fullnode network the Validator uses this identity:
-        let val_addr_for_vfn_net = ValConfigs::make_unencrypted_addr(
-            &val_ip_address, val_pubkey, NetworkId::Vfn
-        );
+        let val_addr_for_vfn_net =
+            ValConfigs::make_unencrypted_addr(&val_ip_address, val_pubkey, NetworkId::Vfn);
 
         // Create the list of VFN fullnode addresses. Usually only one
         // This is the VFN (validator fullnode) address information which the validator will use
@@ -123,8 +117,9 @@ impl ValConfigs {
             &keys.child_3_fullnode_network.get_public().to_bytes(),
         )
         .unwrap();
-        let vfn_addr_obj = ValConfigs::make_unencrypted_addr(&vfn_ip_address, vfn_pubkey, NetworkId::Public);
-        
+        let vfn_addr_obj =
+            ValConfigs::make_unencrypted_addr(&vfn_ip_address, vfn_pubkey, NetworkId::Public);
+
         Self {
             /// Proof zero of the onboarded miner
             block_zero,
@@ -187,16 +182,19 @@ impl ValConfigs {
     //     fn_addr_obj.append_prod_protos(fn_pubkey, 0)
     // }
 
-        /// format the fullnode address which the validator's VFN will use.
-    pub fn make_unencrypted_addr(ip_address: &Ipv4Addr, fn_pubkey: PublicKey, net: NetworkId) -> NetworkAddress {
+    /// format the fullnode address which the validator's VFN will use.
+    pub fn make_unencrypted_addr(
+        ip_address: &Ipv4Addr,
+        fn_pubkey: PublicKey,
+        net: NetworkId,
+    ) -> NetworkAddress {
+        let port = match net {
+            NetworkId::Validator => DEFAULT_VAL_PORT,
+            NetworkId::Public => DEFAULT_PUB_PORT,
+            NetworkId::Vfn => DEFAULT_VFN_PORT,
+        };
 
-      let port = match net {
-          NetworkId::Validator => DEFAULT_VAL_PORT,
-          NetworkId::Public => DEFAULT_PUB_PORT,
-          NetworkId::Vfn => DEFAULT_VFN_PORT,
-      };
-      
-      let fullnode_network_string = format!("/ip4/{}/tcp/{}", ip_address.to_string(), port);
+        let fullnode_network_string = format!("/ip4/{}/tcp/{}", ip_address.to_string(), port);
         let fn_addr_obj: NetworkAddress = fullnode_network_string
             .parse()
             .expect("could not parse fullnode network address");
@@ -205,9 +203,9 @@ impl ValConfigs {
 
     /// check correctness of autopay
     pub fn check_autopay(&self) -> Result<(), anyhow::Error> {
-       if *&self.autopay_signed.is_none() {
-        bail!("could not find signed transactions on this autopay file.");
-       }
+        if *&self.autopay_signed.is_none() {
+            bail!("could not find signed transactions on this autopay file.");
+        }
         self.autopay_instructions
             .clone()
             .expect("could not find autopay instructions")
@@ -277,7 +275,6 @@ impl UserConfigs {
 
 #[test]
 fn test_parse_account_file() {
-
     use crate::account::ValConfigs;
 
     let path = crate::fixtures::get_persona_account_json("eve").1;
@@ -310,11 +307,18 @@ fn val_config_ip_address() {
         difficulty: Some(100),
         security: Some(2048),
     };
-    
+
     let eve_keys = KeyScheme::new_from_mnemonic("recall october regret kite undo choice outside season business wall quit arrest vacant arrow giggle vote ghost winter hawk soft cheap decide exhaust spare".to_string());
     let eve_account = eve_keys.derived_address();
 
-    let val = ValConfigs::new(Some(block), eve_keys, "161.35.13.169".parse().unwrap(), "161.35.13.169".parse().unwrap(), None, None);
+    let val = ValConfigs::new(
+        Some(block),
+        eve_keys,
+        "161.35.13.169".parse().unwrap(),
+        "161.35.13.169".parse().unwrap(),
+        None,
+        None,
+    );
 
     let correct_fn_hex = "012d0400a1230da9052218072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800".to_owned();
 

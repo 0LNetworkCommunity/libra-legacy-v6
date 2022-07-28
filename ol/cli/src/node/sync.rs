@@ -34,7 +34,7 @@ impl Node {
     /// check if node is synced
     pub fn check_sync(&mut self) -> Result<SyncState, Error> {
         let mut s = SyncState::default();
-        // this should not fail for `ol start` command. The node is usually 
+        // this should not fail for `ol start` command. The node is usually
         // off when the command and sync is checked.
         if !Node::node_running() {
             return Ok(SyncState {

@@ -6,10 +6,7 @@ use diem_global_constants::NODE_HOME;
 use glob::glob;
 use std::{fs, net::Ipv4Addr, path::PathBuf};
 
-use crate::{
-    block::VDFProof,
-    config::IS_TEST,
-};
+use crate::{block::VDFProof,config::IS_TEST};
 
 /// interact with user to get the home path for files
 pub fn what_home(swarm_path: Option<PathBuf>, swarm_persona: Option<String>) -> PathBuf {
@@ -71,11 +68,11 @@ pub fn what_ip() -> Result<Ipv4Addr, Error> {
     let ip_str = resp.text()?;
 
     let system_ip = ip_str
-      .parse::<Ipv4Addr>()
-      .unwrap_or_else(|_| match machine_ip::get() {
-          Some(ip) => ip.to_string().parse().unwrap(),
-          None => "127.0.0.1".parse().unwrap(),
-      });
+        .parse::<Ipv4Addr>()
+        .unwrap_or_else(|_| match machine_ip::get() {
+            Some(ip) => ip.to_string().parse().unwrap(),
+            None => "127.0.0.1".parse().unwrap(),
+        });
 
     if *IS_TEST {
         return Ok(system_ip);
@@ -110,13 +107,13 @@ pub fn what_vfn_ip() -> Result<Ipv4Addr, Error> {
     let txt = "Will you set up Fullnode configs now? If not that's ok but you'll need to submit a transaction later to update on-chain peer discovery info";
     let ip = match Confirm::new().with_prompt(txt).interact().unwrap() {
         true => {
-          let input: String = Input::new()
-            .with_prompt("Enter the IP address of the VFN node")
-            .interact_text()?;
+            let input: String = Input::new()
+                .with_prompt("Enter the IP address of the VFN node")
+                .interact_text()?;
 
-          input.parse::<Ipv4Addr>()?
-        },
-        false => "0.0.0.0".parse::<Ipv4Addr>()?
+            input.parse::<Ipv4Addr>()?
+        }
+        false => "0.0.0.0".parse::<Ipv4Addr>()?,
     };
 
     Ok(ip)
@@ -135,7 +132,7 @@ pub fn what_statement() -> String {
         )
 }
 
-// deprecated 
+// deprecated
 
 // interact with user to get a statement
 // pub fn add_tower(config: &AppCfg) -> Option<String> {

@@ -1,13 +1,9 @@
 //! `bal` subcommand
 
-use abscissa_core::{Command, Options, Runnable, status_info};
 use crate::{
-    entrypoint,
-    prelude::app_config,
-    node::query::QueryType,
-    node::client,
-    node::node::Node
+    entrypoint, node::client, node::node::Node, node::query::QueryType, prelude::app_config,
 };
+use abscissa_core::{status_info, Command, Options, Runnable};
 use std::process::exit;
 
 /// `bal` subcommand
@@ -27,10 +23,10 @@ pub struct QueryCmd {
 
     #[options(no_short, help = "blockheight")]
     blockheight: bool,
-    
+
     #[options(help = "sync delay from upstream")]
     sync: bool,
-    
+
     #[options(help = "resources")]
     resources: bool,
 
@@ -42,7 +38,7 @@ pub struct QueryCmd {
 
     #[options(help = "get last payment events SENT, defaults to last 100")]
     events_sent: bool,
-    
+
     #[options(help = "get last payment events RECEIVED, defaults to last 100")]
     events_received: bool,
 
@@ -66,7 +62,7 @@ pub struct QueryCmd {
 
     #[options(help = "move value name")]
     move_value: Option<String>,
-    
+
     #[options(help = "Get a validator's on-chain config")]
     val_config: bool,
 }
@@ -76,89 +72,80 @@ impl Runnable for QueryCmd {
         let args = entrypoint::get_args();
         let is_swarm = *&args.swarm_path.is_some();
         let mut cfg = app_config().clone();
-        let account = 
-            if args.account.is_some() { args.account.unwrap() }
-            else { cfg.profile.account };
-        let client = client::pick_client(
-            args.swarm_path.clone(), &mut cfg
-        ).unwrap_or_else(|e| {
+        let account = if args.account.is_some() {
+            args.account.unwrap()
+        } else {
+            cfg.profile.account
+        };
+        let client = client::pick_client(args.swarm_path.clone(), &mut cfg).unwrap_or_else(|e| {
             println!("ERROR: Cannot connect to a client. Message: {}", e);
             exit(1);
         });
         let mut node = Node::new(client, &cfg, is_swarm);
         let mut display = "";
-        let mut query_type = QueryType::Balance{account};
+        let mut query_type = QueryType::Balance { account };
 
         if self.balance {
-            query_type = QueryType::Balance{account};
+            query_type = QueryType::Balance { account };
             display = "BALANCE";
-        }
-        else if self.unlocked_balance {
-            query_type = QueryType::UnlockedBalance{account};
+        } else if self.unlocked_balance {
+            query_type = QueryType::UnlockedBalance { account };
             display = "UNLOCKED BALANCE";
-        }
-        else if self.blockheight {
+        } else if self.blockheight {
             query_type = QueryType::BlockHeight;
             display = "BLOCK HEIGHT";
-        }
-        else if self.sync {
+        } else if self.sync {
             query_type = QueryType::SyncDelay;
             display = "SYNC";
-        }
-        else if self.resources {
-            query_type = QueryType::Resources{account};
+        } else if self.resources {
+            query_type = QueryType::Resources { account };
             display = "RESOURCES";
-        }
-        else if self.move_state {
-            query_type = QueryType::MoveValue{
-              account,
-              module_name: self.move_module.clone().unwrap(),
-              struct_name: self.move_struct.clone().unwrap(),
-              key_name: self.move_value.clone().unwrap(),
+        } else if self.move_state {
+            query_type = QueryType::MoveValue {
+                account,
+                module_name: self.move_module.clone().unwrap(),
+                struct_name: self.move_struct.clone().unwrap(),
+                key_name: self.move_value.clone().unwrap(),
             };
             display = "RESOURCES";
-        }
-        else if self.epoch {
+        } else if self.epoch {
             query_type = QueryType::Epoch;
             display = "EPOCH";
         } else if self.events_received {
-            
-            query_type = QueryType::Events{
-                account, sent_or_received: false, seq_start: self.txs_height
+            query_type = QueryType::Events {
+                account,
+                sent_or_received: false,
+                seq_start: self.txs_height,
             };
             display = "EVENTS";
         } else if self.events_sent {
-            query_type = QueryType::Events{
-                account, sent_or_received: true, seq_start: self.txs_height
+            query_type = QueryType::Events {
+                account,
+                sent_or_received: true,
+                seq_start: self.txs_height,
             };
             display = "EVENTS";
-        }
-        else if self.txs {
-            query_type = 
-              QueryType::Txs {
+        } else if self.txs {
+            query_type = QueryType::Txs {
                 account,
                 txs_height: self.txs_height,
-                txs_count: self.txs_count, 
+                txs_count: self.txs_count,
                 txs_type: self.txs_type.to_owned(),
-              };
+            };
             display = "TRANSACTIONS";
-        }
-        else if self.val_config {
-            query_type = 
-              QueryType::ValConfig {
-                account,
-              };
+        } else if self.val_config {
+            query_type = QueryType::ValConfig { account };
             display = "VALIDATOR CONFIGS";
         }
 
         match node.query(query_type) {
             Ok(info) => {
-              status_info!(display, format!("{}", info));
-            },
+                status_info!(display, format!("{}", info));
+            }
             Err(e) => {
-              println!("could not query node, exiting. Message: {:?}", e);
-              exit(1);
-            },
+                println!("could not query node, exiting. Message: {:?}", e);
+                exit(1);
+            }
         };
     }
 }

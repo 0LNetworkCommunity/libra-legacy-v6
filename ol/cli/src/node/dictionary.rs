@@ -1,9 +1,9 @@
 //! dictionary to associate notes to account addresses
 
+use super::node::Node;
 use diem_types::account_address::AccountAddress;
 use serde::{Deserialize, Serialize};
-use std::{path::Path, fs::File};
-use super::node::Node;
+use std::{fs::File, path::Path};
 
 ///
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -15,10 +15,10 @@ pub struct AccountDictionary {
 ///
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AccountDictionaryEntry {
-  ///
-  pub address: AccountAddress,
-  ///
-  pub note: String,
+    ///
+    pub address: AccountAddress,
+    ///
+    pub note: String,
 }
 
 impl Node {
@@ -29,20 +29,21 @@ impl Node {
         match Path::new(&dic_path).exists() {
             true => {
                 let file = File::open(dic_path).expect("file should open read only");
-                let dict: AccountDictionary = serde_json::from_reader(file).expect("file should be proper JSON");
+                let dict: AccountDictionary =
+                    serde_json::from_reader(file).expect("file should be proper JSON");
                 dict
             }
-            false => AccountDictionary { accounts: vec![] }
+            false => AccountDictionary { accounts: vec![] },
         }
-    }   
+    }
 }
 
 impl AccountDictionary {
     /// return a note for the account address
     pub fn get_note_for_address(&self, address: AccountAddress) -> String {
-        match self.accounts.iter().find(| entry | entry.address == address) {
+        match self.accounts.iter().find(|entry| entry.address == address) {
             Some(found) => found.note.clone(),
-            None => String::from("")
+            None => String::from(""),
         }
     }
 }

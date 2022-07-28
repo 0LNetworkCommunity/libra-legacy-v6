@@ -256,7 +256,7 @@ impl Node {
         // //           Some(move_resource_viewer::AnnotatedMoveValue::Bool(b)) => *b,
         // //           _ => false
         // //         }
-                    
+
         // //     }
         // //     _ => false,
         // // };

@@ -177,9 +177,7 @@ impl PayInstruction {
         );
         assert!(
             script.args()[4]
-                == TransactionArgument::U64(
-                    value_move.expect("cannot get value_move")
-                ),
+                == TransactionArgument::U64(value_move.expect("cannot get value_move")),
             "not the same value being sent"
         );
         Ok(())
@@ -241,21 +239,20 @@ impl PayInstruction {
 
 /// save a batch file of instructions
 pub fn write_batch_file(file_path: PathBuf, vec_instr: Vec<PayInstruction>) -> Result<(), Error> {
-  #[derive(Clone, Debug, Deserialize, Serialize)]
-  struct Batch {
-    autopay_instructions: Vec<PayInstruction>
-  }
+    #[derive(Clone, Debug, Deserialize, Serialize)]
+    struct Batch {
+        autopay_instructions: Vec<PayInstruction>,
+    }
     let mut buffer = File::create(file_path)?;
     // let data = serde_json::to_string(&vec_instr)?;
 
-    let data = serde_json::to_string(&Batch { 
-      autopay_instructions: vec_instr
+    let data = serde_json::to_string(&Batch {
+        autopay_instructions: vec_instr,
     })?;
 
     buffer.write(data.as_bytes())?;
     Ok(())
 }
-
 
 // convert the decimals for Move.
 // for autopay purposes percentages have two decimal places precision.
@@ -282,7 +279,6 @@ fn scale_percent(fract_percent: f64) -> Option<u64> {
     }
 }
 
-
 #[test]
 fn parse_file() {
     let path = fixtures::get_demo_autopay_json().1;
@@ -294,9 +290,14 @@ fn parse_pct_balance_type() {
     let path = fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let first = &inst[0];
-    
+
     assert_eq!(first.uid, Some(1));
-    assert_eq!(first.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
+    assert_eq!(
+        first.destination,
+        "88E74DFED34420F2AD8032148280A84B"
+            .parse::<AccountAddress>()
+            .unwrap()
+    );
     assert_eq!(first.type_move, Some(0));
     assert_eq!(first.duration_epochs, Some(100));
     assert_eq!(first.end_epoch, Some(100));
@@ -309,9 +310,14 @@ fn parse_pct_change_type() {
     let path = fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let second = &inst[1];
-    
+
     assert_eq!(second.uid, Some(2));
-    assert_eq!(second.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
+    assert_eq!(
+        second.destination,
+        "88E74DFED34420F2AD8032148280A84B"
+            .parse::<AccountAddress>()
+            .unwrap()
+    );
     assert_eq!(second.type_move, Some(1));
     assert_eq!(second.duration_epochs, Some(100));
     assert_eq!(second.end_epoch, Some(100));
@@ -325,9 +331,14 @@ fn parse_fixed_recurr_type() {
     let path = fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let third = &inst[2];
-    
+
     assert_eq!(third.uid, Some(3));
-    assert_eq!(third.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
+    assert_eq!(
+        third.destination,
+        "88E74DFED34420F2AD8032148280A84B"
+            .parse::<AccountAddress>()
+            .unwrap()
+    );
     assert_eq!(third.type_move, Some(2));
     assert_eq!(third.duration_epochs, Some(100));
     assert_eq!(third.end_epoch, Some(100));
@@ -340,9 +351,14 @@ fn parse_fixed_once_type() {
     let path = fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let fourth = &inst[3];
-    
+
     assert_eq!(fourth.uid, Some(4));
-    assert_eq!(fourth.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
+    assert_eq!(
+        fourth.destination,
+        "88E74DFED34420F2AD8032148280A84B"
+            .parse::<AccountAddress>()
+            .unwrap()
+    );
     assert_eq!(fourth.type_move, Some(3));
     assert_eq!(fourth.duration_epochs, Some(2)); // TODO: This is temporary patch for v4.3.2
     assert_eq!(fourth.end_epoch, Some(1));
@@ -355,9 +371,14 @@ fn parse_pct_balance_end_epoch_type() {
     let path = fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let fifth = &inst[4];
-    
+
     assert_eq!(fifth.uid, Some(5));
-    assert_eq!(fifth.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
+    assert_eq!(
+        fifth.destination,
+        "88E74DFED34420F2AD8032148280A84B"
+            .parse::<AccountAddress>()
+            .unwrap()
+    );
     assert_eq!(fifth.type_move, Some(0));
     assert_eq!(fifth.duration_epochs, None);
     assert_eq!(fifth.end_epoch, Some(50));
@@ -370,9 +391,14 @@ fn parse_pct_change_end_epoch_type() {
     let path = fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let sixth = &inst[5];
-    
+
     assert_eq!(sixth.uid, Some(6));
-    assert_eq!(sixth.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
+    assert_eq!(
+        sixth.destination,
+        "88E74DFED34420F2AD8032148280A84B"
+            .parse::<AccountAddress>()
+            .unwrap()
+    );
     assert_eq!(sixth.type_move, Some(1));
     assert_eq!(sixth.duration_epochs, None);
     assert_eq!(sixth.end_epoch, Some(50));
@@ -386,14 +412,18 @@ fn parse_fixed_recurr_end_epoch_type() {
     let path = fixtures::get_demo_autopay_json().1;
     let inst = PayInstruction::parse_autopay_instructions(&path, Some(0), None).unwrap();
     let seventh = &inst[6];
-    
+
     assert_eq!(seventh.uid, Some(7));
-    assert_eq!(seventh.destination, "88E74DFED34420F2AD8032148280A84B".parse::<AccountAddress>().unwrap());
+    assert_eq!(
+        seventh.destination,
+        "88E74DFED34420F2AD8032148280A84B"
+            .parse::<AccountAddress>()
+            .unwrap()
+    );
     assert_eq!(seventh.type_move, Some(2));
     assert_eq!(seventh.duration_epochs, None);
     assert_eq!(seventh.end_epoch, Some(50));
     assert_eq!(seventh.type_of, InstructionType::FixedRecurring);
     assert_eq!(seventh.value, 5f64);
     assert_eq!(seventh.value_move.unwrap(), 5000000u64);
-
 }

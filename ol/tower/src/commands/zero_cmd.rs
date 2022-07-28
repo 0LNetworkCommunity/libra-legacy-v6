@@ -15,7 +15,10 @@ impl Runnable for ZeroCmd {
         let miner_config = app_config().clone();
         match write_genesis(&miner_config) {
             Ok(_) => println!("Success. Proof zero mined"),
-            Err(e) =>  println!("ERROR: could not mine proof zero, message: {:?}", &e.to_string()),
+            Err(e) => println!(
+                "ERROR: could not mine proof zero, message: {:?}",
+                &e.to_string()
+            ),
         }
     }
 }

@@ -2,8 +2,8 @@
 
 use super::pilot;
 use crate::node::node::Node;
-use std::{thread, time::Duration};
 use chrono::Utc;
+use std::{thread, time::Duration};
 
 /// Start the node monitor
 pub fn run_checks(
@@ -11,7 +11,7 @@ pub fn run_checks(
     pilot: bool,
     is_live: bool,
     verbose_check: bool,
-    verbose_pilot: bool
+    verbose_pilot: bool,
 ) {
     loop {
         // update all the checks
@@ -26,7 +26,6 @@ pub fn run_checks(
         thread::sleep(Duration::from_millis(30_000));
     }
 }
-
 
 impl Node {
     /// Run healtchecks once
@@ -45,7 +44,6 @@ impl Node {
         self
     }
 }
-
 
 fn print_it(node: &Node) {
     println!(

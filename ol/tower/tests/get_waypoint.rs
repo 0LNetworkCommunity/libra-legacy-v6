@@ -1,14 +1,14 @@
 //! Functional test for delay module
 
 #![forbid(unsafe_code)]
-use std::{fs, io::Write};
 use diem_types::waypoint::Waypoint;
+use std::{fs, io::Write};
 #[test]
 #[ignore]
 fn test_waypoint() {
     let s = ol_types::config::AppCfg::default();
 
-    let path =  s.get_key_store_path();
+    let path = s.get_key_store_path();
     fs::create_dir_all(&s.workspace.node_home.clone()).unwrap();
 
     dbg!(&path);
@@ -23,8 +23,8 @@ fn test_waypoint() {
     }"#;
 
     file.write_all(json_data.as_bytes())
-            .expect("Could not write json");
-    
+        .expect("Could not write json");
+
     let data = s.get_waypoint(None);
     let correct: Waypoint = 
         "0:08148a7b1ac857caee13337c77e691734899b7cc82f4968b35455fb91c060df5"
