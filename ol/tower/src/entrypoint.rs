@@ -1,11 +1,10 @@
 //! Toplevel entrypoint command.
 
 use abscissa_core::{
-    Command, command::Usage, Config, Configurable, FrameworkError, 
-    Options, Runnable    
+    command::Usage, Command, Config, Configurable, FrameworkError, Options, Runnable,
 };
-use diem_types::{account_address::AccountAddress, waypoint::Waypoint};
 use diem_global_constants::NODE_HOME;
+use diem_types::{account_address::AccountAddress, waypoint::Waypoint};
 use reqwest::Url;
 use std::path::PathBuf;
 
@@ -45,23 +44,29 @@ where
     pub account: Option<AccountAddress>,
 
     /// URL to send tx
-    #[options(short = "u", help = "URL to send tx")]    
+    #[options(short = "u", help = "URL to send tx")]
     pub url: Option<Url>,
 
     /// Force using the first peer in the list of rpc peers
-    #[options(short = "f", help = "Don't search for peers, use the the first upstream URL in upstream_peers")]
+    #[options(
+        short = "f",
+        help = "Don't search for peers, use the the first upstream URL in upstream_peers"
+    )]
     pub use_first_url: bool,
 
     /// Override waypoint to connect to
     #[options(short = "w", help = "waypoint to connect to")]
     pub waypoint: Option<Waypoint>,
 
-        /// Save the tx to file
+    /// Save the tx to file
     #[options(short = "s", help = "save the signed tx to file")]
     pub save_path: Option<PathBuf>,
 
     /// Only save, don't send transaction
-    #[options(short = "n", help = "don't send the transaction, to be used with --save_path")]
+    #[options(
+        short = "n",
+        help = "don't send the transaction, to be used with --save_path"
+    )]
     pub no_send: bool,
 
     /// Swarm path - get tx params from swarm
@@ -73,9 +78,11 @@ where
     pub swarm_persona: Option<String>,
 
     /// The operator is sending the transaction, used in miner.
-    #[options(short = "o", help = "the operator is signing and sending the transaction")]
+    #[options(
+        short = "o",
+        help = "the operator is signing and sending the transaction"
+    )]
     pub is_operator: bool,
-
 }
 
 impl<Cmd> EntryPoint<Cmd>
@@ -158,7 +165,7 @@ where
 pub type EntryPointTxsCmd = EntryPoint<commands::MinerCmd>;
 /// get arguments passed in the entrypoin of this app, not the subcommands
 pub fn get_args() -> EntryPointTxsCmd {
-  Command::from_env_args()
+    Command::from_env_args()
 }
 
 /// returns node_home
@@ -171,7 +178,7 @@ pub fn get_node_home() -> PathBuf {
     let mut config_path = dirs::home_dir().unwrap();
     config_path.push(NODE_HOME);
     let entry_args = get_args();
- 
+
     if entry_args.swarm_path.is_some() {
         config_path = PathBuf::from(entry_args.swarm_path.unwrap());
         if entry_args.swarm_persona.is_some() {
@@ -185,4 +192,4 @@ pub fn get_node_home() -> PathBuf {
     }
 
     return config_path;
- }
+}

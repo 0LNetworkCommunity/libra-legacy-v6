@@ -265,10 +265,9 @@ impl Node {
                     "BurnPreference".to_string(),
                     "send_community".to_string(),
                 ) {
-                  Some(resource_viewer::AnnotatedMoveValue::Bool(b)) => *b,
-                  _ => false
+                    Some(resource_viewer::AnnotatedMoveValue::Bool(b)) => *b,
+                    _ => false,
                 }
-                    
             }
             _ => false,
         };

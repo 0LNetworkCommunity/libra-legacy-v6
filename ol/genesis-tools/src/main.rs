@@ -32,26 +32,22 @@ async fn main() -> Result<()> {
     if opts.fork {
         if let Some(g_path) = opts.output_path {
             if let Some(s_path) = opts.snapshot_path {
-                if !s_path.exists() { 
-                  println!("ERROR: snapshot directory does not exist: {:?}", &s_path);
-                  exit(1);
+                if !s_path.exists() {
+                    println!("ERROR: snapshot directory does not exist: {:?}", &s_path);
+                    exit(1);
                 }
                 // create a genesis file from archive file
-                match make_recovery_genesis(
-                  g_path, 
-                  s_path, 
-                  !opts.debug_baseline,
-                  opts.legacy,
-                ).await {
+                match make_recovery_genesis(g_path, s_path, !opts.debug_baseline, opts.legacy).await
+                {
                     Ok(_) => return Ok(()),
                     Err(e) => {
-                      println!("ERROR: could not create genesis from snapshot, message: {:?}", e);
-                      exit(1);
-                    },
+                        println!(
+                            "ERROR: could not create genesis from snapshot, message: {:?}",
+                            e
+                        );
+                        exit(1);
+                    }
                 };
-
-                
-                
             } else {
                 println!("ERROR: must provide a path with --snapshot, exiting.");
                 exit(1);
@@ -70,9 +66,9 @@ async fn main() -> Result<()> {
     } else if opts.swarm {
         // Write swarm genesis from snapshot, for CI and simulation
         if let Some(s_path) = opts.snapshot_path {
-            if !s_path.exists() { 
-              println!("ERROR: snapshot directory does not exist: {:?}", &s_path);
-              exit(1);
+            if !s_path.exists() {
+                println!("ERROR: snapshot directory does not exist: {:?}", &s_path);
+                exit(1);
             }
             make_swarm_genesis(opts.output_path.unwrap(), s_path).await?;
             return Ok(());

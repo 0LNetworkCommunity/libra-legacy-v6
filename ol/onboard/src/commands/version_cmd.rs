@@ -9,7 +9,6 @@ use abscissa_core::{Command, Options, Runnable};
 #[derive(Command, Debug, Default, Options)]
 pub struct VersionCmd {}
 
-
 impl Runnable for VersionCmd {
     /// Print version message
     fn run(&self) {

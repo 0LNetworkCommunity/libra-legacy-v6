@@ -158,9 +158,9 @@ pub fn get_highest_block(blocks_dir: &PathBuf) -> Result<(VDFProof, PathBuf), Er
             let block = match parse_block_file(&entry, false) {
                 Ok(v) => v,
                 Err(e) => {
-                  println!("could not parse the proof file: {}, skipping. Manually delete if this proof is not readable.", e.to_string());
-                  continue
-                },
+                    println!("could not parse the proof file: {}, skipping. Manually delete if this proof is not readable.", e.to_string());
+                    continue;
+                }
             };
 
             let blocknumber = block.height;
@@ -194,7 +194,9 @@ pub fn parse_block_file(path: &PathBuf, purge_if_bad: bool) -> Result<VDFProof, 
     match serde_json::from_str(&block_file) {
         Ok(v) => Ok(v),
         Err(e) => {
-            if purge_if_bad { fs::remove_file(&block_file)? }
+            if purge_if_bad {
+                fs::remove_file(&block_file)?
+            }
             bail!(
                 "Could not read latest block file in path {:?}, message: {:?}",
                 &path,

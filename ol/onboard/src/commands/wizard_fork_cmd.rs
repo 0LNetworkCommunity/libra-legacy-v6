@@ -18,10 +18,10 @@ use ol_types::block::VDFProof;
 use ol_types::config::IS_TEST;
 use ol_types::{account::ValConfigs, config::TxType, pay_instruction::PayInstruction};
 use reqwest::Url;
-use txs::tx_params::TxParams;
 use std::process::exit;
 use std::{fs::File, io::Write, path::PathBuf};
 use txs::commands::autopay_batch_cmd;
+use txs::tx_params::TxParams;
 /// `validator wizard` subcommand
 #[derive(Command, Debug, Default, Options)]
 pub struct ForkCmd {
@@ -66,7 +66,7 @@ impl Runnable for ForkCmd {
         status_info!("\nValidator Config Wizard.", "Next you'll enter your mnemonic and some other info to configure your validator node and on-chain account. If you haven't yet generated keys, run the standalone keygen tool with 'onboard keygen'.");
 
         if !self.skip_mining {
-          println!("\nYour first 0L proof-of-work will be mined now. Expect this take at least 30 minutes on modern CPUs.\n");
+            println!("\nYour first 0L proof-of-work will be mined now. Expect this take at least 30 minutes on modern CPUs.\n");
         }
 
         let entry_args = entrypoint::get_args();
@@ -85,8 +85,8 @@ impl Runnable for ForkCmd {
 
         let mut wp = self.waypoint.clone();
         if let Some(path) = &self.prebuilt_genesis {
-          wp = Some(waypoint::extract_waypoint_from_file(path).unwrap());
-          dbg!(&wp);
+            wp = Some(waypoint::extract_waypoint_from_file(path).unwrap());
+            dbg!(&wp);
         }
 
         let cfg = AppCfg::init_app_configs(
@@ -102,10 +102,10 @@ impl Runnable for ForkCmd {
             &None, // defaults to mainnet
         )
         .unwrap_or_else(|e| {
-          println!("could not create app configs, exiting. Message: {:?}", &e);
-          exit(1);
+            println!("could not create app configs, exiting. Message: {:?}", &e);
+            exit(1);
         });
-        
+
         let home_path = &cfg.workspace.node_home;
         let base_waypoint = cfg.chain_info.base_waypoint.clone();
         dbg!(&base_waypoint);
@@ -142,16 +142,19 @@ impl Runnable for ForkCmd {
         // fetching the genesis files from genesis-archive, will override the path for prebuilt genesis.
         let mut prebuilt_genesis_path = self.prebuilt_genesis.clone();
         if self.fetch_git_genesis {
-            genesis_files_cmd::fetch_genesis_files_from_repo(home_path.clone(), &self.github_org, &self.repo).unwrap();
+            genesis_files_cmd::fetch_genesis_files_from_repo(
+                home_path.clone(),
+                &self.github_org,
+                &self.repo,
+            )
+            .unwrap();
             status_ok!(
                 "\nDownloaded genesis files",
                 "\n...........................\n"
             );
 
             prebuilt_genesis_path = Some(home_path.join("genesis.blob"))
-            
         }
-
 
         let home_dir = cfg.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
@@ -177,16 +180,19 @@ impl Runnable for ForkCmd {
 
         if !self.skip_mining {
             // Mine Proof
-            match tower::proof::write_genesis(&cfg){
+            match tower::proof::write_genesis(&cfg) {
                 Ok(_) => {
-                  status_ok!(
-                      "\nGenesis proof complete",
-                      "\n...........................\n"
-                  );
-                },
+                    status_ok!(
+                        "\nGenesis proof complete",
+                        "\n...........................\n"
+                    );
+                }
                 Err(e) => {
-                  println!("ERROR: could not write genesis tower proof, message: {:?}", &e.to_string())
-                },
+                    println!(
+                        "ERROR: could not write genesis tower proof, message: {:?}",
+                        &e.to_string()
+                    )
+                }
             };
         }
 

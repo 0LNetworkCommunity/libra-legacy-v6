@@ -27,7 +27,10 @@ fn main() {
 
 fn migrate_0l_toml(config_file: PathBuf, node_home: PathBuf) {
     if !config_file.exists() {
-        println!("config file: {:?} does not exist - no migration possible", config_file);
+        println!(
+            "config file: {:?} does not exist - no migration possible",
+            config_file
+        );
         return;
     }
 
@@ -38,9 +41,19 @@ fn migrate_0l_toml(config_file: PathBuf, node_home: PathBuf) {
 
     // ---------------------- udate [workspace] config start ----------------------
     let default_db_path = node_home.join("db").as_path().display().to_string();
-    let default_source_path = dirs::home_dir().unwrap().join("libra").as_path().display().to_string();
+    let default_source_path = dirs::home_dir()
+        .unwrap()
+        .join("libra")
+        .as_path()
+        .display()
+        .to_string();
     add_or_update_s(&config_file, "workspace", "db_path", default_db_path);
-    add_or_update_s(&config_file, "workspace", "source_path", default_source_path);
+    add_or_update_s(
+        &config_file,
+        "workspace",
+        "source_path",
+        default_source_path,
+    );
     // ---------------------- udate [workspace] config finished ----------------------
 
     // ---------------------- udate [chain_info] config start ----------------------
@@ -48,29 +61,87 @@ fn migrate_0l_toml(config_file: PathBuf, node_home: PathBuf) {
     // ---------------------- udate [workspace] config finished ----------------------
 
     // ---------------------- udate the tx costs config start ----------------------
-    rename_section(&config_file, "tx_configs.miner_txs", "tx_configs.baseline_cost");
+    rename_section(
+        &config_file,
+        "tx_configs.miner_txs",
+        "tx_configs.baseline_cost",
+    );
 
     // previous [tx_configs.management_txs] is renamed and value changed from 1000000 to 100000
-    rename_section(&config_file, "tx_configs.management_txs", "tx_configs.management_txs_cost");
-    add_or_update_n(&config_file, "tx_configs.management_txs_cost", "max_gas_unit_for_tx", 100000);
+    rename_section(
+        &config_file,
+        "tx_configs.management_txs",
+        "tx_configs.management_txs_cost",
+    );
+    add_or_update_n(
+        &config_file,
+        "tx_configs.management_txs_cost",
+        "max_gas_unit_for_tx",
+        100000,
+    );
 
     // add [tx_configs.critical_txs_cost] if not there
     add_section(&config_file, "tx_configs.critical_txs_cost");
-    add_or_update_n(&config_file, "tx_configs.critical_txs_cost", "user_tx_timeout", 5000);
-    add_or_update_n(&config_file, "tx_configs.critical_txs_cost", "coin_price_per_unit", 1);
-    add_or_update_n(&config_file, "tx_configs.critical_txs_cost", "max_gas_unit_for_tx", 1000000);
+    add_or_update_n(
+        &config_file,
+        "tx_configs.critical_txs_cost",
+        "user_tx_timeout",
+        5000,
+    );
+    add_or_update_n(
+        &config_file,
+        "tx_configs.critical_txs_cost",
+        "coin_price_per_unit",
+        1,
+    );
+    add_or_update_n(
+        &config_file,
+        "tx_configs.critical_txs_cost",
+        "max_gas_unit_for_tx",
+        1000000,
+    );
 
     // add [tx_configs.miner_txs_cost] if not there
     add_section(&config_file, "tx_configs.miner_txs_cost");
-    add_or_update_n(&config_file, "tx_configs.miner_txs_cost", "user_tx_timeout", 5000);
-    add_or_update_n(&config_file, "tx_configs.miner_txs_cost", "coin_price_per_unit", 1);
-    add_or_update_n(&config_file, "tx_configs.miner_txs_cost", "max_gas_unit_for_tx", 10000);
+    add_or_update_n(
+        &config_file,
+        "tx_configs.miner_txs_cost",
+        "user_tx_timeout",
+        5000,
+    );
+    add_or_update_n(
+        &config_file,
+        "tx_configs.miner_txs_cost",
+        "coin_price_per_unit",
+        1,
+    );
+    add_or_update_n(
+        &config_file,
+        "tx_configs.miner_txs_cost",
+        "max_gas_unit_for_tx",
+        10000,
+    );
 
     // add [tx_configs.cheap_txs_cost] if not there
     add_section(&config_file, "tx_configs.cheap_txs_cost");
-    add_or_update_n(&config_file, "tx_configs.cheap_txs_cost", "user_tx_timeout", 5000);
-    add_or_update_n(&config_file, "tx_configs.cheap_txs_cost", "coin_price_per_unit", 1);
-    add_or_update_n(&config_file, "tx_configs.cheap_txs_cost", "max_gas_unit_for_tx", 1000);
+    add_or_update_n(
+        &config_file,
+        "tx_configs.cheap_txs_cost",
+        "user_tx_timeout",
+        5000,
+    );
+    add_or_update_n(
+        &config_file,
+        "tx_configs.cheap_txs_cost",
+        "coin_price_per_unit",
+        1,
+    );
+    add_or_update_n(
+        &config_file,
+        "tx_configs.cheap_txs_cost",
+        "max_gas_unit_for_tx",
+        1000,
+    );
 
     // ---------------------- udate the tx costs config finished ----------------------
 }
@@ -97,7 +168,10 @@ pub fn add_section(filename: &PathBuf, section: &str) {
 
     // round 2: update if necessary
     if section_exists {
-        println!("{:?}: section [{}] already there (all fine)", &filename, &section);
+        println!(
+            "{:?}: section [{}] already there (all fine)",
+            &filename, &section
+        );
     } else {
         let mut file = match File::create(&filename) {
             Err(why) => panic!("couldn't create {:?}: {}", filename, why),
@@ -140,7 +214,10 @@ pub fn rename_section(filename: &PathBuf, old_section_name: &str, new_section_na
 
     // round 2: update if necessary
     if section_exists {
-        println!("{:?}: section [{}] already there (all fine)", &filename, &new_section_name);
+        println!(
+            "{:?}: section [{}] already there (all fine)",
+            &filename, &new_section_name
+        );
     } else {
         let mut file = match File::create(&filename) {
             Err(why) => panic!("couldn't create {:?}: {}", filename, why),
@@ -230,7 +307,10 @@ pub fn add_or_update(filename: &PathBuf, section: &str, attribute: &str, value: 
                 // add the new attribute and value to start of section
                 match file.write_fmt(format_args!("{} = {}\n", attribute, value)) {
                     Err(why) => println!("writing to file failed {:?}", why),
-                    _ => println!("{:?}: added property [{}]/{}", &filename, &section, &attribute),
+                    _ => println!(
+                        "{:?}: added property [{}]/{}",
+                        &filename, &section, &attribute
+                    ),
                 }
             }
         } else {
@@ -238,7 +318,10 @@ pub fn add_or_update(filename: &PathBuf, section: &str, attribute: &str, value: 
                 // update the value
                 match file.write_fmt(format_args!("{} = {}\n", attribute, value)) {
                     Err(why) => println!("writing to file failed {:?}", why),
-                    _ => println!("{:?}: updated property [{}]/{} to {}", &filename, &section, &attribute, &value),
+                    _ => println!(
+                        "{:?}: updated property [{}]/{} to {}",
+                        &filename, &section, &attribute, &value
+                    ),
                 }
             } else {
                 // otherwise just write the original attribute and value
@@ -268,7 +351,11 @@ fn make_backup_file(filename: &PathBuf) {
         filename.as_path().display().to_string(),
         now.format("%Y%m%d-%H%M%S")
     );
-    match copy(&filename, PathBuf::from(backup_filename), &CopyOptions::new()) {
+    match copy(
+        &filename,
+        PathBuf::from(backup_filename),
+        &CopyOptions::new(),
+    ) {
         Err(why) => panic!("writing backup file failed {:?} - stopping", why),
         _ => println!("created backup file: {:?}", backup_filename),
     }

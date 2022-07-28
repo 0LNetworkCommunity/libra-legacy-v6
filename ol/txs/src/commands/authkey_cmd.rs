@@ -9,8 +9,8 @@ use crate::{
     submit_tx::{maybe_submit, tx_params_wrapper},
 };
 use abscissa_core::{Command, Options, Runnable};
-use diem_types::transaction::authenticator::AuthenticationKey;
 use diem_transaction_builder::stdlib as transaction_builder;
+use diem_types::transaction::authenticator::AuthenticationKey;
 use ol_types::config::TxType;
 
 #[derive(Command, Debug, Default, Options)]
@@ -27,12 +27,7 @@ impl Runnable for AuthkeyCmd {
 
             use transaction_builder::encode_rotate_authentication_key_script_function;
             let payload = encode_rotate_authentication_key_script_function(key.to_vec());
-            maybe_submit(
-                payload,
-                &tx_params,
-                entry_args.save_path,
-            )
-            .unwrap();
+            maybe_submit(payload, &tx_params, entry_args.save_path).unwrap();
         } else {
             println!("ERROR: expected --authkey to set new account authorization key");
             exit(1);

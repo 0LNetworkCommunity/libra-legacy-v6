@@ -38,21 +38,20 @@ impl Runnable for VouchCmd {
             if let Some(addr) = &self.address {
                 match addr.parse::<AccountAddress>() {
                     Ok(a) => {
-                      
-                      if self.revoke {
-                        transaction_builder::encode_revoke_vouch_script_function(a)
-                      } else {
-                        transaction_builder::encode_vouch_for_script_function(a)
-                      }
-                    },
+                        if self.revoke {
+                            transaction_builder::encode_revoke_vouch_script_function(a)
+                        } else {
+                            transaction_builder::encode_vouch_for_script_function(a)
+                        }
+                    }
                     Err(_) => {
                         println!("could not parse address from args");
                         exit(1)
                     }
                 }
             } else {
-              println!("no arguments passed. Did you mean to `vouch --address <address>`");
-              exit(1)
+                println!("no arguments passed. Did you mean to `vouch --address <address>`");
+                exit(1)
             }
         } else if self.enable {
             transaction_builder::encode_init_vouch_script_function()
