@@ -1,6 +1,7 @@
 //! `monitor-cmd` subcommand
 
 use crate::{check, entrypoint, node::client, node::node::Node, prelude::app_config};
+use ::std::process::exit;
 use abscissa_core::{Command, Options, Runnable};
 
 /// `monitor-cmd` subcommand
@@ -23,7 +24,13 @@ impl Runnable for HealthCmd {
         let args = entrypoint::get_args();
         let is_swarm = *&args.swarm_path.is_some();
         let mut cfg = app_config().clone();
-        let client = client::pick_client(args.swarm_path, &mut cfg).unwrap();
+        let client = match client::pick_client(args.swarm_path, &mut cfg) {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                exit(1);
+            }
+        };
         let mut node = Node::new(client, &cfg, is_swarm);
 
         check::runner::run_checks(&mut node, false, self.live, true, false);

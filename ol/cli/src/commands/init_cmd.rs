@@ -170,7 +170,16 @@ impl Runnable for InitCmd {
 
             let path = app_cfg.workspace.node_home.join("seed_fullnodes.yaml");
 
-            write_seed_peers_file(&path, &seed).unwrap();
+            match write_seed_peers_file(&path, &seed) {
+                Ok(_) => println!("seed peers written to {}", path.display()),
+                Err(e) => {
+                    println!(
+                        "could not write seed peers to file, exiting. Message: {:?}",
+                        e
+                    );
+                    exit(1);
+                }
+            }
             exit(0);
         }
 

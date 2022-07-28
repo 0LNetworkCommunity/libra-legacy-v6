@@ -78,7 +78,13 @@ impl Runnable for QueryCmd {
         let is_swarm = *&args.swarm_path.is_some();
         let mut cfg = app_config().clone();
         let account = if args.account.is_some() {
-            args.account.unwrap()
+            match args.account {
+                Some(a) => a,
+                None => {
+                    eprintln!("Error: account not specified");
+                    exit(1);
+                }
+            }
         } else {
             cfg.profile.account
         };
@@ -108,9 +114,27 @@ impl Runnable for QueryCmd {
         } else if self.move_state {
             query_type = QueryType::MoveValue {
                 account,
-                module_name: self.move_module.clone().unwrap(),
-                struct_name: self.move_struct.clone().unwrap(),
-                key_name: self.move_value.clone().unwrap(),
+                module_name: match self.move_module.clone() {
+                    Some(m) => m,
+                    None => {
+                        eprintln!("Error: module name not specified");
+                        exit(1);
+                    }
+                },
+                struct_name: match self.move_struct.clone() {
+                    Some(s) => s,
+                    None => {
+                        eprintln!("Error: struct name not specified");
+                        exit(1);
+                    }
+                },
+                key_name: match self.move_value.clone() {
+                    Some(k) => k,
+                    None => {
+                        eprintln!("Error: key name not specified");
+                        exit(1);
+                    }
+                },
             };
             display = "RESOURCES";
         } else if self.epoch {

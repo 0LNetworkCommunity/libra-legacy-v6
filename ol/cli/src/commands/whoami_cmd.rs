@@ -39,7 +39,13 @@ impl Runnable for WhoamiCmd {
             None,
             KeyScheme::new(&wallet),
             app_cfg.profile.ip,
-            app_cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
+            app_cfg
+                .profile
+                .vfn_ip
+                .unwrap_or("0.0.0.0".parse().unwrap_or_else(|_| {
+                    println!("error parsing vfn_ip");
+                    exit(1);
+                })),
             None,
             None,
         );
@@ -111,7 +117,10 @@ fn display_id_in_file(yaml_path: &PathBuf) -> Result<(), Error> {
     println!("We will use this machines external IP for display. Note that if you move this file the IP will display differently on another machine. ");
     let ip = get_my_ip().unwrap_or_else(|_| {
         println!("could not get external IP, using 0.0.0.0 for display");
-        "0.0.0.0".parse().unwrap()
+        "0.0.0.0".parse().unwrap_or_else(|_| {
+            println!("error parsing ip");
+            exit(1);
+        })
     });
 
     println!("\n ACTUAL NETWORK IDs IN {:?}\n", yaml_path.as_os_str());
