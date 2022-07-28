@@ -106,7 +106,16 @@ impl Backup {
     pub fn new(epoch: Option<u64>) -> Self {
         let conf = app_config().to_owned();
         let (restore_epoch, archive_url) = if let Some(e) = epoch {
-            (e, get_archive_url(e).unwrap())
+            (
+                e,
+                match get_archive_url(e) {
+                    Ok(url) => url,
+                    Err(e) => {
+                        eprintln!("Error: {}", e);
+                        exit(1);
+                    }
+                },
+            )
         } else {
             get_highest_epoch_archive().expect(&format!(
                 "could not find an archive tar.gz backup at url: {}",
@@ -118,7 +127,13 @@ impl Backup {
             .workspace
             .node_home
             .join(format!("restore/{}", restore_epoch));
-        fs::create_dir_all(&restore_path).unwrap();
+        match fs::create_dir_all(&restore_path) {
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                exit(1);
+            }
+        };
 
         println!("DB fast forward to epoch: {}", &restore_epoch);
 
@@ -186,18 +201,46 @@ impl Backup {
         let restore_path = self.restore_path.clone();
 
         // NOTE: First restore the Epoch before restoring a higher version in the epoch.
-        restore_epoch(db_path, restore_path.to_str().unwrap(), verbose)?;
+        restore_epoch(
+            db_path,
+            match restore_path.to_str() {
+                Some(path) => path,
+                None => {
+                    eprintln!("Error: restore path is not a valid path");
+                    exit(1);
+                }
+            },
+            verbose,
+        )?;
 
         restore_transaction(
             db_path,
-            self.restore_path.to_owned().to_str().unwrap(),
+            match self.restore_path.to_owned().to_str() {
+                Some(path) => path,
+                None => {
+                    eprintln!("Error: restore path is not a valid path");
+                    exit(1);
+                }
+            },
             verbose,
         )?;
 
         restore_snapshot(
             db_path,
-            self.restore_path.to_owned().to_str().unwrap(),
-            &self.waypoint.unwrap().version(),
+            match self.restore_path.to_owned().to_str() {
+                Some(path) => path,
+                None => {
+                    eprintln!("Error: restore path is not a valid path");
+                    exit(1);
+                }
+            },
+            &match &self.waypoint {
+                Some(waypoint) => waypoint.version(),
+                None => {
+                    eprintln!("Error: waypoint is not set");
+                    exit(1);
+                }
+            },
             verbose,
         )?;
 
@@ -209,11 +252,27 @@ impl Backup {
 
             let restore_path_for_version = self.restore_path.to_owned().join(version.to_string());
 
-            restore_transaction(db_path, restore_path_for_version.to_str().unwrap(), verbose)?;
+            restore_transaction(
+                db_path,
+                match restore_path_for_version.to_str() {
+                    Some(path) => path,
+                    None => {
+                        eprintln!("Error: restore path is not a valid path");
+                        exit(1);
+                    }
+                },
+                verbose,
+            )?;
 
             restore_snapshot(
                 db_path,
-                restore_path_for_version.to_str().unwrap(),
+                match restore_path_for_version.to_str() {
+                    Some(path) => path,
+                    None => {
+                        eprintln!("Error: restore path is not a valid path");
+                        exit(1);
+                    }
+                },
                 &version,
                 verbose,
             )?;
@@ -224,15 +283,33 @@ impl Backup {
 
     /// parse waypoint from manifest
     pub fn parse_manifest_waypoint(&mut self) -> Result<Waypoint, Error> {
-        let manifest_path = self.restore_path.to_str().unwrap();
+        let manifest_path = match self.restore_path.to_str() {
+            Some(path) => path,
+            None => {
+                eprintln!("Error: restore path is not a valid path");
+                exit(1);
+            }
+        };
         for entry in glob(&format!("{}/**/epoch_ending.manifest", manifest_path))
             .expect("Failed to read glob pattern")
         {
             match entry {
                 Ok(path) => {
                     println!("{:?}", path.display());
-                    let data = fs::read_to_string(path).unwrap();
-                    let p: Manifest = serde_json::from_str(&data).unwrap();
+                    let data = match fs::read_to_string(path) {
+                        Ok(data) => data,
+                        Err(e) => {
+                            eprintln!("Error: {}", e);
+                            exit(1);
+                        }
+                    };
+                    let p: Manifest = match serde_json::from_str(&data) {
+                        Ok(p) => p,
+                        Err(e) => {
+                            eprintln!("Error: {}", e);
+                            exit(1);
+                        }
+                    };
                     let waypoint = p.waypoints[0];
                     self.waypoint = Some(waypoint);
                     return Ok(waypoint);
@@ -249,7 +326,13 @@ impl Backup {
 
     /// Write Waypoint
     pub fn set_waypoint(&mut self) -> Result<Waypoint, Error> {
-        let waypoint = self.parse_manifest_waypoint().unwrap();
+        let waypoint = match self.parse_manifest_waypoint() {
+            Ok(waypoint) => waypoint,
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                exit(1);
+            }
+        };
         let storage = diem_secure_storage::Storage::OnDiskStorage(OnDiskStorage::new(
             self.home_path.join("key_store.json").to_owned(),
         ));
@@ -285,7 +368,13 @@ impl Backup {
 
         println!(
             "fullnode yaml created, file saved to: {:?}",
-            yaml_path.to_str().unwrap()
+            match yaml_path.to_str() {
+                Some(path) => path,
+                None => {
+                    eprintln!("Error: restore path is not a valid path");
+                    exit(1);
+                }
+            }
         );
         status_ok!(
             "\nFullnode config written",
@@ -318,7 +407,13 @@ fn get_highest_epoch_archive() -> Result<(u64, String), Error> {
         })
         .collect();
     filter.sort();
-    let highest_epoch = filter.pop().unwrap();
+    let highest_epoch = match filter.pop() {
+        Some(epoch) => epoch,
+        None => {
+            eprintln!("Error: no epoch found");
+            exit(1);
+        }
+    };
     // TODO: Change to new directory structure
     Ok((
         highest_epoch,
@@ -368,7 +463,13 @@ pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, verbose: bool) -> Re
         .arg(db_path)
         .arg("epoch-ending")
         .arg("--epoch-ending-manifest")
-        .arg(manifest_path.to_str().unwrap())
+        .arg(match manifest_path.to_str() {
+            Some(path) => path,
+            None => {
+                eprintln!("Error: restore path is not a valid path");
+                exit(1);
+            }
+        })
         .arg("local-fs")
         .arg("--dir")
         .arg(restore_path)
@@ -413,7 +514,13 @@ pub fn restore_transaction(
     if !manifest_path.exists() {
         println!(
             "ERROR: cannot find manifest path: {}",
-            manifest_path.to_str().unwrap()
+            match manifest_path.to_str() {
+                Some(path) => path,
+                None => {
+                    eprintln!("Error: restore path is not a valid path");
+                    exit(1);
+                }
+            }
         );
         exit(1);
     }
@@ -431,7 +538,13 @@ pub fn restore_transaction(
         .arg(db_path)
         .arg("transaction")
         .arg("--transaction-manifest")
-        .arg(manifest_path.to_str().unwrap())
+        .arg(match manifest_path.to_str() {
+            Some(path) => path,
+            None => {
+                eprintln!("Error: restore path is not a valid path");
+                exit(1);
+            }
+        })
         .arg("local-fs")
         .arg("--dir")
         .arg(restore_path)
@@ -493,17 +606,29 @@ pub fn restore_snapshot(
 }
 
 fn get_heighest_version(restore_path: PathBuf) -> anyhow::Result<u64> {
-    let paths = glob(&format!("{}/*", restore_path.to_str().unwrap()))
-        .expect("could not find state.manifest in archive");
+    let paths = glob(&format!(
+        "{}/*",
+        match restore_path.to_str() {
+            Some(path) => path,
+            None => bail!("Error: restore path is not a valid path"),
+        }
+    ))
+    .expect("could not find state.manifest in archive");
 
     let mut highest = 0u64;
     // let mut highest_path: Option<PathBuf> = None;
 
     for path in paths {
-        let p = path.unwrap();
+        let p = match path {
+            Ok(p) => p,
+            Err(_) => continue,
+        };
 
         if p.is_dir() {
-            let dirname = p.components().into_iter().last().unwrap();
+            let dirname = match p.components().into_iter().last() {
+                Some(dirname) => dirname,
+                None => continue,
+            };
             let d = dirname.as_os_str();
             match d.to_str().unwrap().parse::<u64>() {
                 Ok(num) => {
