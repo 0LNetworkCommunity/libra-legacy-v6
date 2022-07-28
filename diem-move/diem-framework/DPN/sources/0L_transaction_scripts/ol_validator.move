@@ -59,12 +59,12 @@ module ValidatorScripts {
         };
     }
 
-    public(script) fun leave(validator: signer) {
-        let addr = Signer::address_of(&validator);
-        if (ValidatorUniverse::is_in_universe(addr)) {
-            ValidatorUniverse::remove_self(&validator);
-        };
-    }
+    // public(script) fun leave(validator: signer) {
+    //     let addr = Signer::address_of(&validator);
+    //     if (ValidatorUniverse::is_in_universe(addr)) {
+    //         ValidatorUniverse::remove_self(&validator);
+    //     };
+    // }
 
     public(script) fun val_add_self(validator: signer) {
         let validator = &validator;

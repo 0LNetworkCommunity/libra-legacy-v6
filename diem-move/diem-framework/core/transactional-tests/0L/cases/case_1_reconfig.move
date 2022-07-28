@@ -32,7 +32,6 @@ script {
         assert!(TowerState::node_above_thresh(@Alice), 7357300101081000);
     }
 }
-// check: EXECUTED
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -62,7 +61,6 @@ script {
         };
     }
 }
-//check: EXECUTED
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -101,6 +99,7 @@ script {
     use DiemFramework::Subsidy;
     use DiemFramework::Globals;
     use DiemFramework::TowerState;
+    use DiemFramework::Debug::print;
 
     fun main() {
         // We are in a new epoch.
@@ -113,8 +112,13 @@ script {
 
         let starting_balance = 10000000;
         let operator_refund = 4336 * 5; // BASELINE_TX_COST * proofs = 21680
-        let ending_balance = starting_balance + expected_subsidy - operator_refund;
 
+        // Note since there's only 1 validator and the reward to alice was the
+        // entirety of subsidy available.
+        let burn = expected_subsidy/2; // 50% of the rewrd to validator. 
+        
+        let ending_balance = starting_balance + expected_subsidy - operator_refund - burn;
+        print(&DiemAccount::balance<GAS>(@Alice));
         assert!(DiemAccount::balance<GAS>(@Alice) == ending_balance, 7357000180113);  
         assert!(NodeWeight::proof_of_weight(@Alice) == 5, 7357000180114);
 
@@ -123,4 +127,3 @@ script {
         assert!(TowerState::get_epochs_compliant(@Alice) == 1, 7357000180115);                  
     }
 }
-//check: EXECUTED

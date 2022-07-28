@@ -94,6 +94,11 @@ address DiemFramework {
       // deduct transaction fees from guaranteed minimum.
       if (guaranteed_minimum > txn_fee_amount ){
         subsidy = guaranteed_minimum - txn_fee_amount;
+
+        if (subsidy > subsidy_ceiling_gas) {
+          subsidy = subsidy_ceiling_gas
+        };
+        
         // return global subsidy and subsidy per node.
         // TODO: we are doing this computation twice at reconfigure time.
         if ((subsidy > network_density) && (network_density > 0)) {

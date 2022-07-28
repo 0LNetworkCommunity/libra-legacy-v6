@@ -1,6 +1,16 @@
-//# init --parent-vasps Alice Bob Jim Carol
-// Alice, Jim:     validator with 10M GAS
-// Bob, Carol: non-validator with  1M GAS
+//# init --parent-vasps Carol Bob X Alice
+// Carol, X:       validator with 10M GAS
+// Bob, Alice: non-validator with  1M GAS
+
+//# run --admin-script --signers DiemRoot Alice
+script {
+    use DiemFramework::DiemAccount;
+
+    fun main(_: signer, account: signer) {
+        // before epoch change, need to mock alice's end-user address as a slow wallet
+        DiemAccount::set_slow(&account);
+    }
+}
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {

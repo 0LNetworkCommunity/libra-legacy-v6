@@ -12,6 +12,7 @@
 //# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::PersistenceDemo;
+    use DiemFramework::Debug::print;
 
     // This sender argument was populated by the test harness with a random 
     // address for `alice`, which can be accessed with sender variable or 
@@ -24,6 +25,7 @@ script {
         // our checks
         assert!(PersistenceDemo::length(&sender) == 3, 0);
         assert!(PersistenceDemo::contains(&sender, 1), 1);
+        print(&111);
     }
 }
 

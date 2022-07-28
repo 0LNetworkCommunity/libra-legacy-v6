@@ -139,6 +139,11 @@
   // deduct transaction fees from guaranteed minimum.
   <b>if</b> (guaranteed_minimum &gt; txn_fee_amount ){
     subsidy = guaranteed_minimum - txn_fee_amount;
+
+    <b>if</b> (subsidy &gt; subsidy_ceiling_gas) {
+      subsidy = subsidy_ceiling_gas
+    };
+
     // <b>return</b> <b>global</b> subsidy and subsidy per node.
     // TODO: we are doing this computation twice at reconfigure time.
     <b>if</b> ((subsidy &gt; network_density) && (network_density &gt; 0)) {

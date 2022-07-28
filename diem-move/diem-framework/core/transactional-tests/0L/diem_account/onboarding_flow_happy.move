@@ -53,21 +53,26 @@ script {
 
   fun main(vm: signer, _: signer) {
     let eve_addr = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
+
+    let bal = DiemAccount::balance<GAS>(eve_addr);
+    // we expect 1 gas (1,000,000 microgas) from bob's transfer
+    assert!(bal == 1000000, 7357401003);
+    
     // set the fullnode proof price to 0, to check if onboarding subsidy is given.
     EpochBoundary::reconfigure(&vm, 10); 
       // need to remove testnet for this test, since testnet does not ratelimit 
       // account creation.
     
     let bal = DiemAccount::balance<GAS>(eve_addr);
-    // we expect 1 gas (1,000,000 microgas) from bob's transfer
-    assert!(bal == 1000000, 7357401003);
+    // After the epoch turned over Eve paid the epoch Burn of 1 coin.
+    assert!(bal == 0, 7357401004);
 
     // validator should have jailedbit
-    assert!(ValidatorUniverse::exists_jailedbit(eve_addr), 7357401004);
+    assert!(ValidatorUniverse::exists_jailedbit(eve_addr), 7357401005);
     // validator should be in universe if just joined.
-    assert!(ValidatorUniverse::is_in_universe(eve_addr), 7357401005);
+    assert!(ValidatorUniverse::is_in_universe(eve_addr), 7357401006);
     // should not be jailed
-    assert!(!ValidatorUniverse::is_jailed(eve_addr), 7357401006);
+    assert!(!ValidatorUniverse::is_jailed(eve_addr), 7357401007);
   }
 }
 

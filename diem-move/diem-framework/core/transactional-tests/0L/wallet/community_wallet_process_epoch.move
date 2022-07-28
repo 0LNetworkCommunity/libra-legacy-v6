@@ -1,8 +1,8 @@
-//# init --parent-vasps Alice Bob
-// Alice:     validators with 10M GAS
-// Bob:   non-validators with  1M GAS
+//# init --parent-vasps Alice Bob X Carol
+// Alice:          validators with 10M GAS
+// Bob, Carol: non-validators with  1M GAS
 
-//# run --admin-script --signers DiemRoot Alice
+//# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::Wallet;
     use Std::Vector;
@@ -12,7 +12,7 @@ script {
       let list = Wallet::get_comm_list();
 
       assert!(Vector::length(&list) == 1, 7357001);
-      assert!(Wallet::is_comm(@Alice), 7357002);
+      assert!(Wallet::is_comm(@Carol), 7357002);
 
       let uid = Wallet::new_timed_transfer(&sender, @Bob, 100, b"thanks bob");
       assert!(Wallet::transfer_is_proposed(uid), 7357003);
@@ -35,7 +35,6 @@ script {
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-
 //////////////////////////////////////////////
 //// Trigger reconfiguration again         ///
 //# block --proposer Alice --time 190000000 --round 20
@@ -44,7 +43,6 @@ script {
 ////// TEST RECONFIGURATION IS HAPPENING /////
 // check: NewEpochEvent
 //////////////////////////////////////////////
-
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {

@@ -63,18 +63,6 @@ address DiemFramework {
       }
     }
 
-    // Permissions: Public, VM Only
-    public fun remove_validator_vm(vm: &signer, validator: address) acquires ValidatorUniverse {
-      assert!(Signer::address_of(vm) == @DiemRoot, 220101014010);
-
-      let state = borrow_global<ValidatorUniverse>(@DiemRoot);
-      let (in_set, index) = Vector::index_of<address>(&state.validators, &validator);
-      if (in_set) {
-         let state = borrow_global_mut<ValidatorUniverse>(@DiemRoot);
-        Vector::remove<address>(&mut state.validators, index);
-      }
-    }
-
     // Permissions: Public, Anyone.
     // Can only remove self from validator list.
     public fun remove_self(validator: &signer) acquires ValidatorUniverse {
