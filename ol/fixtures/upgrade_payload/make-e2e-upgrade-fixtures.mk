@@ -1,7 +1,7 @@
 SHELL=/usr/bin/env bash
 
 ifndef SOURCE_PATH
-SOURCE_PATH = ${HOME}/code/libra/
+SOURCE_PATH = ${HOME}/libra/
 endif
 
 LIBRA_PATH = ${SOURCE_PATH}

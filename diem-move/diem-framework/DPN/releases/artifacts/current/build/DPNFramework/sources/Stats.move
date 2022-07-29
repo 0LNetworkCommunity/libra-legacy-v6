@@ -11,8 +11,10 @@ module Stats{
   use Std::Signer;
   use DiemFramework::Testnet;
   use Std::Vector;    
+  use DiemFramework::Debug::print;
 
-  // TODO: yes we know this slows down block production. In "make it fast" mode this will be moved to Rust, in the vm execution block prologue. TBD.
+  // TODO: yes we know this slows down block production. In "make it fast"
+  // mode this will be moved to Rust, in the vm execution block prologue. TBD.
   
   struct SetData has copy, drop, store {
     addr: vector<address>,
@@ -101,8 +103,9 @@ module Stats{
     let sender = Signer::address_of(vm);
     assert!(sender == @DiemRoot, Errors::requires_role(190005));
     let stats = borrow_global_mut<ValStats>(sender);
-    let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
-    *Vector::borrow<u64>(&mut stats.current.vote_count, i)
+    let (is_found, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+    if (is_found) return *Vector::borrow<u64>(&mut stats.current.vote_count, i)
+    else 0
   }
 
   //Function: 06
@@ -139,8 +142,9 @@ module Stats{
     let sender = Signer::address_of(vm);
     assert!(sender == @DiemRoot, Errors::requires_role(190008));
     let stats = borrow_global_mut<ValStats>(sender);
-    let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
-    *Vector::borrow<u64>(&mut stats.current.prop_count, i)
+    let (is_found, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+    if (is_found) return *Vector::borrow<u64>(&mut stats.current.prop_count, i)
+    else 0
   }
 
   //Permissions: Public, VM only.
@@ -148,13 +152,27 @@ module Stats{
   public fun inc_prop(vm: &signer, node_addr: address) acquires ValStats {
     let sender = Signer::address_of(vm);
     assert!(sender == @DiemRoot, Errors::requires_role(190009));
+    print(&200110);       
 
-    let stats = borrow_global_mut<ValStats>(sender);
-    let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
-    let current_count = *Vector::borrow<u64>(&mut stats.current.prop_count, i);
-    Vector::push_back(&mut stats.current.prop_count, current_count + 1);
-    Vector::swap_remove(&mut stats.current.prop_count, i);
+    let stats = borrow_global_mut<ValStats>(@DiemRoot);
+    print(&200120);
+    let (is_true, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+    // don't try to increment if no state. This has caused issues in the past in emergency recovery.
+    print(&200130);
+
+    if (is_true) {
+      print(&200131);
+      let current_count = *Vector::borrow<u64>(&mut stats.current.prop_count, i);
+      print(&200132);
+      Vector::push_back(&mut stats.current.prop_count, current_count + 1);
+      print(&200133);
+      Vector::swap_remove(&mut stats.current.prop_count, i);
+      print(&200134);
+    };
+    print(&200140);   
+
     stats.current.total_props = stats.current.total_props + 1;
+    print(&200150);  
   }
   
   //TODO: Duplicate code.
@@ -164,11 +182,20 @@ module Stats{
     let sender = Signer::address_of(vm);
     assert!(sender == @DiemRoot, Errors::requires_role(190010));
     let stats = borrow_global_mut<ValStats>(sender);
-    let (_, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
-    let test = *Vector::borrow<u64>(&mut stats.current.vote_count, i);
-    Vector::push_back(&mut stats.current.vote_count, test + 1);
-    Vector::swap_remove(&mut stats.current.vote_count, i);
+    let (is_true, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+    if (is_true) {
+      let test = *Vector::borrow<u64>(&mut stats.current.vote_count, i);
+      Vector::push_back(&mut stats.current.vote_count, test + 1);
+      Vector::swap_remove(&mut stats.current.vote_count, i);
+    } else {
+      // debugging rescue mission. Remove after network stabilizes Apr 2022.
+      // something bad happened and we can't find this node in our list.
+      // print(&666);
+      // print(&node_addr);
+    };
+    // update total vote count anyways even if we can't find this person.
     stats.current.total_votes = stats.current.total_votes + 1;
+    // print(&stats.current);
   }
 
   //Permissions: Public, VM only.
@@ -182,11 +209,8 @@ module Stats{
     if (Vector::length(&stats.history) > 7) {
       Vector::pop_back<SetData>(&mut stats.history); // just drop last record
     };
-
     Vector::push_back(&mut stats.history, *&stats.current);
-
     stats.current = blank();
-    
     init_set(vm, set);
   }
 
@@ -219,5 +243,58 @@ module Stats{
     inc_vote(vm, node_addr);
   }
 
+  // TODO: this code is duplicated with NodeWeight, opportunity to make sorting in to a module.
+  public fun get_sorted_vals_by_props(account: &signer, n: u64): vector<address> acquires ValStats {
+      assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_role(140101));
+
+      //Get all validators from Validator Universe and then find the eligible validators 
+      let eligible_validators = 
+      *&borrow_global<ValStats>(@DiemRoot).current.addr;
+
+      let length = Vector::length<address>(&eligible_validators);
+
+      // Scenario: The universe of validators is under the limit of the BFT consensus.
+      // If n is greater than or equal to accounts vector length - return the vector.
+      if(length <= n) return eligible_validators;
+
+      // Vector to store each address's node_weight
+      let weights = Vector::empty<u64>();
+      let k = 0;
+      while (k < length) {
+
+        let cur_address = *Vector::borrow<address>(&eligible_validators, k);
+        // Ensure that this address is an active validator
+        Vector::push_back<u64>(&mut weights, node_current_props(account, cur_address));
+        k = k + 1;
+      };
+
+      // Sorting the accounts vector based on value (weights).
+      // Bubble sort algorithm
+      let i = 0;
+      while (i < length){
+        let j = 0;
+        while(j < length-i-1){
+          let value_j = *(Vector::borrow<u64>(&weights, j));
+          let value_jp1 = *(Vector::borrow<u64>(&weights, j+1));
+          if(value_j > value_jp1){
+            Vector::swap<u64>(&mut weights, j, j+1);
+            Vector::swap<address>(&mut eligible_validators, j, j+1);
+          };
+          j = j + 1;
+        };
+        i = i + 1;
+      };
+
+      // Reverse to have sorted order - high to low.
+      Vector::reverse<address>(&mut eligible_validators);
+
+      let diff = length - n; 
+      while(diff>0){
+        Vector::pop_back(&mut eligible_validators);
+        diff =  diff - 1;
+      };
+
+      return eligible_validators
+    }
 }
 }

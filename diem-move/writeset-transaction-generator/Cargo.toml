@@ -41,3 +41,9 @@ move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397
 move-vm-runtime = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
 move-vm-test-utils = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
 read-write-set = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
+#//////// 0L ///////
+# cli = { path = "../../../testsuite/cli" }
+diem-transaction-builder = { path = "../../sdk/transaction-builder" }
+ol-types = { path = "../../ol/types" }
+diem-resource-viewer = { path = "../diem-resource-viewer" }
+move-resource-viewer = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }

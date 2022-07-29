@@ -5,6 +5,11 @@
 
 
 
+-  [Resource `DebugMode`](#0x1_EpochBoundary_DebugMode)
+-  [Function `init_debug`](#0x1_EpochBoundary_init_debug)
+-  [Function `remove_debug`](#0x1_EpochBoundary_remove_debug)
+-  [Function `is_debug`](#0x1_EpochBoundary_is_debug)
+-  [Function `get_debug_vals`](#0x1_EpochBoundary_get_debug_vals)
 -  [Function `reconfigure`](#0x1_EpochBoundary_reconfigure)
 -  [Function `process_fullnodes`](#0x1_EpochBoundary_process_fullnodes)
 -  [Function `process_validators`](#0x1_EpochBoundary_process_validators)
@@ -17,6 +22,7 @@
 <b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="Burn.md#0x1_Burn">0x1::Burn</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
@@ -34,6 +40,141 @@
 
 
 
+<a name="0x1_EpochBoundary_DebugMode"></a>
+
+## Resource `DebugMode`
+
+
+
+<pre><code><b>struct</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> <b>has</b> <b>copy</b>, drop, store, key
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>fixed_set: vector&lt;<b>address</b>&gt;</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a name="0x1_EpochBoundary_init_debug"></a>
+
+## Function `init_debug`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_init_debug">init_debug</a>(vm: &signer, vals: vector&lt;<b>address</b>&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_init_debug">init_debug</a>(vm: &signer, vals: vector&lt;<b>address</b>&gt;) {
+  <b>if</b> (!<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
+    <b>move_to</b>&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(vm, <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> {
+      fixed_set: vals
+    });
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_remove_debug"></a>
+
+## Function `remove_debug`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_remove_debug">remove_debug</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_remove_debug">remove_debug</a>(vm: &signer) <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>if</b> (<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
+    _ = <b>move_from</b>&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(@VMReserved);
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_is_debug"></a>
+
+## Function `is_debug`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>(): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>(): bool {
+  <b>exists</b>&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(@VMReserved)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_get_debug_vals"></a>
+
+## Function `get_debug_vals`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_get_debug_vals">get_debug_vals</a>(): vector&lt;<b>address</b>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_get_debug_vals">get_debug_vals</a>(): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>  {
+  <b>if</b> (<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
+    <b>let</b> d = <b>borrow_global</b>&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(@VMReserved);
+    *&d.fixed_set
+  } <b>else</b> {
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;()
+  }
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_EpochBoundary_reconfigure"></a>
 
 ## Function `reconfigure`
@@ -49,24 +190,28 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
+<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> {
+    print(&300300);
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm);
-
+    print(&300310);
     <b>let</b> (outgoing_compliant_set, _) =
         <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a>(vm, height_start, height_now);
+    print(&300320);
 
     // NOTE: This is "nominal" because it doesn't check
     <b>let</b> compliant_nodes_count = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&outgoing_compliant_set);
+    print(&300330);
+
     <b>let</b> (subsidy_units, nominal_subsidy_per) =
         <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
 
-    // print(&subsidy_units);
-    // print(&nominal_subsidy_per);
+    print(&300340);
 
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
+    print(&300350);
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, subsidy_units, *&outgoing_compliant_set);
+    print(&300360);
 
     <b>let</b> proposed_set = <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, height_start, height_now);
     <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm, subsidy_units, &proposed_set);
@@ -182,12 +327,14 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;<b>address</b>&gt; {
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(
+    vm: &signer, height_start: u64, height_now: u64
+): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> {
     // Propose upcoming validator set:
-    // Step 1: Sort Top N eligible validators
-    // Step 2: Jail non-performing validators
-    // Step 3: Reset counters
-    // Step 4: Bulk <b>update</b> validator set (reconfig)
+    // in emergency admin roles set the validator set
+    <b>if</b> (<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
+      <b>return</b> <a href="EpochBoundary.md#0x1_EpochBoundary_get_debug_vals">get_debug_vals</a>()
+    };
 
     // save all the eligible list, before the jailing removes them.
     <b>let</b> proposed_set = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>();
@@ -214,8 +361,17 @@
     };
 
     // If the cardinality of validator_set in the next epoch is less than 4,
-    // we keep the same validator set.
-    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&proposed_set) &lt;= 3) proposed_set = *&top_accounts;
+    // <b>if</b> we are failing <b>to</b> qualify anyone. Pick top 1/2 of validator set
+    // by proposals. They are probably online.
+    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&proposed_set) &lt;= 3)
+        proposed_set = <a href="Stats.md#0x1_Stats_get_sorted_vals_by_props">Stats::get_sorted_vals_by_props</a>(vm, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&proposed_set) / 2);
+
+    // If still failing...in extreme case <b>if</b> we cannot qualify anyone.
+    // Don't change the validator set. we keep the same validator set.
+    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&proposed_set) &lt;= 3)
+        proposed_set = <a href="DiemSystem.md#0x1_DiemSystem_get_val_set_addr">DiemSystem::get_val_set_addr</a>();
+            // Patch for april incident. Make no changes <b>to</b> validator set.
+
     // Usually an issue in staging network for QA only.
     // This is very rare and theoretically impossible for network <b>with</b>
     // at least 6 nodes and 6 rounds. If we reach an epoch boundary <b>with</b>

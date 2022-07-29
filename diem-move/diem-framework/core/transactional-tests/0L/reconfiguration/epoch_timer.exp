@@ -1,21 +1,24 @@
-processed 4 tasks
+processed 3 tasks
 
-task 1 'block'. lines 5-8:
+task 1 'block'. lines 7-11:
 Events:
 {
     key:     0c0000000000000000000000000000000000000000000000
     seq_num: 0
     type:    0x1::DiemBlock::NewBlockEvent
-    data:    "010000000000000006505ccd81e562b524d8f656abd92a15000100000000000000"
-}
-
-task 2 'block'. lines 9-13:
-Events:
-{
-    key:     0c0000000000000000000000000000000000000000000000
-    seq_num: 1
-    type:    0x1::DiemBlock::NewBlockEvent
     data:    "0f0000000000000006505ccd81e562b524d8f656abd92a150040c9a20300000000"
+}
+{
+    key:     010000000000000006505ccd81e562b524d8f656abd92a15
+    seq_num: 0
+    type:    0x1::DiemAccount::SentPaymentEvent
+    data:    "80969800000000000347415306505ccd81e562b524d8f656abd92a15046275726e"
+}
+{
+    key:     060000000000000000000000000000000000000000000000
+    seq_num: 0
+    type:    0x1::Diem::BurnEvent
+    data:    "80969800000000000347415300000000000000000000000000000000"
 }
 {
     key:     040000000000000000000000000000000000000000000000

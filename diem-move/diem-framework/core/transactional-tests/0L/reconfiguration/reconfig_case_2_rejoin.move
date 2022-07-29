@@ -197,16 +197,18 @@ script {
     use DiemFramework::Cases;
     use Std::Vector;
     use DiemFramework::Stats;
+    // use DiemFramework::TowerState;
+    use DiemFramework::Debug::print;
 
     fun main(vm: signer, _: signer) {
         let vm = &vm;
         // start a new epoch.
-        // Everyone except EVE validates, because she was jailed, not in validator set.
+        // Everyone Validates. Frank later doesn't mine.
         let voters = Vector::singleton<address>(@Alice);
         Vector::push_back<address>(&mut voters, @Bob);
         Vector::push_back<address>(&mut voters, @Carol);
         Vector::push_back<address>(&mut voters, @Dave);
-        // Vector::push_back<address>(&mut voters, @Eve);
+        Vector::push_back<address>(&mut voters, @Eve);
         Vector::push_back<address>(&mut voters, @Frank);
 
         let i = 1;
@@ -218,7 +220,13 @@ script {
 
         // Even though Eve will be considered a case 2, it was because she 
         // was jailed. She will rejoin next epoch.
+        print(&777777777777777);
+
+        // TowerState::test_helper_mock_mining_vm(vm, @Eve, 5);
+
+        print(&Cases::get_case(vm, @Eve, 0, 15));        
         assert!(Cases::get_case(vm, @Eve, 0, 15) == 2, 7357008006013);
+
         // EpochBoundary::reconfigure(vm, 30);
     }
 }
@@ -308,6 +316,17 @@ script {
 }
 //check: EXECUTED
 
+//# run --admin-script --signers DiemRoot DiemRoot
+script {
+    use DiemFramework::Cases;
+
+    fun main(_dr: signer, sender: signer) {
+        // Frank can rejoin as he did mining
+        assert!(Cases::get_case(&sender, @Frank, 15, 30) == 3, 7357008006019);
+    }
+}
+//check: EXECUTED
+
 ///////////////////////////////////////////////
 ///// Trigger reconfiguration at 4 seconds ////
 //# block --proposer Alice --time 122000000 --round 30
@@ -320,9 +339,13 @@ script {
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::DiemConfig;
+    use DiemFramework::Debug::print;
 
     fun main() {
         assert!(DiemConfig::get_current_epoch() == 3, 7357008006020);
+        print(&888888888888);
+
+        print(&DiemSystem::validator_set_size());        
         assert!(DiemSystem::validator_set_size() == 6, 7357008006021);
         assert!(DiemSystem::is_validator(@Frank), 7357008006022);
     }

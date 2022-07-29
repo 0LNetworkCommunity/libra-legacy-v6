@@ -527,13 +527,15 @@ impl DiemVM {
         let (round, timestamp, previous_vote, proposer) = block_metadata.clone().into_inner();
         println!("====================================== {} ======================================", round);
         if round % 1000 == 0 {println!("======== round is {}", round)}
+        dbg!(&timestamp);
+        dbg!(&txn_data.sender);
 
         let args = serialize_values(&vec![
             MoveValue::Signer(txn_data.sender),
             MoveValue::U64(round),
             MoveValue::U64(timestamp),
-            MoveValue::Vector(previous_vote.into_iter().map(MoveValue::Address).collect()),
-            MoveValue::Address(proposer),
+            MoveValue::Vector(previous_vote.clone().into_iter().map(MoveValue::Address).collect()),
+            MoveValue::Address(proposer.clone()),
         ]);
         session
             .execute_function(
@@ -545,6 +547,11 @@ impl DiemVM {
             )
             .map(|_return_vals| ())
             .or_else(|e| {
+                /////// 0L /////////
+                println!("error here\n");
+                dbg!(&proposer);
+                dbg!(&previous_vote);
+                
                 expect_only_successful_execution(e, BLOCK_PROLOGUE.as_str(), log_context)
             })?;
 

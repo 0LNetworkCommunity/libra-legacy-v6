@@ -25,29 +25,67 @@ module EpochBoundary {
     use DiemFramework::Burn;
     use DiemFramework::FullnodeSubsidy;
     use DiemFramework::ValidatorUniverse;
-    // use 0x1::Debug::print;
+    use DiemFramework::Debug::print;
+
+    struct DebugMode has copy, key, drop, store{
+      fixed_set: vector<address>
+    }
+
+    // private function so that it can only be called by vm session.
+    // should never be used in production.
+    fun init_debug(vm: &signer, vals: vector<address>) {
+      if (!is_debug()) {
+        move_to<DebugMode>(vm, DebugMode {
+          fixed_set: vals
+        });
+      }
+    }
+
+    fun remove_debug(vm: &signer) acquires DebugMode {
+      CoreAddresses::assert_vm(vm);
+      if (is_debug()) {
+        _ = move_from<DebugMode>(@VMReserved);
+      }
+    }
+
+    fun is_debug(): bool {
+      exists<DebugMode>(@VMReserved)
+    }
+
+    fun get_debug_vals(): vector<address> acquires DebugMode  {
+      if (is_debug()) {
+        let d = borrow_global<DebugMode>(@VMReserved);
+        *&d.fixed_set
+      } else {
+        Vector::empty<address>()
+      }
+    }
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
-    public fun reconfigure(vm: &signer, height_now: u64) {
+    public fun reconfigure(vm: &signer, height_now: u64) acquires DebugMode {
+        print(&300300);        
         CoreAddresses::assert_vm(vm);
-
         let height_start = Epoch::get_timer_height_start(vm);
-        
+        print(&300310);        
         let (outgoing_compliant_set, _) = 
             DiemSystem::get_fee_ratio(vm, height_start, height_now);
+        print(&300320);
 
         // NOTE: This is "nominal" because it doesn't check
         let compliant_nodes_count = Vector::length(&outgoing_compliant_set);
+        print(&300330);
+
         let (subsidy_units, nominal_subsidy_per) = 
             Subsidy::calculate_subsidy(vm, compliant_nodes_count);
 
-        // print(&subsidy_units);
-        // print(&nominal_subsidy_per);
+        print(&300340);
 
         process_fullnodes(vm, nominal_subsidy_per);
+        print(&300350);
         process_validators(vm, subsidy_units, *&outgoing_compliant_set);
-        
+        print(&300360);
+
         let proposed_set = propose_new_set(vm, height_start, height_now);
         proof_of_burn(vm, subsidy_units, &proposed_set);
         // release funds to slow wallets
@@ -103,12 +141,14 @@ module EpochBoundary {
         Subsidy::process_fees(vm, &outgoing_compliant_set);
     }
 
-    fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> {
+    fun propose_new_set(
+        vm: &signer, height_start: u64, height_now: u64
+    ): vector<address> acquires DebugMode {
         // Propose upcoming validator set:
-        // Step 1: Sort Top N eligible validators
-        // Step 2: Jail non-performing validators
-        // Step 3: Reset counters
-        // Step 4: Bulk update validator set (reconfig)
+        // in emergency admin roles set the validator set
+        if (is_debug()) {
+          return get_debug_vals()
+        };
 
         // save all the eligible list, before the jailing removes them.
         let proposed_set = Vector::empty();
@@ -135,8 +175,17 @@ module EpochBoundary {
         };
 
         // If the cardinality of validator_set in the next epoch is less than 4, 
-        // we keep the same validator set. 
-        if (Vector::length<address>(&proposed_set) <= 3) proposed_set = *&top_accounts;
+        // if we are failing to qualify anyone. Pick top 1/2 of validator set
+        // by proposals. They are probably online.
+        if (Vector::length<address>(&proposed_set) <= 3) 
+            proposed_set = Stats::get_sorted_vals_by_props(vm, Vector::length<address>(&proposed_set) / 2);
+
+        // If still failing...in extreme case if we cannot qualify anyone.
+        // Don't change the validator set. we keep the same validator set. 
+        if (Vector::length<address>(&proposed_set) <= 3)
+            proposed_set = DiemSystem::get_val_set_addr(); 
+                // Patch for april incident. Make no changes to validator set.
+
         // Usually an issue in staging network for QA only.
         // This is very rare and theoretically impossible for network with 
         // at least 6 nodes and 6 rounds. If we reach an epoch boundary with 

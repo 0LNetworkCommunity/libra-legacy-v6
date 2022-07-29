@@ -20,4 +20,4 @@ pub mod fullnode_counter;
 pub mod wallet;
 pub mod genesis_proof;
 pub mod fixtures;
-
+pub mod epoch_timer;

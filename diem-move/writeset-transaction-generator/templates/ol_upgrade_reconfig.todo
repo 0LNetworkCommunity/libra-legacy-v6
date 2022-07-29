@@ -1,0 +1,6 @@
+script {
+    use DiemFramework::Upgrade;
+    fun main(diem_root: signer) {
+        Upgrade::upgrade_reconfig(&diem_root);
+    }
+}

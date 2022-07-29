@@ -123,6 +123,12 @@
         <b>let</b> payees: vector&lt;<b>address</b>&gt; = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
         <b>let</b> amounts: vector&lt;u64&gt; = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;();
 
+        // TODO: A new <b>address</b> and amount must be pushed back for each miner
+        //       that needs <b>to</b> be repaid
+        // // This can be done more easily in more recent version of <b>move</b>,
+        // <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> payees, @0x3f9fb9373492a3ec10714214ab53f071);
+        // <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;u64&gt;(&<b>mut</b> amounts, 874041484);
+
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> payees, @0xb2e86a1bee0e63602920eaa90a37c91e);
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;u64&gt;(&<b>mut</b> amounts, 582694323);
 

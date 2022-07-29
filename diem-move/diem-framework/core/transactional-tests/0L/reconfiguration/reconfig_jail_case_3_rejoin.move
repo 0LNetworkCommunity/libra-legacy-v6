@@ -184,14 +184,15 @@ script {
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
     // use DiemFramework::EpochBoundary;
-    use DiemFramework::Cases;
+    // use DiemFramework::Cases;
     use Std::Vector;
     use DiemFramework::Stats;
     
     fun main(vm: signer, _: signer) {
         let vm = &vm;
         // start a new epoch.
-        // Everyone except EVE validates, because she was jailed, not in validator set.
+        // Everyone validates correctly
+        // EVE cannot sign, since she is not in the validator set
         let voters = Vector::singleton<address>(@Alice);
         Vector::push_back<address>(&mut voters, @Bob);
         Vector::push_back<address>(&mut voters, @Carol);
@@ -206,14 +207,12 @@ script {
             i = i + 1;
         };
 
-        // Even though Eve will be considered a case 2, it was because she was 
-        // jailed. She will rejoin next epoch.
-        assert!(Cases::get_case(vm, @Eve, 0, 15) == 2, 7357008008012);
-        // EpochBoundary::reconfigure(vm, 30);
+        // // EVE did not SIGN, but did MINE, is a case 3 and will fall out of set.
+        // assert!(Cases::get_case(vm, @Eve, 0, 15) == 3, 7357008008012);
+        // // EpochBoundary::reconfigure(vm, 30);
     }
 }
 //check: EXECUTED
-
 
 //# run --admin-script --signers DiemRoot Alice
 script {

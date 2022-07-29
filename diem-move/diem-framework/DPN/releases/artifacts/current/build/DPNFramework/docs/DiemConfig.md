@@ -977,8 +977,8 @@ This schema is to be used by callers of <code>reconfigure</code>
 
 ## Function `upgrade_reconfig`
 
-Emit a <code><a href="DiemConfig.md#0x1_DiemConfig_NewEpochEvent">NewEpochEvent</a></code> event but DO NOT increment the EPOCH.
-this is used only in upgrade scenarios.
+Emit a <code><a href="DiemConfig.md#0x1_DiemConfig_NewEpochEvent">NewEpochEvent</a></code>
+this is used only in upgrade scenarios or offline recovery writesets
 
 
 <pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemConfig.md#0x1_DiemConfig_upgrade_reconfig">upgrade_reconfig</a>(vm: &signer)

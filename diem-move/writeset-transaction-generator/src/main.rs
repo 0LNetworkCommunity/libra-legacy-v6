@@ -10,7 +10,13 @@ use diem_types::{
 
 use diem_writeset_generator::{
     create_release, encode_custom_script, encode_halt_network_payload,
-    encode_remove_validators_payload, release_flow::artifacts::load_latest_artifact,
+    encode_remove_validators_payload, script_bulk_update_vals_payload, 
+    // ol_writeset_stdlib_upgrade,
+    ol_create_reconfig_payload, 
+    ol_writset_encode_rescue, ol_writset_update_timestamp, 
+    ol_writeset_force_boundary, ol_writeset_set_testnet, 
+    ol_writeset_debug_epoch, ol_writeset_update_epoch_time,
+    release_flow::artifacts::load_latest_artifact,
     verify_release,
 };
 use move_binary_format::CompiledModule;
@@ -27,6 +33,11 @@ struct Opt {
     /// Path to the output serialized bytes
     #[structopt(long, short, parse(from_os_str))]
     output: Option<PathBuf>,
+
+    /////// 0L /////////
+    #[structopt(long, short, parse(from_os_str))]
+    db: Option<PathBuf>,
+    
     /// Output as serialized WriteSet payload. Set this flag if this payload is submitted to AOS portal.
     #[structopt(long)]
     output_payload: bool,
@@ -87,6 +98,25 @@ enum Command {
         #[structopt(parse(from_os_str))]
         writeset_path: PathBuf,
     },
+    /////// 0L /////////
+    #[structopt(name = "update-validators")]
+    UpdateValidators { addresses: Vec<AccountAddress> },
+    #[structopt(name = "update-stdlib")]
+    UpdateStdlib { },
+    #[structopt(name = "rescue")]
+    Rescue { addresses: Vec<AccountAddress> },
+    #[structopt(name = "debug-epoch")]
+    DebugEpoch { addresses: Vec<AccountAddress> },
+    #[structopt(name = "boundary")]
+    Boundary { addresses: Vec<AccountAddress> },
+    #[structopt(name = "reconfig")]
+    Reconfig { },
+    #[structopt(name = "time")]
+    Timestamp { },
+    #[structopt(name = "testnet")]
+    Testnet { },
+    #[structopt(name = "epoch-time")]
+    EpochTime { },
 }
 
 fn save_bytes(bytes: Vec<u8>, path: PathBuf) -> Result<()> {
@@ -199,7 +229,18 @@ fn main() -> Result<()> {
                 hasher.finish()
             );
             return Ok(());
-        }
+        },
+        //////// 0L ////////
+        Command::Boundary { addresses } => ol_writeset_force_boundary(opt.db.unwrap(), addresses),
+        Command::UpdateValidators { addresses } => script_bulk_update_vals_payload(addresses),
+        // Command::UpdateStdlib {} => ol_writeset_stdlib_upgrade(opt.db.unwrap()), // todo
+        Command::UpdateStdlib {} => todo!(),
+        Command::Reconfig {} => ol_create_reconfig_payload(opt.db.unwrap()),
+        Command::Rescue { addresses } => ol_writset_encode_rescue(opt.db.unwrap(), addresses),
+        Command::Timestamp {} => ol_writset_update_timestamp(opt.db.unwrap()),
+        Command::Testnet {} => ol_writeset_set_testnet(opt.db.unwrap()),
+        Command::DebugEpoch { addresses } => ol_writeset_debug_epoch(opt.db.unwrap(), addresses),
+        Command::EpochTime {} => ol_writeset_update_epoch_time(opt.db.unwrap()),        
     };
     let output_path = if let Some(p) = opt.output {
         p

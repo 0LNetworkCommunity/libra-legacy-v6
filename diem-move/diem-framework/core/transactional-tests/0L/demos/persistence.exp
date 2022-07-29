@@ -1,7 +1,0 @@
-processed 4 tasks
-
-task 2 'run'. lines 39-54:
-Error: Transaction discarded. VMStatus: status ABORTED of type Execution with sub status 4
-
-task 3 'run'. lines 56-65:
-Error: Transaction discarded. VMStatus: status MISSING_DATA of type Execution

@@ -133,7 +133,7 @@ fn main() -> Result<()> {
         }
         Command::ReplayWriteSetAtVersion {
             write_set_blob_path: path,
-            version,
+            .. /////// 0L /////////
         } => {
             let transaction_payload = bcs::from_bytes(&fs::read(path.as_path())?)?;
             let writeset_payload = if let TransactionPayload::WriteSet(ws) = transaction_payload {
@@ -141,10 +141,11 @@ fn main() -> Result<()> {
             } else {
                 bail!("Unexpected transaction payload: {:?}", transaction_payload);
             };
+            let this_version = debugger.get_latest_version()?; /////// 0L /////////
             println!(
                 "{:?}",
                 debugger.execute_writeset_at_version(
-                    version,
+                    this_version, /////// 0L /////////
                     &writeset_payload,
                     opt.save_write_sets
                 )?

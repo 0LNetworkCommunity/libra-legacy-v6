@@ -392,8 +392,8 @@ module DiemFramework::DiemConfig {
     }
 
     //////// 0L ////////
-    /// Emit a `NewEpochEvent` event but DO NOT increment the EPOCH.
-    /// this is used only in upgrade scenarios.
+    /// Emit a `NewEpochEvent` 
+    /// this is used only in upgrade scenarios or offline recovery writesets
     public(friend) fun upgrade_reconfig(vm: &signer) acquires Configuration {
         CoreAddresses::assert_vm(vm);
         assert!(exists<Configuration>(@DiemRoot), Errors::not_published(ECONFIGURATION));

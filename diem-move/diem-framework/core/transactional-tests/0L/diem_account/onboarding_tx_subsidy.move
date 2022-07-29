@@ -91,7 +91,8 @@ script {
   use DiemFramework::TowerState;
   use DiemFramework::Testnet;
   use DiemFramework::Cases;
-  
+  use DiemFramework::Debug::print;
+
   fun main(vm: signer, _: signer) {
       // need to remove testnet for this test, since testnet does not ratelimit account creation.
       Testnet::remove_testnet(&vm); 
@@ -100,24 +101,26 @@ script {
       let old_account_bal = DiemAccount::balance<GAS>(eve);
       let old_account_bal_oper = DiemAccount::balance<GAS>(@0xfa72817f1b5aab94658238ddcdc08010);
 
-      assert!(old_account_bal == 1000000, 7357001);
+      assert!(Cases::get_case(&vm, @Bob, 0, 100) != 1, 7357002);
 
       EpochBoundary::reconfigure(&vm, 100);
       let new_account_bal = DiemAccount::balance<GAS>(eve);
+      print(&new_account_bal);
 
-      assert!(old_account_bal == 1000000, 7357001);
+      // we expect 1 gas (1,000,000 microgas) from bob's transfer
+      assert!(old_account_bal == 1000000, 7357003);
+      // eve did not mine or validator in last epoch, case != 1. So there wont be a reward.
+      // There is a cost-to-exist but since Eve's balance is below the cost,
+      // it will not be deducted.
+      assert!(new_account_bal == 1000000, 7357004);
 
-      // eve did not mine or validator in last epoch, case != 1. 
-      // So there wont be a reward.There is also a 1 coin burn
-      assert!(Cases::get_case(&vm, @Bob, 0, 100) != 1, 7357002);
-      assert!(new_account_bal == 0, 7357003);
-
-      // Operator account should not increase after epoch change
+      // Operator account should not increase after epoch change, since eve did not get a reward.
       assert!(
         DiemAccount::balance<GAS>(@0xfa72817f1b5aab94658238ddcdc08010) == old_account_bal_oper, 
         7357004
       );
 
+      // bob can't create a new account, since he just onboarded eve
       assert!(TowerState::can_create_val_account(@Bob) == false, 7357005);
   }
 }
