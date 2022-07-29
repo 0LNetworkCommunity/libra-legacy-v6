@@ -7,6 +7,7 @@
 
 module DiemFramework::DiemAccount {
     friend DiemFramework::MigrateAutoPayBal; //////// 0L ////////
+    friend DiemFramework::MigrateVouch; //////// 0L ////////
 
     use DiemFramework::AccountFreezing;
     use DiemFramework::CoreAddresses;

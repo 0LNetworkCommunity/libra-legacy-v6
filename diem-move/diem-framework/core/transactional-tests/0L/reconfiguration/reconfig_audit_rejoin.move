@@ -262,6 +262,10 @@ script {
 ///// Trigger reconfiguration at 4 seconds ////
 //# block --proposer Alice --time 122000000 --round 30
 
+///// TEST RECONFIGURATION IS HAPPENING ////
+// check: NewEpochEvent
+//////////////////////////////////////////////
+
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::DiemSystem;

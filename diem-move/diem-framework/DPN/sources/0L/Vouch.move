@@ -13,6 +13,7 @@ address DiemFramework {
     use DiemFramework::Ancestry;
     use DiemFramework::Testnet;
     use DiemFramework::StagingNet;
+    use DiemFramework::CoreAddresses;
 
     // triggered once per epoch
     struct Vouch has key {
@@ -36,14 +37,33 @@ address DiemFramework {
 
     public fun vouch_for(buddy: &signer, val: address) acquires Vouch {
       let buddy_acc = Signer::address_of(buddy);
+      assert!(buddy_acc!=val, 12345); // TODO: Error code.
 
       if (!ValidatorUniverse::is_in_universe(buddy_acc)) return;
       if (!exists<Vouch>(val)) return;
 
       let v = borrow_global_mut<Vouch>(val);
       Vector::push_back<address>(&mut v.vals, buddy_acc);
-
     }
+
+    public fun vm_migrate(vm: &signer, val: address, buddy_list: vector<address>) acquires Vouch {
+      CoreAddresses::assert_vm(vm);
+
+      if (!ValidatorUniverse::is_in_universe(val)) return;
+      if (!exists<Vouch>(val)) return;
+
+      let v = borrow_global_mut<Vouch>(val);
+
+      // take self out of list
+      let (is_found, i) = Vector::index_of(&buddy_list, &val);
+
+      if (is_found) {
+        Vector::swap_remove<address>(&mut buddy_list, i);
+      };
+      
+      v.vals = buddy_list;
+    }
+
     public fun get_buddies(val: address): vector<address> acquires Vouch{
       if (is_init(val)) {
         return *&borrow_global<Vouch>(val).vals
@@ -113,6 +133,8 @@ address DiemFramework {
       if (Testnet::is_testnet() || StagingNet::is_staging_net()) {
         return true
       };
+
+      if (!exists<Vouch>(val)) return false;
 
       let len = Vector::length(&unrelated_buddies(val));
       (len > 3) // TODO: move to Globals

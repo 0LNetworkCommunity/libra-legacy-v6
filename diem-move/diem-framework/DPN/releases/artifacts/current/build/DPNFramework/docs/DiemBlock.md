@@ -34,6 +34,7 @@ For 0L the following changes are applied to the block prologue
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="MakeWhole.md#0x1_MakeWhole">0x1::MakeWhole</a>;
 <b>use</b> <a href="Migrations.md#0x1_MigrateAutoPayBal">0x1::MigrateAutoPayBal</a>;
+<b>use</b> <a href="Migrations.md#0x1_MigrateVouch">0x1::MigrateVouch</a>;
 <b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 </code></pre>
@@ -272,7 +273,8 @@ The runtime always runs this before executing the transactions in a block.
     print(&400100);
 
     // Do any pending migrations
-    // TODO: should this be round 2 (when upgrade writeset happens). May be a on off-by-one.
+    // TODO: should this be round 2 (when upgrade writeset happens).
+    // May be a on off-by-one.
     <b>if</b> (round == 3) {
         // safety. Maybe init Migration <b>struct</b>
         <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(&vm);
@@ -280,6 +282,7 @@ The runtime always runs this before executing the transactions in a block.
         // <a href="Migrations.md#0x1_MigrateTowerCounter_migrate_tower_counter">MigrateTowerCounter::migrate_tower_counter</a>(&vm);
         // migration UID 2
         <a href="Migrations.md#0x1_MigrateAutoPayBal_do_it">MigrateAutoPayBal::do_it</a>(&vm);
+        <a href="Migrations.md#0x1_MigrateVouch_do_it">MigrateVouch::do_it</a>(&vm);
         // Initialize the make whole payment info
         <a href="MakeWhole.md#0x1_MakeWhole_make_whole_init">MakeWhole::make_whole_init</a>(&vm);
     };

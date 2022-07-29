@@ -1,0 +1,10 @@
+script {
+    use DiemFramework::DiemSystem;
+
+    fun main(diem_root: signer) {
+        {{#each addresses}}
+        // loop through all addresses in the system
+        Ancestry::remove_validator(&diem_root, @0x{{this}});
+        {{/each}}
+    }
+}

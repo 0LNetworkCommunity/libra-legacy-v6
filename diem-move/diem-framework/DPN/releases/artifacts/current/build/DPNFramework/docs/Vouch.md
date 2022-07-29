@@ -9,6 +9,7 @@
 -  [Function `init`](#0x1_Vouch_init)
 -  [Function `is_init`](#0x1_Vouch_is_init)
 -  [Function `vouch_for`](#0x1_Vouch_vouch_for)
+-  [Function `vm_migrate`](#0x1_Vouch_vm_migrate)
 -  [Function `get_buddies`](#0x1_Vouch_get_buddies)
 -  [Function `buddies_in_set`](#0x1_Vouch_buddies_in_set)
 -  [Function `unrelated_buddies`](#0x1_Vouch_unrelated_buddies)
@@ -16,6 +17,7 @@
 
 
 <pre><code><b>use</b> <a href="Ancestry.md#0x1_Ancestry">0x1::Ancestry</a>;
+<b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
@@ -124,13 +126,51 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Vouch.md#0x1_Vouch_vouch_for">vouch_for</a>(buddy: &signer, val: <b>address</b>) <b>acquires</b> <a href="Vouch.md#0x1_Vouch">Vouch</a> {
   <b>let</b> buddy_acc = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(buddy);
+  <b>assert</b>!(buddy_acc!=val, 12345); // TODO: Error code.
 
   <b>if</b> (!<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(buddy_acc)) <b>return</b>;
   <b>if</b> (!<b>exists</b>&lt;<a href="Vouch.md#0x1_Vouch">Vouch</a>&gt;(val)) <b>return</b>;
 
   <b>let</b> v = <b>borrow_global_mut</b>&lt;<a href="Vouch.md#0x1_Vouch">Vouch</a>&gt;(val);
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> v.vals, buddy_acc);
+}
+</code></pre>
 
+
+
+</details>
+
+<a name="0x1_Vouch_vm_migrate"></a>
+
+## Function `vm_migrate`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Vouch.md#0x1_Vouch_vm_migrate">vm_migrate</a>(vm: &signer, val: <b>address</b>, buddy_list: vector&lt;<b>address</b>&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Vouch.md#0x1_Vouch_vm_migrate">vm_migrate</a>(vm: &signer, val: <b>address</b>, buddy_list: vector&lt;<b>address</b>&gt;) <b>acquires</b> <a href="Vouch.md#0x1_Vouch">Vouch</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+
+  <b>if</b> (!<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(val)) <b>return</b>;
+  <b>if</b> (!<b>exists</b>&lt;<a href="Vouch.md#0x1_Vouch">Vouch</a>&gt;(val)) <b>return</b>;
+
+  <b>let</b> v = <b>borrow_global_mut</b>&lt;<a href="Vouch.md#0x1_Vouch">Vouch</a>&gt;(val);
+
+  // take self out of list
+  <b>let</b> (is_found, i) = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&buddy_list, &val);
+
+  <b>if</b> (is_found) {
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>&lt;<b>address</b>&gt;(&<b>mut</b> buddy_list, i);
+  };
+
+  v.vals = buddy_list;
 }
 </code></pre>
 

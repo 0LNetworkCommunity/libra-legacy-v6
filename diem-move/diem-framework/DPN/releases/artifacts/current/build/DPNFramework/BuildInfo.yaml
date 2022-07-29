@@ -167,6 +167,9 @@ compiled_package_info:
       name: MigrateTowerCounter
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: MigrateVouch
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Migrations
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -301,7 +304,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: B58CC0ACB292F4C64D5D57853166561BA6279347B8F800CF0A3662C16320E0CA
+  source_digest: 6E8B05B0DF1D5F6624C15A35269F09BE404816AB6AC996C25FEDE8037F11D729
   build_flags:
     dev_mode: false
     test_mode: false

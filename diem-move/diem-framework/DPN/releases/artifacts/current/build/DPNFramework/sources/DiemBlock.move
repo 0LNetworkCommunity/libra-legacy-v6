@@ -34,6 +34,7 @@ module DiemFramework::DiemBlock {
     use DiemFramework::MigrateAutoPayBal;    
     use DiemFramework::MakeWhole;
     use DiemFramework::Debug::print;
+    use DiemFramework::MigrateVouch;
 
     struct BlockMetadata has key {
         /// Height of the current block
@@ -121,7 +122,8 @@ module DiemFramework::DiemBlock {
         print(&400100);
 
         // Do any pending migrations
-        // TODO: should this be round 2 (when upgrade writeset happens). May be a on off-by-one.
+        // TODO: should this be round 2 (when upgrade writeset happens). 
+        // May be a on off-by-one.
         if (round == 3) {
             // safety. Maybe init Migration struct
             Migrations::init(&vm);
@@ -129,6 +131,7 @@ module DiemFramework::DiemBlock {
             // MigrateTowerCounter::migrate_tower_counter(&vm);
             // migration UID 2
             MigrateAutoPayBal::do_it(&vm);
+            MigrateVouch::do_it(&vm);
             // Initialize the make whole payment info
             MakeWhole::make_whole_init(&vm);            
         };

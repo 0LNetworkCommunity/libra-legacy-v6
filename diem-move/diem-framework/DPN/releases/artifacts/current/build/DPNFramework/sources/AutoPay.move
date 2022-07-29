@@ -191,6 +191,7 @@ address DiemFramework {
       account_addr: &address,
     ) acquires UserAutoPay {
       Roles::assert_diem_root(vm);
+      if (!exists<UserAutoPay>(*account_addr)) return;      
 
       // Get the payment list from the account
       let my_autopay_state = borrow_global_mut<UserAutoPay>(*account_addr);
