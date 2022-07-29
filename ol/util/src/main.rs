@@ -17,15 +17,24 @@ use regex::Regex;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::PathBuf;
+use std::process::exit;
 
 fn main() {
-    let node_home = dirs::home_dir().unwrap().join(NODE_HOME);
+    let home_dir = match dirs::home_dir() {
+        Some(d) => d,
+        None => {
+            eprintln!("Error - home dir not set");
+            exit(1001)
+        }
+    };
+
+    let node_home = home_dir.join(NODE_HOME);
     let config_file = node_home.join(CONFIG_FILE);
 
-    migrate_0l_toml(config_file, node_home);
+    migrate_0l_toml(config_file, node_home, home_dir);
 }
 
-fn migrate_0l_toml(config_file: PathBuf, node_home: PathBuf) {
+fn migrate_0l_toml(config_file: PathBuf, node_home: PathBuf, home_dir: PathBuf) {
     if !config_file.exists() {
         println!(
             "config file: {:?} does not exist - no migration possible",
@@ -41,8 +50,7 @@ fn migrate_0l_toml(config_file: PathBuf, node_home: PathBuf) {
 
     // ---------------------- udate [workspace] config start ----------------------
     let default_db_path = node_home.join("db").as_path().display().to_string();
-    let default_source_path = dirs::home_dir()
-        .unwrap()
+    let default_source_path = home_dir
         .join("libra")
         .as_path()
         .display()
@@ -158,7 +166,14 @@ fn migrate_0l_toml(config_file: PathBuf, node_home: PathBuf) {
 pub fn add_section(filename: &PathBuf, section: &str) {
     let mut section_exists = false;
 
-    let my_section_re = Regex::new(&format!(r"^\[{}\]$", section).as_str()).unwrap();
+    let my_section_re = match Regex::new(&format!(r"^\[{}\]$", section).as_str()) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Error applying Regex: {}", e);
+            exit(1002);
+        }
+    };
+    
 
     // round 1: check if section already exists
     let file_content = read_file(&filename);
@@ -203,8 +218,21 @@ pub fn add_section(filename: &PathBuf, section: &str) {
 pub fn rename_section(filename: &PathBuf, old_section_name: &str, new_section_name: &str) {
     let mut section_exists = false;
 
-    let old_section_re = Regex::new(&format!(r"^\[{}\]$", old_section_name).as_str()).unwrap();
-    let new_section_re = Regex::new(&format!(r"^\[{}\]$", new_section_name).as_str()).unwrap();
+    let old_section_re = match Regex::new(&format!(r"^\[{}\]$", old_section_name).as_str()) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Error applying Regex: {}", e);
+            exit(1003);
+        }
+    };
+ 
+    let new_section_re = match Regex::new(&format!(r"^\[{}\]$", new_section_name).as_str()) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Error applying Regex: {}", e);
+            exit(1004);
+        }
+    };
 
     // round 1: check if section already exists
     let file_content = read_file(&filename);
@@ -275,9 +303,29 @@ pub fn add_or_update(filename: &PathBuf, section: &str, attribute: &str, value: 
     let mut in_my_section = false;
     let mut attribute_exists = false;
 
-    let any_section_start_re = Regex::new(r"^\[.*\]$").unwrap();
-    let my_section_re = Regex::new(&format!(r"^\[{}\]$", section).as_str()).unwrap();
-    let my_attribute_re = Regex::new(&format!(r"^{}[ \t]*=.*$", attribute).as_str()).unwrap();
+    let any_section_start_re = match Regex::new(r"^\[.*\]$") {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Error applying Regex: {}", e);
+            exit(1005);
+        }
+    };
+
+    let my_section_re = match Regex::new(&format!(r"^\[{}\]$", section).as_str()) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Error applying Regex: {}", e);
+            exit(1006);
+        }
+    };
+
+    let my_attribute_re = match Regex::new(&format!(r"^{}[ \t]*=.*$", attribute).as_str()) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("Error applying Regex: {}", e);
+            exit(1007);
+        }
+    };
 
     // round 1: check if attribute already exists
     let file_content = read_file(&filename);
