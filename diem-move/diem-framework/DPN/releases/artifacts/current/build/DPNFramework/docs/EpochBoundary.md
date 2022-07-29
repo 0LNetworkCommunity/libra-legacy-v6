@@ -214,9 +214,10 @@
     print(&300360);
 
     <b>let</b> proposed_set = <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, height_start, height_now);
-    <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm, subsidy_units, &proposed_set);
-    // release funds <b>to</b> slow wallets
+    // Update all slow wallet limits
     <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>()); // todo
+
+    <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm,nominal_subsidy_per);
 
     <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, outgoing_compliant_set, height_now)
 }
@@ -283,7 +284,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm: &signer, nominal_subsidy_per: u64, outgoing_compliant_set: vector&lt;<b>address</b>&gt;)
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;<b>address</b>&gt;)
 </code></pre>
 
 
@@ -293,15 +294,15 @@
 
 
 <pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(
-    vm: &signer, nominal_subsidy_per: u64, outgoing_compliant_set: vector&lt;<b>address</b>&gt;
+    vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;<b>address</b>&gt;
 ) {
     // Process outgoing validators:
     // Distribute Transaction fees and subsidy payments <b>to</b> all outgoing validators
 
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>&lt;<b>address</b>&gt;(&outgoing_compliant_set)) <b>return</b>;
 
-    <b>if</b> (nominal_subsidy_per &gt; 0) {
-        <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, nominal_subsidy_per, &outgoing_compliant_set);
+    <b>if</b> (subsidy_units &gt; 0) {
+        <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, &outgoing_compliant_set);
     };
 
     <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, &outgoing_compliant_set);
@@ -364,7 +365,8 @@
     // <b>if</b> we are failing <b>to</b> qualify anyone. Pick top 1/2 of validator set
     // by proposals. They are probably online.
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&proposed_set) &lt;= 3)
-        proposed_set = <a href="Stats.md#0x1_Stats_get_sorted_vals_by_props">Stats::get_sorted_vals_by_props</a>(vm, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&proposed_set) / 2);
+        proposed_set =
+          <a href="Stats.md#0x1_Stats_get_sorted_vals_by_props">Stats::get_sorted_vals_by_props</a>(vm, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&proposed_set) / 2);
 
     // If still failing...in extreme case <b>if</b> we cannot qualify anyone.
     // Don't change the validator set. we keep the same validator set.
@@ -400,10 +402,16 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;<b>address</b>&gt;, outgoing_compliant: vector&lt;<b>address</b>&gt;, height_now: u64) {
-
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(
+    vm: &signer,
+    proposed_set: vector&lt;<b>address</b>&gt;,
+    outgoing_compliant: vector&lt;<b>address</b>&gt;,
+    height_now: u64
+) {
     // Reset <a href="Stats.md#0x1_Stats">Stats</a>
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
+
+    // Migrate <a href="TowerState.md#0x1_TowerState">TowerState</a> list from elegible.
     <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &outgoing_compliant);
 
     // Reconfigure the network
@@ -428,7 +436,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector&lt;<b>address</b>&gt;)
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm: &signer, nominal_subsidy_per: u64)
 </code></pre>
 
 
@@ -437,31 +445,21 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector&lt;<b>address</b>&gt;) {
-    // print(&222201);
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm: &signer, nominal_subsidy_per: u64) {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-
-    // recaulculate the ratios of the community index.
     <a href="Burn.md#0x1_Burn_reset_ratios">Burn::reset_ratios</a>(vm);
 
-    // get the burn value for next epoch. 50% of this epoch's reward.
-    <b>let</b> burn_value = nominal_subsidy_per/2;
-    // print(&burn_value);
-    // <b>apply</b> the cost-<b>to</b>-exist <b>to</b> all validator candidates
-    // TODO: remove proposed_set implementation until after epoch 185
-    <b>let</b> all_vals = <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() &gt; 185) {
-     <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm)
-    } <b>else</b> {
-      *proposed_set
-    };
-
+    <b>let</b> burn_value = nominal_subsidy_per / 2; // 50% of the current per validator reward
+    <b>let</b> all_vals = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm);
+    print(&all_vals);
     <b>let</b> i = 0;
     <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&all_vals)) {
       <b>let</b> addr = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&all_vals, i);
+      print(&addr);
+
       <a href="Burn.md#0x1_Burn_epoch_start_burn">Burn::epoch_start_burn</a>(vm, addr, burn_value);
       i = i + 1;
     };
-  //  print(&222202);
 }
 </code></pre>
 
