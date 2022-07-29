@@ -42,7 +42,10 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
 
     let account_template = warp::path("account.json").and(warp::get()).map(move || {
         let account_path = node_home.join("account.json");
-        fs::read_to_string(account_path).unwrap()
+        match fs::read_to_string(account_path) {
+            Ok(s) => warp::reply::json(&s),
+            Err(_) => warp::reply::json(&json!({})),
+        }
     });
 
     let node_home = cfg.clone().workspace.node_home.clone();

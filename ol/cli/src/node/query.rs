@@ -1,5 +1,5 @@
 //! 'query'
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, process::exit};
 
 use super::node::Node;
 use anyhow::Error;
@@ -130,7 +130,10 @@ impl Node {
                                 "SlowWallet".to_string(),
                                 "unlocked".to_string(),
                             );
-                            value.unwrap().to_string()
+                            match value {
+                                Some(v) => v.to_string(),
+                                None => format!("Error, could not find unlocked balance"),
+                            }
                         }
                     }
                     Err(e) => format!("Error retrieving unlocked balance. Message: {:#?}", e),
@@ -224,7 +227,13 @@ impl Node {
             } => {
                 // TODO: should borrow and not create a new client.
                 let mut print = "Events \n".to_string();
-                let handles = self.get_payment_event_handles(account).unwrap();
+                let handles = match self.get_payment_event_handles(account) {
+                    Ok(handles) => handles,
+                    Err(e) => {
+                        print.push_str(&format!("Error getting payment event handles: {:?}", e));
+                        return Ok(print);
+                    }
+                };
 
                 if let Some((sent_handle, received_handle)) = handles {
                     for evt in self.get_handle_events(&sent_handle, seq_start).unwrap() {
@@ -456,12 +465,30 @@ pub fn test_fixture_blob() -> AnnotatedAccountStateBlob {
 pub fn test_fixture_struct() -> AnnotatedMoveStruct {
     let module_tag = StructTag {
         address: AccountAddress::random(),
-        module: Identifier::new("TestModule").unwrap(),
-        name: Identifier::new("TestStructName").unwrap(),
+        module: match Identifier::new("TestModule") {
+            Ok(m) => m,
+            Err(e) => {
+                print!("Error: {}", e);
+                exit(1)
+            }
+        },
+        name: match Identifier::new("TestStructName") {
+            Ok(m) => m,
+            Err(e) => {
+                print!("Error: {}", e);
+                exit(1)
+            }
+        },
         type_params: vec![TypeTag::Bool],
     };
 
-    let key = Identifier::new("test_key").unwrap();
+    let key = match Identifier::new("test_key") {
+        Ok(m) => m,
+        Err(e) => {
+            print!("Error: {}", e);
+            exit(1)
+        }
+    };
     let value = AnnotatedMoveValue::Bool(true);
 
     AnnotatedMoveStruct {
@@ -480,8 +507,20 @@ pub fn test_fixture_wallet_type(
     let mut s = BTreeMap::new();
     let module_tag = StructTag {
         address: AccountAddress::random(),
-        module: Identifier::new(module_name).unwrap(),
-        name: Identifier::new(struct_name).unwrap(),
+        module: match Identifier::new(module_name) {
+            Ok(m) => m,
+            Err(e) => {
+                print!("Error: {}", e);
+                exit(1)
+            }
+        },
+        name: match Identifier::new(struct_name) {
+            Ok(m) => m,
+            Err(e) => {
+                print!("Error: {}", e);
+                exit(1)
+            }
+        },
         type_params: vec![],
     };
 
@@ -518,7 +557,13 @@ fn test_find_annotated_move_value() {
 #[test]
 fn test_is_slow_wallet_should_return_true() {
     let value = vec![(
-        Identifier::new("unlocked").unwrap(),
+        match Identifier::new("unlocked") {
+            Ok(m) => m,
+            Err(e) => {
+                print!("Error: {}", e);
+                exit(1)
+            }
+        },
         AnnotatedMoveValue::U64(0),
     )];
     let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
@@ -528,7 +573,13 @@ fn test_is_slow_wallet_should_return_true() {
 #[test]
 fn test_is_slow_wallet_should_return_false_if_missing_unlocked() {
     let value = vec![(
-        Identifier::new("transferred").unwrap(),
+        match Identifier::new("transferred") {
+            Ok(m) => m,
+            Err(e) => {
+                print!("Error: {}", e);
+                exit(1)
+            }
+        },
         AnnotatedMoveValue::U64(0),
     )];
     let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
@@ -539,11 +590,23 @@ fn test_is_slow_wallet_should_return_false_if_missing_unlocked() {
 fn test_is_slow_wallet_should_return_false_with_wrong_module_name() {
     let value = vec![
         (
-            Identifier::new("unlocked").unwrap(),
+            match Identifier::new("unlocked") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("transferred").unwrap(),
+            match Identifier::new("transferred") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::U64(1),
         ),
     ];
@@ -555,11 +618,23 @@ fn test_is_slow_wallet_should_return_false_with_wrong_module_name() {
 fn test_is_slow_wallet_should_return_false_with_wrong_struct_name() {
     let value = vec![
         (
-            Identifier::new("unlocked").unwrap(),
+            match Identifier::new("unlocked") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("transferred").unwrap(),
+            match Identifier::new("transferred") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::U64(1),
         ),
     ];
@@ -571,15 +646,33 @@ fn test_is_slow_wallet_should_return_false_with_wrong_struct_name() {
 fn test_is_community_wallet_should_return_true() {
     let value = vec![
         (
-            Identifier::new("is_frozen").unwrap(),
+            match Identifier::new("is_frozen") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").unwrap(),
+            match Identifier::new("consecutive_rejections") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            match Identifier::new("unfreeze_votes") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
         ),
     ];
@@ -591,15 +684,33 @@ fn test_is_community_wallet_should_return_true() {
 fn test_is_community_wallet_should_return_false_with_wrong_is_frozen() {
     let value = vec![
         (
-            Identifier::new("is_frozen").unwrap(),
+            match Identifier::new("is_frozen") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Bool(true),
         ),
         (
-            Identifier::new("consecutive_rejections").unwrap(),
+            match Identifier::new("consecutive_rejections") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            match Identifier::new("unfreeze_votes") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
         ),
     ];
@@ -611,15 +722,33 @@ fn test_is_community_wallet_should_return_false_with_wrong_is_frozen() {
 fn test_is_community_wallet_should_return_false_with_wrong_consecutive_rejections() {
     let value = vec![
         (
-            Identifier::new("is_frozen").unwrap(),
+            match Identifier::new("is_frozen") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").unwrap(),
+            match Identifier::new("consecutive_rejections") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::U64(1),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            match Identifier::new("unfreeze_votes") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
         ),
     ];
@@ -631,15 +760,33 @@ fn test_is_community_wallet_should_return_false_with_wrong_consecutive_rejection
 fn test_is_community_wallet_should_return_false_with_wrong_unfreeze_votes() {
     let value = vec![
         (
-            Identifier::new("is_frozen").unwrap(),
+            match Identifier::new("is_frozen") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").unwrap(),
+            match Identifier::new("consecutive_rejections") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            match Identifier::new("unfreeze_votes") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![AnnotatedMoveValue::Bool(false)]),
         ),
     ];
@@ -651,11 +798,23 @@ fn test_is_community_wallet_should_return_false_with_wrong_unfreeze_votes() {
 fn test_is_community_wallet_should_return_false_if_missing_unfreeze_votes() {
     let value = vec![
         (
-            Identifier::new("consecutive_rejections").unwrap(),
+            match Identifier::new("consecutive_rejections") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            match Identifier::new("unfreeze_votes") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
         ),
     ];
@@ -667,11 +826,23 @@ fn test_is_community_wallet_should_return_false_if_missing_unfreeze_votes() {
 fn test_is_community_wallet_should_return_false_if_missing_consecutive_rejections() {
     let value = vec![
         (
-            Identifier::new("is_frozen").unwrap(),
+            match Identifier::new("is_frozen") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            match Identifier::new("unfreeze_votes") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
         ),
     ];
@@ -683,15 +854,33 @@ fn test_is_community_wallet_should_return_false_if_missing_consecutive_rejection
 fn test_is_community_wallet_should_return_false_with_wrong_module_name() {
     let value = vec![
         (
-            Identifier::new("is_frozen").unwrap(),
+            match Identifier::new("is_frozen") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").unwrap(),
+            match Identifier::new("consecutive_rejections") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            match Identifier::new("unfreeze_votes") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
         ),
     ];
@@ -703,15 +892,33 @@ fn test_is_community_wallet_should_return_false_with_wrong_module_name() {
 fn test_is_community_wallet_should_return_false_with_wrong_struct_name() {
     let value = vec![
         (
-            Identifier::new("is_frozen").unwrap(),
+            match Identifier::new("is_frozen") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").unwrap(),
+            match Identifier::new("consecutive_rejections") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            match Identifier::new("unfreeze_votes") {
+                Ok(m) => m,
+                Err(e) => {
+                    print!("Error: {}", e);
+                    exit(1)
+                }
+            },
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
         ),
     ];
