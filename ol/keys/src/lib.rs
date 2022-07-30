@@ -1,2 +1,2 @@
-pub mod wallet;
 pub mod scheme;
+pub mod wallet;

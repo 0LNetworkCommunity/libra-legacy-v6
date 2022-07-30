@@ -30,7 +30,7 @@ pub enum OnboardState {
     /// Files initialized node.yaml, key_store.json
     ValConfigsOk,
 
-    /// DB files 
+    /// DB files
     DbFilesOk,
     /// Database restored from backup
     DbBootstrapOk,
@@ -91,8 +91,6 @@ pub enum TowerState {
     Mining,
 }
 
-
-
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 /// Actions that impact the miner
@@ -102,7 +100,6 @@ pub enum MinerEvents {
     /// miner failed
     Failed,
 }
-
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]

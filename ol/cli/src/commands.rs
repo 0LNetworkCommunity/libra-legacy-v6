@@ -10,32 +10,25 @@
 //! See the `impl Configurable` below for how to specify the path to the
 //! application's configuration file.
 
-pub mod init_cmd;
-pub mod query_cmd;
-mod version;
-mod mgmt_cmd;
-mod serve_cmd;
-mod restore_cmd;
 mod health_cmd;
+pub mod init_cmd;
+mod mgmt_cmd;
 mod pilot_cmd;
+pub mod query_cmd;
+mod restore_cmd;
+mod serve_cmd;
 mod start_cmd;
+mod version;
 mod whoami_cmd;
 
 use self::{
-    init_cmd::InitCmd,
-    version::VersionCmd,
-    mgmt_cmd::MgmtCmd,
-    serve_cmd::ServeCmd,
-    restore_cmd::RestoreCmd,
-    query_cmd::QueryCmd,
-    health_cmd::HealthCmd,
-    pilot_cmd::PilotCmd,
-    start_cmd::StartCmd,
-    whoami_cmd::WhoamiCmd,
+    health_cmd::HealthCmd, init_cmd::InitCmd, mgmt_cmd::MgmtCmd, pilot_cmd::PilotCmd,
+    query_cmd::QueryCmd, restore_cmd::RestoreCmd, serve_cmd::ServeCmd, start_cmd::StartCmd,
+    version::VersionCmd, whoami_cmd::WhoamiCmd,
 };
 
-use crate::entrypoint;
 use crate::config::AppCfg;
+use crate::entrypoint;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
 };
@@ -69,14 +62,16 @@ pub enum OlCliCmd {
 
     /// The `restore` subcommand
     #[options(help = "restore the database from the epoch-archive repository")]
-    Restore(RestoreCmd), 
-     
+    Restore(RestoreCmd),
+
     /// The `query` subcommand
     #[options(help = "run simple queries through subcommands, prints the value to stdout")]
-    Query(QueryCmd), 
+    Query(QueryCmd),
 
     /// The `health` subcommand
-    #[options(help = "run healthcheck on the account, node, and displays some network information")]
+    #[options(
+        help = "run healthcheck on the account, node, and displays some network information"
+    )]
     Health(HealthCmd),
 
     /// The `pilot` subcommand, for explorer
@@ -86,7 +81,7 @@ pub enum OlCliCmd {
     /// The `start` subcommand
     #[options(help = "start 0L services")]
     Start(StartCmd),
-    
+
     /// The `whoami` subcommand
     #[options(help = "show public keys and network protocols")]
     Whoami(WhoamiCmd),
@@ -117,10 +112,7 @@ impl Configurable<AppCfg> for OlCliCmd {
     ///
     /// This can be safely deleted if you don't want to override config
     /// settings from command-line options.
-    fn process_config(
-        &self,
-        config: AppCfg,
-    ) -> Result<AppCfg, FrameworkError> {
+    fn process_config(&self, config: AppCfg) -> Result<AppCfg, FrameworkError> {
         match self {
             OlCliCmd::Init(cmd) => cmd.override_config(config),
             _ => Ok(config),

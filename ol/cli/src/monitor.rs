@@ -1,12 +1,9 @@
 //! `monitor` subcommand
 
-
-use std::{thread, time::{Duration}};
-use crate::{
-    check::Check,
-};
-use std::io::{Write, stdout};
-use crossterm::{QueueableCommand, cursor};
+use crate::check::Check;
+use crossterm::{cursor, QueueableCommand};
+use std::io::{stdout, Write};
+use std::{thread, time::Duration};
 
 /// Start the node monitor
 pub fn mon() {
@@ -22,12 +19,12 @@ pub fn mon() {
         // TODO: make keep cursor position
         let sync = checker.check_sync();
         let mining = match checker.miner_is_mining() {
-            true=> "Running",
-            false => "Stopped"
+            true => "Running",
+            false => "Stopped",
         };
         let node_status = match checker.node_is_running() {
-            true=> "Running",
-            false => "Stopped"
+            true => "Running",
+            false => "Stopped",
         };
 
         stdout.queue(cursor::SavePosition).unwrap();
@@ -53,14 +50,15 @@ pub fn mon() {
     }
 }
 
-
 // TODO: Implement loop with clockwerk
 use clokwerk::{Scheduler, TimeUnits};
 
 /// set a timer for the monitor
-pub fn timer () {
+pub fn timer() {
     let mut scheduler = Scheduler::new();
-    scheduler.every(1.seconds()).run(|| println!("Periodic task"));
+    scheduler
+        .every(1.seconds())
+        .run(|| println!("Periodic task"));
 
     let _thread_handle = scheduler.watch_thread(Duration::from_millis(100));
 }

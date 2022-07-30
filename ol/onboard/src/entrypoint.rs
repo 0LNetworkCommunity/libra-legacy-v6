@@ -1,12 +1,11 @@
 //! Toplevel entrypoint command.
 
-use abscissa_core::{
-    Command, command::Usage, Config, Configurable, FrameworkError, 
-    Options, Runnable    
-};
-use std::path::PathBuf;
 use crate::commands;
+use abscissa_core::{
+    command::Usage, Command, Config, Configurable, FrameworkError, Options, Runnable,
+};
 use diem_global_constants::NODE_HOME;
+use std::path::PathBuf;
 
 /// Toplevel entrypoint command.
 ///
@@ -43,7 +42,6 @@ where
     /// Swarm persona - what fixtures to use
     #[options(help = "use the fixtures of a persona, e.g. alice, eve")]
     pub swarm_persona: Option<String>,
-
 }
 
 impl<Cmd> EntryPoint<Cmd>
@@ -126,7 +124,7 @@ where
 pub type EntryPointTxsCmd = EntryPoint<commands::WizCmd>;
 /// get arguments passed in the entrypoin of this app, not the subcommands
 pub fn get_args() -> EntryPointTxsCmd {
-  Command::from_env_args()
+    Command::from_env_args()
 }
 
 /// returns node_home

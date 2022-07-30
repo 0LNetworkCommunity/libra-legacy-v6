@@ -224,7 +224,6 @@ fn bench_delay(c: &mut Criterion) {
         })
     });
 
-    
     c.bench_function("verify_pz_20m_1024", |b| {
         b.iter(|| {
             let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
@@ -285,8 +284,6 @@ fn bench_delay(c: &mut Criterion) {
         })
     });
 
-
-
     c.bench_function("verify_pz_80m_512", |b| {
         b.iter(|| {
             let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
@@ -323,7 +320,6 @@ fn bench_delay(c: &mut Criterion) {
         })
     });
 
-
     c.bench_function("verify_pz_250m_256", |b| {
         b.iter(|| {
             let preimage_bytes = hex::decode("df6046be26c9a64ececa098a5ecbf724d91619ce64a4899087ac2098d394df59").unwrap();
@@ -337,10 +333,7 @@ fn bench_delay(c: &mut Criterion) {
     });
 }
 
-
-
-
-// 
+//
 //
 
 // sample size configs not documented. Found here: https://github.com/bheisler/criterion.rs/issues/407

@@ -18,9 +18,9 @@
 
 pub mod application;
 pub mod commands;
-pub mod error;
-pub mod prelude;
 pub mod entrypoint;
+pub mod error;
 pub mod manifest;
+pub mod prelude;
 // pub mod home;
 pub mod read_genesis;
