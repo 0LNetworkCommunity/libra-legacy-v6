@@ -1773,9 +1773,7 @@ pub enum ScriptFunctionCall {
     /// in the MakeWhole module, which can be found using the
     /// query_make_whole_payment, which should not be run as part of
     /// the tx as it is relatively resource intensive (linear search)
-    ClaimMakeWhole {
-        index: u64,
-    },
+    ClaimMakeWhole {},
 
     CommunityTransfer {
         destination: AccountAddress,
@@ -3656,7 +3654,7 @@ impl ScriptFunctionCall {
                 preburn_address,
                 amount,
             } => encode_cancel_burn_with_amount_script_function(token, preburn_address, amount),
-            ClaimMakeWhole { index } => encode_claim_make_whole_script_function(index),
+            ClaimMakeWhole {} => encode_claim_make_whole_script_function(),
             CommunityTransfer {
                 destination,
                 unscaled_value,
@@ -4472,7 +4470,7 @@ pub fn encode_cancel_burn_with_amount_script_function(
 /// in the MakeWhole module, which can be found using the
 /// query_make_whole_payment, which should not be run as part of
 /// the tx as it is relatively resource intensive (linear search)
-pub fn encode_claim_make_whole_script_function(index: u64) -> TransactionPayload {
+pub fn encode_claim_make_whole_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
@@ -4480,7 +4478,7 @@ pub fn encode_claim_make_whole_script_function(index: u64) -> TransactionPayload
         ),
         ident_str!("claim_make_whole").to_owned(),
         vec![],
-        vec![bcs::to_bytes(&index).unwrap()],
+        vec![],
     ))
 }
 
@@ -8509,10 +8507,8 @@ fn decode_cancel_burn_with_amount_script_function(
 fn decode_claim_make_whole_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::ClaimMakeWhole {
-            index: bcs::from_bytes(script.args().get(0)?).ok()?,
-        })
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::ClaimMakeWhole {})
     } else {
         None
     }

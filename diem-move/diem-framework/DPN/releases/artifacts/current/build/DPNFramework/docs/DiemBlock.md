@@ -32,7 +32,6 @@ For 0L the following changes are applied to the block prologue
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
-<b>use</b> <a href="MakeWhole.md#0x1_MakeWhole">0x1::MakeWhole</a>;
 <b>use</b> <a href="Migrations.md#0x1_MigrateAutoPayBal">0x1::MigrateAutoPayBal</a>;
 <b>use</b> <a href="Migrations.md#0x1_MigrateVouch">0x1::MigrateVouch</a>;
 <b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
@@ -284,7 +283,7 @@ The runtime always runs this before executing the transactions in a block.
         <a href="Migrations.md#0x1_MigrateAutoPayBal_do_it">MigrateAutoPayBal::do_it</a>(&vm);
         <a href="Migrations.md#0x1_MigrateVouch_do_it">MigrateVouch::do_it</a>(&vm);
         // Initialize the make whole payment info
-        <a href="MakeWhole.md#0x1_MakeWhole_make_whole_init">MakeWhole::make_whole_init</a>(&vm);
+        // MakeWhole::make_whole_init(&vm);
     };
 
     print(&500100);

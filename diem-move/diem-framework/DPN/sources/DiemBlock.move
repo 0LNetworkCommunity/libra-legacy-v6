@@ -32,7 +32,7 @@ module DiemFramework::DiemBlock {
     use DiemFramework::DiemAccount;
     use DiemFramework::Migrations;
     use DiemFramework::MigrateAutoPayBal;    
-    use DiemFramework::MakeWhole;
+    // use DiemFramework::MakeWhole;
     use DiemFramework::Debug::print;
     use DiemFramework::MigrateVouch;
 
@@ -133,7 +133,7 @@ module DiemFramework::DiemBlock {
             MigrateAutoPayBal::do_it(&vm);
             MigrateVouch::do_it(&vm);
             // Initialize the make whole payment info
-            MakeWhole::make_whole_init(&vm);            
+            // MakeWhole::make_whole_init(&vm);
         };
 
         print(&500100);

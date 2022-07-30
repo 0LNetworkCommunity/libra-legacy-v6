@@ -13,7 +13,7 @@ use diem_writeset_generator::{
     encode_remove_validators_payload, script_bulk_update_vals_payload, 
     // ol_writeset_stdlib_upgrade,
     ol_create_reconfig_payload, 
-    ol_writset_encode_rescue, ol_writset_update_timestamp, 
+    ol_writeset_encode_rescue, ol_writset_update_timestamp, 
     ol_writeset_force_boundary, ol_writeset_set_testnet, 
     ol_writeset_debug_epoch, ol_writeset_update_epoch_time,
     ol_writeset_ancestry, ol_writeset_encode_migrations,
@@ -113,7 +113,7 @@ enum Command {
     #[structopt(name = "ancestry")]
     Ancestry { ancestry_file: PathBuf,},
     #[structopt(name = "migrate")]
-    Migrate { ancestry_file: PathBuf, addresses: Vec<AccountAddress>},    
+    Migrate { ancestry_file: PathBuf, makewhole_file: PathBuf, addresses: Vec<AccountAddress>},    
     #[structopt(name = "reconfig")]
     Reconfig { },
     #[structopt(name = "time")]
@@ -241,13 +241,16 @@ fn main() -> Result<()> {
         // Command::UpdateStdlib {} => ol_writeset_stdlib_upgrade(opt.db.unwrap()), // todo
         Command::UpdateStdlib {} => todo!(),
         Command::Reconfig {} => ol_create_reconfig_payload(opt.db.unwrap()),
-        Command::Rescue { addresses } => ol_writset_encode_rescue(opt.db.unwrap(), addresses),
+        Command::Rescue { addresses } => ol_writeset_encode_rescue(opt.db.unwrap(), addresses),
         Command::Timestamp {} => ol_writset_update_timestamp(opt.db.unwrap()),
         Command::Testnet {} => ol_writeset_set_testnet(opt.db.unwrap()),
         Command::DebugEpoch { addresses } => ol_writeset_debug_epoch(opt.db.unwrap(), addresses),
         Command::EpochTime {} => ol_writeset_update_epoch_time(opt.db.unwrap()),
         Command::Ancestry { ancestry_file } => ol_writeset_ancestry(opt.db.unwrap(), ancestry_file),
-        Command::Migrate { ancestry_file, addresses} => ol_writeset_encode_migrations(opt.db.unwrap(), ancestry_file, addresses),
+        Command::Migrate { ancestry_file, makewhole_file, addresses } 
+            => ol_writeset_encode_migrations(
+                opt.db.unwrap(), ancestry_file, makewhole_file, addresses
+            ),
     };
     let output_path = if let Some(p) = opt.output {
         p

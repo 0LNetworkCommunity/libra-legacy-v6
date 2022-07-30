@@ -46,11 +46,9 @@ module Upgrade {
     use DiemFramework::DiemConfig;
     // Can only be called by the VM
     // making public so that we can use in admin scripts of writeset-transaction-generator.
-    use DiemFramework::Debug::print;
     use DiemFramework::CoreAddresses;
 
     public fun upgrade_reconfig(vm: &signer) acquires UpgradePayload {
-        print(&1111111);
         CoreAddresses::assert_vm(vm);
         reset_payload(vm);
         // This is janky, but there's no other way to get the current block height,

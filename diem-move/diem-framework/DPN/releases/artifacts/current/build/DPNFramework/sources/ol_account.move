@@ -108,8 +108,8 @@ module AccountScripts {
     /// in the MakeWhole module, which can be found using the 
     /// query_make_whole_payment, which should not be run as part of 
     /// the tx as it is relatively resource intensive (linear search)
-    public(script) fun claim_make_whole(sender: signer, index: u64) {
-        let _ = MakeWhole::claim_make_whole_payment(&sender, index);
+    public(script) fun claim_make_whole(sender: signer) {
+        let _ = MakeWhole::claim_make_whole_payment(&sender);
     }
 }
 }
