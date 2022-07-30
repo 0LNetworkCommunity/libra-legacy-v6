@@ -6085,6 +6085,7 @@ dependencies = [
  "num-format",
  "ol-keys",
  "once_cell",
+ "rand 0.8.4",
  "reqwest",
  "rustyline",
  "serde 1.0.137",

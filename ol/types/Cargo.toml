@@ -29,3 +29,4 @@ move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397
 sha2 = "0.9.1"
 num-format = "0.4.0"
 glob = "0.3"
+rand = "0.8.4"

@@ -75,7 +75,7 @@ pub fn parse_toml(path: PathBuf) -> Result<AppCfg, Error> {
 /// Get a AppCfg object from toml file
 pub fn fix_missing_fields(path: PathBuf) -> Result<(), Error> {
     let cfg: AppCfg = parse_toml(path)?;
-    cfg.save_file();
+    cfg.save_file()?;
     Ok(())
 }
 
@@ -204,12 +204,12 @@ impl AppCfg {
 
         // skip questionnaire if CI
         if *IS_TEST {
-            default_config.save_file();
+            default_config.save_file()?;
 
             return Ok(default_config);
         }
         fs::create_dir_all(&default_config.workspace.node_home).unwrap();
-        default_config.save_file();
+        default_config.save_file()?;
 
         Ok(default_config)
     }
@@ -221,11 +221,11 @@ impl AppCfg {
         swarm_path: PathBuf,
         node_home: PathBuf,
         source_path: Option<PathBuf>,
-    ) -> AppCfg {
+    ) -> Result<AppCfg, Error> {
         // println!("init_swarm_config: {:?}", swarm_path); already logged in commands.rs
         let host_config = AppCfg::make_swarm_configs(swarm_path, node_home, source_path);
-        host_config.save_file();
-        host_config
+        host_config.save_file()?;
+        Ok(host_config)
     }
 
     /// get configs from swarm
@@ -276,39 +276,22 @@ impl AppCfg {
 
         cfg
     }
-    // /// choose a node to connect to, either localhost or upstream
-    // pub fn what_url(&self, use_upstream_url: bool) -> Url {
-    //     if use_upstream_url {
-    //         self.profile
-    //             .upstream_nodes
-    //             .clone()
-    //             .unwrap()
-    //             .into_iter()
-    //             .next()
-    //             .expect("no backup url provided in config toml")
-    //     } else {
-    //         self.profile
-    //             .default_node
-    //             .clone()
-    //             .expect("no url provided in config toml")
-    //     }
-    // }
 
     /// save the config file to 0L.toml to the workspace home path
-    pub fn save_file(&self) {
-        let toml = toml::to_string(&self).unwrap();
+    pub fn save_file(&self) -> Result<(), Error>{
+        let toml = toml::to_string(&self)?;
         let home_path = &self.workspace.node_home.clone();
         // create home path if doesn't exist, usually only in dev/ci environments.
-        fs::create_dir_all(&home_path).expect("could not create 0L home directory");
+        fs::create_dir_all(&home_path)?;
         let toml_path = home_path.join(CONFIG_FILE);
-        let file = fs::File::create(&toml_path);
-        file.unwrap()
-            .write(&toml.as_bytes())
-            .expect("Could not write toml file");
+        let mut file = fs::File::create(&toml_path)?;
+        file.write(&toml.as_bytes())?;
+
         println!(
             "\nhost configs initialized, file saved to: {:?}",
             &toml_path
         );
+        Ok(())
     }
 }
 
