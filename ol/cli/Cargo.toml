@@ -57,16 +57,16 @@ storage-interface = { path = "../../storage/storage-interface", version = "0.1.0
 fs_extra = "1"
 port_scanner = "0.1.5"
 backup-cli = { path = "../../storage/backup/backup-cli", version = "0.1.0" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4" }
 walkdir = "2.3"
 rand = "0.8"
 bcs = "0.1.2"
-move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" } # 0L todo: which move-vm/ path?
-move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
+move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4" } # 0L todo: which move-vm/ path?
+move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4" }
 dialoguer = "0.8.0"
 diem-crypto = { path = "../../crates/diem-crypto" }
 diem-client = { path = "../../crates/diem-client" }
-move-resource-viewer = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
+move-resource-viewer = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4" }
 
 # Parity with Storage create
 [dependencies.rocksdb]

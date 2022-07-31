@@ -19,15 +19,15 @@ diem-state-view = { path = "../../storage/state-view" }
 diem-validator-interface = { path = "../diem-validator-interface" }
 diemdb = { path = "../../storage/diemdb" }
 diem-vm = { path = "../diem-vm" }
-move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b"}
-move-cli = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
-move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
-move-vm-runtime = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
-move-vm-test-utils = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
+move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4"}
+move-cli = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4" }
+move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4" }
+move-vm-runtime = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4" }
+move-vm-test-utils = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4" }
 diem-resource-viewer = { path = "../diem-resource-viewer" }
 diem-framework = { path = "../../diem-move/diem-framework" }
-move-compiler = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b" }
+move-compiler = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4" }
 bcs = "0.1.2"
 difference = "2.0.0"
 

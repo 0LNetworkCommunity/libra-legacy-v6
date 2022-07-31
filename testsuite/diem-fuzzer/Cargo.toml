@@ -42,14 +42,14 @@ diem-mempool = { path = "../../mempool" }
 diem-types = { path = "../../types", features = ["fuzzing"] }
 diem-vault-client = { path = "../../secure/storage/vault", features = ["fuzzing"] }
 diemdb = { path = "../../storage/diemdb", features = ["fuzzing"] }
-move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b", features = ["fuzzing"] }
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b", features = ["fuzzing"] }
+move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4", features = ["fuzzing"] }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4", features = ["fuzzing"] }
 network = { path = "../../network", features = ["fuzzing"] }
 safety-rules = { path = "../../consensus/safety-rules", features = ["fuzzing", "testing"]  }
 scratchpad = { path = "../../storage/scratchpad", features = ["fuzzing"]}
 state-sync-v1 = { path = "../../state-sync/state-sync-v1", features = ["fuzzing", "diemdb"]  }
 storage-interface = { path = "../../storage/storage-interface" }
-move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "3a174c09c397ee78df1ef7bd2f4ea4205711f69b", features = ["fuzzing"] }
+move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4", features = ["fuzzing"] }
 
 [dev-dependencies]
 rusty-fork = "0.3.0"

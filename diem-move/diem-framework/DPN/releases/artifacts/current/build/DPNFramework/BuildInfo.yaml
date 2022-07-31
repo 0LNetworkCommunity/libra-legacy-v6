@@ -131,6 +131,9 @@ compiled_package_info:
       name: Errors
     : Std
     ? address: "00000000000000000000000000000001"
+      name: EthSignature
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Event
     : Std
     ? address: "00000000000000000000000000000001"
@@ -302,9 +305,12 @@ compiled_package_info:
       name: XDX
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: XHash
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: BB33313D4A1FCA296489C6709618DFF2CDA10E7B33115CA38D33267581CE592E
+  source_digest: AF8F3AB2ADC720E10BD9F4D1C1AA22EB9791F9BF4B4EFE21360CC3A073110F44
   build_flags:
     dev_mode: false
     test_mode: false
