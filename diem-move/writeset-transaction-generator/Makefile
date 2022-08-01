@@ -54,6 +54,9 @@ tx-epoch-time:
 tx-migrate:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob migrate ${SOURCE_PATH}/ol/fixtures/rescue/ancestry.json ${SOURCE_PATH}/ol/fixtures/rescue/make_whole.json ${VALS}
 
+tx-debug:
+	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob debug
+
 # tx-custom:
 # 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${DATA_PATH}/restore/rescue.blob build-custom-script set_testnet.move '{}'
 
@@ -90,7 +93,7 @@ dump-self:
 
 test: wipe tx check commit init start
 
-
+debug: wipe tx-debug check
 # NOTES for testing
 
 # Step 0: change this makefile so that VALS= at top has your node address. Use a sanitized validator.node.yaml file.

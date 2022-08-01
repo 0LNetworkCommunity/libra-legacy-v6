@@ -2,6 +2,10 @@
 // Alice:          validators with 10M GAS
 // Bob, Carol: non-validators with  1M GAS
 
+// CAROL THE COMMUNITY WALLET TIMED TRANSFER
+// Carol will send Bob funds from the community wallet. 
+// It will be processed after three epoch boundaries complete.
+
 //# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::Wallet;
@@ -29,7 +33,7 @@ script {
 
 //////////////////////////////////////////////
 //// Trigger reconfiguration again         ///
-//# block --proposer Alice --time 125000000 --round 20
+//# block --proposer Alice --time 125000000 --round 30
 
 ////// TEST RECONFIGURATION IS HAPPENING /////
 // check: NewEpochEvent
@@ -37,8 +41,7 @@ script {
 
 //////////////////////////////////////////////
 //// Trigger reconfiguration again         ///
-//# block --proposer Alice --time 190000000 --round 20
-//! round: 20
+//# block --proposer Alice --time 190000000 --round 90
 
 ////// TEST RECONFIGURATION IS HAPPENING /////
 // check: NewEpochEvent

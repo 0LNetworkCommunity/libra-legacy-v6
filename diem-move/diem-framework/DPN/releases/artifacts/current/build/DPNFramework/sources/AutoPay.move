@@ -18,7 +18,6 @@ address DiemFramework {
     use Std::Errors;
     use DiemFramework::Wallet;
     use DiemFramework::Roles;
-    use DiemFramework::Debug::print;
 
     /// Attempted to send funds to an account that does not exist
     /// Maximum value for the Payment type selection
@@ -176,7 +175,6 @@ address DiemFramework {
       let account_list = &borrow_global<AccountList>(
         @DiemRoot
       ).accounts;
-      print(account_list);
       let accounts_length = Vector::length<address>(account_list);
       let account_idx = 0;
       while (account_idx < accounts_length) {

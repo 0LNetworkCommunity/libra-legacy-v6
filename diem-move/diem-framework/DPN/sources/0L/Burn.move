@@ -116,6 +116,9 @@ module Burn {
   fun send(vm: &signer, payer: address, value: u64) acquires DepositInfo {
     let list = get_address_list();
     let len = Vector::length<address>(&list);
+    
+    // There could be errors in the array, and underpayment happen.
+    let value_sent = 0;
 
     let i = 0;
     while (i < len) {
@@ -130,9 +133,15 @@ module Burn {
           b"",
           vm,
       );
-      
+      value_sent = value_sent + val;      
       i = i + 1;
     };
+
+    // prevent under-burn due to issues with index.
+    let diff = value - value_sent;
+    if (diff > 0) {
+      burn(vm, payer, diff)
+    };    
   }
 
   public fun set_send_community(sender: &signer, community: bool) acquires BurnPreference {

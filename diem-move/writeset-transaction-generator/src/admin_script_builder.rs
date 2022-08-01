@@ -184,10 +184,15 @@ pub fn script_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPay
     }
 }
 /// Force the ol epoch boundary and reset all the counters
-/// TODO: this creates some issue for block_prologue around epoch boundary because data disappears.
+/// TODO: this creates some issue for block_prologue around epoch boundary
+/// because data disappears.
 pub fn ol_writeset_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
     let cs = ol_force_boundary(path, vals).unwrap();
     WriteSetPayload::Direct(cs)
+}
+
+pub fn ol_debug(path: PathBuf) -> WriteSetPayload {
+    WriteSetPayload::Direct(ol_debug_height(path).unwrap())
 }
 
 // Todo: No encode_stdlib_upgrade_transaction in new Diem
@@ -295,7 +300,8 @@ pub fn ol_writeset_encode_migrations(
 
     let vouch = ol_vouch_migrate(path.clone(), vals.clone()).unwrap();
 
-    let boundary = ol_force_boundary(path.clone(), vals.clone()).unwrap();
+    // force an NewEpochEvent
+    let boundary = ol_bulk_validators_changeset(path.clone(), vals.clone()).unwrap();
 
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
     let new_cs = merge_vec_changeset(vec![ancestry, makewhole, vouch, boundary]).unwrap();
@@ -706,6 +712,7 @@ fn ol_bulk_validators_changeset(
     let db = DiemDebugger::db(path)?;
 
     let v = db.get_latest_version()?;
+    dbg!(&v);
     db.run_session_at_version(v, None, |session| {
         let mut gas_status = GasStatus::new_unmetered();
 
@@ -863,6 +870,37 @@ fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeS
                     Identifier::new("EpochBoundary").unwrap(),
                 ),
                 &Identifier::new("reset_counters").unwrap(),
+                vec![],
+                serialize_values(&args),
+                &mut gas_status,
+            )
+            .unwrap(); // TODO: don't use unwraps.
+        Ok(())
+    })
+}
+
+// TODO this doesn't work.
+fn ol_debug_height(path: PathBuf) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+
+    // TODO: This is not producing the same version height after appling to database.
+    let v = db.get_latest_version()?;
+
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        // fun reset_counters(vm: &signer, proposed_set: vector<address>, outgoing_compliant: vector<address>, height_now: u64) {
+
+        let args = vec![
+           MoveValue::U64(v)              // height_now
+        ];
+
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("DiemBlock").unwrap(),
+                ),
+                &Identifier::new("debug_height_version").unwrap(),
                 vec![],
                 serialize_values(&args),
                 &mut gas_status,

@@ -107,7 +107,7 @@ module Globals {
                                        // genesis to validators
           epoch_mining_thres_upper: 1000, // upper bound unlimited
           epoch_slow_wallet_unlock: 10,
-          min_blocks_per_epoch: 10,
+          min_blocks_per_epoch: 0,
         }
       };
 

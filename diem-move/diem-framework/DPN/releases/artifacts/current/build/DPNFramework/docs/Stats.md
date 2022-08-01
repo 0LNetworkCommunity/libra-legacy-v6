@@ -26,8 +26,7 @@
 -  [Function `get_sorted_vals_by_props`](#0x1_Stats_get_sorted_vals_by_props)
 
 
-<pre><code><b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
-<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
+<pre><code><b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
@@ -424,27 +423,18 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_inc_prop">inc_prop</a>(vm: &signer, node_addr: <b>address</b>) <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
   <b>let</b> sender = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>!(sender == @DiemRoot, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190009));
-  print(&200110);
-
   <b>let</b> stats = <b>borrow_global_mut</b>&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(@DiemRoot);
-  print(&200120);
   <b>let</b> (is_true, i) = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;<b>address</b>&gt;(&<b>mut</b> stats.current.addr, &node_addr);
-  // don't try <b>to</b> increment <b>if</b> no state. This <b>has</b> caused issues in the past in emergency recovery.
-  print(&200130);
+  // don't try <b>to</b> increment <b>if</b> no state. This <b>has</b> caused issues in the past
+  // in emergency recovery.
 
   <b>if</b> (is_true) {
-    print(&200131);
     <b>let</b> current_count = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&<b>mut</b> stats.current.prop_count, i);
-    print(&200132);
     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.current.prop_count, current_count + 1);
-    print(&200133);
     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> stats.current.prop_count, i);
-    print(&200134);
   };
-  print(&200140);
 
   stats.current.total_props = stats.current.total_props + 1;
-  print(&200150);
 }
 </code></pre>
 

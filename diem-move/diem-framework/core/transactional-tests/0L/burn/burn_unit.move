@@ -4,7 +4,7 @@
 script {
     use DiemFramework::Burn;
 
-    fun main(sender: signer) {
+    fun main(_dr: signer, sender: signer) {
       // alice chooses a pure burn for all burns.
       Burn::set_send_community(&sender, false);
     }
@@ -123,7 +123,7 @@ script {
     Burn::epoch_start_burn(&vm, @Alice, 100000);
 
     let bal_alice = DiemAccount::balance<GAS>(@Alice);
-    assert!(bal_alice == 9100001, 7357010); // rounding issues
+    assert!(bal_alice == 9100000, 7357010); // rounding issues
 
     // balances are greater than before.
     let bal_bob = DiemAccount::balance<GAS>(@Bob);

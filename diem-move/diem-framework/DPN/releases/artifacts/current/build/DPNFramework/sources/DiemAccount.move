@@ -6,8 +6,11 @@
 // File Prefix for errors: 1201 used for OL errors
 
 module DiemFramework::DiemAccount {
-    friend DiemFramework::MigrateAutoPayBal; //////// 0L ////////
-    friend DiemFramework::MigrateVouch; //////// 0L ////////
+    //////// 0L ////////
+    friend DiemFramework::AccountAdministrationScripts;
+    friend DiemFramework::MakeWhole;
+    friend DiemFramework::MigrateAutoPayBal;
+    friend DiemFramework::MigrateVouch;
 
     use DiemFramework::AccountFreezing;
     use DiemFramework::CoreAddresses;
@@ -48,10 +51,8 @@ module DiemFramework::DiemAccount {
     use DiemFramework::ValidatorUniverse;
     use DiemFramework::Wallet;
     use DiemFramework::Ancestry;
-    use DiemFramework::Vouch;    
-    
-    friend DiemFramework::AccountAdministrationScripts;
-    friend DiemFramework::MakeWhole; //////// 0L ////////
+    use DiemFramework::Vouch;
+    use DiemFramework::Debug::print;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -1406,16 +1407,22 @@ module DiemFramework::DiemAccount {
     ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
         if (Signer::address_of(vm) != @DiemRoot) return;
         
+        print(&990100);
         // Migrate on the fly if state doesn't exist on upgrade.
         if (!Wallet::is_init_comm()) {
             Wallet::init(vm);
             return
         };
+        print(&990200);
+        let all = Wallet::list_transfers(0);
+        print(&all);
 
         let v = Wallet::list_tx_by_epoch(epoch);
         let len = Vector::length<Wallet::TimedTransfer>(&v);
+        print(&len);
         let i = 0;
         while (i < len) {
+            print(&990201);
             let t: Wallet::TimedTransfer = *Vector::borrow(&v, i);
             // TODO: Is this the best way to access a struct property from 
             // outside a module?
@@ -1424,9 +1431,12 @@ module DiemFramework::DiemAccount {
               i = i + 1;
               continue
             };
+            print(&990202);
             vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
+            print(&990203);
             Wallet::mark_processed(vm, t);
             Wallet::reset_rejection_counter(vm, payer);
+            print(&990204);
             i = i + 1;
         };
     }

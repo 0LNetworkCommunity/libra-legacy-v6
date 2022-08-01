@@ -11,7 +11,6 @@ module Stats{
   use Std::Signer;
   use DiemFramework::Testnet;
   use Std::Vector;    
-  use DiemFramework::Debug::print;
 
   // TODO: yes we know this slows down block production. In "make it fast"
   // mode this will be moved to Rust, in the vm execution block prologue. TBD.
@@ -152,27 +151,18 @@ module Stats{
   public fun inc_prop(vm: &signer, node_addr: address) acquires ValStats {
     let sender = Signer::address_of(vm);
     assert!(sender == @DiemRoot, Errors::requires_role(190009));
-    print(&200110);       
-
     let stats = borrow_global_mut<ValStats>(@DiemRoot);
-    print(&200120);
     let (is_true, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
-    // don't try to increment if no state. This has caused issues in the past in emergency recovery.
-    print(&200130);
+    // don't try to increment if no state. This has caused issues in the past
+    // in emergency recovery.
 
     if (is_true) {
-      print(&200131);
       let current_count = *Vector::borrow<u64>(&mut stats.current.prop_count, i);
-      print(&200132);
       Vector::push_back(&mut stats.current.prop_count, current_count + 1);
-      print(&200133);
       Vector::swap_remove(&mut stats.current.prop_count, i);
-      print(&200134);
     };
-    print(&200140);   
 
     stats.current.total_props = stats.current.total_props + 1;
-    print(&200150);  
   }
   
   //TODO: Duplicate code.

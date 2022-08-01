@@ -17,6 +17,7 @@ use diem_writeset_generator::{
     ol_writeset_force_boundary, ol_writeset_set_testnet, 
     ol_writeset_debug_epoch, ol_writeset_update_epoch_time,
     ol_writeset_ancestry, ol_writeset_encode_migrations,
+    ol_debug,
     release_flow::artifacts::load_latest_artifact,
     verify_release,
 };
@@ -116,6 +117,8 @@ enum Command {
     Migrate { ancestry_file: PathBuf, makewhole_file: PathBuf, addresses: Vec<AccountAddress>},    
     #[structopt(name = "reconfig")]
     Reconfig { },
+    #[structopt(name = "debug")]
+    Debug { },    
     #[structopt(name = "time")]
     Timestamp { },
     #[structopt(name = "testnet")]
@@ -241,6 +244,7 @@ fn main() -> Result<()> {
         // Command::UpdateStdlib {} => ol_writeset_stdlib_upgrade(opt.db.unwrap()), // todo
         Command::UpdateStdlib {} => todo!(),
         Command::Reconfig {} => ol_create_reconfig_payload(opt.db.unwrap()),
+        Command::Debug {} => ol_debug(opt.db.unwrap()),
         Command::Rescue { addresses } => ol_writeset_encode_rescue(opt.db.unwrap(), addresses),
         Command::Timestamp {} => ol_writset_update_timestamp(opt.db.unwrap()),
         Command::Testnet {} => ol_writeset_set_testnet(opt.db.unwrap()),

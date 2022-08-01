@@ -66,40 +66,39 @@ module EpochBoundary {
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) acquires DebugMode {
-        print(&300300);        
         CoreAddresses::assert_vm(vm);
         let height_start = Epoch::get_timer_height_start(vm);
-        print(&300310);        
+        print(&800100);        
         let (outgoing_compliant_set, _) = 
             DiemSystem::get_fee_ratio(vm, height_start, height_now);
-        print(&300320);
+        print(&800200);
 
         // NOTE: This is "nominal" because it doesn't check
         let compliant_nodes_count = Vector::length(&outgoing_compliant_set);
-        print(&300330);
+        print(&800300);
 
         let (subsidy_units, nominal_subsidy_per) = 
             Subsidy::calculate_subsidy(vm, compliant_nodes_count);
 
-        print(&300340);
+        print(&800400);
 
         process_fullnodes(vm, nominal_subsidy_per);
-        print(&300350);
+        print(&800500);
         process_validators(vm, subsidy_units, *&outgoing_compliant_set);
-        print(&300360);
+        print(&800600);
 
         let proposed_set = propose_new_set(vm, height_start, height_now);
-        print(&300370);
+        print(&800700);
 
         // Update all slow wallet limits
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock()); // todo
-        print(&300380);
+        print(&800800);
 
         proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
-        print(&300390);
+        print(&800900);
 
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
-        print(&300391);
+        print(&801000);
     }
 
     // process fullnode subsidy
@@ -215,6 +214,8 @@ module EpochBoundary {
         // Migrate TowerState list from elegible.
         TowerState::reconfig(vm, &outgoing_compliant);
 
+        print(&99999999999999);
+
         // process community wallets
         DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
         
@@ -234,45 +235,31 @@ module EpochBoundary {
     fun proof_of_burn(
       vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector<address>
     ) {
-        print(&300400);
         CoreAddresses::assert_vm(vm);
         DiemAccount::migrate_cumu_deposits(vm); // may need to populate data on a migration.
 
         Burn::reset_ratios(vm);
-        print(&300410);
 
         let burn_value = nominal_subsidy_per / 2; // 50% of the current per validator reward
-        print(&300420);
 
         let vals_to_burn = if (
           !Testnet::is_testnet() &&
           !StagingNet::is_staging_net() &&
           DiemConfig::get_current_epoch() > 185
         ) {
-          print(&300421);
 
           &ValidatorUniverse::get_eligible_validators(vm)
         } else {
-          print(&300422);
-
           proposed_set
         };
-        print(&300430);
 
         // print(vals_to_burn);
         let i = 0;
         while (i < Vector::length<address>(vals_to_burn)) {
-          print(&300431);
           let addr = *Vector::borrow(vals_to_burn, i);
-          // print(&addr);
-          print(&300432);
-
           Burn::epoch_start_burn(vm, addr, burn_value);
-          print(&300433);
-
           i = i + 1;
         };
-        print(&300440);
     }
 }
 }

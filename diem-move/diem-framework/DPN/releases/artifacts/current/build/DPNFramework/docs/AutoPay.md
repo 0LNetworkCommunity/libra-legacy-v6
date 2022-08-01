@@ -37,8 +37,7 @@ This module enables automatic payments from accounts to community wallets at epo
 -  [Function `find`](#0x1_AutoPay_find)
 
 
-<pre><code><b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
-<b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
@@ -556,7 +555,6 @@ Attempt to use a UID that is already taken
   <b>let</b> account_list = &<b>borrow_global</b>&lt;<a href="AutoPay.md#0x1_AutoPay_AccountList">AccountList</a>&gt;(
     @DiemRoot
   ).accounts;
-  print(account_list);
   <b>let</b> accounts_length = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(account_list);
   <b>let</b> account_idx = 0;
   <b>while</b> (account_idx &lt; accounts_length) {

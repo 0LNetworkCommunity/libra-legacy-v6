@@ -307,6 +307,9 @@
   <b>let</b> list = <a href="Burn.md#0x1_Burn_get_address_list">get_address_list</a>();
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&list);
 
+  // There could be errors in the array, and underpayment happen.
+  <b>let</b> value_sent = 0;
+
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
     <b>let</b> payee = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<b>address</b>&gt;(&list, i);
@@ -320,8 +323,14 @@
         b"",
         vm,
     );
-
+    value_sent = value_sent + val;
     i = i + 1;
+  };
+
+  // prevent under-burn due <b>to</b> issues <b>with</b> index.
+  <b>let</b> diff = value - value_sent;
+  <b>if</b> (diff &gt; 0) {
+    <a href="Burn.md#0x1_Burn_burn">burn</a>(vm, payer, diff)
   };
 }
 </code></pre>

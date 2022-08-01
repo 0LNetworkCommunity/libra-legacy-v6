@@ -49,13 +49,13 @@ script {
     fun main(_dr: signer, sender: signer) {
       let uid = 1;
       let e = Wallet::get_tx_epoch(uid);
-      assert!(e == 4, 7357004);
+      assert!(e == 3, 7357004);
 
       Wallet::veto(&sender, uid);
 
       let e = Wallet::get_tx_epoch(uid);
       // adds latency to tx
-      assert!(e == 5, 7357005);
+      assert!(e == 4, 7357005);
 
       assert!(Wallet::transfer_is_proposed(uid), 7357006);
       assert!(!Wallet::transfer_is_rejected(uid), 7357007);
@@ -71,7 +71,7 @@ script {
       let uid = 1;
 
       let e = Wallet::get_tx_epoch(uid);
-      assert!(e == 5, 7357008);
+      assert!(e == 4, 7357008);
 
       Wallet::veto(&sender, uid);
 

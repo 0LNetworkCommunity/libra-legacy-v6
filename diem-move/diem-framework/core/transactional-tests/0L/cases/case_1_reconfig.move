@@ -118,6 +118,7 @@ script {
         let burn = expected_subsidy/2; // 50% of the rewrd to validator. 
         
         let ending_balance = starting_balance + expected_subsidy - operator_refund - burn;
+        print(&ending_balance);
         print(&DiemAccount::balance<GAS>(@Alice));
         assert!(DiemAccount::balance<GAS>(@Alice) == ending_balance, 7357000180113);  
         assert!(NodeWeight::proof_of_weight(@Alice) == 5, 7357000180114);

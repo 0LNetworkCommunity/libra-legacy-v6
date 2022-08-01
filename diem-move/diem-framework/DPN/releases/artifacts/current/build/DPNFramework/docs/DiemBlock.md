@@ -17,6 +17,7 @@ For 0L the following changes are applied to the block prologue
 -  [Function `is_initialized`](#0x1_DiemBlock_is_initialized)
 -  [Function `block_prologue`](#0x1_DiemBlock_block_prologue)
 -  [Function `get_current_block_height`](#0x1_DiemBlock_get_current_block_height)
+-  [Function `debug_height_version`](#0x1_DiemBlock_debug_height_version)
 -  [Module Specification](#@Module_Specification_1)
     -  [Initialization](#@Initialization_2)
 
@@ -257,11 +258,11 @@ The runtime always runs this before executing the transactions in a block.
 
     //////// 0L ////////
     // increment stats
-    print(&100100);
+    print(&100);
     <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(&vm, &previous_block_votes);
-    print(&200100);
+    print(&200);
     <a href="Stats.md#0x1_Stats_inc_prop">Stats::inc_prop</a>(&vm, *&proposer);
-    print(&300100);
+    print(&300);
     <b>if</b> (<a href="AutoPay.md#0x1_AutoPay_tick">AutoPay::tick</a>(&vm)){
         // triggers autopay at beginning of each epoch
         // tick is reset at end of previous epoch
@@ -269,7 +270,7 @@ The runtime always runs this before executing the transactions in a block.
         <a href="AutoPay.md#0x1_AutoPay_process_autopay">AutoPay::process_autopay</a>(&vm);
     };
 
-    print(&400100);
+    print(&400);
 
     // Do any pending migrations
     // TODO: should this be round 2 (when upgrade writeset happens).
@@ -286,12 +287,10 @@ The runtime always runs this before executing the transactions in a block.
         // MakeWhole::make_whole_init(&vm);
     };
 
-    print(&500100);
+    print(&500);
 
     <b>let</b> block_metadata_ref = <b>borrow_global_mut</b>&lt;<a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a>&gt;(@DiemRoot);
     <a href="DiemTimestamp.md#0x1_DiemTimestamp_update_global_time">DiemTimestamp::update_global_time</a>(&vm, proposer, timestamp);
-
-    print(&500110);
 
     block_metadata_ref.height = block_metadata_ref.height + 1;
     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Event.md#0x1_Event_emit_event">Event::emit_event</a>&lt;<a href="DiemBlock.md#0x1_DiemBlock_NewBlockEvent">NewBlockEvent</a>&gt;(
@@ -304,20 +303,20 @@ The runtime always runs this before executing the transactions in a block.
         }
     );
 
-    print(&600100);
+    print(&600);
 
     //////// 0L ////////
     // EPOCH BOUNDARY
     <b>let</b> height = <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">get_current_block_height</a>();
-    print(&700100);
+    print(&700);
     <b>if</b> (<a href="Epoch.md#0x1_Epoch_epoch_finished">Epoch::epoch_finished</a>(height)) {
-      print(&800200);
+      print(&800);
       // TODO: We don't need <b>to</b> pass block height <b>to</b> EpochBoundaryOL.
       // It should <b>use</b> the <a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a>. But there's a circular reference
       // there when we try.
       <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">EpochBoundary::reconfigure</a>(&vm, height);
     };
-    print(&900200);
+    print(&900);
 }
 </code></pre>
 
@@ -385,6 +384,33 @@ Get the current block height
 <pre><code><b>public</b> <b>fun</b> <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">get_current_block_height</a>(): u64 <b>acquires</b> <a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a> {
     <b>assert</b>!(<a href="DiemBlock.md#0x1_DiemBlock_is_initialized">is_initialized</a>(), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemBlock.md#0x1_DiemBlock_EBLOCK_METADATA">EBLOCK_METADATA</a>));
     <b>borrow_global</b>&lt;<a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a>&gt;(@DiemRoot).height
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemBlock_debug_height_version"></a>
+
+## Function `debug_height_version`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemBlock.md#0x1_DiemBlock_debug_height_version">debug_height_version</a>(vm_height: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemBlock.md#0x1_DiemBlock_debug_height_version">debug_height_version</a>(vm_height: u64) <b>acquires</b> <a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a> {
+    print(&111111);
+    print(&<a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">get_current_block_height</a>());
+    print(&222222);
+    print(&vm_height);
 }
 </code></pre>
 
