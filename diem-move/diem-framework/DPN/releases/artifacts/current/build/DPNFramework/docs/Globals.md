@@ -23,6 +23,7 @@ This module provides global variables and constants that have no specific owner
 -  [Function `get_epoch_mining_thres_lower`](#0x1_Globals_get_epoch_mining_thres_lower)
 -  [Function `get_epoch_mining_thres_upper`](#0x1_Globals_get_epoch_mining_thres_upper)
 -  [Function `get_unlock`](#0x1_Globals_get_unlock)
+-  [Function `get_min_blocks_epoch`](#0x1_Globals_get_min_blocks_epoch)
 -  [Function `get_constants`](#0x1_Globals_get_constants)
 
 
@@ -97,6 +98,12 @@ epoch by a miner to remain compliant
 </dd>
 <dt>
 <code>epoch_slow_wallet_unlock: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>min_blocks_per_epoch: u64</code>
 </dt>
 <dd>
 
@@ -345,6 +352,31 @@ Get the mining threshold
 
 </details>
 
+<a name="0x1_Globals_get_min_blocks_epoch"></a>
+
+## Function `get_min_blocks_epoch`
+
+Get the mining threshold
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_min_blocks_epoch">get_min_blocks_epoch</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_min_blocks_epoch">get_min_blocks_epoch</a>(): u64 {
+  <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>().min_blocks_per_epoch
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_Globals_get_constants"></a>
 
 ## Function `get_constants`
@@ -363,7 +395,10 @@ Get the constants for the current network
 
 <pre><code><b>fun</b> <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>(): <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
   // <b>let</b> coin_scale = 1000000; // <a href="Diem.md#0x1_Diem_scaling_factor">Diem::scaling_factor</a>&lt;GAS::T&gt;();
-  <b>assert</b>!(<a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a> == <a href="Diem.md#0x1_Diem_scaling_factor">Diem::scaling_factor</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;(), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(070001));
+  <b>assert</b>!(
+    <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a> == <a href="Diem.md#0x1_Diem_scaling_factor">Diem::scaling_factor</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;(),
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(070001)
+  );
 
   <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
@@ -371,9 +406,12 @@ Get the constants for the current network
       max_validators_per_set: 100,
       subsidy_ceiling_gas: 296 * <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>,
       vdf_difficulty: 100,
-      epoch_mining_thres_lower: 2, //many tests depend on two proofs because the test harness already gives one at genesis <b>to</b> validators
+      epoch_mining_thres_lower: 2, // many tests depend on two proofs because
+                                   // the test harness already gives one at
+                                   // genesis <b>to</b> validators
       epoch_mining_thres_upper: 1000, // upper bound unlimited
       epoch_slow_wallet_unlock: 10,
+      min_blocks_per_epoch: 10,
     }
   };
 
@@ -386,6 +424,7 @@ Get the constants for the current network
       epoch_mining_thres_lower: 1, // in testnet, staging, we don't want <b>to</b> wait too long between proofs.
       epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
       epoch_slow_wallet_unlock: 10000000,
+      min_blocks_per_epoch: 1000,
     }
   } <b>else</b> {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
@@ -401,6 +440,7 @@ Get the constants for the current network
       epoch_mining_thres_lower: 7, // NOTE: bootstrapping, allowance for operator error.
       epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
       epoch_slow_wallet_unlock: 1000 * <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>, // approx 10 years for largest accounts in genesis.
+      min_blocks_per_epoch: 10000,
     }
   }
 }

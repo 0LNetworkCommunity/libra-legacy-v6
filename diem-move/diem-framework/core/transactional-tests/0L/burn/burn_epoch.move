@@ -8,18 +8,21 @@ script {
     use DiemFramework::TowerState;
     use DiemFramework::Diem;
     use DiemFramework::GAS::GAS;
+    use DiemFramework::Burn;
     
     fun main(_dr: signer, sender: signer) {
         // Alice is the only one that can update her mining stats. 
         // Hence this first transaction.
         let mk_cap_genesis = Diem::market_cap<GAS>();
 
-        // Validator and Operator payment 10m & 1M (for operator which is not explicit in tests)
+        // Validator and Operator payment 10m & 1M 
+        // (for operator which is not explicit in tests)
         assert!(mk_cap_genesis == 10000000 + 1000000, 7357000);
 
         TowerState::test_helper_mock_mining(&sender, 5);
         
         // alice's preferences are set to always burn
+        Burn::set_send_community(&sender, false);
     }
 }
 //check: EXECUTED

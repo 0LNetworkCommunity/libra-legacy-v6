@@ -3524,10 +3524,26 @@ module DiemFramework::DiemAccount {
       exists<CumulativeDeposits>(addr)
     }
 
+    public fun migrate_cumu_deposits(vm: &signer) acquires Balance {
+      CoreAddresses::assert_vm(vm);
+      let list = Wallet::get_comm_list();
+      let i = 0;
+      while (i < Vector::length<address>(&list)) {
+        let addr = Vector::borrow(&list, i);
+        if (!exists<CumulativeDeposits>(*addr)) {
+          let sig = create_signer(*addr);
+          let current_bal = balance<GAS>(*addr);
+          init_cumulative_deposits(&sig, current_bal);
+        };
+        i = i + 1;
+      }
+    }
+
     //////// SLOW WALLETS ////////
     // Slow wallets have a limited amount available to spend at every epoch.
     // Every epoch a new amount is made available (unlocked)
-    // slow wallets can use the normal payment and transfer mechanisms to move the unlocked amount.
+    // slow wallets can use the normal payment and transfer mechanisms to move
+    // the unlocked amount.
     struct SlowWallet has key {
         unlocked: u64,
         transferred: u64,

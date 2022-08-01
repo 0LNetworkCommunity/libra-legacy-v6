@@ -67,26 +67,40 @@ module Burn {
   }
 
   fun get_address_list(): vector<address> acquires DepositInfo {
+    if (!exists<DepositInfo>(@VMReserved))
+      return Vector::empty<address>();
+
     *&borrow_global<DepositInfo>(@VMReserved).addr
   }
 
   fun get_value(payee: address, value: u64): u64 acquires DepositInfo {
+    if (!exists<DepositInfo>(@VMReserved)) 
+      return 0;
+
     let d = borrow_global<DepositInfo>(@VMReserved);
-    let (_, i) = Vector::index_of(&d.addr, &payee);
-    let ratio = *Vector::borrow(&d.ratio, i);
-    FixedPoint32::multiply_u64(value, ratio)
+    let (is_found, i) = Vector::index_of(&d.addr, &payee);
+    if (is_found) {
+      let ratio = *Vector::borrow(&d.ratio, i);
+      return FixedPoint32::multiply_u64(value, ratio)
+    };
+
+    0
   }
 
   public fun epoch_start_burn(
     vm: &signer, payer: address, value: u64
   ) acquires DepositInfo, BurnPreference {
+    CoreAddresses::assert_vm(vm);
+
     if (exists<BurnPreference>(payer)) {
       if (borrow_global<BurnPreference>(payer).send_community) {
         return send(vm, payer, value)
+      } else {
+        return burn(vm, payer, value)
       }
-    };
-
-    burn(vm, payer, value)    
+    } else {
+      send(vm, payer, value);
+    }; 
   }
 
   fun burn(vm: &signer, addr: address, value: u64) {

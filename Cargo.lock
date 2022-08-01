@@ -1701,7 +1701,7 @@ dependencies = [
 
 [[package]]
 name = "diem-config"
-version = "5.0.11"
+version = "5.1.0"
 dependencies = [
  "bcs",
  "diem-crypto",
@@ -2233,7 +2233,7 @@ dependencies = [
 
 [[package]]
 name = "diem-management"
-version = "5.0.11"
+version = "5.1.0"
 dependencies = [
  "anyhow",
  "bcs",
@@ -2347,7 +2347,7 @@ dependencies = [
 
 [[package]]
 name = "diem-node"
-version = "5.0.11"
+version = "5.1.0"
 dependencies = [
  "backup-service",
  "bcs",
@@ -6145,7 +6145,6 @@ dependencies = [
  "bitflags",
  "cfg-if 1.0.0",
  "libc",
- "memoffset",
 ]
 
 [[package]]
@@ -6350,7 +6349,7 @@ dependencies = [
 
 [[package]]
 name = "ol"
-version = "5.0.11"
+version = "5.1.0"
 dependencies = [
  "abscissa_core",
  "abscissa_tokio",
@@ -6390,7 +6389,7 @@ dependencies = [
  "move-core-types",
  "move-resource-viewer",
  "move-vm-types",
- "nix 0.24.1",
+ "nix 0.18.0",
  "num-format",
  "ol-keys",
  "ol-types",
@@ -6498,7 +6497,7 @@ dependencies = [
 
 [[package]]
 name = "onboard"
-version = "5.0.11"
+version = "5.1.0"
 dependencies = [
  "abscissa_core",
  "anyhow",
@@ -6512,7 +6511,7 @@ dependencies = [
  "diem-wallet",
  "dirs",
  "gumdrop 0.7.0",
- "hex 0.4.3",
+ "hex 0.3.2",
  "ol",
  "ol-keys",
  "ol-types",
@@ -6523,7 +6522,7 @@ dependencies = [
  "serde_json",
  "thiserror",
  "toml",
- "tower 5.0.11",
+ "tower 5.1.0",
  "txs",
  "wait-timeout",
  "zip",
@@ -9614,7 +9613,7 @@ dependencies = [
 
 [[package]]
 name = "tower"
-version = "5.0.11"
+version = "5.1.0"
 dependencies = [
  "abscissa_core",
  "ajson",
@@ -9880,7 +9879,7 @@ dependencies = [
 
 [[package]]
 name = "txs"
-version = "5.0.11"
+version = "5.1.0"
 dependencies = [
  "abscissa_core",
  "ajson",

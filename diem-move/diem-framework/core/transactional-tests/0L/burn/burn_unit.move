@@ -1,5 +1,16 @@
 //# init --validators Alice Bob Carol
 
+//# run --admin-script --signers DiemRoot Alice
+script {
+    use DiemFramework::Burn;
+
+    fun main(sender: signer) {
+      // alice chooses a pure burn for all burns.
+      Burn::set_send_community(&sender, false);
+    }
+}
+// check: EXECUTED
+
 //# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::Wallet;
@@ -43,6 +54,7 @@ script {
   use DiemFramework::Burn;
   use Std::Vector;
   use Std::FixedPoint32;
+  use DiemFramework::Debug::print;
 
   fun main(vm: signer, _:signer) {
     // send to community wallet Bob
@@ -69,10 +81,14 @@ script {
     Burn::epoch_start_burn(&vm, @Alice, 100000);
 
     let bal_alice = DiemAccount::balance<GAS>(@Alice);
-    assert!(bal_alice == 9200000, 7357007); // rounding issues
+    print(&bal_alice);
+    assert(
+      (bal_alice >= 1199999 && bal_alice <= 1200001), 7357007
+    ); // rounding issues
     
     // unchanged balance
     let bal_bob = DiemAccount::balance<GAS>(@Bob);
+    print(&bal_bob);
     assert!(bal_bob == bal_bob_old, 7357008);
 
     // unchanged balance

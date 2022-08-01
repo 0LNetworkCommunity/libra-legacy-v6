@@ -101,6 +101,7 @@ before and after every transaction.
 -  [Function `get_cumulative_deposits`](#0x1_DiemAccount_get_cumulative_deposits)
 -  [Function `get_index_cumu_deposits`](#0x1_DiemAccount_get_index_cumu_deposits)
 -  [Function `is_init`](#0x1_DiemAccount_is_init)
+-  [Function `migrate_cumu_deposits`](#0x1_DiemAccount_migrate_cumu_deposits)
 -  [Function `vm_init_slow`](#0x1_DiemAccount_vm_init_slow)
 -  [Function `set_slow`](#0x1_DiemAccount_set_slow)
 -  [Function `slow_wallet_epoch_drip`](#0x1_DiemAccount_slow_wallet_epoch_drip)
@@ -6491,6 +6492,41 @@ inflation by x% per day from the start of network.
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_is_init">is_init</a>(addr: <b>address</b>): bool {
   <b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(addr)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_migrate_cumu_deposits"></a>
+
+## Function `migrate_cumu_deposits`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_migrate_cumu_deposits">migrate_cumu_deposits</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_migrate_cumu_deposits">migrate_cumu_deposits</a>(vm: &signer) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&list)) {
+    <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&list, i);
+    <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(*addr)) {
+      <b>let</b> sig = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(*addr);
+      <b>let</b> current_bal = <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*addr);
+      <a href="DiemAccount.md#0x1_DiemAccount_init_cumulative_deposits">init_cumulative_deposits</a>(&sig, current_bal);
+    };
+    i = i + 1;
+  }
 }
 </code></pre>
 

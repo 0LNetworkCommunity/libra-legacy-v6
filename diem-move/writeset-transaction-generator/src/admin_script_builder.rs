@@ -170,7 +170,7 @@ pub fn encode_enable_parallel_execution_with_config() -> WriteSetPayload {
 
 //////// 0L ////////
 pub fn script_bulk_update_vals_payload(vals: Vec<AccountAddress>) -> WriteSetPayload {
-    println!("encode_bulk_update_vals_payload");
+    println!("\nencode_bulk_update_vals_payload");
     let mut script = template_path();
     script.push("bulk_update.move");
 
@@ -202,6 +202,16 @@ pub fn ol_writeset_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> W
 // }
 
 /// create the upgrade payload INCLUDING the epoch reconfigure
+pub fn ol_writeset_set_stagingnet(path: PathBuf) -> WriteSetPayload {
+    // Take the stdlib upgrade change set.
+    let testnet = ol_staging_net_changeset(path.clone()).unwrap();
+
+    let reconfig = ol_reconfig_changeset(path).unwrap();
+
+    WriteSetPayload::Direct(merge_change_set(testnet, reconfig).unwrap())
+}
+
+/// create the upgrade payload INCLUDING the epoch reconfigure
 pub fn ol_writeset_set_testnet(path: PathBuf) -> WriteSetPayload {
     // Take the stdlib upgrade change set.
     let testnet = ol_testnet_changeset(path.clone()).unwrap();
@@ -229,7 +239,6 @@ pub fn ol_writeset_ancestry(path: PathBuf, ancestry_file: PathBuf) -> WriteSetPa
 }
 
 fn parse_ancestry_file(ancestry_file: PathBuf) -> Result<Vec<AncestrysUnit>>{
-    dbg!(&ancestry_file);
     let file = fs::File::open(ancestry_file).expect("file should open read only");
     let ancestry_vec: Vec<AncestrysUnit> = 
         serde_json::from_reader(file).expect("file should be proper JSON");
@@ -239,7 +248,8 @@ fn parse_ancestry_file(ancestry_file: PathBuf) -> Result<Vec<AncestrysUnit>>{
 fn parse_makewhole_file(makewhole_file: PathBuf) -> Result<Vec<MakeWholeUnit>>{
     let file = fs::File::open(makewhole_file).expect("file should open read only");
 
-    let makewhole_vec: Vec<MakeWholeUnit> = serde_json::from_reader(file).expect("file should be proper JSON");
+    let makewhole_vec: Vec<MakeWholeUnit> 
+        = serde_json::from_reader(file).expect("file should be proper JSON");
     Ok(makewhole_vec)
 }
 
@@ -253,7 +263,7 @@ pub fn ol_writeset_encode_rescue(
 
     let stdlib_cs = ol_fresh_stlib_changeset(path.clone()).unwrap();
     // TODO: forcing the boundary causes an error on the epoch boundary.
-    let boundary = ol_force_boundary(path.clone(), vals).unwrap();
+    let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
     // let boundary = ol_bulk_validators_changeset(path.clone(), vals).unwrap();
 
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
@@ -334,7 +344,7 @@ pub fn ol_writeset_update_epoch_time(path: PathBuf) -> WriteSetPayload {
 
 
 pub fn ol_fresh_stlib_changeset(path: PathBuf) -> Result<ChangeSet> {
-    println!("encode stdlib changeset");
+    println!("\nencode stdlib changeset");
 
     let db = DiemDebugger::db(path)?;
 
@@ -483,7 +493,7 @@ fn _ol_autopay_migrate(path: PathBuf) -> Result<ChangeSet> {
 }
 
 fn ol_vouch_migrate(path: PathBuf, val_set: Vec<AccountAddress>) -> Result<ChangeSet> {
-    println!("migrating validator vouch data");
+    println!("\nmigrating validator vouch data");
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -543,7 +553,7 @@ struct MakeWholeUnit {
 }
 
 fn ol_makewhole_migrate(path: PathBuf, payments: Vec<MakeWholeUnit>) -> Result<ChangeSet> {
-    println!("migrating make whole data");
+    println!("\nmigrating make whole data");
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -583,7 +593,7 @@ struct AncestrysUnit {
   ancestry: Vec<AccountAddress>,
 }
 fn ol_ancestry_migrate(path: PathBuf, ancestry_vec: Vec<AncestrysUnit> ) -> Result<ChangeSet> {
-    println!("migrating ancestry data");
+    println!("\nmigrating ancestry data");
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -689,9 +699,10 @@ fn ol_set_epoch_debug_mode(path: PathBuf, vals: Vec<AccountAddress>) -> Result<C
     })
 }
 
-// Todo
-fn _ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
-    println!("encode validators bulk update changeset");
+fn ol_bulk_validators_changeset(
+    path: PathBuf, vals: Vec<AccountAddress>
+) -> Result<ChangeSet> {
+    println!("\nencode validators bulk update changeset");
     let db = DiemDebugger::db(path)?;
 
     let v = db.get_latest_version()?;
@@ -804,10 +815,35 @@ fn ol_testnet_changeset(path: PathBuf) -> Result<ChangeSet> {
     })
 }
 
+fn ol_staging_net_changeset(path: PathBuf) -> Result<ChangeSet> {
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let args = vec![MoveValue::Signer(diem_root_address())];
+        session
+            .execute_function(
+                &ModuleId::new(
+                    account_config::CORE_CODE_ADDRESS,
+                    Identifier::new("StagingNet").unwrap(),
+                ),
+                &Identifier::new("initialize").unwrap(),
+                vec![],
+                serialize_values(&args),
+                &mut gas_status,
+            )
+            .unwrap(); // TODO: don't use unwraps.
+        Ok(())
+    })
+}
+
+// TODO this doesn't work.
 fn ol_force_boundary(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
 
+    // TODO: This is not producing the same version height after appling to database.
     let v = db.get_latest_version()?;
+
     db.run_session_at_version(v, None, |session| {
         let mut gas_status = GasStatus::new_unmetered();
 
