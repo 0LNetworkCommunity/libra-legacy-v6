@@ -15,7 +15,6 @@ use executor_benchmark::transaction_generator::AccountData;
 pub fn commit_proof_tx(
     tx_params: &TxParams,
     block: VDFProof,
-    is_operator: bool,
 ) -> Result<TransactionView, TxError> {
 
     // Create a client object
@@ -30,7 +29,7 @@ pub fn commit_proof_tx(
         None => 0,
     };
 
-    let script = if is_operator {
+    let script = if tx_params.is_operator {
         transaction_builder::encode_minerstate_commit_by_operator_script_function(
             tx_params.owner_address.clone(), 
             block.preimage.clone(), 

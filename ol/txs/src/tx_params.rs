@@ -50,6 +50,8 @@ pub struct TxParams {
     // pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
     /// Chain id
     pub chain_id: ChainId,
+    /// is using operator for signing
+    pub is_operator: bool,
 }
 
 /// Find a url to use for connecting a client.
@@ -111,6 +113,8 @@ impl TxParams {
             tx_params.waypoint = w
         }
 
+        tx_params.is_operator = is_operator;
+
         Ok(tx_params)
     }
 
@@ -156,6 +160,7 @@ impl TxParams {
             // coin_price_per_unit: config.tx_configs.management_txs.coin_price_per_unit, // in micro_gas
             // user_tx_timeout: config.tx_configs.management_txs.user_tx_timeout,
             chain_id,
+            is_operator: false
         };
 
         Ok(tx_params)
@@ -195,6 +200,7 @@ impl TxParams {
             },
 
             chain_id: ChainId::new(4),
+            is_operator
         };
 
         println!("Info: Got tx params from swarm");
@@ -239,6 +245,7 @@ impl TxParams {
             keypair,
             tx_cost,
             chain_id: ChainId::new(1),
+            is_operator: true
         })
     }
 
@@ -271,6 +278,7 @@ impl TxParams {
             keypair,
             tx_cost: config.tx_configs.get_cost(tx_type),
             chain_id,
+            is_operator: false
         };
 
         Ok(tx_params)
@@ -305,6 +313,7 @@ impl TxParams {
             // coin_price_per_unit: 1, // in micro_gas
             // user_tx_timeout: 5_000,
             chain_id: ChainId::new(4), // swarm/testnet
+            is_operator: false
         }
     }
 }
