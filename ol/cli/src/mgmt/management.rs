@@ -113,7 +113,7 @@ impl Node {
             let bin_str = match debug_bin.to_str() {
                 Some(s) => s,
                 None => {
-                    eprintln!("Error: target/debug/{} is not set", NODE);
+                    eprintln!("Error: debug_bin {} is not set", NODE);
                     exit(1);
                 }
             };
@@ -174,7 +174,7 @@ impl Node {
             let bin_str = match debug_bin.to_str() {
                 Some(s) => s,
                 None => {
-                    eprintln!("Error: target/debug/{} is not set", MINER);
+                    eprintln!("Error: debug_bin {} is not set", MINER);
                     exit(1);
                 }
             };
@@ -235,7 +235,7 @@ impl Node {
             let bin_str = match debug_bin.to_str() {
                 Some(s) => s,
                 None => {
-                    println!("ERROR: can't start web-monitor in dev mode. It doesn't seem like you have workspace.source_path set in 0L.toml. Exiting.");
+                    println!("ERROR: debug_bin is not set");
                     exit(1);
                 }
             };
@@ -283,7 +283,7 @@ impl Node {
             let project_root = match self.app_conf.workspace.source_path.clone() {
                 Some(p) => p,
                 None => {
-                    println!("ERROR: can't start pilot in dev mode. It doesn't seem like you have workspace.source_path set in 0L.toml. Exiting.");
+                    println!("ERROR: It doesn't seem like you have workspace.source_path set in 0L.toml. Exiting.");
                     exit(1);
                 }
             };
@@ -291,7 +291,7 @@ impl Node {
             let bin_str = match debug_bin.to_str() {
                 Some(s) => s,
                 None => {
-                    println!("ERROR: can't start pilot in dev mode. It doesn't seem like you have workspace.source_path set in 0L.toml. Exiting.");
+                    println!("ERROR: debug_bin is not set");
                     exit(1);
                 }
             };

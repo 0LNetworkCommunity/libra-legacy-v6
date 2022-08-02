@@ -371,7 +371,7 @@ impl Backup {
             match yaml_path.to_str() {
                 Some(path) => path,
                 None => {
-                    eprintln!("Error: restore path is not a valid path");
+                    eprintln!("Error: yaml path is not a valid path");
                     exit(1);
                 }
             }
@@ -466,7 +466,7 @@ pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, verbose: bool) -> Re
         .arg(match manifest_path.to_str() {
             Some(path) => path,
             None => {
-                eprintln!("Error: restore path is not a valid path");
+                eprintln!("Error: manifest path is not a valid path");
                 exit(1);
             }
         })
@@ -517,7 +517,7 @@ pub fn restore_transaction(
             match manifest_path.to_str() {
                 Some(path) => path,
                 None => {
-                    eprintln!("Error: restore path is not a valid path");
+                    eprintln!("Error: manifest path is not a valid path");
                     exit(1);
                 }
             }
@@ -541,7 +541,7 @@ pub fn restore_transaction(
         .arg(match manifest_path.to_str() {
             Some(path) => path,
             None => {
-                eprintln!("Error: restore path is not a valid path");
+                eprintln!("Error: manifest path is not a valid path");
                 exit(1);
             }
         })

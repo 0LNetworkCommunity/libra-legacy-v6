@@ -130,7 +130,9 @@ impl Node {
                                 "SlowWallet".to_string(),
                                 "unlocked".to_string(),
                             );
-                            value.expect("Error, could not find unlocked balance").to_string()
+                            value
+                                .expect("Error, could not find unlocked balance")
+                                .to_string()
                         }
                     }
                     Err(e) => format!("Error retrieving unlocked balance. Message: {:#?}", e),
@@ -462,8 +464,8 @@ pub fn test_fixture_blob() -> AnnotatedAccountStateBlob {
 pub fn test_fixture_struct() -> AnnotatedMoveStruct {
     let module_tag = StructTag {
         address: AccountAddress::random(),
-        module:  Identifier::new("TestModule").expect("failed to create identifier"),
-        name:  Identifier::new("TestStructName").expect("failed to create identifier"),
+        module: Identifier::new("TestModule").expect("failed to create identifier"),
+        name: Identifier::new("TestStructName").expect("failed to create identifier"),
         type_params: vec![TypeTag::Bool],
     };
 
@@ -581,7 +583,8 @@ fn test_is_community_wallet_should_return_true() {
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").expect("failed to create consecutive_rejections identifier"),
+            Identifier::new("consecutive_rejections")
+                .expect("failed to create consecutive_rejections identifier"),
             AnnotatedMoveValue::U64(0),
         ),
         (
@@ -601,7 +604,8 @@ fn test_is_community_wallet_should_return_false_with_wrong_is_frozen() {
             AnnotatedMoveValue::Bool(true),
         ),
         (
-            Identifier::new("consecutive_rejections").expect("failed to create consecutive_rejections identifier"),
+            Identifier::new("consecutive_rejections")
+                .expect("failed to create consecutive_rejections identifier"),
             AnnotatedMoveValue::U64(0),
         ),
         (
@@ -621,7 +625,8 @@ fn test_is_community_wallet_should_return_false_with_wrong_consecutive_rejection
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").expect("failed to create consecutive_rejections identifier"),
+            Identifier::new("consecutive_rejections")
+                .expect("failed to create consecutive_rejections identifier"),
             AnnotatedMoveValue::U64(1),
         ),
         (
@@ -641,7 +646,8 @@ fn test_is_community_wallet_should_return_false_with_wrong_unfreeze_votes() {
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").expect("failed to create consecutive_rejections identifier"),
+            Identifier::new("consecutive_rejections")
+                .expect("failed to create consecutive_rejections identifier"),
             AnnotatedMoveValue::U64(0),
         ),
         (
@@ -657,7 +663,8 @@ fn test_is_community_wallet_should_return_false_with_wrong_unfreeze_votes() {
 fn test_is_community_wallet_should_return_false_if_missing_unfreeze_votes() {
     let value = vec![
         (
-            Identifier::new("consecutive_rejections").expect("failed to create consecutive_rejections identifier"),
+            Identifier::new("consecutive_rejections")
+                .expect("failed to create consecutive_rejections identifier"),
             AnnotatedMoveValue::U64(0),
         ),
         (
@@ -693,7 +700,8 @@ fn test_is_community_wallet_should_return_false_with_wrong_module_name() {
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").expect("failed to create consecutive_rejections identifier"),
+            Identifier::new("consecutive_rejections")
+                .expect("failed to create consecutive_rejections identifier"),
             AnnotatedMoveValue::U64(0),
         ),
         (
@@ -713,7 +721,8 @@ fn test_is_community_wallet_should_return_false_with_wrong_struct_name() {
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").expect("failed to create consecutive_rejections identifier"),
+            Identifier::new("consecutive_rejections")
+                .expect("failed to create consecutive_rejections identifier"),
             AnnotatedMoveValue::U64(0),
         ),
         (
