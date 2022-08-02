@@ -432,7 +432,7 @@ pub fn test_fixture_struct() -> AnnotatedMoveStruct {
     }
 }
 
-///
+/// test fixtures to generate wallet
 pub fn test_fixture_wallet_type(
     module_name: &str,
     struct_name: &str,

@@ -296,6 +296,9 @@ compiled_package_info:
       name: Vouch
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: VouchScripts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Wallet
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -310,7 +313,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 45E8C86A1302E9EA36F98527F3040C892C82CF8793DD3FBCF6511FCA50F649C7
+  source_digest: CA41E3EF29409A7BC89A05E5F26C3F3E211ACCF76A48F2C67CBC4F0E56127781
   build_flags:
     dev_mode: false
     test_mode: false

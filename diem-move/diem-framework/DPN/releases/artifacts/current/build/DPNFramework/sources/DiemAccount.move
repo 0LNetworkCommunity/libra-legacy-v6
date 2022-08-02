@@ -644,7 +644,8 @@ module DiemFramework::DiemAccount {
 
         let new_signer = create_signer(new_account_address);
         Ancestry::init(sender, &new_signer);
-        Vouch::init(&new_signer);        
+        Vouch::init(&new_signer);
+        Vouch::vouch_for(sender, new_account_address);
         set_slow(&new_signer);
 
         new_account_address
