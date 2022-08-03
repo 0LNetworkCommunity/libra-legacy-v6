@@ -5,11 +5,6 @@
 
 
 
--  [Resource `DebugMode`](#0x1_EpochBoundary_DebugMode)
--  [Function `init_debug`](#0x1_EpochBoundary_init_debug)
--  [Function `remove_debug`](#0x1_EpochBoundary_remove_debug)
--  [Function `is_debug`](#0x1_EpochBoundary_is_debug)
--  [Function `get_debug_vals`](#0x1_EpochBoundary_get_debug_vals)
 -  [Function `reconfigure`](#0x1_EpochBoundary_reconfigure)
 -  [Function `process_fullnodes`](#0x1_EpochBoundary_process_fullnodes)
 -  [Function `process_validators`](#0x1_EpochBoundary_process_validators)
@@ -31,6 +26,7 @@
 <b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
+<b>use</b> <a href="RecoveryMode.md#0x1_RecoveryMode">0x1::RecoveryMode</a>;
 <b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Subsidy.md#0x1_Subsidy">0x1::Subsidy</a>;
@@ -41,141 +37,6 @@
 </code></pre>
 
 
-
-<a name="0x1_EpochBoundary_DebugMode"></a>
-
-## Resource `DebugMode`
-
-
-
-<pre><code><b>struct</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> <b>has</b> <b>copy</b>, drop, store, key
-</code></pre>
-
-
-
-<details>
-<summary>Fields</summary>
-
-
-<dl>
-<dt>
-<code>fixed_set: vector&lt;<b>address</b>&gt;</code>
-</dt>
-<dd>
-
-</dd>
-</dl>
-
-
-</details>
-
-<a name="0x1_EpochBoundary_init_debug"></a>
-
-## Function `init_debug`
-
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_init_debug">init_debug</a>(vm: &signer, vals: vector&lt;<b>address</b>&gt;)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_init_debug">init_debug</a>(vm: &signer, vals: vector&lt;<b>address</b>&gt;) {
-  <b>if</b> (!<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
-    <b>move_to</b>&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(vm, <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> {
-      fixed_set: vals
-    });
-  }
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_EpochBoundary_remove_debug"></a>
-
-## Function `remove_debug`
-
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_remove_debug">remove_debug</a>(vm: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_remove_debug">remove_debug</a>(vm: &signer) <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> {
-  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-  <b>if</b> (<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
-    _ = <b>move_from</b>&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(@VMReserved);
-  }
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_EpochBoundary_is_debug"></a>
-
-## Function `is_debug`
-
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>(): bool
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>(): bool {
-  <b>exists</b>&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(@VMReserved)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_EpochBoundary_get_debug_vals"></a>
-
-## Function `get_debug_vals`
-
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_get_debug_vals">get_debug_vals</a>(): vector&lt;<b>address</b>&gt;
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_get_debug_vals">get_debug_vals</a>(): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>  {
-  <b>if</b> (<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
-    <b>let</b> d = <b>borrow_global</b>&lt;<a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a>&gt;(@VMReserved);
-    *&d.fixed_set
-  } <b>else</b> {
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;()
-  }
-}
-</code></pre>
-
-
-
-</details>
 
 <a name="0x1_EpochBoundary_reconfigure"></a>
 
@@ -192,7 +53,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm);
     print(&800100);
@@ -272,7 +133,12 @@
           <b>let</b> count = <a href="TowerState.md#0x1_TowerState_get_count_above_thresh_in_epoch">TowerState::get_count_above_thresh_in_epoch</a>(addr);
 
           <b>let</b> miner_subsidy = count * proof_price;
-          <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_distribute_fullnode_subsidy">FullnodeSubsidy::distribute_fullnode_subsidy</a>(vm, addr, miner_subsidy);
+
+          // don't pay <b>while</b> we are in recovery mode, since that creates
+          // a frontrunning opportunity
+          <b>if</b> (!<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()){
+            <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_distribute_fullnode_subsidy">FullnodeSubsidy::distribute_fullnode_subsidy</a>(vm, addr, miner_subsidy);
+          }
         };
 
         k = k + 1;
@@ -307,7 +173,9 @@
 
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>&lt;<b>address</b>&gt;(&outgoing_compliant_set)) <b>return</b>;
 
-    <b>if</b> (subsidy_units &gt; 0) {
+    // don't pay <b>while</b> we are in recovery mode, since that creates
+    // a frontrunning opportunity
+    <b>if</b> (subsidy_units &gt; 0 && !<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()) {
         <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, &outgoing_compliant_set);
     };
 
@@ -334,13 +202,17 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(
-    vm: &signer, height_start: u64, height_now: u64
-): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="EpochBoundary.md#0x1_EpochBoundary_DebugMode">DebugMode</a> {
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, height_start: u64, height_now: u64): vector&lt;<b>address</b>&gt;
+{
     // Propose upcoming validator set:
+
     // in emergency admin roles set the validator set
-    <b>if</b> (<a href="EpochBoundary.md#0x1_EpochBoundary_is_debug">is_debug</a>()) {
-      <b>return</b> <a href="EpochBoundary.md#0x1_EpochBoundary_get_debug_vals">get_debug_vals</a>()
+    // there may be a recovery set <b>to</b> be used.
+    // <b>if</b> there is no rescue mission validators, just do usual procedure.
+
+    <b>if</b> (<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()) {
+      <b>let</b> recovery_vals = <a href="RecoveryMode.md#0x1_RecoveryMode_get_debug_vals">RecoveryMode::get_debug_vals</a>();
+      <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&recovery_vals) &gt; 0) <b>return</b> recovery_vals;
     };
 
     // save all the eligible list, before the jailing removes them.
@@ -430,8 +302,8 @@
 
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
 
+    <a href="RecoveryMode.md#0x1_RecoveryMode_maybe_remove_debug_at_epoch">RecoveryMode::maybe_remove_debug_at_epoch</a>(vm);
     // Reconfig should be the last event.
-
     // Reconfigure the network
     <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
 }

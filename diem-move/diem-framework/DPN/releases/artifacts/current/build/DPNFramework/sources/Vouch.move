@@ -43,7 +43,9 @@ address DiemFramework {
       if (!exists<Vouch>(val)) return;
 
       let v = borrow_global_mut<Vouch>(val);
-      Vector::push_back<address>(&mut v.vals, buddy_acc);
+      if (!Vector::contains(&v.vals, &buddy_acc)) { // prevent duplicates
+        Vector::push_back<address>(&mut v.vals, buddy_acc);
+      }
     }
 
     public fun vm_migrate(vm: &signer, val: address, buddy_list: vector<address>) acquires Vouch {
@@ -137,7 +139,7 @@ address DiemFramework {
       if (!exists<Vouch>(val)) return false;
 
       let len = Vector::length(&unrelated_buddies(val));
-      (len > 3) // TODO: move to Globals
+      (len >= 4) // TODO: move to Globals
     }
   }
 }

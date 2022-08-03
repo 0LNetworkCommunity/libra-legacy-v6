@@ -35,7 +35,6 @@ script {
         DiemAccount::vm_make_payment_no_limit<GAS>(@Frank, oper_frank, 50009, x"", x"", &dr);
     }
 }
-//check: EXECUTED
 
 //# run --admin-script --signers DiemRoot Alice
 script {
@@ -50,7 +49,6 @@ script {
         assert!(TowerState::get_count_in_epoch(@Alice) == 5, 7357008015001);
     }
 }
-//check: EXECUTED
 
 //# run --admin-script --signers DiemRoot Bob
 script {
@@ -65,7 +63,6 @@ script {
         assert!(TowerState::test_helper_get_count(&sender) == 5, 7357008015002);
     }
 }
-//check: EXECUTED
 
 //# run --admin-script --signers DiemRoot Carol
 script {
@@ -80,7 +77,6 @@ script {
         assert!(TowerState::test_helper_get_count(&sender) == 5, 7357008015003);
     }
 }
-//check: EXECUTED
 
 //# run --admin-script --signers DiemRoot Dave
 script {
@@ -90,27 +86,27 @@ script {
     fun main(_dr: signer, sender: signer) {
         AutoPay::enable_autopay(&sender);
         
-        // Miner is the only one that can update their mining stats. Hence this first transaction.
+        // Miner is the only one that can update their mining stats.
+        // Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
         assert!(TowerState::test_helper_get_count(&sender) == 5, 7357008015004);
     }
 }
-//check: EXECUTED
 
 //# run --admin-script --signers DiemRoot Eve
 script {
     use DiemFramework::TowerState;
+    use DiemFramework::AutoPay;
 
     fun main(_dr: signer, sender: signer) {
-        // Skip eve forcing audit to fail
-        // AutoPay::enable_autopay(&sender);
+        AutoPay::enable_autopay(&sender);
         
-        // Miner is the only one that can update their mining stats. Hence this first transaction.
+        // Miner is the only one that can update their mining stats.
+        // Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
         assert!(TowerState::get_count_in_epoch(@Eve) == 5, 7357008015005);
     }
 }
-//check: EXECUTED
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -137,7 +133,6 @@ script {
         assert!(DiemSystem::is_validator(@Alice) == true, 7357008015006);
     }
 }
-//check: EXECUTED
 
 //////////////////////////////////////////////
 ///// Trigger reconfiguration at 61 seconds ////
@@ -156,8 +151,7 @@ script {
         // We are in a new epoch.
         assert!(DiemConfig::get_current_epoch() == 2, 7357008015007);
         // Tests on initial size of validators 
-        assert!(DiemSystem::validator_set_size() == 4, 7357008015008);
-        assert!(DiemSystem::is_validator(@Eve) == false, 7357008015009);
+        assert!(DiemSystem::validator_set_size() == 5, 7357008015008);
+        assert!(DiemSystem::is_validator(@Eve), 7357008015009);
     }
 }
-//check: EXECUTED

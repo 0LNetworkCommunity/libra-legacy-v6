@@ -15,7 +15,7 @@ use diem_writeset_generator::{
     ol_create_reconfig_payload, 
     ol_writeset_encode_rescue, ol_writset_update_timestamp, 
     ol_writeset_force_boundary, ol_writeset_set_testnet, 
-    ol_writeset_debug_epoch, ol_writeset_update_epoch_time,
+    ol_writeset_recover_mode, ol_writeset_update_epoch_time,
     ol_writeset_ancestry, ol_writeset_encode_migrations,
     ol_debug,
     release_flow::artifacts::load_latest_artifact,
@@ -108,7 +108,7 @@ enum Command {
     #[structopt(name = "rescue")]
     Rescue { addresses: Vec<AccountAddress> },
     #[structopt(name = "debug-epoch")]
-    DebugEpoch { addresses: Vec<AccountAddress> },
+    RecoveryMode { addresses: Vec<AccountAddress> , epoch_ending: u64},
     #[structopt(name = "boundary")]
     Boundary { addresses: Vec<AccountAddress> },
     #[structopt(name = "ancestry")]
@@ -239,18 +239,23 @@ fn main() -> Result<()> {
             return Ok(());
         },
         //////// 0L ////////
-        Command::Boundary { addresses } => ol_writeset_force_boundary(opt.db.unwrap(), addresses),
-        Command::UpdateValidators { addresses } => script_bulk_update_vals_payload(addresses),
+        Command::Boundary { addresses } 
+            => ol_writeset_force_boundary(opt.db.unwrap(), addresses),
+        Command::UpdateValidators { addresses } 
+            => script_bulk_update_vals_payload(addresses),
         // Command::UpdateStdlib {} => ol_writeset_stdlib_upgrade(opt.db.unwrap()), // todo
         Command::UpdateStdlib {} => todo!(),
         Command::Reconfig {} => ol_create_reconfig_payload(opt.db.unwrap()),
         Command::Debug {} => ol_debug(opt.db.unwrap()),
-        Command::Rescue { addresses } => ol_writeset_encode_rescue(opt.db.unwrap(), addresses),
+        Command::Rescue { addresses }
+            => ol_writeset_encode_rescue(opt.db.unwrap(), addresses),
         Command::Timestamp {} => ol_writset_update_timestamp(opt.db.unwrap()),
         Command::Testnet {} => ol_writeset_set_testnet(opt.db.unwrap()),
-        Command::DebugEpoch { addresses } => ol_writeset_debug_epoch(opt.db.unwrap(), addresses),
+        Command::RecoveryMode { addresses, epoch_ending } 
+            => ol_writeset_recover_mode(opt.db.unwrap(), addresses, epoch_ending),
         Command::EpochTime {} => ol_writeset_update_epoch_time(opt.db.unwrap()),
-        Command::Ancestry { ancestry_file } => ol_writeset_ancestry(opt.db.unwrap(), ancestry_file),
+        Command::Ancestry { ancestry_file } 
+            => ol_writeset_ancestry(opt.db.unwrap(), ancestry_file),
         Command::Migrate { ancestry_file, makewhole_file, addresses } 
             => ol_writeset_encode_migrations(
                 opt.db.unwrap(), ancestry_file, makewhole_file, addresses

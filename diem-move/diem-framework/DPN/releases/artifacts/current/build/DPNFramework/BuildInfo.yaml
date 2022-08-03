@@ -209,6 +209,9 @@ compiled_package_info:
       name: RecoveryAddress
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: RecoveryMode
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: RegisteredCurrencies
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -313,7 +316,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: CA41E3EF29409A7BC89A05E5F26C3F3E211ACCF76A48F2C67CBC4F0E56127781
+  source_digest: 527C2DC202309936503DF607F45E6BEDB1B96B58623FFCB6497BF203A559F86C
   build_flags:
     dev_mode: false
     test_mode: false

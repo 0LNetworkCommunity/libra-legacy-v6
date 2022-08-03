@@ -82,7 +82,7 @@ script {
 
     let bal_alice = DiemAccount::balance<GAS>(@Alice);
     print(&bal_alice);
-    assert(
+    assert!(
       (bal_alice >= 1199999 && bal_alice <= 1200001), 7357007
     ); // rounding issues
     

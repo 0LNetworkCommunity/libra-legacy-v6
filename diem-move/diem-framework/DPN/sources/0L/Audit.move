@@ -23,7 +23,7 @@ address DiemFramework {
       // operator account has balance
       // if (DiemAccount::balance<GAS>(oper) < 50000 && !Testnet::is_testnet()) return false;
       // has autopay enabled
-      if (!AutoPay::is_enabled(val)) return false;
+      // if (!AutoPay::is_enabled(val)) return false;
       // has mining state
       if (!TowerState::is_init(val)) return false;
       // is a slow wallet

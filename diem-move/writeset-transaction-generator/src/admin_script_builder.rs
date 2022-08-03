@@ -310,13 +310,13 @@ pub fn ol_writeset_encode_migrations(
 }
 
 /// set the EpochBoundary debug mode.
-pub fn ol_writeset_debug_epoch(path: PathBuf, vals: Vec<AccountAddress>) -> WriteSetPayload {
+pub fn ol_writeset_recover_mode(path: PathBuf, vals: Vec<AccountAddress>, epoch_ending: u64) -> WriteSetPayload {
     if vals.len() == 0 {
         println!("need to provide list of addresses");
         exit(1)
     };
 
-    let debug_mode = ol_set_epoch_debug_mode(path.clone(), vals).unwrap();
+    let debug_mode = ol_set_epoch_recovery_mode(path.clone(), vals, epoch_ending).unwrap();
     let reconfig = ol_reconfig_changeset(path).unwrap();
 
     WriteSetPayload::Direct(merge_change_set(debug_mode, reconfig).unwrap())
@@ -678,7 +678,9 @@ fn test_epoch() {
   let _ = ol_epoch_timestamp_update("/home/node/.0L/db".parse().unwrap());
 }
 
-fn ol_set_epoch_debug_mode(path: PathBuf, vals: Vec<AccountAddress>) -> Result<ChangeSet> {
+fn ol_set_epoch_recovery_mode(
+    path: PathBuf, vals: Vec<AccountAddress>, end_epoch: u64
+) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;
 
@@ -688,14 +690,15 @@ fn ol_set_epoch_debug_mode(path: PathBuf, vals: Vec<AccountAddress>) -> Result<C
         let txn_args = vec![
             TransactionArgument::Address(diem_root_address()),
             TransactionArgument::AddressVector(vals),
+            TransactionArgument::U64(end_epoch),
         ];
         session
             .execute_function(
                 &ModuleId::new(
                     account_config::CORE_CODE_ADDRESS,
-                    Identifier::new("EpochBoundary").unwrap(),
+                    Identifier::new("RecoveryMode").unwrap(),
                 ),
-                &Identifier::new("init_debug").unwrap(),
+                &Identifier::new("init_recovery").unwrap(),
                 vec![],
                 convert_txn_args(&txn_args),
                 &mut gas_status,

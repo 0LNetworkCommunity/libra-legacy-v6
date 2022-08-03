@@ -2,9 +2,9 @@
  //! new-transaction
  //! sender: alice
  script {
-     use 0x1::MakeWhole;
-     use 0x1::Signer;
-     //use 0x1::Debug::print;
+     use DiemFramework::MakeWhole;
+     use DiemFramework::Signer;
+     //use DiemFramework::Debug::print;
 
      fun main(sig: signer) {
          let addr = Signer::address_of(&sig);
@@ -22,11 +22,11 @@
  //! new-transaction
  //! sender: carol
  script {
-     use 0x1::MakeWhole;
+     use DiemFramework::MakeWhole;
 
      fun main(sig: signer) {
         //carol should not be able to claim bob's payment
-         let (_, idx) = MakeWhole::query_make_whole_payment(@{{bob}});
+         let (_, idx) = MakeWhole::query_make_whole_payment(@Bob);
 
          MakeWhole::claim_make_whole_payment(&sig, idx);
 
@@ -38,10 +38,10 @@
  //! new-transaction
  //! sender: bob
  script {
-     use 0x1::MakeWhole;
-     use 0x1::DiemAccount;
-     use 0x1::GAS::GAS;
-     use 0x1::Signer;
+     use DiemFramework::MakeWhole;
+     use DiemFramework::DiemAccount;
+     use DiemFramework::GAS::GAS;
+     use DiemFramework::Signer;
 
      fun main(sig: signer) {
          let addr = Signer::address_of(&sig);
@@ -51,11 +51,11 @@
 
          let (_, idx) = MakeWhole::query_make_whole_payment(addr);
 
-        assert(MakeWhole::claim_make_whole_payment(&sig, idx) == expected_amount, 7);
+        assert!(MakeWhole::claim_make_whole_payment(&sig, idx) == expected_amount, 7);
 
          let current = DiemAccount::balance<GAS>(addr);
 
-         assert(current - initial == expected_amount, 1);
+         assert!(current - initial == expected_amount, 1);
 
      }
  }
@@ -66,8 +66,8 @@
  //! new-transaction
  //! sender: carol
  script {
-     use 0x1::MakeWhole;
-     use 0x1::Signer;
+     use DiemFramework::MakeWhole;
+     use DiemFramework::Signer;
 
      fun main(sig: signer) {
          let addr = Signer::address_of(&sig);
@@ -75,8 +75,8 @@
 
          let (amt, idx) = MakeWhole::query_make_whole_payment(addr);
 
-         assert(amt == expected_amount, 11);
-         assert(idx == 0, 12);
+         assert!(amt == expected_amount, 11);
+         assert!(idx == 0, 12);
      }
  }
    // check: "Keep(EXECUTED)"
