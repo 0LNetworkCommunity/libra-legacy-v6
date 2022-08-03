@@ -33,6 +33,12 @@ impl NamedChain {
           "TESTING" => NamedChain::TESTING,
           "PREMAINNET" => NamedChain::PREMAINNET,
           "EXPERIMENTAL" => NamedChain::EXPERIMENTAL, //////// 0L ////////
+          "Mainnet" => NamedChain::MAINNET, // Backwards compatibility.
+          "Testnet" => NamedChain::TESTNET,
+          "Devnet" => NamedChain::DEVNET,
+          "Testing" => NamedChain::TESTING,
+          "Premainet" => NamedChain::PREMAINNET,
+          "Experimental" => NamedChain::EXPERIMENTAL, //////// 0L ////////
           "1" => NamedChain::MAINNET,
           "2" => NamedChain::TESTNET,
           "3" => NamedChain::DEVNET,
