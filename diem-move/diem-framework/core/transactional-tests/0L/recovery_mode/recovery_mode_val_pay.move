@@ -140,13 +140,13 @@ script {
 
         // let recovery_ending_balance = starting_balance - operator_refund - burn;
 
-        // print(&ending_balance);
-        print(&DiemAccount::balance<GAS>(@Alice));
-
         //////// RESCUE MODE SHOULD NOT PAY EXPECTED AMOUNT //////////////
         assert!(DiemAccount::balance<GAS>(@Alice) != usual_ending_balance, 7357000180113);
+ 
+        // The Rewards and Burns are not taking place during RecovryMode.
+        // so there should be no change in balance.
+        print(&DiemAccount::balance<GAS>(@Alice));
 
-        // the operator_refund and burn depleted the account, and there was no new reward.
-        assert!(DiemAccount::balance<GAS>(@Alice) == 0, 7357000180114);
-    }
+        assert!(DiemAccount::balance<GAS>(@Alice) == starting_balance, 7357000180114);
+     }
 }

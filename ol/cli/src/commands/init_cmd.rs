@@ -242,6 +242,8 @@ impl Runnable for InitCmd {
                     exit(1);
                 }
             };
+
+            exit(0);
         }
 
         // create files for VFN

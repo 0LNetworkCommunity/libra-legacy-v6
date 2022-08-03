@@ -80,7 +80,7 @@ pub fn process_backlog(
     Ok(())
 }
 
-///
+/// submit an exact proof height
 pub fn submit_proof_by_number(
     config: &AppCfg,
     tx_params: &TxParams,
@@ -133,7 +133,7 @@ pub fn submit_proof_by_number(
     Ok(())
 }
 
-///
+/// display the user's tower backlog
 pub fn show_backlog(
     config: &AppCfg,
     tx_params: &TxParams,

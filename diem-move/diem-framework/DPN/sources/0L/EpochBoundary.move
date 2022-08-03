@@ -61,9 +61,10 @@ module EpochBoundary {
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock()); // todo
         print(&800800);
 
-        proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
-        print(&800900);
-
+        if (!RecoveryMode::is_recovery()) {
+          proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
+          print(&800900);
+        };
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
         print(&801000);
     }

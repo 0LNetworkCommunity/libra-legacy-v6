@@ -64,6 +64,8 @@ module RecoveryMode {
         }
       }
 
+    // removes the recovery mode.
+    // private so it can only be done offline with writeset
     fun remove_debug(vm: &signer) acquires RecoveryMode {
       CoreAddresses::assert_vm(vm);
       if (is_recovery()) {

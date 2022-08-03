@@ -147,7 +147,7 @@ module MigrateVouch {
   use Std::Vector;
   use DiemFramework::Migrations;
 
-  const UID:u64 = 2;
+  const UID:u64 = 3;
 
   // Migration to migrate all wallets to be slow wallets
   public fun do_it(vm: &signer) {
