@@ -1,5 +1,5 @@
 //! 'query'
-use std::{collections::BTreeMap, process::exit};
+use std::collections::BTreeMap;
 
 use super::node::Node;
 use anyhow::Error;
