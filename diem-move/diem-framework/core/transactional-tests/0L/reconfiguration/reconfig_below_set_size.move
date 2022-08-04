@@ -51,11 +51,11 @@ script {
     fun main(vm: signer, _: signer) {
         let voters = Vector::singleton<address>(@Alice);
         Vector::push_back<address>(&mut voters, @Bob);
-        Vector::push_back<address>(&mut voters, @Carol);
-        Vector::push_back<address>(&mut voters, @Dave);
+        // Vector::push_back<address>(&mut voters, @Carol);
+        // Vector::push_back<address>(&mut voters, @Dave);
         // Skip Eve.
         // Vector::push_back<address>(&mut voters, @Eve);
-        Vector::push_back<address>(&mut voters, @Frank);
+        // Vector::push_back<address>(&mut voters, @Frank);
 
         let i = 1;
         while (i < 15) {

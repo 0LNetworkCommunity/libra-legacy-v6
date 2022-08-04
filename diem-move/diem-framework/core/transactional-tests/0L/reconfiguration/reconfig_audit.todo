@@ -20,6 +20,9 @@ script {
     use DiemFramework::ValidatorConfig;
 
     fun main(dr: signer, _: signer) {
+        // remove slow wallet from eve, should fail audit
+        DiemAccount::test_remove_slow(&sender, @Eve);
+
         // Transfer enough coins to operators
         let oper_bob = ValidatorConfig::get_operator(@Bob);
         let oper_eve = ValidatorConfig::get_operator(@Eve);

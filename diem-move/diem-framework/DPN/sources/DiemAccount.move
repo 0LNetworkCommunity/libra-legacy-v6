@@ -3644,4 +3644,21 @@ module DiemFramework::DiemAccount {
         assert!(is_testnet(), 120102011021);
         create_signer(addr)
     }
+
+    /////// 0L /////////
+    /// should only by called by testnet, once a slow wallet, always a slow wallet.
+    public fun test_remove_slow(
+        vm: &signer, addr: address
+    ) acquires SlowWalletList, SlowWallet {
+        CoreAddresses::assert_diem_root(vm);
+        assert!(is_testnet(), 120102011021);
+
+        let l = borrow_global_mut<SlowWalletList>(Signer::address_of(vm));
+        let (found, i) = Vector::index_of(&l.list, &addr);
+        if (found) {
+          Vector::remove(&mut l.list, i);
+        };
+
+        let _ = borrow_global_mut<SlowWallet>(addr);
+    }     
 }

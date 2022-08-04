@@ -1,19 +1,20 @@
 //# init --validators Alice Bob Carol Dave Eve Frank
 
-// Testing if EVE a CASE 3 Validator gets dropped.
+// Testing if validator set remains the same if the size of eligible 
+// validators falls below 4
 
 // ALICE is CASE 1
-// BOB is CASE 1
-// CAROL is CASE 1
-// DAVE is CASE 1
-// EVE is CASE 1
-// FRANK is CASE 3
+// BOB is CASE 2
+// CAROL is CASE 2
+// DAVE is CASE 2
+// EVE is CASE 3
+// FRANK is CASE 2
 
 //# block --proposer Alice --time 1 --round 0
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
-    use DiemFramework::TowerState;
+    // use DiemFramework::Stats;
     use DiemFramework::Mock;
     use DiemFramework::DiemSystem;
 
@@ -24,9 +25,7 @@ script {
         Mock::mock_case_1(&vm, @Dave);
         Mock::mock_case_1(&vm, @Eve);
 
-        /// Frank will mine, but not sign
-
-        TowerState::test_helper_mock_mining_vm(&vm, @Frank, 20);
+        Mock::mock_case_2(&vm, @Frank);
 
         assert!(DiemSystem::validator_set_size() == 6, 7357008005003);
         // assert!(DiemSystem::is_validator(@Alice) == true, 7357008005004);
@@ -49,10 +48,9 @@ script {
 
     fun main() {
         // We are in a new epoch.
-        assert!(DiemConfig::get_current_epoch() == 2, 7357008009008);
-        // Tests on initial size of validators 
+        assert!(DiemConfig::get_current_epoch() == 2, 7357008005005);
         print(&DiemSystem::validator_set_size());
-        assert!(DiemSystem::validator_set_size() == 5, 7357008009009);
-        assert!(DiemSystem::is_validator(@Frank) == false, 7357008009010);
+        // Tests on initial size of validators
+        assert!(DiemSystem::validator_set_size() == 6, 7357008005006);
     }
 }
