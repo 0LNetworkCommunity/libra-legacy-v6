@@ -48,6 +48,19 @@ address DiemFramework {
       }
     }
 
+    public fun revoke(buddy: &signer, val: address) acquires Vouch {
+      let buddy_acc = Signer::address_of(buddy);
+      assert!(buddy_acc!=val, 12345); // TODO: Error code.
+
+      if (!exists<Vouch>(val)) return;
+
+      let v = borrow_global_mut<Vouch>(val);
+      let (found, i) = Vector::index_of(&v.vals, &buddy_acc);
+      if (found) {
+        Vector::remove(&mut v.vals, i);
+      };
+    }    
+
     public fun vm_migrate(vm: &signer, val: address, buddy_list: vector<address>) acquires Vouch {
       CoreAddresses::assert_vm(vm);
 

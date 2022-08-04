@@ -2647,6 +2647,10 @@ pub enum ScriptFunctionCall {
         domain: Bytes,
     },
 
+    RevokeVouch {
+        val: AccountAddress,
+    },
+
     /// # Summary
     /// Rotates the `account`'s authentication key to the supplied new authentication key. May be sent by any account.
     ///
@@ -3864,6 +3868,7 @@ impl ScriptFunctionCall {
             RemoveVaspDomain { address, domain } => {
                 encode_remove_vasp_domain_script_function(address, domain)
             }
+            RevokeVouch { val } => encode_revoke_vouch_script_function(val),
             RotateAuthenticationKey { new_key } => {
                 encode_rotate_authentication_key_script_function(new_key)
             }
@@ -5775,6 +5780,18 @@ pub fn encode_remove_vasp_domain_script_function(
             bcs::to_bytes(&address).unwrap(),
             bcs::to_bytes(&domain).unwrap(),
         ],
+    ))
+}
+
+pub fn encode_revoke_vouch_script_function(val: AccountAddress) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("VouchScripts").to_owned(),
+        ),
+        ident_str!("revoke_vouch").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&val).unwrap()],
     ))
 }
 
@@ -8991,6 +9008,16 @@ fn decode_remove_vasp_domain_script_function(
     }
 }
 
+fn decode_revoke_vouch_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::RevokeVouch {
+            val: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_rotate_authentication_key_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9859,6 +9886,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "TreasuryComplianceScriptsremove_vasp_domain".to_string(),
             Box::new(decode_remove_vasp_domain_script_function),
+        );
+        map.insert(
+            "VouchScriptsrevoke_vouch".to_string(),
+            Box::new(decode_revoke_vouch_script_function),
         );
         map.insert(
             "AccountAdministrationScriptsrotate_authentication_key".to_string(),

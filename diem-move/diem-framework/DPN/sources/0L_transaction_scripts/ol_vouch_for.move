@@ -10,5 +10,9 @@ module VouchScripts {
     public(script) fun vouch_for(sender: signer, val: address) {
       Vouch::vouch_for(&sender, val);
     }
+
+    public(script) fun revoke_vouch(sender: signer, val: address) {
+      Vouch::revoke(&sender, val);
+    }    
 }
 }
