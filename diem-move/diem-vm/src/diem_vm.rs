@@ -527,8 +527,6 @@ impl DiemVM {
         let (round, timestamp, previous_vote, proposer) = block_metadata.clone().into_inner();
         println!("====================================== {} ======================================", round);
         if round % 1000 == 0 {println!("======== round is {}", round)}
-        dbg!(&timestamp);
-        dbg!(&txn_data.sender);
 
         let args = serialize_values(&vec![
             MoveValue::Signer(txn_data.sender),

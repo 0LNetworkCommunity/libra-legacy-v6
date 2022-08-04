@@ -6,7 +6,7 @@ Here's a quick reference to the policies implemented at genesis, with further di
 
 ## Rewards
 
-- Rewards are paid at the end of each "Epoch", daily at 16:00 UTC.
+- Rewards are paid at the end of each "Epoch" daily.
 
 - The majority of the rewards will go to Validator Nodes, you'll need a cloud host to be successful at this (you can't do this with a laptop, and you need to be somewhat technical). Transaction fees are the principal source of rewards, but they can be augmented by Guaranteed Minimum subsidies.
 
@@ -41,6 +41,21 @@ While it doesn't take group permission to onboard a new validator, existing vali
 
 - The validator subsidy only exists in the absence of sufficient transaction fees. It is a Guaranteed Minimum, which is net of transaction fees. So hypothetically if the network has 4 nodes, and hence the security budget is 8,400,000, however the total transaction fees are already above this number (e.g. 10,000,000), there is no need to subsidize the guaranteed minimum, there are no new Coins minted. This prevents unnecessary inflation.
 
+## Validator burn
+
+- Validators spend their credits to be candidates for validation. This is also known as a cost-to-exist. It can also be thought of a pre-paid "slashing" for lack of node liveness.
+
+- The burn will apply to all validators: those successfully validating and those otherwise inactive.
+
+- The validator burn amount is dynamic. To enter a validator set, all validators burn 50% of the previous epoch's subsidy.
+
+- The validator has two options for the burn settings. 1) The validator can elect to have the burn be a pure burn, and the coins are removed from circulation. 2) the validator can have the burn recycled to the Community Wallet Index, which is updated every epoch based on how many donations are flowing to each community wallet.
+
+## Validator Vouch
+- Validators do not need permission from the entire validator set to be elegible to validate. They simply need 1 validator to create their account.
+- To actually enter a validator set and perform work, there need to be 4 validators from the previous validator set which have vouched for that node. 
+- There is a sybil resistance mechanism: each validator needs 4 vouches from separate "families" of accounts, using the Ancestry information (which validator invited the other).
+
 ## End Users Mining
 - Anyone with a laptop and with an ordinary account (End Users) can receive coins for creating a Delay Tower (proofs of elapsed time), as a basis for durable identity.  We also call this mining. 
 
@@ -61,7 +76,7 @@ The reward pool for all miners is exactly the equivalent of one Validator Node's
 
 - Early participants of a network may receive generous subsidies, but they are prevented from dumping on less sophisticated users, these are Slow Wallets. All validator node accounts, where a majority of rewards flow to must be Slow Wallets.
 
-- At genesis Slow Wallets currently cannot transfer Coins between accounts. At epoch 100, they get 10,000 coins unlocked per epoch (day).
+- Slow Wallets have 1,000 additional coins unlocked for transfer per epoch (day).
 
 ### Community Wallets
 
