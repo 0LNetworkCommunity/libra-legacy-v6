@@ -76,40 +76,28 @@ pub fn get_next_proof_from_chain(
     n.refresh_onchain_state();
     // TODO: we are picking Client twice
     let diff = get_difficulty_from_chain(&n)?;
+  
+    // get the user's tower state from chain.
+    let ts = n.client
+      .get_account_state(config.profile.account)?
+      .get_miner_state()?;
 
-    // // get the user's tower state from chain.
-    let ts = n
-        .client
-        .get_account_state(config.profile.account)?
-        .get_miner_state()?;
-
-    if let Some(t) = ts {
-        Ok(NextProof {
-            diff,
-            next_height: t.verified_tower_height + 1,
-            preimage: t.previous_proof_hash,
-        })
-    } else {
+      if let Some(t) = ts {
+            Ok(NextProof {
+          diff,
+          next_height: t.verified_tower_height + 1,
+          preimage: t.previous_proof_hash,
+      })
+      } else {
         bail!("cannot get tower resource for account")
     }
 }
 
 /// Get the VDF difficulty from chain.
 pub fn get_difficulty_from_chain(n: &Node) -> anyhow::Result<VDFDifficulty> {
-    // dbg!("pick_client");
-    // let client = pick_client(swarm_path.clone(), config)?;
-
-    // dbg!("get_account_state");
-
-    // let mut n = Node::new(client, config, swarm_path.is_some());
-
-    // // get the user's tower state from chain.
-    // let ts = client.get_account_state(config.profile.account)?.get_miner_state()?;
 
     if let Some(a) = &n.chain_state {
-        // let a = client.get_account_state(AccountAddress::ZERO)?;
-        // dbg!(&a);
-        // dbg!(&a.get_diem_version());
+
         if let Some(diff) = a.get_tower_params()? {
             return Ok(diff);
         }
