@@ -13,6 +13,9 @@ use crate::{
     metrics::{
         DIEM_EXECUTOR_APPLY_CHUNK_SECONDS, DIEM_EXECUTOR_COMMIT_CHUNK_SECONDS,
         DIEM_EXECUTOR_EXECUTE_CHUNK_SECONDS, DIEM_EXECUTOR_VM_EXECUTE_CHUNK_SECONDS,
+        DIEM_EXECUTOR_EXECUTE_AND_COMMIT_CHUNK_VERIFY_LATENCY,
+        DIEM_EXECUTOR_EXECUTE_AND_COMMIT_CHUNK_EXECUTION_LATENCY,
+        DIEM_EXECUTOR_EXECUTE_AND_COMMIT_CHUNK_SAVE_TX_LATENCY        
     },
 };
 use anyhow::Result;
@@ -29,7 +32,7 @@ use diem_types::{
 use diem_vm::VMExecutor;
 use executor_types::{ChunkExecutorTrait, ExecutedChunk, ExecutedTrees, TransactionReplayer};
 use fail::fail_point;
-use std::{marker::PhantomData, sync::Arc};
+use std::{marker::PhantomData, sync::Arc, time::Instant,};
 use storage_interface::{state_view::VerifiedStateView, DbReaderWriter};
 
 pub struct ChunkExecutor<V> {
@@ -95,6 +98,12 @@ impl<V> ChunkExecutor<V> {
     }
 
     fn commit_chunk_impl(&self) -> Result<Arc<ExecutedChunk>> {
+        /////// 0L /////////
+        // temp time the transaction execution.
+        let start_time = Instant::now();
+        let metrics_timer_stxl
+            = DIEM_EXECUTOR_EXECUTE_AND_COMMIT_CHUNK_SAVE_TX_LATENCY.start_timer();
+
         let (base_view, to_commit) = self.commit_queue.lock().next_chunk_to_commit()?;
         let txns_to_commit = to_commit.transactions_to_commit()?;
         let ledger_info = to_commit.ledger_info.as_ref();
@@ -108,6 +117,10 @@ impl<V> ChunkExecutor<V> {
                 ledger_info,
             )?;
         }
+        /////// 0L /////////
+        let latency = start_time.elapsed();
+        metrics_timer_stxl.observe_duration();
+        dbg!("save_transactions latency", &latency);
 
         self.commit_queue.lock().dequeue()?;
         Ok(to_commit)
@@ -127,9 +140,20 @@ impl<V: VMExecutor> ChunkExecutorTrait for ChunkExecutor<V> {
         let first_version_in_request = txn_list_with_proof.first_transaction_version;
         let (persisted_view, latest_view) = self.commit_queue.lock().persisted_and_latest_view();
 
+        /////// 0L /////////
+        // temp time the transaction execution.
+        let start_time = Instant::now();
+        let metrics_timer_vl
+            = DIEM_EXECUTOR_EXECUTE_AND_COMMIT_CHUNK_VERIFY_LATENCY.start_timer();
+
         // Verify input transaction list.
         txn_list_with_proof.verify(verified_target_li.ledger_info(), first_version_in_request)?;
 
+        /////// 0L /////////
+        let latency = start_time.elapsed();
+        metrics_timer_vl.observe_duration();
+        dbg!("verify_chunk latency", &latency);
+        
         // Skip transactions already in ledger.
         let txns_to_skip = txn_list_with_proof.proof.verify_extends_ledger(
             latest_view.txn_accumulator().num_leaves(),
@@ -145,6 +169,12 @@ impl<V: VMExecutor> ChunkExecutorTrait for ChunkExecutor<V> {
             );
         }
 
+        /////// 0L /////////
+        // temp time the transaction execution.
+        let start_time = Instant::now();
+        let metrics_timer_el
+            = DIEM_EXECUTOR_EXECUTE_AND_COMMIT_CHUNK_EXECUTION_LATENCY.start_timer();
+
         // Execute transactions.
         let state_view = self.state_view(&latest_view, &persisted_view);
         let chunk_output = {
@@ -158,6 +188,11 @@ impl<V: VMExecutor> ChunkExecutorTrait for ChunkExecutor<V> {
             chunk_output,
             &txn_list_with_proof.proof.transaction_infos[txns_to_skip..],
         )?;
+
+        /////// 0L /////////
+        let latency = start_time.elapsed();
+        metrics_timer_el.observe_duration();
+        dbg!("execute_chunk latency", &latency);        
 
         // Add result to commit queue.
         self.commit_queue.lock().enqueue(executed_chunk);

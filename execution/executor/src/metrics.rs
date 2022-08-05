@@ -97,3 +97,33 @@ pub static DIEM_EXECUTOR_TRANSACTIONS_SAVED: Lazy<Histogram> = Lazy::new(|| {
     )
     .unwrap()
 });
+
+pub static DIEM_EXECUTOR_EXECUTE_AND_COMMIT_CHUNK_VERIFY_LATENCY: Lazy<Histogram> = Lazy::new(|| {
+    register_histogram!(
+        // metric name
+        "diem_executor_execute_and_commit_chunk_verify_latency",
+        // metric description
+        "The time spent to verify a chunk in Diem executor"
+    )
+    .unwrap()
+});
+
+pub static DIEM_EXECUTOR_EXECUTE_AND_COMMIT_CHUNK_EXECUTION_LATENCY: Lazy<Histogram> = Lazy::new(|| {
+    register_histogram!(
+        // metric name
+        "diem_executor_execute_and_commit_chunk_execution_latency",
+        // metric description
+        "The time spent to execute a chunk in Diem executor"
+    )
+        .unwrap()
+});
+
+pub static DIEM_EXECUTOR_EXECUTE_AND_COMMIT_CHUNK_SAVE_TX_LATENCY: Lazy<Histogram> = Lazy::new(|| {
+    register_histogram!(
+        // metric name
+        "diem_executor_execute_and_commit_chunk_save_tx_latency",
+        // metric description
+        "The time spent to save a transaction in Diem executor"
+    )
+        .unwrap()
+});

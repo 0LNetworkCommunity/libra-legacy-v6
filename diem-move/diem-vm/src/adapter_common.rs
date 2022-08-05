@@ -27,7 +27,7 @@ use diem_types::{
     write_set::WriteSet,
 };
 use rayon::prelude::*;
-use std::collections::HashSet;
+use std::{collections::HashSet, time::Instant};
 
 /// This trait describes the VM adapter's interface.
 /// TODO: bring more of the execution logic in diem_vm into this file.
@@ -222,8 +222,27 @@ pub(crate) fn execute_block_impl<A: VMAdapter, S: StateView>(
             debug!(log_context, "Retry after reconfiguration");
             continue;
         };
+
+        /////// 0L /////////
+        // temp time the transaction execution.
+        let start_time = Instant::now();
+        let metric_single_tx_lat = EXECUTOR_SINGLE_TX_LATENCY.start_timer();
+        
         let (vm_status, output, sender) =
             adapter.execute_single_transaction(&txn, data_cache, &log_context)?;
+
+        /////// 0L /////////
+        match &txn {
+            PreprocessedTransaction::UserTransaction(t) => {
+                dbg!(&t.sequence_number());
+            },
+            _ => {},
+        };
+        dbg!("tx sender", &sender);
+        let latency = start_time.elapsed();
+        metric_single_tx_lat.observe_duration();
+        dbg!("single tx latency", &latency);
+
         if !output.status().is_discarded() {
             data_cache.push_write_set(output.write_set());
         } else {

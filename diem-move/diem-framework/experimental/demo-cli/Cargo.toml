@@ -15,7 +15,7 @@ diem-transaction-builder = { path = "../../../../sdk/transaction-builder"}
 diem-types = { path = "../../../../types" }
 diem-workspace-hack = { path = "../../../../crates/diem-workspace-hack" }
 generate-key = { path = "../../../../config/generate-key" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "5ff91d82a4969f1efa18dfc18965a37300d8f2e4" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0.52"
 bcs = "0.1.2"

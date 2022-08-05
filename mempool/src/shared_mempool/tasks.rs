@@ -103,7 +103,11 @@ pub(crate) async fn process_client_transaction_submission<V>(
     timer: HistogramTimer,
 ) where
     V: TransactionValidation,
-{
+{ 
+    dbg!("new transaction", &transaction);
+    dbg!("new transaction", &transaction.sender());
+    dbg!("new transaction", &transaction.sequence_number());
+
     timer.stop_and_record();
     let _timer = counters::process_txn_submit_latency_timer_client();
     let statuses = process_incoming_transactions(&smp, vec![transaction], TimelineState::NotReady);
@@ -437,6 +441,10 @@ pub(crate) fn process_consensus_request<V: TransactionValidation>(
         counters::REQUEST_SUCCESS_LABEL
     };
     let latency = start_time.elapsed();
+    
+    dbg!("mempool_service latency", &latency);
+
+
     counters::mempool_service_latency(counter_label, result, latency);
 }
 
