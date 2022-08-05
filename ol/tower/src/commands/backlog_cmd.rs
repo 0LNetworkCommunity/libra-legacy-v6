@@ -13,16 +13,13 @@ use crate::{entrypoint::EntryPointTxsCmd, prelude::*};
 #[derive(Command, Default, Debug, Options)]
 pub struct BacklogCmd {
     /// Option for --submit, sends backlogged transactions.
-    #[options(
-    short = "s",
-    help = "Submit backlogged transactions"
-    )]
+    #[options(short = "s", help = "Submit backlogged transactions")]
     submit: bool,
 
     /// Submits the specified proof from the proof directory
     #[options(
-    short = "n",
-    help = "Submit specific proof, given as numerical argument, e.g. 1337 to submit proof no. 1337"
+        short = "n",
+        help = "Submit specific proof, given as numerical argument, e.g. 1337 to submit proof no. 1337"
     )]
     submit_specific: Option<u64>,
 
@@ -79,13 +76,14 @@ impl Runnable for BacklogCmd {
             is_operator,
             use_first_url,
             None,
-        ).expect("could not get tx parameters");
+        )
+        .expect("could not get tx parameters");
 
         let mut processed_commands = 0u8;
 
         if let Some(specific_proof) = self.submit_specific {
             match backlog::submit_proof_by_number(&cfg, &tx_params, specific_proof) {
-                Ok(()) => {},
+                Ok(()) => {}
                 Err(e) => {
                     println!("WARN: Unable to submit proof: {:?}", e);
                 }
@@ -96,7 +94,7 @@ impl Runnable for BacklogCmd {
 
         if self.submit {
             match backlog::process_backlog(&cfg, &tx_params) {
-                Ok(()) => {},
+                Ok(()) => {}
                 Err(e) => {
                     println!("WARN: Unable to submit backlog: {:?}", e);
                 }
@@ -108,7 +106,7 @@ impl Runnable for BacklogCmd {
         if processed_commands == 0 || self.list_backlog {
             // Check for, and submit backlog proofs.
             match backlog::show_backlog(&cfg, &tx_params) {
-                Ok(()) => {},
+                Ok(()) => {}
                 Err(e) => {
                     println!("WARN: Unable to list backlog: {:?}", e);
                 }

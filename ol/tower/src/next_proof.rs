@@ -2,15 +2,15 @@
 
 use std::path::PathBuf;
 
-use anyhow::{Error, bail};
+use crate::{preimage, proof};
+use anyhow::{bail, Error};
 use cli::diem_client::DiemClient;
 use diem_crypto::HashValue;
 use diem_global_constants::genesis_delay_difficulty;
-use diem_types::{ol_vdf_difficulty::VDFDifficulty};
+use diem_types::ol_vdf_difficulty::VDFDifficulty;
 use ol::{config::AppCfg, node::node::Node};
 use ol_types::config::IS_PROD;
 use serde::{Deserialize, Serialize};
-use crate::{proof, preimage};
 
 /// container for the next proof parameters to be fed to VDF prover.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -25,21 +25,20 @@ pub struct NextProof {
 }
 
 impl NextProof {
-  /// create a genesis proof
-  pub fn genesis_proof(config: &AppCfg) -> Self {
+    /// create a genesis proof
+    pub fn genesis_proof(config: &AppCfg) -> Self {
+        let mut diff = VDFDifficulty::default();
 
-    let mut diff = VDFDifficulty::default(); 
-    
-    if !*IS_PROD {
-      diff.difficulty = genesis_delay_difficulty()
-    }
+        if !*IS_PROD {
+            diff.difficulty = genesis_delay_difficulty()
+        }
 
-    NextProof {
-        diff,
-        next_height: 0,
-        preimage: preimage::genesis_preimage(config),
+        NextProof {
+            diff,
+            next_height: 0,
+            preimage: preimage::genesis_preimage(config),
+        }
     }
-  }
 }
 /// return the VDF difficulty expected and the next tower height
 pub fn get_next_proof_params_from_local(config: &AppCfg) -> Result<NextProof, Error> {
@@ -66,7 +65,7 @@ pub fn get_next_proof_params_from_local(config: &AppCfg) -> Result<NextProof, Er
 pub fn get_next_proof_from_chain(
     config: &mut AppCfg,
     client: DiemClient,
-    swarm_path: Option<PathBuf>
+    swarm_path: Option<PathBuf>,
 ) -> Result<NextProof, Error> {
     // dbg!("pick_client");
     // let client = pick_client(swarm_path.clone(), config)?;
@@ -84,14 +83,14 @@ pub fn get_next_proof_from_chain(
       .get_miner_state()?;
 
       if let Some(t) = ts {
-            Ok(NextProof {
-          diff,
-          next_height: t.verified_tower_height + 1,
-          preimage: t.previous_proof_hash,
-      })
+        Ok(NextProof {
+            diff,
+            next_height: t.verified_tower_height + 1,
+            preimage: t.previous_proof_hash,
+        })
       } else {
         bail!("cannot get tower resource for account")
-      }
+    }
 }
 
 /// Get the VDF difficulty from chain.
@@ -100,10 +99,9 @@ pub fn get_difficulty_from_chain(n: &Node) -> anyhow::Result<VDFDifficulty> {
     if let Some(a) = &n.chain_state {
 
         if let Some(diff) = a.get_tower_params()? {
-            return Ok(diff)
+            return Ok(diff);
         }
         bail!("could not get this epoch's VDF params from chain.")
     }
     bail!("could not get account state for 0x0")
 }
-

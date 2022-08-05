@@ -2,8 +2,8 @@
 
 use super::pilot;
 use crate::node::node::Node;
-use std::{thread, time::Duration};
 use chrono::Utc;
+use std::{thread, time::Duration};
 
 /// Start the node monitor
 pub fn run_checks(
@@ -11,7 +11,7 @@ pub fn run_checks(
     pilot: bool,
     is_live: bool,
     verbose_check: bool,
-    verbose_pilot: bool
+    verbose_pilot: bool,
 ) {
     loop {
         // update all the checks
@@ -27,29 +27,27 @@ pub fn run_checks(
     }
 }
 
-
 impl Node {
-  /// Run healtchecks once
-  pub fn check_once(&mut self, verbose: bool) -> &mut Self {
-      let home_path = self.app_conf.workspace.node_home.clone();
+    /// Run healtchecks once
+    pub fn check_once(&mut self, verbose: bool) -> &mut Self {
+        let home_path = self.app_conf.workspace.node_home.clone();
 
-      &self.refresh_onchain_state();
-      &self.refresh_chain_info();
-      &self.refresh_account_info();
-      &self.refresh_checks();
-      &self.vitals.write_json(&home_path);
-      if verbose {
-          print_it(&self)
-      }
+        &self.refresh_onchain_state();
+        &self.refresh_chain_info();
+        &self.refresh_account_info();
+        &self.refresh_checks();
+        &self.vitals.write_json(&home_path);
+        if verbose {
+            print_it(&self)
+        }
 
-      self
-  }
+        self
+    }
 }
-
 
 fn print_it(node: &Node) {
     println!(
-"
+        "
 {now}\n
 HEALTH\n...........................\n
 Configs exist: {configs}
@@ -63,16 +61,16 @@ Tower running: {miner}
 Account on chain: {account}
 In validator set: {in_set}
 \n",
-                now = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string(), 
-                configs = node.vitals.items.configs_exist,
-                restored = node.vitals.items.db_restored,
-                web_running = node.vitals.items.web_running,
-                synced = node.vitals.items.is_synced,
-                version = node.vitals.items.sync_height,
-                delay = node.vitals.items.sync_delay,
-                node = node.vitals.items.node_running,
-                miner = node.vitals.items.miner_running,
-                account = node.vitals.items.account_created,
-                in_set = node.vitals.items.validator_set,
-        );
+        now = Utc::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+        configs = node.vitals.items.configs_exist,
+        restored = node.vitals.items.db_restored,
+        web_running = node.vitals.items.web_running,
+        synced = node.vitals.items.is_synced,
+        version = node.vitals.items.sync_height,
+        delay = node.vitals.items.sync_delay,
+        node = node.vitals.items.node_running,
+        miner = node.vitals.items.miner_running,
+        account = node.vitals.items.account_created,
+        in_set = node.vitals.items.validator_set,
+    );
 }

@@ -1,10 +1,8 @@
 //! `pilot` module
 
 #![allow(clippy::never_loop)]
+use crate::node::node::Node;
 use crate::node::states::*;
-use crate::{
-    node::node::Node,
-};
 use std::{thread, time::Duration};
 
 /// run once
@@ -46,30 +44,29 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
                 node.vitals.host_state.account_state = AccountState::None;
                 if verbose {
                     println!(".. Account: Owner account does NOT exist on chain. Was the account creation transaction submitted?");
-              }
+                }
             }
         }
     }
 
     // is node started?
     if !node.vitals.items.node_running {
-    //     if verbose {
-    //         println!("Node: node is running");
-    //     }
-    //     node.vitals.host_state.node_state = maybe_switch_mode(&mut node, is_in_val_set, verbose);
-    // } else {
+        //     if verbose {
+        //         println!("Node: node is running");
+        //     }
+        //     node.vitals.host_state.node_state = maybe_switch_mode(&mut node, is_in_val_set, verbose);
+        // } else {
         // let start_mode = if is_in_val_set { Validator } else { Fullnode };
 
         if verbose {
-            println!(
-                "Node: WARN: node is NOT running, starting node");
+            println!("Node: WARN: node is NOT running, starting node");
         }
 
         node.vitals.host_state.node_state = match node.start_node(verbose) {
             Ok(_) => NodeState::ValidatorOutOfSet,
             Err(_) => {
-              println!(".. Node: WARN: could not start node");
-              NodeState::Stopped
+                println!(".. Node: WARN: could not start node");
+                NodeState::Stopped
             }
         }
     }

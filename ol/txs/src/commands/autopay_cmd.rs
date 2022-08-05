@@ -2,11 +2,14 @@
 
 #![allow(clippy::never_loop)]
 
-use std::process::exit;
+use crate::{
+    entrypoint,
+    submit_tx::{maybe_submit, tx_params_wrapper},
+};
 use abscissa_core::{Command, Options, Runnable};
 use diem_transaction_builder::stdlib as transaction_builder;
-use crate::{entrypoint, submit_tx::{ maybe_submit, tx_params_wrapper}};
-use ol_types::{config::TxType};
+use ol_types::config::TxType;
+use std::process::exit;
 
 /// command to enable or disable autopay
 #[derive(Command, Debug, Default, Options)]
@@ -16,7 +19,6 @@ pub struct AutopayCmd {
     #[options(help = "disable autopay on account")]
     disable: bool,
 }
-
 
 impl Runnable for AutopayCmd {
     fn run(&self) {
@@ -30,17 +32,14 @@ impl Runnable for AutopayCmd {
             panic!("must choose --enable or --disable");
         };
 
-        match maybe_submit(
-            script,
-            &tx_params,
-            entry_args.save_path,
-        ) {
+        match maybe_submit(script, &tx_params, entry_args.save_path) {
             Err(e) => {
                 println!(
-                    "ERROR: could not submit autopay enable transaction, message: \n{:?}", &e
+                    "ERROR: could not submit autopay enable transaction, message: \n{:?}",
+                    &e
                 );
                 exit(1);
-            },
+            }
             _ => {}
         }
     }

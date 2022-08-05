@@ -9,9 +9,8 @@ use ol_keys::wallet;
 #[derive(Command, Debug, Default, Options)]
 pub struct KeygenCmd {}
 
-
 impl Runnable for KeygenCmd {
     fn run(&self) {
-      wallet::keygen();
+        wallet::keygen();
     }
 }

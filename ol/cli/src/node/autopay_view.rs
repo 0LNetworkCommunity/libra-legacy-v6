@@ -1,16 +1,10 @@
 //! `chain_info`
 
+use diem_types::account_address::AccountAddress;
 
-
-use diem_types::{
-    account_address::AccountAddress,
-};
-
-
-use super::{node::Node, chain_view::ValidatorView};
+use super::{chain_view::ValidatorView, node::Node};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap};
-
+use std::collections::HashMap;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 ///
@@ -30,7 +24,6 @@ pub struct PayeeStats {
     ///
     pub all_percentage: f64,
 }
-
 
 impl Node {
     /// Get all percentage recurring payees stats
@@ -93,5 +86,3 @@ impl Node {
         Some(ret)
     }
 }
-
-

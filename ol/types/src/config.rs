@@ -4,8 +4,8 @@ use anyhow::{bail, Error};
 use diem_config::config::NodeConfig;
 use diem_global_constants::{CONFIG_FILE, NODE_HOME};
 use diem_types::{
-    account_address::AccountAddress, transaction::authenticator::AuthenticationKey,
-    waypoint::Waypoint, chain_id::NamedChain,
+    account_address::AccountAddress, chain_id::NamedChain,
+    transaction::authenticator::AuthenticationKey, waypoint::Waypoint,
 };
 use dirs;
 use once_cell::sync::Lazy;
@@ -68,7 +68,6 @@ pub fn parse_toml(path: Option<PathBuf>) -> Result<AppCfg, Error> {
     let mut file = File::open(&cfg_path)?;
     file.read_to_string(&mut toml_buf)?;
 
-
     let cfg: AppCfg = toml::from_str(&toml_buf)?;
     Ok(cfg)
 }
@@ -115,14 +114,13 @@ impl AppCfg {
 
     /// format the standard namespace for 0L OPERATOR
     pub fn format_oper_namespace(&self) -> String {
-      format!("{}-oper", self.profile.account.to_hex())
+        format!("{}-oper", self.profile.account.to_hex())
     }
 
     /// format the standard namespace for 0L OWNER
     pub fn format_owner_namespace(&self) -> String {
-      self.profile.account.to_hex()
+        self.profile.account.to_hex()
     }
-    
 
     /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self) -> PathBuf {
@@ -176,7 +174,7 @@ impl AppCfg {
             config_path.clone().unwrap_or_else(|| what_home(None, None));
 
         if let Some(u) = upstream_peer {
-          default_config.profile.upstream_nodes = vec![u.to_owned()]
+            default_config.profile.upstream_nodes = vec![u.to_owned()]
         };
         // Add link to previous tower
         // if !*IS_TEST {
@@ -184,7 +182,7 @@ impl AppCfg {
         // }
 
         if let Some(id) = network_id {
-          default_config.chain_info.chain_id = id.to_owned();
+            default_config.chain_info.chain_id = id.to_owned();
         };
 
         if source_path.is_some() {
@@ -203,11 +201,9 @@ impl AppCfg {
             default_config.chain_info.base_epoch = *base_epoch;
             default_config.chain_info.base_waypoint = *base_waypoint;
         } else {
-
-          default_config.chain_info.base_epoch = None;
-          default_config.chain_info.base_waypoint = None;
-          println!("WARN: No --epoch or --waypoint or upstream --url passed. This should only be done at genesis. If that's not correct either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
-
+            default_config.chain_info.base_epoch = None;
+            default_config.chain_info.base_waypoint = None;
+            println!("WARN: No --epoch or --waypoint or upstream --url passed. This should only be done at genesis. If that's not correct either pass --epoch and --waypoint as CLI args, or provide a URL to fetch this data from --upstream-peer or --template-url");
         }
 
         // skip questionnaire if CI
@@ -286,7 +282,7 @@ impl AppCfg {
     }
 
     /// save the config file to 0L.toml to the workspace home path
-    pub fn save_file(&self) -> Result<(), Error>{
+    pub fn save_file(&self) -> Result<(), Error> {
         let toml = toml::to_string(&self)?;
         let home_path = &self.workspace.node_home.clone();
         // create home path if doesn't exist, usually only in dev/ci environments.
@@ -399,7 +395,6 @@ pub struct Profile {
 
     // /// Node URL and and port to submit transactions. Defaults to localhost:8080
     // pub default_node: Option<Url>,
-
     /// Other nodes to connect for fallback connections
     pub upstream_nodes: Vec<Url>,
 
@@ -597,4 +592,3 @@ pub fn bootstrap_waypoint_from_rpc(url: Url) -> Result<Waypoint, Error> {
     }
     bail!("could not get waypoint from json-rpc, url: {:?} ", url)
 }
-

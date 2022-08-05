@@ -19,11 +19,7 @@ pub struct GenesisMiningProof {
 impl Default for GenesisMiningProof {
     fn default() -> GenesisMiningProof {
         // These use "alice" fixtures from ../fixtures/vdf_proofs/ and used elsewhere in the project, in both easy(stage) and hard(Prod) mode.
-        let env = if *IS_PROD {
-          "prod"
-        } else {
-          "test"
-        };
+        let env = if *IS_PROD { "prod" } else { "test" };
 
         let block = fixtures::get_persona_block_zero("alice", env);
         return GenesisMiningProof {

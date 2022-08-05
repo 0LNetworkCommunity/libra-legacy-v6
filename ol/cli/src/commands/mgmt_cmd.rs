@@ -1,6 +1,10 @@
 //! `mgmt` subcommand
 
-use crate::{application::app_config, entrypoint, node::{client, node::Node}};
+use crate::{
+    application::app_config,
+    entrypoint,
+    node::{client, node::Node},
+};
 use abscissa_core::{Command, Options, Runnable};
 
 /// management subcommands
