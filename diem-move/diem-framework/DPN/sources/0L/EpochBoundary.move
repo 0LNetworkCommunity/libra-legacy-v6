@@ -166,7 +166,8 @@ module EpochBoundary {
         };
 
         let len_proven_nodes = Vector::length(&proven_nodes);
-        let max_unproven_nodes = len_proven_nodes / 3;
+        let max_unproven_nodes = len_proven_nodes / 6;
+        print(&len_proven_nodes);
         print(&max_unproven_nodes);
         // start from the proven nodes
         let proposed_set = proven_nodes;
@@ -179,6 +180,8 @@ module EpochBoundary {
         let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
 
         print(&top_accounts);
+        print(&jailed_set);
+
         // let jailed_set = DiemSystem::get_jailed_set(vm, height_start, height_now);
         // find the top unproven nodes and add to the proposed set
         let i = 0;

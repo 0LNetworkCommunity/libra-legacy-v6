@@ -88,7 +88,7 @@ script {
       print(&TowerState::get_count_in_epoch(@Bob));
       print(&TowerState::get_count_above_thresh_in_epoch(@Bob));
 
-      Mock::mock_case_1(&vm, @Alice);
+      Mock::mock_case_1(&vm, @Alice, 0, 15);
 
     }
 }

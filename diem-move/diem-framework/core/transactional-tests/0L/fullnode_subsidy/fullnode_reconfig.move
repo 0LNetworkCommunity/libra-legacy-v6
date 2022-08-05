@@ -62,7 +62,7 @@ script {
       TowerState::test_helper_mock_reconfig(&vm, @Bob);
 
       // make alice a compliant validator, and mine 10 proofs
-      Mock::mock_case_1(&vm, @Alice);
+      Mock::mock_case_1(&vm, @Alice, 0, 15);
       assert!(TowerState::get_count_in_epoch(@Alice) == 10, 735701);
       // print(&TowerState::get_count_in_epoch(@Alice));
       assert!(DiemAccount::balance<GAS>(@Alice) == 9000000, 735704);

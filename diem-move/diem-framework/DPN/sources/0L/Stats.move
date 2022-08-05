@@ -108,18 +108,24 @@ module Stats{
   }
 
   //Function: 06
-  public fun node_above_thresh(vm: &signer, node_addr: address, height_start: u64, height_end: u64): bool acquires ValStats{
+  public fun node_above_thresh(
+    vm: &signer, node_addr: address, height_start: u64, height_end: u64
+  ): bool acquires ValStats{
     let sender = Signer::address_of(vm);
     assert!(sender == @DiemRoot, Errors::requires_role(190006));
     let range = height_end-height_start;
     // TODO: Change to 5 percent
-    let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(1, 100));
+    let threshold_signing = FixedPoint32::multiply_u64(
+      range, FixedPoint32::create_from_rational(5, 100)
+    );
     if (node_current_votes(vm, node_addr) >  threshold_signing) { return true };
     return false
   }
 
   //Function: 07
-  public fun network_density(vm: &signer, height_start: u64, height_end: u64): u64 acquires ValStats {
+  public fun network_density(
+    vm: &signer, height_start: u64, height_end: u64
+  ): u64 acquires ValStats {
     let sender = Signer::address_of(vm);
     assert!(sender == @DiemRoot, Errors::requires_role(190007));
     let density = 0u64;

@@ -18,11 +18,11 @@ script {
     use DiemFramework::DiemSystem;
 
     fun main(vm: signer, _: signer) {
-        Mock::mock_case_1(&vm, @Alice);
-        Mock::mock_case_1(&vm, @Bob);
-        Mock::mock_case_1(&vm, @Carol);
-        Mock::mock_case_1(&vm, @Dave);
-        Mock::mock_case_1(&vm, @Eve);
+        Mock::mock_case_1(&vm, @Alice, 0, 15);
+        Mock::mock_case_1(&vm, @Bob, 0, 15);
+        Mock::mock_case_1(&vm, @Carol, 0, 15);
+        Mock::mock_case_1(&vm, @Dave, 0, 15);
+        Mock::mock_case_1(&vm, @Eve, 0, 15);
 
         /// Frank will mine, but not sign
 

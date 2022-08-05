@@ -246,7 +246,8 @@
     };
 
     <b>let</b> len_proven_nodes = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proven_nodes);
-    <b>let</b> max_unproven_nodes = len_proven_nodes / 3;
+    <b>let</b> max_unproven_nodes = len_proven_nodes / 6;
+    print(&len_proven_nodes);
     print(&max_unproven_nodes);
     // start from the proven nodes
     <b>let</b> proposed_set = proven_nodes;
@@ -259,6 +260,8 @@
     <b>let</b> jailed_set = <a href="DiemSystem.md#0x1_DiemSystem_get_jailed_set">DiemSystem::get_jailed_set</a>(vm, height_start, height_now);
 
     print(&top_accounts);
+    print(&jailed_set);
+
     // <b>let</b> jailed_set = <a href="DiemSystem.md#0x1_DiemSystem_get_jailed_set">DiemSystem::get_jailed_set</a>(vm, height_start, height_now);
     // find the top unproven nodes and add <b>to</b> the proposed set
     <b>let</b> i = 0;

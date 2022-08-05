@@ -325,12 +325,16 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_node_above_thresh">node_above_thresh</a>(vm: &signer, node_addr: <b>address</b>, height_start: u64, height_end: u64): bool <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a>{
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_node_above_thresh">node_above_thresh</a>(
+  vm: &signer, node_addr: <b>address</b>, height_start: u64, height_end: u64
+): bool <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a>{
   <b>let</b> sender = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>!(sender == @DiemRoot, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190006));
   <b>let</b> range = height_end-height_start;
   // TODO: Change <b>to</b> 5 percent
-  <b>let</b> threshold_signing = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(range, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(1, 100));
+  <b>let</b> threshold_signing = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(
+    range, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(5, 100)
+  );
   <b>if</b> (<a href="Stats.md#0x1_Stats_node_current_votes">node_current_votes</a>(vm, node_addr) &gt;  threshold_signing) { <b>return</b> <b>true</b> };
   <b>return</b> <b>false</b>
 }
@@ -355,7 +359,9 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_network_density">network_density</a>(vm: &signer, height_start: u64, height_end: u64): u64 <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_network_density">network_density</a>(
+  vm: &signer, height_start: u64, height_end: u64
+): u64 <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
   <b>let</b> sender = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
   <b>assert</b>!(sender == @DiemRoot, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190007));
   <b>let</b> density = 0u64;

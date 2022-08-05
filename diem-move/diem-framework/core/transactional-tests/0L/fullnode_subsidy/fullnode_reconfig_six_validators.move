@@ -40,12 +40,12 @@ script {
       TowerState::test_helper_mock_reconfig(&vm, @Frank);
       TowerState::test_helper_mock_reconfig(&vm, @Gertie);
 
-      Mock::mock_case_1(&vm, @Alice);
-      Mock::mock_case_1(&vm, @Carol);
-      Mock::mock_case_1(&vm, @Dave);
-      Mock::mock_case_1(&vm, @Eve);
-      Mock::mock_case_1(&vm, @Frank);
-      Mock::mock_case_1(&vm, @Gertie);
+      Mock::mock_case_1(&vm, @Alice, 0, 15);
+      Mock::mock_case_1(&vm, @Carol, 0, 15);
+      Mock::mock_case_1(&vm, @Dave, 0, 15);
+      Mock::mock_case_1(&vm, @Eve, 0, 15);
+      Mock::mock_case_1(&vm, @Frank, 0, 15);
+      Mock::mock_case_1(&vm, @Gertie, 0, 15);
 
       // Mock the end-users submitting proofs above threshold.
       // Add 12: make it so that +2 gets above threshold so that 10 are
