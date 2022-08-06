@@ -99,7 +99,7 @@ module Burn {
         return burn(vm, payer, value)
       }
     } else {
-      send(vm, payer, value);
+      burn(vm, payer, value);
     }; 
   }
 

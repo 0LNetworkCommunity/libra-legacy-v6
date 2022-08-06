@@ -386,14 +386,18 @@
 
     <a href="Burn.md#0x1_Burn_reset_ratios">Burn::reset_ratios</a>(vm);
 
-    <b>let</b> burn_value = nominal_subsidy_per / 2; // 50% of the current per validator reward
+    // 50% of the current per validator reward
+    <b>let</b> burn_value = nominal_subsidy_per / 2;
 
     <b>let</b> vals_to_burn = <b>if</b> (
       !<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>() &&
       !<a href="Testnet.md#0x1_StagingNet_is_staging_net">StagingNet::is_staging_net</a>() &&
-      <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() &gt; 185
+      <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() &gt; 290 &&
+        // bump up <b>to</b> epoch 290 so people can discuss.
+      // only implement this burn at a steady state <b>with</b> 90/100 validator
+      // positions full. Will make the burn amount much smaller over time.
+      <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(proposed_set) &gt; 90
     ) {
-
       &<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm)
     } <b>else</b> {
       proposed_set

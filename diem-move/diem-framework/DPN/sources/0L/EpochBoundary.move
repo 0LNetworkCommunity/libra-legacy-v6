@@ -268,14 +268,18 @@ module EpochBoundary {
 
         Burn::reset_ratios(vm);
 
-        let burn_value = nominal_subsidy_per / 2; // 50% of the current per validator reward
+        // 50% of the current per validator reward
+        let burn_value = nominal_subsidy_per / 2;
 
         let vals_to_burn = if (
           !Testnet::is_testnet() &&
           !StagingNet::is_staging_net() &&
-          DiemConfig::get_current_epoch() > 185
+          DiemConfig::get_current_epoch() > 290 && 
+            // bump up to epoch 290 so people can discuss.
+          // only implement this burn at a steady state with 90/100 validator
+          // positions full. Will make the burn amount much smaller over time.
+          Vector::length<address>(proposed_set) > 90
         ) {
-
           &ValidatorUniverse::get_eligible_validators(vm)
         } else {
           proposed_set
