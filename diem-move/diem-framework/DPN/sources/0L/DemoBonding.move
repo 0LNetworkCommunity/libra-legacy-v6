@@ -1,6 +1,6 @@
 // DEMOWARE: this is to test the Decimal implementation for curved bonding cases.
 address DiemFramework {
-module Bonding {
+module DemoBonding {
   use DiemFramework::Decimal;
   use DiemFramework::Debug::print;
 

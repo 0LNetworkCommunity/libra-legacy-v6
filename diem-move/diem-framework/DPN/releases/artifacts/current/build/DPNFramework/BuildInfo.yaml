@@ -50,9 +50,6 @@ compiled_package_info:
       name: BitVector
     : Std
     ? address: "00000000000000000000000000000001"
-      name: Bonding
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
       name: Burn
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -78,6 +75,9 @@ compiled_package_info:
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: Decimal
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DemoBonding
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: DemoScripts
@@ -316,7 +316,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: B0E940497A4909225727098657BA14249C911EC9C4A15C752138557328B4BD8F
+  source_digest: 8F75820685CC0AAC6A9F20B40587A48DE7E8C826D08737A89701D203EE1EC1B7
   build_flags:
     dev_mode: false
     test_mode: false
