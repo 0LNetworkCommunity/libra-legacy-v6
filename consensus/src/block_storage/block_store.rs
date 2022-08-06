@@ -14,8 +14,7 @@ use crate::{
     state_replication::StateComputer,
     util::time_service::TimeService,
 };
-use anyhow::{bail, ensure, format_err, Context};
-
+use anyhow::{anyhow, bail, ensure, format_err, Context};
 use consensus_types::{
     block::Block, common::Round, executed_block::ExecutedBlock, quorum_cert::QuorumCert,
     sync_info::SyncInfo, timeout_2chain::TwoChainTimeoutCertificate,
@@ -267,7 +266,8 @@ impl BlockStore {
         let block_tree = self.inner.clone();
         let storage = self.storage.clone();
 
-        // This callback is invoked synchronously withe coupled-execution and asynchronously in decoupled setup.
+        // This callback is invoked synchronously withe coupled-execution
+        // and asynchronously in decoupled setup.
         // the callback could be used for multiple batches of blocks.
         self.state_computer
             .commit(
@@ -285,7 +285,7 @@ impl BlockStore {
                 ),
             )
             .await
-            .expect("Failed to persist commit");
+            .map_err(|_| anyhow!("Failed to persist commit"))?;
 
         self.inner.write().update_ordered_root(block_to_commit.id());
         update_counters_for_ordered_blocks(&blocks_to_commit);
