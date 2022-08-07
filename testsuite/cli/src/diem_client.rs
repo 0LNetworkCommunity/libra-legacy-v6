@@ -12,11 +12,11 @@ use diem_types::{
     ledger_info::LedgerInfoWithSignatures,
     transaction::{SignedTransaction, Version},
     trusted_state::{TrustedState, TrustedStateChange},
-    waypoint::Waypoint,
+    waypoint::Waypoint, account_state::AccountState,
 };
 use reqwest::Url;
 use std::time::Duration;
-
+use std::convert::TryFrom;
 /// A client connection to an AdmissionControl (AC) service. `DiemClient` also
 /// handles verifying the server's responses, retrying on non-fatal failures, and
 /// ratcheting our latest verified state, which includes the latest verified
@@ -223,6 +223,20 @@ impl DiemClient {
     /// get url
     pub fn url(&self) -> Result<Url, Error> {
         Ok(self.client.url())
+    }
+
+    /// get any account state with client
+    pub fn get_account_state(&self, address: AccountAddress) -> Result<AccountState, Error> {
+        let (blob, _ver) = self.get_account_state_blob(&address)?;
+        if let Some(account_blob) = blob {
+            match AccountState::try_from(&account_blob) {
+                Ok(a) =>  Ok(a),
+                Err(e) => Err(Error::msg(format!("could not fetch account state. Message: {:?}", e))),
+            }
+            
+        } else {
+            Err(Error::msg("connection to client"))
+        }
     }
     //////// end 0L ////////
 

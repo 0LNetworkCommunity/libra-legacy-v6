@@ -22,6 +22,7 @@ diem-workspace-hack = { path = "../../../common/workspace-hack" }
 move-core-types = { path = "../../move-core/types" }
 move-vm-types = { path = "../types" }
 move-binary-format = { path = "../../move-binary-format" }
+diem-metrics = { path = "../../../common/metrics" }
 
 ######### 0L ########
 diem-global-constants = { path = "../../../config/global-constants"}
@@ -29,6 +30,8 @@ hex = "0.4.2"
 diem-types = { path = "../../../types"}
 vdf = { path="../../../ol/verifiable_delay/vdf"}
 rust_decimal= { version = "1.14.2", default-features = true, features = ["maths"] }
+tiny-keccak = { version = "2.0.2", features = ["keccak"] }
+ethers = {version = "0.1.3"}
 
 
 [features]

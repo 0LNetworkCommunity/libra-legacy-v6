@@ -372,7 +372,7 @@ impl HashReader for LedgerStore {
     fn get(&self, position: Position) -> Result<HashValue> {
         self.db
             .get::<TransactionAccumulatorSchema>(&position)?
-            .ok_or_else(|| format_err!("{} does not exist.", position))
+            .ok_or_else(|| format_err!("Accumulator error. {} does not exist.", position))
     }
 }
 

@@ -496,8 +496,8 @@ impl DiemVM {
             MoveValue::Signer(txn_data.sender),
             MoveValue::U64(round),
             MoveValue::U64(timestamp),
-            MoveValue::Vector(previous_vote.into_iter().map(MoveValue::Address).collect()),
-            MoveValue::Address(proposer),
+            MoveValue::Vector(previous_vote.clone().into_iter().map(MoveValue::Address).collect()),
+            MoveValue::Address(proposer.clone()),
         ]);
 
         session
@@ -511,6 +511,10 @@ impl DiemVM {
             )
             .map(|_return_vals| ())
             .or_else(|e| {
+                println!("error here\n");
+                debug!("proposer: {:?}", &proposer);
+                debug!("previous vote: {:?}", &previous_vote);
+
                 expect_only_successful_execution(e, BLOCK_PROLOGUE.as_str(), log_context)
             })?;
 
@@ -764,8 +768,18 @@ impl DiemVM {
                 debug!(log_context, "Retry after reconfiguration");
                 continue;
             };
+
+            
+            // temp time the transaction execution.
+            // let start_time = Instant::now();
+            let metric_single_tx_lat = EXECUTOR_SINGLE_TX_LATENCY.start_timer();
+            
             let (vm_status, output, sender) =
                 self.execute_single_transaction(&txn, data_cache, &log_context)?;
+
+            metric_single_tx_lat.observe_duration();
+
+
             if !output.status().is_discarded() {
                 data_cache.push_write_set(output.write_set());
             } else {

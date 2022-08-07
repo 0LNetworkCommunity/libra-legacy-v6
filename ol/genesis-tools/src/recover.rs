@@ -38,7 +38,7 @@ pub enum AccountRole {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum WalletType {
     ///
-    None,
+    Normal,
     ///
     Slow,
     ///

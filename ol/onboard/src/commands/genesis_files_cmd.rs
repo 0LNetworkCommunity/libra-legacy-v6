@@ -30,11 +30,13 @@ impl Runnable for GenesisFilesCmd {
     fn run(&self) {
         let miner_configs = app_config().to_owned();
         let home = miner_configs.clone().workspace.node_home;
-        if *&self.github_org.is_none() || *&self.repo.is_none()  {
-          println!("must pass a --github-org and --repo in order to fetch genesis.blob. Exiting.");
-          exit(1);
+        if *&self.github_org.is_none() || *&self.repo.is_none() {
+            println!(
+                "must pass a --github-org and --repo in order to fetch genesis.blob. Exiting."
+            );
+            exit(1);
         }
-        
+
         match fetch_genesis_files_from_repo(
         // genesis_files(
             home.clone(),
@@ -122,7 +124,10 @@ pub fn fetch_genesis_files_from_repo(
             println!("genesis_waypoint.txt fetched, file saved to: {:?}", g_path);
         }
         _ => {
-            bail!("Cannot fetch genesis_waypoint.txt from Github repo: {}", base_url);
+            bail!(
+                "Cannot fetch genesis_waypoint.txt from Github repo: {}",
+                base_url
+            );
         }
     };
 
@@ -143,6 +148,4 @@ pub fn fetch_genesis_files_from_repo(
             bail!("Cannot fetch genesis.blob from Github repo: {}", base_url);
         }
     };
-
-    
 }

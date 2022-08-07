@@ -4,24 +4,21 @@ use crate::{
     entrypoint::{self, EntryPointTxsCmd},
     prelude::app_config,
     save_tx::save_tx,
-    sign_tx::sign_tx, tx_params::TxParams,
+    sign_tx::sign_tx,
+    tx_params::TxParams,
 };
-use anyhow::{Error, anyhow};
+use anyhow::{anyhow, Error};
 use cli::{diem_client::DiemClient, AccountData, AccountStatus};
-
 
 use diem_json_rpc_types::views::{TransactionView, VMStatusView};
 
-use diem_types::{account_address::AccountAddress};
+use diem_types::account_address::AccountAddress;
 use diem_types::{
     chain_id::ChainId,
     transaction::{SignedTransaction, TransactionPayload},
 };
 
-use ol_types::{
-    self,
-    config::TxType,
-};
+use ol_types::{self, config::TxType};
 
 use std::{
     io::{stdout, Write},
@@ -60,20 +57,20 @@ use std::{
 // REFERENCE:
 // DiemAccount.move defines the following prologue errors
 
-    // const PROLOGUE_EACCOUNT_FROZEN: u64 = 1000;
-    // const PROLOGUE_EINVALID_ACCOUNT_AUTH_KEY: u64 = 1001;
-    // const PROLOGUE_ESEQUENCE_NUMBER_TOO_OLD: u64 = 1002;
-    // const PROLOGUE_ESEQUENCE_NUMBER_TOO_NEW: u64 = 1003;
-    const PROLOGUE_EACCOUNT_DNE: u64 = 1004;
-    // const PROLOGUE_ECANT_PAY_GAS_DEPOSIT: u64 = 1005;
-    // const PROLOGUE_ETRANSACTION_EXPIRED: u64 = 1006;
-    // const PROLOGUE_EBAD_CHAIN_ID: u64 = 1007;
-    // const PROLOGUE_ESCRIPT_NOT_ALLOWED: u64 = 1008;
-    // const PROLOGUE_EMODULE_NOT_ALLOWED: u64 = 1009;
-    // const PROLOGUE_EINVALID_WRITESET_SENDER: u64 = 1010;
-    // const PROLOGUE_ESEQUENCE_NUMBER_TOO_BIG: u64 = 1011;
-    // const PROLOGUE_EBAD_TRANSACTION_FEE_CURRENCY: u64 = 1012;
-    // const PROLOGUE_ESECONDARY_KEYS_ADDRESSES_COUNT_MISMATCH: u64 = 1013;
+// const PROLOGUE_EACCOUNT_FROZEN: u64 = 1000;
+// const PROLOGUE_EINVALID_ACCOUNT_AUTH_KEY: u64 = 1001;
+// const PROLOGUE_ESEQUENCE_NUMBER_TOO_OLD: u64 = 1002;
+// const PROLOGUE_ESEQUENCE_NUMBER_TOO_NEW: u64 = 1003;
+const PROLOGUE_EACCOUNT_DNE: u64 = 1004;
+// const PROLOGUE_ECANT_PAY_GAS_DEPOSIT: u64 = 1005;
+// const PROLOGUE_ETRANSACTION_EXPIRED: u64 = 1006;
+// const PROLOGUE_EBAD_CHAIN_ID: u64 = 1007;
+// const PROLOGUE_ESCRIPT_NOT_ALLOWED: u64 = 1008;
+// const PROLOGUE_EMODULE_NOT_ALLOWED: u64 = 1009;
+// const PROLOGUE_EINVALID_WRITESET_SENDER: u64 = 1010;
+// const PROLOGUE_ESEQUENCE_NUMBER_TOO_BIG: u64 = 1011;
+// const PROLOGUE_EBAD_TRANSACTION_FEE_CURRENCY: u64 = 1012;
+// const PROLOGUE_ESECONDARY_KEYS_ADDRESSES_COUNT_MISMATCH: u64 = 1013;
 
 #[derive(Debug)]
 /// a transaction error type specific to ol txs
@@ -90,7 +87,12 @@ pub struct TxError {
 
 impl From<Error> for TxError {
     fn from(e: Error) -> Self {
-        TxError{ err: Some(e), tx_view: None, location: None, abort_code: None }
+        TxError {
+            err: Some(e),
+            tx_view: None,
+            location: None,
+            abort_code: None,
+        }
     }
 }
 
@@ -131,14 +133,13 @@ pub fn save_dont_send_tx(
     tx_params: &TxParams,
     save_path: Option<PathBuf>,
 ) -> Result<SignedTransaction, TxError> {
-    let mut client = DiemClient::new(tx_params.url.clone(), tx_params.waypoint)
-    .map_err(|e| { TxError { 
-      err: Some(e),
-      tx_view:  None,
-      location: None,
-      abort_code: None,
-      }
-    })?;
+    let mut client =
+        DiemClient::new(tx_params.url.clone(), tx_params.waypoint).map_err(|e| TxError {
+            err: Some(e),
+            tx_view: None,
+            location: None,
+            abort_code: None,
+        })?;
 
     let (_account_data, txn) = stage(script, tx_params, &mut client)?;
     if let Some(path) = save_path {
@@ -185,10 +186,10 @@ fn stage(
                 let sequence_number = av.sequence_number;
                 // Sign the transaction script
                 let txn = sign_tx(
-                  script,
-                  tx_params,
-                  sequence_number,
-                  ChainId::new(meta.chain_id)
+                    script,
+                    tx_params,
+                    sequence_number,
+                    ChainId::new(meta.chain_id),
                 )?;
 
                 // Get account_data struct
@@ -201,20 +202,20 @@ fn stage(
                 };
                 Ok((signer_account_data, txn))
             } else {
-              let msg = format!("ERROR: cannot get account_state from chain");
-              println!("{}", &msg);
-              let mut e: TxError = anyhow!(msg).into();
-              e.abort_code = Some(PROLOGUE_EACCOUNT_DNE);
-              Err(e)
+                let msg = format!("ERROR: cannot get account_state from chain");
+                println!("{}", &msg);
+                let mut e: TxError = anyhow!(msg).into();
+                e.abort_code = Some(PROLOGUE_EACCOUNT_DNE);
+                Err(e)
             }
-        },
+        }
         _ => {
             let msg = format!("ERROR: could not get chain metadata, cannot send tx");
             println!("{}", &msg);
             let mut e: TxError = anyhow!(msg).into();
             e.abort_code = Some(404);
             Err(e)
-        },
+        }
     }
 }
 
@@ -284,7 +285,7 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
 //             swarm_persona.expect("need a swarm 'persona' with credentials in fixtures."),
 //             is_operator,
 //         )?
-//     }, 
+//     },
 //      _ => {
 //         if is_operator {
 //             get_oper_params(&config, tx_type, url, waypoint)?
@@ -390,8 +391,6 @@ pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
 //     })
 // }
 
-
-
 // /// Gets transaction params from the 0L project root.
 // pub fn get_tx_params_from_keypair(
 //     config: AppCfg,
@@ -472,21 +471,28 @@ pub fn eval_tx_status(result: TransactionView) -> Result<TransactionView, TxErro
         VMStatusView::Executed => {
             println!("\nSuccess: transaction executed");
             Ok(result)
-        },
-        VMStatusView::MoveAbort {location, abort_code, explanation: _ } => {
-            let msg = format!("Transaction failed, rejected with status: {:?}", result.vm_status);
+        }
+        VMStatusView::MoveAbort {
+            location,
+            abort_code,
+            explanation: _,
+        } => {
+            let msg = format!(
+                "Transaction failed, rejected with status: {:?}",
+                result.vm_status
+            );
             println!("{}", &msg);
-            Err(TxError{
+            Err(TxError {
                 err: Some(Error::msg(msg)),
                 tx_view: Some(result.clone()),
                 location: Some(location.to_string()),
                 abort_code: Some(*abort_code),
             })
-        },
+        }
         _ => {
             let msg = format!("Rejected with code: {:?}", result.vm_status);
             let e = Error::msg(msg);
-            Err(TxError{
+            Err(TxError {
                 err: Some(e),
                 tx_view: Some(result),
                 location: None,
@@ -495,7 +501,6 @@ pub fn eval_tx_status(result: TransactionView) -> Result<TransactionView, TxErro
         }
     }
 }
-
 
 // pub fn what_url(config: &AppCfg, use_first_upstream: bool) -> Result<Url, Error> {
 //     if let Some(url_list) = &config.profile.upstream_nodes {
@@ -526,7 +531,7 @@ pub fn eval_tx_status(result: TransactionView) -> Result<TransactionView, TxErro
 //       use_first_upstream: bool,
 //       wallet_opt: Option<&WalletLibrary>,
 //   ) -> Result<Self, Error> {
-      
+
 //       // unless overriding with a URL, or explicitly selecting the first node from list
 //       // default behavior is to try all upstreams in upstream_nodes, and pick the first that can give metadata
 //       let url = match url_opt {
@@ -541,7 +546,7 @@ pub fn eval_tx_status(result: TransactionView) -> Result<TransactionView, TxErro
 //               swarm_persona.expect("need a swarm 'persona' with credentials in fixtures."),
 //               is_operator,
 //           )?
-//       }, 
+//       },
 //       _ => {
 //           if is_operator {
 //               get_oper_params(&config, tx_type, url, waypoint)?

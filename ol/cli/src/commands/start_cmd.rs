@@ -2,10 +2,8 @@
 
 use std::process::exit;
 
+use crate::{check, entrypoint, node::client, node::node::Node, prelude::app_config};
 use abscissa_core::{Command, Options, Runnable};
-use crate::{
-  check, entrypoint, node::client, node::node::Node, prelude::app_config
-};
 
 /// `start` subcommand
 
@@ -14,7 +12,6 @@ pub struct StartCmd {
     /// Silent mode, defaults to verbose
     #[options(short = "q", help = "silent mode, no prints")]
     quiet: bool,
-
 }
 
 impl Runnable for StartCmd {
@@ -26,12 +23,12 @@ impl Runnable for StartCmd {
         let client = match client::pick_client(args.swarm_path, &mut cfg) {
             Ok(c) => c,
             Err(e) => {
-              println!("ERROR: Could not create a client to connect to network, exiting. Message: {:?}", e );
-              exit(1);
-            },
+                println!("ERROR: Could not create a client to connect to network. Will not be able to send txs. Exiting. Message: {:?}", e );
+                exit(1);
+            }
         };
         let mut node = Node::new(client, &cfg, is_swarm);
-        
+
         check::runner::run_checks(&mut node, true, true, !self.quiet, !self.quiet);
     }
 }

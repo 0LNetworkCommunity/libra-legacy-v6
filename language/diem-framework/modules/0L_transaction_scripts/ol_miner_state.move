@@ -49,8 +49,8 @@ use 0x1::Testnet;
             &sender,
             TestFixtures::alice_0_easy_chal(),
             TestFixtures::alice_0_easy_sol(),
-            Globals::get_vdf_difficulty(),
-            Globals::get_vdf_security(),
+            Globals::get_vdf_difficulty_baseline(),
+            Globals::get_vdf_security_baseline(),
         );
     }
 

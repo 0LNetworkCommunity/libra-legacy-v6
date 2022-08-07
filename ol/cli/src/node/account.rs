@@ -1,12 +1,19 @@
 //! `account`
 
 use crate::node::node::Node;
-use anyhow::{Error, Result, bail};
-use diem_json_rpc_client::{views::{AccountView, EventView}, AccountAddress};
-use diem_types::{account_state::AccountState, event::{EventHandle, EventKey}, transaction::Version};
+use anyhow::{bail, Error, Result};
+use diem_json_rpc_client::{
+    views::{AccountView, EventView},
+    AccountAddress,
+};
+use diem_types::{
+    account_state::AccountState,
+    event::{EventHandle, EventKey},
+    transaction::Version,
+};
 use ol_types::{
-    autopay::{AutoPayResource, AutoPayView}, 
-    validator_config::{ValidatorConfigResource, ValidatorConfigView}
+    autopay::{AutoPayResource, AutoPayView},
+    validator_config::{ValidatorConfigResource, ValidatorConfigView},
 };
 use resource_viewer::{AnnotatedAccountStateBlob, MoveValueAnnotator, NullStateView};
 use serde::{Deserialize, Serialize};
@@ -38,7 +45,7 @@ impl OwnerAccountView {
             is_in_validator_set: false,
             autopay: None,
             operator_account: None,
-            operator_balance: None,            
+            operator_balance: None,
         }
     }
 
@@ -46,7 +53,7 @@ impl OwnerAccountView {
     pub fn has_autopay_not_empty(&self) -> bool {
         match &self.autopay {
             Some(autopay) => autopay.payments.len() > 0,
-            None => false
+            None => false,
         }
     }
 
@@ -59,36 +66,33 @@ impl OwnerAccountView {
     pub fn has_operator_positive_balance(&self) -> bool {
         match self.operator_balance {
             Some(balance) => balance > 0.0,
-            None => false
+            None => false,
         }
-    }    
+    }
 }
 
 impl Node {
     /// fetch new account info
-    pub fn refresh_account_info(&mut self) -> Result<OwnerAccountView, Error>{
+    pub fn refresh_account_info(&mut self) -> Result<OwnerAccountView, Error> {
         let av = self.get_account_view()?;
 
         self.vitals.account_view.balance = get_balance(av);
-        
-        self.vitals.account_view.is_in_validator_set = 
-            self.is_in_validator_set();
-        
-            self.vitals.account_view.autopay = 
+
+        self.vitals.account_view.is_in_validator_set = self.is_in_validator_set();
+
+        self.vitals.account_view.autopay =
             self.get_autopay_view(self.vitals.account_view.address).ok();
-        
-        let operator = 
-            self.get_validator_operator_account(
-                self.vitals.account_view.address
-            ).ok();
-        
+
+        let operator = self
+            .get_validator_operator_account(self.vitals.account_view.address)
+            .ok();
+
         self.vitals.account_view.operator_account = operator;
-        
+
         if let Some(a) = operator {
-            self.vitals.account_view.operator_balance = 
-                self.get_account_balance(a);
+            self.vitals.account_view.operator_balance = self.get_account_balance(a);
         }
-        
+
         Ok(self.vitals.account_view.clone())
     }
 
@@ -97,50 +101,48 @@ impl Node {
         let account = self.app_conf.profile.account;
         match self.client.get_account(&account) {
             Ok(Some(account_view)) => Ok(account_view),
-            _ => bail!("could not get account view")
+            _ => bail!("could not get account view"),
         }
     }
 
     /// Get account auto pay resource
     pub fn get_autopay_view(&self, account: AccountAddress) -> Result<AutoPayView, Error> {
         let state = self.get_account_state(account)?;
-         match state.get_resource_impl::<AutoPayResource>(
-                AutoPayResource::resource_path().as_slice()
-            ) {
-                Ok(Some(res)) => Ok(self.enrich_note(res.get_view())),
-                _ => bail!("cannot get autopay view")
-            }
-      
+        match state
+            .get_resource_impl::<AutoPayResource>(AutoPayResource::resource_path().as_slice())
+        {
+            Ok(Some(res)) => Ok(self.enrich_note(res.get_view())),
+            _ => bail!("cannot get autopay view"),
+        }
     }
 
     /// Enrich with notes from dictionary file
     fn enrich_note(&self, mut autopay: AutoPayView) -> AutoPayView {
         let dic = self.load_account_dictionary();
-        for payment in autopay.payments.iter_mut()  {
+        for payment in autopay.payments.iter_mut() {
             payment.note = Some(dic.get_note_for_address(payment.payee));
-        }        
+        }
         autopay
     }
 
     /// Get validator config view
     pub fn get_validator_config(
-        &self, address: AccountAddress
+        &self,
+        address: AccountAddress,
     ) -> Result<ValidatorConfigView, Error> {
         let state = self.get_account_state(address)?;
-        match state
-          .get_resource_impl::<ValidatorConfigResource>(
-          ValidatorConfigResource::resource_path().as_slice()
-          )? {
+        match state.get_resource_impl::<ValidatorConfigResource>(
+            ValidatorConfigResource::resource_path().as_slice(),
+        )? {
             Some(res) => {
-              let mut view = res.get_view().clone();
+                let mut view = res.get_view().clone();
 
                 let operator = view.operator_account;
                 if let Some(o) = operator {
-                  view.operator_has_balance = 
-                    Some(self.has_positive_balance(o))
+                    view.operator_has_balance = Some(self.has_positive_balance(o))
                 }
                 Ok(view)
-            },
+            }
             None => bail!("cannot get account resource"),
         }
     }
@@ -155,12 +157,13 @@ impl Node {
 
     /// Get operator account addres from validator
     pub fn get_validator_operator_account(
-        &mut self, address: AccountAddress
+        &mut self,
+        address: AccountAddress,
     ) -> Result<AccountAddress, Error> {
-      match self.get_validator_config(address)?.operator_account {
-        Some(a) => Ok(a),
-        None => bail!("no operator address found")
-      }
+        match self.get_validator_config(address)?.operator_account {
+            Some(a) => Ok(a),
+            None => bail!("no operator address found"),
+        }
     }
 
     /// Get account balance
@@ -168,13 +171,13 @@ impl Node {
         match self.client.get_account(&address) {
             Ok(Some(account_view)) => Some(get_balance(account_view)),
             Ok(None) => None,
-            Err(_) => None
+            Err(_) => None,
         }
     }
 
     /// Return a full Move-annotated account resource struct
     pub fn get_annotate_account_blob(
-        &mut self,
+        &self,
         account: AccountAddress,
     ) -> Result<(Option<AnnotatedAccountStateBlob>, Version)> {
         let (blob, ver) = self.client.get_account_state_blob(&account)?;
@@ -194,10 +197,12 @@ impl Node {
         let (blob, _ver) = self.client.get_account_state_blob(&address)?;
         if let Some(account_blob) = blob {
             match AccountState::try_from(&account_blob) {
-                Ok(a) =>  Ok(a),
-                Err(e) => Err(Error::msg(format!("could not fetch account state. Message: {:?}", e))),
+                Ok(a) => Ok(a),
+                Err(e) => Err(Error::msg(format!(
+                    "could not fetch account state. Message: {:?}",
+                    e
+                ))),
             }
-            
         } else {
             Err(Error::msg("connection to client"))
         }
@@ -210,17 +215,15 @@ impl Node {
     ) -> Result<Option<(EventHandle, EventHandle)>, Error> {
         match self.get_account_state(account) {
             Ok(account_state) => {
-              let handles = account_state
-              .get_account_resource()?
-              .map(|resource| {
-                (
-                    resource.sent_events().clone(),
-                    resource.received_events().clone(),
-                )
-              });
-              Ok(handles)
-            },
-            Err(_) =>  Err(Error::msg("cannot get payment event handles"))
+                let handles = account_state.get_account_resource()?.map(|resource| {
+                    (
+                        resource.sent_events().clone(),
+                        resource.received_events().clone(),
+                    )
+                });
+                Ok(handles)
+            }
+            Err(_) => Err(Error::msg("cannot get payment event handles")),
         }
     }
 
@@ -237,18 +240,20 @@ impl Node {
     /// get all events associated with an EventHandle
     // change this to async and do paging.
     pub fn get_handle_events(
-        &mut self, event_handle: &EventHandle, seq_start: Option<u64>
+        &mut self,
+        event_handle: &EventHandle,
+        seq_start: Option<u64>,
     ) -> Result<Vec<EventView>> {
         if event_handle.count() == 0 {
             return Ok(vec![]);
         }
         // TODO: how to get the highest sequence number available in the database.
         self.get_events(
-          event_handle.key(), 
-          seq_start.unwrap_or(0), 
-          event_handle.count()
+            event_handle.key(),
+            seq_start.unwrap_or(0),
+            event_handle.count(),
         )
-    }    
+    }
 }
 
 /// get balance from AccountView

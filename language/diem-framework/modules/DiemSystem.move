@@ -26,6 +26,8 @@ module DiemSystem {
     use 0x1::Cases;
     use 0x1::NodeWeight;
 
+    // use 0x1::Debug::print;
+
     /// Information about a Validator Owner.
     struct ValidatorInfo has copy, drop, store {
         /// The address (account) of the Validator Owner
@@ -711,39 +713,48 @@ module DiemSystem {
     //get_compliant_val_votes
     //Function code:02
     public fun get_fee_ratio(vm: &signer, height_start: u64, height_end: u64): (vector<address>, vector<FixedPoint32::FixedPoint32>) {
+
         let validators = &get_diem_system_config().validators;
 
         let compliant_nodes = Vector::empty<address>();
         let count_compliant_votes = 0;
         let i = 0;
+
         while (i < Vector::length(validators)) {
+
             let addr = Vector::borrow(validators, i).addr;
-            
+
             let case = Cases::get_case(vm, addr, height_start, height_end);
             if (case == 1) {
                 let node_votes = Stats::node_current_votes(vm, addr);
                 Vector::push_back(&mut compliant_nodes, addr);
                 count_compliant_votes = count_compliant_votes + node_votes;
             };
+
             i = i + 1;
+
         };
+
         // calculate the ratio of votes per node.
         let fee_ratios = Vector::empty<FixedPoint32::FixedPoint32>();
         let k = 0;
         while (k < Vector::length(&compliant_nodes)) {
+
             let addr = *Vector::borrow(&compliant_nodes, k);
             let node_votes = Stats::node_current_votes(vm, addr);
             let ratio = FixedPoint32::create_from_rational(node_votes, count_compliant_votes);
             Vector::push_back(&mut fee_ratios, ratio);
              k = k + 1;
+
         };
 
-        assert(Vector::length(&compliant_nodes) == Vector::length(&fee_ratios),Errors::invalid_argument(120002) );
+        if (Vector::length(&compliant_nodes) != Vector::length(&fee_ratios)) return (Vector::empty(), Vector::empty());
 
         (compliant_nodes, fee_ratios)
     }
 
     /////// 0L /////////
+    // TODO: Sort by repeat infractors
     public fun get_jailed_set(vm: &signer, height_start: u64, height_end: u64): vector<address> {
       let validator_set = get_val_set_addr();
       let jailed_set = Vector::empty<address>();

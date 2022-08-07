@@ -56,7 +56,7 @@ stop:
 	killall diem-swarm diem-node tower ol txs cli | true
 
 init:
-	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
+	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH} --chain-id TESTING
 
 tx: balance
 	cd ${SOURCE_PATH} && NODE_ENV=test TEST=y cargo r -p txs -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} autopay-batch -f ${SOURCE_PATH}/ol/fixtures/autopay/${AUTOPAY_FILE}
@@ -88,7 +88,7 @@ check-swarm:
 
 send-tx: 
 	PERSONA=alice make -f ${MAKE_FILE} init
-	PERSONA=alice make -f ${MAKE_FILE} tx &>> ${LOG} &
+	PERSONA=alice make -f ${MAKE_FILE} tx &> ${LOG} &
 
 check-tx:
 	@while [[ ${NOW} -le ${END} ]] ; do \
@@ -112,7 +112,7 @@ check-transfer:
 # all tests above push the balance back up to 10, 11 or 15
 
 	@while [[ ${NOW} -le ${END} ]] ; do \
-			if PERSONA=alice make -f ${MAKE_FILE} balance-bob | grep -e '10' -e '11' -e '15'; then \
+			if PERSONA=alice make -f ${MAKE_FILE} balance-bob | grep -e '16' -e '17' -e '15'; then \
 				echo TX SUCCESS ; \
 				break ; \
 			else \

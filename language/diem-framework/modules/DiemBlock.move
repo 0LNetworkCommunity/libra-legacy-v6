@@ -34,7 +34,8 @@ module DiemBlock {
     use 0x1::GAS::GAS;
     use 0x1::DiemAccount;
     use 0x1::Migrations;
-    use 0x1::MigrateTowerCounter;
+    use 0x1::TowerState;
+    use 0x1::MigrateJail;
 
     struct BlockMetadata has key {
         /// Height of the current block
@@ -107,7 +108,7 @@ module DiemBlock {
         // increment stats        
         Stats::process_set_votes(&vm, &previous_block_votes);
         Stats::inc_prop(&vm, *&proposer);    
-
+        
         if (AutoPay::tick(&vm)){
             // triggers autopay at beginning of each epoch 
             // tick is reset at end of previous epoch
@@ -116,16 +117,17 @@ module DiemBlock {
         };       
 
         // Do any pending migrations
-        // TODO: should this be round 2 (when upgrade writeset happens). May be a on off-by-one.
+        // TODO: should this be round 2 (when upgrade writeset happens). May be an off-by-one.
         if (round == 3){
           // safety. Maybe init Migration struct
           Migrations::init(&vm);
-          // Migration UID 1
-          MigrateTowerCounter::migrate_tower_counter(&vm);
+          TowerState::init_difficulty(&vm);
+          MigrateJail::do_it(&vm);
         };    
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(CoreAddresses::DIEM_ROOT_ADDRESS());
         DiemTimestamp::update_global_time(&vm, proposer, timestamp);
+
         block_metadata_ref.height = block_metadata_ref.height + 1;
         Event::emit_event<NewBlockEvent>(
             &mut block_metadata_ref.new_block_events,
@@ -139,13 +141,15 @@ module DiemBlock {
 
         //////// 0L ////////
         // EPOCH BOUNDARY
-        if (Epoch::epoch_finished()) {
+        let height = get_current_block_height();
+        if (Epoch::epoch_finished(height)) {
 
           // TODO: We don't need to pass block height to EpochBoundaryOL. 
           // It should use the BlockMetadata. But there's a circular reference 
           // there when we try.
-          EpochBoundary::reconfigure(&vm, get_current_block_height());
-        };        
+          EpochBoundary::reconfigure(&vm, height);
+        };
+    
     }
     spec block_prologue {
         include DiemTimestamp::AbortsIfNotOperating;
@@ -178,6 +182,7 @@ module DiemBlock {
         assert(is_initialized(), Errors::not_published(EBLOCK_METADATA));
         borrow_global<BlockMetadata>(CoreAddresses::DIEM_ROOT_ADDRESS()).height
     }
+
 
     spec module { } // Switch documentation context to module level.
 

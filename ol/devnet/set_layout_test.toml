@@ -2,9 +2,13 @@ owners = [
   "4c613c2f4b1e67ca8d98a542ee3f59f5",
   "88e74dfed34420f2ad8032148280a84b",
   "e660402d586ad220ed9beff47d662d54",
+  "9e6bb3a75e9618fba057e86e69338c94",
+  "3dc18d1cf61faac6ac70e3a63f062e4b"
 ]
 operators = [
   "4c613c2f4b1e67ca8d98a542ee3f59f5-oper",
   "88e74dfed34420f2ad8032148280a84b-oper",
   "e660402d586ad220ed9beff47d662d54-oper",
+  "9e6bb3a75e9618fba057e86e69338c94-oper",
+  "3dc18d1cf61faac6ac70e3a63f062e4b-oper"
 ]

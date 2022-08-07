@@ -35,7 +35,8 @@ impl Node {
     pub fn check_sync(&mut self) -> Result<SyncState, Error> {
         let mut s = SyncState::default();
 
-        if !Node::node_running() { // this should not fail for `ol start` command. The node is usually off when the command and sync is checked.
+        if !Node::node_running() {
+            // this should not fail for `ol start` command. The node is usually off when the command and sync is checked.
             return Ok(SyncState {
                 is_synced: false,
                 sync_height: 0,
@@ -82,6 +83,6 @@ impl Node {
                 None => {}
             }
         }
-        bail!("could not load backup_service_address from config.yaml")
+        bail!("could not load backup_service_address from node.yaml")
     }
 }

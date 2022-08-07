@@ -87,6 +87,42 @@ module TowerState {
         epochs_since_last_account_creation: u64
     }
 
+    struct VDFDifficulty has key {
+
+      // current epoch number of iterations (difficulty) of vdf
+      difficulty: u64,
+      // current epoch security parameter for VDF
+      security: u64,
+      // previous epoch's difficulty. Allowance for all validtors on first proof of epoch
+      prev_diff: u64,
+      // allowance for first proof.
+      prev_sec: u64,
+    }
+
+    // Create the difficulty struct
+    public fun init_difficulty(vm: &signer) {
+      CoreAddresses::assert_diem_root(vm);
+      if (!exists<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+        if (Testnet::is_testnet()) {
+          move_to<VDFDifficulty>(vm, VDFDifficulty {
+            difficulty: 100,
+            security: 512,
+            prev_diff: 100,
+            prev_sec: 512,
+          });
+        } else {
+          move_to<VDFDifficulty>(vm, VDFDifficulty {
+            difficulty: 5000000,
+            security: 512,
+            prev_diff: 5000000,
+            prev_sec: 512,
+          });
+        }
+
+      }
+    }
+
+
     /// Create an empty list of miners 
     fun init_miner_list(vm: &signer) {
       CoreAddresses::assert_diem_root(vm);
@@ -94,16 +130,7 @@ module TowerState {
         list: Vector::empty<address>()
       }); 
     }
-
-    // /// Create an empty miner stats 
-    // fun init_miner_stats(vm: &signer) {
-    //   move_to<TowerStats>(vm, TowerStats {
-    //     proofs_in_epoch: 0u64,
-    //     validator_proofs: 0u64,
-    //     fullnode_proofs: 0u64,
-    //   });
-    // }
-
+    
     /// Create an empty miner stats 
     public fun init_tower_counter(
       vm: &signer,
@@ -204,19 +231,17 @@ module TowerState {
     public fun commit_state(
       miner_sign: &signer,
       proof: Proof
-    ) acquires TowerProofHistory, TowerList, TowerCounter {
+    ) acquires TowerProofHistory, TowerList, TowerCounter, VDFDifficulty {
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
-      
-      // Skip this check on local tests, we need tests to send different difficulties.
-      if (!Testnet::is_testnet()){
-        // Get vdf difficulty constant. Will be different in tests than in production.
-        let difficulty_constant = Globals::get_vdf_difficulty();
-        assert(&proof.difficulty == &difficulty_constant, Errors::invalid_argument(130102));
-      };
+      let diff = borrow_global_mut<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
 
       // This may be the 0th proof of an end user that hasn't had tower state initialized
       if (!is_init(miner_addr)) {
+        
+        assert(&proof.difficulty == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_argument(130102));
+        assert(&proof.security == &Globals::get_vdf_security_baseline(), Errors::invalid_argument(13010202));
+
         // check proof belongs to user.
         let (addr_in_proof, _) = VDF::extract_address_from_challenge(&proof.challenge);
         assert(addr_in_proof == Signer::address_of(miner_sign), Errors::requires_role(130112));
@@ -225,6 +250,27 @@ module TowerState {
         return
       };
 
+
+      // Skip this check on local tests, we need tests to send different difficulties.
+      if (!Testnet::is_testnet()){
+        // Get vdf difficulty constant. Will be different in tests than in production.
+        
+        // need to also give allowance for user's first proof in epoch to be in the last proof.
+        if (get_count_in_epoch(miner_addr) == 0) { 
+          // first proof in this epoch, can be either the previous difficulty or the current one
+          let is_diff = &proof.difficulty == &diff.difficulty ||
+          &proof.difficulty == &diff.prev_diff;
+
+          let is_sec = &proof.difficulty == &diff.security ||
+          &proof.difficulty == &diff.prev_sec;
+
+          assert(is_diff, Errors::invalid_argument(130102));
+          assert(is_sec, Errors::invalid_argument(13010202));
+        } else {
+          assert(&proof.difficulty == &diff.difficulty, Errors::invalid_argument(130102));
+          assert(&proof.security == &diff.security, Errors::invalid_argument(13010202));
+        };
+      };
       // Process the proof
       verify_and_update_state(miner_addr, proof, true);
     }
@@ -250,8 +296,8 @@ module TowerState {
       // Check vdf difficulty constant. Will be different in tests than in production.
       // Skip this check on local tests, we need tests to send differentdifficulties.
       if (!Testnet::is_testnet()){
-        assert(&proof.difficulty == &Globals::get_vdf_difficulty(), Errors::invalid_argument(130105));
-        assert(&proof.security == &Globals::get_vdf_security(), Errors::invalid_state(130106));
+        assert(&proof.difficulty == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_argument(130105));
+        assert(&proof.security == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_state(130106));
       };
       
       // Process the proof
@@ -359,11 +405,34 @@ module TowerState {
       get_count_in_epoch(miner_addr) >= Globals::get_epoch_mining_thres_lower()
     }
 
+    fun epoch_param_reset(vm: &signer) acquires VDFDifficulty, TowerList, TowerProofHistory  {
+      CoreAddresses::assert_diem_root(vm);
+
+      let diff = borrow_global_mut<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
+
+      diff.prev_diff = diff.difficulty;
+      diff.prev_sec = diff.security;
+      
+      // NOTE: For now we are not changing the vdf security params.
+      if (Testnet::is_testnet()) {
+        // VDF proofs must be even numbers.
+        let rng =  toy_rng(3, 2);
+        if (rng > 0) {
+          rng = rng * 2;
+        };
+        diff.difficulty = Globals::get_vdf_difficulty_baseline() + rng;
+       
+      }
+    }
+
     // Used at epoch boundary by vm to reset all validator's statistics.
     // Permissions: PUBLIC, ONLY VM.
-    public fun reconfig(vm: &signer, outgoing_validators: &vector<address>) acquires TowerProofHistory, TowerList, TowerCounter {
+    public fun reconfig(vm: &signer, outgoing_validators: &vector<address>) acquires TowerProofHistory, TowerList, TowerCounter, VDFDifficulty {
       // Check permissions
       CoreAddresses::assert_diem_root(vm);
+
+      // update the vdf parameters
+      epoch_param_reset(vm);
 
       // Iterate through validators and call update_metrics for each validator that had proofs this epoch
       let vals_len = Vector::length<address>(outgoing_validators); //TODO: These references are weird
@@ -500,11 +569,75 @@ module TowerState {
       state.fullnode_proofs_in_epoch_above_thresh = 0;
     }
 
+    //////////////////////
+    //  Experimental  //
+    /////////////////////
 
+
+    // EXPERIMENTAL: this is a test to see if we can get a plausible RNG from the VDF proofs, to use in low-stakes scenarios.
+    // THIS IS AN EXPERIMENT, IT WILL BREAK. DON'T USE FOR ANYTHING SERIOUS.
+    // We want to see where it breaks.
+    // the first use case is to change the VDF difficulty parameter by tiny margins, in order to make it difficult to stockpile VDFs in a previous epoch, but not change the security properties.
+    // the goal is to push all the RNG work to all the tower miners in the network, and minimize compute on the Move side
+    use 0x1::Debug::print;
+
+    public fun toy_rng(seed: u64, iters: u64): u64 acquires TowerList, TowerProofHistory {
+      // Get the list of all miners L
+      // Pick a tower miner  (M) from the seed position 1/(N) of the list of miners.
+      print(&77777777);
+
+      let l = get_miner_list();
+      print(&l);
+      // the length will keep incrementing through the epoch. The last miner can know what the starting position will be. There could be a race to be the last validator to augment the set and bias the initial shuffle.
+      let len = Vector::length(&l);
+      if (len == 0) return 0;
+      print(&5555);
+
+      // start n with the seed index
+      let n = seed;
+
+      let i = 0;
+      while (i < iters) {
+        print(&6666);
+        print(&i);
+        // make sure we get an n smaller than list of validators
+        // abort if loops too much
+        let k = 0;
+        while (n > len) {
+          if (k > 1000) return 0;
+          n = n / len;
+          k = k + 1;
+        };
+        print(&n);
+        print(&len);
+        // double check
+        if (len <= n) return 0;
+
+        print(&666602);
+        let miner_addr = Vector::borrow<address>(&l, n);
+  
+        print(&666603);
+        let vec = if (exists<TowerProofHistory>(*miner_addr)) {
+          *&borrow_global<TowerProofHistory>(*miner_addr).previous_proof_hash
+        } else { return 0 };
+
+        print(&vec);
+
+        print(&666604);
+        // take the last bit (B) from their last proof hash.
+
+        n = (Vector::pop_back(&mut vec) as u64);
+        print(&666605);
+        i = i + 1;
+      };
+      print(&8888);
+
+      n
+    }
 
 
     //////////////////////
-    /// Public Getters ///
+    ///    Getters     ///
     /////////////////////
 
     // Returns number of epochs for input miner's state
@@ -607,6 +740,15 @@ module TowerState {
       (0,0,0)
     }
 
+    public fun get_difficulty(): (u64, u64) acquires VDFDifficulty {
+      if (exists<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+        let v = borrow_global_mut<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
+        return (v.difficulty, v.security)
+      } else {
+        // we are probably in the middle of a migration
+        (5000000, 512)
+      }
+    }
 
 
     //////////////////
@@ -686,7 +828,7 @@ module TowerState {
       // Check vdf difficulty constant. Will be different in tests than in production.
       // Skip this check on local tests, we need tests to send different difficulties.
       if (!Testnet::is_testnet()){ // todo: remove?
-        assert(&proof.difficulty == &Globals::get_vdf_difficulty(), Errors::invalid_state(130117));
+        assert(&proof.difficulty == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_state(130117));
       };
 
       verify_and_update_state(miner_addr, proof, true);
@@ -843,6 +985,15 @@ module TowerState {
       
       let s = borrow_global<TowerCounter>(CoreAddresses::VM_RESERVED_ADDRESS());
       s.lifetime_proofs
+    }
+
+    public fun test_set_vdf_difficulty(vm: &signer, diff: u64, sec: u64) acquires VDFDifficulty {
+      assert(Testnet::is_testnet(), Errors::invalid_state(130113));
+      CoreAddresses::assert_vm(vm);
+      
+      let s = borrow_global_mut<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
+      s.difficulty = diff;
+      s.security = sec;
     }
 
     public fun test_danger_destroy_tower_counter(vm: &signer) acquires TowerCounter {

@@ -1,31 +1,30 @@
 //! autopay view for web monitor
 
-use diem_types::{
-    access_path::AccessPath,
-    account_config::constants:: CORE_CODE_ADDRESS,
-};
 use anyhow::Result;
+use diem_types::{access_path::AccessPath, account_config::constants::CORE_CODE_ADDRESS};
+use move_core_types::account_address::AccountAddress;
 use move_core_types::{
     ident_str,
     identifier::IdentStr,
     language_storage::{ResourceKey, StructTag},
     move_resource::{MoveResource, MoveStructType},
 };
-use serde::{Deserialize, Serialize};
-use move_core_types::account_address::AccountAddress;
 use num_format::{Locale, ToFormattedString};
+use serde::{Deserialize, Serialize};
 
 /// Struct that represents a AutoPay resource
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AutoPayResource {
     ///
     pub payment: Vec<Payment>,
+    ///
+    pub prev_bal: u64,
 }
 
 /// Struct that represents a view for AutoPay resource
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AutoPayView {
-    /// 
+    ///
     pub payments: Vec<PaymentView>,
     ///
     pub recurring_sum: u64,
@@ -47,7 +46,7 @@ pub struct PaymentView {
     ///
     pub prev_bal: u64,
     ///
-    pub amt: u64,    
+    pub amt: u64,
     ///
     pub amount: String,
     ///
@@ -93,15 +92,15 @@ impl Payment {
     /// format amount according to type
     pub fn get_amount_formatted(&self) -> String {
         match self.in_type {
-            0 | 1   => format!("{:.2}%", self.amt as f64 / 100.00),
-            _       => self.amt.to_formatted_string(&Locale::en),
+            0 | 1 => format!("{:.2}%", self.amt as f64 / 100.00),
+            _ => self.amt.to_formatted_string(&Locale::en),
         }
     }
 }
 
 impl MoveStructType for AutoPayResource {
     const MODULE_NAME: &'static IdentStr = ident_str!("AutoPay");
-    const STRUCT_NAME: &'static IdentStr = ident_str!("Data");
+    const STRUCT_NAME: &'static IdentStr = ident_str!("UserAutoPay");
 }
 impl MoveResource for AutoPayResource {}
 
@@ -117,10 +116,7 @@ impl AutoPayResource {
     }
     ///
     pub fn access_path(account: AccountAddress) -> AccessPath {
-        let resource_key = ResourceKey::new(
-            account,
-            AutoPayResource::struct_tag(),
-        );
+        let resource_key = ResourceKey::new(account, AutoPayResource::struct_tag());
         AccessPath::resource_access_path(resource_key)
     }
     ///
@@ -128,15 +124,17 @@ impl AutoPayResource {
         AccessPath::resource_access_vec(AutoPayResource::struct_tag())
     }
 
-    /// 
+    ///
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
         bcs::from_bytes(bytes).map_err(Into::into)
     }
 
     ///
     pub fn get_view(&self) -> AutoPayView {
-        let payments = self.payment.iter().map(|each| {
-            PaymentView {
+        let payments = self
+            .payment
+            .iter()
+            .map(|each| PaymentView {
                 uid: each.uid,
                 in_type: each.in_type,
                 type_desc: each.get_type_desc(),
@@ -146,17 +144,19 @@ impl AutoPayResource {
                 amt: each.amt,
                 amount: each.get_amount_formatted(),
                 note: None,
-            }
-        }).collect();
+            })
+            .collect();
 
         // sum amount of recurring instructions
-        let sum = self.payment.iter()
+        let sum = self
+            .payment
+            .iter()
             .filter(|payment| payment.in_type == 1u8)
             .map(|x| x.amt)
             .sum();
 
-        AutoPayView { 
-            payments: payments,
+        AutoPayView {
+            payments,
             recurring_sum: sum,
         }
     }

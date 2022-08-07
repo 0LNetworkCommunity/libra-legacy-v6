@@ -10,7 +10,7 @@ use diem_crypto::{
 use diem_global_constants::OPERATOR_KEY;
 
 use diem_secure_storage::{CryptoStorage, Namespaced, OnDiskStorage, Storage};
-use diem_types::{account_address::AccountAddress, waypoint::Waypoint};
+use diem_types::{account_address::AccountAddress, chain_id::NamedChain, waypoint::Waypoint};
 use diem_types::{chain_id::ChainId, transaction::authenticator::AuthenticationKey};
 use ol::node::client::find_a_remote_jsonrpc;
 use ol_keys::{scheme::KeyScheme, wallet};
@@ -50,6 +50,8 @@ pub struct TxParams {
     // pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
     /// Chain id
     pub chain_id: ChainId,
+    /// is using operator for signing
+    pub is_operator: bool,
 }
 
 /// Find a url to use for connecting a client.
@@ -115,6 +117,8 @@ impl TxParams {
             tx_params.waypoint = w
         }
 
+        tx_params.is_operator = is_operator;
+
         Ok(tx_params)
     }
 
@@ -142,10 +146,10 @@ impl TxParams {
         let tx_cost = config.tx_configs.get_cost(tx_type);
 
         let chain_id = if is_swarm {
-            ChainId::new(4)
+            ChainId::new(NamedChain::TESTING.id())
         } else {
             // main net id
-            ChainId::new(1)
+            ChainId::new(config.chain_info.chain_id.id())
         };
 
         let tx_params = TxParams {
@@ -160,6 +164,7 @@ impl TxParams {
             // coin_price_per_unit: config.tx_configs.management_txs.coin_price_per_unit, // in micro_gas
             // user_tx_timeout: config.tx_configs.management_txs.user_tx_timeout,
             chain_id,
+            is_operator: false,
         };
 
         Ok(tx_params)
@@ -198,7 +203,8 @@ impl TxParams {
                 user_tx_timeout: 5_000,
             },
 
-            chain_id: ChainId::new(4),
+            chain_id: ChainId::new(NamedChain::TESTING.id()),
+            is_operator,
         };
 
         println!("Info: Got tx params from swarm");
@@ -243,6 +249,7 @@ impl TxParams {
             keypair,
             tx_cost,
             chain_id: ChainId::new(1),
+            is_operator: true,
         })
     }
 
@@ -259,11 +266,12 @@ impl TxParams {
             Some(w) => w,
             None => config.get_waypoint(None)?,
         };
+
         let chain_id = if is_swarm {
-            ChainId::new(4)
+            ChainId::new(NamedChain::TESTING.id())
         } else {
             // main net id
-            ChainId::new(1)
+            ChainId::new(config.chain_info.chain_id.id())
         };
 
         let tx_params = TxParams {
@@ -275,6 +283,7 @@ impl TxParams {
             keypair,
             tx_cost: config.tx_configs.get_cost(tx_type),
             chain_id,
+            is_operator: false,
         };
 
         Ok(tx_params)
@@ -309,6 +318,7 @@ impl TxParams {
             // coin_price_per_unit: 1, // in micro_gas
             // user_tx_timeout: 5_000,
             chain_id: ChainId::new(4), // swarm/testnet
+            is_operator: false,
         }
     }
 }

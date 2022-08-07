@@ -15,6 +15,7 @@ use move_core_types::{
 };
 use num_format::{Locale, ToFormattedString};
 use resource_viewer::{AnnotatedAccountStateBlob, AnnotatedMoveStruct, AnnotatedMoveValue};
+use serde::{Deserialize, Serialize};
 
 const SCALING_FACTOR: u64 = 1_000_000;
 
@@ -23,6 +24,11 @@ const SCALING_FACTOR: u64 = 1_000_000;
 pub enum QueryType {
     /// Account balance
     Balance {
+        /// account to query txs of
+        account: AccountAddress,
+    },
+    /// Unlocked Account balance
+    UnlockedBalance {
         /// account to query txs of
         account: AccountAddress,
     },
@@ -69,10 +75,22 @@ pub enum QueryType {
         seq_start: Option<u64>,
     },
     /// get the validator's on-chain configuration, including network discovery addresses
-    ValConfig { 
-      /// the account of the validator
-      account: AccountAddress 
-    }
+    ValConfig {
+        /// the account of the validator
+        account: AccountAddress,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+
+/// wallet type
+pub enum WalletType {
+    ///
+    None,
+    ///
+    Slow,
+    ///
+    Community,
 }
 
 /// Get data from a client, with a query type. Will connect to local only if in sync.
@@ -87,11 +105,7 @@ impl Node {
                 // TODO: get scaling factor from chain.
                 match self.client.get_account(&account) {
                     Ok(Some(account_view)) => {
-                        match account_view
-                            .balances
-                            .iter()
-                            .find(|av| av.currency == "GAS")
-                        {
+                        match account_view.balances.iter().find(|av| av.currency == "GAS") {
                             Some(av) => {
                                 let a = av.amount as f64;
                                 a.to_string()
@@ -101,6 +115,26 @@ impl Node {
                     }
                     Ok(None) => format!("No account {} found on chain, account", account),
                     Err(e) => format!("Chain query error: {:?}", e),
+                }
+            }
+            UnlockedBalance { account } => {
+                // account
+                match self.get_annotate_account_blob(account) {
+                    Ok((Some(r), _)) => {
+                        if !is_slow_wallet(&r) {
+                            format!("Error, account is not a slow wallet")
+                        } else {
+                            let value = find_value_from_state(
+                                &r,
+                                "DiemAccount".to_string(),
+                                "SlowWallet".to_string(),
+                                "unlocked".to_string(),
+                            );
+                            value.unwrap().to_string()
+                        }
+                    }
+                    Err(e) => format!("Error retrieving unlocked balance. Message: {:#?}", e),
+                    _ => format!("Error, cannot find account state for {:#?}", account),
                 }
             }
             BlockHeight => self.refresh_chain_info()?.0.height.to_string(),
@@ -127,7 +161,7 @@ impl Node {
                     Err(e) => format!("Error querying account resource. Message: {:#?}", e),
                     _ => format!("Error, cannot find account state for {:#?}", account),
                 }
-            },
+            }
             MoveValue {
                 account,
                 module_name,
@@ -206,40 +240,58 @@ impl Node {
                 };
                 print
             }
+            //           Tower { account } => {
+            //             match self.get_account_state(account) {
+            //               Ok(a) => {
+            //                 let t: Option<TowerStateResource> = a.get_resource()?;
+
+            //               },
+            //               Err(_) => format!("No tower found at: {}", account)
+            // ,
+            //             }
+            //           }
             ValConfig { account } => {
                 // account
                 match self.get_account_state(account) {
                     Ok(a) => {
-                      if let Some(cr) = a.get_validator_config_resource()?{
-                        
-                        let val_addr = cr.clone().validator_config.unwrap().validator_network_addresses()?;
-                        
-                        let val_decrypted = val_addr
+                        if let Some(cr) = a.get_validator_config_resource()? {
+                            let val_addr = cr
+                                .clone()
+                                .validator_config
+                                .unwrap()
+                                .validator_network_addresses()?;
+
+                            let val_decrypted = val_addr
                           .first()
                           .unwrap()
                           .clone()
                           .decrypt(
                             &diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
-                            &account, 
+                            &account,
                             0
                           )?;
 
-                        format!("\n
+                            format!(
+                                "\n
                             consensus pubkey: {:?}\n
                             validator network addr: {:?}\n
                             fullnode network addr: {:?}\n
-                            ", 
-                          cr.clone().validator_config.unwrap().consensus_public_key.to_string(),
-                          val_decrypted,
-                          cr.validator_config.unwrap().fullnode_network_addresses()?,
-                        )
-                      } else {
-                        format!("No validator configs cound at: {}", account)
-                      }
-                    },
+                            ",
+                                cr.clone()
+                                    .validator_config
+                                    .unwrap()
+                                    .consensus_public_key
+                                    .to_string(),
+                                val_decrypted,
+                                cr.validator_config.unwrap().fullnode_network_addresses()?,
+                            )
+                        } else {
+                            format!("No validator configs found at: {}", account)
+                        }
+                    }
                     Err(_) => format!("No validator configs cound at: {}", account),
                 }
-            },
+            }
         };
         Ok(print)
     }
@@ -342,6 +394,56 @@ pub fn find_value_from_state(
     }
 }
 
+/// check if is a slow wallet
+pub fn is_slow_wallet(r: &AnnotatedAccountStateBlob) -> bool {
+    let slow_module_name = "DiemAccount";
+    let slow_struct_name = "SlowWallet";
+    let unlocked = find_value_from_state(
+        &r,
+        slow_module_name.to_string(),
+        slow_struct_name.to_string(),
+        "unlocked".to_string(),
+    );
+    if !unlocked.is_none() {
+        return true;
+    }
+    false
+}
+
+/// check if is a community wallet
+pub fn is_community_wallet(r: &AnnotatedAccountStateBlob) -> bool {
+    let community_module_name = "Wallet";
+    let community_struct_name = "CommunityFreeze";
+    let is_frozen = find_value_from_state(
+        &r,
+        community_module_name.to_string(),
+        community_struct_name.to_string(),
+        "is_frozen".to_string(),
+    );
+    if let Some(AnnotatedMoveValue::Bool(false)) = is_frozen {
+        let consecutive_rejections = find_value_from_state(
+            &r,
+            community_module_name.to_string(),
+            community_struct_name.to_string(),
+            "consecutive_rejections".to_string(),
+        );
+        if let Some(AnnotatedMoveValue::U64(0)) = consecutive_rejections {
+            let unfreeze_votes = find_value_from_state(
+                &r,
+                community_module_name.to_string(),
+                community_struct_name.to_string(),
+                "unfreeze_votes".to_string(),
+            );
+            if let Some(AnnotatedMoveValue::Vector(TypeTag::Address, vec)) = unfreeze_votes {
+                if vec.len() == 0 {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
+
 /// test fixtures
 pub fn test_fixture_blob() -> AnnotatedAccountStateBlob {
     let mut s = BTreeMap::new();
@@ -369,6 +471,29 @@ pub fn test_fixture_struct() -> AnnotatedMoveStruct {
     }
 }
 
+/// test fixtures to generate wallet
+pub fn test_fixture_wallet_type(
+    module_name: &str,
+    struct_name: &str,
+    value: Vec<(Identifier, AnnotatedMoveValue)>,
+) -> AnnotatedAccountStateBlob {
+    let mut s = BTreeMap::new();
+    let module_tag = StructTag {
+        address: AccountAddress::random(),
+        module: Identifier::new(module_name).unwrap(),
+        name: Identifier::new(struct_name).unwrap(),
+        type_params: vec![],
+    };
+
+    let move_struct = AnnotatedMoveStruct {
+        abilities: AbilitySet::EMPTY | Ability::Key,
+        type_: module_tag.clone(),
+        value,
+    };
+    s.insert(move_struct.type_.clone(), move_struct);
+    AnnotatedAccountStateBlob(s)
+}
+
 #[test]
 fn test_find_annotated_move_value() {
     let s = test_fixture_blob();
@@ -388,4 +513,208 @@ fn test_find_annotated_move_value() {
         }
         None => panic!("not the right value"),
     }
+}
+
+#[test]
+fn test_is_slow_wallet_should_return_true() {
+    let value = vec![(
+        Identifier::new("unlocked").unwrap(),
+        AnnotatedMoveValue::U64(0),
+    )];
+    let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
+    assert_eq!(true, is_slow_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_slow_wallet_should_return_false_if_missing_unlocked() {
+    let value = vec![(
+        Identifier::new("transferred").unwrap(),
+        AnnotatedMoveValue::U64(0),
+    )];
+    let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
+    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_slow_wallet_should_return_false_with_wrong_module_name() {
+    let value = vec![
+        (
+            Identifier::new("unlocked").unwrap(),
+            AnnotatedMoveValue::U64(0),
+        ),
+        (
+            Identifier::new("transferred").unwrap(),
+            AnnotatedMoveValue::U64(1),
+        ),
+    ];
+    let s = test_fixture_wallet_type("IncorrectModuleName", "SlowWallet", value);
+    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_slow_wallet_should_return_false_with_wrong_struct_name() {
+    let value = vec![
+        (
+            Identifier::new("unlocked").unwrap(),
+            AnnotatedMoveValue::U64(0),
+        ),
+        (
+            Identifier::new("transferred").unwrap(),
+            AnnotatedMoveValue::U64(1),
+        ),
+    ];
+    let s = test_fixture_wallet_type("DiemAccount", "IncorrectStructName", value);
+    assert_eq!(false, is_slow_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_true() {
+    let value = vec![
+        (
+            Identifier::new("is_frozen").unwrap(),
+            AnnotatedMoveValue::Bool(false),
+        ),
+        (
+            Identifier::new("consecutive_rejections").unwrap(),
+            AnnotatedMoveValue::U64(0),
+        ),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
+        ),
+    ];
+    let s = test_fixture_wallet_type("Wallet", "CommunityFreeze", value);
+    assert_eq!(true, is_community_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_false_with_wrong_is_frozen() {
+    let value = vec![
+        (
+            Identifier::new("is_frozen").unwrap(),
+            AnnotatedMoveValue::Bool(true),
+        ),
+        (
+            Identifier::new("consecutive_rejections").unwrap(),
+            AnnotatedMoveValue::U64(0),
+        ),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
+        ),
+    ];
+    let s = test_fixture_wallet_type("Wallet", "CommunityFreeze", value);
+    assert_eq!(false, is_community_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_false_with_wrong_consecutive_rejections() {
+    let value = vec![
+        (
+            Identifier::new("is_frozen").unwrap(),
+            AnnotatedMoveValue::Bool(false),
+        ),
+        (
+            Identifier::new("consecutive_rejections").unwrap(),
+            AnnotatedMoveValue::U64(1),
+        ),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
+        ),
+    ];
+    let s = test_fixture_wallet_type("Wallet", "CommunityFreeze", value);
+    assert_eq!(false, is_community_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_false_with_wrong_unfreeze_votes() {
+    let value = vec![
+        (
+            Identifier::new("is_frozen").unwrap(),
+            AnnotatedMoveValue::Bool(false),
+        ),
+        (
+            Identifier::new("consecutive_rejections").unwrap(),
+            AnnotatedMoveValue::U64(0),
+        ),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(TypeTag::Address, vec![AnnotatedMoveValue::Bool(false)]),
+        ),
+    ];
+    let s = test_fixture_wallet_type("Wallet", "CommunityFreeze", value);
+    assert_eq!(false, is_community_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_false_if_missing_unfreeze_votes() {
+    let value = vec![
+        (
+            Identifier::new("consecutive_rejections").unwrap(),
+            AnnotatedMoveValue::U64(0),
+        ),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
+        ),
+    ];
+    let s = test_fixture_wallet_type("Wallet", "CommunityFreeze", value);
+    assert_eq!(false, is_community_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_false_if_missing_consecutive_rejections() {
+    let value = vec![
+        (
+            Identifier::new("is_frozen").unwrap(),
+            AnnotatedMoveValue::Bool(false),
+        ),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
+        ),
+    ];
+    let s = test_fixture_wallet_type("Wallet", "CommunityFreeze", value);
+    assert_eq!(false, is_community_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_false_with_wrong_module_name() {
+    let value = vec![
+        (
+            Identifier::new("is_frozen").unwrap(),
+            AnnotatedMoveValue::Bool(false),
+        ),
+        (
+            Identifier::new("consecutive_rejections").unwrap(),
+            AnnotatedMoveValue::U64(0),
+        ),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
+        ),
+    ];
+    let s = test_fixture_wallet_type("IncorrectModuleName", "CommunityFreeze", value);
+    assert_eq!(false, is_community_wallet(&s), "{}", s.to_string());
+}
+
+#[test]
+fn test_is_community_wallet_should_return_false_with_wrong_struct_name() {
+    let value = vec![
+        (
+            Identifier::new("is_frozen").unwrap(),
+            AnnotatedMoveValue::Bool(false),
+        ),
+        (
+            Identifier::new("consecutive_rejections").unwrap(),
+            AnnotatedMoveValue::U64(0),
+        ),
+        (
+            Identifier::new("unfreeze_votes").unwrap(),
+            AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
+        ),
+    ];
+    let s = test_fixture_wallet_type("Wallet", "IncorrectStructName", value);
+    assert_eq!(false, is_community_wallet(&s), "{}", s.to_string());
 }

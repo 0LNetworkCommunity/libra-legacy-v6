@@ -1361,12 +1361,15 @@ Private function checks for membership of <code>addr</code> in validator set.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">get_fee_ratio</a>(vm: &signer, height_start: u64, height_end: u64): (vector&lt;address&gt;, vector&lt;<a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;) {
+
     <b>let</b> validators = &<a href="DiemSystem.md#0x1_DiemSystem_get_diem_system_config">get_diem_system_config</a>().validators;
 
     <b>let</b> compliant_nodes = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;address&gt;();
     <b>let</b> count_compliant_votes = 0;
     <b>let</b> i = 0;
+
     <b>while</b> (i &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(validators)) {
+
         <b>let</b> addr = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(validators, i).addr;
 
         <b>let</b> case = <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_end);
@@ -1375,20 +1378,25 @@ Private function checks for membership of <code>addr</code> in validator set.
             <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> compliant_nodes, addr);
             count_compliant_votes = count_compliant_votes + node_votes;
         };
+
         i = i + 1;
+
     };
+
     // calculate the ratio of votes per node.
     <b>let</b> fee_ratios = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;();
     <b>let</b> k = 0;
     <b>while</b> (k &lt; <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&compliant_nodes)) {
+
         <b>let</b> addr = *<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&compliant_nodes, k);
         <b>let</b> node_votes = <a href="Stats.md#0x1_Stats_node_current_votes">Stats::node_current_votes</a>(vm, addr);
         <b>let</b> ratio = <a href="../../../../../../move-stdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(node_votes, count_compliant_votes);
         <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> fee_ratios, ratio);
          k = k + 1;
+
     };
 
-    <b>assert</b>(<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&compliant_nodes) == <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&fee_ratios),<a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(120002) );
+    <b>if</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&compliant_nodes) != <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&fee_ratios)) <b>return</b> (<a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(), <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>());
 
     (compliant_nodes, fee_ratios)
 }

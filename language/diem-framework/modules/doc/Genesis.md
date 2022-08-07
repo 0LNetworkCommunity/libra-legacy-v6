@@ -138,6 +138,7 @@ Initializes the Diem framework.
     // FullnodeSubsidy::init_fullnode_sub(dm_account);
     <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(dm_account);
     <a href="TowerState.md#0x1_TowerState_init_miner_list_and_stats">TowerState::init_miner_list_and_stats</a>(dm_account);
+    <a href="TowerState.md#0x1_TowerState_init_difficulty">TowerState::init_difficulty</a>(dm_account);
     <a href="Wallet.md#0x1_Wallet_init">Wallet::init</a>(dm_account);
     <a href="DiemAccount.md#0x1_DiemAccount_vm_init_slow">DiemAccount::vm_init_slow</a>(dm_account);
     <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(dm_account);

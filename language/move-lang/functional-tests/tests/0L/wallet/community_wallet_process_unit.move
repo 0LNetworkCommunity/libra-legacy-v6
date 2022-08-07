@@ -40,7 +40,7 @@ script {
       let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
       assert(bob_balance == 1000000, 7357004);
 
-      DiemAccount::process_community_wallets(&vm, 4);
+      DiemAccount::process_community_wallets(&vm, 3);
 
       let bob_balance = DiemAccount::balance<GAS>(@{{bob}});
       assert(bob_balance == 1000100, 7357005);

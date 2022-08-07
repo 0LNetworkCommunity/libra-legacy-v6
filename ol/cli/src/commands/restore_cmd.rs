@@ -1,7 +1,7 @@
 //! `restore-cmd` subcommand
 
-use abscissa_core::{Command, Options, Runnable};
 use crate::mgmt;
+use abscissa_core::{Command, Options, Runnable};
 
 /// `restore-cmd` subcommand
 ///
@@ -12,17 +12,37 @@ use crate::mgmt;
 /// <https://docs.rs/gumdrop/>
 #[derive(Command, Debug, Options)]
 pub struct RestoreCmd {
-    #[options(short="v", help = "verbose logging of backup restore")]
+    #[options(help = "verbose logging of backup restore")]
     verbose: bool,
-    #[options(short="e", help = "what epoch to start restore from")]
+
+    #[options(short = "e", help = "what epoch to start restore from")]
     epoch: Option<u64>,
+
+    #[options(
+        short = "v",
+        help = "specify a version or height if there is more than one per archive"
+    )]
+    version: Option<u64>,
+
+    #[options(
+        short = "l",
+        help = "fetch the highest version available, of the latest epoch."
+    )]
+    latest_version: bool,
 }
 
 impl Runnable for RestoreCmd {
     /// Start the application.
     fn run(&self) {
-        match mgmt::restore::fast_forward_db(self.verbose, self.epoch) {
-            Ok(_) => {},
+        match mgmt::restore::fast_forward_db(
+            self.verbose,
+            self.epoch,
+            self.version,
+            self.latest_version,
+        ) {
+            Ok(_) => {
+                println!("SUCCESS")
+            }
             Err(e) => println!("ERROR: could not complete db restore, message: {:?}", e),
         };
     }

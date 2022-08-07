@@ -8,7 +8,7 @@ NODE_ENV=test
 TEST=y
 
 ifndef SOURCE_PATH
-SOURCE_PATH = ${HOME}/libra
+SOURCE_PATH = ${HOME}/code/rust/libra
 endif
 MAKE_FILE = ${SOURCE_PATH}/ol/integration-tests/test-mining.mk
 
@@ -41,7 +41,7 @@ echo:
 	@echo hi &> ${LOG} &
 
 init:
-	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
+	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH} --chain-id TESTING
 
 mine:
 	cd ${SOURCE_PATH} && cargo r -p tower -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} start
@@ -69,7 +69,7 @@ check-swarm:
 
 start-mine: 
 	PERSONA=alice make -f ${MAKE_FILE} init
-	PERSONA=alice make -f ${MAKE_FILE} mine &>> ${LOG} &
+	PERSONA=alice make -f ${MAKE_FILE} mine &> ${LOG} &
 
 check:
 	@while [[ ${NOW} -le ${END} ]] ; do \

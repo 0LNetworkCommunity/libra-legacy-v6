@@ -7,7 +7,11 @@ use crate::{
 use anyhow::Error;
 use ol_types::config::IS_PROD;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, fs::{self, File}, process::{Command, Stdio, exit}};
+use std::{
+    collections::HashSet,
+    fs::{self, File},
+    process::{exit, Command, Stdio},
+};
 const BINARY_NODE: &str = "diem-node";
 const BINARY_MINER: &str = "tower";
 
@@ -58,7 +62,7 @@ fn spawn_process(
 
 impl Node {
     /// Start Node, as fullnode
-    pub fn start_node(&mut self, config_type: NodeMode, verbose: bool) -> Result<(), Error> {
+    pub fn start_node(&mut self, verbose: bool) -> Result<(), Error> {
         use BINARY_NODE as NODE;
         // if is running do nothing
         // TODO: Get another check of node running
@@ -72,10 +76,7 @@ impl Node {
         // Start as validator or fullnode
         let conf = app_config();
         let node_home = conf.workspace.node_home.to_str().unwrap();
-        let config_file_name = match config_type {
-            NodeMode::Validator => format!("{}validator.node.yaml", node_home),
-            NodeMode::Fullnode => format!("{}fullnode.node.yaml", node_home),
-        };
+        let config_file_name = format!("{}validator.node.yaml", node_home);
 
         let child = if *IS_PROD {
             let args = vec!["--config", &config_file_name];
@@ -107,7 +108,7 @@ impl Node {
         if let Ok(ch) = child {
             let pid = &ch.id();
             self.save_pid(NODE, *pid);
-            if verbose{
+            if verbose {
                 println!("Started with PID {} in the background", pid);
             }
         }
@@ -157,11 +158,10 @@ impl Node {
         if let Ok(ch) = child {
             let pid = &ch.id();
             self.save_pid(MINER, *pid);
-            if _verbose{
+            if _verbose {
                 println!("Started with PID {} in the background", pid);
             }
         }
-
     }
 
     /// Start Monitor
@@ -177,7 +177,7 @@ impl Node {
         }
 
         let child = if *IS_PROD {
-            if _verbose{
+            if _verbose {
                 println!("Starting `ol serve`");
             }
             spawn_process(
@@ -187,19 +187,19 @@ impl Node {
                 "failed to run 'ol', is it installed?",
             )
         } else {
-            let project_root = match self.app_conf.workspace.source_path.clone(){
+            let project_root = match self.app_conf.workspace.source_path.clone() {
                 Some(p) => p,
                 None => {
-                  println!("ERROR: can't start web-monitor in dev mode. It doesn't seem like you have workspace.source_path set in 0L.toml. Exiting.");
-                  exit(1);
-                },
+                    println!("ERROR: can't start web-monitor in dev mode. It doesn't seem like you have workspace.source_path set in 0L.toml. Exiting.");
+                    exit(1);
+                }
             };
 
             let debug_bin = project_root.join("target/debug/ol");
             let bin_str = debug_bin.to_str().unwrap();
 
             let args = vec!["serve"];
-            if _verbose{
+            if _verbose {
                 println!("Starting '{}' with args: {:?}", bin_str, args.join(" "));
             }
             spawn_process(
@@ -213,7 +213,7 @@ impl Node {
         if let Ok(ch) = child {
             let pid = &ch.id();
             self.save_pid("monitor", *pid);
-            if _verbose{
+            if _verbose {
                 println!("Started with PID {} in the background", pid);
             }
         }
@@ -221,11 +221,13 @@ impl Node {
 
     /// Start pilot, for explorer
     pub fn start_pilot(&mut self, verbose: bool) {
-        if Node::pilot_running() { return }
+        if Node::pilot_running() {
+            return;
+        }
 
         let mut args = vec!["pilot"];
         if verbose {
-          args.push("-s");
+            args.push("-s");
         }
         let child = if *IS_PROD {
             println!("Starting `ol pilot`");

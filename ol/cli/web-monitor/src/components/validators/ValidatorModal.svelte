@@ -54,11 +54,11 @@
                 </tr>
                 <tr>
                     <td>fullnode network address</td>
-                    <td class="uk-text-break">{validator.full_node_ip}</td>
+                    <td class="uk-text-break">{validator.vfn_full_ip}</td>
                 </tr>
                 <tr>
                     <td>validator network address</td>
-                    <td>{validator.validator_ip}</td>
+                    <td>{validator.validator_full_ip}</td>
                 </tr>
                 <tr>
                     <td>epochs validating and mining</td>

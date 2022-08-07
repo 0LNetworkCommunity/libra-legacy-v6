@@ -13,7 +13,7 @@ module Epoch {
   use 0x1::Globals;
   use 0x1::DiemConfig;
   use 0x1::Roles;
-
+  
   /// Contains timing info for the current epoch
   /// epoch: the epoch number
   /// height_start: the block height the epoch started at
@@ -40,10 +40,20 @@ module Epoch {
 
   /// Check to see if epoch is finished 
   /// Simply checks if the elapsed time is greater than the epoch time 
-  public fun epoch_finished(): bool acquires Timer {
-      let epoch_secs = Globals::get_epoch_length();
+  public fun epoch_finished(height_now: u64): bool acquires Timer {
       let time = borrow_global<Timer>(CoreAddresses::DIEM_ROOT_ADDRESS());
-      DiemTimestamp::now_seconds() > (epoch_secs + time.seconds_start)
+
+      // we target 24hrs for block production.
+      // there are failure cases when there is a halt, and nodes have been offline for all of the 24hrs, producing a new epoch upon restart leads to further failures. So we check that a meaninful amount of blocks have been created too.
+
+      let enough_blocks = height_now > (time.height_start + Globals::get_min_blocks_epoch());
+
+      let time_now = DiemTimestamp::now_seconds();
+      let len = Globals::get_epoch_length();
+      let enough_time = (time_now > (time.seconds_start + len));
+
+      (enough_blocks && enough_time)
+      
   }
 
   // Function code:02

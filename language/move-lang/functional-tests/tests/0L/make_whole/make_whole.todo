@@ -1,0 +1,83 @@
+
+ //! new-transaction
+ //! sender: alice
+ script {
+     use 0x1::MakeWhole;
+     use 0x1::Signer;
+     //use 0x1::Debug::print;
+
+     fun main(sig: signer) {
+         let addr = Signer::address_of(&sig);
+
+         let (_, idx) = MakeWhole::query_make_whole_payment(addr);
+
+         //make sure it doesn't run twice
+        MakeWhole::claim_make_whole_payment(&sig, idx);
+
+     }
+ }
+  // check: "VMExecutionFailure(ABORTED { code: 22016,"
+
+
+ //! new-transaction
+ //! sender: carol
+ script {
+     use 0x1::MakeWhole;
+
+     fun main(sig: signer) {
+        //carol should not be able to claim bob's payment
+         let (_, idx) = MakeWhole::query_make_whole_payment(@{{bob}});
+
+         MakeWhole::claim_make_whole_payment(&sig, idx);
+
+     }
+ }
+   // check: ABORTED
+
+
+ //! new-transaction
+ //! sender: bob
+ script {
+     use 0x1::MakeWhole;
+     use 0x1::DiemAccount;
+     use 0x1::GAS::GAS;
+     use 0x1::Signer;
+
+     fun main(sig: signer) {
+         let addr = Signer::address_of(&sig);
+         let expected_amount = 360;
+
+         let initial = DiemAccount::balance<GAS>(addr);
+
+         let (_, idx) = MakeWhole::query_make_whole_payment(addr);
+
+        assert(MakeWhole::claim_make_whole_payment(&sig, idx) == expected_amount, 7);
+
+         let current = DiemAccount::balance<GAS>(addr);
+
+         assert(current - initial == expected_amount, 1);
+
+     }
+ }
+   // check: "Keep(EXECUTED)"
+
+
+
+ //! new-transaction
+ //! sender: carol
+ script {
+     use 0x1::MakeWhole;
+     use 0x1::Signer;
+
+     fun main(sig: signer) {
+         let addr = Signer::address_of(&sig);
+         let expected_amount = 0;
+
+         let (amt, idx) = MakeWhole::query_make_whole_payment(addr);
+
+         assert(amt == expected_amount, 11);
+         assert(idx == 0, 12);
+     }
+ }
+   // check: "Keep(EXECUTED)"
+  

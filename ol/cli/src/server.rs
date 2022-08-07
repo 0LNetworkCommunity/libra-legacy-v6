@@ -1,50 +1,55 @@
 //! `server`  web monitor http server
 // use futures::StreamExt;
+use futures::StreamExt;
 use ol_types::config::IS_PROD;
+use reqwest;
 use serde_json::json;
-use std::{fs, path::PathBuf, process::Command, thread, time::Duration, io};
+use serde_json::Error;
+use std::{fs, io, path::PathBuf, process::Command, thread, time::Duration};
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 use warp::{sse::Event, Filter};
-use serde_json::Error;
-use futures::StreamExt;
-use reqwest;
+use std::process::exit;
 
 use crate::{cache::Vitals, check::runner, node::node::Node};
 
 #[tokio::main]
 /// starts the web server
-pub async fn start_server(mut node: Node, run_checks: bool) {
+pub async fn start_server(mut node: Node, _run_checks: bool) {
     let cfg = node.app_conf.clone();
 
-    if run_checks {
-        thread::spawn(move || {
-            runner::run_checks(&mut node, false, true, false, false);
-        });
-    }
+    // if run_checks {
+    thread::spawn(move || {
+        runner::run_checks(&mut node, false, true, false, false);
+    });
+    // }
 
-    //GET check/ (json api for check data)   
+    //GET check/ (json api for check data)
     let node_home = cfg.clone().workspace.node_home.clone();
-    let vitals_route = warp::path("vitals")
-        .and(warp::get())
-        .map(move || {
-            let path = node_home.clone();
-            let interval = interval(Duration::from_secs(10));
-            let stream = IntervalStream::new(interval);
-            let event_stream = stream.map(move |_| {
-                let vitals = Vitals::read_json(&path);
-                sse_vitals(vitals)
-            });
-            // reply using server-sent events
-            warp::sse::reply(event_stream)
+    let vitals_route = warp::path("vitals").and(warp::get()).map(move || {
+        let path = node_home.clone();
+        let interval = interval(Duration::from_secs(10));
+        let stream = IntervalStream::new(interval);
+        let event_stream = stream.map(move |_| {
+            let vitals = Vitals::read_json(&path);
+            sse_vitals(vitals)
         });
+        // reply using server-sent events
+        warp::sse::reply(event_stream)
+    });
 
     // TODO: re-assigning node_home because warp moves it.
     let node_home = cfg.clone().workspace.node_home.clone();
-
-    let account_template = warp::path("account.json").and(warp::get()).map(move || {
-        let account_path = node_home.join("account.json");
-        fs::read_to_string(account_path).unwrap()
+    let account_file_name = "account.json";
+    let account_template = warp::path(account_file_name).and(warp::get()).map(move || {
+        let account_path = node_home.join(account_file_name);
+        match fs::read_to_string(account_path) {
+            Ok(value) => value,
+            Err(msg) => {
+                println!("Could not read {}: \nError {}", account_file_name, msg);
+                exit(1)
+            },
+        }
     });
 
     let node_home = cfg.clone().workspace.node_home.clone();
@@ -82,15 +87,15 @@ pub async fn start_server(mut node: Node, run_checks: bool) {
 }
 
 /// Prepare to start server
-pub fn init(node: &mut Node, run_checks: bool) {
-    if run_checks { 
-        /*
-            Initialize cache to avoid:
-            - read a cache file not created yet
-            - load old cache with invalid structs
-        */          
-        node.check_once(false);
-    }
+pub fn init(node: &mut Node, _run_checks: bool) {
+    // if run_checks {
+    /*
+        Initialize cache to avoid:
+        - read a cache file not created yet
+        - load old cache with invalid structs
+    */
+    node.check_once(false);
+    // }
 }
 
 fn sse_vitals(data: Vitals) -> Result<Event, Error> {
@@ -121,9 +126,11 @@ pub fn update_web(home_path: &PathBuf) {
         .arg("-C")
         .arg(&dir_path)
         .spawn()
-        .expect(&format!("failed to unzip {:?} into {:?}", &zip_path, &dir_path));
+        .expect(&format!(
+            "failed to unzip {:?} into {:?}",
+            &zip_path, &dir_path
+        ));
 
     let ecode = child.wait().expect("failed to wait on child");
     assert!(ecode.success());
-
 }

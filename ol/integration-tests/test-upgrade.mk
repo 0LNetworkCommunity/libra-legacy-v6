@@ -30,8 +30,9 @@ MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow 
 NUM_NODES = 2
 
 ifndef PREV_VERSION
-#TODO: decide how to programmatically tell the tests what version is in production.
-PREV_VERSION = v5.0.4
+#TODO: decide how to programmatically tell the tests what version is in production. 
+#This needs to be updated after every chain upgrade
+PREV_VERSION = v5.0.10
 endif
 
 ifndef BRANCH_NAME
@@ -71,7 +72,7 @@ prev-stdlib:
 
 
 init:
-	cd ${SOURCE_PATH} && cargo run -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init
+	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH} --chain-id TESTING
 	cp ${SWARM_TEMP}/0/0L.toml ${HOME}/.0L/0L.toml
 
 submit:
@@ -134,6 +135,8 @@ progress:
 				i=$$(($$i + 1)); \
 			else \
 				echo ERROR, txs not successful ; \
+				cat ${LOG};\
+				cat ${SWARM_TEMP}/logs/0.log;\
 				exit 1 ; \
 			fi ; \
 			echo "Sleeping for 1 min" ; \

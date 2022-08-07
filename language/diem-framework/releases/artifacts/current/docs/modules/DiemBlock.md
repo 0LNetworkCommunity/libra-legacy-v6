@@ -29,9 +29,10 @@ For 0L the following changes are applied to the block prologue
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
-<b>use</b> <a href="Migrations.md#0x1_MigrateTowerCounter">0x1::MigrateTowerCounter</a>;
+<b>use</b> <a href="Migrations.md#0x1_MigrateJail">0x1::MigrateJail</a>;
 <b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
+<b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 </code></pre>
 
 
@@ -263,16 +264,17 @@ The runtime always runs this before executing the transactions in a block.
     };
 
     // Do any pending migrations
-    // TODO: should this be round 2 (when upgrade writeset happens). May be a on off-by-one.
+    // TODO: should this be round 2 (when upgrade writeset happens). May be an off-by-one.
     <b>if</b> (round == 3){
       // safety. Maybe init Migration <b>struct</b>
       <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(&vm);
-      // Migration UID 1
-      <a href="Migrations.md#0x1_MigrateTowerCounter_migrate_tower_counter">MigrateTowerCounter::migrate_tower_counter</a>(&vm);
+      <a href="TowerState.md#0x1_TowerState_init_difficulty">TowerState::init_difficulty</a>(&vm);
+      <a href="Migrations.md#0x1_MigrateJail_do_it">MigrateJail::do_it</a>(&vm);
     };
 
     <b>let</b> block_metadata_ref = borrow_global_mut&lt;<a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a>&gt;(<a href="CoreAddresses.md#0x1_CoreAddresses_DIEM_ROOT_ADDRESS">CoreAddresses::DIEM_ROOT_ADDRESS</a>());
     <a href="DiemTimestamp.md#0x1_DiemTimestamp_update_global_time">DiemTimestamp::update_global_time</a>(&vm, proposer, timestamp);
+
     block_metadata_ref.height = block_metadata_ref.height + 1;
     <a href="../../../../../../move-stdlib/docs/Event.md#0x1_Event_emit_event">Event::emit_event</a>&lt;<a href="DiemBlock.md#0x1_DiemBlock_NewBlockEvent">NewBlockEvent</a>&gt;(
         &<b>mut</b> block_metadata_ref.new_block_events,
@@ -286,13 +288,15 @@ The runtime always runs this before executing the transactions in a block.
 
     //////// 0L ////////
     // EPOCH BOUNDARY
-    <b>if</b> (<a href="Epoch.md#0x1_Epoch_epoch_finished">Epoch::epoch_finished</a>()) {
+    <b>let</b> height = <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">get_current_block_height</a>();
+    <b>if</b> (<a href="Epoch.md#0x1_Epoch_epoch_finished">Epoch::epoch_finished</a>(height)) {
 
       // TODO: We don't need <b>to</b> pass block height <b>to</b> EpochBoundaryOL.
       // It should <b>use</b> the <a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a>. But there's a circular reference
       // there when we try.
-      <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">EpochBoundary::reconfigure</a>(&vm, <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">get_current_block_height</a>());
+      <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">EpochBoundary::reconfigure</a>(&vm, height);
     };
+
 }
 </code></pre>
 

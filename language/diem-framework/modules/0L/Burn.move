@@ -31,7 +31,6 @@ module Burn {
 
       let addr = *Vector::borrow(&list, i);
       let cumu = DiemAccount::get_index_cumu_deposits(addr);
-
       global_deposits = global_deposits + cumu;
       Vector::push_back(&mut deposit_vec, cumu);
       i = i + 1;
@@ -53,11 +52,13 @@ module Burn {
     };
 
     if (exists<DepositInfo>(CoreAddresses::VM_RESERVED_ADDRESS())) {
+
       let d = borrow_global_mut<DepositInfo>(CoreAddresses::VM_RESERVED_ADDRESS());
       d.addr = list;
       d.deposits = deposit_vec;
       d.ratio = ratios_vec;
     } else {
+
       move_to<DepositInfo>(vm, DepositInfo {
         addr: list,
         deposits: deposit_vec,
@@ -67,24 +68,36 @@ module Burn {
   }
 
   fun get_address_list(): vector<address> acquires DepositInfo {
+    if (!exists<DepositInfo>(CoreAddresses::VM_RESERVED_ADDRESS())) return Vector::empty<address>();
     *&borrow_global<DepositInfo>(CoreAddresses::VM_RESERVED_ADDRESS()).addr
   }
 
   fun get_value(payee: address, value: u64): u64 acquires DepositInfo {
+    if (!exists<DepositInfo>(CoreAddresses::VM_RESERVED_ADDRESS())) return 0;
+
     let d = borrow_global<DepositInfo>(CoreAddresses::VM_RESERVED_ADDRESS());
-    let (_, i) = Vector::index_of(&d.addr, &payee);
-    let ratio = *Vector::borrow(&d.ratio, i);
-    FixedPoint32::multiply_u64(value, ratio)
+
+    let (is_found, i) = Vector::index_of(&d.addr, &payee);
+    if (is_found) {
+      let ratio = *Vector::borrow(&d.ratio, i);
+      return FixedPoint32::multiply_u64(value, ratio)
+    };
+    0
   }
 
   public fun epoch_start_burn(vm: &signer, payer: address, value: u64) acquires DepositInfo, BurnPreference {
+    CoreAddresses::assert_vm(vm);
     if (exists<BurnPreference>(payer)) {
       if (borrow_global<BurnPreference>(payer).send_community) {
+
         return send(vm, payer, value)
+      } else {
+        return burn(vm, payer, value)
       }
     } else {
-      burn(vm, payer, value)
-    }
+
+      burn(vm, payer, value);
+    };
   }
 
   fun burn(vm: &signer, addr: address, value: u64) {
@@ -100,12 +113,16 @@ module Burn {
   fun send(vm: &signer, payer: address, value: u64) acquires DepositInfo {
     let list = get_address_list();
     let len = Vector::length<address>(&list);
-
     let i = 0;
+
+    // There could be errors in the array, and underpayment happen.
+    let value_sent = 0;
+
     while (i < len) {
       let payee = *Vector::borrow<address>(&list, i);
+
       let val = get_value(payee, value);
-      
+
       DiemAccount::vm_make_payment_no_limit<GAS>(
           payer,
           payee,
@@ -114,19 +131,25 @@ module Burn {
           b"",
           vm,
       );
-      
+      value_sent = value_sent + val;
       i = i + 1;
+    };
+
+    // prevent under-burn due to issues with index.
+    let diff = value - value_sent;
+    if (diff > 0) {
+      burn(vm, payer, diff)
     };
   }
 
-  public fun set_send_community(sender: &signer) acquires BurnPreference {
+  public fun set_send_community(sender: &signer, community: bool) acquires BurnPreference {
     let addr = Signer::address_of(sender);
     if (exists<BurnPreference>(addr)) {
       let b = borrow_global_mut<BurnPreference>(addr);
-      b.send_community = true;
+      b.send_community = community;
     } else {
       move_to<BurnPreference>(sender, BurnPreference {
-        send_community: true
+        send_community: community
       });
     }
   }

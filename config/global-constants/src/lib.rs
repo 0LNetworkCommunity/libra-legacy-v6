@@ -35,7 +35,7 @@ pub const PROOF_OF_WORK_PROOF: &str = "pow_proof";
 pub const ACCOUNT_PROFILE: &str = "account_profile";
 pub const SALT_0L: &str = "0L";
 pub const SOURCE_DIR: &str = "libra/";
-pub const VDF_SECURITY_PARAM: u16 = 512;
+pub const GENESIS_VDF_SECURITY_PARAM: u64 = 512;
 
 /// Filename for 0L configs
 pub const CONFIG_FILE: &str = "0L.toml";
@@ -43,10 +43,9 @@ pub const DEFAULT_VAL_PORT: u64 = 6180;
 pub const DEFAULT_VFN_PORT: u64 = 6179;
 pub const DEFAULT_PUB_PORT: u64 = 6178;
 
-
 // TODO: make this lazy static.
 /// Switch settings between production and testing
-pub fn delay_difficulty() -> u64 {
+pub fn genesis_delay_difficulty() -> u64 {
     let node_env = match env::var("NODE_ENV") {
         Ok(val) => val,
         _ => "prod".to_string() // default to "prod" if not set

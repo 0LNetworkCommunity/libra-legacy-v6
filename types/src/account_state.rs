@@ -20,7 +20,7 @@ use crate::{
         ConfigurationResource, DiemVersion, OnChainConfig, RegisteredCurrencies,
         VMPublishingOption, ValidatorSet,
     },
-    validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
+    validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource}, ol_vdf_difficulty::VDFDifficulty,
 };
 use anyhow::{format_err, Error, Result};
 use move_core_types::{
@@ -230,6 +230,13 @@ impl AccountState {
     pub fn get_validators_stats(&self) -> Result<Option<ValidatorsStatsResource>> {
         self.get_resource()
     }
+
+    //////// 0L ////////
+    /// Fetch VDF difficulty params from chain.
+    pub fn get_tower_params(&self) -> Result<Option<VDFDifficulty>>{
+      self.get_resource()
+    }
+
 
     pub fn get(&self, key: &[u8]) -> Option<&Vec<u8>> {
         self.0.get(key)
