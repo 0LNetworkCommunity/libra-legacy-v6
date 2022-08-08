@@ -11,6 +11,7 @@ use std::{
     fs::{self, File},
     io::Write,
     path::PathBuf,
+    process::exit,
 };
 
 /// caching database name, to be appended to node_home
@@ -63,8 +64,14 @@ impl Vitals {
 
         // after writing temporary file renames and overwrite to cache file
         let cache_path = get_cache_path(node_home);
-        rename(temp_path, cache_path).expect("temporary cache file should be renamed");
-        Ok(())
+        match rename(temp_path, cache_path) {
+            Ok(_) => Ok(()),
+            Err(e) => { 
+                    eprintln!("Error renaming path! :( \n  {}", e);
+                    exit(1)
+                }
+        };
+        
     }
 }
 
