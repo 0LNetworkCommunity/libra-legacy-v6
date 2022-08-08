@@ -297,7 +297,7 @@ module TowerState {
       // Skip this check on local tests, we need tests to send differentdifficulties.
       if (!Testnet::is_testnet()){
         assert(&proof.difficulty == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_argument(130105));
-        assert(&proof.security == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_state(130106));
+        assert(&proof.security == &Globals::get_vdf_security_baseline(), Errors::invalid_state(130106));
       };
       
       // Process the proof
