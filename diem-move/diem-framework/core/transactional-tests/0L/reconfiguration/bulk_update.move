@@ -21,7 +21,7 @@ script {
         assert!(DiemSystem::is_validator(@Carol), 73570080010004);
         assert!(DiemSystem::is_validator(@Dave), 73570080010005);
 
-        let old_vec = ValidatorUniverse::get_eligible_validators(&vm);
+        let old_vec = ValidatorUniverse::get_eligible_validators();
         assert!(Vector::length<address>(&old_vec) == 4, 73570080010006);
         
         //Create vector of validators and func call

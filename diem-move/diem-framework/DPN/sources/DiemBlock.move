@@ -31,9 +31,7 @@ module DiemFramework::DiemBlock {
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
     use DiemFramework::Migrations;
-    use DiemFramework::MigrateAutoPayBal;    
-    // use DiemFramework::MakeWhole;
-    use DiemFramework::MigrateVouch;
+    use DiemFramework::MigrateJail;    
 
     struct BlockMetadata has key {
         /// Height of the current block
@@ -121,13 +119,7 @@ module DiemFramework::DiemBlock {
         if (round == 3) {
             // safety. Maybe init Migration struct
             Migrations::init(&vm);
-            // Migration UID 1 // DONE
-            // MigrateTowerCounter::migrate_tower_counter(&vm);
-            // migration UID 2
-            MigrateAutoPayBal::do_it(&vm);
-            MigrateVouch::do_it(&vm);
-            // Initialize the make whole payment info
-            // MakeWhole::make_whole_init(&vm);
+            MigrateJail::do_it(&vm);
         };
 
         let block_metadata_ref = borrow_global_mut<BlockMetadata>(@DiemRoot);

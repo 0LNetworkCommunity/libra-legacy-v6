@@ -799,6 +799,7 @@ module DiemFramework::DiemSystem {
     }
 
     /////// 0L /////////
+    // TODO: Sort by repeat infractors
     public fun get_jailed_set(vm: &signer, height_start: u64, height_end: u64): vector<address> {
       let validator_set = get_val_set_addr();
       let jailed_set = Vector::empty<address>();

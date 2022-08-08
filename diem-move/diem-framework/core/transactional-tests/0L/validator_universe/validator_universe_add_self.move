@@ -8,12 +8,10 @@
 script{
 use DiemFramework::ValidatorUniverse;
 use Std::Vector;
-// use DiemFramework::TestFixtures;
-// use DiemFramework::DiemAccount;
 
-fun main(vm: signer, _: signer) {
+fun main() {
     let len = Vector::length<address>(
-        &ValidatorUniverse::get_eligible_validators(&vm)
+        &ValidatorUniverse::get_eligible_validators()
     );
     assert!(len == 1, 73570);
 }
@@ -25,7 +23,6 @@ script{
 use DiemFramework::ValidatorUniverse;
 use DiemFramework::TestFixtures;
 use DiemFramework::TowerState;
-// use DiemFramework::FullnodeState;
 
 fun main(_dr: signer, eve_sig: signer) {
     let eve_sig = &eve_sig;
@@ -49,10 +46,10 @@ script{
     use Std::Vector;
     use DiemFramework::ValidatorUniverse;
 
-    fun main(vm: signer, _: signer) {
+    fun main() {
         let len = Vector::length<address>(
-            &ValidatorUniverse::get_eligible_validators(&vm
-        ));
+            &ValidatorUniverse::get_eligible_validators()
+        );
         assert!(len == 2, 73570);
     }
 }

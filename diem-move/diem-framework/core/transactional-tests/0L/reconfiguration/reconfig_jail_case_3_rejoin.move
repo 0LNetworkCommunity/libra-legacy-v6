@@ -33,6 +33,7 @@ script {
 script {
     use DiemFramework::TowerState;
     use DiemFramework::AutoPay;
+    use DiemFramework::Jail;
 
     fun main(_dr: signer, sender: signer) {
         AutoPay::enable_autopay(&sender);
@@ -41,6 +42,8 @@ script {
         // Hence this first transaction.
         TowerState::test_helper_mock_mining(&sender, 5);
         assert!(TowerState::get_count_in_epoch(@Eve) == 5, 7357180102011000);
+
+        assert!(!Jail::is_jailed(@Eve), 7357180102011001);
     }
 }
 
@@ -56,10 +59,15 @@ script {
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::DiemConfig;
-    fun main() {
+    use DiemFramework::Debug::print;
+    use DiemFramework::Mock;
+
+    fun main(vm: signer, _: signer) {
         // We are in a new epoch.
         assert!(DiemConfig::get_current_epoch() == 2, 7357008008009);
         // Tests on initial size of validators 
+        print(&99999999999999);
+        print(&DiemSystem::validator_set_size());        
         assert!(DiemSystem::validator_set_size() == 6, 7357008008010);
         assert!(DiemSystem::is_validator(@Eve) == false, 7357008008011);
 
@@ -76,10 +84,23 @@ script {
 //# run --admin-script --signers DiemRoot Eve
 script {
     use DiemFramework::TowerState;
+    use DiemFramework::Vouch;
 
     fun main(_dr: signer, sender: signer) {
         // Mock some mining so Eve can send rejoin tx
         TowerState::test_helper_mock_mining(&sender, 100);
+        Vouch::init(&sender);
+    }
+}
+
+//# run --admin-script --signers DiemRoot Alice
+script {
+    use DiemFramework::Vouch;
+    use DiemFramework::Jail;
+
+    fun main(_dr: signer, sender: signer) {
+      Vouch::vouch_for(&sender, @Eve);
+      Jail::vouch_unjail(&sender, @Eve);
     }
 }
 

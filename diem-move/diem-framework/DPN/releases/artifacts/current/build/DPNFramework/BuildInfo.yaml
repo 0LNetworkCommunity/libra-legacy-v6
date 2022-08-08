@@ -161,16 +161,13 @@ compiled_package_info:
       name: Hash
     : Std
     ? address: "00000000000000000000000000000001"
+      name: Jail
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: MakeWhole
     : DiemFramework
     ? address: "00000000000000000000000000000001"
-      name: MigrateAutoPayBal
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
-      name: MigrateTowerCounter
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
-      name: MigrateVouch
+      name: MigrateJail
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: Migrations
@@ -316,7 +313,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 8F75820685CC0AAC6A9F20B40587A48DE7E8C826D08737A89701D203EE1EC1B7
+  source_digest: 53661DA9187301B9072C0BBFA82A7C33398BA0F31D3AE431986902187B787E95
   build_flags:
     dev_mode: false
     test_mode: false

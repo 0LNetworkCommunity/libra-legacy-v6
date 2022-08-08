@@ -31,8 +31,7 @@ For 0L the following changes are applied to the block prologue
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
-<b>use</b> <a href="Migrations.md#0x1_MigrateAutoPayBal">0x1::MigrateAutoPayBal</a>;
-<b>use</b> <a href="Migrations.md#0x1_MigrateVouch">0x1::MigrateVouch</a>;
+<b>use</b> <a href="Migrations.md#0x1_MigrateJail">0x1::MigrateJail</a>;
 <b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 </code></pre>
@@ -271,13 +270,7 @@ The runtime always runs this before executing the transactions in a block.
     <b>if</b> (round == 3) {
         // safety. Maybe init Migration <b>struct</b>
         <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(&vm);
-        // Migration UID 1 // DONE
-        // <a href="Migrations.md#0x1_MigrateTowerCounter_migrate_tower_counter">MigrateTowerCounter::migrate_tower_counter</a>(&vm);
-        // migration UID 2
-        <a href="Migrations.md#0x1_MigrateAutoPayBal_do_it">MigrateAutoPayBal::do_it</a>(&vm);
-        <a href="Migrations.md#0x1_MigrateVouch_do_it">MigrateVouch::do_it</a>(&vm);
-        // Initialize the make whole payment info
-        // MakeWhole::make_whole_init(&vm);
+        <a href="Migrations.md#0x1_MigrateJail_do_it">MigrateJail::do_it</a>(&vm);
     };
 
     <b>let</b> block_metadata_ref = <b>borrow_global_mut</b>&lt;<a href="DiemBlock.md#0x1_DiemBlock_BlockMetadata">BlockMetadata</a>&gt;(@DiemRoot);

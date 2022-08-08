@@ -73,7 +73,7 @@ script {
 
         let vm = &vm;
         //Check the size of the validator universe.
-        let vec =  ValidatorUniverse::get_eligible_validators(vm);
+        let vec =  ValidatorUniverse::get_eligible_validators();
         let len = Vector::length<address>(&vec);
         assert!(len == 5, 7357140102011000);
 

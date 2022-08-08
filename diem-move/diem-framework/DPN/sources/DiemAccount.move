@@ -9,8 +9,7 @@ module DiemFramework::DiemAccount {
     //////// 0L ////////
     friend DiemFramework::AccountAdministrationScripts;
     friend DiemFramework::MakeWhole;
-    friend DiemFramework::MigrateAutoPayBal;
-    friend DiemFramework::MigrateVouch;
+    friend DiemFramework::MigrateJail;
 
     use DiemFramework::AccountFreezing;
     use DiemFramework::CoreAddresses;
@@ -53,6 +52,7 @@ module DiemFramework::DiemAccount {
     use DiemFramework::Ancestry;
     use DiemFramework::Vouch;
     use DiemFramework::Debug::print;
+    use DiemFramework::Jail;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -262,7 +262,7 @@ module DiemFramework::DiemAccount {
     // This is restricted by `friend` visibility, which is defined above as the 
     // 0x1::MigrateAutoPayBal module for a one-time use.
     // language/changes/1-friend-visibility.md
-    public(friend) fun scary_wtf_create_signer(vm: &signer, addr: address): signer {
+    public(friend) fun scary_create_signer_for_migrations(vm: &signer, addr: address): signer {
         CoreAddresses::assert_diem_root(vm);
         create_signer(addr)
     }
@@ -628,6 +628,7 @@ module DiemFramework::DiemAccount {
         // User can join validator universe list, but will only join if 
         // the mining is above the threshold in the preceeding period.
         ValidatorUniverse::add_self(&new_signer);
+        Jail::init(&new_signer);
 
         make_account(&new_signer, auth_key_prefix);
         add_currencies_for_account<GAS>(&new_signer, false);
@@ -739,8 +740,9 @@ module DiemFramework::DiemAccount {
         );
         // User can join validator universe list, but will only join if 
         // the mining is above the threshold in the preceeding period.
-        ValidatorUniverse::add_self(&new_signer);        
-        
+        ValidatorUniverse::add_self(&new_signer);
+        Jail::init(&new_signer);
+
         // no need to make the owner address.
 
         // make_account(new_signer, auth_key_prefix);
@@ -756,7 +758,9 @@ module DiemFramework::DiemAccount {
         let new_signer = create_signer(new_account_address);
     
         Ancestry::init(sender, &new_signer);
-        Vouch::init(&new_signer);        
+        Vouch::init(&new_signer);
+        Vouch::vouch_for(sender, new_account_address);
+
         set_slow(&new_signer);
         new_account_address
     }
@@ -3085,6 +3089,7 @@ module DiemFramework::DiemAccount {
         include should_trigger_reconfiguration ==> DiemConfig::ReconfigureEmits;
     }
 
+    /// NOTE: in 0L this is only used for test harness
     /// Create a Validator account
     public fun create_validator_account(
         dr_account: &signer,
@@ -3100,8 +3105,14 @@ module DiemFramework::DiemAccount {
         make_account(&new_account, auth_key_prefix);
         /////// 0L /////////
         add_currencies_for_account<GAS>(&new_account, false);
+
         let new_account = create_signer(new_account_address);
         set_slow(&new_account);
+
+        /////// 0L /////////
+        Jail::init(&new_account);
+        // ValidatorUniverse::add_self(&new_account);
+        // Vouch::init(&new_account);
     }
     spec create_validator_account {
         pragma disable_invariants_in_body;

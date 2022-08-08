@@ -18,9 +18,29 @@ address DiemFramework {
 
     public fun proof_of_weight (node_addr: address): u64 {
       // Calculate the weight/voting power for the next round.
-      // TODO: This assumes that validator passed the validation threshold this epoch, perhaps double check here.
+      // TODO: This assumes that validator passed the validation threshold
+      // this epoch, perhaps double check here.
       TowerState::get_tower_height(node_addr)
     }
+
+    // 
+    public fun top_n_accounts(account: &signer, n: u64): vector<address> {
+        assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_role(140101));
+
+        let eligible_validators = get_sorted_vals();
+        let len = Vector::length<address>(&eligible_validators);
+        if(len <= n) return eligible_validators;
+
+        let diff = len - n; 
+        while(diff > 0){
+          Vector::pop_back(&mut eligible_validators);
+          diff = diff - 1;
+        };
+
+        eligible_validators
+    }
+    
+    // get the validator universe sorted by consensus power    
 
     // Recommend a new validator set. This uses a Proof of Weight calculation in
 
@@ -28,20 +48,9 @@ address DiemFramework {
     // the validator weight will determine the subsidy and transaction fees.
     // Function code: 01 Prefix: 140101
     // Permissions: Public, VM Only
-    public fun top_n_accounts(account: &signer, n: u64): vector<address> {
-
-      assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_role(140101));
-
-      //Get all validators from Validator Universe and then find the eligible validators 
-      let eligible_validators = ValidatorUniverse::get_eligible_validators(account);
-
-
+    public fun get_sorted_vals(): vector<address> {
+      let eligible_validators = ValidatorUniverse::get_eligible_validators();
       let length = Vector::length<address>(&eligible_validators);
-
-      // Scenario: The universe of validators is under the limit of the BFT consensus.
-      // If n is greater than or equal to accounts vector length - return the vector.
-      if(length <= n) return eligible_validators;
-
       // Vector to store each address's node_weight
       let weights = Vector::empty<u64>();
       let k = 0;
@@ -73,12 +82,6 @@ address DiemFramework {
 
       // Reverse to have sorted order - high to low.
       Vector::reverse<address>(&mut eligible_validators);
-
-      let diff = length - n; 
-      while(diff>0){
-        Vector::pop_back(&mut eligible_validators);
-        diff =  diff - 1;
-      };
 
       return eligible_validators
     }

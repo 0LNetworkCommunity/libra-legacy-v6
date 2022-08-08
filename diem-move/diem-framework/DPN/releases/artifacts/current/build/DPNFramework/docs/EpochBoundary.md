@@ -26,6 +26,7 @@
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
+<b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
 <b>use</b> <a href="RecoveryMode.md#0x1_RecoveryMode">0x1::RecoveryMode</a>;
 <b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
@@ -221,76 +222,86 @@
       <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&recovery_vals) &gt; 0) <b>return</b> recovery_vals;
     };
 
-    // find good new validators
-    // limit the amount of validators so that the new set doesn't have
-    // 25% of nodes that we don't know their current performance.
-
+    // Process all the jail terms of the previous validator set
     <b>let</b> previous_set = <a href="DiemSystem.md#0x1_DiemSystem_get_val_set_addr">DiemSystem::get_val_set_addr</a>();
-    <b>let</b> proven_nodes = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
+
+    // Take advantage of this <b>loop</b> <b>to</b> get the expected size of
+    // the validator set that the new set doesn't have
+    // 25% of nodes that we don't know their current performance.
+    <b>let</b> len_proven_nodes = 0;
 
     <b>let</b> i = 0;
     <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&previous_set)) {
         <b>let</b> addr = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&previous_set, i);
         <b>let</b> case = <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_now);
-        // <b>let</b> mined_last_epoch = <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr);
-        // TODO: temporary until jailing is enabled.
         <b>if</b> (
-          // TODO: We should <b>include</b> CASE 2
-          (case == 1 || case == 2) &&
-          // case == 1 &&
+          // we care about nodes that are performing consensus correctly, case 1 and 2.
+          case &lt; 3 &&
           <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
         ) {
-            <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proven_nodes, addr);
+            // <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proven_nodes, addr);
+            len_proven_nodes = len_proven_nodes + 1;
+            // also reset the jail counter for any successful unjails
+            <a href="Jail.md#0x1_Jail_remove_consecutive_fail">Jail::remove_consecutive_fail</a>(vm, addr);
+        } <b>else</b> {
+          <a href="Jail.md#0x1_Jail_jail">Jail::jail</a>(vm, addr);
         };
         i = i+ 1;
     };
 
-    <b>let</b> len_proven_nodes = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proven_nodes);
+    // <b>let</b> len_proven_nodes = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proven_nodes);
     <b>let</b> max_unproven_nodes = len_proven_nodes / 6;
     print(&len_proven_nodes);
     print(&max_unproven_nodes);
     // start from the proven nodes
-    <b>let</b> proposed_set = proven_nodes;
 
-    <b>let</b> top_accounts = <a href="NodeWeight.md#0x1_NodeWeight_top_n_accounts">NodeWeight::top_n_accounts</a>(
-        vm, <a href="Globals.md#0x1_Globals_get_max_validators_per_set">Globals::get_max_validators_per_set</a>()
-    );
+    // get all validators by consensus weight
+    <b>let</b> sorted_val_universe = <a href="NodeWeight.md#0x1_NodeWeight_get_sorted_vals">NodeWeight::get_sorted_vals</a>();
 
-    // we also need <b>to</b> explicitly filter those which did not do work.
-    <b>let</b> jailed_set = <a href="DiemSystem.md#0x1_DiemSystem_get_jailed_set">DiemSystem::get_jailed_set</a>(vm, height_start, height_now);
-
+    // sort by jail index, prioritizes nodes joining that aren't
+    // currently struggling <b>to</b> stay in the validator set.
+    <b>let</b> top_accounts = <a href="Jail.md#0x1_Jail_sort_by_jail">Jail::sort_by_jail</a>(sorted_val_universe);
     print(&top_accounts);
-    print(&jailed_set);
 
-    // <b>let</b> jailed_set = <a href="DiemSystem.md#0x1_DiemSystem_get_jailed_set">DiemSystem::get_jailed_set</a>(vm, height_start, height_now);
-    // find the top unproven nodes and add <b>to</b> the proposed set
+    // <b>loop</b> through all accounts, sorted by jail status, and then by consensus power
+    <b>let</b> proposed_set = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
+
     <b>let</b> i = 0;
     <b>while</b> (
+      // can't be more than index of accounts
       i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&top_accounts) &&
-      <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proposed_set) &lt; len_proven_nodes + max_unproven_nodes
+      // the new proposed set can only only expand by 15%
+      <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proposed_set) &lt; len_proven_nodes + max_unproven_nodes &&
+      // Validator set can only be <b>as</b> big <b>as</b> the maximum set size
+      <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proposed_set) &lt; <a href="Globals.md#0x1_Globals_get_max_validators_per_set">Globals::get_max_validators_per_set</a>()
     ) {
         <b>let</b> addr = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&top_accounts, i);
         <b>let</b> mined_last_epoch = <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr);
-
+        <b>let</b> case = <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_now);
         print(&addr);
+        print(&case);
 
         <b>if</b> (
             // ignore those already on list
             !<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&proposed_set, &addr) &&
             // jail the current validators which did not perform.
-            !<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&jailed_set, &addr) &&
-            // check the unproven node <b>has</b> done a minimum of work
-            mined_last_epoch &&
+            !<a href="Jail.md#0x1_Jail_is_jailed">Jail::is_jailed</a>(addr) &&
+            // <b>if</b> they are not a current case 1 or 2, then they are
+            // rejoining and need <b>to</b> have mining proofs.
+            // case 2 get grace
+            (case &lt; 3 || mined_last_epoch) &&
+            // do the remaining configuration checks, incl vouching
             <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
         ) {
-            print(&901);
+            print(&99990901);
             <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proposed_set, addr);
         };
-        i = i+ 1;
+        i = i + 1;
     };
 
     print(&proposed_set);
 
+    //////// Failover Rules ////////
     // If the cardinality of validator_set in the next epoch is less than 4,
     // <b>if</b> we are failing <b>to</b> qualify anyone. Pick top 1/2 of validator set
     // by proposals. They are probably online.
@@ -398,7 +409,7 @@
       // positions full. Will make the burn amount much smaller over time.
       <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(proposed_set) &gt; 90
     ) {
-      &<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>(vm)
+      &<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>()
     } <b>else</b> {
       proposed_set
     };

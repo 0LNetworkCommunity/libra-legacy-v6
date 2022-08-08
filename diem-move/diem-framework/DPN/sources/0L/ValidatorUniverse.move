@@ -21,6 +21,7 @@ address DiemFramework {
         validators: vector<address>
     }
 
+    // deprecated
     struct JailedBit has key {
         is_jailed: bool
     }
@@ -77,21 +78,20 @@ address DiemFramework {
 
     // A simple public function to query the EligibleValidators.
     // Function code: 03 Prefix: 220103
-    public fun get_eligible_validators(vm: &signer): vector<address> acquires ValidatorUniverse {
-      assert!(Signer::address_of(vm) == @DiemRoot, Errors::requires_role(220103));
+    public fun get_eligible_validators(): vector<address> acquires ValidatorUniverse {
       let state = borrow_global<ValidatorUniverse>(@DiemRoot);
       *&state.validators
     }
 
     // Is a candidate for validation
-    public fun is_in_universe(miner: address): bool acquires ValidatorUniverse {
+    public fun is_in_universe(addr: address): bool acquires ValidatorUniverse {
       let state = borrow_global<ValidatorUniverse>(@DiemRoot);
-      Vector::contains<address>(&state.validators, &miner)
+      Vector::contains<address>(&state.validators, &addr)
     }
 
     public fun jail(vm: &signer, validator: address) acquires JailedBit{
       assert!(Signer::address_of(vm) == @DiemRoot, 220101014010);
-
+      assert!(exists<JailedBit>(validator), 220101014011);
       borrow_global_mut<JailedBit>(validator).is_jailed = true;
     }
 
@@ -99,7 +99,7 @@ address DiemFramework {
       // only a validator can un-jail themselves.
       let validator = Signer::address_of(sender);
       // check the node has been mining before unjailing.
-      assert!(TowerState::node_above_thresh(validator), 220102014010);
+      assert!(TowerState::node_above_thresh(validator), 220101014013);
       unjail(sender);
     }
 
@@ -133,7 +133,7 @@ address DiemFramework {
     //////// TEST ////////
 
     public fun test_helper_add_self_onboard(vm: &signer, addr:address) acquires ValidatorUniverse {
-      assert!(Testnet::is_testnet(), 220116014011);
+      assert!(Testnet::is_testnet(), 220101014014);
       assert!(Signer::address_of(vm) == @DiemRoot, 220101015010);
       let state = borrow_global_mut<ValidatorUniverse>(@DiemRoot);
       Vector::push_back<address>(&mut state.validators, addr);
