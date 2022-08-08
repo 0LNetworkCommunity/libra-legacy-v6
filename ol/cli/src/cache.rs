@@ -11,6 +11,7 @@ use std::{
     fs::{self, File},
     io::Write,
     path::PathBuf,
+    process::exit,
 };
 
 /// caching database name, to be appended to node_home
@@ -46,10 +47,20 @@ impl Vitals {
     /// reach the json cache
     pub fn read_json(node_home: &PathBuf) -> Vitals {
         let cache_path = get_cache_path(node_home);
-        let file = fs::File::open(cache_path).expect("file should open read only");
-        let deser: Vitals = serde_json::from_reader(file).expect("file should be proper JSON");
-
-        deser
+        let file = match fs::File::open(cache_path) {
+            Ok(f) => f,
+            Err(e) => {
+                println!("Could not open file: \nError {}", e);
+                exit(1)
+            },
+        };
+        match serde_json::from_reader(file) {
+            Ok(value) => value,
+            Err(e) => {
+                println!("Could not read json file: \nError {}", e);
+                exit(1)
+            }
+        }
     }
 
     /// write json cache
@@ -63,8 +74,13 @@ impl Vitals {
 
         // after writing temporary file renames and overwrite to cache file
         let cache_path = get_cache_path(node_home);
-        rename(temp_path, cache_path).expect("temporary cache file should be renamed");
-        Ok(())
+        match rename(temp_path, cache_path) {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                println!("Could not rename json: \nError {}", e);
+                exit(1)
+            },
+        }
     }
 }
 
