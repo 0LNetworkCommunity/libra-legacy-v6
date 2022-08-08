@@ -234,7 +234,7 @@ module TowerState {
     ) acquires TowerProofHistory, TowerList, TowerCounter, VDFDifficulty {
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
-      let diff = borrow_global_mut<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
+      // let diff = borrow_global<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
 
       // This may be the 0th proof of an end user that hasn't had tower state initialized
       if (!is_init(miner_addr)) {
@@ -250,10 +250,63 @@ module TowerState {
         return
       };
 
+      check_difficulty(miner_addr, &proof);
 
-      // Skip this check on local tests, we need tests to send different difficulties.
+      // // Skip this check on local tests, we need tests to send different difficulties.
+      // if (!Testnet::is_testnet()){
+      //   // Get vdf difficulty constant. Will be different in tests than in production.
+        
+      //   // need to also give allowance for user's first proof in epoch to be in the last proof.
+      //   if (get_count_in_epoch(miner_addr) == 0) { 
+      //     // first proof in this epoch, can be either the previous difficulty or the current one
+      //     let is_diff = &proof.difficulty == &diff.difficulty ||
+      //     &proof.difficulty == &diff.prev_diff;
+
+      //     let is_sec = &proof.security == &diff.security ||
+      //     &proof.security == &diff.prev_sec;
+
+      //     assert(is_diff, Errors::invalid_argument(130102));
+      //     assert(is_sec, Errors::invalid_argument(13010202));
+      //   } else {
+      //     assert(&proof.difficulty == &diff.difficulty, Errors::invalid_argument(130102));
+      //     assert(&proof.security == &diff.security, Errors::invalid_argument(13010202));
+      //   };
+      // };
+      // Process the proof
+      verify_and_update_state(miner_addr, proof, true);
+    }
+
+    // This function is called by the OPERATOR associated with node,
+    // it verifies the proof and commits to chain.
+    // Function index: 02
+    // Permissions: PUBLIC, ANYONE
+    public fun commit_state_by_operator(
+      operator_sig: &signer,
+      miner_addr: address,
+      proof: Proof
+    ) acquires TowerProofHistory, TowerList, TowerCounter, VDFDifficulty {
+
+      // Check the signer is in fact an operator delegated by the owner.
+      
+      // Get address, assumes the sender is the signer.
+      assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), Errors::requires_role(130103));
+      // Abort if not initialized. Assumes the validator Owner account already has submitted the 0th miner proof in onboarding.
+      assert(exists<TowerProofHistory>(miner_addr), Errors::not_published(130104));
+
+      // Return early if difficulty and security are not correct.
+      // Check vdf difficulty constant. Will be different in tests than in production.
+      // Skip this check on local tests, we need tests to send differentdifficulties.
+      check_difficulty(miner_addr, &proof);
+      
+      // Process the proof
+      verify_and_update_state(miner_addr, proof, true);
+      
+    }
+
+    fun check_difficulty(miner_addr: address, proof: &Proof) acquires TowerProofHistory, VDFDifficulty {
       if (!Testnet::is_testnet()){
-        // Get vdf difficulty constant. Will be different in tests than in production.
+        // Get vdf difficulty constant. Will be different in tests than in production.ex
+        let diff = borrow_global<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
         
         // need to also give allowance for user's first proof in epoch to be in the last proof.
         if (get_count_in_epoch(miner_addr) == 0) { 
@@ -271,45 +324,8 @@ module TowerState {
           assert(&proof.security == &diff.security, Errors::invalid_argument(13010202));
         };
       };
-      // Process the proof
-      verify_and_update_state(miner_addr, proof, true);
+
     }
-
-    // This function is called by the OPERATOR associated with node,
-    // it verifies the proof and commits to chain.
-    // Function index: 02
-    // Permissions: PUBLIC, ANYONE
-    public fun commit_state_by_operator(
-      operator_sig: &signer,
-      miner_addr: address,
-      proof: Proof
-    ) acquires TowerProofHistory, TowerList, TowerCounter {
-
-      // Check the signer is in fact an operator delegated by the owner.
-      
-      // Get address, assumes the sender is the signer.
-      assert(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), Errors::requires_role(130103));
-      // Abort if not initialized. Assumes the validator Owner account already has submitted the 0th miner proof in onboarding.
-      assert(exists<TowerProofHistory>(miner_addr), Errors::not_published(130104));
-
-      // Return early if difficulty and security are not correct.
-      // Check vdf difficulty constant. Will be different in tests than in production.
-      // Skip this check on local tests, we need tests to send differentdifficulties.
-      if (!Testnet::is_testnet()){
-        assert(&proof.difficulty == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_argument(130105));
-        assert(&proof.security == &Globals::get_vdf_security_baseline(), Errors::invalid_state(130106));
-      };
-      
-      // Process the proof
-      verify_and_update_state(miner_addr, proof, true);
-      
-      // TODO: The operator mining needs its own struct to count mining.
-      // For now it is implicit there is only 1 operator per validator, 
-      // and that the fullnode state is the place to count.
-      // This will require a breaking change to TowerState
-      // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
-    }
-
     // Function to verify a proof blob and update a TowerProofHistory
     // Permissions: private function.
     // Function index: 03
