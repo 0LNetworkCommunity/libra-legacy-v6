@@ -12,13 +12,17 @@ pub struct StateSyncConfig {
     // (in milliseconds)
     pub client_commit_timeout_ms: u64,
     // default timeout used for long polling to remote peer
+    // this is only used by fullnodes
     pub long_poll_timeout_ms: u64,
     // valid maximum chunk limit for sanity check
     pub max_chunk_limit: u64,
     // valid maximum timeout limit for sanity check
+    // This timeout applies to the process_request_for_target_and_highest
+    // if the chunk cannot be applied now, then insert it in a subscription
+    // to apply. The subscription expires at max_timeout_ms
     pub max_timeout_ms: u64,
     // The timeout of the state sync coordinator to receive a commit ack
-    // from mempool (in milliseconds)
+    // from mempool (in milliseconds). Stops sending.
     pub mempool_commit_timeout_ms: u64,
     // default timeout to make state sync progress by sending chunk requests
     // to a certain number of networks
@@ -29,6 +33,7 @@ pub struct StateSyncConfig {
     // (i.e., the maximum time between commits when processing a sync request).
     pub sync_request_timeout_ms: u64,
     // interval used for checking state synchronization progress
+    // IMPORTANT: the mempool peer ack timeout is determined by 2X this number
     pub tick_interval_ms: u64,
 
     // Everything above belongs to state sync v1 and will be removed in the future.

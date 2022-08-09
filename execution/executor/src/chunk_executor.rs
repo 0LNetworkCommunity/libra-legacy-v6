@@ -120,7 +120,7 @@ impl<V> ChunkExecutor<V> {
         /////// 0L /////////
         let latency = start_time.elapsed();
         metrics_timer_stxl.observe_duration();
-        dbg!("save_transactions latency", &latency);
+        debug!("save_transactions latency: {:?}", &latency);
 
         self.commit_queue.lock().dequeue()?;
         Ok(to_commit)
@@ -152,7 +152,7 @@ impl<V: VMExecutor> ChunkExecutorTrait for ChunkExecutor<V> {
         /////// 0L /////////
         let latency = start_time.elapsed();
         metrics_timer_vl.observe_duration();
-        dbg!("verify_chunk latency", &latency);
+        debug!("verify_chunk latency: {:?}", &latency);
         
         // Skip transactions already in ledger.
         let txns_to_skip = txn_list_with_proof.proof.verify_extends_ledger(
@@ -192,7 +192,7 @@ impl<V: VMExecutor> ChunkExecutorTrait for ChunkExecutor<V> {
         /////// 0L /////////
         let latency = start_time.elapsed();
         metrics_timer_el.observe_duration();
-        dbg!("execute_chunk latency", &latency);        
+        debug!("execute_chunk latency: {:?}", &latency);
 
         // Add result to commit queue.
         self.commit_queue.lock().enqueue(executed_chunk);

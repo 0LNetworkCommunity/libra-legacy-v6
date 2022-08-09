@@ -99,7 +99,8 @@ pub fn reset_safety_data(path: &PathBuf, namespace: &str) {
     );
     let key = &format!("{}/{}", namespace, SAFETY_DATA);
     storage
-      .set(key, SafetyData::new(0, 0, 0, None))
+      .set(key, SafetyData::new(0, 0, 0, 0, None))
+        // 0L todo: review `one_chain_round` arg value
       .unwrap();
 }
 

@@ -547,8 +547,8 @@ impl DiemVM {
             .or_else(|e| {
                 /////// 0L /////////
                 println!("error here\n");
-                dbg!(&proposer);
-                dbg!(&previous_vote);
+                debug!("proposer: {:?}", &proposer);
+                debug!("previous vote: {:?}", &previous_vote);
                 
                 expect_only_successful_execution(e, BLOCK_PROLOGUE.as_str(), log_context)
             })?;

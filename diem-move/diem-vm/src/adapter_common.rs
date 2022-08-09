@@ -231,17 +231,7 @@ pub(crate) fn execute_block_impl<A: VMAdapter, S: StateView>(
         let (vm_status, output, sender) =
             adapter.execute_single_transaction(&txn, data_cache, &log_context)?;
 
-        /////// 0L /////////
-        // match &txn {
-        //     PreprocessedTransaction::UserTransaction(t) => {
-        //         dbg!(&t.sequence_number());
-        //     },
-        //     _ => {},
-        // };
-        // dbg!("tx sender", &sender);
-        // let latency = start_time.elapsed();
         metric_single_tx_lat.observe_duration();
-        // dbg!("single tx latency", &latency);
 
         if !output.status().is_discarded() {
             data_cache.push_write_set(output.write_set());

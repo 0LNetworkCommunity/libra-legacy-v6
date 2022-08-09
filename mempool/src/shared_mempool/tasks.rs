@@ -104,9 +104,9 @@ pub(crate) async fn process_client_transaction_submission<V>(
 ) where
     V: TransactionValidation,
 { 
-    dbg!("new transaction", &transaction);
-    dbg!("new transaction", &transaction.sender());
-    dbg!("new transaction", &transaction.sequence_number());
+    debug!("new transaction: {:?}", &transaction);
+    debug!("new transaction sender: {:?}", &transaction.sender());
+    debug!("new transaction seq number: {:?}", &transaction.sequence_number());
 
     timer.stop_and_record();
     let _timer = counters::process_txn_submit_latency_timer_client();
@@ -157,6 +157,10 @@ pub(crate) async fn process_transaction_broadcast<V>(
 ) where
     V: TransactionValidation,
 {
+    /////// 0L /////////
+    warn!("process_transaction_broadcast from other node {:?}", &peer);
+    counters::TASKS_PROCESS_TX_BROADCAST_EVENT.inc();
+
     timer.stop_and_record();
     let _timer = counters::process_txn_submit_latency_timer(peer.network_id());
     let results = process_incoming_transactions(&smp, transactions, timeline_state);
@@ -164,7 +168,9 @@ pub(crate) async fn process_transaction_broadcast<V>(
 
     let ack_response = gen_ack_response(request_id, results, &peer);
     let network_sender = smp.network_interface.sender();
-    if let Err(e) = network_sender.send_to(peer, ack_response) {
+    /////// 0L /////////
+    if let Err(e) = network_sender.send_to(peer, ack_response.clone()) {
+        error!("process_transaction_broadcast network error, {:?}, message: {:?}", &peer, &ack_response);
         counters::network_send_fail_inc(counters::ACK_TXNS);
         error!(
             LogSchema::event_log(LogEntry::BroadcastACK, LogEvent::NetworkSendFail)
@@ -184,7 +190,12 @@ fn gen_ack_response(
 ) -> MempoolSyncMsg {
     let mut backoff_and_retry = false;
     for (_, (mempool_status, _)) in results.into_iter() {
+        // 0L TODO: when is backoff submitted when mempool is full.
         if mempool_status.code == MempoolStatusCode::MempoolIsFull {
+            /////// 0L /////////
+            debug!("mempool is full, responding to peer with backoff.");
+            counters::SELF_REQUEST_BACKOFF.inc();
+            
             backoff_and_retry = true;
             break;
         }
@@ -264,6 +275,7 @@ where
                 if t.sequence_number() == crsn_or_seqno.min_seq() {
                     return Some((t, crsn_or_seqno));
                 } else if let Sequential(sequence_number) = crsn_or_seqno {
+                    // discard transactions that are too new.
                     if t.sequence_number() > sequence_number {
                         statuses.push((
                             t,
@@ -381,10 +393,14 @@ fn log_txn_process_results(results: &[SubmissionStatusBundle], sender: Option<Pe
 
 /// Only applies to Validators. Either provides transactions to consensus [`GetBlockRequest`] or
 /// handles rejecting transactions [`RejectNotification`]
-pub(crate) fn process_consensus_request<V: TransactionValidation>(
-    smp: &SharedMempool<V>,
+pub(crate) async fn process_consensus_request<V: TransactionValidation>( /////// 0L /////////
+    smp: SharedMempool<V>,
     req: ConsensusRequest,
 ) {
+    /////// 0L /////////
+    debug!("process_consensus_request");
+    counters::TASKS_PROCESS_CONSENSUS_REQUEST_EVENT.inc();
+
     // Start latency timer
     let start_time = Instant::now();
     debug!(LogSchema::event_log(LogEntry::Consensus, LogEvent::Received).consensus_msg(&req));
@@ -442,8 +458,7 @@ pub(crate) fn process_consensus_request<V: TransactionValidation>(
     };
     let latency = start_time.elapsed();
     
-    dbg!("mempool_service latency", &latency);
-
+    debug!("mempool_service latency: {:?}", &latency);
 
     counters::mempool_service_latency(counter_label, result, latency);
 }
