@@ -105,7 +105,8 @@ before and after every transaction.
 -  [Function `vm_init_slow`](#0x1_DiemAccount_vm_init_slow)
 -  [Function `set_slow`](#0x1_DiemAccount_set_slow)
 -  [Function `slow_wallet_epoch_drip`](#0x1_DiemAccount_slow_wallet_epoch_drip)
--  [Function `update_unlocked_tracker`](#0x1_DiemAccount_update_unlocked_tracker)
+-  [Function `decrease_unlocked_tracker`](#0x1_DiemAccount_decrease_unlocked_tracker)
+-  [Function `increase_unlocked_tracker`](#0x1_DiemAccount_increase_unlocked_tracker)
 -  [Function `is_slow`](#0x1_DiemAccount_is_slow)
 -  [Function `unlocked_amount`](#0x1_DiemAccount_unlocked_amount)
 -  [Function `get_slow_list`](#0x1_DiemAccount_get_slow_list)
@@ -2736,18 +2737,6 @@ Return a unique capability granting permission to withdraw from the sender's acc
         !<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&community_wallets, &sender_addr),
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)
     );
-    // Slow wallet transfers disabled by default, enabled when epoch is 1000
-    // At that point slow wallets receive 1,000 coins unlocked per day.
-    // <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(sender_addr) && !DiemConfig::check_transfer_enabled() ) {
-    //   // <b>if</b> transfers are not enabled for slow wallets
-    //   // then the tx should fail
-    //     <b>assert</b>!(
-    //         <b>false</b>,
-    //         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE">ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE</a>)
-    //     );
-    // };
-
-    // Abort <b>if</b> we already extracted the unique withdraw capability for this account.
     <b>assert</b>!(
         !<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(sender_addr),
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED">EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED</a>)
@@ -3082,9 +3071,14 @@ attestation protocol
     );
     /////// 0L /////////
     // in case of slow wallet <b>update</b> the tracker
-    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&cap.account_address)) {
-        <a href="DiemAccount.md#0x1_DiemAccount_update_unlocked_tracker">update_unlocked_tracker</a>(*&cap.account_address, amount);
-    };
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&cap.account_address))
+      <a href="DiemAccount.md#0x1_DiemAccount_decrease_unlocked_tracker">decrease_unlocked_tracker</a>(*&cap.account_address, amount);
+
+    // <b>if</b> a payee is a slow wallet and is receiving funds from ordinary
+    // or another slow wallet's unlocked funds, it counts toward unlocked coins.
+    // the exceptional case is community wallets, which funds don't count toward unlocks.
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee) && !<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(*&cap.account_address))
+      <a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(*&payee, amount);
 }
 </code></pre>
 
@@ -6657,13 +6651,13 @@ inflation by x% per day from the start of network.
 
 </details>
 
-<a name="0x1_DiemAccount_update_unlocked_tracker"></a>
+<a name="0x1_DiemAccount_decrease_unlocked_tracker"></a>
 
-## Function `update_unlocked_tracker`
+## Function `decrease_unlocked_tracker`
 
 
 
-<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_update_unlocked_tracker">update_unlocked_tracker</a>(payer: <b>address</b>, amount: u64)
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_decrease_unlocked_tracker">decrease_unlocked_tracker</a>(payer: <b>address</b>, amount: u64)
 </code></pre>
 
 
@@ -6672,10 +6666,35 @@ inflation by x% per day from the start of network.
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_update_unlocked_tracker">update_unlocked_tracker</a>(payer: <b>address</b>, amount: u64) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_decrease_unlocked_tracker">decrease_unlocked_tracker</a>(payer: <b>address</b>, amount: u64) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
   <b>let</b> s = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a>&gt;(payer);
   s.transferred = s.transferred + amount;
   s.unlocked = s.unlocked - amount;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_increase_unlocked_tracker"></a>
+
+## Function `increase_unlocked_tracker`
+
+
+
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(recipient: <b>address</b>, amount: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(recipient: <b>address</b>, amount: u64) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
+  <b>let</b> s = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a>&gt;(recipient);
+  s.unlocked = s.unlocked + amount;
 }
 </code></pre>
 
