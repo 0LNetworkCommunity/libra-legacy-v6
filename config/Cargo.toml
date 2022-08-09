@@ -1,6 +1,6 @@
 [package]
 name = "diem-config"
-version = "5.1.1" #/////// 0L /////////
+version = "5.1.2" #/////// 0L /////////
 authors = ["Diem Association <opensource@diem.com>"]
 description = "Diem diem-config"
 repository = "https://github.com/diem/diem"
