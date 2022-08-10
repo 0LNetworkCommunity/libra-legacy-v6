@@ -89,6 +89,10 @@ module Globals {
       get_constants().min_blocks_per_epoch
     }
 
+    /// Get the mining threshold 
+    public fun get_vouch_threshold(): u64 {
+      get_constants().vouch_threshold
+    }
 
 
     /// Get the constants for the current network 
@@ -107,6 +111,7 @@ module Globals {
           epoch_mining_thres_upper: 1000, // upper bound unlimited
           epoch_slow_wallet_unlock: 10,
           min_blocks_per_epoch: 0,
+          vouch_threshold: 0,
         }
       };
 
@@ -121,6 +126,7 @@ module Globals {
           epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
           epoch_slow_wallet_unlock: 10000000,
           min_blocks_per_epoch: 1000,
+          vouch_threshold: 0,
         }
       } else {
         return GlobalConstants {
@@ -138,6 +144,7 @@ module Globals {
           epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
           epoch_slow_wallet_unlock: 1000 * COIN_SCALING_FACTOR, // approx 10 years for largest accounts in genesis.
           min_blocks_per_epoch: 10000,
+          vouch_threshold: 2, // Production is 2 vouchers per validator
         }
       }
     }
