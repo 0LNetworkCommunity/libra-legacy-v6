@@ -118,7 +118,7 @@ module Globals {
           epoch_slow_wallet_unlock: 10,
           min_blocks_per_epoch: 0,
           vouch_threshold: 0,
-          signing_threshold_pct: 0,
+          signing_threshold_pct: 3,
         }
       };
 
@@ -134,7 +134,7 @@ module Globals {
           epoch_slow_wallet_unlock: 10000000,
           min_blocks_per_epoch: 1000,
           vouch_threshold: 0,
-          signing_threshold_pct: 0,
+          signing_threshold_pct: 3,
         }
       } else {
         return GlobalConstants {
