@@ -438,8 +438,7 @@ fn update_waypoint(mut app_cfg: AppCfg, waypoint_opt: Option<Waypoint>,  swarm_p
         Some(w) => w,
         None => {
             let client = client::pick_client(swarm_path, &mut app_cfg)?;
-
-            match client.get_waypoint_state()? {
+            match client.get_waypoint()?.into_inner() {
                 Some(wv) => wv.waypoint,
                 None => bail!("could not get waypoint view from chain"),
             }
