@@ -5,11 +5,11 @@ use ol_types::config::IS_PROD;
 use reqwest;
 use serde_json::json;
 use serde_json::Error;
+use std::process::exit;
 use std::{fs, io, path::PathBuf, process::Command, thread, time::Duration};
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 use warp::{sse::Event, Filter};
-use std::process::exit;
 
 use crate::{cache::Vitals, check::runner, node::node::Node};
 
@@ -31,7 +31,13 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
         let interval = interval(Duration::from_secs(10));
         let stream = IntervalStream::new(interval);
         let event_stream = stream.map(move |_| {
-            let vitals = Vitals::read_json(&path).unwrap();
+            let vitals = match Vitals::read_json(&path) {
+                Ok(v) => v,
+                Err(e) => {
+                    println!("{}", e);
+                    exit(1)
+                }
+            };
             sse_vitals(vitals)
         });
         // reply using server-sent events
@@ -48,14 +54,27 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
             Err(msg) => {
                 println!("Could not read {}: \nError {}", account_file_name, msg);
                 exit(1)
-            },
+            }
         }
     });
 
     let node_home = cfg.clone().workspace.node_home.clone();
     let epoch_route = warp::path("epoch.json").and(warp::get()).map(move || {
         // let node_home = node_home_two.clone();
-        let vitals = Vitals::read_json(&node_home).unwrap().chain_view.unwrap();
+        let vitals = match Vitals::read_json(&node_home) {
+            Ok(v) => {
+                if let Some(v) = v.chain_view {
+                    v
+                } else {
+                    println!("No chain metadata");
+                    exit(1)
+                }
+            }
+            Err(e) => {
+                println!("{}", e);
+                exit(1)
+            }
+        };
         let json = json!({
           "epoch": vitals.epoch,
           "waypoint": vitals.waypoint.unwrap().to_string()

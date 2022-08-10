@@ -49,11 +49,11 @@ impl Vitals {
         let cache_path = get_cache_path(node_home);
         let file = match fs::File::open(cache_path) {
             Ok(f) => f,
-            Err(e) => return Err("Could not open the json file".to_string())
+            Err(_) => return Err("Could not open the json file".to_string()),
         };
         match serde_json::from_reader(file) {
             Ok(value) => value,
-            Err(e) => Err("Could not read json content".to_string())
+            Err(_) => Err("Could not read json content".to_string()),
         }
     }
 
@@ -73,7 +73,7 @@ impl Vitals {
             Err(e) => {
                 println!("Could not rename json: \nError {}", e);
                 exit(1)
-            },
+            }
         }
     }
 }
