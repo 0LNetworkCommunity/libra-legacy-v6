@@ -45,21 +45,15 @@ pub struct Vitals {
 
 impl Vitals {
     /// reach the json cache
-    pub fn read_json(node_home: &PathBuf) -> Vitals {
+    pub fn read_json(node_home: &PathBuf) -> Result<Vitals, Error> {
         let cache_path = get_cache_path(node_home);
         let file = match fs::File::open(cache_path) {
             Ok(f) => f,
-            Err(e) => {
-                println!("Could not open file: \nError {}", e);
-                exit(1)
-            },
+            Err(e) => return Err(e)
         };
         match serde_json::from_reader(file) {
             Ok(value) => value,
-            Err(e) => {
-                println!("Could not read json file: \nError {}", e);
-                exit(1)
-            }
+            Err(e) => Err(e)
         }
     }
 
