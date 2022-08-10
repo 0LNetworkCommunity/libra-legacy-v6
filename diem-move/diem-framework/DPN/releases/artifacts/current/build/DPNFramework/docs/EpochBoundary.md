@@ -36,6 +36,7 @@
 <b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
+<b>use</b> <a href="Vouch.md#0x1_Vouch">0x1::Vouch</a>;
 </code></pre>
 
 
@@ -239,7 +240,6 @@
           case &lt; 3 &&
           <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
         ) {
-            // <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proven_nodes, addr);
             len_proven_nodes = len_proven_nodes + 1;
             // also reset the jail counter for any successful unjails
             <a href="Jail.md#0x1_Jail_remove_consecutive_fail">Jail::remove_consecutive_fail</a>(vm, addr);
@@ -282,7 +282,7 @@
         print(&case);
 
         <b>if</b> (
-            // ignore those already on list
+            // ignore proven nodes already on list
             !<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&proposed_set, &addr) &&
             // jail the current validators which did not perform.
             !<a href="Jail.md#0x1_Jail_is_jailed">Jail::is_jailed</a>(addr) &&
@@ -291,8 +291,13 @@
             // case 2 get grace
             (case &lt; 3 || mined_last_epoch) &&
             // do the remaining configuration checks, incl vouching
-            <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr)
-        ) {
+            <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr) &&
+            // when being onboarded or being un-jailed check <b>if</b> the vouches
+            // are sufficient. I.e. don't do this check <b>if</b> the validator
+            // <b>has</b> proven themselves in the previous round. If your
+            // vouchers fall out of the set, you may also fall out,
+            // and this chain reaction would cause instability in the network.
+            <a href="Vouch.md#0x1_Vouch_unrelated_buddies_above_thresh">Vouch::unrelated_buddies_above_thresh</a>(addr)            ) {
             print(&99990901);
             <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proposed_set, addr);
         };

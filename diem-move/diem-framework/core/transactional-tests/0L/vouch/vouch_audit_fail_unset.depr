@@ -11,7 +11,7 @@ script {
     use DiemFramework::Testnet;
     use DiemFramework::Debug::print;
 
-    fun main(vm: signer, _alice_sig: signer) {
+    fun main(vm: signer, _Alice_sig: signer) {
         Testnet::remove_testnet(&vm);
         // // Test audit function val_audit_passing satisfying all conditions
         assert!(ValidatorConfig::is_valid(@Alice), 7257001);
@@ -22,7 +22,7 @@ script {
         
         // // enable autopay
         // assert!(!AutoPay::is_enabled(@Alice), 7357007003003);
-        // AutoPay::enable_autopay(&alice_sig);
+        // AutoPay::enable_autopay(&Alice_sig);
         // assert!(AutoPay::is_enabled(@Alice), 7357007003004);
 
         // assert!(TowerState::is_init(@Alice), 7357007003005);

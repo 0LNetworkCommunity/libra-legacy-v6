@@ -7,6 +7,8 @@
 
 //# block --proposer Alice --time 1 --round 0
 
+// NewBlockEvent
+
 //# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::DiemSystem;
@@ -16,7 +18,7 @@ script {
     use DiemFramework::DiemAccount;
     use DiemFramework::Debug::print;
 
-    fun main(_dr: signer, sender: signer) {
+    fun main(_: signer, sender: signer) {
         // Tests on initial size of validators
         assert!(DiemSystem::validator_set_size() == 5, 7357300101011000);
         assert!(DiemSystem::is_validator(@Alice) == true, 7357300101021000);
@@ -43,7 +45,7 @@ script {
     use DiemFramework::Stats;
 
     // This is the the epoch boundary.
-    fun main(vm: signer, _: signer) {
+    fun main(_: signer, vm: signer) {
         // This is not an onboarding case, steady state.
         // FullnodeState::test_set_fullnode_fixtures(
         //     &vm, @Alice, 0, 0, 0, 200, 200, 1000000
@@ -72,7 +74,7 @@ script {
     use Std::Vector;
     use DiemFramework::DiemSystem;
     
-    fun main(vm: signer, _: signer) {
+    fun main(_: signer, vm: signer) {
         // We are in a new epoch.
         // Check Alice is in the the correct case during reconfigure
         assert!(Cases::get_case(&vm, @Alice, 0, 15) == 1, 735700018010901);
@@ -84,6 +86,25 @@ script {
         // check only 1 val is getting the subsidy
         let (vals, _) = DiemSystem::get_fee_ratio(&vm, 0, 100);
         assert!(Vector::length<address>(&vals) == 1, 7357000180111);
+
+    }
+}
+
+//# run --admin-script --signers DiemRoot Bob
+script {
+    use DiemFramework::Vouch;
+    
+    fun main(_: signer, sender: signer) {
+      Vouch::revoke(&sender, @Alice);
+    }
+}
+
+//# run --admin-script --signers DiemRoot Carol
+script {
+    use DiemFramework::Vouch;
+    
+    fun main(_: signer, sender: signer) {
+      Vouch::revoke(&sender, @Alice);
     }
 }
 
@@ -92,7 +113,7 @@ script {
 //# block --proposer Alice --time 61000000 --round 15
 
 ///// TEST RECONFIGURATION IS HAPPENING ////
-// check: NewEpochEvent
+// NewEpochEvent
 //////////////////////////////////////////////
 
 //# run --admin-script --signers DiemRoot DiemRoot
@@ -103,10 +124,12 @@ script {
     use DiemFramework::Subsidy;
     use DiemFramework::Globals;
     use DiemFramework::TowerState;
-    use DiemFramework::Debug::print;
+    use DiemFramework::DiemSystem;
 
+    use DiemFramework::Debug::print;
     fun main() {
         // We are in a new epoch.
+        assert!(DiemSystem::is_validator(@Alice) == true, 7357300101021000);
 
         let expected_subsidy = Subsidy::subsidy_curve(
           Globals::get_subsidy_ceiling_gas(),
@@ -122,8 +145,7 @@ script {
         // the entirety of subsidy available.
         let burn = expected_subsidy/2; // 50% of the rewrd to validator. 
 
-        let ending_balance 
-            = starting_balance + expected_subsidy - operator_refund - burn;
+        let ending_balance = starting_balance + expected_subsidy - operator_refund - burn;
         print(&ending_balance);
         print(&DiemAccount::balance<GAS>(@Alice));
 

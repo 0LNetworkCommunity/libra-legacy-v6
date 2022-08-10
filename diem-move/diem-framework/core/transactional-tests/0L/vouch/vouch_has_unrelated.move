@@ -1,7 +1,7 @@
 //# init --validators Alice Bob Carol Dave Eve Frank
 // Validators with 10M GAS
 
-// TODO: Unsure how to send a tx so that both alice and bob are signers. 
+// TODO: Unsure how to send a tx so that both Alice and bob are signers. 
 //       Testsuite only seems to allow diemroot and another signer.
 
 //# run --admin-script --signers DiemRoot Alice
@@ -9,8 +9,8 @@ script {
   use DiemFramework::Vouch;
   // use Std::Signer;
   // use DiemFramework::Debug::print;
-  fun main(_dr: signer, alice: signer) {
-    Vouch::init(&alice);
+  fun main(_dr: signer, Alice: signer) {
+    Vouch::init(&Alice);
     assert!(Vouch::is_init(@Alice), 7347001);
 
   }
@@ -43,12 +43,12 @@ script {
   use Std::Vector;
   use Std::Signer;
 
-  fun main(_dr: signer, carol_sig: signer) {
+  fun main(_dr: signer, Carol_sig: signer) {
     assert!(Vouch::is_init(@Alice), 7347004);
 
-    Vouch::vouch_for(&carol_sig, @Alice);
+    Vouch::vouch_for(&Carol_sig, @Alice);
     let includes = Vector::contains(
-      &Vouch::get_buddies(@Alice), &Signer::address_of(&carol_sig)
+      &Vouch::get_buddies(@Alice), &Signer::address_of(&Carol_sig)
     );
 
     assert!(includes, 7357005);

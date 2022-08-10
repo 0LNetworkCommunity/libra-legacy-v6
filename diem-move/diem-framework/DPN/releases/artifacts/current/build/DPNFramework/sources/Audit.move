@@ -12,7 +12,7 @@ address DiemFramework {
     use DiemFramework::AutoPay;
     use DiemFramework::TowerState;
     use DiemFramework::Testnet;
-    use DiemFramework::Vouch;    
+    // use DiemFramework::Vouch;
 
     public fun val_audit_passing(val: address): bool {
       // has valid configs
@@ -27,7 +27,7 @@ address DiemFramework {
       // is a slow wallet
       if (!DiemAccount::is_slow(val)) return false;
 
-      if (!Vouch::unrelated_buddies_above_thresh(val)) return false;
+      // if (!Vouch::unrelated_buddies_above_thresh(val)) return false;
 
       true
     }

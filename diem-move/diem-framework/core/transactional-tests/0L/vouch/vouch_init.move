@@ -1,14 +1,14 @@
 //# init --validators Alice Bob
 
-// TODO: Unsure how to send a tx so that both alice and bob are signers. 
+// TODO: Unsure how to send a tx so that both Alice and bob are signers. 
 //       Testsuite only seems to allow diemroot and another signer.
 
 //# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::Vouch;
 
-  fun main(_dr: signer, alice: signer) {
-    Vouch::init(&alice);
+  fun main(_dr: signer, Alice: signer) {
+    Vouch::init(&Alice);
     assert!(Vouch::is_init(@Alice), 7347001);
   }
 }

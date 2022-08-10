@@ -9,14 +9,14 @@ script {
     use DiemFramework::Testnet;
     use DiemFramework::Debug::print;
 
-    fun main(vm: signer, alice_sig: signer) {
+    fun main(vm: signer, Alice_sig: signer) {
         // NOTE: when you remove testnet, you will not see the specific error
         // code of the assert!() that fails. You will only see a writeset rejection.
         Testnet::remove_testnet(&vm);
 
         assert!(ValidatorConfig::is_valid(@Alice), 7257001);
         
-        Vouch::init(&alice_sig);
+        Vouch::init(&Alice_sig);
 
         let buddies = Vector::singleton<address>(@Bob);
         Vector::push_back(&mut buddies, @Carol);
