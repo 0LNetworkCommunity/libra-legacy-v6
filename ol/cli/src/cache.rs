@@ -4,14 +4,12 @@ use crate::{
     mgmt::management::HostProcess,
     node::{account::OwnerAccountView, chain_view::ChainView, states::HostState},
 };
-use anyhow::Error;
 use serde::{Deserialize, Serialize};
 use std::{
     fs::rename,
     fs::{self, File},
     io::Write,
     path::PathBuf,
-    process::exit,
 };
 
 /// caching database name, to be appended to node_home
@@ -58,7 +56,7 @@ impl Vitals {
     }
 
     /// write json cache
-    pub fn write_json(&self, node_home: &PathBuf) -> Result<(), Error> {
+    pub fn write_json(&self, node_home: &PathBuf) -> Result<(), std::io::Error> {
         let serialized = serde_json::to_vec(&self)?;
 
         // uses temporary file to avoid listeners reading partial content
@@ -68,13 +66,8 @@ impl Vitals {
 
         // after writing temporary file renames and overwrite to cache file
         let cache_path = get_cache_path(node_home);
-        match rename(temp_path, cache_path) {
-            Ok(_) => Ok(()),
-            Err(e) => {
-                println!("Could not rename json: \nError {}", e);
-                exit(1)
-            }
-        }
+        let result = rename(temp_path, cache_path)?;
+        Ok(result)
     }
 }
 
