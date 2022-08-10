@@ -222,8 +222,8 @@ impl Node {
     };
     let ms  = self.client.get_miner_state(v.account_address().clone())?.into_inner().unwrap();
     let one_val_stat = stats.get_validator_current_stats(v.account_address().clone());
-    let val_config = self.get_validator_config(v.account_address().clone()).unwrap();
-    let autopay = self.get_autopay_view(v.account_address().clone()).unwrap();
+    let val_config_opt = self.get_validator_config(v.account_address().clone());
+    let autopay_opt = self.get_autopay_view(v.account_address().clone());
 
     Ok(ValidatorView {
         account_address: v.account_address().to_string(),
@@ -241,8 +241,8 @@ impl Node {
         
         vote_count_in_epoch: one_val_stat.vote_count,
         prop_count_in_epoch: one_val_stat.prop_count,
-        validator_config: Some(val_config),
-        autopay: Some(autopay),
+        validator_config: val_config_opt,
+        autopay: autopay_opt,
         note: dict.get_note_for_address(*v.account_address()),
     })
   }
