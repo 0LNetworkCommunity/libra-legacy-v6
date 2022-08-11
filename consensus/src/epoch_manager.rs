@@ -307,9 +307,9 @@ impl EpochManager {
         // however this error if not solved, will cause a problem on the next epoch.
         if let Err(error) = safety_rules.perform_initialize() {
             error!(
-                "Unable to initialize safety rules. YOUR VALIDATOR WILL NOT BE ABLE TO SIGN BLOCKS but it will be able to sync. This is likely a problem with the restore point in your DB.",
                 epoch = epoch,
                 error = error,
+                "Unable to initialize safety rules. YOUR VALIDATOR WILL NOT BE ABLE TO SIGN BLOCKS but it will be able to sync. This is likely a problem with the restore point in your DB.",
             );
         }
 
