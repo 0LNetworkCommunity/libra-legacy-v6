@@ -31,7 +31,13 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
         let interval = interval(Duration::from_secs(10));
         let stream = IntervalStream::new(interval);
         let event_stream = stream.map(move |_| {
-            let vitals = Vitals::read_json(&path).unwrap();
+            let vitals = match Vitals::read_json(&path) {
+                Ok(v) => v,
+                Err(e) => {
+                    println!("Error reading json cache: \nError {}", e);
+                    exit(1)
+                }
+            };
             sse_vitals(vitals)
         });
         // reply using server-sent events
@@ -55,7 +61,20 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
     let node_home = cfg.clone().workspace.node_home.clone();
     let epoch_route = warp::path("epoch.json").and(warp::get()).map(move || {
         // let node_home = node_home_two.clone();
-        let chain_view = Vitals::read_json(&node_home).unwrap().chain_view.unwrap();
+        let chain_view = match Vitals::read_json(&node_home) {
+            Ok(vitals) => {
+                if let Some(v) = vitals.chain_view {
+                    v
+                } else {
+                    println!("No chain metadata found");
+                    exit(1)
+                }
+            }
+            Err(e) => {
+                println!("{}", e);
+                exit(1)
+            }
+        };
         let json = json!({
           "epoch": chain_view.epoch,
           "waypoint": chain_view.waypoint.unwrap().to_string()
