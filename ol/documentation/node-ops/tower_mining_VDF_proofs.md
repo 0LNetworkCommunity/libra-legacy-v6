@@ -88,7 +88,11 @@ tmux a -t tower
 
 ### Error Code 130109(discontinuity in proofs)
 
+```
+..Transaction failed, rejected with status: MoveAbort { location: "00000000000000000000000000000001::TowerState", abort_code: 130109, explanation: None }
+WARN: Failed processing backlog: TxError { err: Some(Transaction failed, rejected with status: MoveAbort { location: "00000000000000000000000000000001::TowerState", abort_code: 130109, explanation: None })
 Occasionally, the continutity of proofs is not subsequential due to garbage collection issues. in `.0L/vdf_proofs` you will see one extra proof that is specified in the towerState struct when checking your account resources. eg verified_tower_height: 4655 and highest proof from 0L explorer download is 4656
+```
 
 > You can check your account's resources using this `ol  -a <YOUR ACC> query -r`
 
