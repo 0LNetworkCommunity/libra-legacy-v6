@@ -31,7 +31,7 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
         let interval = interval(Duration::from_secs(10));
         let stream = IntervalStream::new(interval);
         let event_stream = stream.map(move |_| {
-            let vitals = Vitals::read_json(&path)?;
+            let vitals = Vitals::read_json(&path).unwrap();
             sse_vitals(vitals)
         });
         // reply using server-sent events
@@ -55,10 +55,10 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
     let node_home = cfg.clone().workspace.node_home.clone();
     let epoch_route = warp::path("epoch.json").and(warp::get()).map(move || {
         // let node_home = node_home_two.clone();
-        let vitals = Vitals::read_json(&node_home)?;
+        let chain_view = Vitals::read_json(&node_home).unwrap().chain_view.unwrap();
         let json = json!({
-          "epoch": vitals.epoch,
-          "waypoint": vitals.waypoint.unwrap().to_string()
+          "epoch": chain_view.epoch,
+          "waypoint": chain_view.waypoint.unwrap().to_string()
         });
         json.to_string()
     });
