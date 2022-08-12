@@ -11,6 +11,8 @@ use std::{
     io::Write,
     path::PathBuf,
 };
+use anyhow::Error;
+
 
 /// caching database name, to be appended to node_home
 pub const MONITOR_DB_PATH: &str = "/tmp/0L/monitor_db";
@@ -43,20 +45,16 @@ pub struct Vitals {
 
 impl Vitals {
     /// reach the json cache
-    pub fn read_json(node_home: &PathBuf) -> Result<Vitals, String> {
+    pub fn read_json(node_home: &PathBuf) -> Result<Vitals, Error> {
+
         let cache_path = get_cache_path(node_home);
-        let file = match fs::File::open(cache_path) {
-            Ok(f) => f,
-            Err(_) => return Err("Could not open the json file".to_string()),
-        };
-        match serde_json::from_reader(file) {
-            Ok(value) => value,
-            Err(_) => Err("Could not read json content".to_string()),
-        }
+        let file = fs::File::open(cache_path)?;
+        let value = serde_json::from_reader(file)?;
+        Ok(value)
     }
 
     /// write json cache
-    pub fn write_json(&self, node_home: &PathBuf) -> Result<(), std::io::Error> {
+    pub fn write_json(&self, node_home: &PathBuf) -> Result<(), Error> {
         let serialized = serde_json::to_vec(&self)?;
 
         // uses temporary file to avoid listeners reading partial content
