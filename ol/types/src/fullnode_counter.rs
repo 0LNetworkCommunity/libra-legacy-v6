@@ -1,13 +1,15 @@
 //! fullnode counter for system address
 
-use diem_types::{
-    access_path::AccessPath,
-    account_config::constants:: CORE_CODE_ADDRESS,
-};
 use anyhow::Result;
-use move_core_types::{ident_str, identifier::IdentStr, language_storage::{ResourceKey, StructTag}, move_resource::{MoveStructType}};
-use serde::{Deserialize, Serialize};
+use diem_types::{access_path::AccessPath, account_config::constants::CORE_CODE_ADDRESS};
 use move_core_types::account_address::AccountAddress;
+use move_core_types::{
+    ident_str,
+    identifier::IdentStr,
+    language_storage::{ResourceKey, StructTag},
+    move_resource::MoveStructType,
+};
+use serde::{Deserialize, Serialize};
 
 /// Struct that represents a CurrencyInfo resource
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,12 +28,10 @@ pub struct FullnodeCounterResource {
     pub cumulative_subsidy: u64,
 }
 
-
 impl MoveStructType for FullnodeCounterResource {
     const MODULE_NAME: &'static IdentStr = ident_str!("FullnodeState");
     const STRUCT_NAME: &'static IdentStr = ident_str!("FullnodeCounter");
 }
-
 
 impl FullnodeCounterResource {
     ///
@@ -45,10 +45,7 @@ impl FullnodeCounterResource {
     }
     ///
     pub fn access_path(account: AccountAddress) -> AccessPath {
-        let resource_key = ResourceKey::new(
-            account,
-            FullnodeCounterResource::struct_tag(),
-        );
+        let resource_key = ResourceKey::new(account, FullnodeCounterResource::struct_tag());
         AccessPath::resource_access_path(resource_key)
     }
     ///
@@ -56,7 +53,7 @@ impl FullnodeCounterResource {
         AccessPath::resource_access_vec(FullnodeCounterResource::struct_tag())
     }
 
-    /// 
+    ///
     pub fn try_from_bytes(bytes: &[u8]) -> Result<Self> {
         bcs::from_bytes(bytes).map_err(Into::into)
     }

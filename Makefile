@@ -92,7 +92,8 @@ bins: stdlib
 stdlib:
 # cargo run ${CARGO_ARGS} -p diem-framework
 	cargo run ${CARGO_ARGS} -p diem-framework -- --create-upgrade-payload
-	sha256sum language/diem-framework/staged/stdlib.mv
+# linux uses sha265sum, but not available by default on OS X
+	bash -c "sha256sum language/diem-framework/staged/stdlib.mv || shasum -a 256 language/diem-framework/staged/stdlib.mv"
   
 
 install: mv-bin bin-path
@@ -301,8 +302,8 @@ genesis:
   --layout-path ${DATA_PATH}/set_layout.toml \
 	--val-ip-address ${IP}
 
-
-	sha256sum ${DATA_PATH}/genesis.blob
+# linux uses sha265sum, but not available by default on OS X
+	bash -c "sha256sum ${DATA_PATH}/genesis.blob || shasum -a 256 ${DATA_PATH}/genesis.blob"
 
 #### NODE MANAGEMENT ####
 start:
@@ -497,7 +498,7 @@ testnet-genesis: genesis set-waypoint
 testnet: clear fix testnet-init testnet-genesis start
 
 # For subsequent validators joining the testnet. This will fetch the genesis information saved
-testnet-onboard: clear fix
+testnet-onboard: clear
 	MNEM='${MNEM}' cargo run -p onboard -- val --github-org OLSF --repo dev-genesis --chain-id ${CHAIN_ID}
 # start a node with fullnode.node.yaml configs
 	cargo r -p diem-node -- -f ~/.0L/fullnode.node.yaml

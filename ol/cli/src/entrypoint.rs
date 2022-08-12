@@ -1,11 +1,10 @@
 //! Toplevel entrypoint command.
 
 use abscissa_core::{
-    Command, command::Usage, Config, Configurable, FrameworkError, 
-    Options, Runnable    
+    command::Usage, Command, Config, Configurable, FrameworkError, Options, Runnable,
 };
-use diem_types::{account_address::AccountAddress, waypoint::Waypoint};
 use diem_global_constants::NODE_HOME;
+use diem_types::{account_address::AccountAddress, waypoint::Waypoint};
 use reqwest::Url;
 use std::path::PathBuf;
 
@@ -45,7 +44,7 @@ where
     pub account: Option<AccountAddress>,
 
     /// URL to send tx
-    #[options(help = "URL to send tx")]    
+    #[options(help = "URL to send tx")]
     pub url: Option<Url>,
 
     /// Override waypoint to connect to
@@ -141,7 +140,7 @@ where
 pub type EntryPointTxsCmd = EntryPoint<commands::OlCliCmd>;
 /// get arguments passed in the entrypoin of this app, not the subcommands
 pub fn get_args() -> EntryPointTxsCmd {
-  Command::from_env_args()
+    Command::from_env_args()
 }
 
 /// returns node_home

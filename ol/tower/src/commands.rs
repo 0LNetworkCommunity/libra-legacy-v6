@@ -1,22 +1,19 @@
 //! MinerApp Subcommands
 
+mod backlog_cmd;
 pub mod start_cmd;
 mod version_cmd;
 mod zero_cmd;
-mod backlog_cmd;
 
 use self::{
-    start_cmd::StartCmd,
-    version_cmd::VersionCmd,
-    zero_cmd::ZeroCmd,
-    backlog_cmd::BacklogCmd
+    backlog_cmd::BacklogCmd, start_cmd::StartCmd, version_cmd::VersionCmd, zero_cmd::ZeroCmd,
 };
-use ol_types::config::AppCfg;
+use crate::entrypoint;
 use abscissa_core::{
     config::Override, Command, Configurable, FrameworkError, Help, Options, Runnable,
 };
+use ol_types::config::AppCfg;
 use std::path::PathBuf;
-use crate::entrypoint;
 
 /// MinerApp Configuration Filename
 pub const CONFIG_FILE: &str = "0L.toml";
@@ -43,7 +40,6 @@ pub enum MinerCmd {
     /// The `version` subcommand
     #[options(help = "display version information")]
     Version(VersionCmd),
-
 }
 
 /// This trait allows you to define how application configuration is loaded.

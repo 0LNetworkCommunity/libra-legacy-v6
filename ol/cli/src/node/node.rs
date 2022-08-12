@@ -1,20 +1,20 @@
 //! `node` module
 
+use super::client;
+use super::{account::OwnerAccountView, states::HostState};
 use crate::{cache::Vitals, check::items::Items, config::AppCfg, mgmt::management::NodeMode};
 use anyhow::Error;
 use cli::diem_client::DiemClient;
 use diem_config::config::{NodeConfig, RocksdbConfig};
-use diemdb::DiemDB;
-use std::path::PathBuf;
-use std::{process::Command, str};
-use sysinfo::SystemExt;
-use sysinfo::{ProcessExt, ProcessStatus};
 use diem_json_rpc_client::views::TowerStateResourceView;
 use diem_types::waypoint::Waypoint;
 use diem_types::{account_address::AccountAddress, account_state::AccountState};
-use super::client;
-use super::{account::OwnerAccountView, states::HostState};
+use diemdb::DiemDB;
+use std::path::PathBuf;
+use std::{process::Command, str};
 use storage_interface::DbReader;
+use sysinfo::SystemExt;
+use sysinfo::{ProcessExt, ProcessStatus};
 
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
@@ -40,7 +40,7 @@ pub struct Node {
     /// vitals
     pub vitals: Vitals,
     /// node conf
-    pub node_conf: Option<NodeConfig>,    
+    pub node_conf: Option<NodeConfig>,
     /// TODO: deduplicate these
     pub chain_state: Option<AccountState>,
     miner_state: Option<TowerStateResourceView>,
@@ -55,26 +55,24 @@ impl Node {
             "validator.node.yaml"
         };
 
-        let node_conf = match NodeConfig::load(
-            app_cfg.workspace.node_home.join(node_yaml)
-        ){
+        let node_conf = match NodeConfig::load(app_cfg.workspace.node_home.join(node_yaml)) {
             Ok(c) => Some(c),
             Err(_) => {
-              // println!("Warn: could not find a validator config file, trying fullnode");
-              match NodeConfig::load(app_cfg.workspace.node_home.join("fullnode.node.yaml")) {
-                Ok(c) => Some(c),
-                Err(_) => {
-                  // println!("ERROR: could not find any *.node.yaml file. Will start without knowing the Node configs");
-                  None
+                // println!("Warn: could not find a validator config file, trying fullnode");
+                match NodeConfig::load(app_cfg.workspace.node_home.join("fullnode.node.yaml")) {
+                    Ok(c) => Some(c),
+                    Err(_) => {
+                        // println!("ERROR: could not find any *.node.yaml file. Will start without knowing the Node configs");
+                        None
+                    }
                 }
-              }
             }
         };
 
         return Self {
             client,
             app_conf: app_cfg.clone(),
-            node_conf: node_conf,
+            node_conf,
             vitals: Vitals {
                 host_state: HostState::new(),
                 account_view: OwnerAccountView::new(app_cfg.profile.account),
@@ -109,18 +107,18 @@ impl Node {
         // TODO: make SyncState an item, so we don't need to assign.
         // affects web-monitor structs
         if let Ok(s) = self.check_sync() {
-          self.vitals.items.is_synced = s.is_synced;
-          self.vitals.items.sync_delay = s.sync_delay;
-          self.vitals.items.sync_height = s.sync_height
+            self.vitals.items.is_synced = s.is_synced;
+            self.vitals.items.sync_delay = s.sync_delay;
+            self.vitals.items.sync_height = s.sync_height
         } else {
-          self.vitals.items.is_synced = false;
-          self.vitals.items.sync_delay = 404;
-          self.vitals.items.sync_height = 404;
+            self.vitals.items.is_synced = false;
+            self.vitals.items.sync_delay = 404;
+            self.vitals.items.sync_height = 404;
         }
         self.vitals.items.validator_set = self.is_in_validator_set();
         self.vitals.items.has_autopay = self.vitals.account_view.has_autopay_not_empty();
         self.vitals.items.has_operator_set = self.vitals.account_view.has_operator();
-        self.vitals.items.has_operator_positive_balance = 
+        self.vitals.items.has_operator_positive_balance =
             self.vitals.account_view.has_operator_positive_balance();
         self
     }
@@ -131,9 +129,7 @@ impl Node {
             Ok(account_state) => Some(account_state),
             Err(_) => None,
         };
-        self.miner_state = match self.client.get_miner_state(
-            &self.app_conf.profile.account
-        ) {
+        self.miner_state = match self.client.get_miner_state(&self.app_conf.profile.account) {
             Ok(state) => state,
             _ => None,
         };
@@ -187,9 +183,7 @@ impl Node {
                 }
                 false
             }
-            None => {
-                false
-            }
+            None => false,
         }
     }
 
@@ -221,8 +215,8 @@ impl Node {
     pub fn db_bootstrapped(&mut self) -> bool {
         let file = self.app_conf.workspace.db_path.clone();
         if file.exists() {
-            // When not committing, we open the DB as secondary so the tool 
-            // is usable along side a running node on the same DB. 
+            // When not committing, we open the DB as secondary so the tool
+            // is usable along side a running node on the same DB.
             // Using a TempPath since it won't run for long.
             match DiemDB::open(file, true, None, RocksdbConfig::default()) {
                 Ok(db) => {
@@ -259,7 +253,7 @@ impl Node {
                 mode: Node::node_mode_systemd().ok(),
             }
         } else {
-           ProcInfo {
+            ProcInfo {
                 is_running: false,
                 mode: None,
             }
@@ -313,13 +307,11 @@ impl Node {
     /// check what mode the node is running in
     pub fn what_node_mode() -> Result<NodeMode, Error> {
         match Node::node_proc_info() {
-            Ok(proc) => {
-              match proc.mode {
+            Ok(proc) => match proc.mode {
                 Some(m) => Ok(m),
-                None => Err(Error::msg("no node mode found"))
-            }
+                None => Err(Error::msg("no node mode found")),
             },
-            Err(e) => Err(e)
+            Err(e) => Err(e),
         }
     }
 

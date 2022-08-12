@@ -302,9 +302,14 @@ impl EpochManager {
 
         let mut safety_rules =
             MetricsSafetyRules::new(self.safety_rules_manager.client(), self.storage.clone());
+        //////// 0L ////////
+        // Don't panic on initialize. We may be a validator trying to sync from a starting point.
+        // however this error if not solved, will cause a problem on the next epoch.
         if let Err(error) = safety_rules.perform_initialize() {
-            panic!(
-                "Unable to initialize safety rules, epoch: {}, error: {}", epoch, error
+            error!(
+                epoch = epoch,
+                error = error,
+                "Unable to initialize safety rules. YOUR VALIDATOR WILL NOT BE ABLE TO SIGN BLOCKS but it will be able to sync. This is likely a problem with the restore point in your DB.",
             );
         }
 

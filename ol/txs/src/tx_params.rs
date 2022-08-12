@@ -10,7 +10,7 @@ use diem_crypto::{
 use diem_global_constants::OPERATOR_KEY;
 
 use diem_secure_storage::{CryptoStorage, Namespaced, OnDiskStorage, Storage};
-use diem_types::{account_address::AccountAddress, waypoint::Waypoint, chain_id::NamedChain};
+use diem_types::{account_address::AccountAddress, chain_id::NamedChain, waypoint::Waypoint};
 use diem_types::{chain_id::ChainId, transaction::authenticator::AuthenticationKey};
 use ol::node::client::find_a_remote_jsonrpc;
 use ol_keys::{scheme::KeyScheme, wallet};
@@ -164,7 +164,7 @@ impl TxParams {
             // coin_price_per_unit: config.tx_configs.management_txs.coin_price_per_unit, // in micro_gas
             // user_tx_timeout: config.tx_configs.management_txs.user_tx_timeout,
             chain_id,
-            is_operator: false
+            is_operator: false,
         };
 
         Ok(tx_params)
@@ -204,7 +204,7 @@ impl TxParams {
             },
 
             chain_id: ChainId::new(NamedChain::TESTING.id()),
-            is_operator
+            is_operator,
         };
 
         println!("Info: Got tx params from swarm");
@@ -249,7 +249,7 @@ impl TxParams {
             keypair,
             tx_cost,
             chain_id: ChainId::new(1),
-            is_operator: true
+            is_operator: true,
         })
     }
 
@@ -283,7 +283,7 @@ impl TxParams {
             keypair,
             tx_cost: config.tx_configs.get_cost(tx_type),
             chain_id,
-            is_operator: false
+            is_operator: false,
         };
 
         Ok(tx_params)
@@ -318,7 +318,7 @@ impl TxParams {
             // coin_price_per_unit: 1, // in micro_gas
             // user_tx_timeout: 5_000,
             chain_id: ChainId::new(4), // swarm/testnet
-            is_operator: false
+            is_operator: false,
         }
     }
 }
