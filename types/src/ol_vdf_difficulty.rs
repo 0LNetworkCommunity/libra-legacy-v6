@@ -65,9 +65,9 @@ impl MoveResource for VDFDifficulty {}
 impl Default for VDFDifficulty {
     fn default() -> Self {
         Self { 
-          difficulty: 5_000_000,  // historical value from genesis
-          security: 512, // historical value from genesis 
-          prev_diff: 5_000_000,
+          difficulty: 120_000_000,  // baseline, the historical value from genesis
+          security: 512, // baseline, historical value from genesis 
+          prev_diff: 120_000_000,
           prev_sec: 512,
         }
     }

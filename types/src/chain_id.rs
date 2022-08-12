@@ -9,7 +9,7 @@ use std::{convert::TryFrom, fmt, str::FromStr};
 /// When signing transactions for such chains, the numerical chain ID should still be used
 /// (e.g. MAINNET has numeric chain ID 1, TESTNET has chain ID 2, etc)
 #[repr(u8)]
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)] ///////// 0L ////////
+#[derive(Copy, Clone, Debug, Serialize)] ///////// 0L ////////
 pub enum NamedChain {
     /// Users might accidentally initialize the ChainId field to 0, hence reserving ChainId 0 for accidental
     /// initialization.
@@ -33,6 +33,12 @@ impl NamedChain {
           "TESTING" => NamedChain::TESTING,
           "PREMAINNET" => NamedChain::PREMAINNET,
           "EXPERIMENTAL" => NamedChain::EXPERIMENTAL, //////// 0L ////////
+          "Mainnet" => NamedChain::MAINNET, // Backwards compatibility.
+          "Testnet" => NamedChain::TESTNET,
+          "Devnet" => NamedChain::DEVNET,
+          "Testing" => NamedChain::TESTING,
+          "Premainet" => NamedChain::PREMAINNET,
+          "Experimental" => NamedChain::EXPERIMENTAL, //////// 0L ////////
           "1" => NamedChain::MAINNET,
           "2" => NamedChain::TESTNET,
           "3" => NamedChain::DEVNET,
@@ -65,6 +71,16 @@ impl NamedChain {
             7 => Ok(NamedChain::EXPERIMENTAL), //////// 0L ////////            
             _ => Err(String::from("Not a named chain")),
         }
+    }
+}
+
+impl<'de> Deserialize<'de> for NamedChain { //////// 0L ////////
+    fn deserialize<D>(deserializer: D) -> Result<NamedChain, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+      let s = String::deserialize(deserializer)?;
+      NamedChain::from_str(&s).map_err(serde::de::Error::custom)
     }
 }
 

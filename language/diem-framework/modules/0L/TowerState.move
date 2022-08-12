@@ -112,9 +112,9 @@ module TowerState {
           });
         } else {
           move_to<VDFDifficulty>(vm, VDFDifficulty {
-            difficulty: 5000000,
+            difficulty: 120000000,
             security: 512,
-            prev_diff: 5000000,
+            prev_diff: 120000000,
             prev_sec: 512,
           });
         }
@@ -234,7 +234,7 @@ module TowerState {
     ) acquires TowerProofHistory, TowerList, TowerCounter, VDFDifficulty {
       // Get address, assumes the sender is the signer.
       let miner_addr = Signer::address_of(miner_sign);
-      let diff = borrow_global_mut<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
+      // let diff = borrow_global<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
 
       // This may be the 0th proof of an end user that hasn't had tower state initialized
       if (!is_init(miner_addr)) {
@@ -250,27 +250,28 @@ module TowerState {
         return
       };
 
+      check_difficulty(miner_addr, &proof);
 
-      // Skip this check on local tests, we need tests to send different difficulties.
-      if (!Testnet::is_testnet()){
-        // Get vdf difficulty constant. Will be different in tests than in production.
+      // // Skip this check on local tests, we need tests to send different difficulties.
+      // if (!Testnet::is_testnet()){
+      //   // Get vdf difficulty constant. Will be different in tests than in production.
         
-        // need to also give allowance for user's first proof in epoch to be in the last proof.
-        if (get_count_in_epoch(miner_addr) == 0) { 
-          // first proof in this epoch, can be either the previous difficulty or the current one
-          let is_diff = &proof.difficulty == &diff.difficulty ||
-          &proof.difficulty == &diff.prev_diff;
+      //   // need to also give allowance for user's first proof in epoch to be in the last proof.
+      //   if (get_count_in_epoch(miner_addr) == 0) { 
+      //     // first proof in this epoch, can be either the previous difficulty or the current one
+      //     let is_diff = &proof.difficulty == &diff.difficulty ||
+      //     &proof.difficulty == &diff.prev_diff;
 
-          let is_sec = &proof.difficulty == &diff.security ||
-          &proof.difficulty == &diff.prev_sec;
+      //     let is_sec = &proof.security == &diff.security ||
+      //     &proof.security == &diff.prev_sec;
 
-          assert(is_diff, Errors::invalid_argument(130102));
-          assert(is_sec, Errors::invalid_argument(13010202));
-        } else {
-          assert(&proof.difficulty == &diff.difficulty, Errors::invalid_argument(130102));
-          assert(&proof.security == &diff.security, Errors::invalid_argument(13010202));
-        };
-      };
+      //     assert(is_diff, Errors::invalid_argument(130102));
+      //     assert(is_sec, Errors::invalid_argument(13010202));
+      //   } else {
+      //     assert(&proof.difficulty == &diff.difficulty, Errors::invalid_argument(130102));
+      //     assert(&proof.security == &diff.security, Errors::invalid_argument(13010202));
+      //   };
+      // };
       // Process the proof
       verify_and_update_state(miner_addr, proof, true);
     }
@@ -283,7 +284,7 @@ module TowerState {
       operator_sig: &signer,
       miner_addr: address,
       proof: Proof
-    ) acquires TowerProofHistory, TowerList, TowerCounter {
+    ) acquires TowerProofHistory, TowerList, TowerCounter, VDFDifficulty {
 
       // Check the signer is in fact an operator delegated by the owner.
       
@@ -295,21 +296,36 @@ module TowerState {
       // Return early if difficulty and security are not correct.
       // Check vdf difficulty constant. Will be different in tests than in production.
       // Skip this check on local tests, we need tests to send differentdifficulties.
-      if (!Testnet::is_testnet()){
-        assert(&proof.difficulty == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_argument(130105));
-        assert(&proof.security == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_state(130106));
-      };
+      check_difficulty(miner_addr, &proof);
       
       // Process the proof
       verify_and_update_state(miner_addr, proof, true);
       
-      // TODO: The operator mining needs its own struct to count mining.
-      // For now it is implicit there is only 1 operator per validator, 
-      // and that the fullnode state is the place to count.
-      // This will require a breaking change to TowerState
-      // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
     }
 
+    fun check_difficulty(miner_addr: address, proof: &Proof) acquires TowerProofHistory, VDFDifficulty {
+      if (!Testnet::is_testnet()){
+        // Get vdf difficulty constant. Will be different in tests than in production.ex
+        let diff = borrow_global<VDFDifficulty>(CoreAddresses::VM_RESERVED_ADDRESS());
+        
+        // need to also give allowance for user's first proof in epoch to be in the last proof.
+        if (get_count_in_epoch(miner_addr) == 0) { 
+          // first proof in this epoch, can be either the previous difficulty or the current one
+          let is_diff = &proof.difficulty == &diff.difficulty ||
+          &proof.difficulty == &diff.prev_diff;
+
+          let is_sec = &proof.security == &diff.security ||
+          &proof.security == &diff.prev_sec;
+
+          assert(is_diff, Errors::invalid_argument(130102));
+          assert(is_sec, Errors::invalid_argument(13010202));
+        } else {
+          assert(&proof.difficulty == &diff.difficulty, Errors::invalid_argument(130102));
+          assert(&proof.security == &diff.security, Errors::invalid_argument(13010202));
+        };
+      };
+
+    }
     // Function to verify a proof blob and update a TowerProofHistory
     // Permissions: private function.
     // Function index: 03
