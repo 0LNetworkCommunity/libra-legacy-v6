@@ -60,9 +60,13 @@ pub fn process_backlog(config: &AppCfg, tx_params: &TxParams) -> Result<(), TxEr
         info!("Backlog: resubmitting missing proofs. Remaining in epoch: {}, already submitted in this backlog: {}", remaining_in_epoch, submitted_now);
 
         while i <= current_proof_number && submitted_now <= remaining_in_epoch {
-            let path = PathBuf::from(format!("{}/{}_{}.json", blocks_dir.display(), FILENAME, i));
             info!("submitting proof {}, in this backlog: {}", i, submitted_now);
-            let file = File::open(&path).map_err(|e| Error::from(e))?;
+
+            let path = PathBuf::from(format!("{}/{}_{}.json", blocks_dir.display(), FILENAME, i));
+
+            let file = File::open(&path).map_err(|e| {
+                anyhow!("failed to open file: {:?}, message, {}", &path.to_str(), e.to_string())
+            })?;
 
             let reader = BufReader::new(file);
             let block: VDFProof = serde_json::from_reader(reader).map_err(|e| Error::from(e))?;
