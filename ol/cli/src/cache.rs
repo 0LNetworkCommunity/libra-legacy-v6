@@ -4,6 +4,7 @@ use crate::{
     mgmt::management::HostProcess,
     node::{account::OwnerAccountView, chain_view::ChainView, states::HostState},
 };
+use anyhow::Error;
 use serde::{Deserialize, Serialize};
 use std::{
     fs::rename,
@@ -11,8 +12,6 @@ use std::{
     io::Write,
     path::PathBuf,
 };
-use anyhow::Error;
-
 
 /// caching database name, to be appended to node_home
 pub const MONITOR_DB_PATH: &str = "/tmp/0L/monitor_db";
@@ -46,7 +45,6 @@ pub struct Vitals {
 impl Vitals {
     /// reach the json cache
     pub fn read_json(node_home: &PathBuf) -> Result<Vitals, Error> {
-
         let cache_path = get_cache_path(node_home);
         let file = fs::File::open(cache_path)?;
         let value = serde_json::from_reader(file)?;

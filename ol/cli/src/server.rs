@@ -55,7 +55,7 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
     let node_home = cfg.clone().workspace.node_home.clone();
     let epoch_route = warp::path("epoch.json").and(warp::get()).map(move || {
         // let node_home = node_home_two.clone();
-        let vitals =  Vitals::read_json(&node_home)?;
+        let vitals = Vitals::read_json(&node_home)?;
         let json = json!({
           "epoch": vitals.epoch,
           "waypoint": vitals.waypoint.unwrap().to_string()
