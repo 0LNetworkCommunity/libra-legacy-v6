@@ -2,6 +2,7 @@
 
 use crate::{check, entrypoint, node::client, node::node::Node, prelude::app_config};
 use abscissa_core::{Command, Options, Runnable};
+use std::process::exit;
 
 /// `monitor-cmd` subcommand
 ///

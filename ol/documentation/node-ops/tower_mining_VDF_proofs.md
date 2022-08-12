@@ -83,3 +83,23 @@ To return to tmux and the background tower tasks, you can reattach to the screen
 ```
 tmux a -t tower
 ```
+
+## Trouble Shooting
+
+### Error Code 130109(discontinuity in proofs)
+
+Occasionally, the continutity of proofs is not subsequential due to garbage collection issues. in `.0L/vdf_proofs` you will see one extra proof that is specified in the towerState struct when checking your account resources. eg verified_tower_height: 4655 and highest proof from 0L explorer download is 4656
+
+> You can check your account's resources using this `ol  -a <YOUR ACC> query -r`
+
+To rectify the above issue you will need to:
+
+1. Remove the second highest proof
+2. Rename the highest proof to the height of the second highest proof
+3. Change the height field in the contents to match the new number.
+
+eg verified_tower_height: 4655 and highest proof from explorer download was 4656.
+
+- remove proof 4955. Rename proof 4956 to 4955.
+- remove 4956 content and place in 4955, change height field from 4956 to 4955
+- start tower
