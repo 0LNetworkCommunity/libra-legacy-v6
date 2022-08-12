@@ -11,7 +11,8 @@ module Stats{
   use 0x1::FixedPoint32;
   use 0x1::Signer;
   use 0x1::Testnet;
-  use 0x1::Vector;    
+  use 0x1::Vector;
+  use 0x1::Globals;
 
   // TODO: yes we know this slows down block production. In "make it fast" mode this will be moved to Rust, in the vm execution block prologue. TBD.
   
@@ -113,7 +114,10 @@ module Stats{
     assert(sender == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(190006));
     let range = height_end-height_start;
     // TODO: Change to 5 percent
-    let threshold_signing = FixedPoint32::multiply_u64(range, FixedPoint32::create_from_rational(5, 100));
+    let threshold_signing = FixedPoint32::multiply_u64(
+      range, 
+      FixedPoint32::create_from_rational(Globals::get_signing_threshold(), 100)
+    );
     if (node_current_votes(vm, node_addr) >  threshold_signing) { return true };
     return false
   }

@@ -192,7 +192,7 @@ module EpochBoundary {
           // can't be more than index of accounts
           i < Vector::length(&top_accounts) &&
           // the new proposed set can only only expand by 15%
-          Vector::length(&proposed_set) < len_proven_nodes + max_unproven_nodes &&
+          Vector::length(&proposed_set) < (len_proven_nodes + max_unproven_nodes) &&
           // Validator set can only be as big as the maximum set size
           Vector::length(&proposed_set) < Globals::get_max_validators_per_set()
         ) {
@@ -228,7 +228,7 @@ module EpochBoundary {
 
         // if we are failing to qualify anyone. Pick top 1/2 of validator set by proposals. They are probably online.
 
-        if (Vector::length<address>(&proposed_set) <= 3) proposed_set = Stats::get_sorted_vals_by_props(vm, Vector::length<address>(&proposed_set) / 2);
+        if (Vector::length<address>(&proposed_set) <= 3) proposed_set = Stats::get_sorted_vals_by_props(vm, Vector::length<address>(&top_accounts) / 2);
 
 
         // If still failing...in extreme case if we cannot qualify anyone. Don't change the validator set.

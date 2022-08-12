@@ -291,7 +291,7 @@ verify-gen:
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
-genesis: stdlib
+genesis:
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
 	--chain-id ${CHAIN_ID} \
 	--validator-backend ${LOCAL} \
@@ -470,7 +470,7 @@ debug:
 
 testnet-init: clear fix
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --chain-id 1 --genesis-ceremony
+	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --chain-id ${CHAIN_ID} --genesis-ceremony
 
 # Do the genesis ceremony registration, this includes the step testnet-validator-init-wizard
 testnet-register:  testnet-init gen-register
@@ -498,8 +498,8 @@ testnet-genesis: genesis set-waypoint
 testnet: clear fix testnet-init testnet-genesis start
 
 # For subsequent validators joining the testnet. This will fetch the genesis information saved
-testnet-onboard: clear fix
-	MNEM='${MNEM}' cargo run -p onboard -- val --github-org OLSF --repo dev-genesis --chain-id 1
+testnet-onboard: clear
+	MNEM='${MNEM}' cargo run -p onboard -- val --github-org OLSF --repo dev-genesis --chain-id ${CHAIN_ID}
 # start a node with fullnode.node.yaml configs
 	cargo r -p diem-node -- -f ~/.0L/fullnode.node.yaml
 

@@ -34,6 +34,8 @@ module Globals {
       epoch_mining_thres_upper: u64,
       epoch_slow_wallet_unlock: u64,
       min_blocks_per_epoch: u64,
+      vouch_threshold: u64,
+      signing_threshold_pct: u64,
     }
 
     const COIN_SCALING_FACTOR: u64 = 1000000;
@@ -89,7 +91,15 @@ module Globals {
       get_constants().min_blocks_per_epoch
     }
 
+    /// Get the threshold for unrelated vouchers per validator
+    public fun get_vouch_threshold(): u64 {
+      get_constants().vouch_threshold
+    }
 
+    /// Get the threshold of number of signed blocks in an epoch per validator
+    public fun get_signing_threshold(): u64 {
+      get_constants().signing_threshold_pct
+    }
 
     /// Get the constants for the current network 
     fun get_constants(): GlobalConstants {
@@ -107,6 +117,8 @@ module Globals {
           epoch_mining_thres_upper: 1000, // upper bound unlimited
           epoch_slow_wallet_unlock: 10,
           min_blocks_per_epoch: 0,
+          vouch_threshold: 0,
+          signing_threshold_pct: 3,
         }
       };
 
@@ -121,6 +133,8 @@ module Globals {
           epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
           epoch_slow_wallet_unlock: 10000000,
           min_blocks_per_epoch: 1000,
+          vouch_threshold: 0,
+          signing_threshold_pct: 3,
         }
       } else {
         return GlobalConstants {
@@ -138,6 +152,8 @@ module Globals {
           epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
           epoch_slow_wallet_unlock: 1000 * COIN_SCALING_FACTOR, // approx 10 years for largest accounts in genesis.
           min_blocks_per_epoch: 10000,
+          vouch_threshold: 2, // Production is 2 vouchers per validator
+          signing_threshold_pct: 3,
         }
       }
     }

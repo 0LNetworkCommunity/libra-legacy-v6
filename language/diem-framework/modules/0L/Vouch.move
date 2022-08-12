@@ -11,9 +11,8 @@ address 0x1 {
     use 0x1::ValidatorUniverse;
     use 0x1::DiemSystem;
     use 0x1::Ancestry;
-    use 0x1::Testnet;
-    use 0x1::StagingNet;
     use 0x1::CoreAddresses;
+    use 0x1::Globals;
 
     // triggered once per epoch
     struct Vouch has key {
@@ -145,15 +144,11 @@ address 0x1 {
     }
 
     public fun unrelated_buddies_above_thresh(val: address): bool acquires Vouch{
-      if (Testnet::is_testnet() || StagingNet::is_staging_net()) {
-        return true
-      };
-
       if (!exists<Vouch>(val)) return false;
 
       let len = Vector::length(&unrelated_buddies(val));
 
-      (len >= 4) // TODO: move to Globals
+      (len >= Globals::get_vouch_threshold())
     }
   }
 }
