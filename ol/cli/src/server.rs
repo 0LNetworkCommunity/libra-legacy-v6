@@ -5,7 +5,6 @@ use ol_types::config::IS_PROD;
 use reqwest;
 use serde_json::json;
 use serde_json::Error;
-use std::process::exit;
 use std::{fs, io, path::PathBuf, process::Command, thread, time::Duration};
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
@@ -31,14 +30,14 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
         let interval = interval(Duration::from_secs(10));
         let stream = IntervalStream::new(interval);
         let event_stream = stream.map(move |_| {
-            let vitals = match Vitals::read_json(&path) {
-                Ok(v) => v,
+            match Vitals::read_json(&path) {
+                Ok(v) => sse_vitals(v),
                 Err(e) => {
                     println!("Error reading json cache: \nError {}", e);
-                    exit(1)
+                    Event::default().json_data("404")
                 }
-            };
-            sse_vitals(vitals)
+            }
+            
         });
         // reply using server-sent events
         warp::sse::reply(event_stream)
