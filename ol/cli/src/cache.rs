@@ -62,8 +62,7 @@ impl Vitals {
 
         // after writing temporary file renames and overwrite to cache file
         let cache_path = get_cache_path(node_home);
-        let result = rename(temp_path, cache_path)?;
-        Ok(result)
+        Ok(rename(temp_path, cache_path)?)
     }
 }
 

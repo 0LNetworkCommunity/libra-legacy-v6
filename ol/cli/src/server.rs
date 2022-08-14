@@ -53,7 +53,7 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
             Ok(value) => value,
             Err(msg) => {
                 println!("Could not read {}: \nError {}", account_file_name, msg);
-                exit(1)
+                "404".to_string()
             }
         }
     });
@@ -67,12 +67,12 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
                     v
                 } else {
                     println!("No chain metadata found");
-                    exit(1)
+                    return "404".to_string()
                 }
             }
             Err(e) => {
                 println!("{}", e);
-                exit(1)
+                return "404".to_string()
             }
         };
         let json = json!({
