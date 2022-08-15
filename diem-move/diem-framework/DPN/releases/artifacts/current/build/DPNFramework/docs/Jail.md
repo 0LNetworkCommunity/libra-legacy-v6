@@ -10,6 +10,7 @@
 -  [Function `is_jailed`](#0x1_Jail_is_jailed)
 -  [Function `jail`](#0x1_Jail_jail)
 -  [Function `remove_consecutive_fail`](#0x1_Jail_remove_consecutive_fail)
+-  [Function `self_unjail`](#0x1_Jail_self_unjail)
 -  [Function `vouch_unjail`](#0x1_Jail_vouch_unjail)
 -  [Function `unjail`](#0x1_Jail_unjail)
 -  [Function `sort_by_jail`](#0x1_Jail_sort_by_jail)
@@ -187,6 +188,35 @@
     <b>let</b> j = <b>borrow_global_mut</b>&lt;<a href="Jail.md#0x1_Jail">Jail</a>&gt;(validator);
     j.consecutive_failure_to_rejoin = 0;
   }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Jail_self_unjail"></a>
+
+## Function `self_unjail`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Jail.md#0x1_Jail_self_unjail">self_unjail</a>(sender: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Jail.md#0x1_Jail_self_unjail">self_unjail</a>(sender: &signer) <b>acquires</b> <a href="Jail.md#0x1_Jail">Jail</a> {
+  // only a validator can un-jail themselves.
+  <b>let</b> self = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+
+  // check the node <b>has</b> been mining before unjailing.
+  <b>assert</b>!(<a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(self), 100104);
+  <a href="Jail.md#0x1_Jail_unjail">unjail</a>(self);
 }
 </code></pre>
 
