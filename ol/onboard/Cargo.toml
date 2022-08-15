@@ -1,6 +1,6 @@
 [package]
 name = "onboard"
-version = "5.1.2"
+version = "5.1.3"
 edition = "2018"
 authors = ["0L contributors"]
 description = "0L onboarding wizard"

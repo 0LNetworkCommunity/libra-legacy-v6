@@ -19,7 +19,7 @@ use ol_types::{
 };
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
-use vm_genesis::{OperRecover, ValRecover};
+use vm_genesis::{OperRecover, ValStateRecover};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 /// Account role
@@ -76,7 +76,7 @@ pub struct LegacyRecovery {
 #[derive(Debug, Clone)]
 pub struct RecoverConsensusAccounts {
     ///
-    pub vals: Vec<ValRecover>,
+    pub vals: Vec<ValStateRecover>,
     ///
     pub opers: Vec<OperRecover>,
 }
@@ -223,7 +223,7 @@ pub fn recover_consensus_accounts(
                     .find(|&a| a.val_account == account)
                     .is_none()
                 {
-                    set.vals.push(ValRecover {
+                    set.vals.push(ValStateRecover {
                         val_account: account,
                         operator_delegated_account,
                         val_auth_key: i.auth_key.unwrap(),

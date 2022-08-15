@@ -14,14 +14,14 @@ use crate::{cache::Vitals, check::runner, node::node::Node};
 
 #[tokio::main]
 /// starts the web server
-pub async fn start_server(mut node: Node, run_checks: bool) {
+pub async fn start_server(mut node: Node, _run_checks: bool) {
     let cfg = node.app_conf.clone();
 
-    if run_checks {
+    // if run_checks {
         thread::spawn(move || {
             runner::run_checks(&mut node, false, true, false, false);
         });
-    }
+    // }
 
     //GET check/ (json api for check data)   
     let node_home = cfg.clone().workspace.node_home.clone();
@@ -82,15 +82,15 @@ pub async fn start_server(mut node: Node, run_checks: bool) {
 }
 
 /// Prepare to start server
-pub fn init(node: &mut Node, run_checks: bool) {
-    if run_checks { 
+pub fn init(node: &mut Node, _run_checks: bool) {
+    // if run_checks { 
         /*
             Initialize cache to avoid:
             - read a cache file not created yet
             - load old cache with invalid structs
         */          
         node.check_once(false);
-    }
+    // }
 }
 
 fn sse_vitals(data: Vitals) -> Result<Event, Error> {

@@ -3,7 +3,6 @@
 #![allow(clippy::never_loop)]
 use crate::node::states::*;
 use crate::{
-    mgmt::management::NodeMode::*,
     node::node::Node,
 };
 use std::{thread, time::Duration};
@@ -53,31 +52,24 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
     }
 
     // is node started?
-    if node.vitals.items.node_running {
-        if verbose {
-            println!("Node: node is running");
-        }
-        node.vitals.host_state.node_state = maybe_switch_mode(&mut node, is_in_val_set, verbose);
-    } else {
-        let start_mode = if is_in_val_set { Validator } else { Fullnode };
+    if !node.vitals.items.node_running {
+    //     if verbose {
+    //         println!("Node: node is running");
+    //     }
+    //     node.vitals.host_state.node_state = maybe_switch_mode(&mut node, is_in_val_set, verbose);
+    // } else {
+        // let start_mode = if is_in_val_set { Validator } else { Fullnode };
 
         if verbose {
             println!(
-                "Node: WARN: node is NOT running, starting in {:?} mode",
-                &start_mode
-            );
+                "Node: WARN: node is NOT running, starting node");
         }
 
-        node.vitals.host_state.node_state = match node.start_node(start_mode.clone(), verbose) {
-            Ok(_) => match &start_mode {
-                Validator => NodeState::ValidatorMode,
-                Fullnode => NodeState::FullnodeMode,
-            },
+        node.vitals.host_state.node_state = match node.start_node(verbose) {
+            Ok(_) => NodeState::ValidatorOutOfSet,
             Err(_) => {
-                if verbose {
-                    println!(".. Node: WARN: could not start node in: {:?}", &start_mode);
-                }
-                NodeState::Stopped
+              println!(".. Node: WARN: could not start node");
+              NodeState::Stopped
             }
         }
     }
@@ -131,56 +123,56 @@ pub fn run_once(mut node: &mut Node, verbose: bool) -> &mut Node {
     node
 }
 
-fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool, verbose: bool) -> NodeState {
-    let running_mode = match Node::what_node_mode() {
-        Ok(t) => t,
-        Err(_) => return NodeState::Stopped,
-    };
+// fn maybe_switch_mode(node: &mut Node, is_in_val_set: bool, verbose: bool) -> NodeState {
+//     let running_mode = match Node::what_node_mode() {
+//         Ok(t) => t,
+//         Err(_) => return NodeState::Stopped,
+//     };
 
-    if verbose {
-        println!(".. Mode: node running in mode: {:?}", running_mode);
-    }
+//     if verbose {
+//         println!(".. Mode: node running in mode: {:?}", running_mode);
+//     }
 
-    let running_in_val_mode = running_mode == Validator;
-    // Running correctly as a FULLNODE
-    if !running_in_val_mode && !is_in_val_set {
-        if verbose {
-            println!(".... Mode: running the correct mode",);
-        }
-        return NodeState::FullnodeMode;
-    }
-    // Running correctly as a VALIDATOR
-    // Do nothing, the account is in validator set, and we are running as a validator
-    if running_in_val_mode && is_in_val_set {
-        if verbose {
-            println!(".... Mode: running the correct mode");
-        }
-        return NodeState::ValidatorMode;
-    }
+//     let running_in_val_mode = running_mode == Validator;
+//     // Running correctly as a FULLNODE
+//     if !running_in_val_mode && !is_in_val_set {
+//         if verbose {
+//             println!(".... Mode: running the correct mode",);
+//         }
+//         return NodeState::FullnodeMode;
+//     }
+//     // Running correctly as a VALIDATOR
+//     // Do nothing, the account is in validator set, and we are running as a validator
+//     if running_in_val_mode && is_in_val_set {
+//         if verbose {
+//             println!(".... Mode: running the correct mode");
+//         }
+//         return NodeState::ValidatorMode;
+//     }
 
-    // INCORRECT CASE 1: Need to change mode from Fullnode to Validator mode
-    if !running_in_val_mode && is_in_val_set {
-        if verbose {
-            println!(".... Mode: WARN: running the INCORRECT mode, switching to VALIDATOR mode");
-        }
-        node.stop_node();
-        node.start_node(Validator, verbose)
-            .expect("could not start node");
+//     // INCORRECT CASE 1: Need to change mode from Fullnode to Validator mode
+//     if !running_in_val_mode && is_in_val_set {
+//         if verbose {
+//             println!(".... Mode: WARN: running the INCORRECT mode, switching to VALIDATOR mode");
+//         }
+//         node.stop_node();
+//         node.start_node(verbose)
+//             .expect("could not start node");
 
-        return NodeState::ValidatorMode;
-    }
+//         return NodeState::ValidatorMode;
+//     }
 
-    // INCORRECT CASE 2: Need to change mode from Validator to Fullnode mode
-    if running_in_val_mode && !is_in_val_set {
-        if verbose {
-            println!(".... Mode: WARN: running the INCORRECT mode, switching to FULLNODE mode");
-        }
-        node.stop_node();
-        node.start_node(Validator, verbose)
-            .expect("could not start node");
+//     // INCORRECT CASE 2: Need to change mode from Validator to Fullnode mode
+//     if running_in_val_mode && !is_in_val_set {
+//         if verbose {
+//             println!(".... Mode: WARN: running the INCORRECT mode, switching to FULLNODE mode");
+//         }
+//         node.stop_node();
+//         node.start_node(Validator, verbose)
+//             .expect("could not start node");
 
-        return NodeState::FullnodeMode;
-    }
+//         return NodeState::FullnodeMode;
+//     }
 
-    NodeState::Stopped
-}
+//     NodeState::Stopped
+// }

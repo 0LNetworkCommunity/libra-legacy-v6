@@ -42,7 +42,9 @@ impl MetricsSafetyRules {
                 .retrieve_epoch_change_proof(waypoint_version)
                 .map_err(|e| {
                     Error::InternalError(format!(
-                        "Unable to retrieve Waypoint state from storage, encountered Error:{}",
+                        /////// 0L /////////
+                        "Unable to retrieve epoch change proof from storage for Waypoint. State for version {} not found. Error:{}",
+                        &waypoint_version,
                         e
                     ))
                 })?;

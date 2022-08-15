@@ -21,15 +21,15 @@ pub struct RestoreCmd {
     #[options(short="v", help = "specify a version or height if there is more than one per archive")]
     version: Option<u64>,
 
-    #[options(help = "get only the exact last block at the end of an epoch. Not extra blocks at the start of following epoch.")]
-    exclude_buffer: bool,
+    #[options(short="l", help = "fetch the latest version available, of the latest epoch.")]
+    latest_version: bool,
 }
 
 impl Runnable for RestoreCmd {
     /// Start the application.
     fn run(&self) {
-        match mgmt::restore::fast_forward_db(self.verbose, self.epoch, self.version) {
-            Ok(_) => {},
+        match mgmt::restore::fast_forward_db(self.verbose, self.epoch, self.version, self.latest_version) {
+            Ok(_) => {println!("SUCCESS")},
             Err(e) => println!("ERROR: could not complete db restore, message: {:?}", e),
         };
     }

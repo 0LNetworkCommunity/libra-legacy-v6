@@ -199,7 +199,7 @@ pub fn encode_genesis_change_set(
 // create this fn, changed significantly.
 //////// 0L ////////
 pub fn encode_recovery_genesis_changeset(
-    val_assignments: &[ValRecover],
+    val_assignments: &[ValStateRecover],
     operator_registrations: &[OperRecover],
     val_set: &[AccountAddress],
     chain: u8,
@@ -544,7 +544,7 @@ fn create_and_initialize_owners_operators(
 //////// 0L ///////
 // Validator/owner state to recover in genesis recovery mode
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
-pub struct ValRecover {
+pub struct ValStateRecover {
     ///
     pub val_account: AccountAddress,
     ///
@@ -579,7 +579,7 @@ pub struct OperRecover {
 /// validator config on-chain.
 fn recovery_owners_operators(
     session: &mut Session<StateViewCache<GenesisStateView>>,
-    val_assignments: &[ValRecover],
+    val_assignments: &[ValStateRecover],
     operator_registrations: &[OperRecover],
     val_set: &[AccountAddress],
 ) {
@@ -604,7 +604,6 @@ fn recovery_owners_operators(
             .into_script_function();
         exec_script_function(
             session,
-            // log_context,
             diem_root_address,
             &create_owner_script,
         );
@@ -613,7 +612,6 @@ fn recovery_owners_operators(
         // TODO: Where's this function recover_miner_state. Lost from v4 to v5?
         // exec_function(
         //     session,
-        //     // log_context,
         //     "TowerState",
         //     "recover_miner_state", 
         //     vec![],
@@ -625,7 +623,6 @@ fn recovery_owners_operators(
 
         exec_function(
             session,
-            // log_context,
             "ValidatorUniverse",
             "genesis_helper",
             vec![],
@@ -634,6 +631,32 @@ fn recovery_owners_operators(
                 MoveValue::Signer(i.val_account),
             ]),
         );
+
+        exec_function(
+            session,
+            "Vouch",
+            "init",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(i.val_account)
+            ]),
+        );
+
+        let all_vals: Vec<AccountAddress> = operator_registrations.iter()
+            .map(|a|{ a.validator_to_represent }).collect();
+        let mut vals = all_vals.clone();
+        vals.retain(|el|{ el != &i.val_account});
+        exec_function(
+            session,
+            "Vouch",
+            "vm_migrate",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Address(i.val_account),
+                MoveValue::vector_address(vals),
+            ]),
+        );        
     }
 
     println!("1 ======== Create OP Accounts");
@@ -649,7 +672,6 @@ fn recovery_owners_operators(
             .into_script_function();
         exec_script_function(
             session,
-            // log_context,
             diem_root_address,
             &create_operator_script,
         );
@@ -667,7 +689,6 @@ fn recovery_owners_operators(
             .into_script_function();
         exec_script_function(
             session,
-            // log_context,
             i.val_account, //TODO: check the signer is correct
             &create_operator_script,
         );
@@ -686,7 +707,6 @@ fn recovery_owners_operators(
             .into_script_function();
         exec_script_function(
             session,
-            // log_context,
             i.operator_account,
             &create_operator_script,
         );
@@ -700,7 +720,6 @@ fn recovery_owners_operators(
         // // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
         exec_function(
             session,
-            // log_context,
             "DiemSystem",
             "add_validator",
             vec![],
