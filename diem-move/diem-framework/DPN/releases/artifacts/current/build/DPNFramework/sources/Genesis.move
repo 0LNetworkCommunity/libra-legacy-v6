@@ -153,6 +153,7 @@ module DiemFramework::Genesis {
         // FullnodeSubsidy::init_fullnode_sub(dr_account);
         Oracle::initialize(dr_account);
         TowerState::init_miner_list_and_stats(dr_account);
+        TowerState::init_difficulty(dr_account);
         Wallet::init(dr_account);
         DiemAccount::vm_init_slow(dr_account);
         Migrations::init(dr_account);

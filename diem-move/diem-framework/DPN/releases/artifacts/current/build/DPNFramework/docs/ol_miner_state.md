@@ -115,8 +115,8 @@
         &sender,
         <a href="TestFixtures.md#0x1_TestFixtures_alice_0_easy_chal">TestFixtures::alice_0_easy_chal</a>(),
         <a href="TestFixtures.md#0x1_TestFixtures_alice_0_easy_sol">TestFixtures::alice_0_easy_sol</a>(),
-        <a href="Globals.md#0x1_Globals_get_vdf_difficulty">Globals::get_vdf_difficulty</a>(),
-        <a href="Globals.md#0x1_Globals_get_vdf_security">Globals::get_vdf_security</a>(),
+        <a href="Globals.md#0x1_Globals_get_vdf_difficulty_baseline">Globals::get_vdf_difficulty_baseline</a>(),
+        <a href="Globals.md#0x1_Globals_get_vdf_security_baseline">Globals::get_vdf_security_baseline</a>(),
     );
 }
 </code></pre>

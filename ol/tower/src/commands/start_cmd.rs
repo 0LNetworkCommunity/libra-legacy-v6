@@ -22,6 +22,13 @@ pub struct StartCmd {
     /// don't process backlog
     #[options(short = "s", help = "Skip backlog")]
     skip_backlog: bool,
+
+        /// Option for --backlog, only sends backlogged transactions.
+    #[options(
+        short = "l",
+        help = "local mode, continues mining from last proof, without checking chain for params. Warning: may lead to discontinous proofs."
+    )]
+    local: bool,
 }
 
 impl Runnable for StartCmd {
@@ -48,7 +55,7 @@ impl Runnable for StartCmd {
 
         // config reading respects swarm setup
         // so also cfg.get_waypoint will return correct data
-        let cfg = app_config().clone();
+        let mut cfg = app_config().clone();
 
         let waypoint = if waypoint.is_none() {
             match cfg.get_waypoint(None) {
@@ -66,7 +73,7 @@ impl Runnable for StartCmd {
             cfg.clone(),
             url,
             waypoint,
-            swarm_path,
+            swarm_path.clone(),
             swarm_persona,
             TxType::Miner,
             is_operator,
@@ -94,7 +101,7 @@ impl Runnable for StartCmd {
 
         if !self.backlog_only {
             // Steady state.
-            let result = mine_and_submit(&cfg, tx_params);
+            let result = mine_and_submit(&mut cfg, tx_params, self.local, swarm_path);
             match result {
                 Ok(_val) => {}
                 Err(err) => {

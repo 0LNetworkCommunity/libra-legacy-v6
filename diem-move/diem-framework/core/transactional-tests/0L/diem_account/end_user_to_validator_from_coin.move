@@ -1,5 +1,20 @@
 //# init --validators Bob
 
+// Set up the test difficulty for dynamic vdf
+
+//# run --admin-script --signers DiemRoot DiemRoot
+script {
+  use DiemFramework::TowerState;
+  use DiemFramework::TestFixtures;
+
+    fun main(_: signer, vm: signer) {
+      TowerState::test_set_vdf_difficulty(
+        &vm, TestFixtures::easy_difficulty(),
+        TestFixtures::security()
+      );
+    }
+}
+
 // 1. create an end-user account for eve.
 
 //# run --admin-script --signers DiemRoot Bob
@@ -9,7 +24,6 @@ script {
 
   fun main(_dr: signer, sender: signer) {
     // Eve's account info.
-
     let new_account: address = @0x3DC18D1CF61FAAC6AC70E3A63F062E4B;
     let new_account_authkey_prefix = x"2bffcbd0e9016013cb8ca78459f69d2b";
     let value = 1000000; // minimum is 1m microgas

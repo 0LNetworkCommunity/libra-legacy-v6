@@ -1,7 +1,7 @@
 // Copyright (c) 0lsf
 // SPDX-License-Identifier: Apache-2.0
 
-use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
+use diem_global_constants::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
 use diem_transaction_builder::stdlib as transaction_builder;
 use diem_types::{transaction::TransactionStatus, vm_status::KeptVMStatus, PeerId};
 use hex;

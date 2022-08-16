@@ -3,7 +3,7 @@
 #![allow(clippy::never_loop)]
 
 use anyhow::Error;
-use diem_global_constants::{VDF_SECURITY_PARAM, delay_difficulty};
+use diem_global_constants::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
 use ol_keys::wallet;
 use ol_types::block::VDFProof;
 use tower::{proof::write_genesis, delay};
@@ -67,5 +67,10 @@ pub fn check(path: PathBuf) -> bool {
         &format!("could not parse manifest in {:?}", &path)
     );
 
-    delay::verify(&user_data.block_zero.preimage, &user_data.block_zero.proof, delay_difficulty(), VDF_SECURITY_PARAM)
+    delay::verify(
+      &user_data.block_zero.preimage,
+      &user_data.block_zero.proof,
+      genesis_delay_difficulty(),
+      GENESIS_VDF_SECURITY_PARAM as u16
+    )
 }

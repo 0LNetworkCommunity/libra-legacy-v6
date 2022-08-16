@@ -32,6 +32,7 @@ module DiemFramework::DiemBlock {
     use DiemFramework::DiemAccount;
     use DiemFramework::Migrations;
     use DiemFramework::MigrateJail;    
+    use DiemFramework::TowerState;
 
     struct BlockMetadata has key {
         /// Height of the current block
@@ -115,10 +116,11 @@ module DiemFramework::DiemBlock {
 
         // Do any pending migrations
         // TODO: should this be round 2 (when upgrade writeset happens). 
-        // May be a on off-by-one.
+        // May be an off-by-one.
         if (round == 3) {
             // safety. Maybe init Migration struct
             Migrations::init(&vm);
+            TowerState::init_difficulty(&vm);
             MigrateJail::do_it(&vm);
         };
 

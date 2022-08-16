@@ -8,7 +8,7 @@ NODE_ENV=test
 TEST=y
 
 ifndef SOURCE_PATH
-SOURCE_PATH = ${HOME}/code/rust/libra
+SOURCE_PATH = ${HOME}/libra
 endif
 MAKE_FILE = ${SOURCE_PATH}/ol/integration-tests/test-mining.mk
 
@@ -19,10 +19,10 @@ endif
 
 MNEM="talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse"
 
-NUM_NODES = 2
+NUM_NODES = 4
 
 START_TEXT = "To run the Diem CLI client"
-SUCCESS_TEXT = "Proof committed to chain"
+SUCCESS_TEXT = "Remote tower height: 10"
 
 
 test: swarm check-swarm start-mine check stop
@@ -42,6 +42,7 @@ echo:
 
 init:
 	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH} --chain-id TESTING
+	cp ${SWARM_TEMP}/0/0L.toml ${HOME}/.0L/0L.toml
 
 mine:
 	cd ${SOURCE_PATH} && cargo r -p tower -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} start

@@ -64,8 +64,7 @@ stop:
 	killall diem-swarm diem-node tower ol txs cli | true
 
 init:
-	@echo INIT
-	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH}
+	cd ${SOURCE_PATH} && cargo r -p ol -- --swarm-path ${SWARM_TEMP} --swarm-persona ${PERSONA} init --source-path ${SOURCE_PATH} --chain-id TESTING
 
 create-json:
 	cp ${SOURCE_PATH}/ol/fixtures/autopay/alice.autopay_batch.json ${DATA_PATH}/autopay_batch.json

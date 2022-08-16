@@ -23,13 +23,14 @@ use diem_json_rpc_types::views::WaypointView;
 use diem_types::{
     account_address::AccountAddress,
     account_state_blob::AccountStateBlob,
+    account_state::AccountState,
     event::EventKey,
     transaction::{SignedTransaction, Transaction, Version},
 };
 use move_core_types::move_resource::{MoveResource, MoveStructType};
 use reqwest::Url;
 use serde::{de::DeserializeOwned, Serialize};
-use std::{mem, time::Duration};
+use std::{mem, time::Duration, convert::TryFrom};
 
 // In order to avoid needing to publish the proxy crate to crates.io we simply include the small
 // library in inline by making it a module instead of a dependency. 'src/proxy.rs' is a symlink to
@@ -482,6 +483,27 @@ impl BlockingClient {
             Ok((Some(bcs::from_bytes(&blob).unwrap()), ret.version))
         } else {
             Ok((None, ret.version))
+        }
+    }
+
+    /////// 0L /////////
+    /// get any account state with client
+    pub fn get_account_state(
+        &self, address: AccountAddress
+    ) -> Result<AccountState, anyhow::Error> {
+        let (blob, _ver) = self.get_account_state_blob(&address)?;
+        if let Some(account_blob) = blob {
+            match AccountState::try_from(&account_blob) {
+                Ok(a) =>  Ok(a),
+                Err(e) => Err(
+                    anyhow::Error::msg(
+                        format!("could not fetch account state. Message: {:?}", e)
+                    )
+                ),
+            }
+            
+        } else {
+            Err(anyhow::Error::msg("connection to client"))
         }
     }    
 }

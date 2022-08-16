@@ -13,8 +13,9 @@ use txs::submit_tx::{eval_tx_status, TxError};
 use txs::tx_params::TxParams;
 
 use crate::commit_proof::commit_proof_tx;
-use crate::EPOCH_MINING_THRES_UPPER;
-use crate::proof::{FILENAME, parse_block_height};
+use crate::garbage_collection::gc_failed_proof;
+use crate::{EPOCH_MINING_THRES_UPPER, tower_errors};
+use crate::proof::{FILENAME, get_highest_block};
 
 /// Submit a backlog of blocks that may have been mined while network is offline.
 /// Likely not more than 1.
@@ -31,8 +32,11 @@ pub fn process_backlog(
     // Getting local state height
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
-    let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
-    if let Some(current_proof_number) = current_block_number {
+
+    let (current_local_proof, _current_block_path) = get_highest_block(&blocks_dir)?;
+
+    let current_proof_number = current_local_proof.height;
+    // if let Some(current_proof_number) = current_local_proof {
         info!("Local tower height: {:?}", current_proof_number);
         if remote_height < 0 || current_proof_number > remote_height as u64 {
             let mut i = remote_height as u64 + 1;
@@ -61,21 +65,28 @@ pub fn process_backlog(
                 let block: VDFProof =
                     serde_json::from_reader(reader).map_err(|e| Error::from(e))?;
 
-                let view = commit_proof_tx(&tx_params, block)?;
+                let view = commit_proof_tx(&tx_params, block.clone())?;
                 match eval_tx_status(view) {
                     Ok(_) => {}
                     Err(e) => {
                         warn!(
                             "WARN: could not fetch TX status, aborting. Message: {:?} ",
-                            e
+                            &e
                         );
+                        // evaluate type of error and maybe garbage collect
+                        match tower_errors::parse_error(&e) {
+                            tower_errors::TowerError::WrongDifficulty => gc_failed_proof(config, path)?,
+                            tower_errors::TowerError::Discontinuity => gc_failed_proof(config, path)?,
+                            tower_errors::TowerError::Invalid => gc_failed_proof(config, path)?,
+                            _ => {},
+                        }
                         return Err(e);
                     }
                 };
                 i = i + 1;
                 submitted_now = submitted_now + 1;
             }
-        }
+        // }
     }
     Ok(())
 }
@@ -94,8 +105,9 @@ pub fn submit_proof_by_number(
     // Getting local state height
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
-    let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
-    if let Some(current_proof_number) = current_block_number {
+    let (current_local_proof, _current_block_path) = get_highest_block(&blocks_dir)?;
+    let current_proof_number = current_local_proof.height;
+    // if let Some(current_proof_number) = current_local_proof {
         info!("Local tower height: {:?}", current_proof_number);
 
         if proof_to_submit > current_proof_number {
@@ -128,7 +140,7 @@ pub fn submit_proof_by_number(
                         );
                 return Err(e);
             }
-        };
+        // };
     }
     Ok(())
 }
@@ -146,12 +158,12 @@ pub fn show_backlog(
     // Getting local state height
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
-    let (current_block_number, _current_block_path) = parse_block_height(&blocks_dir);
-    if let Some(current_proof_number) = current_block_number {
-        println!("Local tower height: {:?}", current_proof_number);
-    } else {
-        println!("Local tower height: 0");
-    }
+    let (current_local_proof, _current_block_path) = get_highest_block(&blocks_dir)?;
+    // if let Some(current_proof_number) = current_local_proof.height {
+        println!("Local tower height: {:?}", current_local_proof.height);
+    // } else {
+        // println!("Local tower height: 0");
+    // }
     Ok(())
 }
 

@@ -243,6 +243,17 @@ impl Node {
                 };
                 print
             }
+  //           Tower { account } => {
+  //             match self.get_account_state(account) {
+  //               Ok(a) => {
+  //                 let t: Option<TowerStateResource> = a.get_resource()?;
+                  
+                  
+  //               },
+  //               Err(_) => format!("No tower found at: {}", account)
+  // ,
+  //             }
+  //           }
             ValConfig { account } => {
                 // account
                 match self.get_account_state(account) {
@@ -260,7 +271,7 @@ impl Node {
                           cr.validator_config.unwrap().fullnode_network_addresses()?,
                         )
                       } else {
-                        format!("No validator configs cound at: {}", account)
+                        format!("No validator configs found at: {}", account)
                       }
                     },
                     Err(_) => format!("No validator configs cound at: {}", account),
@@ -467,6 +478,7 @@ pub fn test_fixture_wallet_type(
     s.insert(move_struct.type_.clone(), move_struct);
     AnnotatedAccountStateBlob(s)
 }
+
 
 #[test]
 fn test_find_annotated_move_value() {
