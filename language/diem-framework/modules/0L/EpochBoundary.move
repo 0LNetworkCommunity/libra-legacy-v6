@@ -105,9 +105,9 @@ module EpochBoundary {
               let miner_subsidy = count * proof_price;
 
               // don't pay while we are in recovery mode, since that creates a frontrunning opportunity
-              if (!RecoveryMode::is_recovery()){ 
+              // if (!RecoveryMode::is_recovery()){ 
                 FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
-              }
+              // }
               
             };
 
