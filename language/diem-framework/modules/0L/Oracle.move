@@ -266,10 +266,18 @@ address 0x1 {
           total_weight: 0,
         };
       }
+
+      fun vm_expire_upgrade(vm: &signer) acquires Oracles {
+        assert(Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(150003));
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
+        let threshold = get_threshold(VOTE_TYPE_PROPORTIONAL_VOTING_POWER);
+        let result = check_consensus(&upgrade_oracle.vote_counts, threshold);
+        upgrade_oracle.consensus = result
+      }
   
       // check to see if threshold is reached every time receiving a vote
       // TODO: Not sure we still want to do this every time as tallying is more costly when using node weight (as the threshold must be summed), fine for now. 
-      fun tally_upgrade (upgrade_oracle: &mut UpgradeOracle, type: u8) {
+      fun tally_upgrade(upgrade_oracle: &mut UpgradeOracle, type: u8) {
         let threshold = get_threshold(type);
         let result = check_consensus(&upgrade_oracle.vote_counts, threshold);
   
