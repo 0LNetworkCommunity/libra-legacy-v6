@@ -207,3 +207,32 @@ pub fn parse_makewhole_file(makewhole_file: PathBuf) -> Result<Vec<MakeWholeUnit
         serde_json::from_reader(file).expect("file should be proper JSON");
     Ok(makewhole_vec)
 }
+
+pub fn ol_expire_oracle_upgrade(path: PathBuf) -> Result<ChangeSet> {
+
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+
+    db.run_session_at_version(v, None, |session| {
+        let mut gas_status = GasStatus::new_unmetered();
+        let log_context = NoContextLog::new();
+            let args = vec![
+                MoveValue::Signer(diem_root_address()),
+            ];
+
+            session
+                .execute_function(
+                    &ModuleId::new(
+                        account_config::CORE_CODE_ADDRESS,
+                        Identifier::new("Oracle").unwrap(),
+                    ),
+                    &Identifier::new("vm_expire_upgrade").unwrap(),
+                    vec![],
+                    serialize_values(&args),
+                    &mut gas_status,
+                    &log_context,
+                )
+                .unwrap(); // TODO: don't use unwraps.
+        Ok(())
+    })
+}

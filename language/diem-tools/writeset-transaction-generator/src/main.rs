@@ -57,7 +57,7 @@ enum Command {
     #[structopt(name = "rescue")]
     Rescue { addresses: Vec<AccountAddress>},
     #[structopt(name = "upgrade-expire")]
-    UpgradeExpire { },
+    UpgradeExpire { addresses: Vec<AccountAddress> },
     #[structopt(name = "recovery")]
     RecoveryMode { addresses: Vec<AccountAddress> },
     // #[structopt(name = "hotfix")]
@@ -171,7 +171,7 @@ fn main() -> Result<()> {
             opt.block_height.expect("need to provide --block-height"),
         ),
         Command::Rescue { addresses } => ol_writset_encode_rescue(opt.db.unwrap(), addresses, opt.recovery_epoch),
-        Command::UpgradeExpire { } => ol_writeset_upgrade_expire(opt.db.unwrap()),
+        Command::UpgradeExpire { addresses } => ol_writeset_oracle_expire(opt.db.unwrap(), addresses, opt.recovery_epoch.expect("need to provide --recovery-epoch")),
         Command::Timestamp {} => ol_writset_update_timestamp(
             opt.db.unwrap(),
             opt.block_height.expect("need to provide --block-height"),
