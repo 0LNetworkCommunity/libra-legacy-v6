@@ -2273,6 +2273,8 @@ pub enum ScriptFunctionCall {
     /// Alice can remove Bob as the delegate with this function.
     OlRemoveDelegation {},
 
+    OlRevokeVote {},
+
     /// # Summary
     /// Transfers a given number of coins in a specified currency from one account to another.
     /// Transfers over a specified amount defined on-chain that are between two different VASPs, or
@@ -3712,6 +3714,7 @@ impl ScriptFunctionCall {
                 ram,
             } => encode_ol_reconfig_bulk_update_setup_script_function(alice, bob, carol, sha, ram),
             OlRemoveDelegation {} => encode_ol_remove_delegation_script_function(),
+            OlRevokeVote {} => encode_ol_revoke_vote_script_function(),
             PeerToPeerWithMetadata {
                 currency,
                 payee,
@@ -5169,6 +5172,18 @@ pub fn encode_ol_remove_delegation_script_function() -> TransactionPayload {
             ident_str!("OracleScripts").to_owned(),
         ),
         ident_str!("ol_remove_delegation").to_owned(),
+        vec![],
+        vec![],
+    ))
+}
+
+pub fn encode_ol_revoke_vote_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("OracleScripts").to_owned(),
+        ),
+        ident_str!("ol_revoke_vote").to_owned(),
         vec![],
         vec![],
     ))
@@ -8621,6 +8636,16 @@ fn decode_ol_remove_delegation_script_function(
     }
 }
 
+fn decode_ol_revoke_vote_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::OlRevokeVote {})
+    } else {
+        None
+    }
+}
+
 fn decode_peer_to_peer_with_metadata_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9556,6 +9581,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "OracleScriptsol_remove_delegation".to_string(),
             Box::new(decode_ol_remove_delegation_script_function),
+        );
+        map.insert(
+            "OracleScriptsol_revoke_vote".to_string(),
+            Box::new(decode_ol_revoke_vote_script_function),
         );
         map.insert(
             "PaymentScriptspeer_to_peer_with_metadata".to_string(),

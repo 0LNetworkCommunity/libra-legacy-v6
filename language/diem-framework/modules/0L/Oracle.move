@@ -178,7 +178,9 @@ address 0x1 {
         }; 
   
         // if the sender has voted, do nothing
-        if (Vector::contains<address>(&upgrade_oracle.validators_voted, &sender)) {return};
+        if (Vector::contains<address>(&upgrade_oracle.validators_voted, &sender)) {
+          assert(false, Errors::invalid_argument(VOTE_TYPE_INVALID));
+        };
         
         let vote_weight = get_weight(sender, VOTE_TYPE_UPGRADE);
         
@@ -194,6 +196,23 @@ address 0x1 {
         if (vote_sent) {
           Vector::push_back(&mut upgrade_oracle.votes, validator_vote);
           Vector::push_back(&mut upgrade_oracle.validators_voted, sender);
+          tally_upgrade(upgrade_oracle, VOTE_TYPE_UPGRADE);
+        };
+        
+      }
+
+      public fun revoke_my_votes(sender: &signer) acquires Oracles {
+        let addr = Signer::address_of(sender);
+        revoke_vote(addr);
+      }
+
+      fun revoke_vote(addr: address) acquires Oracles{
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
+        let (is_found, idx) = Vector::index_of<address>(&upgrade_oracle.validators_voted, &addr);
+
+        if (is_found) {
+          Vector::remove(&mut upgrade_oracle.votes, idx);
+          Vector::remove(&mut upgrade_oracle.validators_voted, idx);
           tally_upgrade(upgrade_oracle, VOTE_TYPE_UPGRADE);
         };
         
