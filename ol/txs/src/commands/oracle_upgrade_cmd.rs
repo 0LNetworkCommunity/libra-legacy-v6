@@ -18,6 +18,8 @@ use std::{fs, io::prelude::*, path::PathBuf, process::exit};
 pub struct OracleUpgradeCmd {
     #[options(short = "v", help = "Do the vote tx")]
     vote: bool,
+    #[options(help = "revoke all votes")]
+    revoke: bool,
     #[options(short = "f", help = "Path of upgrade file")]
     upgrade_file_path: Option<PathBuf>,
     #[options(short = "h", help = "Use hash instead of binary")]
@@ -63,6 +65,8 @@ impl Runnable for OracleUpgradeCmd {
             transaction_builder::encode_ol_remove_delegation_script_function()
         } else if let Some(destination) = self.delegate {
             transaction_builder::encode_ol_delegate_vote_script_function(destination)
+        } else if self.revoke {
+            transaction_builder::encode_ol_revoke_vote_script_function()
         } else {
             println!("Nothing to do from command line args. Did you mean to pass --vote?");
             exit(1);
