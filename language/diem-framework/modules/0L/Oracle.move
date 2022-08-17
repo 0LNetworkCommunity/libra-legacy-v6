@@ -290,8 +290,10 @@ address 0x1 {
         assert(Signer::address_of(vm) == CoreAddresses::DIEM_ROOT_ADDRESS(), Errors::requires_role(150003));
         let upgrade_oracle = &mut borrow_global_mut<Oracles>(CoreAddresses::DIEM_ROOT_ADDRESS()).upgrade;
         let threshold = get_threshold(VOTE_TYPE_PROPORTIONAL_VOTING_POWER);
+
         let result = check_consensus(&upgrade_oracle.vote_counts, threshold);
-        upgrade_oracle.consensus = result
+        upgrade_oracle.consensus = result;
+        upgrade_oracle.vote_window = DiemBlock::get_current_block_height() - 1;
       }
   
       // check to see if threshold is reached every time receiving a vote
