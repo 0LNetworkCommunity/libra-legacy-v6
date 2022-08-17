@@ -37,7 +37,7 @@ pub fn ol_writeset_stdlib_upgrade(path: PathBuf, height_now: u64) -> WriteSetPay
     // Take the stdlib upgrade change set.
     let stdlib_cs = encode_stdlib_upgrade_transaction();
 
-    let reconfig = reconfig::ol_reconfig_changeset(path, height_now).unwrap();
+    let reconfig = reconfig::ol_reconfig_changeset(path).unwrap();
 
     WriteSetPayload::Direct(merge_change_set(stdlib_cs, reconfig).unwrap())
 }
@@ -47,7 +47,7 @@ pub fn ol_writeset_set_stagingnet(path: PathBuf, height_now: u64) -> WriteSetPay
     // Take the stdlib upgrade change set.
     let testnet = testnet::ol_staging_net_changeset(path.clone()).unwrap();
 
-    let reconfig = reconfig::ol_reconfig_changeset(path, height_now).unwrap();
+    let reconfig = reconfig::ol_reconfig_changeset(path).unwrap();
 
     WriteSetPayload::Direct(merge_change_set(testnet, reconfig).unwrap())
 }
@@ -57,7 +57,7 @@ pub fn ol_writeset_set_testnet(path: PathBuf, height_now: u64) -> WriteSetPayloa
     // Take the stdlib upgrade change set.
     let testnet = testnet::ol_testnet_changeset(path.clone()).unwrap();
 
-    let reconfig = reconfig::ol_reconfig_changeset(path, height_now).unwrap();
+    let reconfig = reconfig::ol_reconfig_changeset(path).unwrap();
 
     WriteSetPayload::Direct(merge_change_set(testnet, reconfig).unwrap())
 }
@@ -94,7 +94,7 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>, recove
     let stdlib_cs = stdlib::ol_fresh_stlib_changeset(path.clone()).unwrap();
 
     // Changing the validators creates a new epoch boundary. But does not run the reconfiguration.
-    let boundary = reconfig::ol_bulk_validators_changeset(path.clone(), vals.clone()).unwrap();
+    let boundary = reconfig::ol_reset_epoch_counters(path.clone(), vals.clone()).unwrap();
 
 
     let mut all_cs = vec![stdlib_cs, boundary];
@@ -172,21 +172,21 @@ pub fn ol_writset_update_timestamp(path: PathBuf, height_now: u64) -> WriteSetPa
 
     // Take the stdlib upgrade change set.
     let reconfig =
-        reconfig::ol_reconfig_changeset(path, height_now).expect("could not get reconfig writeset");
+        reconfig::ol_reconfig_changeset(path).expect("could not get reconfig writeset");
 
     WriteSetPayload::Direct(merge_change_set(timestamp, reconfig).unwrap())
 }
 
 pub fn ol_create_reconfig_payload(path: PathBuf, height_now: u64) -> WriteSetPayload {
     WriteSetPayload::Direct(
-        reconfig::ol_reconfig_changeset(path, height_now)
+        reconfig::ol_reconfig_changeset(path)
             .expect("could not create reconfig change set"),
     )
 }
 
 pub fn ol_writeset_update_epoch_time(path: PathBuf, height_now: u64) -> WriteSetPayload {
     let epoch_time = reconfig::ol_epoch_timestamp_update(path.clone()).unwrap();
-    let reconfig = reconfig::ol_reconfig_changeset(path, height_now).unwrap();
+    let reconfig = reconfig::ol_reconfig_changeset(path).unwrap();
 
     WriteSetPayload::Direct(merge_change_set(epoch_time, reconfig).unwrap())
 }
