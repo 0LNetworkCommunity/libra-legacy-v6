@@ -24,7 +24,7 @@ pub fn ol_writeset_force_boundary(
     vals: Vec<AccountAddress>,
     block_height: u64,
 ) -> WriteSetPayload {
-    let cs = reconfig::ol_reset_epoch_counters(path, vals, block_height).unwrap();
+    let cs = reconfig::ol_reset_epoch_counters(path, vals).unwrap();
     WriteSetPayload::Direct(cs)
 }
 
@@ -94,7 +94,8 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>, recove
     let stdlib_cs = stdlib::ol_fresh_stlib_changeset(path.clone()).unwrap();
 
     // Changing the validators creates a new epoch boundary. But does not run the reconfiguration.
-    let boundary = reconfig::ol_bulk_validators_changeset(path.clone(), vals).unwrap();
+    let boundary = reconfig::ol_bulk_validators_changeset(path.clone(), vals.clone()).unwrap();
+
 
     let mut all_cs = vec![stdlib_cs, boundary];
 
@@ -139,7 +140,7 @@ pub fn ol_writset_encode_migrations(
     let recovery =
         stdlib::ol_set_epoch_recovery_mode(path.clone(), vec![], recovery_epoch).unwrap();
 
-    let boundary = reconfig::ol_reset_epoch_counters(path.clone(), vals, block_height).unwrap();
+    let boundary = reconfig::ol_reset_epoch_counters(path.clone(), vals).unwrap();
 
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
     let new_cs = merge_vec_changeset(vec![ancestry, makewhole, vouch, boundary, recovery]).unwrap();
