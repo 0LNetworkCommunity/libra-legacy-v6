@@ -28,6 +28,7 @@ address 0x1 {
       const DELEGATION_NOT_ENABLED: u64 = 150002;
       const VOTE_ALREADY_DELEGATED: u64 = 150003;
       const DELEGATION_NOT_PRESENT: u64 = 150004;
+      const DUPLICATE_VOTE: u64 = 150005;
   
       struct Oracles has key {
         upgrade: UpgradeOracle
@@ -179,7 +180,7 @@ address 0x1 {
   
         // if the sender has voted, do nothing
         if (Vector::contains<address>(&upgrade_oracle.validators_voted, &sender)) {
-          assert(false, Errors::invalid_argument(VOTE_TYPE_INVALID));
+          assert(false, Errors::invalid_argument(DUPLICATE_VOTE));
         };
         
         let vote_weight = get_weight(sender, VOTE_TYPE_UPGRADE);
@@ -201,9 +202,19 @@ address 0x1 {
         
       }
 
-      public fun revoke_my_votes(sender: &signer) acquires Oracles {
+      public fun revoke_my_votes(sender: &signer) acquires Oracles, VoteDelegation {
         let addr = Signer::address_of(sender);
         revoke_vote(addr);
+
+        let del = borrow_global<VoteDelegation>(Signer::address_of(sender));
+        let l = Vector::length<address>(&del.delegates);
+        let i = 0;
+        while (i < l) {
+          let addr = *Vector::borrow<address>(&del.delegates, i);
+          revoke_vote(addr);
+          i = i + 1;
+        };
+
       }
 
       fun revoke_vote(addr: address) acquires Oracles{
