@@ -36,7 +36,6 @@ script {
 script {
   use 0x1::Oracle;
   use 0x1::Vector;
-  use 0x1::Debug::print;
   fun main(sender: signer){
       let id = 1;
       let data = b"bello";
