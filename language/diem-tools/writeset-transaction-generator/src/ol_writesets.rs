@@ -93,19 +93,16 @@ pub fn ol_writset_encode_rescue(path: PathBuf, vals: Vec<AccountAddress>, recove
 
     let stdlib_cs = stdlib::ol_fresh_stlib_changeset(path.clone()).unwrap();
 
-    // let oracle_expiry = reconfig::ol_expire_oracle_upgrade(path.clone()).unwrap();
-
     // Changing the validators creates a new epoch boundary. But does not run the reconfiguration.
     let boundary = reconfig::ol_reset_epoch_counters(path.clone(), vals.clone()).unwrap();
 
 
     let mut all_cs = vec![stdlib_cs, boundary];
-    // let mut all_cs = vec![stdlib_cs, oracle_expiry, boundary];
 
     // set recovery mode if the option was passed by commandline
     if let Some(end_epoch) = recovery_epoch {
       // NOTE: we are not using a fixed validator set here. Just using usual validator selection.
-      let recovery = stdlib::ol_set_epoch_recovery_mode(path.clone(), vec![], end_epoch).unwrap();
+      let recovery = stdlib::ol_set_epoch_recovery_mode(path.clone(), vals, end_epoch).unwrap();
       all_cs.push(recovery)
     }
 
