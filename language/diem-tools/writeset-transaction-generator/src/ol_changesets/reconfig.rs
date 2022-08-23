@@ -8,13 +8,11 @@ use diem_transaction_replay::DiemDebugger;
 use diem_types::{
     account_address::AccountAddress,
     account_config::{diem_root_address, NewEpochEvent},
+    block_metadata::DiemBlockResource,
     contract_event::ContractEvent,
     transaction::{ChangeSet, TransactionArgument},
 };
-use move_core_types::{
-    language_storage::TypeTag,
-    move_resource::MoveStructType,
-};
+use move_core_types::{language_storage::TypeTag, move_resource::MoveStructType};
 
 use ol_types::epoch_timer::EpochTimerResource;
 use resource_viewer::AnnotatedMoveValue;
@@ -43,7 +41,8 @@ pub fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) ->
     wrapper::function_changeset_from_db(path, vec![fnwrap])
 }
 
-pub fn ol_reconfig_changeset(path: PathBuf, height_now: u64) -> Result<ChangeSet> {
+pub fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
+    let height_now = ol_get_internal_blockheight(path.clone())?;
     let txn_args = vec![
         TransactionArgument::Address(diem_root_address()),
         TransactionArgument::U64(height_now),
@@ -71,23 +70,37 @@ pub fn mfg_epoch_event(epoch: u64, seq: u64) -> Result<ContractEvent> {
     ))
 }
 
-
-// TODO this doesn't work.
+// TODO this doesn't work. Causes issues with epoch seq number already being bumped.
 pub fn ol_reset_epoch_counters(
     path: PathBuf,
     vals: Vec<AccountAddress>,
-    block_height: u64,
+    // block_height: u64,
 ) -> Result<ChangeSet> {
+    let block_height = ol_get_internal_blockheight(path.clone())?;
     let txn_args = vec![
         TransactionArgument::Address(diem_root_address()),
-        TransactionArgument::AddressVector(vals),
-        TransactionArgument::AddressVector(vec![]),
-        TransactionArgument::U64(block_height + 1),
+        TransactionArgument::AddressVector(vals), // new validator set
+        TransactionArgument::AddressVector(vec![]), // outgoing compliant
+        TransactionArgument::U64(block_height + 1), // start of epoch
     ];
 
     let fnwrap = FunctionWrapper {
         module_name: "EpochBoundary".to_string(),
         function_name: "reset_counters".to_string(),
+        txn_args,
+    };
+
+    wrapper::function_changeset_from_db(path, vec![fnwrap])
+}
+
+pub fn ol_expire_oracle_upgrade(path: PathBuf) -> Result<ChangeSet> {
+    let txn_args = vec![
+        TransactionArgument::Address(diem_root_address()),
+    ];
+
+    let fnwrap = FunctionWrapper {
+        module_name: "Oracle".to_string(),
+        function_name: "vm_expire_upgrade".to_string(),
         txn_args,
     };
 
@@ -133,7 +146,6 @@ pub fn ol_epoch_timestamp_update(path: PathBuf) -> Result<ChangeSet> {
     bail!("could not get epoch timer state")
 }
 
-
 pub fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
     let start = SystemTime::now();
     let now = start.duration_since(UNIX_EPOCH)?;
@@ -152,4 +164,37 @@ pub fn ol_increment_timestamp(path: PathBuf) -> Result<ChangeSet> {
     };
 
     wrapper::function_changeset_from_db(path, vec![fnwrap])
+}
+
+fn ol_get_internal_blockheight(path: PathBuf) -> Result<u64> {
+    let db = DiemDebugger::db(path)?;
+    let v = db.get_latest_version()?;
+
+    // TODO: HELP! there must be a better way to get a MoveResource from db
+    if let Some(acc) = db.annotate_account_state_at_version(AccountAddress::ZERO, v, false)? {
+        let key = DiemBlockResource::struct_tag();
+        let move_str = acc
+            .0
+            .get(&key)
+            .expect("cannot get a value for DiemBlockResource");
+
+        // confirm the field exists.
+        let height = move_str.value.iter().find_map(|item| {
+            if let AnnotatedMoveValue::U64(u) = item.1 {
+                match item.0.as_str() {
+                    "height" => Some(u),
+                    _ => None,
+                }
+            } else {
+                None
+            }
+        });
+
+        match height {
+            Some(h) => return Ok(h),
+            None => bail!("could not get internal block height"),
+        }
+    };
+
+    bail!("could not get epoch height")
 }

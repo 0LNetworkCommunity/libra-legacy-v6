@@ -41,7 +41,7 @@ impl Default for StateSyncConfig {
             client_commit_timeout_ms: 5_000,
             long_poll_timeout_ms: 10_000,
             max_chunk_limit: 1_000,
-            max_timeout_ms: 120_000,
+            max_timeout_ms: 1_200_000,
             mempool_commit_timeout_ms: 5_000,
             multicast_timeout_ms: 30_000,
             sync_request_timeout_ms: 60_000, //////// 0L /////////

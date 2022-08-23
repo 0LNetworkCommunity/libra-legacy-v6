@@ -24,6 +24,8 @@ This module provides global variables and constants that have no specific owner
 -  [Function `get_epoch_mining_thres_upper`](#0x1_Globals_get_epoch_mining_thres_upper)
 -  [Function `get_unlock`](#0x1_Globals_get_unlock)
 -  [Function `get_min_blocks_epoch`](#0x1_Globals_get_min_blocks_epoch)
+-  [Function `get_vouch_threshold`](#0x1_Globals_get_vouch_threshold)
+-  [Function `get_signing_threshold`](#0x1_Globals_get_signing_threshold)
 -  [Function `get_constants`](#0x1_Globals_get_constants)
 
 
@@ -110,6 +112,18 @@ epoch by a miner to remain compliant
 </dd>
 <dt>
 <code>min_blocks_per_epoch: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>vouch_threshold: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>signing_threshold_pct: u64</code>
 </dt>
 <dd>
 
@@ -383,6 +397,56 @@ Get the mining threshold
 
 </details>
 
+<a name="0x1_Globals_get_vouch_threshold"></a>
+
+## Function `get_vouch_threshold`
+
+Get the threshold for unrelated vouchers per validator
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_vouch_threshold">get_vouch_threshold</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_vouch_threshold">get_vouch_threshold</a>(): u64 {
+  <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>().vouch_threshold
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Globals_get_signing_threshold"></a>
+
+## Function `get_signing_threshold`
+
+Get the threshold of number of signed blocks in an epoch per validator
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_signing_threshold">get_signing_threshold</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_signing_threshold">get_signing_threshold</a>(): u64 {
+  <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>().signing_threshold_pct
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_Globals_get_constants"></a>
 
 ## Function `get_constants`
@@ -414,6 +478,8 @@ Get the constants for the current network
       epoch_mining_thres_upper: 1000, // upper bound unlimited
       epoch_slow_wallet_unlock: 10,
       min_blocks_per_epoch: 0,
+      vouch_threshold: 0,
+      signing_threshold_pct: 3,
     }
   };
 
@@ -428,6 +494,8 @@ Get the constants for the current network
       epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
       epoch_slow_wallet_unlock: 10000000,
       min_blocks_per_epoch: 1000,
+      vouch_threshold: 0,
+      signing_threshold_pct: 3,
     }
   } <b>else</b> {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
@@ -445,6 +513,8 @@ Get the constants for the current network
       epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
       epoch_slow_wallet_unlock: 1000 * <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>, // approx 10 years for largest accounts in genesis.
       min_blocks_per_epoch: 10000,
+      vouch_threshold: 2, // Production is 2 vouchers per validator
+      signing_threshold_pct: 3,
     }
   }
 }

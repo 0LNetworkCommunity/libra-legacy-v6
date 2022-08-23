@@ -8,7 +8,7 @@ BLOCK_HEIGHT = 28671095
 endif
 
 ifndef RECOVERY_EPOCH
-RECOVERY_EPOCH = 178
+RECOVERY_EPOCH = 295
 endif
 
 ifndef ACCOUNT
@@ -36,18 +36,22 @@ wipe:
 	cp -r ${DATA_PATH}/db-reference ${DATA_PATH}/db
 	STEP=wipe make dump
 
-tx:
+
+tx-rescue:
+# Compiles a new stdlib from source, updates the validator set with VALS, and enters recovery mode until RECOVERY_EPOCH.
 	mkdir ${RESCUE_PATH} | true
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --recovery-epoch ${RECOVERY_EPOCH} --output ${RESCUE_PATH}/rescue.blob rescue ${VALS}
+
+tx-upgrade-expire:
+# Compiles a new stdlib from source, updates the validator set with VALS, and enters recovery mode until RECOVERY_EPOCH.
+	mkdir ${RESCUE_PATH} | true
+	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --recovery-epoch ${RECOVERY_EPOCH} --output ${RESCUE_PATH}/rescue.blob upgrade-expire
 
 tx-migrate:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --block-height ${BLOCK_HEIGHT} --recovery-epoch ${RECOVERY_EPOCH} --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob migrate ${SOURCE_PATH}/ol/fixtures/rescue/ancestry.json ${SOURCE_PATH}/ol/fixtures/rescue/make_whole.json ${VALS}
 
 tx-recovery:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob --recovery-epoch ${RECOVERY_EPOCH} recovery ${VALS}
-
-tx-debug:
-	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob debug ${VALS}
 
 tx-vals:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob update-validators ${VALS}
@@ -100,9 +104,9 @@ diff:
 	@shasum ${RESCUE_PATH}/dump-start | true
 
 init:
-	mv ${DATA_PATH}/key_store.json ${DATA_PATH}/key_store.json.bak.${DATE} | true
 	ol init --key-store --waypoint $(shell cat ${RESCUE_PATH}/rescue_waypoint.txt)
-
+	ol init --reset-safety
+	
 start:
 	cd ${SOURCE_PATH} && cargo r -p diem-node -- -f ${DATA_PATH}/validator.node.yaml 2>&1 | tee ${DATA_PATH}/logs/node.log
 

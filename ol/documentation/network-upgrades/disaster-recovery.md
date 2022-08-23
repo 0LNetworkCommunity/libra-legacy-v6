@@ -74,10 +74,11 @@ cd libra/language/diem-tools/writeset-transaction-generator
 
 export VALS = <alice> <bob> <carol>
 
-// save a writset transaction binary
-make tx
+// save a writset transaction binary, for example of the "rescue" transaction set.
+// Compiles a new stdlib from source, updates the validator set with VALS, and enters recovery mode until RECOVERY_EPOCH.
+make tx-rescue
 
-// check it can be applied to the db
+// check those transactions can be applied to the db
 make check
 
 // commit the writset to db at rest

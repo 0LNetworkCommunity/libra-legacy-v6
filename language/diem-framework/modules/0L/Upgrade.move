@@ -8,7 +8,6 @@ module Upgrade {
     use 0x1::Errors;
     use 0x1::Signer;
     use 0x1::Vector;
-    // use 0x1::DiemTimestamp;
 
     /// Structs for UpgradePayload resource
     struct UpgradePayload has key {

@@ -20,9 +20,8 @@
 <pre><code><b>use</b> <a href="Ancestry.md#0x1_Ancestry">0x1::Ancestry</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
+<b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
-<b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
-<b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
@@ -355,15 +354,11 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Vouch.md#0x1_Vouch_unrelated_buddies_above_thresh">unrelated_buddies_above_thresh</a>(val: address): bool <b>acquires</b> <a href="Vouch.md#0x1_Vouch">Vouch</a>{
-  <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>() || <a href="Testnet.md#0x1_StagingNet_is_staging_net">StagingNet::is_staging_net</a>()) {
-    <b>return</b> <b>true</b>
-  };
-
   <b>if</b> (!<b>exists</b>&lt;<a href="Vouch.md#0x1_Vouch">Vouch</a>&gt;(val)) <b>return</b> <b>false</b>;
 
   <b>let</b> len = <a href="../../../../../../move-stdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&<a href="Vouch.md#0x1_Vouch_unrelated_buddies">unrelated_buddies</a>(val));
 
-  (len &gt;= 4) // TODO: <b>move</b> <b>to</b> <a href="Globals.md#0x1_Globals">Globals</a>
+  (len &gt;= <a href="Globals.md#0x1_Globals_get_vouch_threshold">Globals::get_vouch_threshold</a>())
 }
 </code></pre>
 

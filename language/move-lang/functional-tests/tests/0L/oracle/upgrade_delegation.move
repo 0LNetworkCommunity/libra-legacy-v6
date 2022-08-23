@@ -28,6 +28,9 @@ script {
 }
 //check: EXECUTED
 
+//// JIM PROXIES LUCY to vote on upgrades
+//// THOMAS PROXIES ALICE to vote on upgrades
+
 //! new-transaction
 //! sender: lucy
 script {
@@ -156,6 +159,7 @@ script {
 // check: EXECUTED
 
 
+// THOMAS SHOULD NOT BE ABLE TO VOTE, SINCE ALICE ALREADY VOTED FOR THEM
 
 
 //! new-transaction
@@ -177,108 +181,4 @@ script {
     }
   }
 }
-// check: EXECUTED
-
-
-
-//! new-transaction
-//! sender: lucy
-script {
-  use 0x1::Oracle;
-  use 0x1::Vector;
-  use 0x1::Upgrade;
-  use 0x1::Hash;
-  fun main(sender: signer){
-    if (Oracle::delegation_enabled_upgrade()) {
-      let id = 2;
-      let data = b"hello";
-      let hash = Hash::sha2_256(data);
-      Oracle::handler(&sender, id, hash);
-      let vec = Oracle::test_helper_query_oracle_votes();
-      let e = *Vector::borrow<address>(&vec, 3);
-      assert(e == @{{lucy}}, 7357123401011000);
-      let e = *Vector::borrow<address>(&vec, 4);
-      assert(e == @{{jim}}, 7357123401011000);
-
-      assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
-    }
-  }
-}
-// check: EXECUTED
-
-
-//! new-transaction
-//! sender: jim
-script {
-  use 0x1::Oracle;
-  use 0x1::Vector;
-  fun main(sender: signer){
-    if (Oracle::delegation_enabled_upgrade()) {
-      let id = 1;
-      let data = b"hello";
-      Oracle::handler(&sender, id, data);
-      // ensure jim's vote is not counted twice
-      let vec = Oracle::test_helper_query_oracle_votes();
-      let e = Vector::length<address>(&vec);
-      assert(e == 5, 7357123401011002);
-    }
-  }
-}
-// check: EXECUTED
-
-//! new-transaction
-//! sender: charlie
-script {
-  use 0x1::Oracle;
-  use 0x1::Vector;
-  use 0x1::Upgrade;
-  use 0x1::Hash;
-  fun main(sender: signer){
-    if (Oracle::delegation_enabled_upgrade()) {
-      let id = 2;
-      let data = b"hello";
-      let hash = Hash::sha2_256(data);
-      Oracle::handler(&sender, id, hash);
-      let vec = Oracle::test_helper_query_oracle_votes();
-      let e = *Vector::borrow<address>(&vec, 5);
-      assert(e == @{{charlie}}, 7357123401011000);
-
-      assert(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert(Oracle::test_helper_check_upgrade() == true, 7357123401011001);
-    }
-  }
-}
-// check: EXECUTED
-
-
-
-
-// //! block-prologue
-// //! proposer: bob
-// //! block-time: 1
-// //! round: 2
-
-// //! block-prologue
-// //! proposer: bob
-// //! block-time: 2
-// //! round: 2
-
-// //! new-transaction
-// //! sender: diemroot
-// script {
-//   use 0x1::Upgrade;
-//   use 0x1::Vector;
-//   fun main(){
-//     let (upgraded_version, payload, voters, height) = Upgrade::retrieve_latest_history();
-
-//     let validators = Vector::empty<address>();
-//     Vector::push_back(&mut validators, @{{alice}});
-//     Vector::push_back(&mut validators, @{{charlie}});
-//     assert(upgraded_version == 0, 7357123401011000);
-//     assert(payload == b"hello", 7357123401011000);
-//     assert(Vector::compare(&voters, &validators), 7357123401011000);
-//     assert(height == 1, 7357123401011000);
-//   }
-// }
-// // check: EXECUTED
+// check: ABORTED

@@ -6,6 +6,7 @@
 
 
 -  [Function `ol_oracle_tx`](#0x1_OracleScripts_ol_oracle_tx)
+-  [Function `ol_revoke_vote`](#0x1_OracleScripts_ol_revoke_vote)
 -  [Function `ol_delegate_vote`](#0x1_OracleScripts_ol_delegate_vote)
 -  [Function `ol_enable_delegation`](#0x1_OracleScripts_ol_enable_delegation)
 -  [Function `ol_remove_delegation`](#0x1_OracleScripts_ol_remove_delegation)
@@ -33,6 +34,30 @@
 
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_oracle.md#0x1_OracleScripts_ol_oracle_tx">ol_oracle_tx</a>(sender: signer, id: u64, data: vector&lt;u8&gt;) {
     <a href="Oracle.md#0x1_Oracle_handler">Oracle::handler</a>(&sender, id, data);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_OracleScripts_ol_revoke_vote"></a>
+
+## Function `ol_revoke_vote`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_oracle.md#0x1_OracleScripts_ol_revoke_vote">ol_revoke_vote</a>(sender: signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_oracle.md#0x1_OracleScripts_ol_revoke_vote">ol_revoke_vote</a>(sender: signer) {
+    <a href="Oracle.md#0x1_Oracle_revoke_my_votes">Oracle::revoke_my_votes</a>(&sender);
 }
 </code></pre>
 
