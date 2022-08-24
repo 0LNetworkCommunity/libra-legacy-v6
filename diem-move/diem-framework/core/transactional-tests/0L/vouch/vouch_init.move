@@ -7,7 +7,7 @@
 script {
   use DiemFramework::Vouch;
 
-  fun main(_dr: signer, Alice: signer) {
+  fun main(_dr: signer, alice: signer) {
     Vouch::init(&Alice);
     assert!(Vouch::is_init(@Alice), 7347001);
   }
