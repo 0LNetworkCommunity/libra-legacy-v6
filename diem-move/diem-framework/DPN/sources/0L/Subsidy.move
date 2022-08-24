@@ -181,9 +181,17 @@ address DiemFramework {
       outgoing_set: &vector<address>,
     ) {
       CoreAddresses::assert_vm(vm);
+
       let len = Vector::length<address>(outgoing_set);
       let bal = TransactionFee::get_amount_to_distribute(vm);
       // leave fees in tx_fee if there isn't at least 1 gas coin per validator.
+      if (bal < len) {
+        return
+      };
+
+      if (bal < 1) {
+        return
+      };
 
       let i = 0;
       while (i < len) {
