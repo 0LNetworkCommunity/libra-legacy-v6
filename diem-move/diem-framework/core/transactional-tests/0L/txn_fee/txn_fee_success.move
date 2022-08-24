@@ -76,6 +76,7 @@ script {
     use DiemFramework::TransactionFee;
     use DiemFramework::Diem;
     use DiemFramework::DiemSystem;
+    use DiemFramework::Debug::print;
 
     fun main(vm: signer, _: signer) {
         let vm = &vm;
@@ -85,6 +86,7 @@ script {
         assert!(bal == 1000, 7357190103011000);
 
         let (validators, _) = DiemSystem::get_fee_ratio(vm, 0, 15);
+        print(&validators);
         //TODO: The fee ratio is unused in this proposal.
         Subsidy::process_fees(vm, &validators);
 
