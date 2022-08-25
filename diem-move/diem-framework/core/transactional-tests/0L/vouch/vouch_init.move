@@ -7,8 +7,8 @@
 script {
   use DiemFramework::Vouch;
 
-  fun main(_dr: signer, alice: signer) {
-    Vouch::init(&Alice);
+  fun main(_dr: signer, addr: signer) {
+    Vouch::init(&addr);
     assert!(Vouch::is_init(@Alice), 7347001);
   }
 }
@@ -19,11 +19,11 @@ script {
   use Std::Vector;
   use Std::Signer;
 
-  fun main(_dr: signer, bob: signer) {
+  fun main(_dr: signer, bob_addr: signer) {
     assert!(Vouch::is_init(@Alice), 7347002);
-    Vouch::vouch_for(&bob, @Alice);
+    Vouch::vouch_for(&bob_addr, @Alice);
     let includes = Vector::contains(
-      &Vouch::get_buddies(@Alice), &Signer::address_of(&bob)
+      &Vouch::get_buddies(@Alice), &Signer::address_of(&bob_addr)
     );
     assert!(includes, 7357003);
   }
@@ -35,12 +35,12 @@ script {
   use Std::Vector;
   use Std::Signer;
 
-  fun main(_dr: signer, bob: signer) {
+  fun main(_dr: signer, bob_addr: signer) {
     assert!(Vouch::is_init(@Alice), 7347004);
-    Vouch::revoke(&bob, @Alice);
+    Vouch::revoke(&bob_addr, @Alice);
 
     let includes = Vector::contains(
-      &Vouch::get_buddies(@Alice), &Signer::address_of(&bob)
+      &Vouch::get_buddies(@Alice), &Signer::address_of(&bob_addr)
     );
 
     assert!(!includes, 7357005);
