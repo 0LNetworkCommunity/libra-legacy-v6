@@ -1,5 +1,18 @@
-//# init --validators Alice Bob Carol
-    // bob and carol are community wallets
+//# init --validators Alice
+//#      --addresses Bob=0x2e3a0b7a741dae873bf0f203a82dfd52
+//#                  Carol=0x4b7653f6566a52c9b496f245628a69a0
+//#      --private-keys Bob=e1acb70a23dba96815db374b86c5ae96d6a9bc5fff072a7a8e55a1c27c1852d8
+//#                     Carol=f5fd1521bd82454a9834ef977c389a0201f9525b11520334842ab73d2dcbf8b7
+
+//# run --signers DiemRoot
+//#     --args @Bob
+//#     -- 0x1::DiemAccount::test_harness_create_user
+
+//# run --signers DiemRoot
+//#     --args @Carol
+//#     -- 0x1::DiemAccount::test_harness_create_user
+
+
 
 // make Alice a case 1 validator, so that she is in the next validator set.
 
@@ -91,7 +104,7 @@ script {
     // send to community wallet Bob
     DiemAccount::vm_make_payment_no_limit<GAS>(@Alice, @Bob, 500000, x"", x"", &vm);
     let bal = DiemAccount::balance<GAS>(@Bob);
-    assert!(bal == 10500000, 7357003);
+    assert!(bal == 500000, 7357003);
   }
 }
 // check: EXECUTED
@@ -114,7 +127,7 @@ script {
     // bob's community wallet increased by 50% of subsidy after epoch change.
     let bal = DiemAccount::balance<GAS>(@Bob);
     print(&bal);
-    assert!(bal == 90359140, 7357004);    
+    assert!(bal == 148500000, 7357004);    
   }
 }
 // check: EXECUTED
