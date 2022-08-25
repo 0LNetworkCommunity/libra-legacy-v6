@@ -182,19 +182,20 @@ address DiemFramework {
     ) {
       CoreAddresses::assert_vm(vm);
 
-      let capability_token = DiemAccount::extract_withdraw_capability(vm);
       let len = Vector::length<address>(outgoing_set);
       let bal = TransactionFee::get_amount_to_distribute(vm);
       // leave fees in tx_fee if there isn't at least 1 gas coin per validator.
       if (bal < len) {
-        DiemAccount::restore_withdraw_capability(capability_token);
+        return
+      };
+
+      if (bal < 1) {
         return
       };
 
       let i = 0;
       while (i < len) {
         let node_address = *(Vector::borrow<address>(outgoing_set, i));
-        // let node_ratio = *(Vector::borrow<FixedPoint32>(fee_ratio, i));
         let fees = bal/len;
         
         DiemAccount::vm_deposit_with_metadata<GAS>(
@@ -206,7 +207,6 @@ address DiemFramework {
         );
         i = i + 1;
       };
-      DiemAccount::restore_withdraw_capability(capability_token);
     }
 
     // Operators may run out of balance to submit txs for the Validator. 
