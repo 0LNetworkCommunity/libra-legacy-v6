@@ -23,7 +23,7 @@ script {
         assert!(DiemSystem::is_validator(@Eve) == true, 7357300101031000);
 
         assert!(TowerState::get_count_in_epoch(@Alice) == 0, 7357300101041000);
-        assert!(DiemAccount::balance<GAS>(@Alice) == 1000000, 7357300101051000);
+        assert!(DiemAccount::balance<GAS>(@Alice) == 10000000, 7357300101051000);
         assert!(NodeWeight::proof_of_weight(@Alice) == 0, 7357300101051000);
 
         // Alice continues to mine after genesis.
@@ -114,13 +114,13 @@ script {
           Globals::get_max_validators_per_set(),
         );
 
-        let starting_balance = 1000000;
+        let starting_balance = 10000000;
 
         let operator_refund = 4336 * 5; // BASELINE_TX_COST * proofs = 21680
         
         // Note since there's only 1 validator and the reward to Alice was
         // the entirety of subsidy available.
-        let burn = expected_subsidy/2; // 50% of the rewrd to validator. 
+        let burn = expected_subsidy/2; // 50% of the reward to validator. 
 
         let ending_balance 
             = starting_balance + expected_subsidy - operator_refund - burn;
