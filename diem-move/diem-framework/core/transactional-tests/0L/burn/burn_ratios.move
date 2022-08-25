@@ -43,6 +43,7 @@ script {
   use DiemFramework::Burn;
   use Std::Vector;
   use Std::FixedPoint32;
+  use DiemFramework::Debug::print;
 
   fun main(vm: signer, _:signer) {
     // send to community wallet Bob
@@ -63,13 +64,14 @@ script {
 
     let bob_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 0);
     let pct_bob = FixedPoint32::multiply_u64(100, bob_mult);
+    print(&pct_bob);
     // ratio for bob's community wallet.
-    assert!(pct_bob == 36, 7357008); // todo
+    assert!(pct_bob == 48, 7357008); // todo
 
     let carol_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 1);
     let pct_carol = FixedPoint32::multiply_u64(100, carol_mult);
     // ratio for carol's community wallet.
-    assert!(pct_carol == 63, 7357009); // todo
+    assert!(pct_carol == 51, 7357009); // todo
   }
 }
 // check: EXECUTED
