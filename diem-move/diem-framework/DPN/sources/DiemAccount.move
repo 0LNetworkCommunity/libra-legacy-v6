@@ -1875,6 +1875,7 @@ module DiemFramework::DiemAccount {
             &mut borrow_global_mut<AccountOperationsCapability>(@DiemRoot).creation_events,
             CreateAccountEvent { created: new_account_addr, role_id: Roles::get_role_id(new_account_addr) },
         );
+
         move_to(
             new_account,
             DiemAccount {
@@ -1892,9 +1893,10 @@ module DiemFramework::DiemAccount {
                 sequence_number: 0,
             }
         );
+        
         //////// 0L ////////
-        // NOTE: if all accounts are to be slow set this
-        // set_slow(&new_account);        
+        // Initialize struct for tracking payment receipts
+        Receipts::init(new_account);    
     }
     spec make_account {
         pragma opaque;
