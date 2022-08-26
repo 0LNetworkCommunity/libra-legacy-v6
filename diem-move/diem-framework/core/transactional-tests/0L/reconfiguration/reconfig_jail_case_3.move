@@ -24,7 +24,7 @@ script {
         Mock::mock_case_1(&vm, @Dave, 0, 15);
         Mock::mock_case_1(&vm, @Eve, 0, 15);
 
-        /// Frank will mine, but not sign
+        // Frank will mine, but not sign
 
         TowerState::test_helper_mock_mining_vm(&vm, @Frank, 20);
 
