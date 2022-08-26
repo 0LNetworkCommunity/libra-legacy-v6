@@ -1,5 +1,6 @@
 //# init --validators Alice
-// Module to test bulk validator updates function in DiemSystem.move
+
+// We are testing one validator creating another validator account
 
 //# run --admin-script --signers DiemRoot Alice
 script {
@@ -11,8 +12,14 @@ script {
   use DiemFramework::ValidatorConfig;
   use DiemFramework::Roles;
   use DiemFramework::TowerState;
+  use DiemFramework::Testnet;
+  use DiemFramework::Debug::print;
 
-  fun main(_dr: signer, sender: signer) {
+  fun main(dr: signer, sender: signer) {
+    let sender_addr = Signer::address_of(&sender);
+    assert!(TowerState::can_create_val_account(sender_addr) == true, 7357001);
+    
+
     let challenge = TestFixtures::eve_0_easy_chal();
     let solution = TestFixtures::eve_0_easy_sol();
     let (parsed_address, _auth_key_prefix) = VDF::extract_address_from_challenge(&challenge);
@@ -36,13 +43,14 @@ script {
     );
 
     // Check the account has the Validator role
-    assert!(Roles::assert_validator_addr(parsed_address), 7357130101011000);
-    assert!(ValidatorConfig::is_valid(parsed_address), 7357130101021000);
+    assert!(Roles::assert_validator_addr(parsed_address), 7357002);
+    assert!(ValidatorConfig::is_valid(parsed_address), 7357003);
 
-    // Todo: Why 0? Validators get 1'000_000 when they are created
-    // Check the account exists and the balance is 0
-    assert!(DiemAccount::balance<GAS>(parsed_address) == 0, 7357130101031000);
-    let sender_addr = Signer::address_of(&sender);
-    assert!(TowerState::can_create_val_account(sender_addr) == false, 7357130101041000);
+    // Check that the Onboarder Alice, was able to deposit funds to the net validator account
+    print(&DiemAccount::balance<GAS>(parsed_address));
+    assert!(DiemAccount::balance<GAS>(parsed_address) == 1000000, 7357004);
+
+    Testnet::remove_testnet(&dr); // testnet would make this always true
+    assert!(TowerState::can_create_val_account(sender_addr) == false, 7357005);
   }
 }
