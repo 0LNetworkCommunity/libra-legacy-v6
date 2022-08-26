@@ -88,12 +88,11 @@ impl ValConfigs {
         vfn_ip_address: Ipv4Addr,
         autopay_instructions: Option<Vec<PayInstruction>>,
         autopay_signed: Option<Vec<SignedTransaction>>,
-    ) -> Self {
+    ) -> Result<ValConfigs, anyhow::Error> {
         let owner_address = keys.child_0_owner.get_address();
 
         let val_pubkey =
-            PublicKey::from_ed25519_public_bytes(&keys.child_2_val_network.get_public().to_bytes())
-                .unwrap();
+            PublicKey::from_ed25519_public_bytes(&keys.child_2_val_network.get_public().to_bytes())?;
 
         let val_addr_for_val_net =
             ValConfigs::make_unencrypted_addr(&val_ip_address, val_pubkey, NetworkId::Validator);
@@ -122,12 +121,11 @@ impl ValConfigs {
         // to connect to its fullnode.
         let vfn_pubkey = PublicKey::from_ed25519_public_bytes(
             &keys.child_3_fullnode_network.get_public().to_bytes(),
-        )
-        .unwrap();
+        )?;
         let vfn_addr_obj =
             ValConfigs::make_unencrypted_addr(&vfn_ip_address, vfn_pubkey, NetworkId::Public);
 
-        Self {
+        let new_conf = Self {
             /// Proof zero of the onboarded miner
             block_zero,
             ow_human_name: owner_address,
@@ -138,25 +136,26 @@ impl ValConfigs {
                 .prefix()
                 .to_vec(),
             op_consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().to_vec(),
-            op_validator_network_addresses: bcs::to_bytes(&vec![encrypted_addr]).unwrap(),
-            op_fullnode_network_addresses: bcs::to_bytes(&vec![&vfn_addr_obj]).unwrap(),
+            op_validator_network_addresses: bcs::to_bytes(&vec![encrypted_addr])?,
+            op_fullnode_network_addresses: bcs::to_bytes(&vec![&vfn_addr_obj])?,
             op_val_net_addr_for_vals: val_addr_for_val_net.to_owned(),
             op_val_net_addr_for_vfn: val_addr_for_vfn_net.to_owned(),
             op_vfn_net_addr_for_public: vfn_addr_obj.to_owned(),
             op_human_name: format!("{}-oper", owner_address), //NOTE: This must match  ol/types/src/config.rs format_oper_namespace
             autopay_instructions,
             autopay_signed,
-        }
+        };
+        Ok(new_conf)
     }
     /// Creates the json file needed for onchain account creation - validator
-    pub fn create_manifest(&self, mut json_path: PathBuf) {
+    pub fn create_manifest(&self, mut json_path: PathBuf) -> Result<(), anyhow::Error> {
         //where file will be saved
         json_path.push("account.json");
-        let mut file = File::create(json_path.as_path()).unwrap();
-        let buf = serde_json::to_string(&self).expect("Config should be export to json");
-        file.write(&buf.as_bytes())
-            .expect("Could not write account.json");
+        let mut file = File::create(json_path.as_path())?;
+        let buf = serde_json::to_string(&self)?;
+        file.write(&buf.as_bytes())?;
         println!("account manifest created, file saved to: {:?}", json_path);
+        Ok(())
     }
 
     /// Extract the preimage and proof from a genesis proof proof_0.json
@@ -219,7 +218,9 @@ impl ValConfigs {
             .for_each(|(i, instr)| {
                 println!("{}", instr.text_instruction());
                 if !*IS_TEST {
-                  match Confirm::new().with_prompt("").interact().unwrap() {
+
+                    match Confirm::new().with_prompt("").interact().unwrap() { // unwrap is OK in test scope
+                  
                     true => {},
                     _ =>  {
                       print!("Autopay configuration aborted. Check batch configuration file or template");
@@ -229,7 +230,7 @@ impl ValConfigs {
                 }
 
                 if let Some(signed) = &self.autopay_signed {
-                  let tx = signed.iter().nth(i).unwrap();
+                  let tx = signed.iter().nth(i).unwrap(); //TODO: How to refactor this unwrap (Michael64)
                   let payload = tx.clone().into_raw_transaction().into_payload();
                   if let TransactionPayload::Script(s) = payload {
                       match instr.check_instruction_match_tx(s.clone()) {
@@ -258,15 +259,16 @@ impl UserConfigs {
         }
     }
     /// Creates the json file needed for onchain account creation - user
-    pub fn create_manifest(&self, mut json_path: PathBuf) {
+    pub fn create_manifest(&self, mut json_path: PathBuf) -> Result<(), anyhow::Error> {
         //where file will be saved
         json_path.push("account.json");
 
-        let mut file = File::create(json_path.as_path()).unwrap();
+        let mut file = File::create(json_path.as_path())?;
         let buf = serde_json::to_string(&self).expect("Manifest should export to json");
         file.write(&buf.as_bytes())
             .expect("Could not write account.json");
         println!("Account manifest saved to: {:?}", json_path);
+        Ok(())
     }
     /// Extract the preimage and proof from a genesis proof proof_0.json
     pub fn get_init_data(path: &PathBuf) -> Result<UserConfigs, std::io::Error> {
@@ -283,11 +285,11 @@ fn test_parse_account_file() {
     use crate::account::ValConfigs;
 
     let path = crate::fixtures::get_persona_account_json("eve").1;
-    let init_configs = ValConfigs::get_init_data(&path).unwrap();
+    let init_configs = ValConfigs::get_init_data(&path).unwrap(); // .unwrap is OK in test scope
     assert_eq!(init_configs.op_fullnode_network_addresses, decode("012d0400a5e36a0a052318072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800").unwrap(), "Could not parse network address");
 
     let consensus_key_vec =
-        decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap();
+        decode("cac7909e7941176e76c55ddcfae6a9c13e2be071593c82cac685e7c82d7ffe9d").unwrap(); // .unwrap is OK in test scope
 
     assert_eq!(
         init_configs.op_consensus_pubkey, consensus_key_vec,
@@ -319,8 +321,8 @@ fn val_config_ip_address() {
     let val = ValConfigs::new(
         Some(block),
         eve_keys,
-        "161.35.13.169".parse().unwrap(),
-        "161.35.13.169".parse().unwrap(),
+        "161.35.13.169".parse().unwrap(), // .unwrap is OK in test scope
+        "161.35.13.169".parse().unwrap(), // .unwrap is OK in test scope
         None,
         None,
     );
@@ -337,9 +339,9 @@ fn val_config_ip_address() {
 
     let dec_addrs = enc_addr
         .pop()
-        .unwrap()
+        .unwrap()  // .unwrap is OK in test scope
         .decrypt(&TEST_SHARED_VAL_NETADDR_KEY, &eve_account, 0)
-        .unwrap();
+        .unwrap();  // .unwrap is OK in test scope
 
     assert_eq!(
         dec_addrs.to_string(),

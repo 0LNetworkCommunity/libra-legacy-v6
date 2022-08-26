@@ -178,7 +178,8 @@ impl Runnable for ValWizardCmd {
             Some(app_config.clone()),
             None,
             None,
-        );
+        ).expect("could not write account.json"); // Using .expect because command should terminate if JSON not persisted (Michael64)
+      
         status_ok!(
             "\nAccount manifest written",
             "\n...........................\n"
@@ -195,8 +196,11 @@ impl Runnable for ValWizardCmd {
                 &app_config.profile.ip
             );
         }
+
     }
+
 }
+
 
 /// get autopay instructions from file
 pub fn get_autopay_batch(
@@ -303,21 +307,21 @@ pub fn write_account_json(
     wizard_config: Option<AppCfg>,
     autopay_batch: Option<Vec<PayInstruction>>,
     autopay_signed: Option<Vec<SignedTransaction>>,
-) {
+) -> Result<(), anyhow::Error> {
     let cfg = wizard_config.unwrap_or(app_config().clone());
     let json_path = json_path.clone().unwrap_or(cfg.workspace.node_home.clone());
     let keys = KeyScheme::new(&wallet);
-    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
+    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned())?;
 
-    ValConfigs::new(
+    let new_conf = ValConfigs::new(
         Some(block),
         keys,
         cfg.profile.ip,
         cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
         autopay_batch,
         autopay_signed,
-    )
-    .create_manifest(json_path);
+    )?;
+    new_conf.create_manifest(json_path)
 }
 
 fn get_genesis_and_make_node_files(

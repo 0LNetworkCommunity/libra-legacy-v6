@@ -39,7 +39,7 @@ impl Runnable for ValConfigCmd {
             self.vfn_ip.expect("neeed a fn ip address"),
             None,
             None,
-        );
+        ).expect("unable to create validator config"); // Added .expect to exit in case config cannot be created (Michael64);
 
         let txt = format!(
             "New consensus pubkey: {} \n 

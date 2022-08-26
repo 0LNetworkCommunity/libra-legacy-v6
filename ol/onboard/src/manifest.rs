@@ -12,13 +12,15 @@ use ol_types::{account::ValConfigs, pay_instruction::PayInstruction};
 use std::path::PathBuf;
 
 /// Creates an account.json file for the validator
+/// 
+//TODO: Check if write_manifest is obsolete and potentially remove it (Michael64)
 pub fn write_manifest(
     path: &Option<PathBuf>,
     wallet: WalletLibrary,
     wizard_config: Option<AppCfg>,
     autopay_batch: Option<Vec<PayInstruction>>,
     autopay_signed: Option<Vec<SignedTransaction>>,
-) {
+) -> Result<(), anyhow::Error> {
     let cfg = if wizard_config.is_some() {
         wizard_config.unwrap()
     } else {
@@ -30,15 +32,15 @@ pub fn write_manifest(
         .unwrap_or_else(|| cfg.workspace.node_home.clone());
 
     let keys = KeyScheme::new(&wallet);
-    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
+    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned())?;
 
-    ValConfigs::new(
+    let new_conf = ValConfigs::new(
         Some(block),
         keys,
         cfg.profile.ip,
         cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
         autopay_batch,
         autopay_signed,
-    )
-    .create_manifest(miner_home);
+    )?;
+    new_conf.create_manifest(miner_home)
 }

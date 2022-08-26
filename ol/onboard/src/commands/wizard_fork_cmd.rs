@@ -197,20 +197,25 @@ impl Runnable for ForkCmd {
         }
 
         // Write account manifest
+
         write_account_json(
             &self.output_path,
             wallet,
             Some(cfg.clone()),
             autopay_batch,
             autopay_signed,
-        );
+        ).expect("could not write account.json"); // Using .expect because command should terminate if JSON not persisted (Michael64)
+
         status_ok!(
             "\nAccount manifest written",
             "\n...........................\n"
         );
 
         status_info!("Your validator node and miner app are now configured.", &format!("\nStart your node with `ol start`, and then ask someone with GAS to do this transaction `txs create-validator -u http://{}`", &cfg.profile.ip));
+            
+            
     }
+
 }
 
 /// get autopay instructions from file
@@ -280,19 +285,19 @@ pub fn write_account_json(
     wizard_config: Option<AppCfg>,
     autopay_batch: Option<Vec<PayInstruction>>,
     autopay_signed: Option<Vec<SignedTransaction>>,
-) {
+) -> Result<(), anyhow::Error> {
     let cfg = wizard_config.unwrap_or(app_config().clone());
     let json_path = json_path.clone().unwrap_or(cfg.workspace.node_home.clone());
     let keys = KeyScheme::new(&wallet);
-    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
+    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned())?;
 
-    ValConfigs::new(
+   let new_conf = ValConfigs::new(
         Some(block),
         keys,
         cfg.profile.ip,
         cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
         autopay_batch,
         autopay_signed,
-    )
-    .create_manifest(json_path);
+    )?;
+    new_conf.create_manifest(json_path)
 }

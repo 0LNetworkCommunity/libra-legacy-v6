@@ -86,7 +86,8 @@ pub fn migrate_account_json(cfg: &AppCfg) {
         Some(cfg.to_owned()),
         autopay_batch,
         autopay_signed,
-    );
+    ).expect("could not write account.json"); // Using .expect because command should terminate if JSON not persisted (Michael64).
+    
 }
 
 /// migrate autopay.json for archive purposes
