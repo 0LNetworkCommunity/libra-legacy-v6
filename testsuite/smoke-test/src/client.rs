@@ -10,6 +10,18 @@ use crate::{
 use forge::{NodeExt, Swarm};
 use std::time::{Duration, Instant};
 
+//////// 0L ////////
+#[tokio::test]
+async fn test_demo() {
+    let mut swarm = new_local_swarm(1).await;
+
+    // This script does 4 transactions
+    // check_create_mint_transfer(client);
+    // create_and_fund_account(&mut swarm, amount)
+    swarm.chain_info().send_demo_tx().await.unwrap();
+    // send_demo_tx(&mut swarm).await;
+}
+
 #[tokio::test]
 async fn test_create_mint_transfer_block_metadata() {
     let mut swarm = new_local_swarm(1).await;

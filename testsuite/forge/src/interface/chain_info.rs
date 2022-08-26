@@ -5,10 +5,10 @@ use crate::{Coffer, NFTPublicInfo, PublicInfo, Result};
 use diem_rest_client::Client as RestClient;
 use diem_sdk::{
     client::BlockingClient,
-    transaction_builder::{Currency, TransactionFactory},
+    transaction_builder::{Currency, TransactionFactory, self},
     types::{
         account_address::AccountAddress, chain_id::ChainId,
-        transaction::authenticator::AuthenticationKey, LocalAccount,
+        transaction::{authenticator::AuthenticationKey}, LocalAccount,
     },
 };
 use reqwest::Url;
@@ -134,6 +134,24 @@ impl<'t> ChainInfo<'t> {
         let fund_account_txn = designated_dealer_account
             .sign_with_transaction_builder(factory.peer_to_peer(currency, address, amount));
         client.submit_and_wait(&fund_account_txn).await?;
+        Ok(())
+    }
+
+    //////// 0L ////////
+    /// Prints a single line of output to the node console.
+    pub async fn send_demo_tx(
+        &mut self,
+    ) -> Result<()> {
+        let factory = self.transaction_factory();
+        let client = self.rest_client();
+        let diem_root = self.root_account();
+        let txn = diem_root
+            .sign_with_transaction_builder(
+              factory.payload(
+                transaction_builder::stdlib::encode_demo_e2e_script_function(42)
+              )
+            );
+        client.submit_and_wait(&txn).await?;
         Ok(())
     }
 

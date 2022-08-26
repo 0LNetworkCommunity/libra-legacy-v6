@@ -319,7 +319,7 @@ fn create_and_initialize_main_accounts(
 ) {
     //////// 0L ////////
     let diem_root_auth_key: AuthenticationKey;
-    if diem_root_key.is_some() {
+    if diem_root_key.is_some() { // this exists for testnet only
         diem_root_auth_key = AuthenticationKey::ed25519(&diem_root_key.unwrap());
     } else {
         diem_root_auth_key = AuthenticationKey::new([

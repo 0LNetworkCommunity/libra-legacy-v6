@@ -237,7 +237,6 @@ impl ValidatorBuilder {
             self.publishing_option,
             self.move_modules,
         )?;
-        dbg!(&genesis); /////// 0L /////////
 
         // Insert Genesis and Waypoint into each validator
         for validator in &mut validators {
