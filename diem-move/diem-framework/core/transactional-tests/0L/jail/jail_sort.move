@@ -23,14 +23,13 @@ script {
 
     fun main(_: signer, vm: signer) {
       let sorted_val_universe = NodeWeight::get_sorted_vals();
+      print(&sorted_val_universe);
       let (_is_found, idx) = Vector::index_of(&sorted_val_universe, &@Eve);
-      assert!(idx == 4, 735701);
-
-      let (_is_found, idx) = Vector::index_of(&sorted_val_universe, &@Eve);
-
-      assert!(idx == 4, 735702);
+      
 
       print(&idx);
+
+      assert!(idx == 2, 735701);
 
       let jail_sort = Jail::sort_by_jail(*&sorted_val_universe);
       let (_is_found, idx) = Vector::index_of(&jail_sort, &@Eve);
@@ -54,17 +53,19 @@ script {
       let jail_sort = Jail::sort_by_jail(*&sorted_val_universe);
       let (_is_found, idx) = Vector::index_of(&jail_sort, &@Eve);
       print(&idx);
-      assert!(idx == 5, 735705);
+      assert!(idx == 5, 735706);
       let (_is_found, idx) = Vector::index_of(&jail_sort, &@Alice);
       print(&idx);
-      assert!(idx == 6, 735705);
+      assert!(idx == 6, 735707);
 
       Jail::remove_consecutive_fail(&vm, @Eve);
       Jail::remove_consecutive_fail(&vm, @Alice);
 
+      // back to previous sort
       let jail_sort = Jail::sort_by_jail(*&sorted_val_universe);
+      print(&jail_sort);
       let (_is_found, idx) = Vector::index_of(&jail_sort, &@Eve);
       print(&idx);
-      assert!(idx == 4, 735705);
+      assert!(idx == 2, 735708);
     }
 }
