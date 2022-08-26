@@ -1,10 +1,14 @@
-//# init --parent-vasps Alice Bob Carol X Dave Y Eve Z Frank W Gertie
-// Alice, Carol, Dave, Eve, Frank, Gertie: validators with 10M GAS
-// Bob, X, Y, Z, W:                    non-validators with  1M GAS
+//# init --validators Alice Carol Dave Eve Frank Gertie
+//#      --addresses Bob=0x2e3a0b7a741dae873bf0f203a82dfd52 
+//#      --private-keys Bob=e1acb70a23dba96815db374b86c5ae96d6a9bc5fff072a7a8e55a1c27c1852d8
+
+
+//# run --signers DiemRoot
+//#     --args @Bob
+//#     -- 0x1::DiemAccount::test_harness_create_user
 
 // Bob will be the miner
 
-// THIS VALIDATOR WILL BE A CASE 2.
 
 // WE need more than 4 miners so that the validator rewards are changed 
 // This test has 6 validators and one miner (Bob);
@@ -82,17 +86,17 @@ script {
         // We are in a new epoch.
 
         // we expect that Bob receives the share that one validator would get.
-        let expected_subsidy_for_five = Subsidy::subsidy_curve(
+        let total_subsidy_for_five = Subsidy::subsidy_curve(
           Globals::get_subsidy_ceiling_gas(),
           5, //There are 5 compliant validators now, the subisdy will be different
           Globals::get_max_validators_per_set(),
         );
 
-        let starting_balance = 1000000;
+        let starting_balance = 0;
 
-        print(&expected_subsidy_for_five);
+        print(&total_subsidy_for_five);
         
-        let subsidy_per_val = expected_subsidy_for_five/5;
+        let subsidy_per_val = total_subsidy_for_five/5;
         print(&subsidy_per_val);
 
         let ending_balance = starting_balance + subsidy_per_val;
