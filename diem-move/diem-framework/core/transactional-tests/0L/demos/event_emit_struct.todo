@@ -1,7 +1,7 @@
 //# init --validators Alice
 
 //# publish
-module Alice::M {
+module DiemRoot::M {
     use Std::Event::{destroy_handle, emit_event, EventHandle, new_event_handle};
     use Std::Signer::address_of;
 
@@ -24,12 +24,9 @@ module Alice::M {
 
 //# run --admin-script --signers DiemRoot Alice --show-events
 script {
-    use Alice::M;
+    use DiemRoot::M;
 
     fun main(sender: signer) {
         M::emit(&sender);
     }
 }
-// check: EXECUTED
-// check: ContractEvent
-// check: Bool

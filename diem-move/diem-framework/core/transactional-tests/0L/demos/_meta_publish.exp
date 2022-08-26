@@ -1,0 +1,10 @@
+processed 3 tasks
+
+task 2 'run'. lines 13-20:
+Events:
+{
+    key:     010000000000000000000000000000000000000000000000
+    seq_num: 0
+    type:    0x1::DiemAccount::AdminTransactionEvent
+    data:    "0000000000000000"
+}
