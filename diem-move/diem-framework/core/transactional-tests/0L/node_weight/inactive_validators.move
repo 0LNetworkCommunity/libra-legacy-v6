@@ -24,6 +24,7 @@ script {
     use DiemFramework::NodeWeight;
     use DiemFramework::ValidatorUniverse;
     use DiemFramework::TowerState;
+    
 
     fun main(vm: signer, _: signer) {
         let vm = &vm;
@@ -45,7 +46,7 @@ script {
         assert!(Vector::length<address>(&top_n_is_under) == 3, 7357140102021000);
 
         // Check eve is NOT in that list.
-        assert!(Vector::contains<address>(&top_n_is_under, &@Eve) != true, 7357140102031000);
+        assert!(!Vector::contains<address>(&top_n_is_under, &@Eve), 7357140102031000);
         assert!(Vector::contains<address>(&top_n_is_under, &@Alice), 7357140102041000);
         // case of querying the full validator universe.
         let top_n_is_equal = NodeWeight::top_n_accounts(vm, len);
