@@ -33,10 +33,11 @@ module DiemFramework::CoreAddresses {
 
     /// Assert that the signer has the treasury compliance address.
     public fun assert_treasury_compliance(account: &signer) {
-        assert!(
-            Signer::address_of(account) == @TreasuryCompliance,
-            Errors::requires_address(ETREASURY_COMPLIANCE)
-        )
+        // assert!(
+        //     Signer::address_of(account) == @TreasuryCompliance,
+        //     Errors::requires_address(ETREASURY_COMPLIANCE)
+        // )
+        assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_address(EDIEM_ROOT))
     }
     spec assert_treasury_compliance {
         pragma opaque;

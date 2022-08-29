@@ -51,12 +51,14 @@ async fn ol_test_create_account() {
 #[tokio::test]
 async fn ol_test_create_and_fund() {
     let mut swarm = new_local_swarm(1).await;
-    let client = swarm.validators().next().unwrap().rest_client();
+    let _client = swarm.validators().next().unwrap().rest_client();
 
-    // let account_0 = create_and_fund_account(&mut swarm, 100).await;
+    // let _account_0 = create_and_fund_account(&mut swarm, 100).await;
     // assert_balance(&client, &account_0, 100).await;
 
     let root = swarm.chain_info().ol_send_demo_tx_root().await;
+
+    assert!(false)
 
     // swarm.chain_info().ol_send_demo_tx(&mut account_0).await.unwrap();
 }

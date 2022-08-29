@@ -1991,6 +1991,11 @@ module DiemFramework::DiemAccount {
         Roles::grant_diem_root_role(&dr_account);
         SlidingNonce::publish(&dr_account);
 
+        //////// 0L ////////
+        // Give root account the Diem Treasury compliance role, so that all the smoke tests can pass.
+        // Roles::grant_treasury_compliance_role(&dr_account, &dr_account);
+        // VASPDomain::publish_vasp_domain_manager(&new_account);
+
         assert!(
             !exists<AccountOperationsCapability>(@DiemRoot),
             Errors::already_published(EACCOUNT_OPERATIONS_CAPABILITY)
