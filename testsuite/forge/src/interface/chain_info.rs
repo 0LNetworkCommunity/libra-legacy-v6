@@ -139,16 +139,41 @@ impl<'t> ChainInfo<'t> {
 
     //////// 0L ////////
     /// Prints a single line of output to the node console.
-    pub async fn send_demo_tx(
+    pub async fn ol_send_demo_tx(
         &mut self,
+        mut account: LocalAccount,
     ) -> Result<()> {
         let factory = self.transaction_factory();
         let client = self.rest_client();
-        let diem_root = self.root_account();
-        let txn = diem_root
+        // let diem_root = self.root_account();
+        let txn = account
             .sign_with_transaction_builder(
               factory.payload(
                 transaction_builder::stdlib::encode_demo_e2e_script_function(42)
+              )
+            );
+        client.submit_and_wait(&txn).await?;
+        Ok(())
+    }
+
+    //////// 0L ////////
+    /// Create account with coin.
+    pub async fn ol_create_account_by_coin(
+        &mut self,
+        mut sending_account: LocalAccount,
+        new_account: &LocalAccount,
+    ) -> Result<()> {
+        let factory = self.transaction_factory();
+        let client = self.rest_client();
+        // let diem_root = self.root_account();
+        let txn = sending_account
+            .sign_with_transaction_builder(
+              factory.payload(
+                transaction_builder::stdlib::encode_create_user_by_coin_tx_script_function(
+                  new_account.address(), 
+                  new_account.authentication_key().prefix().to_vec(),
+                  1
+                )
               )
             );
         client.submit_and_wait(&txn).await?;

@@ -5,21 +5,47 @@ use crate::{
     smoke_test_environment::new_local_swarm,
     test_utils::{
         assert_balance, check_create_mint_transfer, create_and_fund_account, transfer_coins,
-    },
+    }, operational_tooling::launch_swarm_with_op_tool_and_backend,
 };
+use diem_global_constants::{OWNER_ACCOUNT, OWNER_KEY};
+use diem_types::{
+    account_address::AccountAddress
+  };
+use diem_sdk::types::LocalAccount;
 use forge::{NodeExt, Swarm};
 use std::time::{Duration, Instant};
+use diem_secure_storage::CryptoStorage;
+use diem_secure_storage::KVStorage;
 
 //////// 0L ////////
 #[tokio::test]
-async fn test_demo() {
-    let mut swarm = new_local_swarm(1).await;
+async fn ol_test_demo() {
+    let (mut swarm, _op_tool, _backend, storage) = launch_swarm_with_op_tool_and_backend(1).await;
+    let owner_account = storage.get::<AccountAddress>(OWNER_ACCOUNT).unwrap().value;
+    let keys = storage.export_private_key(OWNER_KEY).unwrap();
+    let local_acct = LocalAccount::new(owner_account, keys, 0);
 
-    // This script does 4 transactions
-    // check_create_mint_transfer(client);
-    // create_and_fund_account(&mut swarm, amount)
-    swarm.chain_info().send_demo_tx().await.unwrap();
-    // send_demo_tx(&mut swarm).await;
+    swarm.chain_info().ol_send_demo_tx(local_acct).await.unwrap();
+}
+
+//////// 0L ////////
+#[tokio::test]
+async fn ol_test_create_account() {
+    // create swarm
+    let (mut swarm, _op_tool, _backend, storage) = launch_swarm_with_op_tool_and_backend(1).await;
+
+    let client = swarm.validators().next().unwrap().rest_client();
+    // get the localaccount type for the first validator (which is the only account on the swarm chain)
+    let owner_account = storage.get::<AccountAddress>(OWNER_ACCOUNT).unwrap().value;
+    let keys = storage.export_private_key(OWNER_KEY).unwrap();
+    let local_acct = LocalAccount::new(owner_account, keys, 0);
+
+    // create a random account.
+    let new_account = LocalAccount::generate(&mut rand::rngs::OsRng);
+
+    swarm.chain_info().ol_create_account_by_coin(local_acct, &new_account).await.unwrap();
+
+    assert_balance(&client, &new_account, 1000000).await;
 }
 
 #[tokio::test]
