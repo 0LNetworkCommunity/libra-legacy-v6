@@ -51,7 +51,7 @@ impl<'t> ChainInfo<'t> {
     }
 
     pub fn treasury_compliance_account(&mut self) -> &mut LocalAccount {
-        self.treasury_compliance_account
+        self.root_account //////// 0L ////////
     }
 
     pub fn json_rpc(&self) -> &str {
@@ -141,10 +141,31 @@ impl<'t> ChainInfo<'t> {
     /// Prints a single line of output to the node console.
     pub async fn ol_send_demo_tx(
         &mut self,
-        mut account: LocalAccount,
+        account: &mut LocalAccount,
     ) -> Result<()> {
         let factory = self.transaction_factory();
         let client = self.rest_client();
+        // let diem_root = self.root_account();
+        let txn = account
+            .sign_with_transaction_builder(
+              factory.payload(
+                transaction_builder::stdlib::encode_demo_e2e_script_function(42)
+              )
+            );
+        client.submit_and_wait(&txn).await?;
+        Ok(())
+    }
+
+    //////// 0L ////////
+    /// Prints a single line of output to the node console.
+    pub async fn ol_send_demo_tx_root(
+        &mut self,
+        // account: &mut LocalAccount,
+    ) -> Result<()> {
+        let factory = self.transaction_factory();
+        let client = self.rest_client();
+
+        let account = self.root_account();
         // let diem_root = self.root_account();
         let txn = account
             .sign_with_transaction_builder(

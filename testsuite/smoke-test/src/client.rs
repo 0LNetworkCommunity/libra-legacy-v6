@@ -23,9 +23,9 @@ async fn ol_test_demo() {
     let (mut swarm, _op_tool, _backend, storage) = launch_swarm_with_op_tool_and_backend(1).await;
     let owner_account = storage.get::<AccountAddress>(OWNER_ACCOUNT).unwrap().value;
     let keys = storage.export_private_key(OWNER_KEY).unwrap();
-    let local_acct = LocalAccount::new(owner_account, keys, 0);
+    let mut local_acct = LocalAccount::new(owner_account, keys, 0);
 
-    swarm.chain_info().ol_send_demo_tx(local_acct).await.unwrap();
+    swarm.chain_info().ol_send_demo_tx(&mut local_acct).await.unwrap();
 }
 
 //////// 0L ////////
@@ -46,6 +46,19 @@ async fn ol_test_create_account() {
     swarm.chain_info().ol_create_account_by_coin(local_acct, &new_account).await.unwrap();
 
     assert_balance(&client, &new_account, 1000000).await;
+}
+
+#[tokio::test]
+async fn ol_test_create_and_fund() {
+    let mut swarm = new_local_swarm(1).await;
+    let client = swarm.validators().next().unwrap().rest_client();
+
+    // let account_0 = create_and_fund_account(&mut swarm, 100).await;
+    // assert_balance(&client, &account_0, 100).await;
+
+    let root = swarm.chain_info().ol_send_demo_tx_root().await;
+
+    // swarm.chain_info().ol_send_demo_tx(&mut account_0).await.unwrap();
 }
 
 #[tokio::test]
