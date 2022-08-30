@@ -92,7 +92,9 @@ bins: stdlib
 stdlib:
 # cargo run ${CARGO_ARGS} -p diem-framework
 	cargo run ${CARGO_ARGS} -p diem-framework -- --create-upgrade-payload
-	sha256sum language/diem-framework/staged/stdlib.mv
+	shasum -a 256 ./DPN/releases/artifacts/current/staged/stdlib.mv
+	mkdir diem-move/diem-framework/DPN/releases/artifacts/current/ | true
+	cp -r ./DPN/releases/artifacts/current/* diem-move/diem-framework/DPN/releases/artifacts/current/
   
 
 install: mv-bin bin-path

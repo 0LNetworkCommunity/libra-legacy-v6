@@ -80,7 +80,6 @@
 
     <b>let</b> proposed_set = <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, height_start, height_now);
     print(&800700);
-
     // Update all slow wallet limits
     <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>()); // todo
     print(&800800);
@@ -354,24 +353,27 @@
     outgoing_compliant: vector&lt;<b>address</b>&gt;,
     height_now: u64
 ) {
+    print(&800900100);
     // Reset <a href="Stats.md#0x1_Stats">Stats</a>
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
-
+    print(&800900101);
     // Migrate <a href="TowerState.md#0x1_TowerState">TowerState</a> list from elegible.
     <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &outgoing_compliant);
-
+    print(&800900102);
     // process community wallets
     <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">DiemAccount::process_community_wallets</a>(vm, <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
-
+    print(&800900103);
     // reset counters
     <a href="AutoPay.md#0x1_AutoPay_reconfig_reset_tick">AutoPay::reconfig_reset_tick</a>(vm);
-
+    print(&800900104);
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
-
+    print(&800900105);
     <a href="RecoveryMode.md#0x1_RecoveryMode_maybe_remove_debug_at_epoch">RecoveryMode::maybe_remove_debug_at_epoch</a>(vm);
     // Reconfig should be the last event.
     // Reconfigure the network
+    print(&800900106);
     <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
+    print(&800900107);
 }
 </code></pre>
 
@@ -397,14 +399,15 @@
 <pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(
   vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector&lt;<b>address</b>&gt;
 ) {
+    print(&800800100);
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
     <a href="DiemAccount.md#0x1_DiemAccount_migrate_cumu_deposits">DiemAccount::migrate_cumu_deposits</a>(vm); // may need <b>to</b> populate data on a migration.
-
+    print(&800800101);
     <a href="Burn.md#0x1_Burn_reset_ratios">Burn::reset_ratios</a>(vm);
-
+    print(&800800102);
     // 50% of the current per validator reward
     <b>let</b> burn_value = nominal_subsidy_per / 2;
-
+    print(&800800103);
     <b>let</b> vals_to_burn = <b>if</b> (
       !<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>() &&
       !<a href="Testnet.md#0x1_StagingNet_is_staging_net">StagingNet::is_staging_net</a>() &&
@@ -414,18 +417,25 @@
       // positions full. Will make the burn amount much smaller over time.
       <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(proposed_set) &gt; 90
     ) {
+      print(&800800104);
       &<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>()
     } <b>else</b> {
+      print(&800800105);
       proposed_set
     };
-
-    // print(vals_to_burn);
+    print(&800800106);
+    print(vals_to_burn);
     <b>let</b> i = 0;
     <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(vals_to_burn)) {
       <b>let</b> addr = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(vals_to_burn, i);
+      print(&addr);
+      print(&burn_value);
+
+
       <a href="Burn.md#0x1_Burn_epoch_start_burn">Burn::epoch_start_burn</a>(vm, addr, burn_value);
       i = i + 1;
     };
+    print(&800800107);
 }
 </code></pre>
 

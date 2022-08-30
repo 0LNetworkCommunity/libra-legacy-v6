@@ -23,7 +23,9 @@ address DiemFramework {
       TowerState::get_tower_height(node_addr)
     }
 
-    // 
+    // Get the top N validators for the next round.
+    // NOTE: there's a known issue when many validators have the same
+    // weight, the nodes included will be those LAST included in the validator universe.
     public fun top_n_accounts(account: &signer, n: u64): vector<address> {
         assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_role(140101));
 

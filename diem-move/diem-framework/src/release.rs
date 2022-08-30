@@ -75,6 +75,10 @@ impl Default for ReleaseOptions {
 }
 
 impl ReleaseOptions {
+    // TODO(0L): We need the files to end up in same package as the sources. Otherwise the rust bindings don't get created correctly.
+    // when we try to change ouput paths we get a 
+    // thread 'main' panicked at 'Failed to deserialize module bytecode: PartialVMError { major_status: BAD_MAGIC, sub_status: None, message: None, indices: [], offsets: [] }', diem-move/diem-framework/src/release.rs:260:53
+
     pub fn create_release(&self) {
         let output_path = self
             .package
