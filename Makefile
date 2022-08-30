@@ -96,13 +96,8 @@ stdlib:
 	mkdir diem-move/diem-framework/DPN/releases/artifacts/current/ | true
 	cp -r ./DPN/releases/artifacts/current/* diem-move/diem-framework/DPN/releases/artifacts/current/
 
-transaction:
-	cargo r -p transaction-builder-generator --  \
-	DPN/releases/artifacts/current/build/DPNFramework/abis \
-	diem-move/diem-framework/DPN/releases/legacy \
-	--target-source-dir ${SOURCE} \
-  --module-name _transaction-builder \
-  --language Rust \
+ftests:
+	NODE_ENV="test" cargo test -p diem-framework --test ol_transactional_tests $$1
   
 
 install: mv-bin bin-path
