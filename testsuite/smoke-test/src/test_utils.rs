@@ -90,7 +90,6 @@ pub async fn assert_balance(client: &RestClient, account: &LocalAccount, balance
         .await
         .unwrap()
         .into_inner();
-
     let onchain_balance = balances
         .into_iter()
         .find(|amount_view| amount_view.currency_code() == Currency::XUS)

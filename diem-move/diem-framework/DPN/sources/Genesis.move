@@ -36,7 +36,7 @@ module DiemFramework::Genesis {
     use DiemFramework::TowerState;
     use DiemFramework::Wallet;
     use DiemFramework::Migrations;  
-    use DiemFramework::Testnet; 
+    // use DiemFramework::Testnet; 
 
     /// Initializes the Diem framework.
     fun initialize(
@@ -165,9 +165,10 @@ module DiemFramework::Genesis {
         DiemTimestamp::set_time_has_started(dr_account);
         Epoch::initialize(dr_account); /////// 0L /////////
 
-                // if this is tesnet, fund the root account so the smoketests can run. They use PaymentScripts functions to test many things.
         
-        if (Testnet::is_testnet()) {
+        // if this is tesnet, fund the root account so the smoketests can run. They use PaymentScripts functions to test many things.
+        // TODO(0L): make this only tun in testsnet. Though we need to make smoketest always initialize in test mode.
+        // if (Testnet::is_testnet()) {
           let val = 10000000;
           DiemAccount::add_currency<GAS::GAS>(dr_account);
           let coin = Diem::mint<GAS::GAS>(dr_account, val);
@@ -179,7 +180,7 @@ module DiemFramework::Genesis {
             x"",
           )
 
-        }
+        // }
     }
 
     /// Sets up the initial validator set for the Diem network.

@@ -780,13 +780,14 @@ fn verify_genesis_write_set(events: &[ContractEvent]) {
         CreateAccountEvent::event_key(),
     );
 
-    // 0L the second event is emitting the deposit to root account in genesis.
-    // // (2) second event is account creation event for TreasuryCompliance
-    // let create_treasury_compliance_event = &events[1];
-    // assert_eq!(
-    //     *create_diem_root_event.key(),
-    //     CreateAccountEvent::event_key(),
-    // );
+    // (2) second event is account creation event for TreasuryCompliance
+    ////////// 0L ////////
+    // 0L: this now uses the diem-root account
+    let create_treasury_compliance_event = &events[1];
+    assert_eq!(
+        *create_diem_root_event.key(),
+        CreateAccountEvent::event_key(),
+    );
 
     //////// 0L ////////
     // // (3) The first non-account creation event should be the new epoch event

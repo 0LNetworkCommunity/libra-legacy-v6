@@ -984,12 +984,14 @@ to be successful.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Diem.md#0x1_Diem_mint">mint</a>&lt;CoinType&gt;(account: &signer, value: u64): <a href="Diem.md#0x1_Diem">Diem</a>&lt;CoinType&gt;
-<b>acquires</b> <a href="Diem.md#0x1_Diem_CurrencyInfo">CurrencyInfo</a>, <a href="Diem.md#0x1_Diem_MintCapability">MintCapability</a> {
-    <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
-    <b>assert</b>!(<b>exists</b>&lt;<a href="Diem.md#0x1_Diem_MintCapability">MintCapability</a>&lt;CoinType&gt;&gt;(addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_capability">Errors::requires_capability</a>(<a href="Diem.md#0x1_Diem_EMINT_CAPABILITY">EMINT_CAPABILITY</a>));
-    <a href="Diem.md#0x1_Diem_mint_with_capability">mint_with_capability</a>(
+<b>acquires</b> <a href="Diem.md#0x1_Diem_CurrencyInfo">CurrencyInfo</a> {
+    // <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
+
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(account); //////// 0L ////////
+    // only diem_root can mint.
+    <a href="Diem.md#0x1_Diem_mint_with_capability">mint_with_capability</a>&lt;CoinType&gt;(
         value,
-        <b>borrow_global</b>&lt;<a href="Diem.md#0x1_Diem_MintCapability">MintCapability</a>&lt;CoinType&gt;&gt;(addr)
+        // <b>borrow_global</b>&lt;<a href="Diem.md#0x1_Diem_MintCapability">MintCapability</a>&lt;CoinType&gt;&gt;(addr)
     )
 }
 </code></pre>
@@ -1223,7 +1225,7 @@ the treasury compliance account or the <code>DiemFramework::GAS</code> module ca
 reference.
 
 
-<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="Diem.md#0x1_Diem_mint_with_capability">mint_with_capability</a>&lt;CoinType&gt;(value: u64, _capability: &<a href="Diem.md#0x1_Diem_MintCapability">Diem::MintCapability</a>&lt;CoinType&gt;): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;CoinType&gt;
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="Diem.md#0x1_Diem_mint_with_capability">mint_with_capability</a>&lt;CoinType&gt;(value: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;CoinType&gt;
 </code></pre>
 
 
@@ -1234,7 +1236,7 @@ reference.
 
 <pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="Diem.md#0x1_Diem_mint_with_capability">mint_with_capability</a>&lt;CoinType&gt;(
     value: u64,
-    _capability: &<a href="Diem.md#0x1_Diem_MintCapability">MintCapability</a>&lt;CoinType&gt;
+    // _capability: &<a href="Diem.md#0x1_Diem_MintCapability">MintCapability</a>&lt;CoinType&gt;
 ): <a href="Diem.md#0x1_Diem">Diem</a>&lt;CoinType&gt; <b>acquires</b> <a href="Diem.md#0x1_Diem_CurrencyInfo">CurrencyInfo</a> {
     <a href="Diem.md#0x1_Diem_assert_is_currency">assert_is_currency</a>&lt;CoinType&gt;();
     <b>let</b> currency_code = <a href="Diem.md#0x1_Diem_currency_code">currency_code</a>&lt;CoinType&gt;();
