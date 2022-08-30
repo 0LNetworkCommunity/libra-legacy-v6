@@ -95,6 +95,14 @@ stdlib:
 	shasum -a 256 ./DPN/releases/artifacts/current/staged/stdlib.mv | true
 	mkdir diem-move/diem-framework/DPN/releases/artifacts/current/ | true
 	cp -r ./DPN/releases/artifacts/current/* diem-move/diem-framework/DPN/releases/artifacts/current/
+
+transaction:
+	cargo r -p transaction-builder-generator --  \
+	DPN/releases/artifacts/current/build/DPNFramework/abis \
+	diem-move/diem-framework/DPN/releases/legacy \
+	--target-source-dir ${SOURCE} \
+  --module-name _transaction-builder \
+  --language Rust \
   
 
 install: mv-bin bin-path

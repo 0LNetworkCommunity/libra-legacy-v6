@@ -2194,21 +2194,25 @@ module DiemFramework::DiemAccount {
         creator_account: &signer,  // TreasuryCompliance
         new_account_address: address,
         auth_key_prefix: vector<u8>,
-        human_name: vector<u8>,
+        _human_name: vector<u8>,
         add_all_currencies: bool
     ) acquires AccountOperationsCapability {
         Roles::assert_treasury_compliance(creator_account);
         let new_account = create_signer(new_account_address);
-        Roles::new_parent_vasp_role(creator_account, &new_account);
-        VASP::publish_parent_vasp_credential(&new_account, creator_account);
-        DualAttestation::publish_credential(&new_account, creator_account, human_name);
-        VASPDomain::publish_vasp_domains(&new_account);
+        print(&400001);
+        // Roles::new_parent_vasp_role(creator_account, &new_account);
+        // VASP::publish_parent_vasp_credential(&new_account, creator_account);
+        // DualAttestation::publish_credential(&new_account, creator_account, human_name);
+        // VASPDomain::publish_vasp_domains(&new_account);
+        Roles::new_user_role_with_proof(&new_account);
         make_account(&new_account, auth_key_prefix);
+        print(&400002);
         add_currencies_for_account<Token>(&new_account, add_all_currencies);
-        spec {
-            assert exists<VASPDomain::VASPDomains>(Signer::address_of(new_account));
-            assert Roles::spec_has_treasury_compliance_role_addr(Signer::address_of(creator_account));
-        }
+        print(&400003);
+        // spec {
+        //     assert exists<VASPDomain::VASPDomains>(Signer::address_of(new_account));
+        //     assert Roles::spec_has_treasury_compliance_role_addr(Signer::address_of(creator_account));
+        // }
     }
 
     spec create_parent_vasp_account {

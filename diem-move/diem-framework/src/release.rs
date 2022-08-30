@@ -131,11 +131,13 @@ impl ReleaseOptions {
             generate_error_map(&package_path, &output_path, build_config)
         }
 
+        let legacy_abis = package_path.join("releases/legacy/script_abis");
+
         if !self.script_builder {
             println!("Generating script builders");
             generate_script_builder(
                 &output_path.join("transaction_script_builder.rs"),
-                &[&output_path, Path::new("DPN/releases/legacy/script_abis")],
+                &[&output_path, &legacy_abis],
             )
         }
 

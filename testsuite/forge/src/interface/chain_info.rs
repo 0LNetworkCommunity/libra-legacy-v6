@@ -130,7 +130,7 @@ impl<'t> ChainInfo<'t> {
     ) -> Result<()> {
         let factory = self.transaction_factory();
         let client = self.rest_client();
-        let designated_dealer_account = self.designated_dealer_account();
+        let designated_dealer_account = self.diem_root();
         let fund_account_txn = designated_dealer_account
             .sign_with_transaction_builder(factory.peer_to_peer(currency, address, amount));
         client.submit_and_wait(&fund_account_txn).await?;
