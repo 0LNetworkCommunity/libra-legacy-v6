@@ -882,12 +882,8 @@ module DiemFramework::DiemAccount {
         //         Errors::limit_exceeded(EDEPOSIT_EXCEEDS_LIMITS)
         //     )
         // };
-
-        print(&100001);
         // Deposit the `to_deposit` coin
         Diem::deposit(&mut borrow_global_mut<Balance<Token>>(payee).coin, to_deposit);
-
-        print(&100002);
 
         // Log a received event
         Event::emit_event<ReceivedPaymentEvent>(
