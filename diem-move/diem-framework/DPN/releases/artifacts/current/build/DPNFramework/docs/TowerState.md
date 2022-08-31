@@ -442,9 +442,9 @@ the miner last created a new account
       });
     } <b>else</b> {
       <b>move_to</b>&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(vm, <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
-        difficulty: 5000000,
+        difficulty: 120000000,
         security: 512,
-        prev_diff: 5000000,
+        prev_diff: 120000000,
         prev_sec: 512,
       });
     }

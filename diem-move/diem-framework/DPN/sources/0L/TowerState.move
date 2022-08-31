@@ -111,9 +111,9 @@ module TowerState {
           });
         } else {
           move_to<VDFDifficulty>(vm, VDFDifficulty {
-            difficulty: 5000000,
+            difficulty: 120000000,
             security: 512,
-            prev_diff: 5000000,
+            prev_diff: 120000000,
             prev_sec: 512,
           });
         }
