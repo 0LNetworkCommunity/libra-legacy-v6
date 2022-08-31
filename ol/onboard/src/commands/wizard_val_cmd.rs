@@ -303,13 +303,13 @@ pub fn write_account_json(
     wizard_config: Option<AppCfg>,
     autopay_batch: Option<Vec<PayInstruction>>,
     autopay_signed: Option<Vec<SignedTransaction>>,
-) {
+){
     let cfg = wizard_config.unwrap_or(app_config().clone());
     let json_path = json_path.clone().unwrap_or(cfg.workspace.node_home.clone());
     let keys = KeyScheme::new(&wallet);
     let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
 
-    ValConfigs::new(
+    match ValConfigs::new(
         Some(block),
         keys,
         cfg.profile.ip,
@@ -317,7 +317,21 @@ pub fn write_account_json(
         autopay_batch,
         autopay_signed,
     )
-    .create_manifest(json_path);
+    .create_manifest(json_path)
+    {
+        Ok(_) => {
+            status_ok!(
+                "\nAccount manifest written",
+                "\n...........................\n"
+            );
+        }
+        Err(e) => {
+            println!(
+                "ERROR: could not write account manifest, message: {:?}",
+                &e.to_string()
+            );
+        }
+    }
 }
 
 fn get_genesis_and_make_node_files(

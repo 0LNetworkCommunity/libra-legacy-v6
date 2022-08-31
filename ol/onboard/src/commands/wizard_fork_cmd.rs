@@ -286,7 +286,7 @@ pub fn write_account_json(
     let keys = KeyScheme::new(&wallet);
     let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
 
-    ValConfigs::new(
+    match ValConfigs::new(
         Some(block),
         keys,
         cfg.profile.ip,
@@ -294,5 +294,19 @@ pub fn write_account_json(
         autopay_batch,
         autopay_signed,
     )
-    .create_manifest(json_path);
+    .create_manifest(json_path)
+    {
+        Ok(_) => {
+            status_ok!(
+                "\nAccount manifest written",
+                "\n...........................\n"
+            );
+        }
+        Err(e) => {
+            println!(
+                "ERROR: could not write account manifest, message: {:?}",
+                &e.to_string()
+            );
+        }
+    }
 }
