@@ -53,6 +53,7 @@ module DiemFramework::DiemAccount {
     use DiemFramework::Vouch;
     use DiemFramework::Debug::print;
     use DiemFramework::Jail;
+    use DiemFramework::Testnet;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -542,6 +543,28 @@ module DiemFramework::DiemAccount {
             restore_withdraw_capability(with_cap);
             new_account
         }
+    }
+
+    /////// 0L ////////
+    // WARNING THIS IS A PUBLIC SCRIPT ONLY INTENDED FOR TESTING.
+    // Function code: 01
+    public(script) fun test_harness_create_user(
+        sender: signer,
+        new_account: address,
+        // new_account_authkey_prefix: vector<u8>,
+        // value: u64,
+    ) acquires AccountOperationsCapability {
+        CoreAddresses::assert_diem_root(&sender);
+        assert!(Testnet::is_testnet(), ECANNOT_CREATE_AT_CORE_CODE);
+
+        let new_signer = create_signer(new_account);
+        Roles::new_user_role_with_proof(&new_signer);
+        let dummy_auth_key = x"4f52c9f095d4e46c0110c7360ae378a8";
+        make_account(&new_signer, dummy_auth_key);
+        add_currencies_for_account<GAS>(&new_signer, false);
+
+        let new_signer = create_signer(new_account);
+        Ancestry::init(&sender, &new_signer);
     }
 
     /////// 0L ////////
@@ -1852,6 +1875,7 @@ module DiemFramework::DiemAccount {
             &mut borrow_global_mut<AccountOperationsCapability>(@DiemRoot).creation_events,
             CreateAccountEvent { created: new_account_addr, role_id: Roles::get_role_id(new_account_addr) },
         );
+
         move_to(
             new_account,
             DiemAccount {
@@ -1869,9 +1893,10 @@ module DiemFramework::DiemAccount {
                 sequence_number: 0,
             }
         );
+        
         //////// 0L ////////
-        // NOTE: if all accounts are to be slow set this
-        // set_slow(&new_account);        
+        // Initialize struct for tracking payment receipts
+        Receipts::init(new_account);    
     }
     spec make_account {
         pragma opaque;

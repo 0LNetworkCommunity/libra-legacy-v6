@@ -69,6 +69,7 @@ module Receipts {
       (timestamp, value, cumu)
   }
 
+    // Reads the last receipt for a given account, returns (timestamp of last payment, last value sent, cumulative)
     public fun read_receipt(account: address, destination: address):(u64, u64, u64) acquires UserReceipts {
       if (!exists<UserReceipts>(account)) {
         return (0, 0, 0)

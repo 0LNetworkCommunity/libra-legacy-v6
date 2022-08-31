@@ -34,6 +34,7 @@ before and after every transaction.
 -  [Function `initialize`](#0x1_DiemAccount_initialize)
 -  [Function `create_user_account_with_proof`](#0x1_DiemAccount_create_user_account_with_proof)
 -  [Function `create_user_account_with_coin`](#0x1_DiemAccount_create_user_account_with_coin)
+-  [Function `test_harness_create_user`](#0x1_DiemAccount_test_harness_create_user)
 -  [Function `create_validator_account_with_proof`](#0x1_DiemAccount_create_validator_account_with_proof)
 -  [Function `upgrade_validator_account_with_proof`](#0x1_DiemAccount_upgrade_validator_account_with_proof)
 -  [Function `has_published_account_limits`](#0x1_DiemAccount_has_published_account_limits)
@@ -1551,6 +1552,45 @@ Initialize this module. This is only callable from genesis.
         <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">restore_withdraw_capability</a>(with_cap);
         new_account
     }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_test_harness_create_user"></a>
+
+## Function `test_harness_create_user`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_test_harness_create_user">test_harness_create_user</a>(sender: signer, new_account: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_test_harness_create_user">test_harness_create_user</a>(
+    sender: signer,
+    new_account: <b>address</b>,
+    // new_account_authkey_prefix: vector&lt;u8&gt;,
+    // value: u64,
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(&sender);
+    <b>assert</b>!(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="DiemAccount.md#0x1_DiemAccount_ECANNOT_CREATE_AT_CORE_CODE">ECANNOT_CREATE_AT_CORE_CODE</a>);
+
+    <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account);
+    <a href="Roles.md#0x1_Roles_new_user_role_with_proof">Roles::new_user_role_with_proof</a>(&new_signer);
+    <b>let</b> dummy_auth_key = x"4f52c9f095d4e46c0110c7360ae378a8";
+    <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(&new_signer, dummy_auth_key);
+    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
+
+    <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account);
+    <a href="Ancestry.md#0x1_Ancestry_init">Ancestry::init</a>(&sender, &new_signer);
 }
 </code></pre>
 
@@ -3744,6 +3784,7 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
         &<b>mut</b> <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>&gt;(@DiemRoot).creation_events,
         <a href="DiemAccount.md#0x1_DiemAccount_CreateAccountEvent">CreateAccountEvent</a> { created: new_account_addr, role_id: <a href="Roles.md#0x1_Roles_get_role_id">Roles::get_role_id</a>(new_account_addr) },
     );
+
     <b>move_to</b>(
         new_account,
         <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> {
@@ -3761,9 +3802,10 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
             sequence_number: 0,
         }
     );
+
     //////// 0L ////////
-    // NOTE: <b>if</b> all accounts are <b>to</b> be slow set this
-    // <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_account);
+    // Initialize <b>struct</b> for tracking payment receipts
+    <a href="Receipts.md#0x1_Receipts_init">Receipts::init</a>(new_account);
 }
 </code></pre>
 
