@@ -258,10 +258,10 @@ module TowerState {
         if (get_count_in_epoch(miner_addr) == 0) { 
           // first proof in this epoch, can be either the previous difficulty or the current one
           let is_diff = &proof.difficulty == &diff.difficulty ||
-          &proof.difficulty == &diff.prev_diff;
+                        &proof.difficulty == &diff.prev_diff;
 
-          let is_sec = &proof.difficulty == &diff.security ||
-          &proof.difficulty == &diff.prev_sec;
+          let is_sec = &proof.security == &diff.security ||
+                       &proof.security == &diff.prev_sec;
 
           assert!(is_diff, Errors::invalid_argument(130102));
           assert!(is_sec, Errors::invalid_argument(13010202));

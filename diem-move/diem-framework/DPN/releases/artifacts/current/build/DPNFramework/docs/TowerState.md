@@ -765,10 +765,10 @@ Permissions: PUBLIC, ANYONE
     <b>if</b> (<a href="TowerState.md#0x1_TowerState_get_count_in_epoch">get_count_in_epoch</a>(miner_addr) == 0) {
       // first proof in this epoch, can be either the previous difficulty or the current one
       <b>let</b> is_diff = &proof.difficulty == &diff.difficulty ||
-      &proof.difficulty == &diff.prev_diff;
+                    &proof.difficulty == &diff.prev_diff;
 
-      <b>let</b> is_sec = &proof.difficulty == &diff.security ||
-      &proof.difficulty == &diff.prev_sec;
+      <b>let</b> is_sec = &proof.security == &diff.security ||
+                   &proof.security == &diff.prev_sec;
 
       <b>assert</b>!(is_diff, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
       <b>assert</b>!(is_sec, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
