@@ -289,7 +289,8 @@ module TowerState {
       
       // Get address, assumes the sender is the signer.
       assert!(ValidatorConfig::get_operator(miner_addr) == Signer::address_of(operator_sig), Errors::requires_role(130103));
-      // Abort if not initialized. Assumes the validator Owner account already has submitted the 0th miner proof in onboarding.
+      // Abort if not initialized. Assumes the validator Owner account
+      // already has submitted the 0th miner proof in onboarding.
       assert!(exists<TowerProofHistory>(miner_addr), Errors::not_published(130104));
 
       // Return early if difficulty and security are not correct.

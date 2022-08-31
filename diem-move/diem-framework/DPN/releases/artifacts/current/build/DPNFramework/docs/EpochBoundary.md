@@ -270,7 +270,7 @@
       // can't be more than index of accounts
       i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&top_accounts) &&
       // the new proposed set can only only expand by 15%
-      <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proposed_set) &lt; len_proven_nodes + max_unproven_nodes &&
+      <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proposed_set) &lt; (len_proven_nodes + max_unproven_nodes) &&
       // Validator set can only be <b>as</b> big <b>as</b> the maximum set size
       <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proposed_set) &lt; <a href="Globals.md#0x1_Globals_get_max_validators_per_set">Globals::get_max_validators_per_set</a>()
     ) {
@@ -311,7 +311,7 @@
     // by proposals. They are probably online.
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&proposed_set) &lt;= 3)
         proposed_set =
-          <a href="Stats.md#0x1_Stats_get_sorted_vals_by_props">Stats::get_sorted_vals_by_props</a>(vm, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&proposed_set) / 2);
+          <a href="Stats.md#0x1_Stats_get_sorted_vals_by_props">Stats::get_sorted_vals_by_props</a>(vm, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&top_accounts) / 2);
 
     // If still failing...in extreme case <b>if</b> we cannot qualify anyone.
     // Don't change the validator set. we keep the same validator set.

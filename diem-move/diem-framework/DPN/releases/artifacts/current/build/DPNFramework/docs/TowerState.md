@@ -813,7 +813,8 @@ Permissions: PUBLIC, ANYONE
 
   // Get <b>address</b>, assumes the sender is the signer.
   <b>assert</b>!(<a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(miner_addr) == <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(operator_sig), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(130103));
-  // Abort <b>if</b> not initialized. Assumes the validator Owner account already <b>has</b> submitted the 0th miner proof in onboarding.
+  // Abort <b>if</b> not initialized. Assumes the validator Owner account
+  // already <b>has</b> submitted the 0th miner proof in onboarding.
   <b>assert</b>!(<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(miner_addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(130104));
 
   // Return early <b>if</b> difficulty and security are not correct.
