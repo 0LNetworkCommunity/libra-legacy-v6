@@ -23,6 +23,7 @@
 -  [Function `genesis_helper`](#0x1_TowerState_genesis_helper)
 -  [Function `commit_state`](#0x1_TowerState_commit_state)
 -  [Function `commit_state_by_operator`](#0x1_TowerState_commit_state_by_operator)
+-  [Function `check_difficulty`](#0x1_TowerState_check_difficulty)
 -  [Function `verify_and_update_state`](#0x1_TowerState_verify_and_update_state)
 -  [Function `update_epoch_metrics_vals`](#0x1_TowerState_update_epoch_metrics_vals)
 -  [Function `node_above_thresh`](#0x1_TowerState_node_above_thresh)
@@ -736,10 +737,10 @@ Permissions: PUBLIC, ANYONE
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_commit_state">commit_state</a>(
   miner_sign: &signer,
   proof: <a href="TowerState.md#0x1_TowerState_Proof">Proof</a>
-) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>, <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
+) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
   // Get <b>address</b>, assumes the sender is the signer.
   <b>let</b> miner_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(miner_sign);
-  <b>let</b> diff = <b>borrow_global_mut</b>&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(@VMReserved );
+  // <b>let</b> diff = <b>borrow_global</b>&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(@VMReserved );
 
   // This may be the 0th proof of an end user that hasn't had tower state initialized
   <b>if</b> (!<a href="TowerState.md#0x1_TowerState_is_init">is_init</a>(miner_addr)) {
@@ -757,26 +758,26 @@ Permissions: PUBLIC, ANYONE
     <b>return</b>
   };
 
-  // Skip this check on <b>local</b> tests, we need tests <b>to</b> send different difficulties.
-  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
-    // Get vdf difficulty constant. Will be different in tests than in production.
+  // // Skip this check on <b>local</b> tests, we need tests <b>to</b> send different difficulties.
+  // <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
+  //   // Get vdf difficulty constant. Will be different in tests than in production.
 
-    // need <b>to</b> also give allowance for user's first proof in epoch <b>to</b> be in the last proof.
-    <b>if</b> (<a href="TowerState.md#0x1_TowerState_get_count_in_epoch">get_count_in_epoch</a>(miner_addr) == 0) {
-      // first proof in this epoch, can be either the previous difficulty or the current one
-      <b>let</b> is_diff = &proof.difficulty == &diff.difficulty ||
-                    &proof.difficulty == &diff.prev_diff;
+  //   // need <b>to</b> also give allowance for user's first proof in epoch <b>to</b> be in the last proof.
+  //   <b>if</b> (<a href="TowerState.md#0x1_TowerState_get_count_in_epoch">get_count_in_epoch</a>(miner_addr) == 0) {
+  //     // first proof in this epoch, can be either the previous difficulty or the current one
+  //     <b>let</b> is_diff = &proof.difficulty == &diff.difficulty ||
+  //                   &proof.difficulty == &diff.prev_diff;
 
-      <b>let</b> is_sec = &proof.security == &diff.security ||
-                   &proof.security == &diff.prev_sec;
+  //     <b>let</b> is_sec = &proof.security == &diff.security ||
+  //                  &proof.security == &diff.prev_sec;
 
-      <b>assert</b>!(is_diff, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
-      <b>assert</b>!(is_sec, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
-    } <b>else</b> {
-      <b>assert</b>!(&proof.difficulty == &diff.difficulty, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
-      <b>assert</b>!(&proof.security == &diff.security, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
-    };
-  };
+  //     <b>assert</b>!(is_diff, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
+  //     <b>assert</b>!(is_sec, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
+  //   } <b>else</b> {
+  //     <b>assert</b>!(&proof.difficulty == &diff.difficulty, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
+  //     <b>assert</b>!(&proof.security == &diff.security, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
+  //   };
+  // };
 
   // Process the proof
   <a href="TowerState.md#0x1_TowerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
@@ -806,7 +807,7 @@ Permissions: PUBLIC, ANYONE
   operator_sig: &signer,
   miner_addr: <b>address</b>,
   proof: <a href="TowerState.md#0x1_TowerState_Proof">Proof</a>
-) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
+) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a>, <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
 
   // Check the signer is in fact an operator delegated by the owner.
 
@@ -818,21 +819,53 @@ Permissions: PUBLIC, ANYONE
   // Return early <b>if</b> difficulty and security are not correct.
   // Check vdf difficulty constant. Will be different in tests than in production.
   // Skip this check on <b>local</b> tests, we need tests <b>to</b> send differentdifficulties.
-  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
-    <b>assert</b>!(&proof.difficulty
-      == &<a href="Globals.md#0x1_Globals_get_vdf_difficulty_baseline">Globals::get_vdf_difficulty_baseline</a>(), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130105));
-    <b>assert</b>!(&proof.security
-      == &<a href="Globals.md#0x1_Globals_get_vdf_security_baseline">Globals::get_vdf_security_baseline</a>(), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(130106));
-  };
+  <a href="TowerState.md#0x1_TowerState_check_difficulty">check_difficulty</a>(miner_addr, &proof);
 
   // Process the proof
   <a href="TowerState.md#0x1_TowerState_verify_and_update_state">verify_and_update_state</a>(miner_addr, proof, <b>true</b>);
+}
+</code></pre>
 
-  // TODO: The operator mining needs its own <b>struct</b> <b>to</b> count mining.
-  // For now it is implicit there is only 1 operator per validator,
-  // and that the fullnode state is the place <b>to</b> count.
-  // This will require a breaking change <b>to</b> <a href="TowerState.md#0x1_TowerState">TowerState</a>
-  // FullnodeState::inc_proof_by_operator(operator_sig, miner_addr);
+
+
+</details>
+
+<a name="0x1_TowerState_check_difficulty"></a>
+
+## Function `check_difficulty`
+
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_check_difficulty">check_difficulty</a>(miner_addr: <b>address</b>, proof: &<a href="TowerState.md#0x1_TowerState_Proof">TowerState::Proof</a>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="TowerState.md#0x1_TowerState_check_difficulty">check_difficulty</a>(miner_addr: <b>address</b>, proof: &<a href="TowerState.md#0x1_TowerState_Proof">Proof</a>) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a> {
+  <b>if</b> (!<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()){
+    // Get vdf difficulty constant. Will be different in tests than in production.ex
+    <b>let</b> diff = <b>borrow_global</b>&lt;<a href="TowerState.md#0x1_TowerState_VDFDifficulty">VDFDifficulty</a>&gt;(@VMReserved );
+
+    // need <b>to</b> also give allowance for user's first proof in epoch <b>to</b> be in the last proof.
+    <b>if</b> (<a href="TowerState.md#0x1_TowerState_get_count_in_epoch">get_count_in_epoch</a>(miner_addr) == 0) {
+      // first proof in this epoch, can be either the previous difficulty or the current one
+      <b>let</b> is_diff = &proof.difficulty == &diff.difficulty ||
+      &proof.difficulty == &diff.prev_diff;
+
+      <b>let</b> is_sec = &proof.security == &diff.security ||
+      &proof.security == &diff.prev_sec;
+
+      <b>assert</b>!(is_diff, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
+      <b>assert</b>!(is_sec, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
+    } <b>else</b> {
+      <b>assert</b>!(&proof.difficulty == &diff.difficulty, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(130102));
+      <b>assert</b>!(&proof.security == &diff.security, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(13010202));
+    };
+  };
 }
 </code></pre>
 
@@ -860,7 +893,8 @@ Permissions: PUBLIC, ANYONE
   proof: <a href="TowerState.md#0x1_TowerState_Proof">Proof</a>,
   steady_state: bool
 ) <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>, <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerCounter">TowerCounter</a> {
-  // instead of looping through all miners at end of epcoh the stats are only reset when the miner submits a new proof.
+  // instead of looping through all miners at end of epcoh the stats are
+  // only reset when the miner submits a new proof.
   <a href="TowerState.md#0x1_TowerState_lazy_reset_count_in_epoch">lazy_reset_count_in_epoch</a>(miner_addr);
 
   <b>assert</b>!(
