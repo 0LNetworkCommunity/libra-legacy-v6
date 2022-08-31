@@ -96,8 +96,8 @@ stdlib:
 	mkdir diem-move/diem-framework/DPN/releases/artifacts/current/ | true
 	cp -r ./DPN/releases/artifacts/current/* diem-move/diem-framework/DPN/releases/artifacts/current/
 
-ftests:
-	NODE_ENV="test" cargo test -p diem-framework --test ol_transactional_tests $$1
+ftest:
+	NODE_ENV="test" cargo test -p diem-framework --test ol_transactional_tests
   
 
 install: mv-bin bin-path

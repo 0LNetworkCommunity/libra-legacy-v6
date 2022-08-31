@@ -65,6 +65,7 @@ before and after every transaction.
 -  [Function `create_diem_root_account`](#0x1_DiemAccount_create_diem_root_account)
 -  [Function `create_treasury_compliance_account`](#0x1_DiemAccount_create_treasury_compliance_account)
 -  [Function `create_designated_dealer`](#0x1_DiemAccount_create_designated_dealer)
+-  [Function `create_smoketest_end_user_account`](#0x1_DiemAccount_create_smoketest_end_user_account)
 -  [Function `create_parent_vasp_account`](#0x1_DiemAccount_create_parent_vasp_account)
 -  [Function `create_child_vasp_account`](#0x1_DiemAccount_create_child_vasp_account)
 -  [Function `create_signer`](#0x1_DiemAccount_create_signer)
@@ -4293,6 +4294,54 @@ Creates Preburn resource under account 'new_account_address'
     <b>ensures</b> <a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(new_account_address);
     <b>ensures</b> <a href="Roles.md#0x1_Roles_spec_has_designated_dealer_role_addr">Roles::spec_has_designated_dealer_role_addr</a>(new_account_address);
     <b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_AddCurrencyForAccountEnsures">AddCurrencyForAccountEnsures</a>&lt;CoinType&gt;{addr: new_account_address};
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_create_smoketest_end_user_account"></a>
+
+## Function `create_smoketest_end_user_account`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_create_smoketest_end_user_account">create_smoketest_end_user_account</a>&lt;Token&gt;(creator_account: &signer, new_account_address: <b>address</b>, auth_key_prefix: vector&lt;u8&gt;, _human_name: vector&lt;u8&gt;, add_all_currencies: bool)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_create_smoketest_end_user_account">create_smoketest_end_user_account</a>&lt;Token&gt;(
+    creator_account: &signer,  // TreasuryCompliance
+    new_account_address: <b>address</b>,
+    auth_key_prefix: vector&lt;u8&gt;,
+    _human_name: vector&lt;u8&gt;,
+    add_all_currencies: bool
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
+    <a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>();
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(creator_account);
+    <b>let</b> new_account = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
+    print(&400001);
+    // <a href="Roles.md#0x1_Roles_new_parent_vasp_role">Roles::new_parent_vasp_role</a>(creator_account, &new_account);
+    // <a href="VASP.md#0x1_VASP_publish_parent_vasp_credential">VASP::publish_parent_vasp_credential</a>(&new_account, creator_account);
+    // <a href="DualAttestation.md#0x1_DualAttestation_publish_credential">DualAttestation::publish_credential</a>(&new_account, creator_account, human_name);
+    // <a href="VASPDomain.md#0x1_VASPDomain_publish_vasp_domains">VASPDomain::publish_vasp_domains</a>(&new_account);
+    <a href="Roles.md#0x1_Roles_new_user_role_with_proof">Roles::new_user_role_with_proof</a>(&new_account);
+    <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(&new_account, auth_key_prefix);
+    print(&400002);
+    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;Token&gt;(&new_account, add_all_currencies);
+    print(&400003);
+
+    // testnet_root_fund_account
+    // <b>spec</b> {
+    //     <b>assert</b> <b>exists</b>&lt;<a href="VASPDomain.md#0x1_VASPDomain_VASPDomains">VASPDomain::VASPDomains</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(new_account));
+    //     <b>assert</b> <a href="Roles.md#0x1_Roles_spec_has_treasury_compliance_role_addr">Roles::spec_has_treasury_compliance_role_addr</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(creator_account));
+    // }
 }
 </code></pre>
 

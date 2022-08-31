@@ -43,6 +43,7 @@
 
 
 <pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="SlidingNonce.md#0x1_SlidingNonce">0x1::SlidingNonce</a>;
 </code></pre>
 
@@ -152,76 +153,25 @@ This is emitted on the new Child VASPS's <code><a href="DiemAccount.md#0x1_DiemA
     add_all_currencies: bool,
     child_initial_balance: u64
 ) {
-    <a href="DiemAccount.md#0x1_DiemAccount_create_child_vasp_account">DiemAccount::create_child_vasp_account</a>&lt;CoinType&gt;(
+    // <a href="SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(&parent_vasp, sliding_nonce);
+    <a href="DiemAccount.md#0x1_DiemAccount_create_smoketest_end_user_account">DiemAccount::create_smoketest_end_user_account</a>&lt;CoinType&gt;(
         &parent_vasp,
         child_address,
         auth_key_prefix,
-        add_all_currencies,
+        b"smoke",
+        add_all_currencies
     );
-    // Give the newly created child `child_initial_balance` coins
-    <b>if</b> (child_initial_balance &gt; 0) {
-        <b>let</b> vasp_withdrawal_cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">DiemAccount::extract_withdraw_capability</a>(&parent_vasp);
-        <a href="DiemAccount.md#0x1_DiemAccount_pay_from">DiemAccount::pay_from</a>&lt;CoinType&gt;(
-            &vasp_withdrawal_cap, child_address, child_initial_balance, x"", x""
-        );
-        <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">DiemAccount::restore_withdraw_capability</a>(vasp_withdrawal_cap);
-    };
+
+    <b>let</b> with_cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">DiemAccount::extract_withdraw_capability</a>(&parent_vasp);
+    <a href="DiemAccount.md#0x1_DiemAccount_pay_from">DiemAccount::pay_from</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+        &with_cap,
+        child_address,
+        child_initial_balance,
+        b"account generation",
+        b"",
+    );
+    <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">DiemAccount::restore_withdraw_capability</a>(with_cap);
 }
-</code></pre>
-
-
-
-</details>
-
-<details>
-<summary>Specification</summary>
-
-
-
-<pre><code><b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_TransactionChecks">DiemAccount::TransactionChecks</a>{sender: parent_vasp};
-<b>let</b> parent_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(parent_vasp);
-<b>let</b> parent_cap = <a href="DiemAccount.md#0x1_DiemAccount_spec_get_withdraw_cap">DiemAccount::spec_get_withdraw_cap</a>(parent_addr);
-<b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_CreateChildVASPAccountAbortsIf">DiemAccount::CreateChildVASPAccountAbortsIf</a>&lt;CoinType&gt;{
-    parent: parent_vasp, new_account_address: child_address};
-<b>aborts_if</b> child_initial_balance &gt; max_u64() <b>with</b> Errors::LIMIT_EXCEEDED;
-<b>include</b> (child_initial_balance &gt; 0) ==&gt;
-    <a href="DiemAccount.md#0x1_DiemAccount_ExtractWithdrawCapAbortsIf">DiemAccount::ExtractWithdrawCapAbortsIf</a>{sender_addr: parent_addr};
-<b>include</b> (child_initial_balance &gt; 0) ==&gt; <a href="DualAttestation.md#0x1_DualAttestation_AssertPaymentOkAbortsIf">DualAttestation::AssertPaymentOkAbortsIf</a>&lt;CoinType&gt;{
-    payer: parent_addr,
-    payee: child_address,
-    metadata: x"",
-    metadata_signature: x"",
-    value: child_initial_balance
-};
-<b>include</b> (child_initial_balance) &gt; 0 ==&gt;
-    <a href="DiemAccount.md#0x1_DiemAccount_PayFromAbortsIfRestricted">DiemAccount::PayFromAbortsIfRestricted</a>&lt;CoinType&gt;{
-        cap: parent_cap,
-        payee: child_address,
-        amount: child_initial_balance,
-        metadata: x"",
-    };
-<b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_CreateChildVASPAccountEnsures">DiemAccount::CreateChildVASPAccountEnsures</a>&lt;CoinType&gt;{
-    parent_addr: parent_addr,
-    child_addr: child_address,
-};
-<b>ensures</b> <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;CoinType&gt;(child_address) == child_initial_balance;
-<b>ensures</b> <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;CoinType&gt;(parent_addr)
-    == <b>old</b>(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;CoinType&gt;(parent_addr)) - child_initial_balance;
-<b>aborts_with</b> [check]
-    Errors::REQUIRES_ROLE,
-    Errors::ALREADY_PUBLISHED,
-    Errors::LIMIT_EXCEEDED,
-    Errors::NOT_PUBLISHED,
-    Errors::INVALID_STATE,
-    Errors::INVALID_ARGUMENT;
-</code></pre>
-
-
-**Access Control:**
-Only Parent VASP accounts can create Child VASP accounts [[A7]][ROLE].
-
-
-<pre><code><b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotParentVasp">Roles::AbortsIfNotParentVasp</a>{account: parent_vasp};
 </code></pre>
 
 
@@ -613,7 +563,7 @@ and the <code>rold_id</code> field being <code><a href="Roles.md#0x1_Roles_PAREN
     add_all_currencies: bool
 ) {
     <a href="SlidingNonce.md#0x1_SlidingNonce_record_nonce_or_abort">SlidingNonce::record_nonce_or_abort</a>(&tc_account, sliding_nonce);
-    <a href="DiemAccount.md#0x1_DiemAccount_create_parent_vasp_account">DiemAccount::create_parent_vasp_account</a>&lt;CoinType&gt;(
+    <a href="DiemAccount.md#0x1_DiemAccount_create_smoketest_end_user_account">DiemAccount::create_smoketest_end_user_account</a>&lt;CoinType&gt;(
         &tc_account,
         new_account_address,
         auth_key_prefix,
@@ -621,36 +571,6 @@ and the <code>rold_id</code> field being <code><a href="Roles.md#0x1_Roles_PAREN
         add_all_currencies
     );
 }
-</code></pre>
-
-
-
-</details>
-
-<details>
-<summary>Specification</summary>
-
-
-
-<pre><code><b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_TransactionChecks">DiemAccount::TransactionChecks</a>{sender: tc_account};
-<b>include</b> <a href="SlidingNonce.md#0x1_SlidingNonce_RecordNonceAbortsIf">SlidingNonce::RecordNonceAbortsIf</a>{account: tc_account, seq_nonce: sliding_nonce};
-<b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_CreateParentVASPAccountAbortsIf">DiemAccount::CreateParentVASPAccountAbortsIf</a>&lt;CoinType&gt;{creator_account: tc_account};
-<b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_CreateParentVASPAccountEnsures">DiemAccount::CreateParentVASPAccountEnsures</a>&lt;CoinType&gt;;
-<b>aborts_with</b> [check]
-    Errors::INVALID_ARGUMENT,
-    Errors::REQUIRES_ADDRESS,
-    Errors::NOT_PUBLISHED,
-    Errors::ALREADY_PUBLISHED,
-    Errors::REQUIRES_ROLE;
-<b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_MakeAccountEmits">DiemAccount::MakeAccountEmits</a>;
-</code></pre>
-
-
-**Access Control:**
-Only the Treasury Compliance account can create Parent VASP accounts [[A6]][ROLE].
-
-
-<pre><code><b>include</b> <a href="Roles.md#0x1_Roles_AbortsIfNotTreasuryCompliance">Roles::AbortsIfNotTreasuryCompliance</a>{account: tc_account};
 </code></pre>
 
 

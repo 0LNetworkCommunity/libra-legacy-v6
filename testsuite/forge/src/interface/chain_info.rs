@@ -208,7 +208,7 @@ impl<'t> ChainInfo<'t> {
             Coffer::TreasuryCompliance {
                 transaction_factory: TransactionFactory::new(self.chain_id),
                 rest_client: self.rest_client(),
-                treasury_compliance_account: self.treasury_compliance_account,
+                treasury_compliance_account: self.root_account, //////// 0L ////////
                 designated_dealer_account: self.designated_dealer_account,
             },
             self.rest_api_url.clone(),

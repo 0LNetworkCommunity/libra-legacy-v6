@@ -360,7 +360,7 @@ impl<'t, 'd> TxnEmitter<'t, 'd> {
     pub async fn get_money_source(&mut self, coins_total: u64) -> Result<&mut LocalAccount> {
         let client = self.client.clone();
         println!("Creating and minting faucet account");
-        let faucet_account = &mut self.designated_dealer_account;
+        let faucet_account = &mut self.treasury_compliance_account;
         let balance = retrieve_account_balance(&client, faucet_account.address()).await?;
         for b in balance {
             if b.currency.eq(XUS_NAME) {
@@ -401,6 +401,7 @@ impl<'t, 'd> TxnEmitter<'t, 'd> {
         seed_account_num: usize,
         vasp: bool,
     ) -> Result<Vec<LocalAccount>> {
+        dbg!("get_seed_accounts");
         info!("Creating and minting seeds accounts");
         let mut i = 0;
         let mut seed_accounts = vec![];
@@ -456,6 +457,7 @@ impl<'t, 'd> TxnEmitter<'t, 'd> {
         req: &EmitJobRequest,
         total_requested_accounts: usize,
     ) -> Result<()> {
+        dbg!("mint");
         if self.accounts.len() >= total_requested_accounts {
             info!("Already have enough accounts exist, do not need to mint more");
             return Ok(());
@@ -470,20 +472,23 @@ impl<'t, 'd> TxnEmitter<'t, 'd> {
         let coins_per_account = SEND_AMOUNT * MAX_TXNS * 10; // extra coins for secure to pay none zero gas price
         let coins_total = coins_per_account * num_accounts as u64;
         let txn_factory = self.txn_factory.clone();
-        let client = self.pick_mint_client(&req.rest_clients);
 
+        // one client per parent
+        let client = self.pick_mint_client(&req.rest_clients);
+        // dbg!(&client);
         // Create seed accounts with which we can create actual accounts concurrently
         let seed_accounts = self
             .get_seed_accounts(&req.rest_clients, expected_num_seed_accounts, req.vasp)
             .await?;
         let rng = self.from_rng();
-        let faucet_account = self.get_money_source(coins_total).await?;
+
+
         let actual_num_seed_accounts = seed_accounts.len();
         let num_new_child_accounts =
             (num_accounts + actual_num_seed_accounts - 1) / actual_num_seed_accounts;
-        let coins_per_seed_account = coins_per_account * num_new_child_accounts as u64;
+        let coins_per_seed_account = coins_per_account;
         mint_to_new_accounts(
-            faucet_account,
+            self.treasury_compliance_account,
             &seed_accounts,
             coins_per_seed_account as u64,
             100,
@@ -494,47 +499,47 @@ impl<'t, 'd> TxnEmitter<'t, 'd> {
         .await
         .map_err(|e| format_err!("Failed to mint seed_accounts: {}", e))?;
         println!("Completed minting seed accounts");
-        println!("Minting additional {} accounts", num_accounts);
-        tokio::time::sleep(Duration::from_secs(10)).await;
+        // println!("Minting additional {} accounts", num_accounts);
+        // tokio::time::sleep(Duration::from_secs(10)).await;
 
-        let seed_rngs = gen_rng_for_reusable_account(actual_num_seed_accounts);
-        // For each seed account, create a future and transfer diem from that seed account to new accounts
-        let account_futures = seed_accounts
-            .into_iter()
-            .enumerate()
-            .map(|(i, seed_account)| {
-                // Spawn new threads
-                let index = i % req.rest_clients.len();
-                let cur_client = req.rest_clients[index].clone();
-                create_new_accounts(
-                    seed_account,
-                    num_new_child_accounts,
-                    coins_per_account,
-                    20,
-                    cur_client,
-                    &txn_factory,
-                    req.vasp,
-                    if req.vasp {
-                        seed_rngs[i].clone()
-                    } else {
-                        self.from_rng()
-                    },
-                )
-            });
-        let mut minted_accounts = try_join_all(account_futures)
-            .await
-            .context("Failed to mint accounts")?
-            .into_iter()
-            .flatten()
-            .collect();
+        // let seed_rngs = gen_rng_for_reusable_account(actual_num_seed_accounts);
+        // // For each seed account, create a future and transfer diem from that seed account to new accounts
+        // let account_futures = seed_accounts
+        //     .into_iter()
+        //     .enumerate()
+        //     .map(|(i, seed_account)| {
+        //         // Spawn new threads
+        //         let index = i % req.rest_clients.len();
+        //         let cur_client = req.rest_clients[index].clone();
+        //         create_new_accounts(
+        //             seed_account,
+        //             num_new_child_accounts,
+        //             coins_per_account,
+        //             20,
+        //             cur_client,
+        //             &txn_factory,
+        //             req.vasp,
+        //             if req.vasp {
+        //                 seed_rngs[i].clone()
+        //             } else {
+        //                 self.from_rng()
+        //             },
+        //         )
+        //     });
+        // let mut minted_accounts = try_join_all(account_futures)
+        //     .await
+        //     .context("Failed to mint accounts")?
+        //     .into_iter()
+        //     .flatten()
+        //     .collect();
 
-        self.accounts.append(&mut minted_accounts);
-        assert!(
-            self.accounts.len() >= num_accounts,
-            "Something wrong in mint_account, wanted to mint {}, only have {}",
-            total_requested_accounts,
-            self.accounts.len()
-        );
+        // self.accounts.append(&mut minted_accounts);
+        // assert!(
+        //     self.accounts.len() >= num_accounts,
+        //     "Something wrong in mint_account, wanted to mint {}, only have {}",
+        //     total_requested_accounts,
+        //     self.accounts.len()
+        // );
         println!("Mint is done");
         tokio::time::sleep(Duration::from_secs(60)).await;
         Ok(())
@@ -544,7 +549,8 @@ impl<'t, 'd> TxnEmitter<'t, 'd> {
         let workers_per_endpoint = match req.workers_per_endpoint {
             Some(x) => x,
             None => {
-                let target_threads = 300;
+                // let target_threads = 300;
+                let target_threads = 2;
                 // Trying to create somewhere between target_threads/2..target_threads threads
                 // We want to have equal numbers of threads for each endpoint, so that they are equally loaded
                 // Otherwise things like flamegrap/perf going to show different numbers depending on which endpoint is chosen
@@ -562,7 +568,12 @@ impl<'t, 'd> TxnEmitter<'t, 'd> {
             "Will create {} accounts_per_client with total {} accounts",
             req.accounts_per_client, num_accounts
         );
+        // initially create accounts and fund them.
+        // these will be accounts that later send transactions.
         self.mint_accounts(&req, num_accounts).await?;
+        //... this takes some time.
+
+
         let all_accounts = self.accounts.split_off(self.accounts.len() - num_accounts);
         let mut workers = vec![];
         let all_addresses: Vec<_> = all_accounts.iter().map(|d| d.address()).collect();
@@ -709,17 +720,21 @@ pub async fn execute_and_wait_transactions(
         account.sequence_number(),
         account.address()
     );
+    dbg!(&account.address());
 
     let pending_txns: Vec<Response<PendingTransaction>> =
         try_join_all(txns.iter().map(|t| client.submit(t)))
             .await
             .context("submit transactions failed")?;
+    dbg!(&pending_txns.len());
 
     for pt in pending_txns {
-        client
+        match client
             .wait_for_transaction(&pt.into_inner())
-            .await
-            .context("wait for transactions failed")?;
+            .await {
+                Ok(tx) => println!("{:?}", tx.inner().vm_status()),
+                Err(e) => println!("{:?}", e),
+            }
     }
 
     debug!(
