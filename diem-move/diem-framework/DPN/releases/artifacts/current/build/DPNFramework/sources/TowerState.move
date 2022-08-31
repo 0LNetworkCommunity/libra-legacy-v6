@@ -299,7 +299,7 @@ module TowerState {
         assert!(&proof.difficulty
           == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_argument(130105));
         assert!(&proof.security
-          == &Globals::get_vdf_difficulty_baseline(), Errors::invalid_state(130106));
+          == &Globals::get_vdf_security_baseline(), Errors::invalid_state(130106));
       };
       
       // Process the proof
