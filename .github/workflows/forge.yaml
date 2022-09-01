@@ -1,4 +1,4 @@
-name: CI-v6
+name: Forge
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   forge:
-    name: Functional Tests
+    name: Forge
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
