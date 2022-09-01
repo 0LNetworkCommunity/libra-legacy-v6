@@ -23,7 +23,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1.0.7
         with:
-            toolchain: 1.52.1
+            toolchain: 1.56.1
             override: true
             components: rustfmt, clippy
       - name: Install deps
@@ -31,7 +31,7 @@ jobs:
       - name: check version
         run: rustc -V
       - name: Build stdlib
-        run: cd language/diem-framework && cargo run --release
+        run: cargo run -p diem-framework
       - name: Run 0L functional tests
         run: cd language/move-lang/functional-tests && NODE_ENV=test cargo test 0L
   tools:
@@ -87,7 +87,7 @@ jobs:
       - name: Create foo_stdlib.mv fixtures
         run: SOURCE_PATH=./ make -f ol/fixtures/upgrade_payload/make-e2e-upgrade-fixtures.mk fixtures
       - name: Build stdlib
-        run: cd language/diem-framework && cargo run --release
+        run: cargo run -p diem-framework
       - name: Run 0L e2e tests
         run: cd language/e2e-testsuite && NODE_ENV=test cargo test ol_
   smoke:
@@ -114,6 +114,6 @@ jobs:
       - name: Create foo_stdlib.mv fixtures
         run: SOURCE_PATH=./ make -f ol/fixtures/upgrade_payload/make-e2e-upgrade-fixtures.mk fixtures
       - name: Build stdlib
-        run: cd language/diem-framework && cargo run --release
+        run: cargo run -p diem-framework
       - name: Run 0L e2e tests
         run: cd testsuite/smoke-test && cargo test
