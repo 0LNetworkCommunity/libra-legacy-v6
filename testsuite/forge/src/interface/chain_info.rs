@@ -160,10 +160,11 @@ impl<'t> ChainInfo<'t> {
     /// Prints a single line of output to the node console.
     pub async fn ol_send_demo_tx_root(
         &mut self,
+        client: Option<RestClient>,
         // account: &mut LocalAccount,
     ) -> Result<()> {
         let factory = self.transaction_factory();
-        let client = self.rest_client();
+        let client = client.unwrap_or(self.rest_client());
 
         let account = self.root_account();
         // let diem_root = self.root_account();

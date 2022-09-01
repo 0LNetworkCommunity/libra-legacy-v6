@@ -1,7 +1,7 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Result, Context};
 pub use diem_api_types::{MoveModuleBytecode, PendingTransaction, Transaction};
 use diem_client::{Response, State};
 use diem_crypto::HashValue;
@@ -137,6 +137,8 @@ impl Client {
 
     pub async fn submit_and_wait(&self, txn: &SignedTransaction) -> Result<Response<Transaction>> {
         self.submit(txn).await?;
+        dbg!("tx submitted");
+        
         self.wait_for_signed_transaction(txn).await
     }
 
@@ -152,6 +154,7 @@ impl Client {
                 .inner(),
         )
         .await
+        .context("error waiting for transaction")
     }
 
     pub async fn wait_for_signed_transaction(
@@ -199,7 +202,7 @@ impl Client {
             tokio::time::sleep(DEFAULT_DELAY).await;
         }
 
-        Err(anyhow!("timeout"))
+        Err(anyhow!("request timeout"))
     }
 
     pub async fn get_transactions(

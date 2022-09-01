@@ -248,10 +248,12 @@ impl LocalSwarm {
         }
 
         // Wait for all of them to startup
-        let deadline = Instant::now() + Duration::from_secs(60);
+        let deadline = Instant::now() + Duration::from_secs(120);
         self.wait_for_startup().await?;
         self.wait_for_connectivity(deadline).await?;
         self.liveness_check(deadline).await?;
+
+        println!("logs located at {:?}", self.logs_location());
 
         Ok(())
     }
