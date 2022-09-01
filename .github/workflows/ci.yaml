@@ -2,7 +2,7 @@ name: CI-v6
 
 on:
   push:
-    branches: [ main, ci, v5, v6-smoketests ]
+    branches: [ main, ci, v5, v6-smoketests, 'v6**' ]
   pull_request:
     branches: [ main, 'release**', v5 ]
 
