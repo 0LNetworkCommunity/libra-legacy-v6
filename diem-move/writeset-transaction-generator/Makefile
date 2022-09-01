@@ -49,9 +49,6 @@ tx-migrate:
 tx-recovery:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob --recovery-epoch ${RECOVERY_EPOCH} recovery ${VALS}
 
-tx-debug:
-	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob debug ${VALS}
-
 tx-vals:
 	cd ${SOURCE_PATH} && cargo r -p diem-writeset-generator -- --db ${DATA_PATH}/db --output ${RESCUE_PATH}/rescue.blob update-validators ${VALS}
 
@@ -103,9 +100,9 @@ diff:
 	@shasum ${RESCUE_PATH}/dump-start | true
 
 init:
-	mv ${DATA_PATH}/key_store.json ${DATA_PATH}/key_store.json.bak.${DATE} | true
-	ol init --key-store --waypoint $(shell cat ${RESCUE_PATH}/rescue_waypoint.txt)
-
+	ol init --update-waypoint --waypoint $(shell cat ${RESCUE_PATH}/rescue_waypoint.txt)
+	ol init --reset-safety
+	
 start:
 	cd ${SOURCE_PATH} && cargo r -p diem-node -- -f ${DATA_PATH}/validator.node.yaml 2>&1 | tee ${DATA_PATH}/logs/node.log
 

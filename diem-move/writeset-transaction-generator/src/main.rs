@@ -252,7 +252,6 @@ fn main() -> Result<()> {
         Command::Boundary { addresses } => ol_writeset_force_boundary(
             opt.db.unwrap(),
             addresses,
-            opt.block_height.expect("need to provide --block-height"),
         ),
         Command::UpdateValidators { addresses } 
             => script_bulk_update_vals_payload(addresses),
@@ -292,12 +291,11 @@ fn main() -> Result<()> {
             ancestry_file,
             makewhole_file,
             addresses,
-        } => ol_writset_encode_migrations(
+        } => ol_writeset_encode_migrations(
             opt.db.unwrap(),
             ancestry_file,
             makewhole_file,
             addresses,
-            opt.block_height.expect("need to provide --block-height"),
             opt.recovery_epoch
                 .expect("need to provide --recovery-epoch"),
         ),
