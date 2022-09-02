@@ -114,6 +114,11 @@ pub fn ol_writeset_encode_rescue(
     WriteSetPayload::Direct(merge_vec_changeset(all_cs).unwrap())
 }
 
+pub fn ol_writeset_upgrade_expire(path: PathBuf) -> WriteSetPayload {
+    let expiry_cs = reconfig::ol_expire_oracle_upgrade(path.clone()).unwrap();
+    WriteSetPayload::Direct(expiry_cs)
+}
+
 pub fn ol_writeset_encode_migrations(
     path: PathBuf,
     ancestry_file: PathBuf,
