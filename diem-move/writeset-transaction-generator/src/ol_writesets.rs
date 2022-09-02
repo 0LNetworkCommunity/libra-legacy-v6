@@ -155,7 +155,7 @@ pub fn ol_writeset_encode_migrations(
 }
 
 pub fn ol_writeset_oracle_expire(
-    path: PathBuf, vals: Vec<AccountAddress>, recovery_epoch: u64
+    path: PathBuf, _vals: Vec<AccountAddress>, recovery_epoch: u64
 ) -> WriteSetPayload  {
     let oracle_expiry = migrations::ol_expire_oracle_upgrade(path.clone()).unwrap();
     let recovery =
