@@ -45,7 +45,8 @@ pub fn ol_bulk_validators_changeset(path: PathBuf, vals: Vec<AccountAddress>) ->
     wrapper::function_changeset_from_db(path, vec![fnwrap])
 }
 
-pub fn ol_reconfig_changeset(path: PathBuf, height_now: u64) -> Result<ChangeSet> {
+pub fn ol_reconfig_changeset(path: PathBuf) -> Result<ChangeSet> {
+    let height_now = ol_get_internal_blockheight(path.clone())?;
     let txn_args = vec![
         TransactionArgument::Address(diem_root_address()),
         TransactionArgument::U64(height_now),
@@ -74,7 +75,7 @@ pub fn mfg_epoch_event(epoch: u64, seq: u64) -> Result<ContractEvent> {
 }
 
 
-// TODO this doesn't work.
+// TODO this doesn't work. Causes issues with epoch seq number already being bumped.
 pub fn ol_reset_epoch_counters(
     path: PathBuf,
     vals: Vec<AccountAddress>,
@@ -82,9 +83,9 @@ pub fn ol_reset_epoch_counters(
     let block_height = ol_get_internal_blockheight(path.clone())?;
     let txn_args = vec![
         TransactionArgument::Address(diem_root_address()),
-        TransactionArgument::AddressVector(vals),
-        TransactionArgument::AddressVector(vec![]),
-        TransactionArgument::U64(block_height + 1),
+        TransactionArgument::AddressVector(vals), // new validator set
+        TransactionArgument::AddressVector(vec![]), // outgoing compliant
+        TransactionArgument::U64(block_height + 1), // start of epoch
     ];
 
     let fnwrap = FunctionWrapper {
