@@ -154,6 +154,7 @@ module EpochBoundary {
         while (i < Vector::length<address>(&previous_set)) {
             let addr = *Vector::borrow(&previous_set, i);
             let case = Cases::get_case(vm, addr, height_start, height_now);
+
             if (
               // we care about nodes that are performing consensus correctly, case 1 and 2.
               case < 3 &&
@@ -163,6 +164,7 @@ module EpochBoundary {
                 // also reset the jail counter for any successful unjails
                 Jail::remove_consecutive_fail(vm, addr);
             } else {
+              
               Jail::jail(vm, addr);
             };
             i = i+ 1;
@@ -197,8 +199,12 @@ module EpochBoundary {
             let addr = *Vector::borrow(&top_accounts, i);
             let mined_last_epoch = TowerState::node_above_thresh(addr);
             let case = Cases::get_case(vm, addr, height_start, height_now);
+            print(&44444444);
             print(&addr);
             print(&case);
+            print(&Jail::is_jailed(addr));
+            print(&Audit::val_audit_passing(addr));
+            print(&Vouch::unrelated_buddies_above_thresh(addr));
 
             if (
                 // ignore proven nodes already on list
@@ -216,7 +222,8 @@ module EpochBoundary {
                 // has proven themselves in the previous round. If your
                 // vouchers fall out of the set, you may also fall out,
                 // and this chain reaction would cause instability in the network.
-                Vouch::unrelated_buddies_above_thresh(addr)            ) {
+                Vouch::unrelated_buddies_above_thresh(addr)
+              ) {
                 print(&99990901);
                 Vector::push_back(&mut proposed_set, addr);
             };

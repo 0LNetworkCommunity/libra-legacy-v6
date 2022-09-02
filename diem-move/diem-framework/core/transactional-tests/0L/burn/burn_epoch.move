@@ -30,7 +30,10 @@ script {
         // Validator and Operator payment 10m & 1M 
         // for Alice only
         // (for operator which is not explicit in tests)
-        assert!(mk_cap_genesis == 10000000 + 1000000, 7357000);
+        let root = 10000000; // root gets payment at genesis for testing
+        let alice = 10000000; // Alice gets payment at genesis
+        let bob = 1000000; // Bob gets payment on account creation from root
+        assert!(mk_cap_genesis == root + alice + bob, 7357000);
 
         TowerState::test_helper_mock_mining(&sender, 5);
         
@@ -109,7 +112,7 @@ script {
 
   fun main() {
     let new_cap = Diem::market_cap<GAS>();
-    let val_plus_oper_start = 11000000u128; //10M + 1M
+    let cap_at_start = 21000000u128; //10M + 1M
     let burn = 148000000u128; //1M
     let subsidy = 296000000u128;
     print(&new_cap);
@@ -118,7 +121,7 @@ script {
     let bal = DiemAccount::balance<GAS>(@Bob);
     assert!(bal == 1000000, 7357004);
 
-    assert!(new_cap == (val_plus_oper_start + subsidy - burn), 7357004);
+    assert!(new_cap == (cap_at_start + subsidy - burn), 7357004);
 
 
   }
