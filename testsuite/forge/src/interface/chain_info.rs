@@ -51,7 +51,7 @@ impl<'t> ChainInfo<'t> {
     }
 
     pub fn treasury_compliance_account(&mut self) -> &mut LocalAccount {
-        self.treasury_compliance_account
+        self.root_account //////// 0L ////////
     }
 
     pub fn json_rpc(&self) -> &str {
@@ -130,7 +130,7 @@ impl<'t> ChainInfo<'t> {
     ) -> Result<()> {
         let factory = self.transaction_factory();
         let client = self.rest_client();
-        let designated_dealer_account = self.designated_dealer_account();
+        let designated_dealer_account = self.root_account(); //////// 0L ////////
         let fund_account_txn = designated_dealer_account
             .sign_with_transaction_builder(factory.peer_to_peer(currency, address, amount));
         client.submit_and_wait(&fund_account_txn).await?;
@@ -141,10 +141,32 @@ impl<'t> ChainInfo<'t> {
     /// Prints a single line of output to the node console.
     pub async fn ol_send_demo_tx(
         &mut self,
-        mut account: LocalAccount,
+        account: &mut LocalAccount,
     ) -> Result<()> {
         let factory = self.transaction_factory();
         let client = self.rest_client();
+        // let diem_root = self.root_account();
+        let txn = account
+            .sign_with_transaction_builder(
+              factory.payload(
+                transaction_builder::stdlib::encode_demo_e2e_script_function(42)
+              )
+            );
+        client.submit_and_wait(&txn).await?;
+        Ok(())
+    }
+
+    //////// 0L ////////
+    /// Prints a single line of output to the node console.
+    pub async fn ol_send_demo_tx_root(
+        &mut self,
+        client: Option<RestClient>,
+        // account: &mut LocalAccount,
+    ) -> Result<()> {
+        let factory = self.transaction_factory();
+        let client = client.unwrap_or(self.rest_client());
+
+        let account = self.root_account();
         // let diem_root = self.root_account();
         let txn = account
             .sign_with_transaction_builder(
@@ -187,7 +209,7 @@ impl<'t> ChainInfo<'t> {
             Coffer::TreasuryCompliance {
                 transaction_factory: TransactionFactory::new(self.chain_id),
                 rest_client: self.rest_client(),
-                treasury_compliance_account: self.treasury_compliance_account,
+                treasury_compliance_account: self.root_account, //////// 0L ////////
                 designated_dealer_account: self.designated_dealer_account,
             },
             self.rest_api_url.clone(),

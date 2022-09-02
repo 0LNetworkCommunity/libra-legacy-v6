@@ -29,7 +29,9 @@
 
 
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_demo_e2e.md#0x1_DemoScripts_demo_e2e">demo_e2e</a> (world: u64) {
-    print(&0x0000000000000000000000000011e110); // Hello!
+    print(&@0x0000000000000000000000000011e110); // Hello!
+    print(&999999999999999); // Hello!
+
     print(&world); // World!
 }
 </code></pre>

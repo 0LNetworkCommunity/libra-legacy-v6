@@ -46,7 +46,7 @@ pub struct StateSyncConfig {
 impl Default for StateSyncConfig {
     fn default() -> Self {
         Self {
-            chunk_limit: 250, ///////// 0L ////////
+            chunk_limit: 1000, ///////// 0L ////////
             client_commit_timeout_ms: 5_000,
             long_poll_timeout_ms: 10_000,
             max_chunk_limit: 1_000,
@@ -54,7 +54,7 @@ impl Default for StateSyncConfig {
             mempool_commit_timeout_ms: 5_000,
             multicast_timeout_ms: 30_000,
             sync_request_timeout_ms: 60_000, ///////// 0L ////////
-            tick_interval_ms: 3000, ///////// 0L ////////
+            tick_interval_ms: 100, ///////// 0L ////////
             data_streaming_service: DataStreamingServiceConfig::default(),
             diem_data_client: DiemDataClientConfig::default(),
             state_sync_driver: StateSyncDriverConfig::default(),

@@ -5,7 +5,7 @@ use crate::layout::Layout;
 use anyhow::Result;
 use diem_crypto::ed25519::Ed25519PublicKey;
 use diem_global_constants::{
-    MOVE_MODULES, OPERATOR_KEY, OWNER_KEY,
+    MOVE_MODULES, OPERATOR_KEY, OWNER_KEY, DIEM_ROOT_KEY,
 };
 use diem_management::constants::{self, VALIDATOR_CONFIG, VALIDATOR_OPERATOR};
 use diem_secure_storage::{KVStorage, Namespaced};
@@ -66,22 +66,22 @@ impl<S: KVStorage> GenesisBuilder<S> {
 
     // 0L todo diem-1.4.1 - new patch, needs review
     /////// 0L /////////
-    // pub fn set_root_key(&mut self, root_key: Ed25519PublicKey) -> Result<()> {
-    //     let layout = self.layout()?;
-    //     self.with_namespace_mut(&layout.diem_root)
-    //         .set(DIEM_ROOT_KEY, root_key)
-    //         .map_err(Into::into)
-    // }
+    pub fn set_root_key(&mut self, root_key: Ed25519PublicKey) -> Result<()> {
+        let layout = self.layout()?;
+        self.with_namespace_mut(&layout.diem_root)
+            .set(DIEM_ROOT_KEY, root_key)
+            .map_err(Into::into)
+    }
 
     // 0L todo diem-1.4.1 - new patch, needs review
     /////// 0L /////////
-    // pub fn root_key(&self) -> Result<Ed25519PublicKey> {
-    //     let layout = self.layout()?;
-    //     self.with_namespace(&layout.diem_root)
-    //         .get(DIEM_ROOT_KEY)
-    //         .map(|r| r.value)
-    //         .map_err(Into::into)
-    // }
+    pub fn root_key(&self) -> Result<Ed25519PublicKey> {
+        let layout = self.layout()?;
+        self.with_namespace(&layout.diem_root)
+            .get(DIEM_ROOT_KEY)
+            .map(|r| r.value)
+            .map_err(Into::into)
+    }
 
     // 0L todo diem-1.4.1 - new patch, needs review
     /////// 0L /////////
@@ -227,13 +227,13 @@ impl<S: KVStorage> GenesisBuilder<S> {
         consensus_config: OnChainConsensusConfig,
     ) -> Result<Transaction> {
         /////// 0L /////////
-        // let diem_root_key = self.root_key()?;
+        let diem_root_key = self.root_key()?;
         // let treasury_compliance_key = self.treasury_compliance_key()?;
         let validators = self.validators()?;
         let move_modules = self.move_modules()?;
 
         let genesis = vm_genesis::encode_genesis_transaction(
-            None, // diem_root_key, /////// 0L /////////
+            Some(&diem_root_key), /////// 0L /////////
             None, // treasury_compliance_key, /////// 0L /////////
             &validators,
             &move_modules,

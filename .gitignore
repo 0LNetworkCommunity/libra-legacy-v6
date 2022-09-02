@@ -74,4 +74,5 @@ key_store.json
 
 # prevent mv files from being committed
 *.mv
-diem-move/diem-framework/DPN/releases/
+diem-move/diem-framework/DPN/releases/artifacts
+*/artifacts/

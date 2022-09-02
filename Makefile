@@ -92,8 +92,12 @@ bins: stdlib
 stdlib:
 # cargo run ${CARGO_ARGS} -p diem-framework
 	cargo run ${CARGO_ARGS} -p diem-framework -- --create-upgrade-payload
-# linux uses sha265sum, but not available by default on OS X
-	bash -c "sha256sum language/diem-framework/staged/stdlib.mv || shasum -a 256 language/diem-framework/staged/stdlib.mv"
+	shasum -a 256 ./DPN/releases/artifacts/current/staged/stdlib.mv | true
+	mkdir diem-move/diem-framework/DPN/releases/artifacts/current/ | true
+	cp -r ./DPN/releases/artifacts/current/* diem-move/diem-framework/DPN/releases/artifacts/current/
+
+ftest:
+	NODE_ENV="test" cargo test -p diem-framework --test ol_transactional_tests
   
 
 install: mv-bin bin-path
@@ -291,7 +295,7 @@ verify-gen:
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
-genesis:
+genesis: stdlib
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
 	--chain-id ${CHAIN_ID} \
 	--validator-backend ${LOCAL} \
@@ -302,8 +306,8 @@ genesis:
   --layout-path ${DATA_PATH}/set_layout.toml \
 	--val-ip-address ${IP}
 
-# linux uses sha265sum, but not available by default on OS X
-	bash -c "sha256sum ${DATA_PATH}/genesis.blob || shasum -a 256 ${DATA_PATH}/genesis.blob"
+
+	sha256sum ${DATA_PATH}/genesis.blob
 
 #### NODE MANAGEMENT ####
 start:
@@ -470,7 +474,7 @@ debug:
 
 testnet-init: clear fix
 #  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
-	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --chain-id ${CHAIN_ID} --genesis-ceremony
+	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --chain-id 1 --genesis-ceremony
 
 # Do the genesis ceremony registration, this includes the step testnet-validator-init-wizard
 testnet-register:  testnet-init gen-register
@@ -498,8 +502,8 @@ testnet-genesis: genesis set-waypoint
 testnet: clear fix testnet-init testnet-genesis start
 
 # For subsequent validators joining the testnet. This will fetch the genesis information saved
-testnet-onboard: clear
-	MNEM='${MNEM}' cargo run -p onboard -- val --github-org OLSF --repo dev-genesis --chain-id ${CHAIN_ID}
+testnet-onboard: clear fix
+	MNEM='${MNEM}' cargo run -p onboard -- val --github-org OLSF --repo dev-genesis --chain-id 1
 # start a node with fullnode.node.yaml configs
 	cargo r -p diem-node -- -f ~/.0L/fullnode.node.yaml
 

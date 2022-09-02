@@ -8,7 +8,7 @@ use diem_sdk::{
     client::{BlockingClient, FaucetClient},
     move_types::account_address::AccountAddress,
     transaction_builder::{Currency, TransactionFactory},
-    types::{chain_id::ChainId, transaction::authenticator::AuthenticationKey, LocalAccount},
+    types::{chain_id::ChainId, transaction::authenticator::AuthenticationKey, LocalAccount, AccountKey},
 };
 use reqwest::Url;
 
@@ -79,6 +79,15 @@ impl<'t> PublicUsageContext<'t> {
             .await
     }
 
+    //////// 0L ////////
+    pub fn get_root_account(&mut self) -> LocalAccount{
+      let r = self.public_info.coffer.get_root_account();
+      LocalAccount::new(
+          r.address(), 
+          AccountKey::from(r.private_key().to_owned()),
+          r.sequence_number()
+      )
+    }
     pub async fn create_parent_vasp_account(&mut self, auth_key: AuthenticationKey) -> Result<()> {
         self.public_info
             .coffer
@@ -157,10 +166,13 @@ impl Fund for Coffer<'_> {
             Coffer::TreasuryCompliance {
                 transaction_factory,
                 rest_client,
-                treasury_compliance_account: _,
-                designated_dealer_account,
+                treasury_compliance_account,
+                designated_dealer_account: _,
             } => {
-                let fund_account_txn = designated_dealer_account.sign_with_transaction_builder(
+                //////// 0L ////////
+                // 0L funds accounts from root account, which is the what treasury_compliance_account is assigned to here.
+
+                let fund_account_txn = treasury_compliance_account.sign_with_transaction_builder(
                     transaction_factory.peer_to_peer(currency, address, amount),
                 );
                 rest_client.submit_and_wait(&fund_account_txn).await?;
@@ -226,6 +238,16 @@ impl Fund for Coffer<'_> {
     }
 }
 
+//////// 0L ////////
+impl <'t> Coffer<'t>  {
+  pub fn get_root_account(&mut self) -> &mut LocalAccount{
+    match self {
+        Coffer::TreasuryCompliance { transaction_factory: _, rest_client: _, treasury_compliance_account, designated_dealer_account:_ } => treasury_compliance_account,
+        Coffer::Faucet(_) => todo!(),
+    }
+
+  }
+}
 pub struct PublicInfo<'t> {
     json_rpc_url: String,
     chain_id: ChainId,

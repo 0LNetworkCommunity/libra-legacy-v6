@@ -18,7 +18,7 @@ pub fn write_manifest(
     wizard_config: Option<AppCfg>,
     autopay_batch: Option<Vec<PayInstruction>>,
     autopay_signed: Option<Vec<SignedTransaction>>,
-) {
+) -> Result<(), anyhow::Error> {
     let cfg = if wizard_config.is_some() {
         wizard_config.unwrap()
     } else {
@@ -32,7 +32,7 @@ pub fn write_manifest(
     let keys = KeyScheme::new(&wallet);
     let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
 
-    ValConfigs::new(
+    return ValConfigs::new(
         Some(block),
         keys,
         cfg.profile.ip,
@@ -40,5 +40,5 @@ pub fn write_manifest(
         autopay_batch,
         autopay_signed,
     )
-    .create_manifest(miner_home);
+    .create_manifest(miner_home)
 }

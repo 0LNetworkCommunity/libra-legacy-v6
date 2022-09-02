@@ -301,12 +301,14 @@ module DiemFramework::Diem {
     /// `MintCapability<CoinType>` at the top-level in order for this call
     /// to be successful.
     public fun mint<CoinType>(account: &signer, value: u64): Diem<CoinType>
-    acquires CurrencyInfo, MintCapability {
-        let addr = Signer::address_of(account);
-        assert!(exists<MintCapability<CoinType>>(addr), Errors::requires_capability(EMINT_CAPABILITY));
-        mint_with_capability(
+    acquires CurrencyInfo {
+        // let addr = Signer::address_of(account);
+
+        CoreAddresses::assert_diem_root(account); //////// 0L //////// 
+        // only diem_root can mint.
+        mint_with_capability<CoinType>(
             value,
-            borrow_global<MintCapability<CoinType>>(addr)
+            // borrow_global<MintCapability<CoinType>>(addr)
         )
     }
     spec mint {
@@ -417,7 +419,7 @@ module DiemFramework::Diem {
     /// reference.
     public(friend) fun mint_with_capability<CoinType>(
         value: u64,
-        _capability: &MintCapability<CoinType>
+        // _capability: &MintCapability<CoinType>
     ): Diem<CoinType> acquires CurrencyInfo {
         assert_is_currency<CoinType>();
         let currency_code = currency_code<CoinType>();

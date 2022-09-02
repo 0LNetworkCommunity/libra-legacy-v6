@@ -337,9 +337,11 @@ fn get_test_suite(suite_name: &str) -> ForgeConfig<'static> {
 
 fn local_test_suite() -> ForgeConfig<'static> {
     ForgeConfig::default()
-        .with_public_usage_tests(&[&FundAccount, &TransferCoins])
-        .with_admin_tests(&[&GetMetadata])
-        .with_network_tests(&[&RestartValidator, &EmitTransaction])
+        // .with_public_usage_tests(&[&FundAccount, &TransferCoins])
+        // .with_admin_tests(&[&GetMetadata])
+        // .with_network_tests(&[&RestartValidator, &EmitTransaction])
+        .with_network_tests(&[&EmitTransaction])
+
 }
 
 fn k8s_test_suite() -> ForgeConfig<'static> {
@@ -463,6 +465,7 @@ impl FundAccount {
         let currency = Currency::XUS;
         ctx.create_parent_vasp_account(account.authentication_key())
             .await?;
+
         ctx.fund(account.address(), amount).await?;
         check_account_balance(&client, currency, account.address(), amount).await?;
 
@@ -488,17 +491,22 @@ impl PublicUsageTest for TransferCoins {
 
 impl TransferCoins {
     async fn async_run(&self, ctx: &mut PublicUsageContext<'_>) -> Result<()> {
-        let mut account = ctx.random_account();
+        let account = ctx.random_account();
         let amount = 1000;
         let currency = Currency::XUS;
         let client = ctx.rest_client();
+
+        // let root = ctx.
         ctx.create_parent_vasp_account(account.authentication_key())
             .await?;
         ctx.fund(account.address(), amount).await?;
 
         let mut payer = ctx.random_account();
         let payee = ctx.random_account();
-        let create_payer = account.sign_with_transaction_builder(
+
+        // NOTE: 0L uses root account create accounts in test network.
+        let mut root = ctx.get_root_account();
+        let create_payer = root.sign_with_transaction_builder(
             ctx.transaction_factory().create_child_vasp_account(
                 currency,
                 payer.authentication_key(),
@@ -506,24 +514,27 @@ impl TransferCoins {
                 100,
             ),
         );
-        let create_payee = account.sign_with_transaction_builder(
+
+        let create_payee = root.sign_with_transaction_builder(
             ctx.transaction_factory().create_child_vasp_account(
                 currency,
                 payee.authentication_key(),
                 false,
-                0,
+                1,
             ),
         );
         client.submit(&create_payer).await?;
-        client.submit(&create_payee).await?;
         client.wait_for_signed_transaction(&create_payer).await?;
+
+        client.submit(&create_payee).await?;
         client.wait_for_signed_transaction(&create_payee).await?;
+
         check_account_balance(&client, currency, payer.address(), 100).await?;
 
         ctx.transfer_coins(currency, &mut payer, payee.address(), 10)
             .await?;
         check_account_balance(&client, currency, payer.address(), 90).await?;
-        check_account_balance(&client, currency, payee.address(), 10).await?;
+        check_account_balance(&client, currency, payee.address(), 11).await?;
 
         Ok(())
     }
@@ -570,7 +581,7 @@ impl NetworkTest for EmitTransaction {
             .validators()
             .map(|v| v.peer_id())
             .collect::<Vec<_>>();
-        let stats = generate_traffic(ctx, &all_validators, duration, 0, None).unwrap();
+        let stats = generate_traffic(ctx, &all_validators, duration, 0, None)?;
         ctx.report
             .report_txn_stats(self.name().to_string(), stats, duration);
 

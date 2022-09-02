@@ -20,7 +20,7 @@ pub struct Layout {
     pub operators: Vec<String>,
     pub owners: Vec<String>,
     //////// 0L /////////    
-    // pub diem_root: String,
+    pub diem_root: String,
     // pub treasury_compliance: String,
 }
 

@@ -1,8 +1,8 @@
-name: CI
+name: CI-v6
 
 on:
   push:
-    branches: [ main, ci, v5 ]
+    branches: [ main, ci, v5, v6-smoketests, 'v6**' ]
   pull_request:
     branches: [ main, 'release**', v5 ]
 
@@ -23,7 +23,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1.0.7
         with:
-            toolchain: 1.52.1
+            toolchain: 1.56.1
             override: true
             components: rustfmt, clippy
       - name: Install deps
@@ -31,9 +31,10 @@ jobs:
       - name: check version
         run: rustc -V
       - name: Build stdlib
-        run: cd language/diem-framework && cargo run --release
+        run: cargo run -p diem-framework
       - name: Run 0L functional tests
-        run: cd language/move-lang/functional-tests && NODE_ENV=test cargo test 0L
+        run: NODE_ENV="test" cargo test -p diem-framework --test ol_transactional_tests
+
   tools:
     name: 0L tools Tests
     runs-on: ubuntu-latest
@@ -52,7 +53,7 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1.0.7
         with:
-            toolchain: 1.52.1
+            toolchain: 1.56.1
             override: true
             components: rustfmt, clippy
       - name: tower tests
@@ -81,75 +82,39 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1.0.7
         with:
-            toolchain: 1.52.1
+            toolchain: 1.56.1
             override: true
             components: rustfmt, clippy
       - name: Create foo_stdlib.mv fixtures
         run: SOURCE_PATH=./ make -f ol/fixtures/upgrade_payload/make-e2e-upgrade-fixtures.mk fixtures
       - name: Build stdlib
-        run: cd language/diem-framework && cargo run --release
+        run: cargo run -p diem-framework
       - name: Run 0L e2e tests
         run: cd language/e2e-testsuite && NODE_ENV=test cargo test ol_
-  
-  # genesis_smoke:
-  #   name: Genesis Smoke Test
-  #   runs-on: ubuntu-latest
-  #   # needs: compile
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #     # Uses the cache done in the parent job (compile) with the same "key"
-  #     - uses: actions/cache@v2.1.6
-  #       with:
-  #         path: |
-  #           ~/.cargo/registry
-  #           ~/.cargo/git
-  #           target
-  #         key: ${{ runner.os }}-test-genesis-smoke-${{ hashFiles('**/Cargo.lock') }}
-  #     - name: Run smoke test
-  #       run: cargo xtest -p libra-management smoke_test
-#   swarm_acceptance:
-#     name: Swarm Acceptance Test
-#     runs-on: ubuntu-latest
-#     # needs: compile
-#     steps:
-#       - uses: actions/checkout@v3
-#       # Uses the cache done in the parent job (compile) with the same "key"
-#       - uses: actions/cache@v2.1.6
-#         with:
-#           path: |
-#             ~/.cargo/registry
-#             ~/.cargo/git
-#             target
-#           key: ${{ runner.os }}-test-swarm-${{ hashFiles('**/Cargo.lock') }}
-#       - name: Start swarm & grep logs
-#         run: chmod +x 0L_swarm_test.sh && ./0L_swarm_test.sh
-  #
-  # compile:
-  #   name: Compile and Cache
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #   # Sets up a cache to be used on other subsequent jobs.
-  #   # subsequent jobs must use the "needs" field and reference this job.id "compile".
-  #     - uses: actions/cache@v2.1.6
-  #       with:
-  #         path: |
-  #           ~/.cargo/registry
-  #           ~/.cargo/git
-  #           target
-  #         # A cache "key" is created from a hash of the cargo.lock.
-  #         key: ${{ runner.os }}-test-compile-${{ hashFiles('**/Cargo.lock') }}
-  #
-  #     - name: Install latest nightly
-  #       uses: actions-rs/toolchain@v1.0.7
-  #       with:
-  #           toolchain: nightly
-  #           override: true
-  #           components: rustfmt, clippy
-  #
-  #     # Note: build all binaries is too heavy for testing the CI flow.
-  #     # implement when caching is consistent.
-  #     - name: Build stdlib
-  #       run: cd language/stdlib && cargo run --release
-  #     - name: Build all binaries
-  #       run: cargo build --all --bins --exclude cluster-test
+  smoke:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v2.1.6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            ./target_test
+          key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install deps
+        run: sudo apt-get install -y lld
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1.0.7
+        with:
+            toolchain: 1.56.1
+            override: true
+            components: rustfmt, clippy
+      - name: Create foo_stdlib.mv fixtures
+        run: SOURCE_PATH=./ make -f ol/fixtures/upgrade_payload/make-e2e-upgrade-fixtures.mk fixtures
+      - name: Build stdlib
+        run: cargo run -p diem-framework
+      - name: Run 0L e2e tests
+        run: cd testsuite/smoke-test && cargo test

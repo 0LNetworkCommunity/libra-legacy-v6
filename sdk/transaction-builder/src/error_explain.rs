@@ -20,7 +20,9 @@ static RELEASE_ERRMAP_BYTES: &[u8] = include_bytes!("../release_errmap/error_des
 
 static RELEASE_ERRMAP: Lazy<ErrorMapping> = Lazy::new(|| {
     bcs::from_bytes(&*RELEASE_ERRMAP_BYTES)
-        .expect("Failed to deserialize static error descriptions")
+    //////// 0L ////////
+    .unwrap_or_default()
+        // .expect("Failed to deserialize static error descriptions")
 });
 
 /// Given the module ID and the abort code raised from that module, returns the

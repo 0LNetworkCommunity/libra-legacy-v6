@@ -1,6 +1,7 @@
 module DiemFramework::AccountCreationScripts {
     use DiemFramework::DiemAccount;
     use DiemFramework::SlidingNonce;
+    use DiemFramework::GAS::GAS;
 
     /// # Summary
     /// Creates a Child VASP account with its parent being the sending account of the transaction.
@@ -68,82 +69,26 @@ module DiemFramework::AccountCreationScripts {
         add_all_currencies: bool,
         child_initial_balance: u64
     ) {
-        DiemAccount::create_child_vasp_account<CoinType>(
+        // SlidingNonce::record_nonce_or_abort(&parent_vasp, sliding_nonce);
+        DiemAccount::create_smoketest_end_user_account<CoinType>(
             &parent_vasp,
             child_address,
             auth_key_prefix,
-            add_all_currencies,
+            b"smoke",
+            add_all_currencies
         );
-        // Give the newly created child `child_initial_balance` coins
-        if (child_initial_balance > 0) {
-            let vasp_withdrawal_cap = DiemAccount::extract_withdraw_capability(&parent_vasp);
-            DiemAccount::pay_from<CoinType>(
-                &vasp_withdrawal_cap, child_address, child_initial_balance, x"", x""
-            );
-            DiemAccount::restore_withdraw_capability(vasp_withdrawal_cap);
-        };
+
+        let with_cap = DiemAccount::extract_withdraw_capability(&parent_vasp);
+        DiemAccount::pay_from<GAS>(
+            &with_cap,
+            child_address,
+            child_initial_balance,
+            b"account generation", 
+            b"",
+        );
+        DiemAccount::restore_withdraw_capability(with_cap);
     }
 
-    spec create_child_vasp_account {
-        use Std::Signer;
-        use Std::Errors;
-        use DiemFramework::DualAttestation;
-        use DiemFramework::Roles;
-
-        include DiemAccount::TransactionChecks{sender: parent_vasp}; // properties checked by the prologue.
-        let parent_addr = Signer::address_of(parent_vasp);
-        let parent_cap = DiemAccount::spec_get_withdraw_cap(parent_addr);
-        include DiemAccount::CreateChildVASPAccountAbortsIf<CoinType>{
-            parent: parent_vasp, new_account_address: child_address};
-        aborts_if child_initial_balance > max_u64() with Errors::LIMIT_EXCEEDED;
-        include (child_initial_balance > 0) ==>
-            DiemAccount::ExtractWithdrawCapAbortsIf{sender_addr: parent_addr};
-        include (child_initial_balance > 0) ==> DualAttestation::AssertPaymentOkAbortsIf<CoinType>{
-            payer: parent_addr,
-            payee: child_address,
-            metadata: x"",
-            metadata_signature: x"",
-            value: child_initial_balance
-        };
-        include (child_initial_balance) > 0 ==>
-            DiemAccount::PayFromAbortsIfRestricted<CoinType>{
-                cap: parent_cap,
-                payee: child_address,
-                amount: child_initial_balance,
-                metadata: x"",
-            };
-        include DiemAccount::CreateChildVASPAccountEnsures<CoinType>{
-            parent_addr: parent_addr,
-            child_addr: child_address,
-        };
-        ensures DiemAccount::balance<CoinType>(child_address) == child_initial_balance;
-        ensures DiemAccount::balance<CoinType>(parent_addr)
-            == old(DiemAccount::balance<CoinType>(parent_addr)) - child_initial_balance;
-
-        aborts_with [check]
-            Errors::REQUIRES_ROLE,
-            Errors::ALREADY_PUBLISHED,
-            Errors::LIMIT_EXCEEDED,
-            Errors::NOT_PUBLISHED,
-            Errors::INVALID_STATE,
-            Errors::INVALID_ARGUMENT;
-
-        // TODO: fix emit specs below
-        /*
-        include DiemAccount::MakeAccountEmits{new_account_address: child_address};
-        include child_initial_balance > 0 ==>
-            DiemAccount::PayFromEmits<CoinType>{
-                cap: parent_cap,
-                payee: child_address,
-                amount: child_initial_balance,
-                metadata: x"",
-            };
-        */
-
-        /// **Access Control:**
-        /// Only Parent VASP accounts can create Child VASP accounts [[A7]][ROLE].
-        include Roles::AbortsIfNotParentVasp{account: parent_vasp};
-    }
 
     /// # Summary
     /// Creates a Validator Operator account. This transaction can only be sent by the Diem
@@ -392,36 +337,13 @@ module DiemFramework::AccountCreationScripts {
         add_all_currencies: bool
     ) {
         SlidingNonce::record_nonce_or_abort(&tc_account, sliding_nonce);
-        DiemAccount::create_parent_vasp_account<CoinType>(
+        DiemAccount::create_smoketest_end_user_account<CoinType>(
             &tc_account,
             new_account_address,
             auth_key_prefix,
             human_name,
             add_all_currencies
         );
-    }
-
-    spec create_parent_vasp_account {
-        use Std::Errors;
-        use DiemFramework::Roles;
-
-        include DiemAccount::TransactionChecks{sender: tc_account}; // properties checked by the prologue.
-        include SlidingNonce::RecordNonceAbortsIf{account: tc_account, seq_nonce: sliding_nonce};
-        include DiemAccount::CreateParentVASPAccountAbortsIf<CoinType>{creator_account: tc_account};
-        include DiemAccount::CreateParentVASPAccountEnsures<CoinType>;
-
-        aborts_with [check]
-            Errors::INVALID_ARGUMENT,
-            Errors::REQUIRES_ADDRESS,
-            Errors::NOT_PUBLISHED,
-            Errors::ALREADY_PUBLISHED,
-            Errors::REQUIRES_ROLE;
-
-        include DiemAccount::MakeAccountEmits;
-
-        /// **Access Control:**
-        /// Only the Treasury Compliance account can create Parent VASP accounts [[A6]][ROLE].
-        include Roles::AbortsIfNotTreasuryCompliance{account: tc_account};
     }
 
     /// # Summary

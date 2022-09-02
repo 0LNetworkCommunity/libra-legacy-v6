@@ -342,16 +342,19 @@ module DiemFramework::Roles {
         include CoreAddresses::AbortsIfNotDiemRoot;
         include AbortsIfNotDiemRoot;
     }
-
+    
+    //////// 0L ////////
+    // TODO(0L): Why is this duplicated with CoreAddresses? Dependency Cyclic?
     /// Assert that the account is treasury compliance.
-    public fun assert_treasury_compliance(account: &signer) acquires RoleId {
+    public fun assert_treasury_compliance(account: &signer) {
         CoreAddresses::assert_diem_root(account); /////// 0L /////////
-        let addr = Signer::address_of(account);
-        assert!(exists<RoleId>(addr), Errors::not_published(EROLE_ID));
-        assert!(
-            borrow_global<RoleId>(addr).role_id == TREASURY_COMPLIANCE_ROLE_ID,
-            Errors::requires_role(ETREASURY_COMPLIANCE)
-        )
+        // let addr = Signer::address_of(account);
+        // CoreAddresses::assert_diem_root(account);
+        // assert!(exists<RoleId>(addr), Errors::not_published(EROLE_ID));
+        // assert!(
+        //     borrow_global<RoleId>(addr).role_id == TREASURY_COMPLIANCE_ROLE_ID,
+        //     Errors::requires_role(ETREASURY_COMPLIANCE)
+        // )
     }
     spec assert_treasury_compliance {
         pragma opaque;

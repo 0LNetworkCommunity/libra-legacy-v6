@@ -1,0 +1,37 @@
+name: Forge
+
+on:
+  push:
+    branches: [ main, ci, v5, v6-smoketests, 'v6**' ]
+  pull_request:
+    branches: [ main, 'release**', v5 ]
+
+jobs:
+  forge:
+    name: Forge
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v2.1.6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            ./target_test
+          key: ${{ runner.os }}-cache2-func-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1.0.7
+        with:
+            toolchain: 1.56.1
+            override: true
+            components: rustfmt, clippy
+      - name: Install deps
+        run: sudo apt-get install -y lld
+      - name: check version
+        run: rustc -V
+      - name: Build stdlib
+        run: cargo run -p diem-framework
+      - name: Run Forge Local Tests
+        run: cargo r -p forge-cli -- test local-swarm
+  

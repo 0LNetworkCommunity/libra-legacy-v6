@@ -232,6 +232,23 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
     // See also discussion at function specification.
     <a href="DiemTimestamp.md#0x1_DiemTimestamp_set_time_has_started">DiemTimestamp::set_time_has_started</a>(dr_account);
     <a href="Epoch.md#0x1_Epoch_initialize">Epoch::initialize</a>(dr_account); /////// 0L /////////
+
+
+    // <b>if</b> this is tesnet, fund the root account so the smoketests can run. They <b>use</b> <a href="PaymentScripts.md#0x1_PaymentScripts">PaymentScripts</a> functions <b>to</b> test many things.
+    // TODO(0L): make this only tun in testsnet. Though we need <b>to</b> make smoketest always initialize in test mode.
+    // <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
+      <b>let</b> val = 10000000;
+      <a href="DiemAccount.md#0x1_DiemAccount_add_currency">DiemAccount::add_currency</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;(dr_account);
+      <b>let</b> coin = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;(dr_account, val);
+      <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>(
+        dr_account,
+        @DiemRoot,
+        coin,
+        x"",
+        x"",
+      )
+
+    // }
 }
 </code></pre>
 

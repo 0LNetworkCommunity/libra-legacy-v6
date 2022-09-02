@@ -57,9 +57,12 @@ pub fn generate_traffic<'t>(
         .collect::<Vec<_>>();
     let mut emit_job_request = ctx.global_job.clone();
     let chain_info = ctx.swarm().chain_info();
+
+    // let root = chain_info.root_account();
+
     let transaction_factory = TransactionFactory::new(chain_info.chain_id);
     let mut emitter = TxnEmitter::new(
-        chain_info.treasury_compliance_account,
+        chain_info.root_account, //////// 0L ////////
         chain_info.designated_dealer_account,
         validator_clients[0].clone(),
         transaction_factory,

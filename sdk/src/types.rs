@@ -43,6 +43,7 @@ impl LocalAccount {
     }
 
     pub fn sign_transaction(&self, txn: RawTransaction) -> SignedTransaction {
+
         txn.sign(self.private_key(), self.public_key().clone())
             .expect("Signing a txn can't fail")
             .into_inner()

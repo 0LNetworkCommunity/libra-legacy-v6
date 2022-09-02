@@ -217,5 +217,7 @@ fn main() {
         installer
             .install_transaction_builders(&name, abis.as_slice())
             .unwrap();
+    } else {
+      eprintln!("No module name specified. Skipping transaction builders.");
     }
 }

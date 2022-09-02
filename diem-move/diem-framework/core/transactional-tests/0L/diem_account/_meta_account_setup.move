@@ -10,5 +10,9 @@ script {
     
     let bal = DiemAccount::balance<GAS>(@Bob);
     assert!(bal == 10000000, 7357001);
+
+    // at genesis the root account is also funded
+    let bal = DiemAccount::balance<GAS>(@DiemRoot);
+    assert!(bal == 10000000, 7357002);
   }
 }

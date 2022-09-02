@@ -75,6 +75,10 @@ impl Default for ReleaseOptions {
 }
 
 impl ReleaseOptions {
+    // TODO(0L): We need the files to end up in same package as the sources. Otherwise the rust bindings don't get created correctly.
+    // when we try to change ouput paths we get a 
+    // thread 'main' panicked at 'Failed to deserialize module bytecode: PartialVMError { major_status: BAD_MAGIC, sub_status: None, message: None, indices: [], offsets: [] }', diem-move/diem-framework/src/release.rs:260:53
+
     pub fn create_release(&self) {
         let output_path = self
             .package
@@ -101,6 +105,8 @@ impl ReleaseOptions {
 
         let package_path = Path::new(std::env!("CARGO_MANIFEST_DIR")).join(&self.package);
 
+        dbg!(&package_path);
+
         let compiled_package = build_config
             .clone()
             .compile_package(&package_path, &mut std::io::stdout())
@@ -125,19 +131,44 @@ impl ReleaseOptions {
             generate_error_map(&package_path, &output_path, build_config)
         }
 
+        let legacy_abis = package_path.join("releases/legacy/script_abis");
+
         if !self.script_builder {
             println!("Generating script builders");
             generate_script_builder(
                 &output_path.join("transaction_script_builder.rs"),
-                &[&output_path, Path::new("DPN/releases/legacy/script_abis")],
+                &[&output_path, &legacy_abis],
             )
         }
 
         //////// 0L ////////
         if self.create_upgrade_payload {
             println!("Generating upgrade payload");
-            create_upgrade_payload_fn();
+            
+            self.create_upgrade_payload_fn(&package_path.parent().unwrap().join(&output_path));
         }
+    }
+
+    //////// 0L ////////
+    pub fn create_upgrade_payload_fn(&self, path: &PathBuf ) {
+
+        let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
+        module_path.push(STAGED_STDLIB_NAME);
+        module_path.set_extension(STAGED_EXTENSION);
+        
+        let path = path.join(module_path);
+        // let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
+        // TODO: set the .0L path the right way.
+        
+        // println!("0L: module_path: {:?}", module_path.to_str().unwrap());
+        // println!("0L: cwd: {:?}", std::env::current_dir().unwrap().to_str());
+        let modules = crate::module_blobs();
+        let bytes = bcs::to_bytes(&modules).unwrap();
+
+        println!("0L: saving compiled stdlib to: {:?}", &path.to_str().unwrap());
+        recreate_dir(&path.parent().unwrap());
+        let mut module_file = File::create(path).unwrap();
+        module_file.write(&bytes).unwrap();
     }
 }
 
@@ -276,17 +307,3 @@ pub fn import_stdlib(lib_bytes: &Vec<u8>) -> Result<Vec<CompiledModule>, Box<dyn
     Ok(verified_modules)
 }
 
-//////// 0L ////////
-pub fn create_upgrade_payload_fn() {
-    // let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
-    // TODO: set the .0L path the right way.
-    let mut module_path = PathBuf::from(STAGED_OUTPUT_PATH);
-    module_path.push(STAGED_STDLIB_NAME);
-    module_path.set_extension(STAGED_EXTENSION);
-    println!("0L: module_path: {:?}", module_path.to_str().unwrap());
-    println!("0L: cwd: {:?}", std::env::current_dir().unwrap().to_str());
-    let modules = crate::module_blobs();
-    let bytes = bcs::to_bytes(&modules).unwrap();
-    let mut module_file = File::create(module_path).unwrap();
-    module_file.write(&bytes).unwrap();
-}

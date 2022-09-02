@@ -144,14 +144,18 @@ impl ValConfigs {
         }
     }
     /// Creates the json file needed for onchain account creation - validator
-    pub fn create_manifest(&self, mut json_path: PathBuf) {
+    pub fn create_manifest(&self, mut json_path: PathBuf) -> Result<(), anyhow::Error>{
         //where file will be saved
         json_path.push("account.json");
-        let mut file = File::create(json_path.as_path()).unwrap();
-        let buf = serde_json::to_string(&self).expect("Config should be export to json");
-        file.write(&buf.as_bytes())
-            .expect("Could not write account.json");
+        let mut file = File::create(json_path.as_path())?;
+
+        let buf = serde_json::to_string(&self)?;
+          // .expect("Config should be export to json");
+
+        file.write(&buf.as_bytes())?;
+
         println!("account manifest created, file saved to: {:?}", json_path);
+        Ok(())
     }
 
     /// Extract the preimage and proof from a genesis proof proof_0.json
