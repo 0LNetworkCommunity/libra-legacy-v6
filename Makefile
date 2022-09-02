@@ -93,7 +93,7 @@ stdlib:
 # cargo run ${CARGO_ARGS} -p diem-framework
 	cargo run ${CARGO_ARGS} -p diem-framework -- --create-upgrade-payload
 	shasum -a 256 ./DPN/releases/artifacts/current/staged/stdlib.mv | true
-	mkdir diem-move/diem-framework/DPN/releases/artifacts/current/ | true
+	mkdir diem-move/diem-framework/DPN/releases/artifacts/current/ | rm -rf diem-move/diem-framework/DPN/releases/artifacts/current/*
 	cp -r ./DPN/releases/artifacts/current/* diem-move/diem-framework/DPN/releases/artifacts/current/
 
 ftest:
