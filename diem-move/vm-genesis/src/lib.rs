@@ -519,29 +519,13 @@ fn create_and_initialize_owners_operators(
             ]),
         );
 
-        exec_function(
+                exec_function(
             session,
             "Vouch",
             "init",
             vec![],
             serialize_values(&vec![
                 MoveValue::Signer(v.address)
-            ]),
-        );
-
-        let all_vals: Vec<AccountAddress> = validators.iter()
-            .map(|v|{ v.address }).collect();
-        let mut vals = all_vals.clone();
-        vals.retain(|el|{ el != &v.address});
-        exec_function(
-            session,
-            "Vouch",
-            "vm_migrate",
-            vec![],
-            serialize_values(&vec![
-                MoveValue::Signer(diem_root_address),
-                MoveValue::Address(v.address),
-                MoveValue::vector_address(vals),
             ]),
         );
     }
@@ -563,6 +547,24 @@ fn create_and_initialize_owners_operators(
             MoveValue::Vector(full_node_network_addresses),
         ]),
     );
+
+    for v in validators {
+        let all_vals: Vec<AccountAddress> = validators.iter()
+            .map(|v|{ v.address }).collect();
+        let mut vals = all_vals.clone();
+        vals.retain(|el|{ el != &v.address});
+        exec_function(
+            session,
+            "Vouch",
+            "vm_migrate",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Address(v.address),
+                MoveValue::vector_address(vals),
+            ]),
+        );
+    }
 }
 
 //////// 0L ///////
