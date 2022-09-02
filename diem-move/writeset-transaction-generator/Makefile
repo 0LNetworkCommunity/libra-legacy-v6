@@ -106,7 +106,7 @@ diff:
 	@shasum ${RESCUE_PATH}/dump-start | true
 
 init:
-	ol init --update-waypoint --waypoint $(shell cat ${RESCUE_PATH}/rescue_waypoint.txt)
+	ol init --key-store --waypoint $(shell cat ${RESCUE_PATH}/rescue_waypoint.txt)
 	ol init --reset-safety
 	
 start:
