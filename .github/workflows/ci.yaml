@@ -33,7 +33,8 @@ jobs:
       - name: Build stdlib
         run: cargo run -p diem-framework
       - name: Run 0L functional tests
-        run: cd language/move-lang/functional-tests && NODE_ENV=test cargo test 0L
+        run: NODE_ENV="test" cargo test -p diem-framework --test ol_transactional_tests
+
   tools:
     name: 0L tools Tests
     runs-on: ubuntu-latest
