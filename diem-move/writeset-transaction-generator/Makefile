@@ -8,7 +8,7 @@ BLOCK_HEIGHT = 28671095
 endif
 
 ifndef RECOVERY_EPOCH
-RECOVERY_EPOCH = 296 #//////// 0L ////////
+RECOVERY_EPOCH = 295 #//////// 0L ////////
 endif
 
 ifndef ACCOUNT
