@@ -99,9 +99,9 @@ module EpochBoundary {
 
               // don't pay while we are in recovery mode, since that creates
               // a frontrunning opportunity
-              if (!RecoveryMode::is_recovery()){ 
+              // if (!RecoveryMode::is_recovery()){ 
                 FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
-              }
+              // }
             };
 
             k = k + 1;
