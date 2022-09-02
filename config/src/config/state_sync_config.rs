@@ -50,10 +50,10 @@ impl Default for StateSyncConfig {
             client_commit_timeout_ms: 5_000,
             long_poll_timeout_ms: 10_000,
             max_chunk_limit: 1_000,
-            max_timeout_ms: 120_000,
+            max_timeout_ms: 1_200_000, ///////// 0L ////////
             mempool_commit_timeout_ms: 5_000,
             multicast_timeout_ms: 30_000,
-            sync_request_timeout_ms: 1_200_000, ///////// 0L ////////
+            sync_request_timeout_ms: 60_000, ///////// 0L ////////
             tick_interval_ms: 3000, ///////// 0L ////////
             data_streaming_service: DataStreamingServiceConfig::default(),
             diem_data_client: DiemDataClientConfig::default(),
