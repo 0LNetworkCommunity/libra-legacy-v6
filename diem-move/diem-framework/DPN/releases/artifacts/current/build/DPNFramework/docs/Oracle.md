@@ -15,6 +15,8 @@
 -  [Function `handler`](#0x1_Oracle_handler)
 -  [Function `upgrade_handler`](#0x1_Oracle_upgrade_handler)
 -  [Function `upgrade_handler_hash`](#0x1_Oracle_upgrade_handler_hash)
+-  [Function `revoke_my_votes`](#0x1_Oracle_revoke_my_votes)
+-  [Function `revoke_vote`](#0x1_Oracle_revoke_vote)
 -  [Function `increment_vote_count`](#0x1_Oracle_increment_vote_count)
 -  [Function `increment_vote_count_hash`](#0x1_Oracle_increment_vote_count_hash)
 -  [Function `check_consensus`](#0x1_Oracle_check_consensus)
@@ -536,7 +538,9 @@
   };
 
   // <b>if</b> the sender <b>has</b> voted, do nothing
-  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&upgrade_oracle.validators_voted, &sender)) {<b>return</b>};
+  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&upgrade_oracle.validators_voted, &sender)) {
+    <b>assert</b>!(<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="Oracle.md#0x1_Oracle_VOTE_TYPE_INVALID">VOTE_TYPE_INVALID</a>));
+  };
 
   <b>let</b> vote_weight = <a href="Oracle.md#0x1_Oracle_get_weight">get_weight</a>(sender, <a href="Oracle.md#0x1_Oracle_VOTE_TYPE_UPGRADE">VOTE_TYPE_UPGRADE</a>);
 
@@ -547,14 +551,70 @@
           weight: vote_weight,
   };
 
-  <b>let</b> vote_sent = <a href="Oracle.md#0x1_Oracle_increment_vote_count_hash">increment_vote_count_hash</a>(&<b>mut</b> upgrade_oracle.vote_counts, data, sender, vote_weight);
+  <b>let</b> vote_sent = <a href="Oracle.md#0x1_Oracle_increment_vote_count_hash">increment_vote_count_hash</a>(
+    &<b>mut</b> upgrade_oracle.vote_counts, data, sender, vote_weight
+  );
 
   <b>if</b> (vote_sent) {
     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> upgrade_oracle.votes, validator_vote);
     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> upgrade_oracle.validators_voted, sender);
     <a href="Oracle.md#0x1_Oracle_tally_upgrade">tally_upgrade</a>(upgrade_oracle, <a href="Oracle.md#0x1_Oracle_VOTE_TYPE_UPGRADE">VOTE_TYPE_UPGRADE</a>);
   };
+}
+</code></pre>
 
+
+
+</details>
+
+<a name="0x1_Oracle_revoke_my_votes"></a>
+
+## Function `revoke_my_votes`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_revoke_my_votes">revoke_my_votes</a>(sender: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_revoke_my_votes">revoke_my_votes</a>(sender: &signer) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
+  <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+  <a href="Oracle.md#0x1_Oracle_revoke_vote">revoke_vote</a>(addr);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Oracle_revoke_vote"></a>
+
+## Function `revoke_vote`
+
+
+
+<pre><code><b>fun</b> <a href="Oracle.md#0x1_Oracle_revoke_vote">revoke_vote</a>(addr: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="Oracle.md#0x1_Oracle_revoke_vote">revoke_vote</a>(addr: <b>address</b>) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>{
+  <b>let</b> upgrade_oracle = &<b>mut</b> <b>borrow_global_mut</b>&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(@DiemRoot).upgrade;
+  <b>let</b> (is_found, idx) = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;<b>address</b>&gt;(&upgrade_oracle.validators_voted, &addr);
+  <b>if</b> (is_found) {
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> upgrade_oracle.votes, idx);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> upgrade_oracle.validators_voted, idx);
+    <a href="Oracle.md#0x1_Oracle_tally_upgrade">tally_upgrade</a>(upgrade_oracle, <a href="Oracle.md#0x1_Oracle_VOTE_TYPE_UPGRADE">VOTE_TYPE_UPGRADE</a>);
+  };
 }
 </code></pre>
 
