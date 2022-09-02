@@ -97,6 +97,20 @@ pub fn ol_reset_epoch_counters(
     wrapper::function_changeset_from_db(path, vec![fnwrap])
 }
 
+pub fn ol_expire_oracle_upgrade(path: PathBuf) -> Result<ChangeSet> {
+    let txn_args = vec![
+        TransactionArgument::Address(diem_root_address()),
+    ];
+
+    let fnwrap = FunctionWrapper {
+        module_name: "Upgrade".to_string(),
+        function_name: "vm_expire_upgrade".to_string(),
+        txn_args,
+    };
+
+    wrapper::function_changeset_from_db(path, vec![fnwrap])
+}
+
 pub fn ol_epoch_timestamp_update(path: PathBuf) -> Result<ChangeSet> {
     let db = DiemDebugger::db(path)?;
     let v = db.get_latest_version()?;

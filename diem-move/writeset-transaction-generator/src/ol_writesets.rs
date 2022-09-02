@@ -92,11 +92,13 @@ pub fn ol_writeset_encode_rescue(
     };
 
     let stdlib_cs = stdlib::ol_fresh_stlib_changeset(path.clone()).unwrap();
+    let oracle_expiry = reconfig::ol_expire_oracle_upgrade(path.clone()).unwrap();
+
     // Changing the validators creates a new epoch boundary.
     // But does not run the reconfiguration.
     let boundary = reconfig::ol_reset_epoch_counters(path.clone(), vals.clone()).unwrap();
 
-    let mut all_cs = vec![stdlib_cs, boundary];
+    let mut all_cs = vec![stdlib_cs, oracle_expiry, boundary];
 
     // set recovery mode if the option was passed by command line
     if let Some(end_epoch) = recovery_epoch {
