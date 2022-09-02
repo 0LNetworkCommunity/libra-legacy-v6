@@ -103,7 +103,7 @@ pub fn ol_expire_oracle_upgrade(path: PathBuf) -> Result<ChangeSet> {
     ];
 
     let fnwrap = FunctionWrapper {
-        module_name: "Upgrade".to_string(),
+        module_name: "Oracle".to_string(),
         function_name: "vm_expire_upgrade".to_string(),
         txn_args,
     };
