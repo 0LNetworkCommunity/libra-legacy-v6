@@ -42,7 +42,7 @@ fn test_sign_tx() {
     let signed = sign_tx(script, &TxParams::test_fixtures(), 1, ChainId::new(1)).unwrap();
     assert_eq!(
         signed.sender(),
-        "4C613C2F4B1E67CA8D98A542EE3F59F5"
+        "E35EB8C3700B931554DD4C2F90C8B7D0"
             .parse::<AccountAddress>()
             .unwrap()
     );
@@ -64,7 +64,7 @@ fn test_save_tx() {
 
     assert_eq!(
         deserialized.sender(),
-        "4C613C2F4B1E67CA8D98A542EE3F59F5"
+        "E35EB8C3700B931554DD4C2F90C8B7D0"
             .parse::<AccountAddress>()
             .unwrap()
     );

@@ -31,7 +31,7 @@ jobs:
       - name: check version
         run: rustc -V
       - name: Build stdlib
-        run: cargo run -p diem-framework
+        run: make stdlib
       - name: Run 0L functional tests
         run: NODE_ENV="test" cargo test -p diem-framework --test ol_transactional_tests
 
@@ -64,6 +64,8 @@ jobs:
         run: cd ol/txs && NODE_ENV=test cargo test
       - name: keys tests
         run: cd ol/keys && NODE_ENV=test cargo test
+      - name: cli tests
+        run: cd ol/cli && NODE_ENV=test cargo test
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
@@ -88,9 +90,9 @@ jobs:
       - name: Create foo_stdlib.mv fixtures
         run: SOURCE_PATH=./ make -f ol/fixtures/upgrade_payload/make-e2e-upgrade-fixtures.mk fixtures
       - name: Build stdlib
-        run: cargo run -p diem-framework
+        run: make stdlib
       - name: Run 0L e2e tests
-        run: cd language/e2e-testsuite && NODE_ENV=test cargo test ol_
+        run: cd diem-move/e2e-testsuite && NODE_ENV=test cargo test ol_
   smoke:
     name: Smoke Tests
     runs-on: ubuntu-latest
@@ -112,9 +114,7 @@ jobs:
             toolchain: 1.56.1
             override: true
             components: rustfmt, clippy
-      - name: Create foo_stdlib.mv fixtures
-        run: SOURCE_PATH=./ make -f ol/fixtures/upgrade_payload/make-e2e-upgrade-fixtures.mk fixtures
       - name: Build stdlib
-        run: cargo run -p diem-framework
-      - name: Run 0L e2e tests
+        run: make stdlib
+      - name: Run smoke tests
         run: cd testsuite/smoke-test && cargo test

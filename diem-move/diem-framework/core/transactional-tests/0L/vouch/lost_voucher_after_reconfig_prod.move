@@ -30,6 +30,7 @@ script {
     use DiemFramework::Vouch;
     use Std::Vector;
     use DiemFramework::EpochBoundary;
+    use DiemFramework::Debug::print;
 
     fun main(vm: signer, _: signer) {
         Mock::mock_case_1(&vm, @Alice, 0, 15);
@@ -51,12 +52,13 @@ script {
 
         let len = Vector::length(&c);
         assert!(len == 2, 735701);
+
+        // mock the epoch boundary
         EpochBoundary::reconfigure(&vm, 15);
 
-        // let b = Vouch::get_buddies(@Alice);
         let c = Vouch::buddies_in_set(@Alice);
-
+        print(&c);
         let len = Vector::length(&c);
-        assert!(len == 1, 735701);
+        assert!(len == 1, 735702);
     }
 }

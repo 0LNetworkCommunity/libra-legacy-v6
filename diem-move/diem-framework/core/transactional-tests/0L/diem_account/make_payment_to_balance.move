@@ -11,11 +11,10 @@ script {
   use DiemFramework::GAS::GAS;
 
   fun main(vm: signer, _: signer) {
-    // Does not fail when trying to make payment to an account which cannot receive balance.
-    // fails silently, as asserts can cause the VM to halt.
+
     DiemAccount::vm_make_payment_no_limit<GAS>(
       @Alice,
-      @0x0, // cannot receive balance
+      @0x1, // can't receive balance, but fails silently
       100,
       x"",
       x"",
@@ -23,7 +22,6 @@ script {
     );
   }
 }
-// check: EXECUTED
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
@@ -31,10 +29,10 @@ script {
   use DiemFramework::GAS::GAS;
 
   fun main(vm: signer, _: signer) {
-    // Should be fine if the balance is 0
+    // Should be fine if can hold balance
     DiemAccount::vm_make_payment_no_limit<GAS>(
       @Alice,
-      @Bob, // has a 0 in balance
+      @Bob,
       100,
       x"",
       x"",
@@ -42,4 +40,3 @@ script {
     );
   }
 }
-// check: EXECUTED

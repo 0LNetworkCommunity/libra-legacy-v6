@@ -6,7 +6,7 @@ use diem_crypto::x25519::PublicKey;
 use diem_global_constants::{DEFAULT_PUB_PORT, DEFAULT_VAL_PORT, DEFAULT_VFN_PORT};
 use diem_types::{
     account_address::AccountAddress,
-    network_address::NetworkAddress,
+    network_address::{NetworkAddress},
     transaction::{SignedTransaction, TransactionPayload},
 };
 
@@ -301,7 +301,6 @@ fn test_parse_account_file() {
 
 #[test]
 fn val_config_ip_address() {
-    use diem_types::network_address::encrypted::EncNetworkAddress;
 
     let block = VDFProof {
         height: 0u64,
@@ -313,7 +312,6 @@ fn val_config_ip_address() {
     };
 
     let eve_keys = KeyScheme::new_from_mnemonic("recall october regret kite undo choice outside season business wall quit arrest vacant arrow giggle vote ghost winter hawk soft cheap decide exhaust spare".to_string());
-    let eve_account = eve_keys.derived_address();
 
     let val = ValConfigs::new(
         Some(block),
@@ -324,23 +322,19 @@ fn val_config_ip_address() {
         None,
     );
 
-    let correct_fn_hex = "012d0400a1230da9052218072029fa0229ff55e1307caf3e32f3f4d0f2cb322cbb5e6d264c1df92e7740e1c06f0800".to_owned();
+    let correct_fn_hex = "012d0400a1230da90522180720893cc3f3b7f5bc55eb73e2e668520533fbe3938c4658ee70893f69e5944b76160800".to_owned();
 
     assert_eq!(encode(&val.op_fullnode_network_addresses), correct_fn_hex);
 
-    let correct_hex = "010000000000000000000000003e250c102074e46ce6160d0efb958f48e4ba3b5a5ac468080135881b885f9baef0da93a2a0b993823448da4d8bf0414d9acd8fea5b664688b864b54c8ec8ae".to_owned();
+    let correct_hex = "012d0400a1230da905241807204220e7ced1563c6f6786363730fd1062b57c9619bb82e536d05ba688f5b70c7c0800".to_owned();
     assert_eq!(encode(&val.op_validator_network_addresses), correct_hex);
 
-    let mut enc_addr: Vec<EncNetworkAddress> = bcs::from_bytes(&val.op_validator_network_addresses)
+    let enc_addr: Vec<NetworkAddress> = bcs::from_bytes(&val.op_validator_network_addresses)
         .expect("couldn't deserialize encrypted network address");
 
-    let dec_addrs = enc_addr
-        .pop()
-        .unwrap()
-        .decrypt(&TEST_SHARED_VAL_NETADDR_KEY, &eve_account, 0)
-        .unwrap();
+    let dec_addrs = &enc_addr[0];
 
     assert_eq!(
         dec_addrs.to_string(),
-        "/ip4/161.35.13.169/tcp/6180/ln-noise-ik/151bcbc2adf48aefee3492a3c802ce35e347860f28dbcffe74068419f3b11812/ln-handshake/0".to_string());
+        "/ip4/161.35.13.169/tcp/6180/ln-noise-ik/4220e7ced1563c6f6786363730fd1062b57c9619bb82e536d05ba688f5b70c7c/ln-handshake/0".to_string());
 }

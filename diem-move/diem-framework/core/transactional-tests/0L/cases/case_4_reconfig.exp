@@ -19,7 +19,7 @@ Events:
 }
 {
     key:     050000000000000000000000000000000000000000000000
-    seq_num: 6
+    seq_num: 7
     type:    0x1::Diem::MintEvent
     data:    "1fe97d030000000003474153"
 }
@@ -43,7 +43,7 @@ Events:
 }
 {
     key:     050000000000000000000000000000000000000000000000
-    seq_num: 7
+    seq_num: 8
     type:    0x1::Diem::MintEvent
     data:    "1fe97d030000000003474153"
 }
@@ -67,7 +67,7 @@ Events:
 }
 {
     key:     050000000000000000000000000000000000000000000000
-    seq_num: 8
+    seq_num: 9
     type:    0x1::Diem::MintEvent
     data:    "1fe97d030000000003474153"
 }
@@ -91,7 +91,7 @@ Events:
 }
 {
     key:     050000000000000000000000000000000000000000000000
-    seq_num: 9
+    seq_num: 10
     type:    0x1::Diem::MintEvent
     data:    "1fe97d030000000003474153"
 }
@@ -115,7 +115,7 @@ Events:
 }
 {
     key:     050000000000000000000000000000000000000000000000
-    seq_num: 10
+    seq_num: 11
     type:    0x1::Diem::MintEvent
     data:    "1fe97d030000000003474153"
 }
