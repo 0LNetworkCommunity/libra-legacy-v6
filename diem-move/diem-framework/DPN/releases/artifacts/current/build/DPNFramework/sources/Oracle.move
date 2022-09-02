@@ -28,7 +28,8 @@ address DiemFramework {
       const DELEGATION_NOT_ENABLED: u64 = 150002;
       const VOTE_ALREADY_DELEGATED: u64 = 150003;
       const DELEGATION_NOT_PRESENT: u64 = 150004;
-  
+      const DUPLICATE_VOTE: u64 = 150005;
+
       struct Oracles has key {
         upgrade: UpgradeOracle
         //Other oracles, price, BTC header, etc.
@@ -178,8 +179,10 @@ address DiemFramework {
         }; 
   
         // if the sender has voted, do nothing
-        if (Vector::contains<address>(&upgrade_oracle.validators_voted, &sender)) {return};
-        
+        if (Vector::contains<address>(&upgrade_oracle.validators_voted, &sender)) {
+          assert!(false, Errors::invalid_argument(DUPLICATE_VOTE));
+        };
+ 
         let vote_weight = get_weight(sender, VOTE_TYPE_UPGRADE);
         
         let validator_vote = Vote {
@@ -189,15 +192,39 @@ address DiemFramework {
                 weight: vote_weight, 
         };
         
-        let vote_sent = increment_vote_count_hash(&mut upgrade_oracle.vote_counts, data, sender, vote_weight);
+        let vote_sent = increment_vote_count_hash(
+          &mut upgrade_oracle.vote_counts, data, sender, vote_weight
+        );
 
         if (vote_sent) {
           Vector::push_back(&mut upgrade_oracle.votes, validator_vote);
           Vector::push_back(&mut upgrade_oracle.validators_voted, sender);
           tally_upgrade(upgrade_oracle, VOTE_TYPE_UPGRADE);
         };
-        
       }
+
+      public fun revoke_my_votes(sender: &signer) acquires Oracles, VoteDelegation {
+        let addr = Signer::address_of(sender);
+        revoke_vote(addr);
+        let del = borrow_global<VoteDelegation>(Signer::address_of(sender));
+        let l = Vector::length<address>(&del.delegates);
+        let i = 0;
+        while (i < l) {
+          let addr = *Vector::borrow<address>(&del.delegates, i);
+          revoke_vote(addr);
+          i = i + 1;
+        };
+      }
+
+      fun revoke_vote(addr: address) acquires Oracles{
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(@DiemRoot).upgrade;
+        let (is_found, idx) = Vector::index_of<address>(&upgrade_oracle.validators_voted, &addr);
+        if (is_found) {
+          Vector::remove(&mut upgrade_oracle.votes, idx);
+          Vector::remove(&mut upgrade_oracle.validators_voted, idx);
+          tally_upgrade(upgrade_oracle, VOTE_TYPE_UPGRADE);
+        };
+      }      
   
       fun increment_vote_count(vote_counts: &mut vector<VoteCount>, data: vector<u8>, validator: address, vote_weight: u64) {
         let data_hash = Hash::sha2_256(copy data);
@@ -266,10 +293,20 @@ address DiemFramework {
           total_weight: 0,
         };
       }
+
+      fun vm_expire_upgrade(vm: &signer) acquires Oracles {
+        assert!(Signer::address_of(vm) == @DiemRoot, Errors::requires_role(150003));
+        let upgrade_oracle = &mut borrow_global_mut<Oracles>(@DiemRoot).upgrade;
+        let threshold = get_threshold(VOTE_TYPE_PROPORTIONAL_VOTING_POWER);
+        let result = check_consensus(&upgrade_oracle.vote_counts, threshold);
+        upgrade_oracle.consensus = result;
+        upgrade_oracle.vote_window = DiemBlock::get_current_block_height() - 1;
+      }      
   
       // check to see if threshold is reached every time receiving a vote
-      // TODO: Not sure we still want to do this every time as tallying is more costly when using node weight (as the threshold must be summed), fine for now. 
-      fun tally_upgrade (upgrade_oracle: &mut UpgradeOracle, type: u8) {
+      // TODO: Not sure we still want to do this every time as tallying is more
+      // costly when using node weight (as the threshold must be summed), fine for now. 
+      fun tally_upgrade(upgrade_oracle: &mut UpgradeOracle, type: u8) {
         let threshold = get_threshold(type);
         let result = check_consensus(&upgrade_oracle.vote_counts, threshold);
   

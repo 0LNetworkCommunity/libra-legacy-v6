@@ -2281,7 +2281,12 @@ pub enum ScriptFunctionCall {
 
     MinerstateHelper {},
 
-    /// A validator (Alice) can delegate the authority for the operation of an upgrade to another validator (Bob). When Oracle delegation happens, effectively the consensus voting power of Alice, is added to Bob only for the effect of calculating the preference on electing a stdlib binary. Whatever binary Bob proposes, Alice will also propose without needing to be submitting transactions.
+    /// A validator (Alice) can delegate the authority for the operation of
+    /// an upgrade to another validator (Bob). When Oracle delegation happens,
+    /// effectively the consensus voting power of Alice, is added to Bob only
+    /// for the effect of calculating the preference on electing a stdlib binary.
+    /// Whatever binary Bob proposes, Alice will also propose without needing
+    /// to be submitting transactions.
     OlDelegateVote {
         dest: AccountAddress,
     },
@@ -2304,6 +2309,8 @@ pub enum ScriptFunctionCall {
 
     /// Alice can remove Bob as the delegate with this function.
     OlRemoveDelegation {},
+
+    OlRevokeVote {},
 
     /// # Summary
     /// Publishes a CRSN resource under `account` and opts the account in to
@@ -3829,6 +3836,7 @@ impl ScriptFunctionCall {
                 ram,
             } => encode_ol_reconfig_bulk_update_setup_script_function(alice, bob, carol, sha, ram),
             OlRemoveDelegation {} => encode_ol_remove_delegation_script_function(),
+            OlRevokeVote {} => encode_ol_revoke_vote_script_function(),
             OptInToCrsn { crsn_size } => encode_opt_in_to_crsn_script_function(crsn_size),
             PeerToPeerBySigners {
                 currency,
@@ -5273,7 +5281,12 @@ pub fn encode_minerstate_helper_script_function() -> TransactionPayload {
     ))
 }
 
-/// A validator (Alice) can delegate the authority for the operation of an upgrade to another validator (Bob). When Oracle delegation happens, effectively the consensus voting power of Alice, is added to Bob only for the effect of calculating the preference on electing a stdlib binary. Whatever binary Bob proposes, Alice will also propose without needing to be submitting transactions.
+/// A validator (Alice) can delegate the authority for the operation of
+/// an upgrade to another validator (Bob). When Oracle delegation happens,
+/// effectively the consensus voting power of Alice, is added to Bob only
+/// for the effect of calculating the preference on electing a stdlib binary.
+/// Whatever binary Bob proposes, Alice will also propose without needing
+/// to be submitting transactions.
 pub fn encode_ol_delegate_vote_script_function(dest: AccountAddress) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
@@ -5343,6 +5356,18 @@ pub fn encode_ol_remove_delegation_script_function() -> TransactionPayload {
             ident_str!("OracleScripts").to_owned(),
         ),
         ident_str!("ol_remove_delegation").to_owned(),
+        vec![],
+        vec![],
+    ))
+}
+
+pub fn encode_ol_revoke_vote_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("OracleScripts").to_owned(),
+        ),
+        ident_str!("ol_revoke_vote").to_owned(),
         vec![],
         vec![],
     ))
@@ -8931,6 +8956,16 @@ fn decode_ol_remove_delegation_script_function(
     }
 }
 
+fn decode_ol_revoke_vote_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::OlRevokeVote {})
+    } else {
+        None
+    }
+}
+
 fn decode_opt_in_to_crsn_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9912,6 +9947,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "OracleScriptsol_remove_delegation".to_string(),
             Box::new(decode_ol_remove_delegation_script_function),
+        );
+        map.insert(
+            "OracleScriptsol_revoke_vote".to_string(),
+            Box::new(decode_ol_revoke_vote_script_function),
         );
         map.insert(
             "AccountAdministrationScriptsopt_in_to_crsn".to_string(),

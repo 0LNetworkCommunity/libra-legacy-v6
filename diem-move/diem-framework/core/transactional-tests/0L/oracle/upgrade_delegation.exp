@@ -1,1 +1,4 @@
-processed 14 tasks
+processed 11 tasks
+
+task 10 'run'. lines 149-233:
+Error: Transaction discarded. VMStatus: status ABORTED of type Execution with sub status 150005

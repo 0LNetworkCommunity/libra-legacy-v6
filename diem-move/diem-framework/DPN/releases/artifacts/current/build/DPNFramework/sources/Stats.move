@@ -10,7 +10,8 @@ module Stats{
   use Std::FixedPoint32;
   use Std::Signer;
   use DiemFramework::Testnet;
-  use Std::Vector;    
+  use Std::Vector;
+  use DiemFramework::Globals;
 
   // TODO: yes we know this slows down block production. In "make it fast"
   // mode this will be moved to Rust, in the vm execution block prologue. TBD.
@@ -116,7 +117,8 @@ module Stats{
     let range = height_end-height_start;
     // TODO: Change to 5 percent
     let threshold_signing = FixedPoint32::multiply_u64(
-      range, FixedPoint32::create_from_rational(5, 100)
+      range, 
+      FixedPoint32::create_from_rational(Globals::get_signing_threshold(), 100)
     );
     if (node_current_votes(vm, node_addr) >  threshold_signing) { return true };
     return false

@@ -9,6 +9,7 @@ use std::{fs, io, path::PathBuf, process::Command, thread, time::Duration};
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 use warp::{sse::Event, Filter};
+use std::process::exit;
 
 use crate::{cache::Vitals, check::runner, node::node::Node};
 
@@ -39,10 +40,16 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
 
     // TODO: re-assigning node_home because warp moves it.
     let node_home = cfg.clone().workspace.node_home.clone();
-
-    let account_template = warp::path("account.json").and(warp::get()).map(move || {
-        let account_path = node_home.join("account.json");
-        fs::read_to_string(account_path).unwrap()
+    let account_file_name = "account.json";
+    let account_template = warp::path(account_file_name).and(warp::get()).map(move || {
+        let account_path = node_home.join(account_file_name);
+        match fs::read_to_string(account_path) {
+            Ok(value) => value,
+            Err(msg) => {
+                println!("Could not read {}: \nError {}", account_file_name, msg);
+                exit(1)
+            },
+        }
     });
 
     let node_home = cfg.clone().workspace.node_home.clone();

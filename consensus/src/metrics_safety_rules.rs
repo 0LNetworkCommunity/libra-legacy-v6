@@ -41,9 +41,9 @@ impl MetricsSafetyRules {
                 .storage
                 .retrieve_epoch_change_proof(waypoint_version)
                 .map_err(|e| {
+                    /////// 0L /////////
                     Error::InternalError(format!(
-                        /////// 0L /////////
-                        "Unable to retrieve epoch change proof from storage for Waypoint. State for version {} not found. Error:{}",
+                        "Unable to retrieve epoch change proof from storage for Waypoint. The node will continue to sync, but the validator will not be able to sign transactions. State for version {} not found. Error:{}",
                         &waypoint_version,
                         e
                     ))

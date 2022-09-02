@@ -29,7 +29,8 @@ pub fn function_changeset_from_db(
     let db = DiemDebugger::db(path)?;
 
     let v = db.get_latest_version()?;
-    dbg!(&v);
+    println!("Using DB at version: {}", &v);
+
     db.run_session_at_version(v, None, |session| {
         let mut gas_status = GasStatus::new_unmetered();
 

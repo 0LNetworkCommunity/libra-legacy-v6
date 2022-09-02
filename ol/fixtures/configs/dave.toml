@@ -14,7 +14,7 @@ default_node = "http://localhost:8080/"
 upstream_nodes = ["http://localhost:8080/"]
 
 [chain_info]
-chain_id = "experimental"
+chain_id = "TESTING"
 base_epoch = 0
 base_waypoint = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2"
 [tx_configs.management_txs]

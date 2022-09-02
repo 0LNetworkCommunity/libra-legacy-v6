@@ -11,9 +11,8 @@ address DiemFramework {
     use DiemFramework::ValidatorUniverse;
     use DiemFramework::DiemSystem;
     use DiemFramework::Ancestry;
-    use DiemFramework::Testnet;
-    use DiemFramework::StagingNet;
     use DiemFramework::CoreAddresses;
+    use DiemFramework::Globals;
 
     // triggered once per epoch
     struct Vouch has key {
@@ -145,14 +144,10 @@ address DiemFramework {
     }
 
     public fun unrelated_buddies_above_thresh(val: address): bool acquires Vouch{
-      if (Testnet::is_testnet() || StagingNet::is_staging_net()) {
-        return true
-      };
-
       if (!exists<Vouch>(val)) return false;
 
       let len = Vector::length(&unrelated_buddies(val));
-      (len >= 4) // TODO: move to Globals
+      (len >= Globals::get_vouch_threshold())
     }
   }
 }
