@@ -517,7 +517,33 @@ fn create_and_initialize_owners_operators(
             serialize_values(&vec![
                 MoveValue::Signer(v.address),
             ]),
-        );        
+        );
+
+        exec_function(
+            session,
+            "Vouch",
+            "init",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(v.address)
+            ]),
+        );
+
+        let all_vals: Vec<AccountAddress> = validators.iter()
+            .map(|v|{ v.address }).collect();
+        let mut vals = all_vals.clone();
+        vals.retain(|el|{ el != &v.address});
+        exec_function(
+            session,
+            "Vouch",
+            "vm_migrate",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Address(v.address),
+                MoveValue::vector_address(vals),
+            ]),
+        );
     }
     exec_function(
         session,
@@ -640,21 +666,21 @@ fn recovery_owners_operators(
             ]),
         );
 
-        let all_vals: Vec<AccountAddress> = operator_registrations.iter()
-            .map(|a|{ a.validator_to_represent }).collect();
-        let mut vals = all_vals.clone();
-        vals.retain(|el|{ el != &i.val_account});
-        exec_function(
-            session,
-            "Vouch",
-            "vm_migrate",
-            vec![],
-            serialize_values(&vec![
-                MoveValue::Signer(diem_root_address),
-                MoveValue::Address(i.val_account),
-                MoveValue::vector_address(vals),
-            ]),
-        );        
+        // let all_vals: Vec<AccountAddress> = operator_registrations.iter()
+        //     .map(|a|{ a.validator_to_represent }).collect();
+        // let mut vals = all_vals.clone();
+        // vals.retain(|el|{ el != &i.val_account});
+        // exec_function(
+        //     session,
+        //     "Vouch",
+        //     "vm_migrate",
+        //     vec![],
+        //     serialize_values(&vec![
+        //         MoveValue::Signer(diem_root_address),
+        //         MoveValue::Address(i.val_account),
+        //         MoveValue::vector_address(vals),
+        //     ]),
+        // );
     }
 
     println!("1 ======== Create OP Accounts");
