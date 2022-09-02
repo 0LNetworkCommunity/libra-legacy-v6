@@ -303,6 +303,15 @@
 
 
 
+<a name="0x1_Oracle_DUPLICATE_VOTE"></a>
+
+
+
+<pre><code><b>const</b> <a href="Oracle.md#0x1_Oracle_DUPLICATE_VOTE">DUPLICATE_VOTE</a>: u64 = 150005;
+</code></pre>
+
+
+
 <a name="0x1_Oracle_VOTE_ALREADY_DELEGATED"></a>
 
 
@@ -539,7 +548,7 @@
 
   // <b>if</b> the sender <b>has</b> voted, do nothing
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&upgrade_oracle.validators_voted, &sender)) {
-    <b>assert</b>!(<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="Oracle.md#0x1_Oracle_VOTE_TYPE_INVALID">VOTE_TYPE_INVALID</a>));
+    <b>assert</b>!(<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="Oracle.md#0x1_Oracle_DUPLICATE_VOTE">DUPLICATE_VOTE</a>));
   };
 
   <b>let</b> vote_weight = <a href="Oracle.md#0x1_Oracle_get_weight">get_weight</a>(sender, <a href="Oracle.md#0x1_Oracle_VOTE_TYPE_UPGRADE">VOTE_TYPE_UPGRADE</a>);
@@ -582,9 +591,17 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_revoke_my_votes">revoke_my_votes</a>(sender: &signer) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="Oracle.md#0x1_Oracle_revoke_my_votes">revoke_my_votes</a>(sender: &signer) <b>acquires</b> <a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>, <a href="Oracle.md#0x1_Oracle_VoteDelegation">VoteDelegation</a> {
   <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   <a href="Oracle.md#0x1_Oracle_revoke_vote">revoke_vote</a>(addr);
+  <b>let</b> del = <b>borrow_global</b>&lt;<a href="Oracle.md#0x1_Oracle_VoteDelegation">VoteDelegation</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender));
+  <b>let</b> l = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&del.delegates);
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; l) {
+    <b>let</b> addr = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<b>address</b>&gt;(&del.delegates, i);
+    <a href="Oracle.md#0x1_Oracle_revoke_vote">revoke_vote</a>(addr);
+    i = i + 1;
+  };
 }
 </code></pre>
 

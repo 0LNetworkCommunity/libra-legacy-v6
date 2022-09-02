@@ -19,7 +19,9 @@ script {
         assert!(NodeWeight::proof_of_weight(@Thomas) == 31, 7357300101011088);
     }
 }
-//check: EXECUTED
+
+//// JIM PROXIES LUCY to vote on upgrades
+//// THOMAS PROXIES ALICE to vote on upgrades
 
 //# run --admin-script --signers DiemRoot Lucy
 script {
@@ -141,6 +143,9 @@ script {
 // check: EXECUTED
 
 
+// THOMAS SHOULD NOT BE ABLE TO VOTE, SINCE ALICE ALREADY VOTED FOR THEM
+
+
 //# run --admin-script --signers DiemRoot Thomas
 script {
   use DiemFramework::Oracle;
@@ -159,96 +164,71 @@ script {
     }
   }
 }
-// check: EXECUTED
+// check: ABORTED
 
-
-
-//# run --admin-script --signers DiemRoot Lucy
-script {
-  use DiemFramework::Oracle;
-  use Std::Vector;
-  use DiemFramework::Upgrade;
-  use Std::Hash;
-  fun main(_dr: signer, sender: signer){
-    if (Oracle::delegation_enabled_upgrade()) {
-      let id = 2;
-      let data = b"hello";
-      let hash = Hash::sha2_256(data);
-      Oracle::handler(&sender, id, hash);
-      let vec = Oracle::test_helper_query_oracle_votes();
-      let e = *Vector::borrow<address>(&vec, 3);
-      assert!(e == @Lucy, 7357123401011000);
-      let e = *Vector::borrow<address>(&vec, 4);
-      assert!(e == @Jim, 7357123401011000);
-
-      assert!(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert!(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
-    }
-  }
-}
-// check: EXECUTED
-
-
-//# run --admin-script --signers DiemRoot Jim
-script {
-  use DiemFramework::Oracle;
-  use Std::Vector;
-  fun main(_dr: signer, sender: signer){
-    if (Oracle::delegation_enabled_upgrade()) {
-      let id = 1;
-      let data = b"hello";
-      Oracle::handler(&sender, id, data);
-      // ensure jim's vote is not counted twice
-      let vec = Oracle::test_helper_query_oracle_votes();
-      let e = Vector::length<address>(&vec);
-      assert!(e == 5, 7357123401011002);
-    }
-  }
-}
-// check: EXECUTED
-
-//# run --admin-script --signers DiemRoot Charlie
-script {
-  use DiemFramework::Oracle;
-  use Std::Vector;
-  use DiemFramework::Upgrade;
-  use Std::Hash;
-  fun main(_dr: signer, sender: signer){
-    if (Oracle::delegation_enabled_upgrade()) {
-      let id = 2;
-      let data = b"hello";
-      let hash = Hash::sha2_256(data);
-      Oracle::handler(&sender, id, hash);
-      let vec = Oracle::test_helper_query_oracle_votes();
-      let e = *Vector::borrow<address>(&vec, 5);
-      assert!(e == @Charlie, 7357123401011000);
-
-      assert!(Upgrade::has_upgrade() == false, 7357123401011000); 
-      assert!(Oracle::test_helper_check_upgrade() == true, 7357123401011001);
-    }
-  }
-}
-// check: EXECUTED
-
-// //# block --proposer Bob --time 1 --round 2
-
-// //# block --proposer Bob --time 2 --round 2
-
-// //! new-transaction
-// //! sender: diemroot
+// //# run --admin-script --signers DiemRoot Lucy
 // script {
-//   use DiemFramework::Upgrade;
+//   use DiemFramework::Oracle;
 //   use Std::Vector;
-//   fun main(){
-//     let (upgraded_version, payload, voters, height) = Upgrade::retrieve_latest_history();
+//   use DiemFramework::Upgrade;
+//   use Std::Hash;
+//   fun main(_dr: signer, sender: signer){
+//     if (Oracle::delegation_enabled_upgrade()) {
+//       let id = 2;
+//       let data = b"hello";
+//       let hash = Hash::sha2_256(data);
+//       Oracle::handler(&sender, id, hash);
+//       let vec = Oracle::test_helper_query_oracle_votes();
+//       let e = *Vector::borrow<address>(&vec, 3);
+//       assert!(e == @Lucy, 7357123401011000);
+//       let e = *Vector::borrow<address>(&vec, 4);
+//       assert!(e == @Jim, 7357123401011000);
 
-//     let validators = Vector::empty<address>();
-//     Vector::push_back(&mut validators, @Alice);
-//     Vector::push_back(&mut validators, @Charlie);
-//     assert!(upgraded_version == 0, 7357123401011000);
-//     assert!(payload == b"hello", 7357123401011000);
-//     assert!(VectorHelper::compare(&voters, &validators), 7357123401011000);
-//     assert!(height == 1, 7357123401011000);
+//       assert!(Upgrade::has_upgrade() == false, 7357123401011000); 
+//       assert!(Oracle::test_helper_check_upgrade() == false, 7357123401011001);
+//     }
+//   }
+// }
+// // check: EXECUTED
+
+
+// //# run --admin-script --signers DiemRoot Jim
+// script {
+//   use DiemFramework::Oracle;
+//   use Std::Vector;
+//   fun main(_dr: signer, sender: signer){
+//     if (Oracle::delegation_enabled_upgrade()) {
+//       let id = 1;
+//       let data = b"hello";
+//       Oracle::handler(&sender, id, data);
+//       // ensure jim's vote is not counted twice
+//       let vec = Oracle::test_helper_query_oracle_votes();
+//       let e = Vector::length<address>(&vec);
+//       assert!(e == 5, 7357123401011002);
+//     }
+//   }
+// }
+// // check: EXECUTED
+
+// //# run --admin-script --signers DiemRoot Charlie
+// script {
+//   use DiemFramework::Oracle;
+//   use Std::Vector;
+//   use DiemFramework::Upgrade;
+//   use Std::Hash;
+//   fun main(_dr: signer, sender: signer){
+//     if (Oracle::delegation_enabled_upgrade()) {
+//       let id = 2;
+//       let data = b"hello";
+//       let hash = Hash::sha2_256(data);
+//       Oracle::handler(&sender, id, hash);
+//       let vec = Oracle::test_helper_query_oracle_votes();
+//       let e = *Vector::borrow<address>(&vec, 5);
+//       assert!(e == @Charlie, 7357123401011000);
+
+//       assert!(Upgrade::has_upgrade() == false, 7357123401011000); 
+//       assert!(Oracle::test_helper_check_upgrade() == true, 7357123401011001);
+//     }
 //   }
 // }
 // // check: EXECUTED
