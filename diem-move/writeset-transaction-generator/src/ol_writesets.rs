@@ -114,11 +114,6 @@ pub fn ol_writeset_encode_rescue(
     WriteSetPayload::Direct(merge_vec_changeset(all_cs).unwrap())
 }
 
-pub fn ol_writeset_upgrade_expire(path: PathBuf) -> WriteSetPayload {
-    let expiry_cs = reconfig::ol_expire_oracle_upgrade(path.clone()).unwrap();
-    WriteSetPayload::Direct(expiry_cs)
-}
-
 pub fn ol_writeset_encode_migrations(
     path: PathBuf,
     ancestry_file: PathBuf,
@@ -156,6 +151,16 @@ pub fn ol_writeset_encode_migrations(
     // let new_cs = merge_change_set(stdlib_cs, boundary).unwrap();
     let new_cs = merge_vec_changeset(vec![ancestry, makewhole, vouch, boundary, recovery]).unwrap();
     // WriteSetPayload::Direct(merge_change_set(new_cs, time).unwrap())
+    WriteSetPayload::Direct(new_cs)
+}
+
+pub fn ol_writeset_oracle_expire(
+    path: PathBuf, vals: Vec<AccountAddress>, recovery_epoch: u64
+) -> WriteSetPayload  {
+    let oracle_expiry = migrations::ol_expire_oracle_upgrade(path.clone()).unwrap();
+    let recovery =
+          stdlib::ol_set_epoch_recovery_mode(path.clone(), vec![], recovery_epoch).unwrap();
+    let new_cs = merge_vec_changeset(vec![oracle_expiry, recovery]).unwrap();
     WriteSetPayload::Direct(new_cs)
 }
 
