@@ -295,7 +295,6 @@ impl TxParams {
         let pubkey = keys.child_0_owner.get_public();
         let signer_auth_key = AuthenticationKey::ed25519(&pubkey);
         let signer_address = signer_auth_key.derived_address();
-
         let url = Url::parse("http://localhost:8080").unwrap();
         let waypoint: Waypoint =
             "0:732ea2e1c3c5ee892da11abcd1211f22c06b5cf75fd6d47a9492c21dbfc32a46"
