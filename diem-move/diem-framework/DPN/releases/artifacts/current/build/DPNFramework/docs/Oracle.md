@@ -789,7 +789,8 @@
   <b>let</b> upgrade_oracle = &<b>mut</b> <b>borrow_global_mut</b>&lt;<a href="Oracle.md#0x1_Oracle_Oracles">Oracles</a>&gt;(@DiemRoot).upgrade;
   <b>let</b> threshold = <a href="Oracle.md#0x1_Oracle_get_threshold">get_threshold</a>(<a href="Oracle.md#0x1_Oracle_VOTE_TYPE_PROPORTIONAL_VOTING_POWER">VOTE_TYPE_PROPORTIONAL_VOTING_POWER</a>);
   <b>let</b> result = <a href="Oracle.md#0x1_Oracle_check_consensus">check_consensus</a>(&upgrade_oracle.vote_counts, threshold);
-  upgrade_oracle.consensus = result
+  upgrade_oracle.consensus = result;
+  upgrade_oracle.vote_window = <a href="DiemBlock.md#0x1_DiemBlock_get_current_block_height">DiemBlock::get_current_block_height</a>() - 1;
 }
 </code></pre>
 
