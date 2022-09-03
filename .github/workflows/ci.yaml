@@ -117,4 +117,4 @@ jobs:
       - name: Build stdlib
         run: make stdlib
       - name: Run smoke tests
-        run: cd testsuite/smoke-test && cargo test
+        run: cd testsuite/smoke-test && cargo test -- --test-threads 1

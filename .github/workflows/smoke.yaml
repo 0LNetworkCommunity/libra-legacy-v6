@@ -1,4 +1,4 @@
-name: Forge
+name: Smoke
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   forge:
-    name: Forge
+    name: Smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -32,6 +32,6 @@ jobs:
         run: rustc -V
       - name: Build stdlib
         run: make stdlib
-      - name: Run Forge Local Tests
-        run: cargo r -p forge-cli -- test local-swarm
+      - name: Run Smoke tests
+        run: cd testsuite/smoke-test && cargo test -- --test-threads 1
   
