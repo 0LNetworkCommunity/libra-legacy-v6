@@ -151,10 +151,10 @@ pub async fn get_treasury_account(
         ));
     };
     let treasury_seq_num = client
-        .get_account_sequence_number(account_config::treasury_compliance_account_address())
+        .get_account_sequence_number(account_config::reserved_vm_address()) //////// 0L ////////
         .await?;
     Ok(LocalAccount::new(
-        account_config::treasury_compliance_account_address(),
+        account_config::reserved_vm_address(), //////// 0L ////////
         treasury_account_key,
         treasury_seq_num,
     ))
