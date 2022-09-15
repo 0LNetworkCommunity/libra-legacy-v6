@@ -1,14 +1,7 @@
-name: Forge
-
-on:
-  push:
-    branches: [ main, ci, v5, v6-smoketests, 'v6**' ]
-  pull_request:
-    branches: [ main, 'release**', v5 ]
+on: workflow_call
 
 jobs:
   forge:
-    name: Forge
     runs-on: ubuntu-latest
     steps:
       - name: Check out
