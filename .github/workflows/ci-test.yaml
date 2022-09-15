@@ -17,5 +17,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: read file
-        run: cat./newfile.txt
+        run: cat ./newfile.txt
 
