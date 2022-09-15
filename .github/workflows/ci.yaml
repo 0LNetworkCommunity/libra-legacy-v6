@@ -6,13 +6,4 @@ on:
 
 jobs:
   read:
-    runs-on: ubuntu-latest
-    steps:
-      # - uses: actions/checkout@v3
-      # - name: pwd
-      #   run: pwd ./.github/workflows/
-      # - name: cat
-      #   run: cat ./.github/workflows/ci-exp-install.yaml
-      - name: Reads
-        uses: actions/checkout@v3
-        uses: ./.github/workflows/ci-exp-install.yaml   
+    uses: ./.github/workflows/ci-exp-install.yaml   
