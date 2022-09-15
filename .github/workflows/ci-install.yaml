@@ -29,7 +29,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
       - name: Minimal Build Including Move Stdlib
-        run: make stdlib
+        run: CARGO_ARGS="--color never" make bins
       # - name: Lint
       #   run: |
       #     cargo fmt --all -- --check

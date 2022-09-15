@@ -23,8 +23,10 @@ GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 
 REPO_ORG = OLSF
 REPO_NAME = genesis-registration
-CARGO_ARGS = --release
 
+ifndef CARGO_ARGS
+CARGO_ARGS = --release
+endif
 # testnet automation settings
 ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
@@ -97,10 +99,10 @@ stdlib:
 	cp -r ./DPN/releases/artifacts/current/* diem-move/diem-framework/DPN/releases/artifacts/current/
 
 ftest:
-	NODE_ENV="test" cargo test -p diem-framework --test ol_transactional_tests
+	NODE_ENV="test" cargo test ${CARGO_ARGS} -p diem-framework --test ol_transactional_tests
 
-smoketest:
-	cargo test -p smoke-test -- --test-threads 1
+smoke:
+	cargo test ${CARGO_ARGS} -p smoke-test -- --test-threads 1
 
 install: mv-bin bin-path
 	mkdir ${USER_BIN_PATH} | true

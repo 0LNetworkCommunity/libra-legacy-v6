@@ -6,10 +6,13 @@ on:
 
 jobs:
   install:
-    uses: ./.github/workflows/ci-exp-install.yaml
+    uses: ./.github/workflows/ci-install.yaml
   tools:
     needs: install
     uses: ./.github/workflows/tools.yaml
   transactional:
     needs: install
     uses: ./.github/workflows/transactional-tests.yaml
+  smoke:
+    needs: install
+    uses: ./.github/workflows/smoke.yaml
