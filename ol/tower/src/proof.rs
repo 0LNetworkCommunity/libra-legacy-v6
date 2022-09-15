@@ -9,6 +9,7 @@ use glob::glob;
 use ol::node::client;
 use ol_types::block::VDFProof;
 use ol_types::config::AppCfg;
+use std::process::exit;
 use std::{fs, io::Write, path::PathBuf, time::Instant};
 use txs::tx_params::TxParams;
 
@@ -194,7 +195,9 @@ pub fn parse_block_file(path: &PathBuf, purge_if_bad: bool) -> Result<VDFProof, 
     match serde_json::from_str(&block_file) {
         Ok(v) => Ok(v),
         Err(e) => {
-            if purge_if_bad { fs::remove_file(&block_file)? }
+            if purge_if_bad {
+                fs::remove_file(&block_file)?
+            }
             bail!(
                 "Could not read latest block file in path {:?}, message: {:?}",
                 &path,
@@ -286,9 +289,13 @@ fn create_fixtures() {
         let mut toml_path = PathBuf::from(save_to);
         toml_path.push("miner.toml");
         let file = fs::File::create(&toml_path);
-        file.unwrap()
-            .write(&toml.as_bytes())
-            .expect("Could not write toml");
+        match file {
+            Ok() => file.write(&toml.as_bytes()),
+            Err(msg) => {
+                println!("Could not write toml\nError {}", msg);
+                exit(1)
+            }
+        }
     }
 }
 
