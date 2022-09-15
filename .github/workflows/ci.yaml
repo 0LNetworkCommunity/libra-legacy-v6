@@ -8,4 +8,5 @@ jobs:
   install:
     uses: ./.github/workflows/ci-exp-install.yaml
   tools:
+    needs: install
     uses: ./.github/workflows/tools.yaml
