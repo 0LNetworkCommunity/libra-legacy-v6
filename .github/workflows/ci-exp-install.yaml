@@ -25,8 +25,8 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            target/            
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
           restore-keys: ${{ runner.os }}-cargo-
       - name: Minimal Build Including Move Stdlib
         run: make stdlib
