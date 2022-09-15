@@ -9,7 +9,6 @@ use glob::glob;
 use ol::node::client;
 use ol_types::block::VDFProof;
 use ol_types::config::AppCfg;
-use std::process::exit;
 use std::{fs, io::Write, path::PathBuf, time::Instant};
 use txs::tx_params::TxParams;
 
@@ -293,7 +292,7 @@ fn create_fixtures() {
             Ok() => file.write(&toml.as_bytes()),
             Err(msg) => {
                 println!("Could not write toml\nError {}", msg);
-                exit(1)
+                std::process::exit(1)
             }
         }
     }
