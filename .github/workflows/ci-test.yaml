@@ -1,4 +1,4 @@
-name: CI
+name: Experiment
 
 on:
   push:
