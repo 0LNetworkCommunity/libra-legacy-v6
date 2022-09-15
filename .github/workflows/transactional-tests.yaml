@@ -1,0 +1,8 @@
+on: workflow_call
+
+jobs:
+  transactional-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: transactional tests
+        run: make ftest
