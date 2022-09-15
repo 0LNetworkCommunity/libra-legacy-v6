@@ -1,0 +1,14 @@
+name: Experiment
+
+on:
+  workflow_call:
+    
+jobs:
+  read:
+    name: Read
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: read file
+        run: cat ./newfile.txt
+
