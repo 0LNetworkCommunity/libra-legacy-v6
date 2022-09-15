@@ -1,8 +1,10 @@
 name: Tools
 
 on:
+  push:
+  pull_request:
   workflow_dispatch:
-
+  
 jobs:
   tool-tests:
     name: 0L tools Tests
