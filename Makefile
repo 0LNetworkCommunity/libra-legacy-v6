@@ -98,7 +98,9 @@ stdlib:
 
 ftest:
 	NODE_ENV="test" cargo test -p diem-framework --test ol_transactional_tests
-  
+
+smoketest:
+	cargo test -p smoke-test -- --test-threads 1
 
 install: mv-bin bin-path
 	mkdir ${USER_BIN_PATH} | true
