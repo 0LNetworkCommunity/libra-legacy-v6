@@ -7,8 +7,27 @@ jobs:
     steps:
       - name: Check out
         uses: actions/checkout@v3
-      - name: Cache
-        uses: ./.github/workflows/cache.yaml
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: 1.56.1
+          override: true
+          components: rustfmt, clippy
+      - name: Install deps
+        run: sudo apt-get install -y lld
+      - name: Set up cargo cache
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
       - name: Minimal Build Including Move Stdlib
         run: make stdlib
       # - name: Lint

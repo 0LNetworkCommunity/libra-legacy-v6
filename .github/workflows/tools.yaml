@@ -18,6 +18,10 @@ jobs:
             target/            
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
           restore-keys: ${{ runner.os }}-cargo-
+      - name: Install deps
+        run: sudo apt-get install -y lld
+
+        
       - name: tower tests
         run: cd ol/tower && NODE_ENV=test cargo test
       # - name: types tests
