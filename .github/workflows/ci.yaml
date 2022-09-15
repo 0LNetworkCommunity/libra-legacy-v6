@@ -8,7 +8,9 @@ jobs:
   read:
     runs-on: ubuntu-latest
     steps:
-      # - name: Check out
-      #   uses: actions/checkout@v3
+      - name: ls
+        run: ls ./.github/workflows/
+      - name: cat
+        run: cat ./.github/workflows/ci-exp-install.yaml
       - name: Reads
         uses: ./.github/workflows/ci-exp-install.yaml    
