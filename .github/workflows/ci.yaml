@@ -11,4 +11,4 @@ jobs:
       - name: Check out
         uses: actions/checkout@v3
       - name: Reads
-        uses: .github/workflows/ci-exp-install.yaml    
+        uses: ../.github/workflows/ci-exp-install.yaml    
