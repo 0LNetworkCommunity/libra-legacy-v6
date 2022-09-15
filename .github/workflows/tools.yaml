@@ -1,0 +1,21 @@
+name: Tools
+
+on:
+  workflow_call:
+
+jobs:
+  tool-tests:
+    name: 0L tools Tests
+    runs-on: ubuntu-latest
+    uses: actions/checkout@v3
+    steps:
+      - name: tower tests
+        run: cd ol/tower && NODE_ENV=test cargo test
+      - name: types tests
+        run: cd ol/types && NODE_ENV=test cargo test
+      - name: txs tests
+        run: cd ol/txs && NODE_ENV=test cargo test
+      - name: keys tests
+        run: cd ol/keys && NODE_ENV=test cargo test
+      - name: cli tests
+        run: cd ol/cli && NODE_ENV=test cargo test

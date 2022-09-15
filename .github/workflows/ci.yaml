@@ -6,4 +6,6 @@ on:
 
 jobs:
   install:
-    uses: ./.github/workflows/ci-exp-install.yaml   
+    uses: ./.github/workflows/ci-exp-install.yaml
+  tools:
+    uses: ./.github/workflows/tools.yaml
