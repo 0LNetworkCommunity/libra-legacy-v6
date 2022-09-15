@@ -104,7 +104,7 @@ export async function invokeScriptFunctionForAddress(
     "sequence_number": `${sequenceNumber}`,
     "max_gas_amount": "1000000",
     "gas_unit_price": "0",
-    "gas_currency_code": "XUS",
+    "gas_currency_code": "GAS",
     "expiration_timestamp_secs": "99999999999",
     "payload": {
       "type": "script_function_payload",
@@ -141,7 +141,7 @@ export function newRawTransaction(
     payload, // txn payload
     BigInt(1000000), // max gas amount
     BigInt(0), // gas_unit_price
-    "XUS", // currency
+    "GAS", // currency
     BigInt(99999999999), // expiration_timestamp_secs
     new DiemTypes.ChainId(4), // chain id, hardcoded to test
   );

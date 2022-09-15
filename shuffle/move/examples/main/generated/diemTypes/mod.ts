@@ -880,6 +880,7 @@ static deserialize(deserializer: Deserializer): Transaction {
     case 0: return TransactionVariantUserTransaction.load(deserializer);
     case 1: return TransactionVariantGenesisTransaction.load(deserializer);
     case 2: return TransactionVariantBlockMetadata.load(deserializer);
+    case 3: return TransactionVariantStateCheckpoint.load(deserializer);
     default: throw new Error("Unknown variant index for Transaction: " + index);
   }
 }
@@ -936,6 +937,21 @@ public serialize(serializer: Serializer): void {
 static load(deserializer: Deserializer): TransactionVariantBlockMetadata {
   const value = BlockMetadata.deserialize(deserializer);
   return new TransactionVariantBlockMetadata(value);
+}
+
+}
+
+export class TransactionVariantStateCheckpoint extends Transaction {
+constructor () {
+  super();
+}
+
+public serialize(serializer: Serializer): void {
+  serializer.serializeVariantIndex(3);
+}
+
+static load(deserializer: Deserializer): TransactionVariantStateCheckpoint {
+  return new TransactionVariantStateCheckpoint();
 }
 
 }
