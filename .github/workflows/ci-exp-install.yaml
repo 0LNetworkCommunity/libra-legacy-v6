@@ -7,7 +7,7 @@ on:
     #     default: nightly
 
 jobs:
-  check:
+  set-up-build:
     runs-on: ubuntu-latest
     steps:
       - name: Check out
@@ -19,6 +19,8 @@ jobs:
           toolchain: 1.56.1
           override: true
           components: rustfmt, clippy
+      - name: Install deps
+        run: sudo apt-get install -y lld
       - name: Set up cargo cache
         uses: actions/cache@v3
         continue-on-error: false
@@ -31,6 +33,8 @@ jobs:
             target/            
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
+      - name: Minimal Build Including Move Stdlib
+        run: make stdlib
       # - name: Lint
       #   run: |
       #     cargo fmt --all -- --check

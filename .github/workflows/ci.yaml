@@ -5,5 +5,5 @@ on:
     branches: [ v6-ci-rebased ]
 
 jobs:
-  read:
+  install:
     uses: ./.github/workflows/ci-exp-install.yaml   
