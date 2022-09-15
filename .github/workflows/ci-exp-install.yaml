@@ -5,6 +5,8 @@ jobs:
   set-up-build:
     runs-on: ubuntu-latest
     steps:
+      - name: Check out
+        uses: actions/checkout@v3
       - name: Cache
         uses: ./.github/workflows/cache.yaml
       - name: Minimal Build Including Move Stdlib
