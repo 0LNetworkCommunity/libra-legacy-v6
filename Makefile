@@ -166,7 +166,7 @@ reset-safety:
 
 #### CI HELPERS ####
 preheat:
-	cargo t --no-run -p diem-node -p diem-framework -p ol -p tower -p shuffle
+	cargo t --no-run -p diem-node -p diem-framework -p ol -p shuffle
 
 tx-test:
 	NODE_ENV="test" cargo t -p diem-framework --test ol_transactional_tests
