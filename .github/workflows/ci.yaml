@@ -1,8 +1,8 @@
-name: On push
+name: CI
 
 on:
   push:
-    branches: [ v6-ci-rebased ]
+    branches: [ "v6**" ]
 
 jobs:
   install:
@@ -16,3 +16,6 @@ jobs:
   smoke:
     needs: install
     uses: ./.github/workflows/smoke.yaml
+  forge:
+    needs: install
+    uses: ./.github/workflows/forge.yaml

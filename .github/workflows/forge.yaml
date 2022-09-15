@@ -1,0 +1,41 @@
+name: Forge
+
+on:
+  push:
+    branches: [ main, ci, v5, v6-smoketests, 'v6**' ]
+  pull_request:
+    branches: [ main, 'release**', v5 ]
+
+jobs:
+  forge:
+    name: Forge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v3
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: 1.56.1
+          override: true
+          components: rustfmt, clippy
+      - name: Install deps
+        run: sudo apt-get install -y lld
+      - name: Set up cargo cache
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+
+      - name: Run Forge Local Tests
+        run: cargo r -p forge-cli -- test local-swarm
+  
