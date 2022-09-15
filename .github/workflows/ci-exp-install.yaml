@@ -1,10 +1,5 @@
 on:
   workflow_call:
-    # inputs:
-    #   rust-version:
-    #     type: string
-    #     required: false
-    #     default: nightly
 
 jobs:
   set-up-build:
