@@ -1,7 +1,7 @@
 on: workflow_call
 
 jobs:
-  transactional-tests:
+  smoke:
     runs-on: ubuntu-latest
     steps:
       - name: Check out
@@ -16,10 +16,10 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/            
-          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.toml') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
       - name: Install deps
         run: sudo apt-get install -y lld
         
       - name: transactional tests
-        run: CARGO_ARGS="--color never" make smoke
+        run: CARGO_ARGS="--color never" make smoke-test

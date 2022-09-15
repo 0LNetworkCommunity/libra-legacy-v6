@@ -12,7 +12,7 @@ jobs:
     uses: ./.github/workflows/tools.yaml
   transactional:
     needs: install
-    uses: ./.github/workflows/transactional-tests.yaml
+    uses: ./.github/workflows/transactional.yaml
   smoke:
     needs: install
     uses: ./.github/workflows/smoke.yaml

@@ -98,12 +98,6 @@ stdlib:
 	mkdir diem-move/diem-framework/DPN/releases/artifacts/current/ | rm -rf diem-move/diem-framework/DPN/releases/artifacts/current/*
 	cp -r ./DPN/releases/artifacts/current/* diem-move/diem-framework/DPN/releases/artifacts/current/
 
-ftest:
-	NODE_ENV="test" cargo test ${CARGO_ARGS} -p diem-framework --test ol_transactional_tests
-
-smoke:
-	cargo test ${CARGO_ARGS} -p smoke-test -- --test-threads 1
-
 install: mv-bin bin-path
 	mkdir ${USER_BIN_PATH} | true
 
@@ -139,8 +133,6 @@ mv-bin:
 		fi ; \
 	fi
 
-reset:
-	onboard val --skip-mining --upstream-peer http://167.172.248.37/ --source-path ~/libra
 
 backup:
 	cd ~ && rsync -av --exclude db/ --exclude logs/ ~/.0L/* ~/0L_backup_$(shell date +"%m-%d-%y-%T")
@@ -162,9 +154,6 @@ danger-restore:
 	rsync -rtv ${HOME}/0L_backup/set_layout.toml ${HOME}/.0L/ | true
 
 
-	
-
-
 clear-prod-db:
 	@echo WIPING DB
 	make confirm
@@ -175,8 +164,22 @@ reset-safety:
 	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
 	
 
-move-test:
-	cd language/move-lang/functional-tests/ && cargo t 0L
+#### CI HELPERS ####
+preheat:
+	cargo t --no-run -p diem-node -p diem-framework -p ol -p tower -p shuffle
+
+tx-test:
+	NODE_ENV="test" cargo t -p diem-framework --test ol_transactional_tests
+
+smoke-test:
+	cargo t -p smoke-test -- --test-threads 1
+
+shuffle-test:
+	timeout 100 nohup cargo r -p shuffle -- node &
+
+	cargo r -p shuffle -- test all
+
+
 #### GENESIS BACKEND SETUP ####
 init-backend: 
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
