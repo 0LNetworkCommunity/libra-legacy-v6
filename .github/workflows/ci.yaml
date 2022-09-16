@@ -5,12 +5,12 @@ on:
     branches: [ "v6**" ]
 
 jobs:
-  continue-on-error: true
   install:
     uses: ./.github/workflows/ci-install.yaml
   tools:
     needs: install
     uses: ./.github/workflows/tools.yaml
+    continue-on-error: true
   transactional:
     needs: install
     uses: ./.github/workflows/transactional.yaml
