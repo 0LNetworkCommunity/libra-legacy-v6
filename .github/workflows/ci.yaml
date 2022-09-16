@@ -15,11 +15,17 @@ jobs:
     needs: install
     uses: ./.github/workflows/tools.yaml
   transactional:
+    strategy:
+      fail-fast: false
     needs: install
     uses: ./.github/workflows/transactional.yaml
   smoke:
+    strategy:
+      fail-fast: false
     needs: install
     uses: ./.github/workflows/smoke.yaml
   forge:
+    strategy:
+      fail-fast: false
     needs: install
     uses: ./.github/workflows/forge.yaml
