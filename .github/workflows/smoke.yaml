@@ -1,20 +1,11 @@
 on: workflow_call
 
 jobs:
-  forge:
+  smoke:
     runs-on: ubuntu-latest
     steps:
       - name: Check out
         uses: actions/checkout@v3
-      - name: Install Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: 1.56.1
-          override: true
-          components: rustfmt, clippy
-      - name: Install deps
-        run: sudo apt-get install -y lld
       - name: Set up cargo cache
         uses: actions/cache@v3
         continue-on-error: false
@@ -27,11 +18,12 @@ jobs:
             target/            
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
-
-      - name: Build stdlib
+      - name: Install deps
+        run: sudo apt-get install -y lld
+        
+      - name: build stdlib
         run: make stdlib
 
-      - name: Run Forge Local Tests
-        run: cargo r -p forge-cli -- test local-swarm
+      - name: smoke tests
+        run: CARGO_ARGS="--color never" make smoke-test
         continue-on-error: true
-  

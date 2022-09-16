@@ -1,0 +1,39 @@
+on: workflow_call
+
+jobs:
+  tools:
+    runs-on: ubuntu-latest
+    steps:
+      - name: check out
+        uses: actions/checkout@v3
+      - name: Set up cargo cache
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+      - name: install deps
+        run: sudo apt-get install -y lld
+
+        
+      - name: tower tests
+        run: cd ol/tower && NODE_ENV=test cargo test
+        continue-on-error: true
+      - name: types tests
+        run: cd ol/types && NODE_ENV=test cargo test
+        continue-on-error: true
+      - name: txs tests
+        run: cd ol/txs && NODE_ENV=test cargo test
+        continue-on-error: true
+      - name: keys tests
+        run: cd ol/keys && NODE_ENV=test cargo test
+        continue-on-error: true
+      - name: cli tests
+        run: cd ol/cli && NODE_ENV=test cargo test
+        continue-on-error: true

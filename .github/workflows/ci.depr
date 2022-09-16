@@ -1,0 +1,120 @@
+name: CI-v6
+
+on:
+  push:
+    branches: [ main, ci, v5, v6-smoketests, 'v6**' ]
+  pull_request:
+    branches: [ main, 'release**', v5 ]
+
+jobs:
+  functional:
+    name: Functional Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v2.1.6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            ./target_test
+          key: ${{ runner.os }}-cache2-func-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1.0.7
+        with:
+            toolchain: 1.56.1
+            override: true
+            components: rustfmt, clippy
+      - name: Install deps
+        run: sudo apt-get install -y lld
+      - name: check version
+        run: rustc -V
+      - name: Build stdlib
+        run: make stdlib
+      - name: Run 0L functional tests
+        run: NODE_ENV="test" cargo test -p diem-framework --test ol_transactional_tests
+
+  tools:
+    name: 0L tools Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v2.1.6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            ./target_test
+          key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install deps
+        run: sudo apt-get install -y lld
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1.0.7
+        with:
+            toolchain: 1.56.1
+            override: true
+            components: rustfmt, clippy
+      - name: tower tests
+        run: cd ol/tower && NODE_ENV=test cargo test
+      - name: types tests
+        run: cd ol/types && NODE_ENV=test cargo test
+      - name: txs tests
+        run: cd ol/txs && NODE_ENV=test cargo test
+      - name: keys tests
+        run: cd ol/keys && NODE_ENV=test cargo test
+      - name: cli tests
+        run: cd ol/cli && NODE_ENV=test cargo test
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v2.1.6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            ./target_test
+          key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install deps
+        run: sudo apt-get install -y lld
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1.0.7
+        with:
+            toolchain: 1.56.1
+            override: true
+            components: rustfmt, clippy
+      - name: Create foo_stdlib.mv fixtures
+        run: SOURCE_PATH=./ make -f ol/fixtures/upgrade_payload/make-e2e-upgrade-fixtures.mk fixtures
+      - name: Build stdlib
+        run: make stdlib
+      - name: Run 0L e2e tests
+        run: cd diem-move/e2e-testsuite && NODE_ENV=test cargo test ol_
+  smoke:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v2.1.6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+            ./target_test
+          key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install deps
+        run: sudo apt-get install -y lld
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1.0.7
+        with:
+            toolchain: 1.56.1
+            override: true
+            components: rustfmt, clippy
+      - name: Build stdlib
+        run: make stdlib
+      - name: Run smoke tests
+        run: cd testsuite/smoke-test && cargo test -- --test-threads 1

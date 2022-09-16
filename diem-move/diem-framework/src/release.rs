@@ -105,7 +105,7 @@ impl ReleaseOptions {
 
         let package_path = Path::new(std::env!("CARGO_MANIFEST_DIR")).join(&self.package);
 
-        dbg!(&package_path);
+        // dbg!(&package_path);
 
         let compiled_package = build_config
             .clone()
@@ -145,7 +145,7 @@ impl ReleaseOptions {
         if self.create_upgrade_payload {
             println!("Generating upgrade payload");
             
-            self.create_upgrade_payload_fn(&package_path.parent().unwrap().join(&output_path));
+            self.create_upgrade_payload_fn(&self.package);
         }
     }
 
@@ -249,11 +249,12 @@ fn extract_old_apis(package_path: impl AsRef<Path>) -> Option<BTreeMap<ModuleId,
     .unwrap();
     for f in files {
         let mut bytes = Vec::new();
-        File::open(f)
+        File::open(&f)
             .expect("Failed to open module bytecode file")
             .read_to_end(&mut bytes)
             .expect("Failed to read module bytecode file");
-        let m = CompiledModule::deserialize(&bytes).expect("Failed to deserialize module bytecode");
+        let m = CompiledModule::deserialize(&bytes)
+        .expect(&format!("Failed to deserialize module bytecode: {:?}", &f));
         old_module_apis.insert(m.self_id(), Module::new(&m));
     }
     Some(old_module_apis)

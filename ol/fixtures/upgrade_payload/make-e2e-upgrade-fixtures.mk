@@ -8,7 +8,7 @@ LIBRA_PATH = ${SOURCE_PATH}
 FIXTURES_PATH = ${LIBRA_PATH}/ol/fixtures/upgrade_payload
 DF_SRC_PATH = ${LIBRA_PATH}/diem-move/diem-framework/DPN/sources
 DF_PATH = ${LIBRA_PATH}/diem-move/diem-framework
-MOVE_BIN_PATH = ${DF_PATH}/DPN/releases/artifacts/current/staged/stdlib.mv
+MOVE_BIN_PATH = ${SOURCE_PATH}/DPN/staged/stdlib.mv
 # Create foo_stdlib.mv which contains"foo" symbol(fn)
 fixtures: rename-files stdlib check-foo copy reverse-rename stdlib-again
 
