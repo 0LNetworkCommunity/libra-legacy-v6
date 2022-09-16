@@ -24,11 +24,14 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            target/            
+            target/
+            DPN/
+            diem-move/diem-framework/DPN/       
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
-      - name: Set Cache
+      - name: set cache
         run: make preheat
+        continue-on-error: true
       # - name: Lint
       #   run: |
       #     cargo fmt --all -- --check

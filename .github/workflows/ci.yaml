@@ -6,26 +6,16 @@ on:
 
 jobs:
   install:
-    strategy:
-      fail-fast: false
     uses: ./.github/workflows/ci-install.yaml
   tools:
-    strategy:
-      fail-fast: false
     needs: install
     uses: ./.github/workflows/tools.yaml
   transactional:
-    strategy:
-      fail-fast: false
     needs: install
     uses: ./.github/workflows/transactional.yaml
   smoke:
-    strategy:
-      fail-fast: false
     needs: install
     uses: ./.github/workflows/smoke.yaml
   forge:
-    strategy:
-      fail-fast: false
     needs: install
     uses: ./.github/workflows/forge.yaml

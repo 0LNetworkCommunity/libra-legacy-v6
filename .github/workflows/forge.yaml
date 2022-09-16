@@ -33,4 +33,5 @@ jobs:
 
       - name: Run Forge Local Tests
         run: cargo r -p forge-cli -- test local-swarm
+        continue-on-error: true
   
