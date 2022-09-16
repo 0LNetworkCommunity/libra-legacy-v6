@@ -166,13 +166,15 @@ reset-safety:
 
 #### CI HELPERS ####
 preheat:
-	cargo t --no-run -p diem-node -p diem-framework -p ol -p shuffle
+	cargo t --no-run -p diem-node -p diem-framework -p ol -p shuffle -p smoke-test -p forge-cli
+	cd ol/tower && cargo t --no-run
+	cargo b -p diem-node -p diem-framework
 
 tx-test:
 	NODE_ENV="test" cargo t -p diem-framework --test ol_transactional_tests
 
 smoke-test:
-	cargo t -p smoke-test -- --test-threads 1
+	cargo t -p smoke-test
 
 shuffle-test:
 	timeout 100 nohup cargo r -p shuffle -- node &
@@ -575,4 +577,3 @@ TAG=$(shell git tag -l "previous")
 clean-tags:
 	git push origin --delete ${TAG}
 	git tag -d ${TAG}
-	
