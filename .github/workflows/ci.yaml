@@ -5,6 +5,7 @@ on:
     branches: [ "v6**" ]
 
 jobs:
+  continue-on-error: true
   install:
     uses: ./.github/workflows/ci-install.yaml
   tools:

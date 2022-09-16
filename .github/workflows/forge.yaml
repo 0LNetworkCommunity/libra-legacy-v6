@@ -28,6 +28,8 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
+      - name: Build stdlib
+        run: make stdlib
 
       - name: Run Forge Local Tests
         run: cargo r -p forge-cli -- test local-swarm
