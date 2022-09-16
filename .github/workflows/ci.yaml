@@ -5,11 +5,13 @@ on:
     branches: [ "v6**" ]
 
 jobs:
-  strategy:
-    fail-fast: false
   install:
+    strategy:
+      fail-fast: false
     uses: ./.github/workflows/ci-install.yaml
   tools:
+    strategy:
+      fail-fast: false
     needs: install
     uses: ./.github/workflows/tools.yaml
   transactional:
