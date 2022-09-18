@@ -336,6 +336,7 @@ fn get_test_suite(suite_name: &str) -> ForgeConfig<'static> {
 }
 
 fn local_test_suite() -> ForgeConfig<'static> {
+    //////// 0L ////////
     ForgeConfig::default()
         // .with_public_usage_tests(&[&FundAccount, &TransferCoins])
         // .with_admin_tests(&[&GetMetadata])
@@ -491,7 +492,7 @@ impl PublicUsageTest for TransferCoins {
 
 impl TransferCoins {
     async fn async_run(&self, ctx: &mut PublicUsageContext<'_>) -> Result<()> {
-        let account = ctx.random_account();
+        let account = ctx.random_account(); //////// 0L ////////
         let amount = 1000;
         let currency = Currency::XUS;
         let client = ctx.rest_client();
@@ -504,6 +505,7 @@ impl TransferCoins {
         let mut payer = ctx.random_account();
         let payee = ctx.random_account();
 
+        //////// 0L ////////
         // NOTE: 0L uses root account create accounts in test network.
         let mut root = ctx.get_root_account();
         let create_payer = root.sign_with_transaction_builder(
@@ -515,6 +517,7 @@ impl TransferCoins {
             ),
         );
 
+        //////// 0L ////////
         let create_payee = root.sign_with_transaction_builder(
             ctx.transaction_factory().create_child_vasp_account(
                 currency,
@@ -581,7 +584,7 @@ impl NetworkTest for EmitTransaction {
             .validators()
             .map(|v| v.peer_id())
             .collect::<Vec<_>>();
-        let stats = generate_traffic(ctx, &all_validators, duration, 0, None)?;
+        let stats = generate_traffic(ctx, &all_validators, duration, 0, None)?; //////// 0L ////////
         ctx.report
             .report_txn_stats(self.name().to_string(), stats, duration);
 

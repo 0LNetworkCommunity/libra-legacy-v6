@@ -64,8 +64,6 @@ impl<S: KVStorage> GenesisBuilder<S> {
             .map_err(Into::into)
     }
 
-    // 0L todo diem-1.4.1 - new patch, needs review
-    /////// 0L /////////
     pub fn set_root_key(&mut self, root_key: Ed25519PublicKey) -> Result<()> {
         let layout = self.layout()?;
         self.with_namespace_mut(&layout.diem_root)
@@ -73,8 +71,6 @@ impl<S: KVStorage> GenesisBuilder<S> {
             .map_err(Into::into)
     }
 
-    // 0L todo diem-1.4.1 - new patch, needs review
-    /////// 0L /////////
     pub fn root_key(&self) -> Result<Ed25519PublicKey> {
         let layout = self.layout()?;
         self.with_namespace(&layout.diem_root)

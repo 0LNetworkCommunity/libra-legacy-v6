@@ -43,8 +43,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-// 0L todo diem-1.4.1 - new patch, needs review
-const DIEM_ROOT_NS: &str = "diem_root"; /////// 0L /////////
+const DIEM_ROOT_NS: &str = "diem_root";
 const OPERATOR_NS: &str = "_operator";
 const OWNER_NS: &str = "_owner";
 
@@ -233,7 +232,7 @@ impl ValidatorBuilder {
             OnDiskStorage::new(self.config_directory.join("genesis-storage.json"));
         let (genesis, waypoint) = Self::genesis_ceremony(
             &mut genesis_storage,
-            &root_keys, /////// 0L /////////
+            &root_keys,
             &validators,
             self.publishing_option,
             self.move_modules,
@@ -412,7 +411,7 @@ impl ValidatorBuilder {
 
     fn genesis_ceremony(
         genesis_storage: &mut OnDiskStorage,
-        root_keys: &RootKeys, /////// 0L /////////
+        root_keys: &RootKeys,
         validators: &[ValidatorConfig],
         publishing_option: Option<VMPublishingOption>,
         move_modules: Vec<Vec<u8>>,
@@ -423,19 +422,16 @@ impl ValidatorBuilder {
         let layout = Layout {
             owners: validators.iter().map(|v| v.owner()).collect(),
             operators: validators.iter().map(|v| v.operator()).collect(),
-            /////// 0L /////////
             diem_root: DIEM_ROOT_NS.into(),
-            // treasury_compliance: DIEM_ROOT_NS.into(),
+            // treasury_compliance: DIEM_ROOT_NS.into(), /////// 0L /////////
         };
         genesis_builder.set_layout(&layout)?;
         genesis_builder.set_move_modules(move_modules)?;
 
-        // 0L todo diem-1.4.1 - new patch, needs review
         /////// 0L /////////
         // Set Root and Treasury public keys
         genesis_builder.set_root_key(Ed25519PublicKey::from(&root_keys.root_key))?;
         dbg!(&genesis_builder.root_key());
-
         // genesis_builder.set_treasury_compliance_key(Ed25519PublicKey::from(
         //     &root_keys.treasury_compliance_key,
         // ))?;

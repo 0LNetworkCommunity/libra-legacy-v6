@@ -170,8 +170,8 @@ impl Fund for Coffer<'_> {
                 designated_dealer_account: _,
             } => {
                 //////// 0L ////////
-                // 0L funds accounts from root account, which is the what treasury_compliance_account is assigned to here.
-
+                // 0L funds accounts from root account, which is the what
+                // treasury_compliance_account is assigned to here.
                 let fund_account_txn = treasury_compliance_account.sign_with_transaction_builder(
                     transaction_factory.peer_to_peer(currency, address, amount),
                 );
