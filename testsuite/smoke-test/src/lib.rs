@@ -43,3 +43,7 @@ mod test_utils;
 
 #[cfg(test)]
 mod workspace_builder;
+
+/////// 0L /////////
+#[cfg(test)]
+mod ol_smoke_tests;
