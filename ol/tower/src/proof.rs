@@ -288,13 +288,9 @@ fn create_fixtures() {
         let mut toml_path = PathBuf::from(save_to);
         toml_path.push("miner.toml");
         let file = fs::File::create(&toml_path);
-        match file {
-            Ok() => file.write(&toml.as_bytes()),
-            Err(msg) => {
-                println!("Could not write toml\nError {}", msg);
-                std::process::exit(1)
-            }
-        }
+        file.expect("failed to create file")
+            .write(&toml.as_bytes())
+            .expect("Could not write toml");
     }
 }
 
