@@ -646,9 +646,20 @@ async fn test_multi_agent_signed_transaction() {
     let mut context = new_test_context();
     let account = context.gen_account();
     let factory = context.transaction_factory();
-    let mut tc_account = context.tc_account();
-    let secondary = context.root_account();
-    let txn = tc_account.sign_multi_agent_with_transaction_builder(
+    
+    //////// 0L ////////
+    let mut root = context.root_account();
+    let secondary = context.gen_account();
+    
+    let create_account_txn = root.sign_with_transaction_builder(
+        factory.create_parent_vasp_account(Currency::XUS, 0, secondary.authentication_key(), "vasp", true),
+    );
+    context.commit_block(&vec![create_account_txn]).await;  
+
+    //////// 0L ////////
+
+
+    let txn = root.sign_multi_agent_with_transaction_builder(
         vec![&secondary],
         factory.create_parent_vasp_account(
             Currency::XUS,
@@ -753,10 +764,13 @@ async fn test_multi_ed25519_signed_transaction() {
             "0x861546d0818178f2b5f37af0fa712fe8ce3cceeda894b553ee274f3fbcb4b32f",
             "0xfe047a766a47719591348a4601afb3f38b0c77fa3f820e0298c064e7cde6763f"
           ],
-          "signatures": [
-            "0xab0ffa0926dd765979c422572b4429d11161a2df6975e223ad4d75c87a117e6c790558e8286caf95550ab97515d2cfa8654365f54524688df91b3b4e91b69d0e",
-            "0x300774b6dd50658d4b693ad5cc1842944465a92b31f1652b445d36b911d4ca625260c451ab7d998534b61253f3bfcdd6bcb03adf4c048b03bd18678d56cd5a03",
-            "0x4bac0f0d9dde41196efae43849f8e4427ee142e04e57e7291ecdfb225528b0fe31eff8e17461a220430daea94a14f750a37b5e0360aa1c72cb956c402743c202"
+          "signatures": [ // TODO(0L): Did these fixtures change on 0L from the Diem fixtures because of the new signature scheme, e.g. salt.
+            "0xa2fd3e2d360230b4e68b5270d09ab917c4ba52a53f07a1566eb25d49a46e7113a96d4f2530dc7d3ffa389f4652e187d996d84f61dacf7cf306b79d4acc0b7602",
+            "0xa003281ca87f7b9f8fc96d309ef05c1060f1811a3ae3bc883f38be5b100c998c52be2beed8601060c4566614bb0e165b9f6c44d762277785d0761b6e9509b508",
+            "0x1089c0772fee6593e1a058419aa3ec574542468d5e436804a1980e0d2ab085402951d425c7ca683bcaaca0885cea02c7bcd9931852cceeb84bee7d6c8a63db0d"
+            // "0xab0ffa0926dd765979c422572b4429d11161a2df6975e223ad4d75c87a117e6c790558e8286caf95550ab97515d2cfa8654365f54524688df91b3b4e91b69d0e",
+            // "0x300774b6dd50658d4b693ad5cc1842944465a92b31f1652b445d36b911d4ca625260c451ab7d998534b61253f3bfcdd6bcb03adf4c048b03bd18678d56cd5a03",
+            // "0x4bac0f0d9dde41196efae43849f8e4427ee142e04e57e7291ecdfb225528b0fe31eff8e17461a220430daea94a14f750a37b5e0360aa1c72cb956c402743c202"
           ],
           "threshold": 3,
           "bitmap": "0xe0000000"

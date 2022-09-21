@@ -130,7 +130,7 @@ impl TestContext {
 
     pub fn tc_account(&self) -> LocalAccount {
         LocalAccount::new(
-            treasury_compliance_account_address(),
+            diem_root_address(), //////// 0L ////////
             self.root_keys.root_key.clone(),
             0,
         )
@@ -138,7 +138,7 @@ impl TestContext {
 
     pub fn dd_account(&self) -> LocalAccount {
         LocalAccount::new(
-            testnet_dd_account_address(),
+            diem_root_address(), //////// 0L ////////
             self.root_keys.root_key.clone(),
             0,
         )
