@@ -1,6 +1,11 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
+/////// 0L /////////
+// Prevent side-effects of hack #[cfg(feature = "ol-smoke-test")] below
+#![allow(unused_imports)]
+#![allow(dead_code)]
+
 // Defines Forge Tests
 pub mod event_fetcher;
 pub mod fullnode;
@@ -45,5 +50,14 @@ mod test_utils;
 mod workspace_builder;
 
 /////// 0L /////////
-#[cfg(test)]
-mod ol_smoke_tests;
+//// Until this issue is solved https://github.com/rust-lang/cargo/issues/8379,
+//// using this small hack: 
+//// Make some test modules available for "ol-smoke-test" feature
+#[cfg(feature = "ol-smoke-test")]
+pub mod operational_tooling;
+#[cfg(feature = "ol-smoke-test")]
+pub mod smoke_test_environment;
+#[cfg(feature = "ol-smoke-test")]
+pub mod test_utils;
+#[cfg(feature = "ol-smoke-test")]
+pub mod workspace_builder;

@@ -1,12 +1,7 @@
 [package]
-name = "smoke-test"
+name = "ol-smoke-test"
 version = "0.1.0"
-authors = ["Diem Association <opensource@diem.com>"]
-description = "Diem smoke test"
-repository = "https://github.com/diem/diem"
-homepage = "https://diem.com"
-license = "Apache-2.0"
-publish = false
+authors = [""]
 edition = "2018"
 
 [dependencies]
@@ -34,26 +29,8 @@ move-command-line-common = { git = "https://github.com/OLSF/move-0L", rev = "f16
 move-ir-compiler = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
 move-stdlib = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
 diem-types = { path = "../../types" }
-forge = { path = "../forge" }
+forge = { path = "../../testsuite/forge" }
 diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
-#/////// 0L /////////
-base64 = "0.13.0"
-hex = "0.4.3"
-once_cell = "1.7.2"
-rand = "0.8.3"
-regex = "1.4.3"
-serde_yaml = "0.8.17"
-futures = "0.3.12"
-diem-global-constants = { path = "../../config/global-constants" }
-diem-logger = { path = "../../crates/diem-logger" }
-diem-secure-storage = { path = "../../secure/storage", features = ["testing"] }
-diem-operational-tool = {path = "../../config/management/operational", features = ["testing"] }
-diem-key-manager = { path = "../../secure/key-manager" }
-diem-time-service = { path = "../../crates/diem-time-service", features = ["testing"] }
-diem-management = { path = "../../config/management", features = ["testing"] }
-diem-validator-interface = { path = "../../diem-move/diem-validator-interface" }
-diem-writeset-generator = { path = "../../diem-move/writeset-transaction-generator" }
-backup-cli = { path = "../../storage/backup/backup-cli" }
 
 [dev-dependencies]
 base64 = "0.13.0"
@@ -63,7 +40,6 @@ rand = "0.8.3"
 regex = "1.4.3"
 serde_yaml = "0.8.17"
 futures = "0.3.12"
-
 backup-cli = { path = "../../storage/backup/backup-cli" }
 debug-interface = { path = "../../crates/debug-interface" }
 generate-key = { path = "../../config/generate-key" }
@@ -82,15 +58,4 @@ diem-vault-client = { path = "../../secure/storage/vault", features = ["fuzzing"
 diem-validator-interface = { path = "../../diem-move/diem-validator-interface" }
 diem-writeset-generator = { path = "../../diem-move/writeset-transaction-generator" }
 diem-transaction-builder = { path = "../../sdk/transaction-builder" }
-
-[[test]]
-name = "forge"
-harness = false
-
-[[test]]
-name = "forge-nft"
-harness = false
-
-#/////// 0L /////////
-[features]
-ol-smoke-test = []
+smoke-test = { path = "../../testsuite/smoke-test", features = ["ol-smoke-test"] }

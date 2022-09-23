@@ -139,6 +139,7 @@ members = [
     "ol/keys",
     "ol/tower",
     "ol/onboard",
+    "ol/smoke-tests",
     "ol/txs",
     "ol/types",
     "ol/util",

@@ -6595,6 +6595,61 @@ dependencies = [
 ]
 
 [[package]]
+name = "ol-smoke-test"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "backup-cli",
+ "base64 0.13.0",
+ "bcs",
+ "debug-interface",
+ "diem-config",
+ "diem-crypto",
+ "diem-events-fetcher",
+ "diem-experimental-framework-releases",
+ "diem-framework",
+ "diem-framework-releases",
+ "diem-genesis-tool",
+ "diem-global-constants",
+ "diem-infallible 0.1.0",
+ "diem-json-rpc",
+ "diem-json-rpc-types",
+ "diem-key-manager",
+ "diem-logger 0.1.0",
+ "diem-management",
+ "diem-operational-tool",
+ "diem-rest-client",
+ "diem-sdk",
+ "diem-secure-storage",
+ "diem-temppath",
+ "diem-time-service",
+ "diem-transaction-builder",
+ "diem-transaction-replay",
+ "diem-types",
+ "diem-validator-interface",
+ "diem-vault-client",
+ "diem-workspace-hack 0.1.0",
+ "diem-writeset-generator",
+ "forge",
+ "futures",
+ "generate-key",
+ "hex 0.4.3",
+ "move-command-line-common",
+ "move-ir-compiler",
+ "move-stdlib",
+ "once_cell",
+ "proptest",
+ "rand 0.8.4",
+ "regex",
+ "reqwest 0.11.10",
+ "serde_yaml",
+ "smoke-test",
+ "tokio 1.18.2",
+ "walkdir",
+]
+
+[[package]]
 name = "ol-types"
 version = "0.1.0"
 dependencies = [
