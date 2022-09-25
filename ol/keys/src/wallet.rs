@@ -122,6 +122,26 @@ fn wallet() {
     assert!(vec_addresses.len() == 1);
 }
 
+#[test]
+fn fixture_wallet() {
+    use diem_wallet::Mnemonic;
+    
+    // alice
+    let mnemonic_string = "talent sunset lizard pill fame nuclear spy noodle basket okay critic grow sleep legend hurry pitch blanket clerk impose rough degree sock insane purse";
+
+
+    let mut wallet = WalletLibrary::new_from_mnemonic(Mnemonic::from(&mnemonic_string).unwrap());
+
+    let (main_addr, child_number) = wallet.new_address().unwrap();
+    println!("wallet\n:{:?} === {:x}", child_number, main_addr);
+
+    let (_, acc, _) = get_account_from_mnem(mnemonic_string.to_owned()).unwrap();
+    dbg!(&acc);
+
+    // expect the same address for alice
+    assert!(&acc.to_string() == "4C613C2F4B1E67CA8D98A542EE3F59F5");
+}
+
 // TODO: this is duplicated with ol/types/config because of a dependency cycle. Move to Global constants?
 /// check this is CI environment
 pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
