@@ -422,7 +422,7 @@ impl ValidatorBuilder {
         let layout = Layout {
             owners: validators.iter().map(|v| v.owner()).collect(),
             operators: validators.iter().map(|v| v.operator()).collect(),
-            diem_root: DIEM_ROOT_NS.into(),
+            // diem_root: DIEM_ROOT_NS.into(),
             // treasury_compliance: DIEM_ROOT_NS.into(), /////// 0L /////////
         };
         genesis_builder.set_layout(&layout)?;

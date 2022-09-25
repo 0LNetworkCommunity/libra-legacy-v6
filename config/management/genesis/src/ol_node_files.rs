@@ -241,7 +241,7 @@ fn make_genesis_file(
     layout_path: &Option<PathBuf>,
     storage_helper: StorageHelper,
     chain_id: ChainId,
-    namespace: &str,
+    _namespace: &str,
 ) -> Result<(PathBuf, Waypoint), anyhow::Error> {
     let genesis_path = output_dir.join("genesis.blob");
     match prebuilt_genesis {
@@ -256,11 +256,10 @@ fn make_genesis_file(
         None => {
             if repo.is_some() && github_org.is_some() {
                 let remote = format!(
-                    "backend=github;repository_owner={github_org};repository={repo};token={path};namespace={ns}",
+                    "backend=github;repository_owner={github_org};repository={repo};token={path}",
                     repo = repo.as_ref().unwrap(),
                     github_org = github_org.as_ref().unwrap(),
                     path = output_dir.join("github_token.txt").to_str().unwrap(),
-                    ns = &namespace
                 );
                 // building a genesis file requires a set_layout path. The default is for genesis to use a local set_layout file. Once a genesis occurs, the canonical chain can store the genesis information to github repo for future verification and creating a genesis blob.
                 let genesis_waypoint = match layout_path {
