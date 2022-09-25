@@ -223,14 +223,14 @@ impl<S: KVStorage> GenesisBuilder<S> {
         consensus_config: OnChainConsensusConfig,
     ) -> Result<Transaction> {
         /////// 0L /////////
-        let diem_root_key = self.root_key()?;
+        let diem_root_key = self.root_key().ok();
         // let treasury_compliance_key = self.treasury_compliance_key()?;
         let validators = self.validators()?;
         // let move_modules = self.move_modules()?;
         let move_modules = diem_framework_releases::current_module_blobs().to_vec();
 
         let genesis = vm_genesis::encode_genesis_transaction(
-            Some(&diem_root_key), /////// 0L /////////
+            diem_root_key.as_ref(), /////// 0L /////////
             None, // treasury_compliance_key, /////// 0L /////////
             &validators,
             &move_modules,
