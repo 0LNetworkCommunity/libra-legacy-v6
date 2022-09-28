@@ -50,7 +50,7 @@ impl WalletLibrary {
 
     /// Constructor that instantiates a new WalletLibrary from Mnemonic
     pub fn new_from_mnemonic(mnemonic: Mnemonic) -> Self {
-        let seed = Seed::new(&mnemonic, "DIEM");
+        let seed = Seed::new(&mnemonic, "0L"); //////// 0L ////////
         WalletLibrary {
             mnemonic,
             key_factory: KeyFactory::new(&seed).unwrap(),
