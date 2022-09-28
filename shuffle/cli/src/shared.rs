@@ -211,6 +211,7 @@ impl NetworkHome {
       let mut file = File::create(&file_path)?;
       file.write_all(username.as_bytes())?;
       println!("Keys saved to {}", file_path.parent().unwrap().to_str().unwrap());
+      println!("To delete all keys check all paths in .shuffle/networks, since this tool may backup the keys.");
       Ok(())
     }
     //////// end 0L ////////

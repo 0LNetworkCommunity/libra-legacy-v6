@@ -118,7 +118,9 @@ fn archive_current_files(network_home: &NetworkHome) -> Result<()> {
     let time = duration_since_epoch();
     let archive_dir = network_home.create_archive_dir(time)?;
     network_home.archive_old_key_for(LATEST_USERNAME, &archive_dir)?;
-    network_home.archive_old_address_for(LATEST_USERNAME, &archive_dir)
+    network_home.archive_old_address_for(LATEST_USERNAME, &archive_dir)?;
+    println!("Archived old keys. Manually delete these files if they contain PRODUCTION KEYS {}", archive_dir.display());
+    Ok(())
 }
 
 fn generate_new_account(network_home: &NetworkHome) -> Result<LocalAccount> {
@@ -151,7 +153,6 @@ fn save_private_key(network_home: &NetworkHome) -> Result<LocalAccount> {
     // save the key
     network_home.save_key_from_prompt(&acc, &test_key)?;
 
-    // network_home.generate_testkey_address_file(&test_key.public_key())?;
     Ok(LocalAccount::new(
         acc,
         test_key,
