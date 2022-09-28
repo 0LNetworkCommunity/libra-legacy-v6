@@ -129,7 +129,7 @@ export class Stdlib {
     serializer.serializeBytes(content_uri);
     const content_uri_serialized: bytes = serializer.getBytes();
     const args: Seq<bytes> = [content_uri_serialized];
-    const module_id: DiemTypes.ModuleId = new DiemTypes.ModuleId(new DiemTypes.AccountAddress([[104], [160], [48], [213], [182], [75], [129], [10], [39], [144], [118], [101], [228], [198], [118], [196]]), new DiemTypes.Identifier("TestNFT"));
+    const module_id: DiemTypes.ModuleId = new DiemTypes.ModuleId(new DiemTypes.AccountAddress([[122], [193], [190], [132], [229], [60], [172], [191], [134], [251], [188], [45], [228], [177], [151], [201]]), new DiemTypes.Identifier("TestNFT"));
     const function_name: DiemTypes.Identifier = new DiemTypes.Identifier("create_nft");
     const script = new DiemTypes.ScriptFunction(module_id, function_name, tyArgs, args);
     return new DiemTypes.TransactionPayloadVariantScriptFunction(script);
@@ -141,7 +141,7 @@ export class Stdlib {
   static encodeInitializeNftCollectionScriptFunction(nft_type: DiemTypes.TypeTag): DiemTypes.TransactionPayload {
     const tyArgs: Seq<DiemTypes.TypeTag> = [nft_type];
     const args: Seq<bytes> = [];
-    const module_id: DiemTypes.ModuleId = new DiemTypes.ModuleId(new DiemTypes.AccountAddress([[104], [160], [48], [213], [182], [75], [129], [10], [39], [144], [118], [101], [228], [198], [118], [196]]), new DiemTypes.Identifier("NFTStandard"));
+    const module_id: DiemTypes.ModuleId = new DiemTypes.ModuleId(new DiemTypes.AccountAddress([[122], [193], [190], [132], [229], [60], [172], [191], [134], [251], [188], [45], [228], [177], [151], [201]]), new DiemTypes.Identifier("NFTStandard"));
     const function_name: DiemTypes.Identifier = new DiemTypes.Identifier("initialize_nft_collection");
     const script = new DiemTypes.ScriptFunction(module_id, function_name, tyArgs, args);
     return new DiemTypes.TransactionPayloadVariantScriptFunction(script);
@@ -156,7 +156,7 @@ export class Stdlib {
     serializer.serializeBytes(message_bytes);
     const message_bytes_serialized: bytes = serializer.getBytes();
     const args: Seq<bytes> = [message_bytes_serialized];
-    const module_id: DiemTypes.ModuleId = new DiemTypes.ModuleId(new DiemTypes.AccountAddress([[104], [160], [48], [213], [182], [75], [129], [10], [39], [144], [118], [101], [228], [198], [118], [196]]), new DiemTypes.Identifier("Message"));
+    const module_id: DiemTypes.ModuleId = new DiemTypes.ModuleId(new DiemTypes.AccountAddress([[122], [193], [190], [132], [229], [60], [172], [191], [134], [251], [188], [45], [228], [177], [151], [201]]), new DiemTypes.Identifier("Message"));
     const function_name: DiemTypes.Identifier = new DiemTypes.Identifier("set_message");
     const script = new DiemTypes.ScriptFunction(module_id, function_name, tyArgs, args);
     return new DiemTypes.TransactionPayloadVariantScriptFunction(script);
@@ -178,7 +178,7 @@ export class Stdlib {
     serializer.serializeU64(creation_num);
     const creation_num_serialized: bytes = serializer.getBytes();
     const args: Seq<bytes> = [to_serialized, creator_serialized, creation_num_serialized];
-    const module_id: DiemTypes.ModuleId = new DiemTypes.ModuleId(new DiemTypes.AccountAddress([[104], [160], [48], [213], [182], [75], [129], [10], [39], [144], [118], [101], [228], [198], [118], [196]]), new DiemTypes.Identifier("NFTStandard"));
+    const module_id: DiemTypes.ModuleId = new DiemTypes.ModuleId(new DiemTypes.AccountAddress([[122], [193], [190], [132], [229], [60], [172], [191], [134], [251], [188], [45], [228], [177], [151], [201]]), new DiemTypes.Identifier("NFTStandard"));
     const function_name: DiemTypes.Identifier = new DiemTypes.Identifier("transfer");
     const script = new DiemTypes.ScriptFunction(module_id, function_name, tyArgs, args);
     return new DiemTypes.TransactionPayloadVariantScriptFunction(script);
@@ -242,7 +242,7 @@ export class Stdlib {
     }
   }
 
-  static SET_MESSAGE_CODE = Stdlib.fromHexString('a11ceb0b0400000005010002030205050705070c1408201000000001000100020c0a0200074d6573736167650b7365745f6d65737361676568a030d5b64b810a27907665e4c676c4000001040b000b01110002');
+  static SET_MESSAGE_CODE = Stdlib.fromHexString('a11ceb0b0400000005010002030205050705070c1408201000000001000100020c0a0200074d6573736167650b7365745f6d6573736167657ac1be84e53cacbf86fbbc2de4b197c9000001040b000b01110002');
 
   static ScriptArgs: {[name: string]: ScriptDef} = {
     SetMessage: {

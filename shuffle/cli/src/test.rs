@@ -45,7 +45,7 @@ pub async fn run_e2e_tests(
     // happen once, and the second redundant build would be skipped. At least
     // it's cached atm.
     shared::codegen_typescript_libraries(project_path, &account1.address())?;
-    deploy::deploy(&client, &mut account1, project_path).await?;
+    deploy::deploy(&client, &mut account1, project_path, network.get_chain_name()).await?;
 
     let tmp_dir = TempDir::new()?;
     let key1_path = tmp_dir.path().join("private1.key");
