@@ -19,7 +19,7 @@ use structopt::StructOpt;
 pub struct Layout {
     pub operators: Vec<String>,
     pub owners: Vec<String>,
-    pub diem_root: String,
+    // pub diem_root: String, //////// 0L /////////
     // pub treasury_compliance: String, //////// 0L /////////
 }
 

@@ -10,6 +10,7 @@ use diem_global_constants::{
 use diem_management::constants::{self, VALIDATOR_CONFIG, VALIDATOR_OPERATOR};
 use diem_secure_storage::{KVStorage, Namespaced};
 use diem_types::{
+    account_address::AccountAddress,
     chain_id::ChainId,
     on_chain_config::{OnChainConsensusConfig, VMPublishingOption},
     transaction::{
@@ -17,7 +18,6 @@ use diem_types::{
     },
 };
 use vm_genesis::{GenesisMiningProof, Validator};
-
 pub struct GenesisBuilder<S> {
     storage: S,
 }
@@ -48,6 +48,7 @@ impl<S: KVStorage> GenesisBuilder<S> {
             .with_namespace(constants::COMMON_NS)
             .get::<String>(constants::LAYOUT)?
             .value;
+        dbg!(&raw_layout);
         Layout::parse(&raw_layout).map_err(Into::into)
     }
 
@@ -66,14 +67,14 @@ impl<S: KVStorage> GenesisBuilder<S> {
 
     pub fn set_root_key(&mut self, root_key: Ed25519PublicKey) -> Result<()> {
         let layout = self.layout()?;
-        self.with_namespace_mut(&layout.diem_root)
+        self.with_namespace_mut(DIEM_ROOT_KEY)
             .set(DIEM_ROOT_KEY, root_key)
             .map_err(Into::into)
     }
 
     pub fn root_key(&self) -> Result<Ed25519PublicKey> {
         let layout = self.layout()?;
-        self.with_namespace(&layout.diem_root)
+        self.with_namespace(DIEM_ROOT_KEY)
             .get(DIEM_ROOT_KEY)
             .map(|r| r.value)
             .map_err(Into::into)
@@ -136,8 +137,9 @@ impl<S: KVStorage> GenesisBuilder<S> {
         let mut validators = Vec::new();
         for owner in &layout.owners {
             let name = owner.as_bytes().to_vec();
-            let address = diem_config::utils::default_validator_owner_auth_key_from_name(&name)
-                .derived_address();
+            let address = AccountAddress::from_hex(owner)?;
+            // let address = diem_config::utils::default_validator_owner_auth_key_from_name(&name)
+            //     .derived_address();
             let auth_key = self
                 .owner_key(owner)
                 .map_or(AuthenticationKey::zero(), |k| {
@@ -223,13 +225,14 @@ impl<S: KVStorage> GenesisBuilder<S> {
         consensus_config: OnChainConsensusConfig,
     ) -> Result<Transaction> {
         /////// 0L /////////
-        let diem_root_key = self.root_key()?;
+        let diem_root_key = self.root_key().ok();
         // let treasury_compliance_key = self.treasury_compliance_key()?;
         let validators = self.validators()?;
-        let move_modules = self.move_modules()?;
+        // let move_modules = self.move_modules()?;
+        let move_modules = diem_framework_releases::current_module_blobs().to_vec();
 
         let genesis = vm_genesis::encode_genesis_transaction(
-            Some(&diem_root_key), /////// 0L /////////
+            diem_root_key.as_ref(), /////// 0L /////////
             None, // treasury_compliance_key, /////// 0L /////////
             &validators,
             &move_modules,

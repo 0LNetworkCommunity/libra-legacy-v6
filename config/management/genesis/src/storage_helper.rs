@@ -63,18 +63,7 @@ impl StorageHelper {
     pub fn initialize_with_mnemonic_swarm(&self, namespace: String, mnemonic: String) {
         let keys = KeyScheme::new_from_mnemonic(mnemonic);
         let mut storage = self.storage(namespace.clone());
-        // let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([5; 32]);
-        // let dummy_root = Ed25519PrivateKey::from_encoded_string(
-        //     "8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010"
-        // ).unwrap();
 
-        // storage
-        //     .import_private_key(DIEM_ROOT_KEY, dummy_root.clone())
-        //     .unwrap();
-        // // let diem_root_key = storage_owner.export_private_key(DIEM_ROOT_KEY).unwrap();
-        // storage
-        //     .import_private_key(TREASURY_COMPLIANCE_KEY, dummy_root)
-        //     .unwrap();
         storage
             .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
             .unwrap();
@@ -123,17 +112,18 @@ impl StorageHelper {
 
         if is_genesis {
             // Data needed for testnet, swarm, and genesis ceremony.
-            let mut storage_root = self.storage("root".to_owned());
-            let dummy_root = Ed25519PrivateKey::from_encoded_string(
-                "8108aedfacf5cf1d73c67b6936397ba5fa72817f1b5aab94658238ddcdc08010" // protests rage accross the nation
-            ).unwrap();
+            // let mut storage_root = self.storage("root".to_owned());
+            // let dummy_root_for_swarm = Ed25519PrivateKey::from_encoded_string(
+            //   //  "50726f7465737473207261676520616363726f737320746865206e6174696f6e"// 
+            //     &hex::encode("Protests rage accross the nation")
+            // ).unwrap();
 
-            storage_root
-                .import_private_key(DIEM_ROOT_KEY, dummy_root.clone())
-                .unwrap();
-            storage_root
-                .import_private_key(TREASURY_COMPLIANCE_KEY, dummy_root)
-                .unwrap();
+            // storage_root
+            //     .import_private_key(DIEM_ROOT_KEY, dummy_root_for_swarm.clone())
+            //     .unwrap();
+            // storage_root
+            //     .import_private_key(TREASURY_COMPLIANCE_KEY, dummy_root_for_swarm)
+            //     .unwrap();
             storage_owner
                 .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
                 .unwrap();
