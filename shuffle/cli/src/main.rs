@@ -6,7 +6,7 @@ use crate::{
     test::TestCommand,
 };
 use anyhow::{anyhow, Result};
-use diem_types::account_address::AccountAddress;
+use diem_types::{account_address::AccountAddress};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -33,19 +33,24 @@ pub async fn main() -> Result<()> {
         Subcommand::Deploy {
             project_path,
             network,
+            mnem,
         } => {
+            let name = normalized_network_name(network.clone()).to_owned();
             deploy::handle(
-                &home.new_network_home(normalized_network_name(network.clone()).as_str()),
+                &home.new_network_home(&name),
                 &shared::normalized_project_path(project_path)?,
                 shared::normalized_network_url(&home, network)?,
+                home.read_networks_toml()?.get(&name)?.get_chain_name(),
+                mnem,
             )
             .await
         }
-        Subcommand::Account { root, network } => {
+        Subcommand::Account { root, network, mnem } => {
             account::handle(
                 &home,
                 root,
                 home.get_network_struct_from_toml(normalized_network_name(network).as_str())?,
+                mnem,
             )
             .await
         }
@@ -136,6 +141,9 @@ pub enum Subcommand {
 
         #[structopt(short, long)]
         network: Option<String>,
+
+        #[structopt(short, long)]
+        mnem: bool,
     },
     Account {
         #[structopt(short, long, help = "Creates account from mint.key passed in by user")]
@@ -143,6 +151,9 @@ pub enum Subcommand {
 
         #[structopt(short, long)]
         network: Option<String>,
+
+        #[structopt(short, long)]
+        mnem: bool,
     },
     #[structopt(about = "Starts a REPL for onchain inspection")]
     Console {

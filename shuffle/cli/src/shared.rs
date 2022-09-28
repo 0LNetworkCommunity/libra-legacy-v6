@@ -5,8 +5,9 @@ use crate::context::UserContext;
 use anyhow::{anyhow, Result};
 use diem_crypto::ed25519::{Ed25519PrivateKey, Ed25519PublicKey};
 use diem_sdk::client::AccountAddress;
-use diem_types::transaction::authenticator::AuthenticationKey;
+use diem_types::{transaction::authenticator::AuthenticationKey, chain_id::NamedChain};
 use directories::BaseDirs;
+use generate_key::save_key;
 use move_package::{
     compilation::compiled_package::CompiledPackage,
     source_package::{layout::SourcePackageLayout, manifest_parser},
@@ -201,6 +202,20 @@ impl NetworkHome {
         ))
     }
 
+    //////// 0L ///////
+    pub fn save_key_from_prompt(&self, acc: &AccountAddress,  key: &Ed25519PrivateKey) -> Result<()>{
+      let username = acc.to_string();
+      save_key(key.to_owned(), self.key_path_for(LATEST_USERNAME).as_path());
+      // save address file
+      let file_path = self.address_path_for(&LATEST_USERNAME);
+      let mut file = File::create(&file_path)?;
+      file.write_all(username.as_bytes())?;
+      println!("Keys saved to {}", file_path.parent().unwrap().to_str().unwrap());
+      println!("To delete all keys check all paths in .shuffle/networks, since this tool may backup the keys.");
+      Ok(())
+    }
+    //////// end 0L ////////
+
     pub fn generate_testkey_address_file(&self, public_key: &Ed25519PublicKey) -> Result<()> {
         let address = AuthenticationKey::ed25519(public_key).derived_address();
         let address_filepath = self.address_path_for(TEST_USERNAME);
@@ -372,6 +387,7 @@ pub struct Network {
     json_rpc_url: Url,
     dev_api_url: Url,
     faucet_url: Option<Url>,
+    chain_id: Option<NamedChain> //////// 0L ////////
 }
 
 impl Network {
@@ -380,12 +396,14 @@ impl Network {
         json_rpc_url: Url,
         dev_api_url: Url,
         faucet_url: Option<Url>,
+        chain_id: Option<NamedChain>, //////// 0L ////////
     ) -> Network {
         Network {
             name,
             json_rpc_url,
             dev_api_url,
             faucet_url,
+            chain_id, //////// 0L ////////
         }
     }
 
@@ -411,6 +429,10 @@ impl Network {
             None => Err(anyhow!("This network doesn't have a faucet url")),
         }
     }
+
+    pub fn get_chain_name(&self) -> NamedChain {
+      self.chain_id.unwrap_or(NamedChain::TESTING)
+    }
 }
 
 impl Default for Network {
@@ -420,6 +442,7 @@ impl Default for Network {
             Url::from_str("http://127.0.0.1:8080").unwrap(),
             Url::from_str("http://127.0.0.1:8080").unwrap(),
             None,
+            Some(NamedChain::TESTING), //////// 0L ////////
         )
     }
 }

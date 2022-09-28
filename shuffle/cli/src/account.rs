@@ -30,7 +30,7 @@ use std::{
 };
 
 // Creates new account from randomly generated private/public key pair.
-pub async fn handle(home: &Home, root: Option<PathBuf>, network: Network) -> Result<()> {
+pub async fn handle(home: &Home, root: Option<PathBuf>, network: Network, from_mnem: bool) -> Result<()> {
     let network_home = home.new_network_home(&network.get_name());
     network_home.generate_paths_if_nonexistent()?;
     check_nodeconfig_exists_if_localhost_used(home, &network)?;
@@ -40,6 +40,10 @@ pub async fn handle(home: &Home, root: Option<PathBuf>, network: Network) -> Res
             true => archive_current_files(&network_home)?,
             false => return Ok(()),
         }
+    }
+    if from_mnem { //////// 0L ////////
+      save_private_key(&network_home)?;
+      return Ok(())
     }
     let new_account = generate_new_account(&network_home)?;
     let test_account = generate_test_account(&network_home)?;
@@ -114,7 +118,9 @@ fn archive_current_files(network_home: &NetworkHome) -> Result<()> {
     let time = duration_since_epoch();
     let archive_dir = network_home.create_archive_dir(time)?;
     network_home.archive_old_key_for(LATEST_USERNAME, &archive_dir)?;
-    network_home.archive_old_address_for(LATEST_USERNAME, &archive_dir)
+    network_home.archive_old_address_for(LATEST_USERNAME, &archive_dir)?;
+    println!("Archived old keys. Manually delete these files if they contain PRODUCTION KEYS {}", archive_dir.display());
+    Ok(())
 }
 
 fn generate_new_account(network_home: &NetworkHome) -> Result<LocalAccount> {
@@ -138,6 +144,23 @@ fn generate_test_account(network_home: &NetworkHome) -> Result<LocalAccount> {
         0,
     ))
 }
+
+//////// 0L ////////
+fn save_private_key(network_home: &NetworkHome) -> Result<LocalAccount> {
+    println!("DANGER: This is saving a private key to disk. This is not recommended for production KEYS.");
+    let (_, acc, w) = ol_keys::wallet::get_account_from_prompt();
+    let test_key = w.get_private_key(&acc)?;
+    // save the key
+    network_home.save_key_from_prompt(&acc, &test_key)?;
+
+    Ok(LocalAccount::new(
+        acc,
+        test_key,
+        0,
+    ))
+}
+//////// end 0L ////////
+
 
 pub async fn get_treasury_account(
     client: &DevApiClient,

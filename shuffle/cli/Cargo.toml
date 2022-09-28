@@ -54,6 +54,9 @@ serde_yaml = "0.8.17"
 smoke-test = { path = "../../testsuite/smoke-test" }
 transaction-builder-generator = { path = "../../diem-move/transaction-builder-generator" }
 
+######### 0L ######## 
+ol-keys = { path = "../../ol/keys"}
+
 [[bin]]
 name = "shuffle"
 path = "src/main.rs"
