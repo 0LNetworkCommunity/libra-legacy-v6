@@ -43,7 +43,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-const DIEM_ROOT_NS: &str = "diem_root";
+const _DIEM_ROOT_NS: &str = "diem_root";
 const OPERATOR_NS: &str = "_operator";
 const OWNER_NS: &str = "_owner";
 

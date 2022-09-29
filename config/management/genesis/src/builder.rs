@@ -66,14 +66,12 @@ impl<S: KVStorage> GenesisBuilder<S> {
     }
 
     pub fn set_root_key(&mut self, root_key: Ed25519PublicKey) -> Result<()> {
-        let layout = self.layout()?;
         self.with_namespace_mut(DIEM_ROOT_KEY)
             .set(DIEM_ROOT_KEY, root_key)
             .map_err(Into::into)
     }
 
     pub fn root_key(&self) -> Result<Ed25519PublicKey> {
-        let layout = self.layout()?;
         self.with_namespace(DIEM_ROOT_KEY)
             .get(DIEM_ROOT_KEY)
             .map(|r| r.value)

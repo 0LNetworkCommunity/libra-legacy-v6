@@ -48,6 +48,7 @@ impl ShuffleTestHelper {
             Url::from_str(chain_info.json_rpc())?,
             Url::from_str(chain_info.rest_api())?,
             None,
+            None,
         );
         let mut mapping: BTreeMap<String, Network> = BTreeMap::new();
         mapping.insert(FORGE_NETWORK_NAME.to_string(), network.clone());
@@ -121,7 +122,7 @@ impl ShuffleTestHelper {
     ) -> Result<()> {
         let url = Url::from_str(dev_api_url)?;
         let client = DevApiClient::new(reqwest::Client::new(), url)?;
-        deploy::deploy(&client, account, &self.project_path()).await
+        deploy::deploy(&client, account, &self.project_path(), diem_types::chain_id::NamedChain::TESTING).await
     }
 
     pub fn codegen_project(&self, account: &LocalAccount) -> Result<()> {

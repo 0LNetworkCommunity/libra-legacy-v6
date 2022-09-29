@@ -8,7 +8,6 @@ use consensus_types::safety_data::SafetyData;
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     Uniform,
-    ValidCryptoMaterialStringExt
 };
 use diem_global_constants::{
     CONSENSUS_KEY, DIEM_ROOT_KEY, EXECUTION_KEY, FULLNODE_NETWORK_KEY, OPERATOR_KEY, OWNER_KEY,

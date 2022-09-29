@@ -303,6 +303,28 @@ impl Home {
         Ok(network_toml)
     }
 
+    //////// 0L ////////
+    pub fn add_network_toml(&self, network: Network) -> Result<NetworksConfig> {
+        self.ensure_networks_toml_exists()?;
+
+        let network_toml_contents = fs::read_to_string(self.networks_config_path.as_path())?;
+        let mut network_toml: NetworksConfig = toml::from_str(network_toml_contents.as_str())?;
+
+        if network_toml.networks.get(&network.get_name()).is_some(){
+          return Err(anyhow!("Network name already exists"));
+        }
+
+        network_toml.networks.insert(network.get_name(), network);
+
+        let networks_config_string = toml::to_string_pretty(&network_toml)?;
+
+        fs::create_dir_all(&self.shuffle_path)?;
+        fs::write(&self.networks_config_path, networks_config_string)?;
+
+        Ok(network_toml)
+    }
+    ///////// end 0L ////////
+
     fn ensure_networks_toml_exists(&self) -> Result<()> {
         match self.networks_config_path.exists() {
             true => Ok(()),
@@ -353,7 +375,7 @@ pub fn normalized_network_name(network: Option<String>) -> String {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct NetworksConfig {
-    networks: BTreeMap<String, Network>,
+    pub networks: BTreeMap<String, Network>,
 }
 
 impl NetworksConfig {
@@ -849,6 +871,7 @@ mod test {
             "localhost".to_string(),
             Url::from_str("http://127.0.0.1:8080").unwrap(),
             Url::from_str("http://127.0.0.1:8080").unwrap(),
+            None,
             None,
         )
     }

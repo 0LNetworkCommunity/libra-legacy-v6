@@ -6,7 +6,8 @@ use crate::{
     test::TestCommand,
 };
 use anyhow::{anyhow, Result};
-use diem_types::{account_address::AccountAddress};
+use diem_types::{account_address::AccountAddress, chain_id::NamedChain};
+use reqwest::Url;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -17,6 +18,26 @@ pub async fn main() -> Result<()> {
     let command = Command::from_args();
     let home = Home::new(normalize_home_path(command.home_path).as_path())?;
     match command.subcommand {
+        Subcommand::Network { add, url, name, chain } => {
+          if add && url.is_some() && name.is_some() {
+            // create a Network struct
+            let u = url.expect("could not read URL");
+            let net = shared::Network::new(name.expect("could not read name of network"), u.clone(), u, None, chain);
+            home.add_network_toml(net)?;
+          } else if add {
+            println!("Error: Please provide a url and name for the network");
+          };
+
+          let net = home.read_networks_toml()?;
+          println!("Networks:");
+          
+          net.networks.into_iter().for_each(|(name, cfg)| {
+            println!("Name: {} Chain-Id: {}  Url: {}", name, cfg.get_chain_name(), cfg.get_dev_api_url().to_string());
+          });
+
+          println!("\nUse --add -h to see how to add a network. Or edit file manually at: {}", home.get_networks_path().parent().unwrap().join("Networks.toml").to_str().unwrap());
+          Ok(())
+        },
         Subcommand::New { blockchain, path } => new::handle(&home, blockchain, path),
         Subcommand::Node { genesis } => node::handle(&home, genesis),
         Subcommand::Build {
@@ -105,6 +126,23 @@ struct Command {
 #[derive(Debug, StructOpt)]
 #[structopt(name = "shuffle", about = "CLI frontend for Shuffle toolset")]
 pub enum Subcommand {
+    //////// 0L ////////
+    #[structopt(about = "View, Add, or Remove networks which Shuffle connects to.")]
+    Network {
+        #[structopt(short, long)]
+        add: bool,
+        /// Url of API endpoint
+        // for adding a network
+        #[structopt(short, long)]
+        url: Option<Url>,
+        /// Name to give a network to be added
+        #[structopt(short, long)]
+        name: Option<String>,
+        /// Optional chain id of the network, defaults to TESTING for local purposes. Use MAINNET for mainnet and testnet.
+        #[structopt(short, long)]
+        chain: Option<NamedChain>,
+    },
+
     #[structopt(about = "Creates a new shuffle project for Move development")]
     New {
         #[structopt(short, long, default_value = new::DEFAULT_BLOCKCHAIN)]
