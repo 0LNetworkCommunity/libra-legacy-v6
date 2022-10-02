@@ -19,5 +19,5 @@ bcs = "0.1.2"
 diem-client = { path = "../diem-client", features = ["blocking"], default-features = false }
 diem-crypto = { path = "../diem-crypto" }
 diem-types = { path = "../../types" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
 diem-workspace-hack = { version = "0.1", path = "../diem-workspace-hack" }

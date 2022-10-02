@@ -24,16 +24,16 @@ diem-metrics = { path = "../../crates/diem-metrics" }
 diem-state-view = { path = "../../storage/state-view" }
 diem-types = { path = "../../types" }
 diem-workspace-hack = { path = "../../crates/diem-workspace-hack" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
-move-vm-runtime = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
-move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
-move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
-move-bytecode-utils = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
-move-stdlib = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
+move-vm-runtime = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
+move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
+move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
+move-bytecode-utils = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
+move-stdlib = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
 diem-framework = { path = "../../diem-move/diem-framework" }
 serde_json = "1.0.64"
 serde = { version = "1.0.124", default-features = false }
-read-write-set-dynamic = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37"}
+read-write-set-dynamic = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539"}
 
 mvhashmap = { path = "../mvhashmap" }
 diem-parallel-executor = {path = "../parallel-executor" }

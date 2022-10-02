@@ -19,7 +19,7 @@ serde_yaml = "0.8.17"
 
 diem-types = { path = "../../types" }
 diem-workspace-hack = { path = "../../crates/diem-workspace-hack" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
 serde-reflection = "0.3.5"
 serde-generate = "0.20.6"
 bcs = "0.1.2"

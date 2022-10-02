@@ -21,13 +21,13 @@ hex = "0.4.3"
 serde = { version = "1.0.124", default-features = false }
 
 ## Move dependencies
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
-move-ir-compiler = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
-move-vm-runtime = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
-move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
-move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
-read-write-set = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
-move-command-line-common = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
+move-ir-compiler = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
+move-vm-runtime = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
+move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
+move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
+read-write-set = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
+move-command-line-common = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
 
 ## Diem-Move dependencies
 diem-writeset-generator = { path = "../writeset-transaction-generator" }

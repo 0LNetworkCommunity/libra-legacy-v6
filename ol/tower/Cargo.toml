@@ -28,7 +28,7 @@ diemdb = { path = "../../storage/diemdb"}
 diem-logger = { path = "../../crates/diem-logger" }
 storage-interface= {path = "../../storage/storage-interface"}
 vm-genesis={path="../../diem-move/vm-genesis"}
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "98ac3f65b4b7865c22883ad341a8ba4ee3154539" }
 regex = "1"
 rpassword = "5.0"
 ajson = "0.2.3"
