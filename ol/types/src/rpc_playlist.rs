@@ -53,7 +53,8 @@ impl FullnodePlaylist {
 
     /// update the app configs 0L.toml file
     pub fn update_config_file(&self, path: Option<PathBuf>) -> Result<(), Error> {
-        let mut new_cfg = config::parse_toml(path.unwrap())?;
+        
+        let mut new_cfg = config::parse_toml(path)?;
         let mut peers = self.get_urls();
         let mut rng = thread_rng();
         peers.shuffle(&mut rng);

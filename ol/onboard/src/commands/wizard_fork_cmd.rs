@@ -158,7 +158,7 @@ impl Runnable for ForkCmd {
 
         let home_dir = cfg.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
-        let namespace = cfg.profile.auth_key.clone().to_string() + "-oper";
+        let namespace = cfg.profile.auth_key.to_string() + "-oper";
         let val_ip_address = cfg.profile.ip;
 
         // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
@@ -300,16 +300,6 @@ pub fn write_account_json(
     };
 
     match val_cfg.create_manifest(json_path)
-
-    // match ValConfigs::new(
-    //     Some(block),
-    //     keys,
-    //     cfg.profile.ip,
-    //     cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
-    //     autopay_batch,
-    //     autopay_signed,
-    // )
-    // .create_manifest(json_path)
     {
         Ok(_) => {
             status_ok!(

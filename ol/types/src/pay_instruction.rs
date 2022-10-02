@@ -149,7 +149,7 @@ impl PayInstruction {
     }
 
     /// checks ths instruction against the raw script for correctness.
-    pub fn check_instruction_match_tx(&self, script: Script) -> Result<(), Error> {
+    pub fn check_instruction_match_tx(&self, script: &Script) -> Result<(), Error> { 
         let PayInstruction {
             uid,
             type_move,
@@ -197,8 +197,8 @@ impl PayInstruction {
             uid = &self.uid.unwrap(),
             percent_balance = *&self.value_move.unwrap() as f64 /100f64,
             times = times,
-            note = &self.note.clone().unwrap(),
-            epoch_ending = &self.end_epoch.unwrap(),
+            note = if let Some(n) = &self.note { n } else {""}, // the note is optional for the message
+            epoch_ending = if let Some(e) = &self.end_epoch { e.to_string() } else {"(not set)".to_string()}, // a missing epoch in the message is no reason to panic
             destination = &self.destination,
           )
         },
@@ -208,8 +208,8 @@ impl PayInstruction {
               uid = &self.uid.unwrap(),
               percent_balance = *&self.value_move.unwrap() as f64 /100f64,
               times = times,
-              note = &self.note.clone().unwrap(),
-              epoch_ending = &self.end_epoch.unwrap(),
+              note = if let Some(n) = &self.note { n } else {""}, // the note is optional for the message
+              epoch_ending = if let Some(e) = &self.end_epoch { e.to_string() } else {"(not set)".to_string()}, // a missing epoch in the message is no reason to panic
               destination = &self.destination,
             )
         },
@@ -219,8 +219,8 @@ impl PayInstruction {
                 uid = &self.uid.unwrap(),
                 total_val = *&self.value_move.unwrap() / 1_000_000, // scaling factor
                 times = times,
-                note = &self.note.clone().unwrap(),
-                epoch_ending = &self.end_epoch.unwrap(),
+                note = if let Some(n) = &self.note { n } else {""}, // the note is optional for the message
+                epoch_ending = if let Some(e) = &self.end_epoch { e.to_string() } else {"(not set)".to_string()}, // a missing epoch in the message is no reason to panic
                 destination = &self.destination,
             )
         },
@@ -228,7 +228,7 @@ impl PayInstruction {
           format!(
                 "Instruction {uid}: {note}\nSend {total_val} once to address: {destination}?",
                 uid = &self.uid.unwrap(),
-                note = &self.note.clone().unwrap(),
+                note = if let Some(n) = &self.note { n } else {""}, // the note is optional for the message
                 total_val = *&self.value_move.unwrap() / 1_000_000, // scaling factor
                 destination = &self.destination,
             )

@@ -230,7 +230,7 @@ impl ValConfigs {
                   let tx = signed.iter().nth(i).unwrap();
                   let payload = tx.clone().into_raw_transaction().into_payload();
                   if let TransactionPayload::Script(s) = payload {
-                      match instr.check_instruction_match_tx(s.clone()) {
+                        match instr.check_instruction_match_tx(&s) { // Now passing reference instead of s.clone() (Michael64)
                           Ok(_) => {}
                           Err(e) => {
                             // TODO: should this panic?

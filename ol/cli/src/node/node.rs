@@ -232,7 +232,8 @@ impl Node {
     /// database is initialized, Please do NOT invoke this function frequently
     pub fn db_files_exist(&mut self) -> bool {
         // check to see no files are present
-        let db_path = self.app_conf.workspace.db_path.clone().join("diemdb");
+        //let db_path = self.app_conf.workspace.db_path.clone().join("diemdb");
+        let db_path = self.app_conf.workspace.db_path.join("diemdb");
         db_path.exists()
     }
 
