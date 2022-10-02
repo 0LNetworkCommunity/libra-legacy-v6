@@ -234,6 +234,7 @@
     <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&previous_set)) {
         <b>let</b> addr = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&previous_set, i);
         <b>let</b> case = <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_now);
+
         <b>if</b> (
           // we care about nodes that are performing consensus correctly, case 1 and 2.
           case &lt; 3 &&
@@ -243,6 +244,7 @@
             // also reset the jail counter for any successful unjails
             <a href="Jail.md#0x1_Jail_remove_consecutive_fail">Jail::remove_consecutive_fail</a>(vm, addr);
         } <b>else</b> {
+
           <a href="Jail.md#0x1_Jail_jail">Jail::jail</a>(vm, addr);
         };
         i = i+ 1;
@@ -277,8 +279,12 @@
         <b>let</b> addr = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&top_accounts, i);
         <b>let</b> mined_last_epoch = <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr);
         <b>let</b> case = <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_now);
+        print(&44444444);
         print(&addr);
         print(&case);
+        print(&<a href="Jail.md#0x1_Jail_is_jailed">Jail::is_jailed</a>(addr));
+        print(&<a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr));
+        print(&<a href="Vouch.md#0x1_Vouch_unrelated_buddies_above_thresh">Vouch::unrelated_buddies_above_thresh</a>(addr));
 
         <b>if</b> (
             // ignore proven nodes already on list
@@ -296,7 +302,8 @@
             // <b>has</b> proven themselves in the previous round. If your
             // vouchers fall out of the set, you may also fall out,
             // and this chain reaction would cause instability in the network.
-            <a href="Vouch.md#0x1_Vouch_unrelated_buddies_above_thresh">Vouch::unrelated_buddies_above_thresh</a>(addr)            ) {
+            <a href="Vouch.md#0x1_Vouch_unrelated_buddies_above_thresh">Vouch::unrelated_buddies_above_thresh</a>(addr)
+          ) {
             print(&99990901);
             <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> proposed_set, addr);
         };
