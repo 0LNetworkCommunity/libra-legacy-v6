@@ -193,8 +193,8 @@ impl Node {
 
             cs.validator_view = Some(validators.clone());
             cs.validators_stats = Some(validators_stats);
-            cs.vals_config_stats = calc_config_stats(validators.clone()).ok();
-            cs.autopay_watch_list = self.get_autopay_watch_list(validators.clone());
+            cs.vals_config_stats = calc_config_stats(&validators).ok();
+            cs.autopay_watch_list = self.get_autopay_watch_list(&validators);
             cs.upgrade = self.client.get_oracle_upgrade_state()?.into_inner();
 
             self.vitals.chain_view = Some(cs.clone());
@@ -288,13 +288,13 @@ impl Node {
     }
 }
 
-fn calc_config_stats(vals: Vec<ValidatorView>) -> Result<ValsConfigStats, Error> {
+fn calc_config_stats(vals: &Vec<ValidatorView>) -> Result<ValsConfigStats, Error> {
     let mut count_autopay = 0;
     let mut count_operators = 0;
     let mut count_positive_balance = 0;
 
     for val in vals.iter() {
-        if let Some(config) = val.validator_config.clone() {
+        if let Some(config) = &val.validator_config {
             if let Some(a) = &val.autopay {
                 if a.payments.iter().any(|each| each.is_percent_of_change()) {
                     count_autopay += 1;
@@ -334,7 +334,7 @@ fn _scan_port(ip: &String, port: &u16) -> bool {
     let timeout = Duration::from_millis(200);
     match IpAddr::from_str(ip) {
         Ok(address) => {
-            let socket_address = SocketAddr::new(address, port.clone());
+            let socket_address = SocketAddr::new(address, *port);
             match TcpStream::connect_timeout(&socket_address, timeout) {
                 Ok(_) => true,
                 _ => false,

@@ -24,7 +24,7 @@ pub fn make_client(url: Option<Url>) -> Result<DiemClient, Error> {
 pub fn get_client() -> Option<DiemClient> {
     let config = app_config();
     for url in &config.profile.upstream_nodes {
-        let client = DiemClient::new(url.clone());
+        let client = DiemClient::new(url.to_owned());
         // TODO: What's the better way to check we can connect to client?
         let metadata = client.get_metadata();
         if metadata.is_ok() {
@@ -85,7 +85,7 @@ pub fn default_local_rpc() -> Result<DiemClient, Error> {
 /// connect a swarm client
 pub fn swarm_test_client(swarm_path: PathBuf) -> Result<DiemClient, Error> {
     let (url, _) = ol_types::config::get_swarm_rpc_url(swarm_path.clone());
-    make_client(Some(url.clone()))
+    make_client(Some(url))
 }
 
 /// picks what URL to connect to based on sync state. Or returns the client for swarm.

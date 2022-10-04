@@ -90,7 +90,7 @@ impl Node {
     /// default node connection from configs
     pub fn default_from_cfg(mut cfg: AppCfg, swarm_path: Option<PathBuf>) -> Node {
         // NOTE: not intended for swarm.
-        let client = client::pick_client(swarm_path.clone(), &mut cfg).unwrap();
+        let client = client::pick_client(swarm_path.to_owned(), &mut cfg).unwrap();
         Node::new(client, &cfg, swarm_path.is_some())
     }
 
@@ -194,7 +194,7 @@ impl Node {
     /// nothing is configured yet, empty box
     pub fn configs_exist(&mut self) -> bool {
         // check to see no files are present
-        let home_path = self.app_conf.workspace.node_home.clone();
+        let home_path = self.app_conf.workspace.node_home.to_owned();
 
         let c_exist = home_path.join("vdf_proofs/proof_0.json").exists()
             && home_path.join("validator.node.yaml").exists()
@@ -214,7 +214,7 @@ impl Node {
 
     /// database is initialized, Please do NOT invoke this function frequently
     pub fn db_bootstrapped(&mut self) -> bool {
-        let file = self.app_conf.workspace.db_path.clone();
+        let file = self.app_conf.workspace.db_path.to_owned();
         if file.exists() {
             // When not committing, we open the DB as secondary so the tool
             // is usable along side a running node on the same DB.
@@ -232,7 +232,7 @@ impl Node {
     /// database is initialized, Please do NOT invoke this function frequently
     pub fn db_files_exist(&mut self) -> bool {
         // check to see no files are present
-        let db_path = self.app_conf.workspace.db_path.clone().join("diemdb");
+        let db_path = self.app_conf.workspace.db_path.to_owned().join("diemdb");
         db_path.exists()
     }
 

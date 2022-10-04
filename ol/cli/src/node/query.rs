@@ -459,7 +459,7 @@ pub fn test_fixture_struct() -> AnnotatedMoveStruct {
 
     AnnotatedMoveStruct {
         abilities: AbilitySet::EMPTY | Ability::Key,
-        type_: module_tag.clone(),
+        type_: module_tag,
         value: vec![(key, value)],
     }
 }
@@ -480,7 +480,7 @@ pub fn test_fixture_wallet_type(
 
     let move_struct = AnnotatedMoveStruct {
         abilities: AbilitySet::EMPTY | Ability::Key,
-        type_: module_tag.clone(),
+        type_: module_tag,
         value,
     };
     s.insert(move_struct.type_.clone(), move_struct);
