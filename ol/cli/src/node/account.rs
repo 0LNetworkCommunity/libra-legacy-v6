@@ -218,8 +218,8 @@ impl Node {
             Ok(account_state) => {
                 let handles = account_state.get_diem_account_resource()?.map(|resource| {
                     (
-                        resource.sent_events().clone(),
-                        resource.received_events().clone(),
+                        resource.sent_events().to_owned(),
+                        resource.received_events().to_owned(),
                     )
                 });
                 Ok(handles)
