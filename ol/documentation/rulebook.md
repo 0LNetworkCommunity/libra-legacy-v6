@@ -18,10 +18,10 @@ Here's a quick reference to the policies implemented at genesis, with further di
 - We do not do Proof of Stake, instead preventing Sybil accounts is done through Delay Towers, a sybil resistance technique we invented.
 
 - It uses Proofs of elapsed time which are done by the `tower` app on cloud machines, or the `carpe` desktop all for end users.
- 
+
 - Validators are required to build Delay Towers, they must produce 6 delay proofs per day in order to gain admission to the validator set, and also to remain.
 
-- End Users can optionally build Delay Towers to establish a persistent identity (and perhaps later join as a validator), and there is a reward for that. 
+- End Users can optionally build Delay Towers to establish a persistent identity (and perhaps later join as a validator), and there is a reward for that.
 
 
 ## Validator Rewards
@@ -33,7 +33,7 @@ Here's a quick reference to the policies implemented at genesis, with further di
 - To become a candidate for a Validator Node, all that is required is to run the configuration tool, and to have any existing Validator in a current validator set send an onboarding transaction. (it's not a vote by the validator set to include a new validator.)
 While it doesn't take group permission to onboard a new validator, existing validators are rate-limited from creating endless accounts. They can only onboard a new prospective validator every 14 days/epochs.
 
-- The budget for Validator subsidies is "thermostatic", it goes up or down depending on the total number of Validator Nodes doing work successfully. 
+- The budget for Validator subsidies is "thermostatic", it goes up or down depending on the total number of Validator Nodes doing work successfully.
 
   - If the network is about to fail, with only 4 nodes on the network, the budget the network has for security, exactly 8,400,000 coins (the maximum). The 4 nodes share the 8,400,000 coins, 2,100,000 each.
 
@@ -53,18 +53,18 @@ While it doesn't take group permission to onboard a new validator, existing vali
 
 ## Validator Vouch
 - Validators do not need permission from the entire validator set to be elegible to validate. They simply need 1 validator to create their account.
-- To actually enter a validator set and perform work, there need to be 4 validators from the previous validator set which have vouched for that node. 
-- There is a sybil resistance mechanism: each validator needs 4 vouches from separate "families" of accounts, using the Ancestry information (which validator invited the other).
+- To actually enter a validator set and perform work, there need to be 2 validators from the previous validator set which have vouched for that node.
+- There is a sybil resistance mechanism: each validator needs 2 vouches from separate "families" of accounts, using the Ancestry information (which validator invited the other).
 
 ## End Users Mining
-- Anyone with a laptop and with an ordinary account (End Users) can receive coins for creating a Delay Tower (proofs of elapsed time), as a basis for durable identity.  We also call this mining. 
+- Anyone with a laptop and with an ordinary account (End Users) can receive coins for creating a Delay Tower (proofs of elapsed time), as a basis for durable identity.  We also call this mining.
 
 - At genesis the protocol provides a subsidy for end users building up their identity.
 The reward pool for all miners is exactly the equivalent of one Validator Node's rewards in a given day. This can be thought of as a single system subsidized "mining pool".
 
 - It is a smaller reward compared to Validator Nodes. So, end users are encouraged to run Validator Nodes or pool together to share rewards of validator nodes. Future mining pools are up to the community to design and create.
 
-- While End User account receive relatively smaller amounts of coins for the Identity Subsidy, their accounts have no restrictions on transferability, 
+- While End User account receive relatively smaller amounts of coins for the Identity Subsidy, their accounts have no restrictions on transferability,
 
 ## Transferability
 
@@ -81,15 +81,15 @@ The reward pool for all miners is exactly the equivalent of one Validator Node's
 ### Community Wallets
 
 - Community wallets are optional settings which allow greater transparency, and also allow owners of the account to help prevent fraud. This designation of wallet is useful for anyone wishing to set up a program for the community benefit.
-And it also appoints all addresses in the validator set to be observers of the wallet, and they can slow down transactions by vertoing. With sufficient Vetoes the transaction gets rejected. 
+And it also appoints all addresses in the validator set to be observers of the wallet, and they can slow down transactions by vertoing. With sufficient Vetoes the transaction gets rejected.
 
 - Community wallets can only make transfers to Slow Wallets.
 
 ## Autopay Sponsoring Programs in the Community
-- Autopay aims to make it trivially easy for early coin holders to send to development programs within the community. 
+- Autopay aims to make it trivially easy for early coin holders to send to development programs within the community.
 At this stage of the network Autopay can only send to wallets tagged CommunityWallets, this is a benefit of being a community wallet.
 
-- At time of writing, there are approx 12 programs that have elected to use Community Wallets. 
+- At time of writing, there are approx 12 programs that have elected to use Community Wallets.
 
 # Background
 
@@ -108,7 +108,7 @@ At times when the network is insecure (with very few validators), the transactio
 
 The Guaranteed Minimum provides a baseline earnings which the Validator can rely on. A network Subsidy makes up the difference between what actual transactions fees were paid, and what is justifiable as a minimum payment. If the Guaranteed Minimum is 10 Coins given a network condition, but the transaction fees amounted to 3 coins, then the network creates new credits amounting to 7 Coins, and thus pays the total of 10 to the validator. Supposing the minimum guaranteed calculated by the algorithm is instead 1 Coin per validator, and the same 3 coins were due from transaction feed, then the network does not create any new Coins, and pays the 3 coins to the validator (in excess of the 1 Coin the network considered a justifiable minimum).
 
-The network's operating software encodes a schedule of the minimal accepted earnings given certain network conditions. The formula is intentionally simple. 
+The network's operating software encodes a schedule of the minimal accepted earnings given certain network conditions. The formula is intentionally simple.
 
 When there are four validators on the network (near failure) the guaranteed minimum is at its highest. When there are 100 validators on the network, (the transaction throughput is exponentially diminished beyond that amount in BFT networks) the network has excess compute power, and the minimum guaranteed is zero Coins. This means that at 100 validators the validators should expect to earn only the transaction fees flowing through the network.
 For easy comprehension by prospective validators the schedule is a straight line from 4 to 100 validators.
@@ -144,6 +144,6 @@ Sending automatic payments is easy. It is also encouraged socially. On the curre
 
 Since transferring credits by early users can cause undesirable effects (e.g. creating markets and dumping credits on lesser informed users), the earliest members, and the ones most likely to accumulate large amounts of credits are rate-limited in transferring funds. Transferability also interferes with the ability of the auction for security.
 
-The exception is transferring credits to Community Wallets. Those transfers are unlimited. 
+The exception is transferring credits to Community Wallets. Those transfers are unlimited.
 
 There are accounts that have elected to have restricted transferability. Those are designated Slow Wallets. To join a Validator Set a prospective user must have a Slow Wallet.
