@@ -93,7 +93,7 @@ impl Node {
             self.vitals.account_view.operator_balance = self.get_account_balance(a);
         }
 
-        Ok(self.vitals.account_view.clone())
+        Ok(self.vitals.account_view.to_owned())
     }
 
     /// Get the account view struct
@@ -135,7 +135,7 @@ impl Node {
             ValidatorConfigResource::resource_path().as_slice(),
         )? {
             Some(res) => {
-                let mut view = res.get_view().clone();
+                let mut view = res.get_view().to_owned();
 
                 let operator = view.operator_account;
                 if let Some(o) = operator {

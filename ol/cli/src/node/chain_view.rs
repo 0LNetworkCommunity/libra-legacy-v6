@@ -16,7 +16,8 @@ use std::{
     convert::TryFrom,
     net::{IpAddr, SocketAddr, TcpStream},
     str::FromStr,
-    time::Duration,
+    time::Duration, 
+    process::exit,
 };
 
 /// name of chain info key for db
@@ -214,7 +215,13 @@ impl Node {
         let vfn_full_ip = match v.config().fullnode_network_addresses() {
             Ok(ips) => {
                 if ips.len() > 0 {
-                    ips.last().unwrap().to_string()
+                    match ips.last(){
+                        Some(r) => r,
+                        None => {
+                            println!("");
+                            exit(1)
+                        },
+                    }.to_string()
                 } else {
                     "--".to_string()
                 }
@@ -307,7 +314,7 @@ fn calc_config_stats(vals: Vec<ValidatorView>) -> Result<ValsConfigStats, Error>
     let mut count_positive_balance = 0;
 
     for val in vals.iter() {
-        if let Some(config) = val.validator_config.clone() {
+        if let Some(config) = val.validator_config.to_owned() {
             if let Some(a) = &val.autopay {
                 if a.payments.iter().any(|each| each.is_percent_of_change()) {
                     count_autopay += 1;

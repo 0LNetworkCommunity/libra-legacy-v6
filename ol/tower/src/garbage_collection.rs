@@ -53,12 +53,27 @@ pub fn put_in_trash(to_trash: Vec<PathBuf>, cfg: &AppCfg) -> anyhow::Result<()> 
     println!(
         "placing {} files in trash at {}",
         to_trash.len(),
-        new_dir.to_str().unwrap()
+        match new_dir.to_str(){
+            Some(r) => dbg!(r),
+            None => println!(?dir);,
+        }
     );
 
     to_trash.into_iter().for_each(|f| {
-        fs::copy(&f, &new_dir).unwrap();
-        fs::remove_file(&f).unwrap();
+        match fs::copy(&f, &new_dir){
+            Ok(r) => r,
+            Err(e) => {
+                println!("ERROR: {}",e.to_string());
+                exit(1)
+            },
+        };
+        match fs::remove_file(&f){
+            Ok(r) => Ok(()),
+            Err(e) => {
+                println!("ERROR: {}",e.to_string());
+                exit(1)
+            },
+        };
     });
 
     Ok(())

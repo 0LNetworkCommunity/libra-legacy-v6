@@ -27,7 +27,7 @@ pub fn mon() {
             false => "Stopped",
         };
 
-        stdout.queue(cursor::SavePosition).unwrap();
+        stdout.queue(cursor::SavePosition)?;
         stdout.write(
             format!(
                 "Test: {}, Is clean:{}, Is synced: {}, node: {}, miner: {}, Account on chain: {}, epoch: {}-{}, validator set:{}",
@@ -43,8 +43,8 @@ pub fn mon() {
             ).as_bytes()
         ).unwrap();
 
-        stdout.queue(cursor::RestorePosition).unwrap();
-        stdout.flush().unwrap();
+        stdout.queue(cursor::RestorePosition)?;
+        stdout.flush()?;
 
         x = x + 1;
     }

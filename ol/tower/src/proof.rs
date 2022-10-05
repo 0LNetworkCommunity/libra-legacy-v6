@@ -21,7 +21,13 @@ fn mine_genesis(config: &AppCfg, difficulty: u64, security: u64) -> VDFProof {
     let preimage = genesis_preimage(&config);
     let now = Instant::now();
 
-    let proof = do_delay(&preimage, difficulty, security).unwrap(); // Todo: make mine_genesis return a result.
+    let proof = match do_delay(&preimage, difficulty, security){
+        Ok(r) => dbg!(r),
+        Err(e) => {
+            println!("Error: {}",e.to_string());
+            exit(1)
+        },
+    }; // Todo: make mine_genesis return a result.
     let elapsed_secs = now.elapsed().as_secs();
     println!("Delay: {:?} seconds", elapsed_secs);
     let block = VDFProof {

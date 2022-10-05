@@ -3,6 +3,7 @@
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use std::process::exit;
 
 use crate::process_snapshot::{archive_into_recovery, merge_writeset};
 use crate::recover::{
@@ -40,7 +41,7 @@ pub async fn make_recovery_genesis(
     // TODO: for testing letting all validators be in genesis set.
     let validator_set: Vec<AccountAddress> = genesis_accounts
         .vals
-        .clone()
+        .to_owned()
         .into_iter()
         .map(|a| return a.val_account)
         .collect();
@@ -90,7 +91,14 @@ pub fn append_genesis(
     let coin_ws = total_coin_value_restore(legacy_vec, total_coin_value as u128)?;
     all_writesets = merge_writeset(all_writesets, coin_ws)?;
 
-    let all_changes = ChangeSet::new(all_writesets.freeze().unwrap(), gen_cs.events().to_owned());
+    let all_changes = ChangeSet::new(match all_writesets.freeze(){
+        Ok(writeset) => dbg!(writeset),
+        Err(e) => {
+            println!("ERROR: {}", &e.to_string());
+            exit(1)
+        },
+    },
+     gen_cs.events().to_owned());
     Ok(Transaction::GenesisTransaction(WriteSetPayload::Direct(
         all_changes,
     )))
@@ -109,7 +117,13 @@ pub fn migrate_account(legacy: &LegacyRecovery) -> Result<WriteSetMut, Error> {
         let new = BalanceResource::new(bal.coin());
         write_set_mut.push((
             AccessPath::new(account, BalanceResource::resource_path()),
-            WriteOp::Value(bcs::to_bytes(&new).unwrap()),
+            WriteOp::Value(match bcs::to_bytes(&new){
+                Ok(r) => dbg!(r),
+                Err(e) => {
+                    println!("ERROR: {}", &e.to_string());
+                    exit(1)
+                },
+            }),
         ));
     }
 
@@ -118,7 +132,13 @@ pub fn migrate_account(legacy: &LegacyRecovery) -> Result<WriteSetMut, Error> {
     if let Some(m) = &legacy.miner_state {
         write_set_mut.push((
             AccessPath::new(account, TowerStateResource::resource_path()),
-            WriteOp::Value(bcs::to_bytes(&m).unwrap()),
+            WriteOp::Value(match bcs::to_bytes(&m){
+                Ok(r) => dbg!(r),
+                Err(e) => {
+                    println!("Error: {}",e.to_string());
+                    exit(1)
+                },
+            }),
         ));
     }
 
@@ -127,7 +147,13 @@ pub fn migrate_account(legacy: &LegacyRecovery) -> Result<WriteSetMut, Error> {
         let new = SlowWalletResource { is_slow: true };
         write_set_mut.push((
             AccessPath::new(account, SlowWalletResource::resource_path()),
-            WriteOp::Value(bcs::to_bytes(&new).unwrap()),
+            WriteOp::Value(match bcs::to_bytes(&new){
+                Ok(r) => dbg!(r),
+                Err(e) => {
+                    println!("Error: {}",e.to_string());
+                    exit(1)
+                },
+            }),
         ));
     }
 
@@ -145,7 +171,7 @@ pub fn migrate_account(legacy: &LegacyRecovery) -> Result<WriteSetMut, Error> {
     // Community Wallets
     if let Some(w) = &legacy.comm_wallet {
         let new = CommunityWalletsResource {
-            list: w.list.clone(),
+            list: w.list.to_owned(),
         };
         write_set_mut.push((
             AccessPath::new(account, CommunityWalletsResource::resource_path()),

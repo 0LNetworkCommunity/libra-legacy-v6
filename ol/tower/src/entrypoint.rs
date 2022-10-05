@@ -6,7 +6,7 @@ use abscissa_core::{
 use diem_global_constants::NODE_HOME;
 use diem_types::{account_address::AccountAddress, waypoint::Waypoint};
 use reqwest::Url;
-use std::path::PathBuf;
+use std::{path::PathBuf, process::exit};
 
 use crate::commands;
 
@@ -175,7 +175,12 @@ pub fn get_args() -> EntryPointTxsCmd {
 
 // TODO: This function is duplicated in other entrypoint.rs files.
 pub fn get_node_home() -> PathBuf {
-    let mut config_path = dirs::home_dir().unwrap();
+    let mut config_path = match dirs::home_dir(){
+        Some(r) => r,
+        None => {
+            println!("Not returning homedir");
+        exit(1)
+    },};
     config_path.push(NODE_HOME);
     let entry_args = get_args();
 

@@ -10,6 +10,7 @@ use diem_types::transaction::SignedTransaction;
 use diem_wallet::WalletLibrary;
 use ol_types::{account::ValConfigs, pay_instruction::PayInstruction};
 use std::path::PathBuf;
+use std::process::exit;
 
 /// Creates an account.json file for the validator
 pub fn write_manifest(
@@ -20,7 +21,13 @@ pub fn write_manifest(
     autopay_signed: Option<Vec<SignedTransaction>>,
 ) {
     let cfg = if wizard_config.is_some() {
-        wizard_config.unwrap()
+        match wizard_config{
+            Some(r) => dbg!(r),
+            None => {
+                println!("");
+                exit(1)
+            },
+        }
     } else {
         app_config().clone()
     };
@@ -36,7 +43,13 @@ pub fn write_manifest(
         Some(block),
         keys,
         cfg.profile.ip,
-        cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
+        cfg.profile.vfn_ip.unwrap_or(match "0.0.0.0".parse(){
+            Ok(r) => r,
+            Err(e) => {
+                println!("Error: {}",e.to_string());
+                exit(1)
+            },
+        }),
         autopay_batch,
         autopay_signed,
     )
