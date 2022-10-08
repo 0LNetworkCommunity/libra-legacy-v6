@@ -9,6 +9,7 @@ use glob::glob;
 use ol::node::client;
 use ol_types::block::VDFProof;
 use ol_types::config::AppCfg;
+use std::process::exit;
 use std::{fs, io::Write, path::PathBuf, time::Instant};
 use txs::tx_params::TxParams;
 
@@ -21,7 +22,13 @@ fn mine_genesis(config: &AppCfg, difficulty: u64, security: u64) -> VDFProof {
     let preimage = genesis_preimage(&config);
     let now = Instant::now();
 
-    let proof = do_delay(&preimage, difficulty, security).expect("failed to do delay"); // Todo: make mine_genesis return a result.
+    let proof = match do_delay(&preimage, difficulty, security) {
+        Ok(r) => r,
+        Err(e) => {
+            println!("Error: {}", e.to_string());
+            exit(1)
+        }
+    }; // Todo: make mine_genesis return a result.
     let elapsed_secs = now.elapsed().as_secs();
     println!("Delay: {:?} seconds", elapsed_secs);
     let block = VDFProof {
@@ -89,10 +96,7 @@ pub fn mine_and_submit(
         let next = match local_mode {
             true => next_proof::get_next_proof_params_from_local(config)?,
             false => {
-                let client = client::find_a_remote_jsonrpc(
-                    &config,
-                    // config.get_waypoint(swarm_path.clone())?, // 0L todo
-                )?;
+                let client = client::find_a_remote_jsonrpc(&config)?;
                 match next_proof::get_next_proof_from_chain(config, client, swarm_path.clone()) {
                     Ok(n) => n,
                     // failover to local mode, if no onchain data can be found.
@@ -248,7 +252,8 @@ fn test_helper_clear_block_dir(blocks_dir: &PathBuf) {
     // delete the temporary test file and directory.
     // remove_dir_all is scary: be careful with this.
     if blocks_dir.exists() {
-        fs::remove_dir_all(blocks_dir).expect("failed to remove all dirs");
+        fs::remove_dir_all(blocks_dir)
+            .expect("Error while deleting temporary test file and directory")
     }
 }
 #[test]
@@ -267,12 +272,12 @@ fn create_fixtures() {
 
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
         let save_to = format!("./test_fixtures_{}/", ns);
-        fs::create_dir_all(save_to.clone()).expect("failed to create all dirs");
+        fs::create_dir_all(save_to.clone())?;
         let mut configs_fixture = test_make_configs_fixture();
         configs_fixture.workspace.block_dir = save_to.clone();
 
         // mine to save_to path
-        write_genesis(&configs_fixture).expect("failed to write genesis file");
+        write_genesis(&configs_fixture)?;
 
         // also create mnemonic
         let mut mnemonic_path = PathBuf::from(save_to.clone());
@@ -284,13 +289,17 @@ fn create_fixtures() {
         // create miner.toml
         //rename the path for actual fixtures
         configs_fixture.workspace.block_dir = "vdf_proofs".to_string();
-        let toml = toml::to_string(&configs_fixture).expect("failed to convert to string");
+        let toml = match toml::to_string(&configs_fixture) {
+            Ok(r) => r,
+            Err(e) => {
+                println!("Error: {}", e.to_string());
+                exit(1)
+            }
+        };
         let mut toml_path = PathBuf::from(save_to);
         toml_path.push("miner.toml");
-        let file = fs::File::create(&toml_path);
-        file.expect("failed to create file")
-            .write(&toml.as_bytes())
-            .expect("Could not write toml");
+        let file = fs::File::create(&toml_path)?;
+        file.write(&toml.as_bytes())?;
     }
 }
 
@@ -307,7 +316,7 @@ fn test_mine_once() {
     // Clear at start. Clearing at end can pollute the path when tests fail.
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 
-    let fixture_previous_proof = decode("0016f43606b957ab9d93046cdffa73a1e6be4f21f3848eb7b55b81756f7d31919affef388c0d92ca7d68232de4fea46884186c23ef1d6c86f63f5c586000048bce05").expect("failed to decode");
+    let fixture_previous_proof = decode("0016f43606b957ab9d93046cdffa73a1e6be4f21f3848eb7b55b81756f7d31919affef388c0d92ca7d68232de4fea46884186c23ef1d6c86f63f5c586000048bce05")?;
 
     let fixture_block = VDFProof {
         height: 0u64, // Tower height
@@ -318,7 +327,7 @@ fn test_mine_once() {
         security: Some(512),
     };
 
-    write_json(&fixture_block, &configs_fixture.get_block_dir()).expect("failed to write json");
+    write_json(&fixture_block, &configs_fixture.get_block_dir())?;
 
     let next = NextProof {
         next_height: fixture_block.height + 1,
@@ -331,7 +340,7 @@ fn test_mine_once() {
         },
     };
 
-    mine_once(&configs_fixture, next).expect("failed to mine once");
+    mine_once(&configs_fixture, next)?;
     // confirm this file was written to disk.
     let block_file = fs::read_to_string("./test_blocks_temp_2/proof_1.json")
         .expect("Could not read latest block");
@@ -361,7 +370,7 @@ fn test_mine_genesis() {
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 
     // mine
-    write_genesis(&configs_fixture).expect("failed to write genesis file");
+    write_genesis(&configs_fixture)?;
     // read file
     let block_file =
         // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("proof_0.json"));
@@ -409,10 +418,10 @@ fn test_parse_one_file() {
     // Clear at start. Clearing at end can pollute the path when tests fail.
     test_helper_clear_block_dir(&blocks_dir);
 
-    fs::create_dir(&blocks_dir).expect("failed to create directory");
+    fs::create_dir(&blocks_dir)?;
     let mut latest_block_path = blocks_dir.clone();
     latest_block_path.push(format!("proof_{}.json", current_block_number));
-    let mut file = fs::File::create(&latest_block_path).expect("failed to create file");
+    let mut file = fs::File::create(&latest_block_path)?;
     file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
         .expect("Could not write block");
 
@@ -430,6 +439,6 @@ pub fn test_make_configs_fixture() -> AppCfg {
     cfg.chain_info.chain_id = NamedChain::DEVNET;
     cfg.profile.auth_key = "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
         .parse()
-        .expect("failed to parse key");
+        .unwrap();
     cfg
 }
