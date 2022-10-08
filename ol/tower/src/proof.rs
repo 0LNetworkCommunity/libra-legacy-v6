@@ -135,7 +135,7 @@ fn write_json(block: &VDFProof, blocks_dir: &PathBuf) -> Result<(), std::io::Err
     if !&blocks_dir.exists() {
         // first run, create the directory if there is none, or if the user changed the configs.
         // note: user may have blocks but they are in a different directory than what miner.toml says.
-        fs::create_dir(&blocks_dir)?;
+        fs::create_dir(&blocks_dir).expect("Failed to create directory");
     };
     // Write the file.
     let mut latest_block_path = blocks_dir.clone();
@@ -272,7 +272,7 @@ fn create_fixtures() {
 
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
         let save_to = format!("./test_fixtures_{}/", ns);
-        fs::create_dir_all(save_to.clone())?;
+        fs::create_dir_all(save_to.clone()).expect("Error while creating directories");
         let mut configs_fixture = test_make_configs_fixture();
         configs_fixture.workspace.block_dir = save_to.clone();
 
@@ -340,7 +340,13 @@ fn test_mine_once() {
         },
     };
 
-    mine_once(&configs_fixture, next)?;
+    match mine_once(&configs_fixture, next) {
+        Ok(r) => r,
+        Err(e) => {
+            println!("Error: {}", e.to_string());
+            exit(1)
+        }
+    };
     // confirm this file was written to disk.
     let block_file = fs::read_to_string("./test_blocks_temp_2/proof_1.json")
         .expect("Could not read latest block");
@@ -370,7 +376,13 @@ fn test_mine_genesis() {
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 
     // mine
-    write_genesis(&configs_fixture)?;
+    match write_genesis(&configs_fixture) {
+        Ok(r) => r,
+        Err(e) => {
+            println!("Error: {}", e.to_string());
+            exit(1)
+        }
+    };
     // read file
     let block_file =
         // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("proof_0.json"));
@@ -418,10 +430,10 @@ fn test_parse_one_file() {
     // Clear at start. Clearing at end can pollute the path when tests fail.
     test_helper_clear_block_dir(&blocks_dir);
 
-    fs::create_dir(&blocks_dir)?;
+    fs::create_dir(&blocks_dir).expect("Failed to create directory");
     let mut latest_block_path = blocks_dir.clone();
     latest_block_path.push(format!("proof_{}.json", current_block_number));
-    let mut file = fs::File::create(&latest_block_path)?;
+    let mut file = fs::File::create(&latest_block_path).expect("Failed to create file");
     file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
         .expect("Could not write block");
 
