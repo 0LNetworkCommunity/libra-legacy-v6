@@ -68,7 +68,7 @@ pub fn mine_once(config: &AppCfg, next: NextProof) -> Result<VDFProof, Error> {
         height: next.next_height,
         elapsed_secs,
         preimage: next.preimage,
-        proof: data.clone(),
+        proof: data.to_owned(),
         difficulty: Some(next.diff.difficulty),
         security: Some(next.diff.security),
     };
@@ -85,7 +85,7 @@ pub fn mine_and_submit(
     swarm_path: Option<PathBuf>,
 ) -> Result<(), Error> {
     // get the location of this miner's blocks
-    let mut blocks_dir = config.workspace.node_home.clone();
+    let mut blocks_dir = config.workspace.node_home.to_owned();
     blocks_dir.push(&config.workspace.block_dir);
 
     loop {
@@ -97,7 +97,7 @@ pub fn mine_and_submit(
             true => next_proof::get_next_proof_params_from_local(config)?,
             false => {
                 let client = client::find_a_remote_jsonrpc(&config)?;
-                match next_proof::get_next_proof_from_chain(config, client, swarm_path.clone()) {
+                match next_proof::get_next_proof_from_chain(config, client, swarm_path.to_owned()) {
                     Ok(n) => n,
                     // failover to local mode, if no onchain data can be found.
                     // TODO: this is important for migrating to the new protocol.
@@ -138,7 +138,7 @@ fn write_json(block: &VDFProof, blocks_dir: &PathBuf) -> Result<(), std::io::Err
         fs::create_dir(&blocks_dir).expect("Failed to create directory");
     };
     // Write the file.
-    let mut latest_block_path = blocks_dir.clone();
+    let mut latest_block_path = blocks_dir.to_owned();
     latest_block_path.push(format!("{}_{}.json", FILENAME, block.height));
     let mut file = fs::File::create(&latest_block_path)?;
     file.write_all(serde_json::to_string(&block)?.as_bytes())
@@ -272,15 +272,15 @@ fn create_fixtures() {
 
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
         let save_to = format!("./test_fixtures_{}/", ns);
-        fs::create_dir_all(save_to.clone()).expect("Error while creating directories");
+        fs::create_dir_all(save_to.to_owned()).expect("Error while creating directories");
         let mut configs_fixture = test_make_configs_fixture();
-        configs_fixture.workspace.block_dir = save_to.clone();
+        configs_fixture.workspace.block_dir = save_to.to_owned();
 
         // mine to save_to path
         write_genesis(&configs_fixture)?;
 
         // also create mnemonic
-        let mut mnemonic_path = PathBuf::from(save_to.clone());
+        let mut mnemonic_path = PathBuf::from(save_to.to_owned());
         mnemonic_path.push("owner.mnem");
         let mut file = fs::File::create(&mnemonic_path).expect("Could not create file");
         file.write_all(mnemonic_string.as_bytes())
@@ -431,7 +431,7 @@ fn test_parse_one_file() {
     test_helper_clear_block_dir(&blocks_dir);
 
     fs::create_dir(&blocks_dir).expect("Failed to create directory");
-    let mut latest_block_path = blocks_dir.clone();
+    let mut latest_block_path = blocks_dir.to_owned();
     latest_block_path.push(format!("proof_{}.json", current_block_number));
     let mut file = fs::File::create(&latest_block_path).expect("Failed to create file");
     file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
