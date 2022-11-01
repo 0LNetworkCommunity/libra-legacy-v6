@@ -41,7 +41,7 @@ pub fn get_events<T: MoveStructType + DeserializeOwned>(
             bcs::from_bytes::<EventWithProof>(e.event_with_proof.inner()).map_err(Error::decode)
         })
         .collect::<Result<Vec<EventWithProof>>>()?;
-    let event_type_tag = TypeTag::Struct(T::struct_tag());
+    let event_type_tag = TypeTag::Struct(Box::new(T::struct_tag()));
     events_with_proof
         .into_iter()
         .map(|e| {

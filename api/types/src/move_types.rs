@@ -558,7 +558,7 @@ impl From<TypeTag> for MoveType {
             TypeTag::Vector(v) => MoveType::Vector {
                 items: Box::new(MoveType::from(*v)),
             },
-            TypeTag::Struct(v) => MoveType::Struct(v.into()),
+            TypeTag::Struct(v) => MoveType::Struct((*v).into()),
         }
     }
 }
@@ -574,7 +574,7 @@ impl TryFrom<MoveType> for TypeTag {
             MoveType::Address => TypeTag::Address,
             MoveType::Signer => TypeTag::Signer,
             MoveType::Vector { items } => TypeTag::Vector(Box::new((*items).try_into()?)),
-            MoveType::Struct(v) => TypeTag::Struct(v.try_into()?),
+            MoveType::Struct(v) => TypeTag::Struct(Box::new(v.try_into()?)),
             _ => {
                 return Err(anyhow::anyhow!(
                     "invalid move type for converting into `TypeTag`: {:?}",
@@ -1032,7 +1032,7 @@ mod tests {
                         vec![(
                             identifier("nested_vector"),
                             Vector(
-                                TypeTag::Struct(type_struct("Host")),
+                                TypeTag::Struct(Box::new(type_struct("Host"))),
                                 vec![Struct(annotated_move_struct(
                                     "String",
                                     vec![
@@ -1244,7 +1244,7 @@ mod tests {
             address: address("0x1"),
             module: identifier("Home"),
             name: identifier("ABC"),
-            type_params: vec![TypeTag::Address, TypeTag::Struct(account)],
+            type_params: vec![TypeTag::Address, TypeTag::Struct(Box::new(account))],
         }
     }
 
@@ -1257,7 +1257,7 @@ mod tests {
                 TypeTag::U128,
                 TypeTag::Vector(Box::new(TypeTag::U64)),
                 TypeTag::Vector(Box::new(TypeTag::Struct(type_struct("String")))),
-                TypeTag::Struct(type_struct("String")),
+                TypeTag::Struct(Box::new(type_struct("String"))),
             ],
         }
     }

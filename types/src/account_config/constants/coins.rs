@@ -19,12 +19,12 @@ pub const XDX_NAME: &str = "GAS";
 pub const XDX_IDENTIFIER: &IdentStr = ident_str!(XDX_NAME);
 
 pub fn xus_tag() -> TypeTag {
-    TypeTag::Struct(StructTag {
+    TypeTag::Struct(Box::new(StructTag {
         address: CORE_CODE_ADDRESS,
         module: from_currency_code_string(XUS_NAME).unwrap(),
         name: from_currency_code_string(XUS_NAME).unwrap(),
         type_params: vec![],
-    })
+    }))
 }
 
 //////// 0L ////////
@@ -41,22 +41,27 @@ pub fn gas_struct() -> StructTag {
 }
 
 pub fn gas_type_tag() -> TypeTag {
-    TypeTag::Struct(gas_struct())
+    TypeTag::Struct(Box::new(gas_struct()))
 }
 
 /// Return `Some(struct_name)` if `t` is a `StructTag` representing one of the current Diem coin
 /// types (GAS, XUS), `None` otherwise.
 pub fn coin_name(t: &TypeTag) -> Option<String> {
     match t {
-        TypeTag::Struct(StructTag {
-            address,
-            module,
-            name,
-            ..
-        }) if *address == CORE_CODE_ADDRESS && module == name => {
-            let name_str = name.to_string();
-            if name_str == GAS_NAME || name_str == XUS_NAME { /////// 0L /////////
-                Some(name_str)
+        TypeTag::Struct(struct_tag) => {
+            let StructTag {
+                address,
+                module,
+                name,
+                ..
+            } = &**struct_tag;
+            if *address == CORE_CODE_ADDRESS && module == name {
+                let name_str = name.to_string();
+                if name_str == GAS_NAME || name_str == XUS_NAME { /////// 0L /////////
+                    Some(name_str)
+                } else {
+                    None
+                }
             } else {
                 None
             }
@@ -72,11 +77,11 @@ fn coin_names() {
     assert!(coin_name(&TypeTag::U64) == None);
 
     let bad_name = ident_str!("NotACoin").to_owned();
-    let bad_coin = TypeTag::Struct(StructTag {
+    let bad_coin = TypeTag::Struct(Box::new(StructTag {
         address: CORE_CODE_ADDRESS,
         module: bad_name.clone(),
         name: bad_name,
         type_params: vec![],
-    });
+    }));
     assert!(coin_name(&bad_coin) == None);
 }

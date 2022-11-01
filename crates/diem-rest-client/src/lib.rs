@@ -73,7 +73,7 @@ impl Client {
                         let currency_tag = res.resource_type.type_params.get(0);
                         if let Some(TypeTag::Struct(currency)) = currency_tag {
                             Ok(dpn::AccountBalance {
-                                currency: currency.clone(),
+                                currency: (**currency).clone(),
                                 amount: serde_json::from_value::<dpn::Balance>(res.data)?
                                     .coin
                                     .value

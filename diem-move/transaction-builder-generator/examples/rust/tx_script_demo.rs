@@ -6,12 +6,12 @@ use diem_types::{AccountAddress, Identifier, StructTag, TypeTag};
 use serde_bytes::ByteBuf as Bytes;
 
 fn demo_p2p_script() {
-    let token = TypeTag::Struct(StructTag {
+    let token = TypeTag::Struct(Box::new(StructTag {
         address: AccountAddress([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
         module: Identifier("XDX".into()),
         name: Identifier("XDX".into()),
         type_params: Vec::new(),
-    });
+    }));
     let payee = AccountAddress([
         0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
         0x22,

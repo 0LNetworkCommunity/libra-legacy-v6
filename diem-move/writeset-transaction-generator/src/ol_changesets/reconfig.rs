@@ -69,7 +69,7 @@ pub fn mfg_epoch_event(epoch: u64, seq: u64) -> Result<ContractEvent> {
     Ok(ContractEvent::new(
         NewEpochEvent::event_key(),
         seq,
-        TypeTag::Struct(NewEpochEvent::struct_tag()),
+        TypeTag::Struct(Box::new(NewEpochEvent::struct_tag())),
         bcs::to_bytes(&new_event)?,
     ))
 }

@@ -107,7 +107,7 @@ impl TryFrom<&ContractEvent> for SentPaymentEvent {
     type Error = Error;
 
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(SentPaymentEvent::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(SentPaymentEvent::struct_tag())) {
             anyhow::bail!("Expected Sent Payment")
         }
         Self::try_from_bytes(&event.event_data)
@@ -118,7 +118,7 @@ impl TryFrom<&ContractEvent> for ReceivedPaymentEvent {
     type Error = Error;
 
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(ReceivedPaymentEvent::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(ReceivedPaymentEvent::struct_tag())) {
             anyhow::bail!("Expected Received Payment")
         }
         Self::try_from_bytes(&event.event_data)
@@ -129,7 +129,7 @@ impl TryFrom<&ContractEvent> for ToXDXExchangeRateUpdateEvent {
     type Error = Error;
 
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(ToXDXExchangeRateUpdateEvent::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(ToXDXExchangeRateUpdateEvent::struct_tag())) {
             anyhow::bail!("Expected ToXDXExchangeRateUpdateEvent")
         }
         Self::try_from_bytes(&event.event_data)
@@ -140,7 +140,7 @@ impl TryFrom<&ContractEvent> for MintEvent {
     type Error = Error;
 
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(MintEvent::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(MintEvent::struct_tag())) {
             anyhow::bail!("Expected MintEvent")
         }
         Self::try_from_bytes(&event.event_data)
@@ -151,7 +151,7 @@ impl TryFrom<&ContractEvent> for ReceivedMintEvent {
     type Error = Error;
 
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(ReceivedMintEvent::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(ReceivedMintEvent::struct_tag())) {
             anyhow::bail!("Expected ReceivedMintEvent")
         }
         Self::try_from_bytes(&event.event_data)
@@ -162,7 +162,7 @@ impl TryFrom<&ContractEvent> for BurnEvent {
     type Error = Error;
 
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(BurnEvent::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(BurnEvent::struct_tag())) {
             anyhow::bail!("Expected BurnEvent")
         }
         Self::try_from_bytes(&event.event_data)
@@ -173,7 +173,7 @@ impl TryFrom<&ContractEvent> for PreburnEvent {
     type Error = Error;
 
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(PreburnEvent::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(PreburnEvent::struct_tag())) {
             anyhow::bail!("Expected PreburnEvent")
         }
         Self::try_from_bytes(&event.event_data)
@@ -184,7 +184,7 @@ impl TryFrom<&ContractEvent> for CancelBurnEvent {
     type Error = Error;
 
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(CancelBurnEvent::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(CancelBurnEvent::struct_tag())) {
             anyhow::bail!("Expected CancelBurnEvent")
         }
         Self::try_from_bytes(&event.event_data)
@@ -195,7 +195,7 @@ impl TryFrom<&ContractEvent> for AdminTransactionEvent {
     type Error = Error;
 
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(Self::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(Self::struct_tag())) {
             anyhow::bail!("Expected AdminTransactionEvent")
         }
         Self::try_from_bytes(&event.event_data)
@@ -206,7 +206,7 @@ impl TryFrom<&ContractEvent> for NewBlockEvent {
     type Error = Error;
 
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(Self::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(Self::struct_tag())) {
             anyhow::bail!("Expected NewBlockEvent")
         }
         Self::try_from_bytes(&event.event_data)
@@ -217,7 +217,7 @@ impl TryFrom<&ContractEvent> for NewEpochEvent {
     type Error = Error;
 
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(Self::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(Self::struct_tag())) {
             anyhow::bail!("Expected NewEpochEvent")
         }
         Self::try_from_bytes(&event.event_data)
@@ -227,7 +227,7 @@ impl TryFrom<&ContractEvent> for NewEpochEvent {
 impl TryFrom<&ContractEvent> for ComplianceKeyRotationEvent {
     type Error = Error;
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(Self::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(Self::struct_tag())) {
             anyhow::bail!("Expected ComplianceKeyRotationEvent")
         }
         Self::try_from_bytes(&event.event_data)
@@ -237,7 +237,7 @@ impl TryFrom<&ContractEvent> for ComplianceKeyRotationEvent {
 impl TryFrom<&ContractEvent> for BaseUrlRotationEvent {
     type Error = Error;
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(Self::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(Self::struct_tag())) {
             anyhow::bail!("Expected BaseUrlRotationEvent")
         }
         Self::try_from_bytes(&event.event_data)
@@ -247,7 +247,7 @@ impl TryFrom<&ContractEvent> for BaseUrlRotationEvent {
 impl TryFrom<&ContractEvent> for CreateAccountEvent {
     type Error = Error;
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(Self::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(Self::struct_tag())) {
             anyhow::bail!("Expected CreateAccountEvent")
         }
         Self::try_from_bytes(&event.event_data)
@@ -257,7 +257,7 @@ impl TryFrom<&ContractEvent> for CreateAccountEvent {
 impl TryFrom<&ContractEvent> for VASPDomainEvent {
     type Error = Error;
     fn try_from(event: &ContractEvent) -> Result<Self> {
-        if event.type_tag != TypeTag::Struct(Self::struct_tag()) {
+        if event.type_tag != TypeTag::Struct(Box::new(Self::struct_tag())) {
             anyhow::bail!("Expected VASPDomainEvent")
         }
         Self::try_from_bytes(&event.event_data)

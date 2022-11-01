@@ -438,7 +438,7 @@ impl TryFrom<ContractEvent> for EventDataView {
     type Error = Error;
 
     fn try_from(event: ContractEvent) -> Result<Self> {
-        let data = if event.type_tag() == &TypeTag::Struct(ReceivedPaymentEvent::struct_tag()) {
+        let data = if event.type_tag() == &TypeTag::Struct(Box::new(ReceivedPaymentEvent::struct_tag())) {
             let received_event = ReceivedPaymentEvent::try_from(&event)?;
             let amount_view = AmountView::new(
                 received_event.amount(),
@@ -450,7 +450,7 @@ impl TryFrom<ContractEvent> for EventDataView {
                 receiver: event.key().get_creator_address(),
                 metadata: BytesView::from(received_event.metadata()),
             }
-        } else if event.type_tag() == &TypeTag::Struct(SentPaymentEvent::struct_tag()) {
+        } else if event.type_tag() == &TypeTag::Struct(Box::new(SentPaymentEvent::struct_tag())) {
             let sent_event = SentPaymentEvent::try_from(&event)?;
             let amount_view =
                 AmountView::new(sent_event.amount(), sent_event.currency_code().as_str());
@@ -460,7 +460,7 @@ impl TryFrom<ContractEvent> for EventDataView {
                 sender: event.key().get_creator_address(),
                 metadata: BytesView::from(sent_event.metadata()),
             }
-        } else if event.type_tag() == &TypeTag::Struct(PreburnEvent::struct_tag()) {
+        } else if event.type_tag() == &TypeTag::Struct(Box::new(PreburnEvent::struct_tag())) {
             let preburn_event = PreburnEvent::try_from(&event)?;
             let amount_view = AmountView::new(
                 preburn_event.amount(),
@@ -470,7 +470,7 @@ impl TryFrom<ContractEvent> for EventDataView {
                 amount: amount_view,
                 preburn_address: preburn_event.preburn_address(),
             }
-        } else if event.type_tag() == &TypeTag::Struct(BurnEvent::struct_tag()) {
+        } else if event.type_tag() == &TypeTag::Struct(Box::new(BurnEvent::struct_tag())) {
             let burn_event = BurnEvent::try_from(&event)?;
             let amount_view =
                 AmountView::new(burn_event.amount(), burn_event.currency_code().as_str());
@@ -478,7 +478,7 @@ impl TryFrom<ContractEvent> for EventDataView {
                 amount: amount_view,
                 preburn_address: burn_event.preburn_address(),
             }
-        } else if event.type_tag() == &TypeTag::Struct(CancelBurnEvent::struct_tag()) {
+        } else if event.type_tag() == &TypeTag::Struct(Box::new(CancelBurnEvent::struct_tag())) {
             let cancel_burn_event = CancelBurnEvent::try_from(&event)?;
             let amount_view = AmountView::new(
                 cancel_burn_event.amount(),
@@ -488,20 +488,20 @@ impl TryFrom<ContractEvent> for EventDataView {
                 amount: amount_view,
                 preburn_address: cancel_burn_event.preburn_address(),
             }
-        } else if event.type_tag() == &TypeTag::Struct(ToXDXExchangeRateUpdateEvent::struct_tag()) {
+        } else if event.type_tag() == &TypeTag::Struct(Box::new(ToXDXExchangeRateUpdateEvent::struct_tag())) {
             let update_event = ToXDXExchangeRateUpdateEvent::try_from(&event)?;
             EventDataView::ToXDXExchangeRateUpdate {
                 currency_code: update_event.currency_code().to_string(),
                 new_to_xdx_exchange_rate: update_event.new_to_xdx_exchange_rate(),
             }
-        } else if event.type_tag() == &TypeTag::Struct(MintEvent::struct_tag()) {
+        } else if event.type_tag() == &TypeTag::Struct(Box::new(MintEvent::struct_tag())) {
             let mint_event = MintEvent::try_from(&event)?;
             let amount_view =
                 AmountView::new(mint_event.amount(), mint_event.currency_code().as_str());
             EventDataView::Mint {
                 amount: amount_view,
             }
-        } else if event.type_tag() == &TypeTag::Struct(ReceivedMintEvent::struct_tag()) {
+        } else if event.type_tag() == &TypeTag::Struct(Box::new(ReceivedMintEvent::struct_tag())) {
             let received_mint_event = ReceivedMintEvent::try_from(&event)?;
             let amount_view = AmountView::new(
                 received_mint_event.amount(),
@@ -511,13 +511,13 @@ impl TryFrom<ContractEvent> for EventDataView {
                 amount: amount_view,
                 destination_address: received_mint_event.destination_address(),
             }
-        } else if event.type_tag() == &TypeTag::Struct(ComplianceKeyRotationEvent::struct_tag()) {
+        } else if event.type_tag() == &TypeTag::Struct(Box::new(ComplianceKeyRotationEvent::struct_tag())) {
             let rotation_event = ComplianceKeyRotationEvent::try_from(&event)?;
             EventDataView::ComplianceKeyRotation {
                 new_compliance_public_key: rotation_event.new_compliance_public_key().into(),
                 time_rotated_seconds: rotation_event.time_rotated_seconds(),
             }
-        } else if event.type_tag() == &TypeTag::Struct(BaseUrlRotationEvent::struct_tag()) {
+        } else if event.type_tag() == &TypeTag::Struct(Box::new(BaseUrlRotationEvent::struct_tag())) {
             let rotation_event = BaseUrlRotationEvent::try_from(&event)?;
             String::from_utf8(rotation_event.new_base_url().to_vec())
                 .map(|new_base_url| EventDataView::BaseUrlRotation {
@@ -525,19 +525,19 @@ impl TryFrom<ContractEvent> for EventDataView {
                     time_rotated_seconds: rotation_event.time_rotated_seconds(),
                 })
                 .map_err(|_| format_err!("Unable to parse BaseUrlRotationEvent"))?
-        } else if event.type_tag() == &TypeTag::Struct(NewBlockEvent::struct_tag()) {
+        } else if event.type_tag() == &TypeTag::Struct(Box::new(NewBlockEvent::struct_tag())) {
             let new_block_event = NewBlockEvent::try_from(&event)?;
             EventDataView::NewBlock {
                 proposer: new_block_event.proposer(),
                 round: new_block_event.round(),
                 proposed_time: new_block_event.proposed_time(),
             }
-        } else if event.type_tag() == &TypeTag::Struct(NewEpochEvent::struct_tag()) {
+        } else if event.type_tag() == &TypeTag::Struct(Box::new(NewEpochEvent::struct_tag())) {
             let new_epoch_event = NewEpochEvent::try_from(&event)?;
             EventDataView::NewEpoch {
                 epoch: new_epoch_event.epoch(),
             }
-        } else if event.type_tag() == &TypeTag::Struct(CreateAccountEvent::struct_tag()) {
+        } else if event.type_tag() == &TypeTag::Struct(Box::new(CreateAccountEvent::struct_tag())) {
             let create_account_event = CreateAccountEvent::try_from(&event)?;
             let created_address = create_account_event.created();
             let role_id = create_account_event.role_id();
@@ -545,12 +545,12 @@ impl TryFrom<ContractEvent> for EventDataView {
                 created_address,
                 role_id,
             }
-        } else if event.type_tag() == &TypeTag::Struct(AdminTransactionEvent::struct_tag()) {
+        } else if event.type_tag() == &TypeTag::Struct(Box::new(AdminTransactionEvent::struct_tag())) {
             let admin_transaction_event = AdminTransactionEvent::try_from(&event)?;
             EventDataView::AdminTransaction {
                 committed_timestamp_secs: admin_transaction_event.committed_timestamp_secs(),
             }
-        } else if event.type_tag() == &TypeTag::Struct(VASPDomainEvent::struct_tag()) {
+        } else if event.type_tag() == &TypeTag::Struct(Box::new(VASPDomainEvent::struct_tag())) {
             let vasp_domain_event = VASPDomainEvent::try_from(&event)?;
             EventDataView::VASPDomain {
                 removed: vasp_domain_event.removed(),
@@ -1252,7 +1252,10 @@ impl From<&Script> for ScriptView {
             .ty_args()
             .iter()
             .map(|type_tag| match type_tag {
-                TypeTag::Struct(StructTag { module, .. }) => module.to_string(),
+                TypeTag::Struct(struct_tag) => {
+                    let StructTag { module, .. } = &**struct_tag;
+                    module.to_string()
+                },
                 tag => format!("{}", tag),
             })
             .collect();
@@ -1298,7 +1301,10 @@ impl From<&ScriptFunction> for ScriptView {
             .ty_args()
             .iter()
             .map(|type_tag| match type_tag {
-                TypeTag::Struct(StructTag { module, .. }) => module.to_string(),
+                TypeTag::Struct(struct_tag) => {
+                    let StructTag { module, .. } = &**struct_tag;
+                    module.to_string()
+                },
                 tag => format!("{}", tag),
             })
             .collect();

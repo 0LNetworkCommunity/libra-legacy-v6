@@ -747,12 +747,12 @@ impl<'a> DiemTestAdapter<'a> {
             let address = self
                 .compiled_state()
                 .resolve_address(&currency_type_name.address);
-            TypeTag::Struct(StructTag {
+            TypeTag::Struct(Box::new(StructTag {
                 address,
                 module: currency_type_name.module_name,
                 name: currency_type_name.type_name,
                 type_params: vec![],
-            })
+            }))
         };
 
         let txn = RawTransaction::new(

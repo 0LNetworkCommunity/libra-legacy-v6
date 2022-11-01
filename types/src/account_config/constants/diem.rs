@@ -21,12 +21,12 @@ pub static COIN_MODULE: Lazy<ModuleId> =
 //   3) The struct name must be the same as the module name
 // We need to consider whether we want to switch to a more or fully qualified name.
 pub fn type_tag_for_currency_code(currency_code: Identifier) -> TypeTag {
-    TypeTag::Struct(StructTag {
+    TypeTag::Struct(Box::new(StructTag {
         address: CORE_CODE_ADDRESS,
         module: currency_code.clone(),
         name: currency_code,
         type_params: vec![],
-    })
+    }))
 }
 
 pub fn currency_code_from_type_tag(type_tag: TypeTag) -> Result<Identifier> {

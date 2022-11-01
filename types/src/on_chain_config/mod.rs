@@ -184,12 +184,12 @@ pub fn config_struct_tag(config_name: Identifier) -> StructTag {
         address: CORE_CODE_ADDRESS,
         module: ConfigurationResource::MODULE_NAME.to_owned(),
         name: ConfigurationResource::MODULE_NAME.to_owned(),
-        type_params: vec![TypeTag::Struct(StructTag {
+        type_params: vec![TypeTag::Struct(Box::new(StructTag {
             address: CORE_CODE_ADDRESS,
             module: config_name.clone(),
             name: config_name,
             type_params: vec![],
-        })],
+        }))],
     }
 }
 

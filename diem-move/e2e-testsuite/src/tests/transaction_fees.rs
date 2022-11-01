@@ -77,12 +77,12 @@ fn burn_txn_fees() {
             status.gas_used()
         };
 
-        let xus_ty = TypeTag::Struct(StructTag {
+        let xus_ty = TypeTag::Struct(Box::new(StructTag {
             address: account_config::CORE_CODE_ADDRESS,
             module: Identifier::new("XUS").unwrap(),
             name: Identifier::new("XUS").unwrap(),
             type_params: vec![],
-        });
+        }));
 
         let output = executor.execute_and_apply(
             blessed

@@ -326,12 +326,12 @@ fn script_type_argument_module_does_not_exist() {
         .transaction()
         .script(Script::new(
             blob,
-            vec![TypeTag::Struct(StructTag {
+            vec![TypeTag::Struct(Box::new(StructTag {
                 address,
                 module,
                 name: Identifier::new("fake").unwrap(),
                 type_params: vec![],
-            })],
+            }))],
             vec![],
         ))
         .sequence_number(10)

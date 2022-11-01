@@ -11,10 +11,10 @@ pub const BARS_NAME: &str = "BARSToken";
 pub const BARS_IDENTIFIER: &IdentStr = ident_str!(BARS_NAME);
 
 pub fn bars_tag() -> TypeTag {
-    TypeTag::Struct(StructTag {
+    TypeTag::Struct(Box::new(StructTag {
         address: CORE_CODE_ADDRESS,
         module: Identifier::from(BARS_IDENTIFIER),
         name: Identifier::from(BARS_IDENTIFIER),
         type_params: vec![],
-    })
+    }))
 }

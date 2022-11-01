@@ -19,8 +19,8 @@ language-e2e-tests = { path = "../e2e-tests" }
 diem-workspace-hack = { path = "../../crates/diem-workspace-hack" }
 diem-crypto = { path = "../../crates/diem-crypto" }
 
-read-write-set = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
-read-write-set-dynamic = { git = "https://github.com/OLSF/move-0L", rev = "f16172cfe44af336bc20187e85811e4bd9815e37" }
+read-write-set = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+read-write-set-dynamic = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
 diem-vm = { path = "../diem-vm" }
 diem-framework-releases = { path = "../diem-framework/DPN/releases" }
 

@@ -1327,12 +1327,12 @@ async fn test_get_txn_execute_failed_by_invalid_script_function_type_arguments()
         "0x1",
         "PaymentScripts",
         "peer_to_peer_with_metadata_invalid",
-        vec![TypeTag::Struct(StructTag {
+        vec![TypeTag::Struct(Box::new(StructTag {
             address: CORE_CODE_ADDRESS,
             module: from_currency_code_string(XUS_NAME).unwrap(),
             name: Identifier::new("invalid").unwrap(),
             type_params: vec![],
-        })],
+        }))],
         vec![
             bcs::to_bytes(&AccountAddress::from_hex_literal("0xdd").unwrap()).unwrap(),
             bcs::to_bytes(&1u64).unwrap(),

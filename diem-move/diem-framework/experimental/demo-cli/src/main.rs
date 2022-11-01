@@ -187,12 +187,12 @@ fn transfer_bars_nft(
     creator: String,
     creation_num: u64,
 ) -> Result<()> {
-    let token = TypeTag::Struct(StructTag {
+    let token = TypeTag::Struct(Box::new(StructTag {
         address: AccountAddress::from_hex_literal("0x1").unwrap(),
         module: Identifier::new("BARSToken").unwrap(),
         name: Identifier::new("BARSToken").unwrap(),
         type_params: Vec::new(),
-    });
+    }));
     let txn =
         account.sign_with_transaction_builder(TransactionFactory::new(ChainId::test()).payload(
             stdlib::encode_transfer_token_between_galleries_script_function(

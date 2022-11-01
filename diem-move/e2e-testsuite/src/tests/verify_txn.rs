@@ -1305,12 +1305,12 @@ fn test_type_tag_dependency_fails_verification() {
         .transaction()
         .script(Script::new(
             script,
-            vec![TypeTag::Struct(StructTag {
+            vec![TypeTag::Struct(Box::new(StructTag {
                 address: account_config::CORE_CODE_ADDRESS,
                 module: Identifier::new("Test").unwrap(),
                 name: Identifier::new("S1").unwrap(),
                 type_params: vec![],
-            })],
+            }))],
             vec![],
         ))
         .sequence_number(10)
@@ -1474,12 +1474,12 @@ fn test_type_tag_transitive_dependency_fails_verification() {
         .transaction()
         .script(Script::new(
             script,
-            vec![TypeTag::Struct(StructTag {
+            vec![TypeTag::Struct(Box::new(StructTag {
                 address: account_config::CORE_CODE_ADDRESS,
                 module: Identifier::new("Test2").unwrap(),
                 name: Identifier::new("S").unwrap(),
                 type_params: vec![],
-            })],
+            }))],
             vec![],
         ))
         .sequence_number(10)
