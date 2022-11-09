@@ -4,6 +4,12 @@ jobs:
   set-up-build:
     runs-on: ubuntu-latest
     steps:
+      - name: Clean up space on runner machine
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
       - name: Check out
         uses: actions/checkout@v3
       - name: Install Rust
@@ -26,7 +32,7 @@ jobs:
             ~/.cargo/git/db/
             target/
             DPN/
-            diem-move/diem-framework/DPN/       
+            diem-move/diem-framework/DPN/
           key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
       - name: set cache
@@ -35,14 +41,14 @@ jobs:
       # - name: Lint
       #   run: |
       #     cargo fmt --all -- --check
-      #     cargo clippy -- -D warnings          
+      #     cargo clippy -- -D warnings
       # - name: Install cargo check tools
       #   run: |
       #     cargo install --locked cargo-deny || true
       #     cargo install --locked cargo-outdated || true
       #     cargo install --locked cargo-udeps || true
       #     cargo install --locked cargo-audit || true
-      #     cargo install --locked cargo-pants || true          
+      #     cargo install --locked cargo-pants || true
       # - name: Check
       #   run: |
       #     cargo deny check
@@ -50,6 +56,6 @@ jobs:
       #     cargo udeps
       #     rm -rf ~/.cargo/advisory-db
       #     cargo audit
-      #     cargo pants          
+      #     cargo pants
       # - name: Test
       #   run: cargo test
