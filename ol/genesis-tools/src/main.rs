@@ -2,7 +2,12 @@ use anyhow::Result;
 use std::{path::PathBuf, process::exit};
 
 use gumdrop::Options;
-use ol_genesis_tools::{fork_genesis::make_recovery_genesis, swarm_genesis::make_swarm_genesis};
+use ol_genesis_tools::{
+    fork_genesis::make_recovery_genesis,
+    process_snapshot::archive_into_recovery,
+    recover::save_recovery_file,
+    swarm_genesis::make_swarm_genesis
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -20,7 +25,7 @@ async fn main() -> Result<()> {
         legacy: bool,
         #[options(help = "optional, write recovery file from snapshot")]
         recover: Option<PathBuf>,
-        #[options(help = "optional, get baseline genesis without changes, for dubugging")]
+        #[options(help = "optional, get baseline genesis without changes, for debugging")]
         debug_baseline: bool,
         #[options(help = "live fork mode")]
         daemon: bool,
@@ -55,8 +60,16 @@ async fn main() -> Result<()> {
         }
         println!("ERROR: must provide --output-path for genesis.blob, exiting.");
         exit(1);
-    } else if let Some(_a_path) = opts.recover {
+    } else if let Some(recovery_path) = opts.recover {
         // just create recovery file
+        let snapshot_path = 
+            opts.snapshot_path.expect("ERROR: must provide snapshot path, exiting.");
+        if !snapshot_path.exists() {
+            panic!("ERROR: snapshot directory does not exist: {:?}", &snapshot_path);
+        }
+        let recovery = archive_into_recovery(&snapshot_path, false).await.unwrap();
+        save_recovery_file(&recovery, &recovery_path)
+            .expect("ERROR: failed to create recovery from snapshot,");
 
         return Ok(());
     } else if opts.daemon {
