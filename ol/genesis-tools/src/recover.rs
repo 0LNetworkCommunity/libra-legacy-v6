@@ -46,7 +46,9 @@ pub enum WalletType {
 }
 
 /// The basic structs needed to recover account state in a new network.
-/// This is necessary for catastrophic recoveries, when the source code changes too much. Like what is going to happen between v4 and v5, where the source code of v5 will not be able to work with objects from v4. We need an intermediary file.
+/// This is necessary for catastrophic recoveries, when the source code changes too much. 
+/// Like what is going to happen between v4 and v5, where the source code of v5
+/// will not be able to work with objects from v4. We need an intermediary file.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LegacyRecovery {
     ///
@@ -90,7 +92,8 @@ impl Default for RecoverConsensusAccounts {
     }
 }
 
-/// make the writeset for the genesis case. Starts with an unmodified account state and make into a writeset.
+/// make the writeset for the genesis case. Starts with an unmodified account
+/// state and make into a writeset.
 pub fn accounts_into_recovery(
     account_state_blobs: &Vec<AccountStateBlob>,
 ) -> Result<Vec<LegacyRecovery>, Error> {
@@ -271,8 +274,7 @@ pub fn recover_consensus_accounts(
 pub fn save_recovery_file(data: &Vec<LegacyRecovery>, path: &PathBuf) -> Result<(), Error> {
     let j = serde_json::to_string(data)?;
     let mut file = fs::File::create(path).expect("Could not genesis_recovery create file");
-    file.write_all(j.as_bytes())
-        .expect("Could not write account recovery");
+    file.write_all(j.as_bytes()).expect("Could not write account recovery");
     Ok(())
 }
 
