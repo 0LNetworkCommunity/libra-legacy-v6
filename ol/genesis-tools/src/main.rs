@@ -2,7 +2,16 @@ use anyhow::Result;
 use std::{path::PathBuf, process::exit};
 
 use gumdrop::Options;
-use ol_genesis_tools::{fork_genesis::make_recovery_genesis, swarm_genesis::make_swarm_genesis};
+use ol_genesis_tools::{
+    fork_genesis::{
+        make_recovery_genesis_from_archive,
+        make_recovery_genesis_from_recovery
+    },
+    process_snapshot::archive_into_recovery,
+    recover::save_recovery_file,
+    recover::read_from_recovery_file,
+    swarm_genesis::make_swarm_genesis
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -55,8 +64,16 @@ async fn main() -> Result<()> {
         }
         println!("ERROR: must provide --output-path for genesis.blob, exiting.");
         exit(1);
-    } else if let Some(_a_path) = opts.recover {
+    } else if let Some(recovery_path) = opts.recover {
         // just create recovery file
+        let snapshot_path = opts.snapshot_path
+            .expect("ERROR: must provide snapshot path, exiting.");
+        if !snapshot_path.exists() {
+            panic!("ERROR: snapshot_path does not exist");
+        }
+        let recovery = archive_into_recovery(&snapshot_path, false).await.unwrap();
+        save_recovery_file(&recovery, &recovery_path)
+            .expect("ERROR: failed to create recovery from snapshot,");
 
         return Ok(());
     } else if opts.daemon {
