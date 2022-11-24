@@ -14,8 +14,6 @@ script {
 
   fun main(_dr: signer, bob: signer) {
     // Genesis creates 6 validators by default which are already slow wallets,
-    // adding Bob
-    DiemAccount::set_slow(&bob);
     let list = DiemAccount::get_slow_list();
     assert!(Vector::length<address>(&list) == 7, 735701);
   }
