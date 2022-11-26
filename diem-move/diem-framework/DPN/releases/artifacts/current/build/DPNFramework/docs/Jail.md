@@ -151,7 +151,6 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Jail.md#0x1_Jail_jail">jail</a>(vm: &signer, validator: <b>address</b>) <b>acquires</b> <a href="Jail.md#0x1_Jail">Jail</a>{
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-
   <b>if</b> (<b>exists</b>&lt;<a href="Jail.md#0x1_Jail">Jail</a>&gt;(validator)) {
     <b>let</b> j = <b>borrow_global_mut</b>&lt;<a href="Jail.md#0x1_Jail">Jail</a>&gt;(validator);
     j.is_jailed = <b>true</b>;

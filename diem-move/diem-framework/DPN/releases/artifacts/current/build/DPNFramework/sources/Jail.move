@@ -61,7 +61,6 @@ address DiemFramework {
 
     public fun jail(vm: &signer, validator: address) acquires Jail{
       CoreAddresses::assert_vm(vm);
-
       if (exists<Jail>(validator)) {
         let j = borrow_global_mut<Jail>(validator);
         j.is_jailed = true;
