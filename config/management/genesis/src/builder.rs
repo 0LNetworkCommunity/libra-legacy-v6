@@ -135,9 +135,8 @@ impl<S: KVStorage> GenesisBuilder<S> {
         let mut validators = Vec::new();
         for owner in &layout.owners {
             let name = owner.as_bytes().to_vec();
-            let address = AccountAddress::from_hex(owner)?;
-            // let address = diem_config::utils::default_validator_owner_auth_key_from_name(&name)
-            //     .derived_address();
+            let address = diem_config::utils::default_validator_owner_auth_key_from_name(&name)
+                .derived_address();
             let auth_key = self
                 .owner_key(owner)
                 .map_or(AuthenticationKey::zero(), |k| {
