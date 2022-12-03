@@ -10,7 +10,6 @@ use diem_global_constants::{
 use diem_management::constants::{self, VALIDATOR_CONFIG, VALIDATOR_OPERATOR};
 use diem_secure_storage::{KVStorage, Namespaced};
 use diem_types::{
-    account_address::AccountAddress,
     chain_id::ChainId,
     on_chain_config::{OnChainConsensusConfig, VMPublishingOption},
     transaction::{

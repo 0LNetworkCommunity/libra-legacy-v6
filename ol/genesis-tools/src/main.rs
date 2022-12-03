@@ -70,7 +70,7 @@ async fn main() -> Result<()> {
             let recovery = read_from_recovery_file(&recovery_json_path);
             make_recovery_genesis_from_recovery(
                 recovery, output_path, opts.legacy
-            ).await.expect("ERROR: failed to create genesis from recovery file");
+            ).expect("ERROR: failed to create genesis from recovery file");
             return Ok(());
         }
         else {

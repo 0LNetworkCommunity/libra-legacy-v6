@@ -22,42 +22,21 @@ use ol_types::fullnode_counter::FullnodeCounterResource;
 use ol_types::wallet::{CommunityWalletsResource, SlowWalletResource};
 use vm_genesis::encode_recovery_genesis_changeset;
 
-/// Make a recovery genesis blob
+/// Make a recovery genesis blob from archive
 pub async fn make_recovery_genesis_from_archive(
     genesis_blob_path: PathBuf,
     archive_path: PathBuf,
     append: bool,
     is_legacy: bool,
 ) -> Result<(), Error> {
-    //TODO: have option to "swarmify" this so that the authkey and network addresses.
-
     // get the legacy data from archive
     let recovery = archive_into_recovery(&archive_path, is_legacy).await?;
-    // get consensus accounts
-    let genesis_accounts = recover_consensus_accounts(&recovery)?;
-    // create baseline genesis
 
-    // TODO: for testing letting all validators be in genesis set.
-    let validator_set: Vec<AccountAddress> = genesis_accounts
-        .vals
-        .clone()
-        .into_iter()
-        .map(|a| return a.val_account)
-        .collect();
-    let cs = get_baseline_genesis_change_set(genesis_accounts, &validator_set)?;
-    let gen_tx;
-    if append {
-        // append further writeset to genesis
-        gen_tx = append_genesis(cs, recovery)?;
-    } else {
-        gen_tx = Transaction::GenesisTransaction(WriteSetPayload::Direct(cs));
-    }
-    // save genesis
-    save_genesis(gen_tx, genesis_blob_path)
+    make_recovery_genesis_from_recovery(recovery, genesis_blob_path, append)
 }
 
-/// todo: merge with fn make_recovery_genesis_from_archive()
-pub async fn make_recovery_genesis_from_recovery(
+/// Make a recovery genesis blob
+pub fn make_recovery_genesis_from_recovery(
     recovery: Vec<LegacyRecovery>,
     genesis_blob_path: PathBuf,
     append: bool,

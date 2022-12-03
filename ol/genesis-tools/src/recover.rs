@@ -281,8 +281,7 @@ pub fn save_recovery_file(data: &Vec<LegacyRecovery>, path: &PathBuf) -> Result<
 /// Read from genesis recovery file
 pub fn read_from_recovery_file(path: &PathBuf) -> Vec<LegacyRecovery> {
     let data = fs::read_to_string(path).expect("Unable to read file");
-    let res: Vec<LegacyRecovery> = serde_json::from_str(&data).expect("Unable to parse");
-    res
+    serde_json::from_str(&data).expect("Unable to parse")
 }
 
 // Note: 0L v4.3.3 has a number of malformed network addresses. This is a one-time migration.
