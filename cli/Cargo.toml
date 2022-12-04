@@ -56,7 +56,7 @@ ol-types = { path = "../../ol/types"}
 storage-interface = { path = "../../storage/storage-interface", version = "0.1.0" }
 fs_extra = "1"
 port_scanner = "0.1.5"
-backup-cli = { path = "../../storage/backup/backup-cli", version = "0.1.0" }
+backup-cli = { git = "https://github.com/OLSF/aptos-core.git", rev = "d8955a2692e9004e3f6790db2a0595c2186faf36" }
 move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
 walkdir = "2.3"
 rand = "0.8"
