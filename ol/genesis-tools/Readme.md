@@ -1,9 +1,10 @@
-# Generate genesis blob from epoch
-Sample command:
-```cargo run -p ol-genesis-tools -- --path ${FULL_PATH_TO_PROJECT_ROOT}/ol/fixtures/state-snapshot/194/state_ver_74694920.0889/```
 
-# Start swarm with a custom genesis blob file
-Sample command:
-```NODE_ENV="test" cargo run -p libra-swarm -- --libra-node target/debug/libra-node -c ${SWARM_TEMP_PATH} -n 1 -s --cli-path target/debug/cli --genesis-blob-path ${FULL_PATH_TO_BLOB_FILE}```
+### JSON export from snapshot 
+cargo r -p ol-genesis-tools -- --recover /opt/rec.json --snapshot-path /opt/state_ver*
+state_ver: https://github.com/OLSF/epoch-archive/tree/main/359/state_ver_76353076.a0ff
 
---genesis-blob-path is the additional parameter added to libra-swarm module. 
+### Create genesis blob from JSON export:
+cargo r -p ol-genesis-tools -- --fork --recovery-json-path /opt/rec.json --output-path /opt/genesis_from_recovery.blob
+
+### Verify the validity of genesis blob by starting a node in test mode:
+cargo r -p diem-node -- --test --genesis-modules /opt/genesis_from_recovery.blob
