@@ -19,7 +19,7 @@ We live 24/7 on Discord [join us there](https://discord.gg/AzCp63pggW).
 
 Read our documentation [here](ol/documentation/README.md).
 
-Skip straight to [toubleshooting onboarding a node to network.](ol/documentation/node-ops/validators/troubleshoting_onboarding.md)
+Skip straight to [troubleshooting onboarding a node to network.](ol/documentation/node-ops/validators/troubleshoting_onboarding.md)
 
 Contribute to [issues](https://github.com/OLSF/libra/issues).
 
@@ -43,7 +43,7 @@ This is a non-exhaustive summary of the key features of the Diem architecture th
 The smart-contract language of the platform is called Move. It is the most unique breakthrough of the team. This is a language that is designed to be extremely safe in adversarial environments, and for hurried, less experienced developers. It's a very ergonomic language, it's easy to approach it if you have even entry-level coding experience. In terms of safety it incorporates much from the Rust language concepts of "borrowing" memory. The compiler is pretty obnoxious, which is something you want when designing autonomous financial systems. One standout feature of the Move language is built-in Formal Verification. Adjacent to the code you can write specs for invariants which your code must preserve (i.e. this function should never be called by this type of account), and it can be checked during the development and build process. This is unique and powerful.
 
 ### Programming model
-The execution of the smart contract and scripts has some subtle but important safety features. By design what are referred to in other platforms as smart-contracts are in fact "modules" here. Users can publish modules, which any other module or transaction can import. This is important. The transactions are scripts. So compared to Ethereum, much of what happens in a smart contract, can actually be split into long lived code in a module, and transaction-scripts which can import from the module (and other modules). This decoupling allows for powerful composability and reliability. The developer can evolve the application without necessarily needing to upgrade modules every time a new transaction use-case emerges.
+The execution of the smart contract and scripts has some subtle but important safety features. By design what are referred to in other platforms as smart contracts are in fact "modules" here. Users can publish modules, which any other module or transaction can import. This is important. The transactions are scripts. So compared to Ethereum, much of what happens in a smart contract, can actually be split into long-lived code in a module, and transaction-scripts which can import from the module (and other modules). This decoupling allows for powerful composability and reliability. The developer can evolve the application without necessarily needing to upgrade modules every time a new transaction use case emerges.
 
 Modules can have "resources" bound to them. A resource can be thought of as an object in memory, but with restrictions: they can only be modified by the module that instantiated them, and are restricted in how they get created and transferred. Writing a non-fungible token is basically just instantiating one such structure, and something like a fungible token, can be done in a handful of lines of code.
 
@@ -75,7 +75,7 @@ The technology we are inheriting is a spaceship. It is also purely infrastructur
 
 But most importantly, the architecture is designed as a private, consortium chain. 
 
-For system administration, there is on omnipresent Diem Association account. Yes, a private key that controls many functions including: Freezing accounts (!), selecting validators for inclusion, paying transaction fees to validators, upgrading the system code. This is obviously a non-starter. So a lot of work had to go into making system policies execute in a permissionless environment.
+For system administration, there is an omnipresent Diem Association account. Yes, a private key that controls many functions including: Freezing accounts (!), selecting validators for inclusion, paying transaction fees to validators, upgrading the system code. This is obviously a non-starter. So a lot of work had to go into making system policies execute in a permissionless environment.
 
 We also had to add Sybil resistance mechanisms. Typically communities have been choosing Proof-of-Stake as the Sybil resistance method for BFT networks. This is not the route we chose given community growth considerations (as well as regulatory). Elsewhere we've talked in detail about our Delay Towers complement to consensus.
 
@@ -134,10 +134,10 @@ We've made some additions to the MoveVM that were necessary for us to implement 
 
 - Decimal - we needed a number type that could be used for financial math that could lead into polynomial curves etc. So we added the Rust Decimal library and some initial APIs and their corresponding native instructions.
 
-- VDF verification - to verify the Delay Towers proofs we added the ChiaVDF verifier to the VM. The prover is not needed in the VM. The VDF prover can accept a number of parameters (not hardcoded for 0L's use-case). So application builders could leverage it in their own games.
+- VDF verification - to verify the Delay Towers proofs we added the ChiaVDF verifier to the VM. The prover is not needed in the VM. The VDF prover can accept a number of parameters (not hardcoded for 0L's use case). So application builders could leverage it in their own games.
 
 ### Auto Pay
-The ability to create payments in the future, and regular payments as a percent of account balance or of new income. This was a feature requested early by the community. It powers a number of use-cases important at the start of a network.
+The ability to create payments in the future, and regular payments as a percent of account balance or of new income. This was a feature requested early by the community. It powers a number of use cases important at the start of a network.
 Namely it is useful for anyone that wants to run a community program. In this case an entity or a person is seeking to accomplish a goal or a project, and is asking for donations. Autopay allows for set-it-and-forget-it donations to programs. Most people in 0L use this to send a portion of their mining rewards to programs automatically.
 
 Autopay can be programmed for:
