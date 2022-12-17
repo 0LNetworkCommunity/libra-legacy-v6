@@ -2,18 +2,18 @@
 resolver = "2"
 
 members = [
-    "ol/cli",    
-    "ol/keys",
-    "ol/tower",
-    "ol/onboard",
-    "ol/smoke-tests",
-    "ol/txs",
-    "ol/types",
-    "ol/util",
-    "ol/verifiable_delay/classgroup",
-    "ol/verifiable_delay/vdf",
-    "ol/verifiable_delay/vdf-cli", 
-    "ol/genesis-tools",    
+    # "cli",    
+    # "keys",
+    # "tower",
+    # "onboard",
+    # "smoke-tests",
+    # "txs",
+    # "types",
+    # "util",
+    "verifiable_delay/classgroup",
+    "verifiable_delay/vdf",
+    "verifiable_delay/vdf-cli", 
+    # "genesis-tools",
 ]
 
 [profile.release]
