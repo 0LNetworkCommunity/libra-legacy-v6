@@ -2,14 +2,15 @@
 resolver = "2"
 
 members = [
-    # "cli",    
+    # "cli",
+    "config/global-constants",
     # "keys",
     # "tower",
     # "onboard",
     # "smoke-tests",
     # "txs",
     # "types",
-    # "util",
+    "util",
     "verifiable_delay/classgroup",
     "verifiable_delay/vdf",
     "verifiable_delay/vdf-cli", 
