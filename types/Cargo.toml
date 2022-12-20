@@ -5,27 +5,27 @@ authors = [""]
 edition = "2018"
 
 [dependencies]
+ol-global-constants = { path = "../config/global-constants" }
+ol-keys = { path = "../keys" }
+aptos-config = { git = "https://github.com/OLSF/aptos-core.git", rev = "d8955a2692e9004e3f6790db2a0595c2186faf36" }
+aptos-types = { git = "https://github.com/OLSF/aptos-core.git", rev = "d8955a2692e9004e3f6790db2a0595c2186faf36" }
+aptos-crypto = { git = "https://github.com/OLSF/aptos-core.git", rev = "d8955a2692e9004e3f6790db2a0595c2186faf36" }
+move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
 bcs = "0.1.2"
-diem-config = { path = "../../config/"}
 reqwest = { version = "0.11.2", features = ["blocking", "json"], default_features = false }
-diem-types = { path = "../../types/" }
 serde = { version = "1", features = ["serde_derive"] }
 serde_json = "1"
 hex = { version = "0.4.2", features = ["serde"] }
 byteorder = "1"
-diem-global-constants = { path = "../../config/global-constants", version = "0.1.0"}
 dirs = "2.0.2"
 machine-ip = "0.2.1"
 rustyline = "6.2.0"
 ajson = "0.2.3"
-diem-crypto = { path = "../../crates/diem-crypto/" }
 toml = "0.5.6"
 anyhow = "1.0.33"
 url = { version = "^2.1", features = ["serde"]}
 dialoguer = "0.8.0"
 once_cell = "1.7.2"
-ol-keys = { path = "../keys" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
 sha2 = "0.9.1"
 num-format = "0.4.0"
 glob = "0.3"

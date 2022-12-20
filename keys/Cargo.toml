@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 rpassword = "5.0"
-diem-wallet = { path = "../../crates/diem-wallet", version = "0.1.0" }
-diem-types = { path = "../../types/" }
+# diem-wallet = { path = "../../crates/diem-wallet", version = "0.1.0" }
+aptos-types = { git = "https://github.com/OLSF/aptos-core.git", rev = "d8955a2692e9004e3f6790db2a0595c2186faf36" }
 once_cell = "1.7.2"
 anyhow = "1.0.38"
