@@ -40,7 +40,7 @@ nix = "*"
 diem-secure-storage = { path = "../../secure/storage", version = "0.1.0" }
 glob = "0.3.0"
 sm = "0.9.0"
-diem-config = { path = "../../config"}
+aptos-config = { git = "https://github.com/OLSF/aptos-core.git", rev = "d8955a2692e9004e3f6790db2a0595c2186faf36" }
 ajson = "0.2.3"
 hex = "0.4"
 machine-ip = "0.2.1"
@@ -64,8 +64,8 @@ bcs = "0.1.2"
 move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" } # 0L todo: which move-vm/ path?
 move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
 dialoguer = "0.8.0"
-diem-crypto = { path = "../../crates/diem-crypto" }
-diem-client = { path = "../../crates/diem-client" }
+aptos-crypto = { git = "https://github.com/OLSF/aptos-core.git", rev = "d8955a2692e9004e3f6790db2a0595c2186faf36" }
+aptos-rest-client = { git = "https://github.com/OLSF/aptos-core.git", rev = "d8955a2692e9004e3f6790db2a0595c2186faf36" }
 move-resource-viewer = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
 
 # Parity with Storage create
