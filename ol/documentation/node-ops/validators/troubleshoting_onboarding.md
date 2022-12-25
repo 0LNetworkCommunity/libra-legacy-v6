@@ -14,11 +14,11 @@
 
 The validator is not voting or syncing and the file descriptor limit exceeded error is shown in the node logs. Tower app is stuck at a proof unable to submit the transaction with ".....".
 
-**Temporary Solution:** 
+**Temporary Solution:**
 
-This is an issue with the file descriptor limit being exceeded. 
+This is an issue with the file descriptor limit being exceeded.
 
-1. Go to the **diem-node.service** template you are using for starting the node. 
+1. Go to the **diem-node.service** template you are using for starting the node.
 2. Update **LimitNOFILE=200000**
 3. Restart node: **make daemon**
 4. Restart tower app: **tower -o start**
@@ -40,18 +40,18 @@ Run with RUST_BACKTRACE=full to include source snippets.
 
 ```
 
-**Solution:** 
+**Solution:**
 
-It is possible that waypoint that tower app is using might be wrong. You can check the waypoint by looking at the logs on tower start. 
+It is possible that waypoint that tower app is using might be wrong. You can check the waypoint by looking at the logs on tower start.
 ```
  Waypoint: No waypoint parsed from command line args. Searching for waypoint in key_store.json
 [tower/src/config.rs:...] &value = "xxxxx"
 ```
-If it is not the right one. This needs to be updated in key_store.json under the key: "oper/waypoint". Update the value for this key with the waypoint your node synced from. 
+If it is not the right one. This needs to be updated in key_store.json under the key: "oper/waypoint". Update the value for this key with the waypoint your node synced from.
 
-**Fetching Waypoint:** 
-1. Use the waypoint value in restore_waypoint. 
-2. If the file is not there, this needs to be fetched from an existing node.  
+**Fetching Waypoint:**
+1. Use the waypoint value in restore_waypoint.
+2. If the file is not there, this needs to be fetched from an existing node.
 
 
 ## <a id="issue-3"></a> Issue: DB should open... libradb/LOCK: Permission denied
@@ -69,35 +69,35 @@ You may be running `diem-node` in a separate process. In that case there may be 
 
 ## <a id="issue-4"></a> Issue: Tower App start: EOF error
 
-**Problem:** 
+**Problem:**
 
-Validator node ran out of space and tower app created empty block_.json file. When starting tower app below error is observed: 
+Validator node ran out of space and tower app created empty block_.json file. When starting tower app below error is observed:
 
 ```
 Message: Error EOF while parsing a value
 Location: tower/src/block.rs:....
 ```
-**Solution:** 
+**Solution:**
 
-Check if the last block proof created is empty. If so, remove the file and start the tower app again. This is after the node is caught up on the network. 
+Check if the last block proof created is empty. If so, remove the file and start the tower app again. This is after the node is caught up on the network.
 
 ## <a id="issue-5"></a> Issue: Received response but no remote state found
 
-**Problem:** 
+**Problem:**
 
-When trying to start the tower app, a response was received from an upstream_node but not a remote tower state. 
+When trying to start the tower app, a response was received from an upstream_node but not a remote tower state.
 
 ```
 Message:  called `Result::unwrap()` on an `Err` value: Info: Received response but no remote state found. Exiting.
 Location: ol/tower/src/backlog.rs:27
 ```
-**Solution:** 
+**Solution:**
 
 There could be an issue with the address used for the validator, or an issue with mining the genesis block.
 If you have another address that has already been onboarded and being used for mining normally, you can try the following:
 
-- change your `acount` and `auth_key` set in `~/.0L/0L.toml` under `[profile]` with details of your existing address. 
-- start tower again with `tower start`, `tower -u <upstream-ip-address> start` or with whatever flags you were trying to start tower with. 
+- change your `acount` and `auth_key` set in `~/.0L/0L.toml` under `[profile]` with details of your existing address.
+- start tower again with `tower start`, `tower -u <upstream-ip-address> start` or with whatever flags you were trying to start tower with.
 - you should now see `Mining VDF Proof # 1` or similar in the logs.
 - If this works, you should use this address as the validator. To do this, you will need to follow step 2.2 onwards again from [the hard onboarding guide](../../node-ops/validators/validator_onboarding_hard_mode.md#2-generate-account-keys), making sure to use the mnemonic of the working address when using `onboard val`
 
@@ -110,7 +110,7 @@ Alternatively, you can try a brand new address:
 
 If this doesn't work, it can also be caused by [When trying to start the web monitor, Connection Failed: Connection refused (os error 111)](#issue-7)
 
-## <a id="issue-6"></a> Issue: NoAvailablePeers after the fullnode (diem-node) has been started. 
+## <a id="issue-6"></a> Issue: NoAvailablePeers after the fullnode (diem-node) has been started.
 
 **Problem:**
 
@@ -147,5 +147,5 @@ ERROR: could not create client connection, message: Cannot connect to any JSON R
 ```
 **Solution:**
 
-There may be a bad IP address, `upstream_nodes`, being used in `~/.0L/0L.toml`. Try changing the ip address there to one from [here](https://github.com/OLSF/carpe/blob/main/seed_peers/fullnode_seed_playlist.json). 
+There may be a bad IP address, `upstream_nodes`, being used in `~/.0L/0L.toml`. Try changing the ip address there to one from [here](https://github.com/0LNetworkCommunity/carpe/blob/main/seed_peers/fullnode_seed_playlist.json).
 ::

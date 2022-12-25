@@ -41,7 +41,7 @@ The command for starting a client, and typical arguments:
 
 2. Waypoint: you can start with the genesis waypoint if you are within 100 epochs of genesis, otherwise provide a more recent waypoint.
 
-The genesis waypoint is archived on github.com/OLSF/genesis-archive/genesis/genesis_waypoint.
+The genesis waypoint is archived on github.com/0LNetworkCommunity/genesis-archive/genesis/genesis_waypoint.
 
 If you are running a fullnode, more recent waypoints can be provided from a libra node by querying `key_store.json`, a make shorcut exists for this.
 

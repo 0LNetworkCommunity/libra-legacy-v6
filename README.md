@@ -3,7 +3,7 @@
 A reference implementation of a neutral replicated state machine. Forked from the Libra/Diem technologies.
 # TL;DR
 
-#### Run *Carpe*  our desktop wallet and miner. [Anyone with a laptop can mine and make 0L Gas Coins. Download for Windows and Mac here.](https://github.com/OLSF/carpe)
+#### Run *Carpe*  our desktop wallet and miner. [Anyone with a laptop can mine and make 0L Gas Coins. Download for Windows and Mac here.](https://github.com/0LNetworkCommunity/carpe)
 
 #### Join a network with a [validator node](ol/documentation/node-ops/validators/validator_onboarding_easy_mode.md), to secure the state machine and earn transaction fees.
 
@@ -21,13 +21,13 @@ Read our documentation [here](ol/documentation/README.md).
 
 Skip straight to [troubleshooting onboarding a node to network.](ol/documentation/node-ops/validators/troubleshoting_onboarding.md)
 
-Contribute to [issues](https://github.com/OLSF/libra/issues).
+Contribute to [issues](https://github.com/0LNetworkCommunity/libra/issues).
 
 
 # 0L's Tech Stack
 
 ## What we are doing
-0L's technology strategy is to stay as close as possible to the Libra/Diem code base. 
+0L's technology strategy is to stay as close as possible to the Libra/Diem code base.
 
 This is because fragmenting the technology products on offer will lead to confusion, and eventually to lack of maintenance and stagnation. This is best for the wider open source ecosystem these tools extend and depend upon. It's also much more efficient on resources. Libra/Diem is a massive project, and simply keeping up to date with the code updates requires a dedicated team. Let alone making additions. Separate from Libra/Diem, The 0L project on its own has contributed tens of thousands of lines of new code.
 
@@ -73,7 +73,7 @@ The database which stores the transactions is based on a Sparse Merkle Tree desi
 
 The technology we are inheriting is a spaceship. It is also purely infrastructural. There's very little in the way of tooling or smart contracts that are usable in the real world. We assume much of the remainder of the software stack is closed-sourced at Facebook.
 
-But most importantly, the architecture is designed as a private, consortium chain. 
+But most importantly, the architecture is designed as a private, consortium chain.
 
 For system administration, there is an omnipresent Diem Association account. Yes, a private key that controls many functions including: Freezing accounts (!), selecting validators for inclusion, paying transaction fees to validators, upgrading the system code. This is obviously a non-starter. So a lot of work had to go into making system policies execute in a permissionless environment.
 
@@ -113,7 +113,7 @@ Since all system rules are encoded in the application layer in Diem, the code is
 
 We had to have on-chain information on the performance of validators. This is critical to designing any economic games around transaction fees and other rewards.
 
-Fortunately in the upstream code, the block prologue is executed in the Move virtual machine, and allows us to add transaction metadata directly into the state machine on every block. So the 0x0 system address contains information on what validators have voted on a given block, and who the proposer was. We can use this for some naive metering within the state machine. It's a sufficient amount to be able to identify which validator nodes are not performing and apply certain sanctions. 
+Fortunately in the upstream code, the block prologue is executed in the Move virtual machine, and allows us to add transaction metadata directly into the state machine on every block. So the 0x0 system address contains information on what validators have voted on a given block, and who the proposer was. We can use this for some naive metering within the state machine. It's a sufficient amount to be able to identify which validator nodes are not performing and apply certain sanctions.
 
 There is a performance penalty for this, and optimizations are possible. Since Move does not offer higher order data structures (hash tables) the data is stored in tables which are not ideal for traversing.
 

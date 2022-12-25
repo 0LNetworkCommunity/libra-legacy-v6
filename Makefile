@@ -21,7 +21,7 @@ IP=$(shell toml get ${DATA_PATH}/0L.toml profile.ip)
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 
-REPO_ORG = OLSF
+REPO_ORG = 0LNetworkCommunity
 REPO_NAME = genesis-registration
 CARGO_ARGS = --release
 
@@ -40,10 +40,10 @@ GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_
 
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
-RELEASE_URL=https://github.com/OLSF/libra/releases/download
+RELEASE_URL=https://github.com/0LNetworkCommunity/libra/releases/download
 
 ifndef RELEASE
-RELEASE=$(shell curl -sL https://api.github.com/repos/OLSF/libra/releases/latest | jq -r '.assets[].browser_download_url')
+RELEASE=$(shell curl -sL https://api.github.com/repos/0LNetworkCommunity/libra/releases/latest | jq -r '.assets[].browser_download_url')
 endif
 
 BINS=db-backup db-backup-verify db-restore diem-node tower ol txs stdlib
@@ -65,8 +65,8 @@ download: web-files
 		chmod 744 ${USER_BIN_PATH}/$$(echo $$b | rev | cut -d"/" -f1 | rev) ;\
 	done
 
-web-files: 
-	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor.tar.gz https://github.com/OLSF/libra/releases/latest/download/web-monitor.tar.gz
+web-files:
+	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor.tar.gz https://github.com/0LNetworkCommunity/libra/releases/latest/download/web-monitor.tar.gz
 	mkdir ${DATA_PATH}/web-monitor | true
 	tar -xf ${DATA_PATH}/web-monitor.tar.gz --directory ${DATA_PATH}/web-monitor
 
@@ -94,7 +94,7 @@ stdlib:
 	cargo run ${CARGO_ARGS} -p diem-framework -- --create-upgrade-payload
 # linux uses sha265sum, but not available by default on OS X
 	bash -c "sha256sum language/diem-framework/staged/stdlib.mv || shasum -a 256 language/diem-framework/staged/stdlib.mv"
-  
+
 
 install: mv-bin bin-path
 	mkdir ${USER_BIN_PATH} | true
@@ -154,7 +154,7 @@ danger-restore:
 	rsync -rtv ${HOME}/0L_backup/set_layout.toml ${HOME}/.0L/ | true
 
 
-	
+
 
 
 clear-prod-db:
@@ -165,12 +165,12 @@ clear-prod-db:
 reset-safety:
 	@echo CLEARING SAFETY RULES IN KEY_STORE.JSON
 	jq -r '.["${ACC}-oper/safety_data"].value = { "epoch": 0, "last_voted_round": 0, "preferred_round": 0, "last_vote": null }' ${DATA_PATH}/key_store.json > ${DATA_PATH}/temp_key_store && mv ${DATA_PATH}/temp_key_store ${DATA_PATH}/key_store.json
-	
+
 
 move-test:
 	cd language/move-lang/functional-tests/ && cargo t 0L
 #### GENESIS BACKEND SETUP ####
-init-backend: 
+init-backend:
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
 layout:
@@ -263,7 +263,7 @@ owner-key:
 
 # OWNER does this
 # Links to an operator on github, creates the OWNER_ACCOUNT locally
-assign: 
+assign:
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  set-operator \
 	--operator-name ${OPER} \
 	--shared-backend ${REMOTE}
@@ -278,7 +278,7 @@ reg:
 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 	--validator-backend ${LOCAL} \
 	--shared-backend ${REMOTE}
-	
+
 
 # Helpers to verify the local state.
 verify:
@@ -317,7 +317,7 @@ daemon:
 	@if test -d ~/logs; then \
 		echo "WIPING SYSTEMD LOGS"; \
 		rm -rf ~/logs*; \
-	fi 
+	fi
 
 	mkdir ~/logs
 	touch ~/logs/node.log
@@ -326,7 +326,7 @@ daemon:
 	systemctl --user stop diem-node.service
 	systemctl --user start diem-node.service
 	sleep 2
-	
+
 	systemctl --user status diem-node.service &
 	tail -f ~/logs/node.log
 
@@ -380,11 +380,11 @@ ifdef TEST
 
 	@if test -f ${DATA_PATH}/vdf_proofs/proof_0.json; then \
 		rm ${DATA_PATH}/vdf_proofs/proof_0.json; \
-	fi 
+	fi
 
 	@if test -f ${DATA_PATH}/0L.toml; then \
 		rm ${DATA_PATH}/0L.toml; \
-	fi 
+	fi
 
 # skip miner configuration with fixtures
 	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/0L.toml
@@ -433,7 +433,7 @@ remove-keys:
 	jq 'del(.["${ACC}-oper/owner", "${ACC}-oper/operator"])' ${DATA_PATH}/key_store.json > ${DATA_PATH}/tmp
 	mv ${DATA_PATH}/tmp ${DATA_PATH}/key_store.json
 
-wipe: 
+wipe:
 	history -c
 	shred ~/.bash_history
 	srm ~/.bash_history
@@ -443,7 +443,7 @@ stop:
 
 debug:
 	make smoke-onboard <<< $$'${MNEM}'
- 
+
 
 #### TESTNET #####
 # The testnet is started using the same tools as genesis to have a faithful reproduction of a network from a clean slate.
@@ -499,7 +499,7 @@ testnet: clear fix testnet-init testnet-genesis start
 
 # For subsequent validators joining the testnet. This will fetch the genesis information saved
 testnet-onboard: clear
-	MNEM='${MNEM}' cargo run -p onboard -- val --github-org OLSF --repo dev-genesis --chain-id ${CHAIN_ID}
+	MNEM='${MNEM}' cargo run -p onboard -- val --github-org 0LNetworkCommunity --repo dev-genesis --chain-id ${CHAIN_ID}
 # start a node with fullnode.node.yaml configs
 	cargo r -p diem-node -- -f ~/.0L/fullnode.node.yaml
 
@@ -564,4 +564,3 @@ TAG=$(shell git tag -l "previous")
 clean-tags:
 	git push origin --delete ${TAG}
 	git tag -d ${TAG}
-	

@@ -4,7 +4,7 @@
 
 - A unix host machine, with a fixed IP address
 - The fixed IP address of the machine
-- Recommended minimum specs: 
+- Recommended minimum specs:
   - 256G storage, 2 core CPU, 8G RAM
 - Firewall rules:
   - Open the ports: 8080
@@ -12,13 +12,13 @@
 ## 1. Set up a host
 These instructions target Ubuntu.
 
-1.1. Set up a cloud service you have `ssh` access to. 
+1.1. Set up a cloud service you have `ssh` access to.
 1.2. You'll want to use `screen` (or `tmux`) to persist the terminal session of the building. `screen -S build`, then you can rejoin the session with `screen -rd build`
-1.3. Clone this repo: 
+1.3. Clone this repo:
 
-`git clone https://github.com/OLSF/libra.git`
+`git clone https://github.com/0LNetworkCommunity/libra.git`
 
-1.4. Config dependencies: 
+1.4. Config dependencies:
 
 ```
 cd </path/to/libra/source/>
@@ -49,5 +49,5 @@ More details in: [syncing_your_node.md](syncing_your_node.md)
 
 Optionally you can set up the web monitor to have easy access to server status via your web browser:
 
-[Set up web monitor](validators/web_monitor.md) 
+[Set up web monitor](validators/web_monitor.md)
 
