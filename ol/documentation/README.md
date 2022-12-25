@@ -60,7 +60,7 @@
 
 ## Core Dev Documentation
 - [Improve Rust compile times with sccache](core-devs/Improve_Rust_compile_times_with_sccache.md)
-- [OS dependencies](OS_dependencies.md)
+- [OS dependencies](core-devs/OS_dependencies.md)
 - [QA onboarding validator](core-devs/QA_onboarding_validator.md)
 - [QA release testing on devnet](core-devs/QA_release_testing_on_devnet.md)
 - [ZKP info](core-devs/ZKP_info.md)
