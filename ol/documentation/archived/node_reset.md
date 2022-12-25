@@ -1,6 +1,6 @@
 # Best-Practices Configuration
 
-WARNING: 0L Tools no longer depend on sudo/root access. As such some default install paths have changed. 
+WARNING: 0L Tools no longer depend on sudo/root access. As such some default install paths have changed.
 
 As of v4.3.2 the default location for executables is `$HOME/bin`. Previously they were in `/usr/local/bin` which required root/sudo
 
@@ -46,7 +46,7 @@ sudo cp /usr/local/bin/* ~/bin
 ## Fetch latest code
 
 ```
-git clone https://github.com/OLSF/libra.git --branch main --depth 1 --single-branch
+git clone https://github.com/0LNetworkCommunity/libra.git --branch main --depth 1 --single-branch
 ```
 
 ##  Build binaries

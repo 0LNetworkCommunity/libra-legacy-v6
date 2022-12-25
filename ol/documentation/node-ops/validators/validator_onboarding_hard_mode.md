@@ -55,16 +55,16 @@ The following ports must be open: 6178, 6179
 ## High-level steps
 
 1. Set up a host - Install binaries.
-2. Generate a public mining/validator key and associated mneumonic.  
+2. Generate a public mining/validator key and associated mneumonic.
    2.1 Generate and share your `account.json` file with someone who has gas and can execute the onboarding transaction for you.
 3. Get the latest snapshot state of the network by running `ol restore`.
-4. Start your node in *fullnode* mode.   
+4. Start your node in *fullnode* mode.
    4.1. Allow your validator in the *fullnode* mode to sync up with the network. Depending on how old the snapshot obtained from `ol restore` is, this
    may take a while (1 hr or more). To check the state of the sync run `db-backup one-shot query node-state`.
-5. Start the tower app which will produce and submit VDF proofs to the chain.   
+5. Start the tower app which will produce and submit VDF proofs to the chain.
    **note** if your node is not fully synced and if you have not been onboarded yet, you will see errors from the tower app
    until your node has caught up to the current state and you have been onboarded.
-6. Create VFN configs, and deploy the VFN.   
+6. Create VFN configs, and deploy the VFN.
    6.1 Check and update your on-chain configuration
 7. Restart your node in *validator* mode. You will join in the next epoch if you have been on boarded by an active validator.
 8. View [ol explorer](https://0lexplorer.io/) to see the state of the network, you should see your validators public key in the list of validators.
@@ -87,12 +87,12 @@ These instructions target Ubuntu.
 1.2. Associate a static IP with your host, this will be tied to you account. This address will be shared on the chain, so that other nodes will be able to find you through the peer discovery mechanism.
 
 1.3. 0L binaries should be run in a linux user that has very narrow permissions. Before you can create binaries you'll need some tools installed probably by `sudo` and likely in root.
-A helpful script to install dependencies exists here: github.com/OLSF/libra/main/ol/util/setup.sh
+A helpful script to install dependencies exists here: github.com/0LNetworkCommunity/libra/main/ol/util/setup.sh
 
 You can run it with a curl bash:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/OLSF/libra/main/ol/util/setup.sh | bash
+curl -sL https://raw.githubusercontent.com/0LNetworkCommunity/libra/main/ol/util/setup.sh | bash
 ```
 
 1.4. Use `tmux` to persist the terminal session for build, as well as for running the nodes and tower app. Also this setup requires `git` and `make`, which might be installed already on your host. If not, perform the following steps now:
@@ -139,7 +139,7 @@ tmux new -s installation
 
 1.8. Clone this repo:
 
-`git clone https://github.com/OLSF/libra.git`
+`git clone https://github.com/0LNetworkCommunity/libra.git`
 
 For more details: (../devs/OS_dependencies.md)
 
@@ -147,7 +147,7 @@ For more details: (../devs/OS_dependencies.md)
 This takes a while, ensure your are still inside the `tmux` session to avoid your session gets disconnected.
 
 ```bash
-cd </path/to/libra-source/> 
+cd </path/to/libra-source/>
 make bins install
 ```
 
@@ -187,7 +187,7 @@ onboard val
 
 2.3. Send the generated `~/.0L/account.json` to someone that has GAS (the one who wants to onboard you) and can execute the account creation transaction for you.
 
-**If you are onboaring someone and receive the `account.json` see [onboarder instructions](#onboarder-instructions)**  
+**If you are onboaring someone and receive the `account.json` see [onboarder instructions](#onboarder-instructions)**
 
 2.4. Backup your files: `cp -r ~/.0L/* ~/.0L/init-backup/`
 
@@ -213,7 +213,7 @@ ulimit -n
 100000
 ```
 
-or edit the `/etc/security/limits.conf` file to make this change persistent across sessions:  
+or edit the `/etc/security/limits.conf` file to make this change persistent across sessions:
 
 ```bash
 sudo vim /etc/security/limits.conf`
@@ -222,7 +222,7 @@ sudo vim /etc/security/limits.conf`
 append to the end of the `limits.conf`. replace `yourusername` with the output from `whoami`.
 
 ```bash
-yourusername soft    nproc          100000 
+yourusername soft    nproc          100000
 yourusername soft    nproc          100000
 yourusername hard    nproc          100000
 yourusername soft    nofile         100000
@@ -244,7 +244,7 @@ inside the [tmux](#tmux-basics) session start the node in fullnode mode.
 Consider using [log rotation](#log-rotation) to start the `diem-node`.
 
 ```bash
-# create log directory 
+# create log directory
 mkdir ~/.0L/logs
 
 # start node
@@ -352,7 +352,7 @@ txs -o val-config --val-ip <IP> --vfn-ip <OTHER IP>
 
 # check if those changes persisted and if they are able to be read.
 ol query --val-config
-4.1 To enable the node to run after you detach from your terminal session, start within a 
+4.1 To enable the node to run after you detach from your terminal session, start within a
 `tmux` session.
 
 **note**: temporarily: as of v4.2.8 you'll need to increase your host's file descriptors. Fix is in the works. For now:
@@ -372,7 +372,7 @@ ulimit -n
 100000
 ```
 
-or edit the `/etc/security/limits.conf` file to make this change persistent across sessions:  
+or edit the `/etc/security/limits.conf` file to make this change persistent across sessions:
 
 ```bash
 sudo vim /etc/security/limits.conf`
@@ -381,7 +381,7 @@ sudo vim /etc/security/limits.conf`
 append to the end of the `limits.conf`. replace `yourusername` with the output from `whoami`.
 
 ```bash
-yourusername soft    nproc          100000 
+yourusername soft    nproc          100000
 yourusername soft    nproc          100000
 yourusername hard    nproc          100000
 yourusername soft    nofile         100000
@@ -402,10 +402,10 @@ inside the [tmux](#tmux-basics) session start the VFN in VFN mode.
 Consider using [log rotation](#log-rotation) to start the `diem-node`.
 
 ```bash
-# create log directory 
+# create log directory
 mkdir ~/.0L/logs
 
-# start node 
+# start node
 diem-node --config ~/.0L/vfn.node.yaml  >> ~/.0L/logs/node.log 2>&1
 ```
 
@@ -500,7 +500,7 @@ for the `diem-node` and the `tower` app. Note: This only works on debian based s
     Of course you can vary this settings to fit your specific needs.
 
 3. Example on how to start the `tower` app with log rotation:
-  
+
     ```bash
     tower -o start 2>&1 | multilog s104857600 n10 ~/.0L/logs/tower
     ```
@@ -537,7 +537,7 @@ Troubleshooting: If there is an issue with sequence_number out of sync. Retry th
 After `rust` and `cargo` are installed you are prompted to set a `PATH` environment variable.
 Follow those instructions or reset your terminal.
 
-![rust config instructions](rust-config-output.png)  
+![rust config instructions](rust-config-output.png)
 
 To configure your current shell, run:
 

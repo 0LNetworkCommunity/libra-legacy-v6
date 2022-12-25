@@ -112,4 +112,4 @@ ol --account 00000000000000000000000000000000 query --move-state --move-module T
 ### more about txs
 
 More insights into the txs command can be found in
-https://github.com/OLSF/libra/tree/main/ol/txs
+https://github.com/0LNetworkCommunity/libra/tree/main/ol/txs

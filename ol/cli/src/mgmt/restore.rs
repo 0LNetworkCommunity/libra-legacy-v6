@@ -23,7 +23,7 @@ use std::{
     process::Command,
 };
 
-const GITHUB_ORG: &str = "OLSF";
+const GITHUB_ORG: &str = "0LNetworkCommunity";
 /// Check if we are in testnet mode
 pub static GITHUB_REPO: Lazy<&str> = Lazy::new(|| {
     if *IS_DEVNET {
@@ -530,7 +530,7 @@ fn prod_yaml(home_path: &str, waypoint: &str) -> String {
 base:
   data_dir: "{home_path}"
   role: "full_node"
-  waypoint: 
+  waypoint:
     from_config: "{waypoint}"
 execution:
   genesis_file_location: ""
@@ -567,7 +567,7 @@ storage:
   prune_window: 20000
   timeout_ms: 30000
 state_sync:
-  chunk_limit: 250  
+  chunk_limit: 250
 json_rpc:
   address: 127.0.0.1:8080
 upstream:
@@ -586,7 +586,7 @@ fn devnet_yaml(home_path: &str, waypoint: &str) -> String {
 base:
   data_dir: "{home_path}"
   role: "full_node"
-  waypoint: 
+  waypoint:
     from_config: "{waypoint}"
 execution:
   genesis_file_location: ""

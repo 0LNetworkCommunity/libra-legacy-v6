@@ -50,7 +50,7 @@ NODE_ENV="test" cargo run -p diem-swarm -- --diem-node target/debug/diem-node -c
 At the cli prompt when asked to "Enter your 0L mnemonic:" you can use the mnemonics of alice (see below in the section about the cli)
 
 
-### Initialize swarm configs 
+### Initialize swarm configs
 
 After starting the swarm, the 0L.toml and other configs have to be created by:
 
@@ -70,7 +70,7 @@ After the above steps, the 0L tools can be used
 ## cli
 
 If swarm has been started without cli, you can attach the cli like this (with the data that is shown at the end of swarm startup in the console). E.g.:
- 
+
 ```
 cargo r -p cli -- -u http://<local-host-and-port> -m <path to mint.key' --waypoint <random waypoint> --chain-id 4
 ```
@@ -166,7 +166,7 @@ The following command would send an onboarding transaction from alice to eve:
 cargo r -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=alice create-validator -f ./ol/fixtures/onboarding/eve_init_test.json
 ```
 
-(the create-validator step for swarm still throws an arror "could not find autopay instructions" in release-v4.3.0, even with https://github.com/OLSF/diem/pull/499)
+(the create-validator step for swarm still throws an arror "could not find autopay instructions" in release-v4.3.0, even with https://github.com/0LNetworkCommunity/diem/pull/499)
 
 
 ### Relay

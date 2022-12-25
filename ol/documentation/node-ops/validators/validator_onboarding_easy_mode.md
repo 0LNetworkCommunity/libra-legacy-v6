@@ -2,7 +2,7 @@
 
 ## Easy Mode
 
-There are a lot of things to configure to set up an 0L validator. Easy Mode makes assumptions. 
+There are a lot of things to configure to set up an 0L validator. Easy Mode makes assumptions.
 
 You can optionally do [Hard Mode](validator_onboarding_hard_mode.md), and build from source, and write your own config files.
 
@@ -22,14 +22,14 @@ Export the `~/bins` directory to be in search path, and download the binaries wi
 ```
 export PATH=$PATH:~/bin && echo export PATH=\$PATH:~/bin >> ~/.bashrc
 
-curl -sL https://raw.githubusercontent.com/OLSF/libra/main/ol/util/install.sh | bash
+curl -sL https://raw.githubusercontent.com/0LNetworkCommunity/libra/main/ol/util/install.sh | bash
 ```
 # 2. Start a persistent terminal session
 
 Recommended multiplexer is `tmux`.
 
 ```
-> tmux 
+> tmux
 
 # or `tmux a` to reattach to a previous session
 > tmux a
@@ -49,7 +49,7 @@ onboard keygen
 
 # 4. Create config files
 
-Preferably use a template from a url (usually on another node on the network). Something like: 
+Preferably use a template from a url (usually on another node on the network). Something like:
 
 ```
 onboard val -u http://[their-ip-address]
@@ -62,7 +62,7 @@ Your `tower` app will produce a proof which is needed to create an account. This
 
 # 6. Start 0L services
 
-The `start` subcommand will run `pilot` app which continuously checks node and tower state and changes nodes. 
+The `start` subcommand will run `pilot` app which continuously checks node and tower state and changes nodes.
 
 ```
 # Restore from the latest epoch snapshot instead of syncing the entire chain
@@ -83,7 +83,7 @@ Go to: `http://[your-ip-address]:3030`
 
 # 7. Create account on chain
 
-Have someone (with GAS) submit the account creation on chain.  
+Have someone (with GAS) submit the account creation on chain.
 
 ```
 txs create-validator -u http://[your-ip-address]
