@@ -27,7 +27,7 @@ jobs:
             override: true
             components: rustfmt, clippy
       - name: Install deps
-        run: sudo apt-get install -y lld
+        run: sudo apt-get install -y lld libssl-dev
       - name: check version
         run: rustc -V
       - name: Build stdlib
@@ -48,7 +48,7 @@ jobs:
             ./target_test
           key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
       - name: Install deps
-        run: sudo apt-get install -y lld
+        run: sudo apt-get install -y lld libssl-dev
       - name: Install Rust
         uses: actions-rs/toolchain@v1.0.7
         with:
@@ -77,7 +77,7 @@ jobs:
             ./target_test
           key: ${{ runner.os }}-cache2-miner-${{ hashFiles('**/Cargo.lock') }}
       - name: Install deps
-        run: sudo apt-get install -y lld
+        run: sudo apt-get install -y lld libssl-dev
       - name: Install Rust
         uses: actions-rs/toolchain@v1.0.7
         with:
