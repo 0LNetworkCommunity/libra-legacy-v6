@@ -60,6 +60,7 @@ pub enum MethodResponse {
     GetMetadata(MetadataView),
     GetAccount(Option<AccountView>),
     GetTransactions(Vec<TransactionView>),
+    GetRecentTransactions(Vec<TransactionView>),
     GetAccountTransaction(Option<TransactionView>),
     GetAccountTransactions(Vec<TransactionView>),
     GetEvents(Vec<EventView>),
@@ -84,6 +85,9 @@ impl MethodResponse {
             Method::GetAccount => MethodResponse::GetAccount(serde_json::from_value(json)?),
             Method::GetTransactions => {
                 MethodResponse::GetTransactions(serde_json::from_value(json)?)
+            }
+            Method::GetRecentTransactions => {
+                MethodResponse::GetRecentTransactions(serde_json::from_value(json)?)
             }
             Method::GetAccountTransaction => {
                 MethodResponse::GetAccountTransaction(serde_json::from_value(json)?)
@@ -128,6 +132,7 @@ impl MethodResponse {
             MethodResponse::GetMetadata(_) => Method::GetMetadata,
             MethodResponse::GetAccount(_) => Method::GetAccount,
             MethodResponse::GetTransactions(_) => Method::GetTransactions,
+            MethodResponse::GetRecentTransactions(_) => Method::GetRecentTransactions,
             MethodResponse::GetAccountTransaction(_) => Method::GetAccountTransaction,
             MethodResponse::GetAccountTransactions(_) => Method::GetAccountTransactions,
             MethodResponse::GetEvents(_) => Method::GetEvents,
@@ -184,6 +189,16 @@ impl MethodResponse {
             MethodResponse::GetTransactions(txs) => Ok(txs),
             _ => Err(Error::rpc_response(format!(
                 "expected MethodResponse::GetTransactions found MethodResponse::{:?}",
+                self.method()
+            ))),
+        }
+    }
+
+    pub fn try_into_get_recent_transactions(self) -> Result<Vec<TransactionView>, Error> {
+        match self {
+            MethodResponse::GetRecentTransactions(txs) => Ok(txs),
+            _ => Err(Error::rpc_response(format!(
+                "expected MethodResponse::GetRecentTransactions found MethodResponse::{:?}",
                 self.method()
             ))),
         }

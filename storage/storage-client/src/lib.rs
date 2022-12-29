@@ -140,6 +140,16 @@ impl DbReader for StorageClient {
         unimplemented!()
     }
 
+    fn get_recent_transactions(
+        &self,
+        _start_version: u64,
+        _limit: u64,
+        _ledger_version: u64,
+        _fetch_events: bool,
+    ) -> Result<TransactionListWithProof> {
+        unimplemented!()
+    }
+
     fn get_events(
         &self,
         _key: &EventKey,

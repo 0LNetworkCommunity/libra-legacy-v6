@@ -16,6 +16,7 @@ pub enum MethodRequest {
     GetMetadata((Option<u64>,)),
     GetAccount(AccountAddress, Option<u64>),
     GetTransactions(u64, u64, bool),
+    GetRecentTransactions(u64, u64, bool),
     GetAccountTransaction(AccountAddress, u64, bool),
     GetAccountTransactions(AccountAddress, u64, u64, bool),
     GetEvents(EventKey, u64, u64),
@@ -77,6 +78,10 @@ impl MethodRequest {
 
     pub fn get_transactions(start_seq: u64, limit: u64, include_events: bool) -> Self {
         Self::GetTransactions(start_seq, limit, include_events)
+    }
+
+    pub fn get_recent_transactions(start_seq: u64, limit: u64, include_events: bool) -> Self {
+        Self::GetRecentTransactions(start_seq, limit, include_events)
     }
 
     pub fn get_account_transaction(
@@ -141,6 +146,7 @@ impl MethodRequest {
             MethodRequest::GetMetadata(_) => Method::GetMetadata,
             MethodRequest::GetAccount(_, _) => Method::GetAccount,
             MethodRequest::GetTransactions(_, _, _) => Method::GetTransactions,
+            MethodRequest::GetRecentTransactions(_, _, _) => Method::GetRecentTransactions,
             MethodRequest::GetAccountTransaction(_, _, _) => Method::GetAccountTransaction,
             MethodRequest::GetAccountTransactions(_, _, _, _) => Method::GetAccountTransactions,
             MethodRequest::GetEvents(_, _, _) => Method::GetEvents,

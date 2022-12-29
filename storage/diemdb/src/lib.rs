@@ -700,6 +700,55 @@ impl DbReader for DiemDB {
         })
     }
 
+    fn get_recent_transactions(
+        &self,
+        start_version: Version,
+        limit: u64,
+        ledger_version: Version,
+        fetch_events: bool,
+    ) -> Result<TransactionListWithProof> {
+        gauged_api("get_recent_transactions", || {
+            error_if_too_many_requested(limit, MAX_LIMIT)?;
+
+            if start_version > ledger_version || limit == 0 {
+                return Ok(TransactionListWithProof::new_empty());
+            }
+
+            //let limit = std::cmp::min(limit, ledger_version - start_version + 1);
+
+            let txns = (ledger_version - start_version - limit..ledger_version - start_version)
+                .map(|version| self.transaction_store.get_transaction(version))
+                .collect::<Result<Vec<_>>>()?;
+            let txn_infos = (ledger_version - start_version - limit..ledger_version - start_version)
+                .map(|version| self.ledger_store.get_transaction_info(version))
+                .collect::<Result<Vec<_>>>()?;
+            let events = if fetch_events {
+                Some(
+                    (ledger_version - start_version - limit..ledger_version - start_version)
+                        .map(|version| self.event_store.get_events_by_version(version))
+                        .collect::<Result<Vec<_>>>()?,
+                )
+            } else {
+                None
+            };
+            let proof = TransactionListProof::new(
+                self.ledger_store.get_transaction_range_proof(
+                    Some(ledger_version - start_version - limit),
+                    limit,
+                    ledger_version,
+                )?,
+                txn_infos,
+            );
+
+            Ok(TransactionListWithProof::new(
+                txns,
+                events,
+                Some(ledger_version - start_version - limit),
+                proof,
+            ))
+        })
+    }
+
     fn get_events(
         &self,
         event_key: &EventKey,

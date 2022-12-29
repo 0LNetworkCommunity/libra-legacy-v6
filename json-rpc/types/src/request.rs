@@ -67,6 +67,7 @@ pub enum MethodRequest {
     GetMetadata(GetMetadataParams),
     GetAccount(GetAccountParams),
     GetTransactions(GetTransactionsParams),
+    GetRecentTransactions(GetTransactionsParams),
     GetAccountTransaction(GetAccountTransactionParams),
     GetAccountTransactions(GetAccountTransactionsParams),
     GetEvents(GetEventsParams),
@@ -95,6 +96,9 @@ impl MethodRequest {
             Method::GetAccount => MethodRequest::GetAccount(serde_json::from_value(value)?),
             Method::GetTransactions => {
                 MethodRequest::GetTransactions(serde_json::from_value(value)?)
+            }
+            Method::GetRecentTransactions => {
+                MethodRequest::GetRecentTransactions(serde_json::from_value(value)?)
             }
             Method::GetAccountTransaction => {
                 MethodRequest::GetAccountTransaction(serde_json::from_value(value)?)
@@ -144,6 +148,7 @@ impl MethodRequest {
             MethodRequest::GetMetadata(_) => Method::GetMetadata,
             MethodRequest::GetAccount(_) => Method::GetAccount,
             MethodRequest::GetTransactions(_) => Method::GetTransactions,
+            MethodRequest::GetRecentTransactions(_) => Method::GetRecentTransactions,
             MethodRequest::GetAccountTransaction(_) => Method::GetAccountTransaction,
             MethodRequest::GetAccountTransactions(_) => Method::GetAccountTransactions,
             MethodRequest::GetEvents(_) => Method::GetEvents,
@@ -469,6 +474,57 @@ mod test {
 
     #[test]
     fn get_transactions() {
+        // Array with all params
+        let value = serde_json::json!([10, 11, false]);
+        serde_json::from_value::<GetTransactionsParams>(value).unwrap();
+
+        // Array with too many params
+        let value = serde_json::json!([10, 11, false, "foo"]);
+        serde_json::from_value::<GetTransactionsParams>(value).unwrap_err();
+
+        // Array with wrong param
+        let value = serde_json::json!(["foo", 11, false]);
+        serde_json::from_value::<GetTransactionsParams>(value).unwrap_err();
+
+        // Array with too few params
+        let value = serde_json::json!([10, 11]);
+        serde_json::from_value::<GetTransactionsParams>(value).unwrap_err();
+
+        // Empty array without required params should fail
+        let value = serde_json::json!([]);
+        serde_json::from_value::<GetTransactionsParams>(value).unwrap_err();
+
+        // Object without required params should fail
+        let value = serde_json::json!({});
+        serde_json::from_value::<GetTransactionsParams>(value).unwrap_err();
+
+        // Object params
+        let value = serde_json::json!({
+            "start_version": 10,
+            "limit": 10,
+            "include_events": true,
+        });
+        serde_json::from_value::<GetTransactionsParams>(value).unwrap();
+
+        // Object without all params
+        let value = serde_json::json!({
+            "limit": 10,
+            "include_events": true,
+        });
+        serde_json::from_value::<GetTransactionsParams>(value).unwrap_err();
+
+        // Object with more params
+        let value = serde_json::json!({
+            "start_version": 10,
+            "limit": 10,
+            "include_events": true,
+            "foo": 11,
+        });
+        serde_json::from_value::<GetTransactionsParams>(value).unwrap();
+    }
+
+    #[test]
+    fn get_recent_transactions() {
         // Array with all params
         let value = serde_json::json!([10, 11, false]);
         serde_json::from_value::<GetTransactionsParams>(value).unwrap();

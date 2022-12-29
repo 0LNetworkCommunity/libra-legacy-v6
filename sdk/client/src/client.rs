@@ -178,6 +178,20 @@ impl Client {
         .await
     }
 
+    pub async fn get_recent_transactions(
+        &self,
+        start_seq: u64,
+        limit: u64,
+        include_events: bool,
+    ) -> Result<Response<Vec<TransactionView>>> {
+        self.send(MethodRequest::get_recent_transactions(
+            start_seq,
+            limit,
+            include_events,
+        ))
+        .await
+    }
+
     pub async fn get_account_transaction(
         &self,
         address: AccountAddress,

@@ -108,6 +108,21 @@ pub fn get_transactions(
     Ok(TransactionListView::try_from(txs)?)
 }
 
+/// Returns transactions by range
+pub fn get_recent_transactions(
+  db: &dyn DbReader,
+  ledger_version: u64,
+  skip_version: u64,
+  limit: u64,
+  include_events: bool,
+) -> Result<TransactionListView, JsonRpcError> {
+  if skip_version > ledger_version || limit == 0 {
+      return Ok(TransactionListView::empty());
+  }
+  let txs = db.get_recent_transactions(skip_version, limit, ledger_version, include_events)?;
+  Ok(TransactionListView::try_from(txs)?)
+}
+
 /// Returns transactions by range with proofs
 pub fn get_transactions_with_proofs(
     db: &dyn DbReader,

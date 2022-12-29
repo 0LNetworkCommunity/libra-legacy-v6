@@ -93,6 +93,16 @@ impl DbReader for FakeDb {
         unimplemented!();
     }
 
+    fn get_recent_transactions(
+        &self,
+        _start_version: Version,
+        _batch_size: u64,
+        _ledger_version: Version,
+        _fetch_events: bool,
+    ) -> Result<TransactionListWithProof> {
+        unimplemented!();
+    }
+
     fn get_events(
         &self,
         _event_key: &EventKey,

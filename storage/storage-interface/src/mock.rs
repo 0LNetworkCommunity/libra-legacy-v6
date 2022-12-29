@@ -43,6 +43,16 @@ impl DbReader for MockDbReader {
         unimplemented!()
     }
 
+    fn get_recent_transactions(
+        &self,
+        _start_version: Version,
+        _batch_size: u64,
+        _ledger_version: Version,
+        _fetch_events: bool,
+    ) -> Result<TransactionListWithProof> {
+        unimplemented!()
+    }
+
     /// Returns events by given event key
     fn get_events(
         &self,

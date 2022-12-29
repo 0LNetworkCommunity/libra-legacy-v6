@@ -185,6 +185,14 @@ pub trait DbReader: Send + Sync {
         fetch_events: bool,
     ) -> Result<TransactionListWithProof>;
 
+    fn get_recent_transactions(
+        &self,
+        start_version: Version,
+        batch_size: u64,
+        ledger_version: Version,
+        fetch_events: bool,
+    ) -> Result<TransactionListWithProof>;
+
     /// Returns events by given event key
     fn get_events(
         &self,

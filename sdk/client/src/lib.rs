@@ -68,6 +68,7 @@ pub enum Method {
     GetMetadata,
     GetAccount,
     GetTransactions,
+    GetRecentTransactions,
     GetAccountTransaction,
     GetAccountTransactions,
     GetEvents,
