@@ -1,26 +1,26 @@
 
 ### Setup Debugger:
 
-#### Step-1 
+#### Step-1
 Install VS Code extension `CodeLLDB (OS X/Linux)`
 
 #### Step-2
 
-Create this folder and file in project root:  
-`.vscode/launch.json` 
+Create this folder and file in project root:
+`.vscode/launch.json`
 
-E.g. two debug configs for `tower` package with and without using `cargo`:  
+E.g. two debug configs for `tower` package with and without using `cargo`:
 ```
 {
   // Use IntelliSense to learn about possible attributes.
   // Hover to view descriptions of existing attributes.
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
-  "configurations": 
+  "configurations":
   [
     {
       "name": "debug tower",
-       
+
        "type": "lldb",
        "request": "launch",
        "cargo": { "args": ["b", "-p", "tower"] },
@@ -30,8 +30,8 @@ E.g. two debug configs for `tower` package with and without using `cargo`:
          "NODE_ENV": "test"
        }, // e.g. {"ENV1": "aa", "ENV2: "bb"}
        "cwd": "${workspaceFolder}"
-    }, 
-    {  
+    },
+    {
        "name": "debug tower without cargo",
        "type": "lldb",
        "request": "launch",
@@ -47,20 +47,20 @@ E.g. two debug configs for `tower` package with and without using `cargo`:
 #### Step-3
 `File -> Preferences -> Settings` type `Allow setting breakpoints...`
 
-Tick this checkbox:  
+Tick this checkbox:
 `<> Allow setting breakpoints in any file`
 
 Done!
 
-### Start Debugging:  
-Set your breakpoint and press `F5` or `menu -> Run -> Start Debugging`.   
-If all goes well, debug sessions should start and you should see `debug tower` on upper-left hand of VS Code in debug window.  
+### Start Debugging:
+Set your breakpoint and press `F5` or `menu -> Run -> Start Debugging`.
+If all goes well, debug sessions should start and you should see `debug tower` on upper-left hand of VS Code in debug window.
 
-Note: You can see/select other debug targets if you added more than one package into `"configurations":` array in step 2.  
+Note: You can see/select other debug targets if you added more than one package into `"configurations":` array in step 2.
 
 ### Known Issues
-https://github.com/OLSF/libra/issues/589
+https://github.com/0LNetworkCommunity/libra/issues/589
 
-### Sources:   
-https://www.forrestthewoods.com/blog/how-to-debug-rust-with-visual-studio-code/  
+### Sources:
+https://www.forrestthewoods.com/blog/how-to-debug-rust-with-visual-studio-code/
 https://code.visualstudio.com/docs/editor/debugging#_launch-configurations

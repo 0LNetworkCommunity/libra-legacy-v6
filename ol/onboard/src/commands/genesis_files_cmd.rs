@@ -96,7 +96,7 @@ pub fn fetch_genesis_files_from_repo(
     github_org: &Option<String>,
     repo: &Option<String>,
 ) -> Result<PathBuf, Error> {
-    let github_org = github_org.clone().unwrap_or("OLSF".to_string());
+    let github_org = github_org.clone().unwrap_or("0LNetworkCommunity".to_string());
     let repo = repo.clone().unwrap_or("genesis-registration".to_string());
 
     let base_url = format!(

@@ -27,4 +27,4 @@ See: [what is the workflow for upgrading a network](./upgrade-workflow.md)
 
 Said plainly: the policy of a network update that goes bad is to restore to the last known epoch which will not cause the same issue. For a Hot Upgrade for example: the network will use the state snapshot of the epoch in which an "abort sequence" can reasonably be issued.
 
-Daily snapshots of the epoch are available on the repo: `github.com/olsf/epoch-archive`
+Daily snapshots of the epoch are available on the repo: `github.com/0LNetworkCommunity/epoch-archive`

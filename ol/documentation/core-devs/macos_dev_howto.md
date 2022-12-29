@@ -1,7 +1,7 @@
 # Prerequisite
 You need the following tools to develop on macOS and compile and link the binaries:
 * [XCode Command Line Tools](https://developer.apple.com/library/archive/technotes/tn2339/_index.html). You can either install XCode from the App Store or use the link to get more information on how to install the command line tools. These tools add support for `git`, `make` and other tools
-* an installer that allows to install the missing Unix libraries and tools for macOS. This tutorial assumes you are using [Homebrew](https://brew.sh/), a package manager for macOS. You can find an easy way to install Homebrew on their website (see link above). 
+* an installer that allows to install the missing Unix libraries and tools for macOS. This tutorial assumes you are using [Homebrew](https://brew.sh/), a package manager for macOS. You can find an easy way to install Homebrew on their website (see link above).
 
 Last but not least you need to export the path where your package manager installs the Unix libraries, so that the linker (`cc`) can find them:
 
@@ -22,7 +22,7 @@ For all the following commands you need to open the Terminal app.
 1. Clone the libra source into a local folder of your choice (denoted as `<<your project folder>>` in the following statements)
 ```
 $ cd <<your project folder>>
-$ git clone git@github.com:OLSF/libra.git
+$ git clone git@github.com:0LNetworkCommunity/libra.git
 ```
 2. Install the Rust programming language and some tools.
 ```

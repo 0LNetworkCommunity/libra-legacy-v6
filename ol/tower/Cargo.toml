@@ -4,8 +4,8 @@ version = "5.2.0"
 edition = "2018"
 authors = ["0L contributors"]
 description = "0L tower"
-repository = "https://github.com/OLSF/libra"
-homepage = "https://github.com/olsf/"
+repository = "https://github.com/0LNetworkCommunity/libra"
+homepage = "https://github.com/0LNetworkCommunity/"
 
 [dependencies]
 bcs = "0.1.2"
@@ -24,7 +24,7 @@ diem-wallet = { path = "../../testsuite/cli/diem-wallet" }
 cli = { path = "../../testsuite/cli/" }
 diem-types = { path = "../../types/" }
 diem-config = { path = "../../config/" }
-diem-json-rpc-types = { path = "../../json-rpc/types"} 
+diem-json-rpc-types = { path = "../../json-rpc/types"}
 diemdb = { path = "../../storage/diemdb"}
 diem-logger = { path = "../../common/logger" }
 storage-interface= {path = "../../storage/storage-interface"}

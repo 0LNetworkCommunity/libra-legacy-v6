@@ -1,6 +1,6 @@
 # Genesis Registration
 
-A network genesis ceremony has two steps: 
+A network genesis ceremony has two steps:
 
 1. registration of interest by participants
 2. genesis transaction creation independently offline.
@@ -8,7 +8,7 @@ A network genesis ceremony has two steps:
 After the ceremony completes, one or more genesis blocks will exist. The canonical chain will be the block that has the most consensus.
 
 # TL;DR
-You will need a few files in place before starting with genesis registration. 
+You will need a few files in place before starting with genesis registration.
 
 - .0L/github_token.txt: the Github authentication token (required). [Link](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token)
 
@@ -95,24 +95,24 @@ Clone the project onto your machine. `cd` into the project directory. Checkout t
 
 
 ```
-git clone https://github.com/OLSF/libra.git
+git clone https://github.com/0LNetworkCommunity/libra.git
 cd <project root>
 git checkout <version> -f
 
 // (optional) install `make`
-sudo apt install make 
+sudo apt install make
 
-// installs ubuntu dependencies and rust. 
-make deps 
+// installs ubuntu dependencies and rust.
+make deps
 // it's best to exit your terminal and log in again to automatically have Cargo's bin dir added to your path
 
 // builds the necessary binaries for registration (and node operations) and installs them
-make bins install 
+make bins install
 ```
 
 
 #### Troubleshooting
-* You may encounter errors related to Rust, version should be same as: https://github.com/OLSF/libra/blob/OLv4/rust-toolchain.
+* You may encounter errors related to Rust, version should be same as: https://github.com/0LNetworkCommunity/libra/blob/OLv4/rust-toolchain.
 * You may encounter errors related to memory running out.
 * Dependencies such as jq and rq are platform specific. The makefile targets Ubuntu.
 * `toml` may not be installed, you can install with `cargo install toml-cli`
@@ -138,7 +138,7 @@ This creates the files your validator needs to run 0L tools. By default files wi
 
 The following script does several steps:
 - Mine's the first proof. Expect this to take 30mins.
-- OL app configs: defaults to `$HOME/.0L/0L.toml` 
+- OL app configs: defaults to `$HOME/.0L/0L.toml`
 - keys init: creating credentials and configs
 - fork: on github this forks the GENESIS_REPO into the CANDIDATE_REPO
 
@@ -157,7 +157,7 @@ GITHUB_USER=<your_github_user> make gen-reset
 cargo run -p onboard --release -- val --genesis-ceremony --skip-mining
 ```
 ## 4. Pause and check your work ##
-Check all your configs are correct before registering is correct: `make check`. 
+Check all your configs are correct before registering is correct: `make check`.
 
 ```
 $ make check
@@ -166,7 +166,7 @@ account: 3F48012938129deadbeef
 github_token: <secret>
 ip: 5.5.5.5
 node path: /root/.0L
-github_org: OLSF
+github_org: 0LNetworkCommunity
 github_repo: genesis-registration
 env: prod
 test mode:
@@ -177,7 +177,7 @@ If the data looks incorrect, you can doublecheck `$HOME/.0L/0L.toml`, and you ma
 
 ### (Optional) link your previous tower to new genesis proof.
 
-The onboard tool will scan the files in `.0L/vdf_proofs/` for legacy files with the format block_x.json. 
+The onboard tool will scan the files in `.0L/vdf_proofs/` for legacy files with the format block_x.json.
 It will then take the highest block, and hash the proof of it. And interactively, the onboard tool will ask if you want to include that information in your genesis block.
 ## 6. Register for genesis
 

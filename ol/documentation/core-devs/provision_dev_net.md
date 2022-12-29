@@ -2,9 +2,9 @@
 
 # Quick start
 
-A OLSF devnet runs with the following nodes. If you have permissions connect with `shh root@ip-address`
+A 0L devnet runs with the following nodes. If you have permissions connect with `shh root@ip-address`
 ```
-alice = 161.35.13.169 
+alice = 161.35.13.169
 bob = 167.71.84.248
 carol = 104.131.56.224
 
@@ -29,7 +29,7 @@ Upon logging in, administrators should check the saved terminal sessions with `t
 
 # Devnet Genesis ceremony (optional)
 
-This assumes there is a github repo which is dedicated to devnet. These instruction assume the layout of the genesis set is found in: `github.com/OLSF/dev-genesis`.
+This assumes there is a github repo which is dedicated to devnet. These instruction assume the layout of the genesis set is found in: `github.com/0LNetworkCommunity/dev-genesis`.
 
 The defaults use personas in the genesis set are: `alice`, `bob`, `carol` whose configs and mnemonics can be found in `/fixtures/`
 
@@ -39,10 +39,10 @@ Optionally change the set layout with:
 
 # Infrastructure
 
-These repos are necessary for accurate mocking of main net. 
+These repos are necessary for accurate mocking of main net.
 
-* OLSF/dev-genesis: the mock repo for genesis registrations.
-* OLSF/dev-epoch-archive: the mock repo for epoch archives.
+* 0LNetworkCommunity/dev-genesis: the mock repo for genesis registrations.
+* 0LNetworkCommunity/dev-epoch-archive: the mock repo for epoch archives.
 
 
 This only needs to be done once per session, or time the devnet configs change: Move standard library, set_layout, IP addresses.
@@ -64,7 +64,7 @@ make dev-infra
 
 ## 1. OS dependencies can be installed with `libra/util/setup.sh`. Devnet nodes usually are already configured, run this only if adding new nodes.
 
-## 2. Set environment variables 
+## 2. Set environment variables
 
 ### TL;DR
 
@@ -74,7 +74,7 @@ For each node, set the NS (namespace) for that persona, e.g.:
 
 ### NODE_ENV
 
-for `prod`, `stage` or `test`. 
+for `prod`, `stage` or `test`.
 
 `> export NODE_ENV=test` will use "easy" difficulty of vdf and stdlib testnet settings.
 
@@ -116,9 +116,9 @@ Preferably run these commands in a `screen` or `tmux`, such as `screen -S node`,
 
 ### End-to-end devnet setup
 
-If something is wrong with the genesis ceremony repository (github.com/OLSF/dev-genesis) then the ceremony needs to be rerun (instead of using the fixtures).
+If something is wrong with the genesis ceremony repository (github.com/0LNetworkCommunity/dev-genesis) then the ceremony needs to be rerun (instead of using the fixtures).
 
-1. (OPTIONAL) This instruciton is in the INFRA section above. But if standard library changes for genesis, need to reregister, alice, bob, carol to the mock genesis repo. Do this on all hosts. 
+1. (OPTIONAL) This instruciton is in the INFRA section above. But if standard library changes for genesis, need to reregister, alice, bob, carol to the mock genesis repo. Do this on all hosts.
 
 ```
 make  dev-register
@@ -132,7 +132,7 @@ make devnet
 ### Frozen: use a backed up devnet setting from fixtures
 
 
-1. Start each node from genesis fixtures 
+1. Start each node from genesis fixtures
 
 ```
 # use './fixtures/genesis/current' for genesis blob and waypoint
@@ -155,7 +155,7 @@ make dev-join
 ```
 
 ### Join a new blank validator
-NOTE: backups of devnet should be created for this version number at this repo: github.com/OLSF/dev-epoch-archive 
+NOTE: backups of devnet should be created for this version number at this repo: github.com/0LNetworkCommunity/dev-epoch-archive
 Do as the typical onboarding procedure.
 
 0. pull same <version> number as above, and build with `make bins`

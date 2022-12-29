@@ -13,7 +13,7 @@ These instructions assume the database is at rest, and diem-node is not running.
 These instructions assumes you are building binaries from /libra source.
 
 The CLI Tools you will use:
- - `db-restore`: The `backup-cli` tool to take archived snapshots and restore a database. We provide wrappers to those tools in: https://github.com/OLSF/epoch-archive
+ - `db-restore`: The `backup-cli` tool to take archived snapshots and restore a database. We provide wrappers to those tools in: https://github.com/0LNetworkCommunity/epoch-archive
 
 - `diem-transaction-replay`: To inspect state of the DB.
 - `diem-writeset-generator`: Create transaction binaries, and save the files. Those file will be applied to db at a later step.
@@ -36,7 +36,7 @@ If there's a change to the stdlib that is needed to get the network unstuck, you
 
 To be clear, you CANNOT bundle a stdlib upgrade writset, with another transaction that depends on the new stdlib.
 
-Note that the issue #1 above still applies. The second writeset, will likely find a database that is at last_reconfiguration timestamp is EQUAL to current DiemTimestamp. 
+Note that the issue #1 above still applies. The second writeset, will likely find a database that is at last_reconfiguration timestamp is EQUAL to current DiemTimestamp.
 
 Solution: So you'll need to run the database for a while (at least one block) and halt the network again to apply the second step.
 
@@ -48,14 +48,14 @@ Being in sync is easy to do if all nodes are starting from one backup file. But 
 Solution: Run nodes with validator.node.yaml with `sync_only: true`, until all nodes in the recovery validator are at the same block. The way to see this in the logs is that the `timeout` block is at the same number.
 
 4. There may be other nodes in the network trying to connect to the recovery nodes.
-This will create side-effects, and unexpected errors. So the nodes in the recovery validator set need to have a private network. 
+This will create side-effects, and unexpected errors. So the nodes in the recovery validator set need to have a private network.
 
 Solution: This can be achieved by creating a validator.node.yaml file, which has 1) no fullnode network connections. 2) in validator network `discovery_service: none`, and 3) in the validator network settings `seeds` need to contain all the networking information of all nodes.
 
 5. The new epochs on the restored network will be discontinuous.
 Nodes that were previously on the network will not be able to automatically sync to recovery nodes. They will see an `epochChangeProof certificate is not valid`. This is because the previous epoch validators did not "sign off" on the epoch transition.
 
-Solution: fullnodes, validators, etc. that join the network after recovery will need to do so with a `db-restore` operation. Either using `ol restore` or otherwise with instructions `https://github.com/OLSF/epoch-archive`
+Solution: fullnodes, validators, etc. that join the network after recovery will need to do so with a `db-restore` operation. Either using `ol restore` or otherwise with instructions `https://github.com/0LNetworkCommunity/epoch-archive`
 ##  Cheatsheet
 
 
@@ -94,7 +94,7 @@ make start
 # Get a DB
 1. Take a known good state snapshot (Snapshot A)
 
-Either from https://github.com/OLSF/epoch-archive, or from a tar.gz file of someone's database.
+Either from https://github.com/0LNetworkCommunity/epoch-archive, or from a tar.gz file of someone's database.
 
 Note: the DB should not be at the epoch boundary block.
 
@@ -118,8 +118,8 @@ After making changes and compiling your Move code, the following writset can be 
 ```
 make tx-stdlib
 
-// or 
-cargo r -p diem-writeset-generator -- --db ~/.0L/db --output ~/.0L/restore/rescue.blob update-stdlib 
+// or
+cargo r -p diem-writeset-generator -- --db ~/.0L/db --output ~/.0L/restore/rescue.blob update-stdlib
 ```
 
 ###  Update validators
@@ -129,7 +129,7 @@ cargo r -p diem-writeset-generator -- --db ~/.0L/db --output ~/.0L/restore/rescu
 export VALS = ECAF65ADD1B785B0495E3099F4045EC0 46A7A744B5D33C47F6B20766F8088B10 7EC16859C24200D8E074809D252AC740
 make tx-vals
 
-// or 
+// or
 cargo r -p diem-writeset-generator -- --output ~/.0L/restore/rescue.blob update-validators $VALS
 ```
 
@@ -154,7 +154,7 @@ export VALS = ECAF65ADD1B785B0495E3099F4045EC0 46A7A744B5D33C47F6B20766F8088B10 
 
 make tx-recue
 // or
-cargo r -p diem-writeset-generator -- --db ~/.0L/db --output ~/.0L/restore/rescue.blob rescue ECAF65ADD1B785B0495E3099F4045EC0 46A7A744B5D33C47F6B20766F8088B10 7EC16859C24200D8E074809D252AC740 
+cargo r -p diem-writeset-generator -- --db ~/.0L/db --output ~/.0L/restore/rescue.blob rescue ECAF65ADD1B785B0495E3099F4045EC0 46A7A744B5D33C47F6B20766F8088B10 7EC16859C24200D8E074809D252AC740
 ```
 
 
@@ -162,7 +162,7 @@ cargo r -p diem-writeset-generator -- --db ~/.0L/db --output ~/.0L/restore/rescu
 
 TODO: this is WIP it's not known to produce a DB in a usable state.
 
-All writesets that `db-bootstrapper` will apply must have a reconfiguraion event. 
+All writesets that `db-bootstrapper` will apply must have a reconfiguraion event.
 This is a no-op to test that the writeset generator can create a writeset that simply issues a reconfiguration event.
 ```
 cargo r -p diem-writeset-generator -- --output ~/.0L/restore/rescue.blob reconfig ~/.0L/db
@@ -225,7 +225,7 @@ Two things need to be changed in key-store: 1) clear the safety rules and 2) set
 
 This can be accomplished with one command:
 ```
-ol init --key-store --waypoint <WAYPOINT> 
+ol init --key-store --waypoint <WAYPOINT>
 ```
 
 Otherwise you will see a Safety rules not initialized error, and a Voting power Quorum error

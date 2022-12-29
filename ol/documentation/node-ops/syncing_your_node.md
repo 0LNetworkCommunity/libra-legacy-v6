@@ -2,7 +2,7 @@
 
 # TL;DR
 
-Restore latest epoch from github archives with: 
+Restore latest epoch from github archives with:
 ```
 ol restore
 ```
@@ -15,7 +15,7 @@ The backup and restore cycle consists of:
 - restore with backup-cli `db-restore`
 - Change node.yaml and key_store.json (validators only) with waypoint.
 
-0L maintains an archive of epochs of `experimental-network` here: https://github.com/OLSF/epoch-archive
+0L maintains an archive of epochs of `experimental-network` here: https://github.com/0LNetworkCommunity/epoch-archive
 
 # New backups
 
@@ -73,7 +73,7 @@ base:
     # Update this value to the location you want Diem to store its database
     data_dir: "/home/val/.0L/"
     role: "full_node"
-    waypoint: 
+    waypoint:
         from_config: "45934438:732ea2e1c3c5ee892da11abcd1211f22c06b5cf75fd6d47a9492c21dbfc32a46"
 ```
 
