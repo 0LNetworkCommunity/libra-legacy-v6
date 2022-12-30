@@ -246,17 +246,19 @@ pub struct EventView {
     pub key: EventKey,
     pub sequence_number: u64,
     pub transaction_version: u64,
+    pub timestamp_usecs: u64,
     pub data: EventDataView,
 }
 
-impl TryFrom<(u64, ContractEvent)> for EventView {
+impl TryFrom<(u64, u64, ContractEvent)> for EventView {
     type Error = Error;
 
-    fn try_from((txn_version, event): (u64, ContractEvent)) -> Result<Self> {
+    fn try_from((txn_version, timestamp_usecs, event): (u64, u64, ContractEvent)) -> Result<Self> {
         Ok(EventView {
             key: *event.key(),
             sequence_number: event.sequence_number(),
             transaction_version: txn_version,
+            timestamp_usecs,
             data: event.try_into()?,
         })
     }
@@ -738,7 +740,7 @@ impl TransactionView {
     ) -> Result<Self> {
         let events = events
             .into_iter()
-            .map(|event| EventView::try_from((version, event)))
+            .map(|event| EventView::try_from((version, timestamp_usecs, event)))
             .collect::<Result<Vec<_>>>()?;
 
         Ok(TransactionView {

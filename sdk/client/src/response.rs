@@ -63,6 +63,7 @@ pub enum MethodResponse {
     GetRecentTransactions(Vec<TransactionView>),
     GetAccountTransaction(Option<TransactionView>),
     GetAccountTransactions(Vec<TransactionView>),
+    GetRecentAccountTransactions(Vec<TransactionView>),
     GetEvents(Vec<EventView>),
     GetCurrencies(Vec<CurrencyInfoView>),
     GetNetworkStatus(u64),    
@@ -94,6 +95,9 @@ impl MethodResponse {
             }
             Method::GetAccountTransactions => {
                 MethodResponse::GetAccountTransactions(serde_json::from_value(json)?)
+            }
+            Method::GetRecentAccountTransactions => {
+                MethodResponse::GetRecentAccountTransactions(serde_json::from_value(json)?)
             }
             Method::GetEvents => MethodResponse::GetEvents(serde_json::from_value(json)?),
             Method::GetCurrencies => MethodResponse::GetCurrencies(serde_json::from_value(json)?),
@@ -135,6 +139,7 @@ impl MethodResponse {
             MethodResponse::GetRecentTransactions(_) => Method::GetRecentTransactions,
             MethodResponse::GetAccountTransaction(_) => Method::GetAccountTransaction,
             MethodResponse::GetAccountTransactions(_) => Method::GetAccountTransactions,
+            MethodResponse::GetRecentAccountTransactions(_) => Method::GetRecentAccountTransactions,
             MethodResponse::GetEvents(_) => Method::GetEvents,
             MethodResponse::GetCurrencies(_) => Method::GetCurrencies,
             MethodResponse::GetNetworkStatus(_) => Method::GetNetworkStatus,  

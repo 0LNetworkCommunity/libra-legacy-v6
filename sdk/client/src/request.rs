@@ -19,6 +19,7 @@ pub enum MethodRequest {
     GetRecentTransactions(u64, u64, bool),
     GetAccountTransaction(AccountAddress, u64, bool),
     GetAccountTransactions(AccountAddress, u64, u64, bool),
+    GetRecentAccountTransactions(AccountAddress, u64, u64, bool),
     GetEvents(EventKey, u64, u64),
     GetCurrencies([(); 0]),
     GetNetworkStatus([(); 0]),
@@ -101,6 +102,15 @@ impl MethodRequest {
         Self::GetAccountTransactions(address, start_seq, limit, include_events)
     }
 
+    pub fn get_recent_account_transactions(
+        address: AccountAddress,
+        start_seq: u64,
+        limit: u64,
+        include_events: bool,
+    ) -> Self {
+        Self::GetRecentAccountTransactions(address, start_seq, limit, include_events)
+    }
+
     pub fn get_events(key: EventKey, start_seq: u64, limit: u64) -> Self {
         Self::GetEvents(key, start_seq, limit)
     }
@@ -149,6 +159,7 @@ impl MethodRequest {
             MethodRequest::GetRecentTransactions(_, _, _) => Method::GetRecentTransactions,
             MethodRequest::GetAccountTransaction(_, _, _) => Method::GetAccountTransaction,
             MethodRequest::GetAccountTransactions(_, _, _, _) => Method::GetAccountTransactions,
+            MethodRequest::GetRecentAccountTransactions(_, _, _, _) => Method::GetRecentAccountTransactions,
             MethodRequest::GetEvents(_, _, _) => Method::GetEvents,
             MethodRequest::GetCurrencies(_) => Method::GetCurrencies,
             MethodRequest::GetNetworkStatus(_) => Method::GetNetworkStatus,

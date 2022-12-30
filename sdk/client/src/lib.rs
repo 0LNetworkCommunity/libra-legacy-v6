@@ -71,6 +71,7 @@ pub enum Method {
     GetRecentTransactions,
     GetAccountTransaction,
     GetAccountTransactions,
+    GetRecentAccountTransactions,
     GetEvents,
     GetCurrencies,
     GetNetworkStatus,

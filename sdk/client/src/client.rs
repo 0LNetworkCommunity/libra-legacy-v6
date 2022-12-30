@@ -222,6 +222,22 @@ impl Client {
         .await
     }
 
+    pub async fn get_recent_account_transactions(
+        &self,
+        address: AccountAddress,
+        start_seq: u64,
+        limit: u64,
+        include_events: bool,
+    ) -> Result<Response<Vec<TransactionView>>> {
+        self.send(MethodRequest::get_recent_account_transactions(
+            address,
+            start_seq,
+            limit,
+            include_events,
+        ))
+        .await
+    }
+
     pub async fn get_events(
         &self,
         key: EventKey,

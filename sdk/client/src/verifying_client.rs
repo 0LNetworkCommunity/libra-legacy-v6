@@ -719,7 +719,7 @@ fn verifying_get_events(key: EventKey, start_seq: u64, limit: u64) -> VerifyingR
                     .map_err(Error::invalid_proof)?;
 
                 // Project into the json-rpc type
-                let event_view = EventView::try_from((txn_version, event_with_proof.event))
+                let event_view = EventView::try_from((txn_version, 0, event_with_proof.event))
                     .map_err(Error::decode)?;
 
                 Ok(event_view)

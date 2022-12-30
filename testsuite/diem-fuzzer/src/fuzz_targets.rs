@@ -34,6 +34,7 @@ static ALL_TARGETS: Lazy<BTreeMap<&'static str, Box<dyn FuzzTargetImpl>>> = Lazy
         Box::new(json_rpc_service::JsonRpcGetAccountRequest::default()),
         Box::new(json_rpc_service::JsonRpcGetAccountTransactionRequest::default()),
         Box::new(json_rpc_service::JsonRpcGetAccountTransactionsRequest::default()),
+        Box::new(json_rpc_service::JsonRpcGetRecentAccountTransactionsRequest::default()),
         Box::new(json_rpc_service::JsonRpcGetTransactionsRequest::default()),
         Box::new(json_rpc_service::JsonRpcGetRecentTransactionsRequest::default()),
         Box::new(json_rpc_service::JsonRpcGetEventsRequest::default()),

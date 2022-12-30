@@ -70,6 +70,7 @@ pub enum MethodRequest {
     GetRecentTransactions(GetTransactionsParams),
     GetAccountTransaction(GetAccountTransactionParams),
     GetAccountTransactions(GetAccountTransactionsParams),
+    GetRecentAccountTransactions(GetAccountTransactionsParams),
     GetEvents(GetEventsParams),
     GetCurrencies(GetCurrenciesParams),
     GetNetworkStatus(GetNetworkStatusParams),
@@ -105,6 +106,9 @@ impl MethodRequest {
             }
             Method::GetAccountTransactions => {
                 MethodRequest::GetAccountTransactions(serde_json::from_value(value)?)
+            }
+            Method::GetRecentAccountTransactions => {
+                MethodRequest::GetRecentAccountTransactions(serde_json::from_value(value)?)
             }
             Method::GetEvents => MethodRequest::GetEvents(serde_json::from_value(value)?),
             Method::GetCurrencies => MethodRequest::GetCurrencies(serde_json::from_value(value)?),
@@ -151,6 +155,7 @@ impl MethodRequest {
             MethodRequest::GetRecentTransactions(_) => Method::GetRecentTransactions,
             MethodRequest::GetAccountTransaction(_) => Method::GetAccountTransaction,
             MethodRequest::GetAccountTransactions(_) => Method::GetAccountTransactions,
+            MethodRequest::GetRecentAccountTransactions(_) => Method::GetRecentAccountTransactions,
             MethodRequest::GetEvents(_) => Method::GetEvents,
             MethodRequest::GetCurrencies(_) => Method::GetCurrencies,
             MethodRequest::GetNetworkStatus(_) => Method::GetNetworkStatus,

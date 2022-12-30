@@ -164,6 +164,9 @@ impl<'a> Handler<'a> {
             MethodRequest::GetAccountTransactions(params) => {
                 serde_json::to_value(self.get_account_transactions(params).await?)?
             }
+            MethodRequest::GetRecentAccountTransactions(params) => {
+              serde_json::to_value(self.get_recent_account_transactions(params).await?)?
+          }
             MethodRequest::GetEvents(params) => {
                 serde_json::to_value(self.get_events(params).await?)?
             }
@@ -328,6 +331,29 @@ impl<'a> Handler<'a> {
 
         self.service.validate_page_size_limit(limit as usize)?;
         data::get_account_transactions(
+            self.service.db.borrow(),
+            self.version(),
+            account,
+            start,
+            limit,
+            include_events,
+        )
+    }
+
+    /// Returns all account transactions from most recent
+    async fn get_recent_account_transactions(
+        &self,
+        params: GetAccountTransactionsParams,
+    ) -> Result<Vec<TransactionView>, JsonRpcError> {
+        let GetAccountTransactionsParams {
+            account,
+            start,
+            limit,
+            include_events,
+        } = params;
+
+        self.service.validate_page_size_limit(limit as usize)?;
+        data::get_recent_account_transactions(
             self.service.db.borrow(),
             self.version(),
             account,
