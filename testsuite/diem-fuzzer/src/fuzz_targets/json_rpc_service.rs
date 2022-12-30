@@ -79,6 +79,23 @@ impl FuzzTargetImpl for JsonRpcGetAccountTransactionsRequest {
 }
 
 #[derive(Clone, Debug, Default)]
+pub struct JsonRpcGetRecentAccountTransactionsRequest;
+
+impl FuzzTargetImpl for JsonRpcGetRecentAccountTransactionsRequest {
+    fn description(&self) -> &'static str {
+        "JSON RPC get_recent_account_transactions request"
+    }
+
+    fn generate(&self, _idx: usize, _gen: &mut ValueGenerator) -> Option<Vec<u8>> {
+        Some(gen_request_params!([ADDRESS, 0, 1, true]))
+    }
+
+    fn fuzz(&self, data: &[u8]) {
+        method_fuzzer(data, "get_recent_account_transactions");
+    }
+}
+
+#[derive(Clone, Debug, Default)]
 pub struct JsonRpcGetTransactionsRequest;
 
 impl FuzzTargetImpl for JsonRpcGetTransactionsRequest {
@@ -92,6 +109,23 @@ impl FuzzTargetImpl for JsonRpcGetTransactionsRequest {
 
     fn fuzz(&self, data: &[u8]) {
         method_fuzzer(data, "get_transactions");
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct JsonRpcGetRecentTransactionsRequest;
+
+impl FuzzTargetImpl for JsonRpcGetRecentTransactionsRequest {
+    fn description(&self) -> &'static str {
+        "JSON RPC get_recent_transactions request"
+    }
+
+    fn generate(&self, _idx: usize, _gen: &mut ValueGenerator) -> Option<Vec<u8>> {
+        Some(gen_request_params!([0, 1, true]))
+    }
+
+    fn fuzz(&self, data: &[u8]) {
+        method_fuzzer(data, "get_recent_transactions");
     }
 }
 

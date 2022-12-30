@@ -106,6 +106,19 @@ impl BroadcastingClient {
         collect_results(results)
     }
 
+    pub async fn get_recent_transactions(
+        &self,
+        start_seq: u64,
+        limit: u64,
+        include_events: bool,
+    ) -> Result<Response<Vec<TransactionView>>> {
+        let futures = self
+            .random_clients()
+            .map(|client| client.get_recent_transactions(start_seq, limit, include_events));
+        let results = join_all(futures).await;
+        collect_results(results)
+    }
+
     pub async fn get_account_transaction(
         &self,
         address: AccountAddress,
@@ -128,6 +141,20 @@ impl BroadcastingClient {
     ) -> Result<Response<Vec<TransactionView>>> {
         let futures = self.random_clients().map(|client| {
             client.get_account_transactions(address, start_seq, limit, include_events)
+        });
+        let results = join_all(futures).await;
+        collect_results(results)
+    }
+
+    pub async fn get_recent_account_transactions(
+        &self,
+        address: AccountAddress,
+        start_seq: u64,
+        limit: u64,
+        include_events: bool,
+    ) -> Result<Response<Vec<TransactionView>>> {
+        let futures = self.random_clients().map(|client| {
+            client.get_recent_account_transactions(address, start_seq, limit, include_events)
         });
         let results = join_all(futures).await;
         collect_results(results)

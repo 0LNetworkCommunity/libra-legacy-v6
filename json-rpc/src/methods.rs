@@ -155,12 +155,18 @@ impl<'a> Handler<'a> {
             MethodRequest::GetTransactions(params) => {
                 serde_json::to_value(self.get_transactions(params).await?)?
             }
+            MethodRequest::GetRecentTransactions(params) => {
+                serde_json::to_value(self.get_recent_transactions(params).await?)?
+            }
             MethodRequest::GetAccountTransaction(params) => {
                 serde_json::to_value(self.get_account_transaction(params).await?)?
             }
             MethodRequest::GetAccountTransactions(params) => {
                 serde_json::to_value(self.get_account_transactions(params).await?)?
             }
+            MethodRequest::GetRecentAccountTransactions(params) => {
+              serde_json::to_value(self.get_recent_account_transactions(params).await?)?
+          }
             MethodRequest::GetEvents(params) => {
                 serde_json::to_value(self.get_events(params).await?)?
             }
@@ -249,6 +255,27 @@ impl<'a> Handler<'a> {
         )
     }
 
+    /// Returns transactions by range
+    async fn get_recent_transactions(
+        &self,
+        params: GetTransactionsParams,
+    ) -> Result<TransactionListView, JsonRpcError> {
+        let GetTransactionsParams {
+            start_version,
+            limit,
+            include_events,
+        } = params;
+
+        self.service.validate_page_size_limit(limit as usize)?;
+        data::get_recent_transactions(
+            self.service.db.borrow(),
+            self.version(),
+            start_version,
+            limit,
+            include_events,
+        )
+    }
+
     /// Returns transactions by range with proofs
     async fn get_transactions_with_proofs(
         &self,
@@ -304,6 +331,29 @@ impl<'a> Handler<'a> {
 
         self.service.validate_page_size_limit(limit as usize)?;
         data::get_account_transactions(
+            self.service.db.borrow(),
+            self.version(),
+            account,
+            start,
+            limit,
+            include_events,
+        )
+    }
+
+    /// Returns all account transactions from most recent
+    async fn get_recent_account_transactions(
+        &self,
+        params: GetAccountTransactionsParams,
+    ) -> Result<Vec<TransactionView>, JsonRpcError> {
+        let GetAccountTransactionsParams {
+            account,
+            start,
+            limit,
+            include_events,
+        } = params;
+
+        self.service.validate_page_size_limit(limit as usize)?;
+        data::get_recent_account_transactions(
             self.service.db.borrow(),
             self.version(),
             account,

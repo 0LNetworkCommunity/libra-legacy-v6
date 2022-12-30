@@ -15,7 +15,7 @@ use diem_types::{account_config::{
         TransactionAccumulatorProof, TransactionInfoWithProof, TransactionListProof,
     }, transaction::{
         Script, ScriptFunction, Transaction, TransactionArgument, TransactionInfo,
-        TransactionListWithProof, TransactionPayload,
+        TransactionListWithProof, TransactionListWithTimestamps, TransactionPayload,
     }, vm_status::KeptVMStatus, waypoint::Waypoint};
 use hex::FromHex;
 use move_core_types::{
@@ -246,17 +246,19 @@ pub struct EventView {
     pub key: EventKey,
     pub sequence_number: u64,
     pub transaction_version: u64,
+    pub timestamp_usecs: u64,
     pub data: EventDataView,
 }
 
-impl TryFrom<(u64, ContractEvent)> for EventView {
+impl TryFrom<(u64, u64, ContractEvent)> for EventView {
     type Error = Error;
 
-    fn try_from((txn_version, event): (u64, ContractEvent)) -> Result<Self> {
+    fn try_from((txn_version, timestamp_usecs, event): (u64, u64, ContractEvent)) -> Result<Self> {
         Ok(EventView {
             key: *event.key(),
             sequence_number: event.sequence_number(),
             transaction_version: txn_version,
+            timestamp_usecs,
             data: event.try_into()?,
         })
     }
@@ -718,6 +720,7 @@ impl From<&KeptVMStatus> for VMStatusView {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct TransactionView {
+    pub timestamp_usecs: u64,
     pub version: u64,
     pub transaction: TransactionDataView,
     pub hash: HashValue,
@@ -729,6 +732,7 @@ pub struct TransactionView {
 
 impl TransactionView {
     pub fn try_from_tx_and_events(
+        timestamp_usecs: u64,
         version: u64,
         tx: Transaction,
         tx_info: TransactionInfo,
@@ -736,10 +740,11 @@ impl TransactionView {
     ) -> Result<Self> {
         let events = events
             .into_iter()
-            .map(|event| EventView::try_from((version, event)))
+            .map(|event| EventView::try_from((version, timestamp_usecs, event)))
             .collect::<Result<Vec<_>>>()?;
 
         Ok(TransactionView {
+            timestamp_usecs,
             version,
             hash: tx.hash(),
             bytes: BytesView::new(bcs::to_bytes(&tx)?),
@@ -804,13 +809,64 @@ impl TryFrom<TransactionListWithProof> for TransactionListView {
         let tx_list = iter
             .map(|(((offset, tx), tx_info), tx_events)| {
                 let version = start_version + offset as u64;
-                TransactionView::try_from_tx_and_events(version, tx, tx_info, tx_events)
+                TransactionView::try_from_tx_and_events(0, version, tx, tx_info, tx_events)
             })
             .collect::<Result<Vec<_>>>()?;
 
         Ok(TransactionListView(tx_list))
     }
 }
+
+
+impl TryFrom<TransactionListWithTimestamps> for TransactionListView {
+  type Error = Error;
+
+  fn try_from(txs: TransactionListWithTimestamps) -> Result<Self, Self::Error> {
+      if txs.is_empty() {
+          return Ok(Self::empty());
+      }
+
+      let transactions = txs.transactions;
+      let transaction_infos = txs.proof.transaction_infos;
+
+      ensure!(
+          transaction_infos.len() == transactions.len(),
+          "expected same number of transaction_infos as transactions, \
+           received {} transaction_infos and {} transactions",
+          transaction_infos.len(),
+          transactions.len(),
+      );
+
+      let event_lists = if let Some(event_lists) = txs.events {
+          ensure!(
+              event_lists.len() == transactions.len(),
+              "expected same number of event lists as transactions, \
+               received {} event lists and {} transactions",
+              event_lists.len(),
+              transactions.len(),
+          );
+          event_lists
+      } else {
+          vec![Vec::new(); transactions.len()]
+      };
+
+      let tx_iter = transactions.into_iter();
+      let infos_iter = transaction_infos.into_iter();
+      let event_lists_iter = event_lists.into_iter();
+      let versions_iter = txs.transaction_versions.into_iter();
+
+      let iter = tx_iter.enumerate().zip(infos_iter).zip(event_lists_iter).zip(versions_iter);
+
+      let tx_list = iter
+          .map(|((((_offset, tx), tx_info), tx_events), tx_version)| {
+              TransactionView::try_from_tx_and_events(tx_version.timestamp_usecs(), tx_version.version(), tx, tx_info, tx_events)
+          })
+          .collect::<Result<Vec<_>>>()?;
+
+      Ok(TransactionListView(tx_list))
+  }
+}
+
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct TransactionsWithProofsView {
@@ -874,6 +930,30 @@ impl TryFrom<&TransactionListWithProof> for TransactionsWithProofsView {
             proofs: TransactionsProofsView::try_from(&txs.proof)?,
         })
     }
+}
+
+impl TryFrom<&TransactionListWithTimestamps> for TransactionsWithProofsView {
+  type Error = Error;
+
+  fn try_from(txs: &TransactionListWithTimestamps) -> Result<Self, Self::Error> {
+      let serialized_transactions = txs
+          .transactions
+          .iter()
+          .map(|tx| bcs::to_bytes(tx).map(BytesView::new))
+          .collect::<Result<Vec<_>, bcs::Error>>()?;
+
+      let serialized_events = txs
+          .events
+          .as_ref()
+          .map(|events| bcs::to_bytes(events).map(BytesView::new))
+          .transpose()?;
+
+      Ok(TransactionsWithProofsView {
+          serialized_transactions,
+          serialized_events,
+          proofs: TransactionsProofsView::try_from(&txs.proof)?,
+      })
+  }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

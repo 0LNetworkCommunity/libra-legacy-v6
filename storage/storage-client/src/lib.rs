@@ -16,7 +16,7 @@ use diem_types::{
     event::EventKey,
     ledger_info::LedgerInfoWithSignatures,
     proof::{AccumulatorConsistencyProof, SparseMerkleProof},
-    transaction::{TransactionListWithProof, TransactionToCommit, TransactionWithProof, Version},
+    transaction::{TransactionToCommit, TransactionWithProof, Version, TransactionListWithTimestamps},
 };
 use serde::de::DeserializeOwned;
 use std::net::SocketAddr;
@@ -136,7 +136,17 @@ impl DbReader for StorageClient {
         _limit: u64,
         _ledger_version: u64,
         _fetch_events: bool,
-    ) -> Result<TransactionListWithProof> {
+    ) -> Result<TransactionListWithTimestamps> {
+        unimplemented!()
+    }
+
+    fn get_recent_transactions(
+        &self,
+        _start_version: u64,
+        _limit: u64,
+        _ledger_version: u64,
+        _fetch_events: bool,
+    ) -> Result<TransactionListWithTimestamps> {
         unimplemented!()
     }
 

@@ -108,6 +108,21 @@ pub fn get_transactions(
     Ok(TransactionListView::try_from(txs)?)
 }
 
+/// Returns transactions by range
+pub fn get_recent_transactions(
+  db: &dyn DbReader,
+  ledger_version: u64,
+  skip_version: u64,
+  limit: u64,
+  include_events: bool,
+) -> Result<TransactionListView, JsonRpcError> {
+  if skip_version > ledger_version || limit == 0 {
+      return Ok(TransactionListView::empty());
+  }
+  let txs = db.get_recent_transactions(skip_version, limit, ledger_version, include_events)?;
+  Ok(TransactionListView::try_from(txs)?)
+}
+
 /// Returns transactions by range with proofs
 pub fn get_transactions_with_proofs(
     db: &dyn DbReader,
@@ -135,6 +150,7 @@ pub fn get_account_transaction(
 
     if let Some(tx) = tx {
         Ok(Some(TransactionView::try_from_tx_and_events(
+            db.get_block_timestamp(tx.version).unwrap(),
             tx.version,
             tx.transaction,
             tx.proof.transaction_info,
@@ -180,6 +196,7 @@ pub fn get_account_transactions(
             .ok_or_else(|| format_err!("Can not find transaction for seq {}!", seq))?;
 
         let tx_view = TransactionView::try_from_tx_and_events(
+            db.get_block_timestamp(tx.version).unwrap(),
             tx.version,
             tx.transaction,
             tx.proof.transaction_info,
@@ -189,6 +206,49 @@ pub fn get_account_transactions(
     }
 
     Ok(all_txs)
+}
+
+/// Returns all account transactions
+pub fn get_recent_account_transactions(
+  db: &dyn DbReader,
+  ledger_version: u64,
+  account: AccountAddress,
+  start: u64,
+  limit: u64,
+  include_events: bool,
+) -> Result<Vec<TransactionView>, JsonRpcError> {
+  let account_state = db.get_latest_account_state(account)?.ok_or_else(|| {
+      JsonRpcError::invalid_request_with_msg(format!(
+          "could not find account by address {}",
+          account
+      ))
+  })?;
+  let account_seq = AccountResource::try_from(&account_state)?.sequence_number();
+
+  if start >= account_seq {
+      return Ok(vec![]);
+  }
+
+  let mut all_txs = vec![];
+  let end =
+      account_seq.checked_sub(start + limit).or(Some(0)).unwrap(); 
+
+  for seq in (end..account_seq - start).rev() {
+      let tx = db
+          .get_txn_by_account(account, seq, ledger_version, include_events)?
+          .ok_or_else(|| format_err!("Can not find transaction for seq {}!", seq))?;
+
+      let tx_view = TransactionView::try_from_tx_and_events(
+          db.get_block_timestamp(tx.version).unwrap(),
+          tx.version,
+          tx.transaction,
+          tx.proof.transaction_info,
+          tx.events.unwrap_or_default(),
+      )?;
+      all_txs.push(tx_view);
+  }
+
+  Ok(all_txs)
 }
 
 /// Returns events by given access path
@@ -204,7 +264,7 @@ pub fn get_events(
     let events = events_raw
         .into_iter()
         .filter(|(version, _event)| version <= &ledger_version)
-        .map(|event| event.try_into())
+        .map(|event| (event.0, db.get_block_timestamp(event.0).unwrap(), event.1).try_into())
         .collect::<Result<Vec<EventView>>>()?;
 
     Ok(events)

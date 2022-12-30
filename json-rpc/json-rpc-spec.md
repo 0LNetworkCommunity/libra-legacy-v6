@@ -8,9 +8,11 @@ List of released stable methods (unless specifically mentioned, all parameters a
 
 * [submit](docs/method_submit.md)(data: string) -> void
 * [get_transactions](docs/method_get_transactions.md)(start_version: unsigned_int64, limit: unsigned_int64, include_events: boolean) -> List<[Transaction](docs/type_transaction.md)>
+* [get_recent_transactions](docs/method_get_recent_transactions.md)(start_version: unsigned_int64, limit: unsigned_int64, include_events: boolean) -> List<[Transaction](docs/type_transaction.md)>
 * [get_account](docs/method_get_account.md)(account: string) -> [Account](docs/type_account.md)
 * [get_account_transaction](docs/method_get_account_transaction.md)(account: string, sequence_number: unsigned_int64, include_events: boolean) -> List<[Transaction](docs/type_transaction.md)>
 * [get_account_transactions](docs/method_get_account_transactions.md)(account: string, start: unsigned_int64, limit: unsigned_int64, include_events: boolean) -> [Transaction](docs/type_transaction.md)
+* [get_recent_account_transactions](docs/method_get_recent_account_transactions.md)(account: string, start: unsigned_int64, limit: unsigned_int64, include_events: boolean) -> [Transaction](docs/type_transaction.md)
 * [get_metadata](docs/method_get_metadata.md)(version: unsigned_int64) -> [Metadata](docs/type_metadata.md)
 * [get_events](docs/method_get_events.md)(key: string, start: unsigned_int64, limit: unsigned_int64) -> List<[Event](docs/type_event.md)>
 * [get_currencies](docs/method_get_currencies.md)() -> List<[CurrencyInfo](docs/type_currency_info.md)>

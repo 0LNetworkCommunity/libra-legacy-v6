@@ -16,7 +16,7 @@ use diem_types::{
     event::{EventHandle, EventKey},
     ledger_info::LedgerInfoWithSignatures,
     proof::{AccumulatorConsistencyProof, SparseMerkleProof},
-    transaction::{TransactionListWithProof, TransactionWithProof, Version},
+    transaction::{TransactionListWithProof, TransactionWithProof, Version, TransactionListWithTimestamps},
 };
 use move_core_types::move_resource::MoveResource;
 use std::convert::TryFrom;
@@ -39,7 +39,17 @@ impl DbReader for MockDbReader {
         _batch_size: u64,
         _ledger_version: Version,
         _fetch_events: bool,
-    ) -> Result<TransactionListWithProof> {
+    ) -> Result<TransactionListWithTimestamps> {
+        unimplemented!()
+    }
+
+    fn get_recent_transactions(
+        &self,
+        _start_version: Version,
+        _batch_size: u64,
+        _ledger_version: Version,
+        _fetch_events: bool,
+    ) -> Result<TransactionListWithTimestamps> {
         unimplemented!()
     }
 

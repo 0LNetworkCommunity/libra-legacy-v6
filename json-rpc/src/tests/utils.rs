@@ -26,8 +26,8 @@ use diem_types::{
         TransactionAccumulatorProof, TransactionInfoWithProof, TransactionListProof,
     },
     transaction::{
-        SignedTransaction, Transaction, TransactionInfo, TransactionListWithProof,
-        TransactionWithProof, Version,
+        SignedTransaction, Transaction, TransactionInfo, TransactionListWithProof, TransactionListWithTimestamps,
+        TransactionWithProof, Version, VersionWithTimestamp,
     },
     vm_status::KeptVMStatus,
 };
@@ -176,7 +176,7 @@ impl DbReader for MockDiemDB {
         limit: u64,
         ledger_version: u64,
         fetch_events: bool,
-    ) -> Result<TransactionListWithProof, Error> {
+    ) -> Result<TransactionListWithTimestamps, Error> {
         // ensure inputs are validated before we enter mock DB
         assert!(
             start_version <= ledger_version,
@@ -202,7 +202,10 @@ impl DbReader for MockDiemDB {
                     status.clone(),
                 ));
             });
-        let first_transaction_version = transactions.first().map(|_| start_version);
+
+        let txn_versions: Vec<VersionWithTimestamp> = (start_version..start_version + limit)
+            .map(|version| VersionWithTimestamp::new( version, self.get_block_timestamp(version).unwrap()))
+            .collect::<Vec<_>>();
         let proof = TransactionListProof::new(AccumulatorRangeProof::new_empty(), txn_infos);
 
         let events = if fetch_events {
@@ -221,10 +224,74 @@ impl DbReader for MockDiemDB {
             None
         };
 
-        Ok(TransactionListWithProof {
+        Ok(TransactionListWithTimestamps {
             transactions,
             events,
-            first_transaction_version,
+            transaction_versions,
+            proof,
+        })
+    }
+
+
+    fn get_recent_transactions(
+        &self,
+        start_version: u64,
+        limit: u64,
+        ledger_version: u64,
+        fetch_events: bool,
+    ) -> Result<TransactionListWithTimestamps, Error> {
+        // ensure inputs are validated before we enter mock DB
+        assert!(
+            start_version <= ledger_version,
+            "start_version: {}, ledger_version: {}",
+            start_version,
+            ledger_version
+        );
+        assert!(limit > 0, "limit: {}", limit);
+        let limit = std::cmp::min(limit, ledger_version - start_version + 1);
+        let mut transactions = vec![];
+        let mut txn_infos = vec![];
+        self.all_txns
+            .iter()
+            .reverse()
+            .skip(start_version as usize)
+            .take(limit as usize)
+            .for_each(|(t, status)| {
+                transactions.push(t.clone());
+                txn_infos.push(TransactionInfo::new(
+                    Default::default(),
+                    Default::default(),
+                    Default::default(),
+                    0,
+                    status.clone(),
+                ));
+            });
+
+        let txn_versions: Vec<VersionWithTimestamp> = (ledger_version - start_version .. ledger_version - start_version - transactions.len() as u64)
+            .map(|version| VersionWithTimestamp::new( version, self.get_block_timestamp(version).unwrap()))
+            .collect::<Vec<_>>();
+        let proof = TransactionListProof::new(AccumulatorRangeProof::new_empty(), txn_infos);
+
+        let events = if fetch_events {
+            let events = (ledger_version - start_version .. ledger_version - start_version - transactions.len() as u64)
+                .map(|version| {
+                    self.events
+                        .iter()
+                        .filter(|(v, _)| *v == version)
+                        .map(|(_, e)| e)
+                        .cloned()
+                        .collect()
+                })
+                .collect::<Vec<_>>();
+            Some(events)
+        } else {
+            None
+        };
+
+        Ok(TransactionListWithTimestamps {
+            transactions,
+            events,
+            transaction_versions: txn_versions,
             proof,
         })
     }

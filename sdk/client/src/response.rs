@@ -60,8 +60,10 @@ pub enum MethodResponse {
     GetMetadata(MetadataView),
     GetAccount(Option<AccountView>),
     GetTransactions(Vec<TransactionView>),
+    GetRecentTransactions(Vec<TransactionView>),
     GetAccountTransaction(Option<TransactionView>),
     GetAccountTransactions(Vec<TransactionView>),
+    GetRecentAccountTransactions(Vec<TransactionView>),
     GetEvents(Vec<EventView>),
     GetCurrencies(Vec<CurrencyInfoView>),
     GetNetworkStatus(u64),    
@@ -85,11 +87,17 @@ impl MethodResponse {
             Method::GetTransactions => {
                 MethodResponse::GetTransactions(serde_json::from_value(json)?)
             }
+            Method::GetRecentTransactions => {
+                MethodResponse::GetRecentTransactions(serde_json::from_value(json)?)
+            }
             Method::GetAccountTransaction => {
                 MethodResponse::GetAccountTransaction(serde_json::from_value(json)?)
             }
             Method::GetAccountTransactions => {
                 MethodResponse::GetAccountTransactions(serde_json::from_value(json)?)
+            }
+            Method::GetRecentAccountTransactions => {
+                MethodResponse::GetRecentAccountTransactions(serde_json::from_value(json)?)
             }
             Method::GetEvents => MethodResponse::GetEvents(serde_json::from_value(json)?),
             Method::GetCurrencies => MethodResponse::GetCurrencies(serde_json::from_value(json)?),
@@ -128,8 +136,10 @@ impl MethodResponse {
             MethodResponse::GetMetadata(_) => Method::GetMetadata,
             MethodResponse::GetAccount(_) => Method::GetAccount,
             MethodResponse::GetTransactions(_) => Method::GetTransactions,
+            MethodResponse::GetRecentTransactions(_) => Method::GetRecentTransactions,
             MethodResponse::GetAccountTransaction(_) => Method::GetAccountTransaction,
             MethodResponse::GetAccountTransactions(_) => Method::GetAccountTransactions,
+            MethodResponse::GetRecentAccountTransactions(_) => Method::GetRecentAccountTransactions,
             MethodResponse::GetEvents(_) => Method::GetEvents,
             MethodResponse::GetCurrencies(_) => Method::GetCurrencies,
             MethodResponse::GetNetworkStatus(_) => Method::GetNetworkStatus,  
@@ -184,6 +194,16 @@ impl MethodResponse {
             MethodResponse::GetTransactions(txs) => Ok(txs),
             _ => Err(Error::rpc_response(format!(
                 "expected MethodResponse::GetTransactions found MethodResponse::{:?}",
+                self.method()
+            ))),
+        }
+    }
+
+    pub fn try_into_get_recent_transactions(self) -> Result<Vec<TransactionView>, Error> {
+        match self {
+            MethodResponse::GetRecentTransactions(txs) => Ok(txs),
+            _ => Err(Error::rpc_response(format!(
+                "expected MethodResponse::GetRecentTransactions found MethodResponse::{:?}",
                 self.method()
             ))),
         }

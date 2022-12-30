@@ -1,15 +1,15 @@
-## Method get_transactions
+## Method get_recent_transactions
 
 **Description**
 
-Get the transactions on the blockchain.
+Get the transactions on the blockchain in descending order from most current.
 
 
 ### Parameters
 
 | Name           | Type           | Description                                                          |
 |----------------|----------------|----------------------------------------------------------------------|
-| start_version  | unsigned int64 | Start on this transaction version for this query                     |
+| start_version  | unsigned int64 | Number of versions behind current version to start                   |
 | limit          | unsigned int64 | Limit the number of transactions returned, the max value is 1000     |
 | include_events | boolean        | Set to true, to also fetch [events](type_event.md) for each transaction |
 
@@ -25,7 +25,7 @@ if include_events is false, the [events](type_event.md) field in the Transaction
 
 ```
 // Request: fetches 10 transactions since version 100000
-curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"get_transactions","params":[100000, 10, false],"id":1}' https://testnet.diem.com/v1
+curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"get_recent_transactions","params":[100000, 10, false],"id":1}' https://testnet.diem.com/v1
 
 // Response
 {

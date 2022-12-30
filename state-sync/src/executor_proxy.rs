@@ -202,11 +202,14 @@ impl ExecutorProxyTrait for ExecutorProxy {
         let starting_version = known_version
             .checked_add(1)
             .ok_or_else(|| Error::IntegerOverflow("Starting version has overflown!".into()))?;
-        self.storage
+        let list = self.storage
             .get_transactions(starting_version, limit, target_version, false)
             .map_err(|error| {
                 Error::UnexpectedError(format!("Failed to get transactions from storage {}", error))
-            })
+            })?;
+        TransactionListWithProof::try_from(&list).map_err(|error| {
+            Error::UnexpectedError(format!("Failed to convert TransactionListWithTimestamps to TransactionListWithProof {}", error))
+        })
     }
 
     fn get_epoch_change_ledger_info(&self, epoch: u64) -> Result<LedgerInfoWithSignatures, Error> {

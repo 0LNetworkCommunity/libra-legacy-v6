@@ -16,8 +16,8 @@ use diem_types::{
     move_resource::MoveStorage,
     proof::{definition::LeafCount, AccumulatorConsistencyProof, SparseMerkleProof},
     transaction::{
-        TransactionInfo, TransactionListWithProof, TransactionToCommit, TransactionWithProof,
-        Version,
+        TransactionInfo, TransactionToCommit, TransactionWithProof,
+        Version, TransactionListWithTimestamps,
     },
 };
 use itertools::Itertools;
@@ -183,7 +183,15 @@ pub trait DbReader: Send + Sync {
         batch_size: u64,
         ledger_version: Version,
         fetch_events: bool,
-    ) -> Result<TransactionListWithProof>;
+    ) -> Result<TransactionListWithTimestamps>;
+
+    fn get_recent_transactions(
+        &self,
+        start_version: Version,
+        batch_size: u64,
+        ledger_version: Version,
+        fetch_events: bool,
+    ) -> Result<TransactionListWithTimestamps>;
 
     /// Returns events by given event key
     fn get_events(

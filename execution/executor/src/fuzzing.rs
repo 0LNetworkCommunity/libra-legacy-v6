@@ -15,7 +15,7 @@ use diem_types::{
     proof::{AccumulatorConsistencyProof, SparseMerkleProof},
     transaction::{
         Transaction, TransactionListWithProof, TransactionOutput, TransactionToCommit,
-        TransactionWithProof, Version,
+        TransactionWithProof, Version, TransactionListWithTimestamps,
     },
     vm_status::VMStatus,
 };
@@ -89,7 +89,17 @@ impl DbReader for FakeDb {
         _batch_size: u64,
         _ledger_version: Version,
         _fetch_events: bool,
-    ) -> Result<TransactionListWithProof> {
+    ) -> Result<TransactionListWithTimestamps> {
+        unimplemented!();
+    }
+
+    fn get_recent_transactions(
+        &self,
+        _start_version: Version,
+        _batch_size: u64,
+        _ledger_version: Version,
+        _fetch_events: bool,
+    ) -> Result<TransactionListWithTimestamps> {
         unimplemented!();
     }
 
