@@ -71,8 +71,8 @@ use diem_types::{
         TransactionListProof,
     },
     transaction::{
-        TransactionInfo, TransactionListWithProof, TransactionToCommit, TransactionWithProof,
-        Version, PRE_GENESIS_VERSION,
+        TransactionInfo, TransactionToCommit, TransactionWithProof,
+        Version, PRE_GENESIS_VERSION, VersionWithTimestamp, TransactionListWithTimestamps,
     },
 };
 use itertools::{izip, zip_eq};
@@ -657,12 +657,12 @@ impl DbReader for DiemDB {
         limit: u64,
         ledger_version: Version,
         fetch_events: bool,
-    ) -> Result<TransactionListWithProof> {
+    ) -> Result<TransactionListWithTimestamps> {
         gauged_api("get_transactions", || {
             error_if_too_many_requested(limit, MAX_LIMIT)?;
 
             if start_version > ledger_version || limit == 0 {
-                return Ok(TransactionListWithProof::new_empty());
+                return Ok(TransactionListWithTimestamps::new_empty());
             }
 
             let limit = std::cmp::min(limit, ledger_version - start_version + 1);
@@ -673,6 +673,11 @@ impl DbReader for DiemDB {
             let txn_infos = (start_version..start_version + limit)
                 .map(|version| self.ledger_store.get_transaction_info(version))
                 .collect::<Result<Vec<_>>>()?;
+
+            let txn_versions: Vec<VersionWithTimestamp> = (start_version..start_version + limit)
+              .map(|version| VersionWithTimestamp::new( version, self.get_block_timestamp(version).unwrap()))
+              .collect::<Vec<_>>();
+            
             let events = if fetch_events {
                 Some(
                     (start_version..start_version + limit)
@@ -691,10 +696,10 @@ impl DbReader for DiemDB {
                 txn_infos,
             );
 
-            Ok(TransactionListWithProof::new(
+            Ok(TransactionListWithTimestamps::new(
                 txns,
                 events,
-                Some(start_version),
+                txn_versions,
                 proof,
             ))
         })
@@ -706,12 +711,12 @@ impl DbReader for DiemDB {
         limit: u64,
         ledger_version: Version,
         fetch_events: bool,
-    ) -> Result<TransactionListWithProof> {
+    ) -> Result<TransactionListWithTimestamps> {
         gauged_api("get_recent_transactions", || {
             error_if_too_many_requested(limit, MAX_LIMIT)?;
 
             if start_version > ledger_version || limit == 0 {
-                return Ok(TransactionListWithProof::new_empty());
+                return Ok(TransactionListWithTimestamps::new_empty());
             }
 
             //let limit = std::cmp::min(limit, ledger_version - start_version + 1);
@@ -722,6 +727,10 @@ impl DbReader for DiemDB {
             let txn_infos = (ledger_version - start_version - limit..ledger_version - start_version)
                 .map(|version| self.ledger_store.get_transaction_info(version))
                 .collect::<Result<Vec<_>>>()?;
+
+            let txn_versions: Vec<VersionWithTimestamp> = (ledger_version - start_version - limit..ledger_version - start_version)
+                .map(|version| VersionWithTimestamp::new( version, self.get_block_timestamp(version).unwrap()))
+                .collect::<Vec<_>>();
             let events = if fetch_events {
                 Some(
                     (ledger_version - start_version - limit..ledger_version - start_version)
@@ -740,10 +749,10 @@ impl DbReader for DiemDB {
                 txn_infos,
             );
 
-            Ok(TransactionListWithProof::new(
+            Ok(TransactionListWithTimestamps::new(
                 txns,
                 events,
-                Some(ledger_version - start_version - limit),
+                txn_versions,
                 proof,
             ))
         })

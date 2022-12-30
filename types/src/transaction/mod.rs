@@ -54,6 +54,34 @@ pub use transaction_argument::{parse_transaction_argument, TransactionArgument};
 
 pub type Version = u64; // Height - also used for MVCC in StateDB
 
+#[derive(
+  Clone, Debug, Eq, PartialEq, Serialize, Deserialize,
+)]
+pub struct VersionWithTimestamp {
+  version: Version,
+  timestamp_usecs: u64,
+}
+
+impl VersionWithTimestamp {
+  pub fn new( 
+    version: Version,
+    timestamp_usecs: u64,
+  ) -> Self {
+    VersionWithTimestamp {
+      version,
+      timestamp_usecs,
+    }
+  }
+
+  pub fn version(&self) -> Version {
+    self.version
+  }
+
+  pub fn timestamp_usecs(&self) -> u64 {
+    self.timestamp_usecs
+  }
+}
+
 // In StateDB, things readable by the genesis transaction are under this version.
 pub const PRE_GENESIS_VERSION: Version = u64::max_value();
 
@@ -1032,6 +1060,65 @@ impl TransactionToCommit {
     pub fn status(&self) -> &KeptVMStatus {
         &self.status
     }
+}
+
+/// TransactionListWithTimestamps is an intermediate type used for combining transaction timestamps 
+/// with transactions and events for output through json-rpc.
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+pub struct TransactionListWithTimestamps {
+    pub transactions: Vec<Transaction>,
+    pub events: Option<Vec<Vec<ContractEvent>>>,
+    pub transaction_versions: Vec<VersionWithTimestamp>,
+    pub proof: TransactionListProof,
+}
+
+impl TransactionListWithTimestamps {
+  /// Constructor.
+  pub fn new(
+      transactions: Vec<Transaction>,
+      events: Option<Vec<Vec<ContractEvent>>>,
+      transaction_versions: Vec<VersionWithTimestamp>,
+      proof: TransactionListProof,
+  ) -> Self {
+      Self {
+          transactions,
+          events,
+          transaction_versions,
+          proof,
+      }
+  }
+
+  /// Creates an empty transaction list.
+  pub fn new_empty() -> Self {
+      Self::new(vec![], None, vec![], TransactionListProof::new_empty())
+  }
+
+  pub fn is_empty(&self) -> bool {
+      self.transactions.is_empty()
+  }
+
+  pub fn len(&self) -> usize {
+      self.transactions.len()
+  }
+}
+
+impl TryFrom<&TransactionListWithTimestamps> for TransactionListWithProof {
+  type Error = Error;
+  fn try_from(list: &TransactionListWithTimestamps) -> Result<Self, Self::Error> {
+      let first_transaction_version: Option<u64>;
+      if list.transaction_versions.is_empty() {
+        first_transaction_version = None
+      } else {
+        first_transaction_version = Some(list.transaction_versions[0].version())
+      }
+      let t = list.clone();
+      Ok(TransactionListWithProof {
+          transactions: t.transactions,
+          events: t.events,
+          first_transaction_version,
+          proof: t.proof,
+      })
+  }
 }
 
 /// The list may have three states:

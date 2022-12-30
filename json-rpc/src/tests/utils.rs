@@ -26,8 +26,8 @@ use diem_types::{
         TransactionAccumulatorProof, TransactionInfoWithProof, TransactionListProof,
     },
     transaction::{
-        SignedTransaction, Transaction, TransactionInfo, TransactionListWithProof,
-        TransactionWithProof, Version,
+        SignedTransaction, Transaction, TransactionInfo, TransactionListWithProof, TransactionListWithTimestamps,
+        TransactionWithProof, Version, VersionWithTimestamp,
     },
     vm_status::KeptVMStatus,
 };
@@ -176,7 +176,7 @@ impl DbReader for MockDiemDB {
         limit: u64,
         ledger_version: u64,
         fetch_events: bool,
-    ) -> Result<TransactionListWithProof, Error> {
+    ) -> Result<TransactionListWithTimestamps, Error> {
         // ensure inputs are validated before we enter mock DB
         assert!(
             start_version <= ledger_version,
@@ -202,7 +202,10 @@ impl DbReader for MockDiemDB {
                     status.clone(),
                 ));
             });
-        let first_transaction_version = transactions.first().map(|_| start_version);
+
+        let txn_versions: Vec<VersionWithTimestamp> = (start_version..start_version + limit)
+            .map(|version| VersionWithTimestamp::new( version, self.get_block_timestamp(version).unwrap()))
+            .collect::<Vec<_>>();
         let proof = TransactionListProof::new(AccumulatorRangeProof::new_empty(), txn_infos);
 
         let events = if fetch_events {
@@ -221,10 +224,10 @@ impl DbReader for MockDiemDB {
             None
         };
 
-        Ok(TransactionListWithProof {
+        Ok(TransactionListWithTimestamps {
             transactions,
             events,
-            first_transaction_version,
+            transaction_versions,
             proof,
         })
     }
@@ -236,7 +239,7 @@ impl DbReader for MockDiemDB {
         limit: u64,
         ledger_version: u64,
         fetch_events: bool,
-    ) -> Result<TransactionListWithProof, Error> {
+    ) -> Result<TransactionListWithTimestamps, Error> {
         // ensure inputs are validated before we enter mock DB
         assert!(
             start_version <= ledger_version,
@@ -263,11 +266,14 @@ impl DbReader for MockDiemDB {
                     status.clone(),
                 ));
             });
-        let first_transaction_version = transactions.first().map(|_| start_version);
+
+        let txn_versions: Vec<VersionWithTimestamp> = (ledger_version - start_version .. ledger_version - start_version - transactions.len() as u64)
+            .map(|version| VersionWithTimestamp::new( version, self.get_block_timestamp(version).unwrap()))
+            .collect::<Vec<_>>();
         let proof = TransactionListProof::new(AccumulatorRangeProof::new_empty(), txn_infos);
 
         let events = if fetch_events {
-            let events = (start_version..start_version + transactions.len() as u64)
+            let events = (ledger_version - start_version .. ledger_version - start_version - transactions.len() as u64)
                 .map(|version| {
                     self.events
                         .iter()
@@ -282,10 +288,10 @@ impl DbReader for MockDiemDB {
             None
         };
 
-        Ok(TransactionListWithProof {
+        Ok(TransactionListWithTimestamps {
             transactions,
             events,
-            first_transaction_version,
+            transaction_versions: txn_versions,
             proof,
         })
     }
