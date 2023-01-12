@@ -6,23 +6,23 @@
 
 address 0x1 {
 
-/// # Summary 
-/// This module provides global variables and constants that have no specific owner 
+/// # Summary
+/// This module provides global variables and constants that have no specific owner
 module Globals {
     use 0x1::Testnet;
     use 0x1::Errors;
     use 0x1::StagingNet;
     use 0x1::Diem;
     use 0x1::GAS;
-    
-    /// Global constants determining validator settings & requirements 
+
+    /// Global constants determining validator settings & requirements
     /// Some constants need to be changed based on environment; dev, testing, prod.
-    /// epoch_length: The length of an epoch in seconds (~1 day for prod.) 
-    /// max_validators_per_set: The maximum number of validators that can participate 
+    /// epoch_length: The length of an epoch in seconds (~1 day for prod.)
+    /// max_validators_per_set: The maximum number of validators that can participate
     /// subsidy_ceiling_gas: TODO I don't really know what this is
-    /// vdf_difficulty: The difficulty required for VDF proofs submitting by miners 
-    /// epoch_mining_thres_lower: The number of proofs that must be submitted each 
-    /// epoch by a miner to remain compliant  
+    /// vdf_difficulty: The difficulty required for VDF proofs submitting by miners
+    /// epoch_mining_thres_lower: The number of proofs that must be submitted each
+    /// epoch by a miner to remain compliant
     struct GlobalConstants has drop {
       // For validator set.
       epoch_length: u64,
@@ -71,22 +71,22 @@ module Globals {
     }
 
 
-    /// Get the mining threshold 
+    /// Get the mining threshold
     public fun get_epoch_mining_thres_lower(): u64 {
       get_constants().epoch_mining_thres_lower
     }
 
-    /// Get the mining threshold 
+    /// Get the mining threshold
     public fun get_epoch_mining_thres_upper(): u64 {
       get_constants().epoch_mining_thres_upper
     }
 
-    /// Get the mining threshold 
+    /// Get the mining threshold
     public fun get_unlock(): u64 {
       get_constants().epoch_slow_wallet_unlock
     }
 
-        /// Get the mining threshold 
+        /// Get the mining threshold
     public fun get_min_blocks_epoch(): u64 {
       get_constants().min_blocks_per_epoch
     }
@@ -101,7 +101,7 @@ module Globals {
       get_constants().signing_threshold_pct
     }
 
-    /// Get the constants for the current network 
+    /// Get the constants for the current network
     fun get_constants(): GlobalConstants {
       // let coin_scale = 1000000; // Diem::scaling_factor<GAS::T>();
       assert(COIN_SCALING_FACTOR == Diem::scaling_factor<GAS::GAS>(), Errors::invalid_argument(070001));
@@ -146,7 +146,7 @@ module Globals {
           // target transaction per sec max gas: 20
           // uses "scaled representation", since there are no decimals.
           subsidy_ceiling_gas: 8640000 * COIN_SCALING_FACTOR, // subsidy amount assumes 24 hour epoch lengths. Also needs to be adjusted for coin_scale the onchain representation of human readable value.
-          vdf_difficulty_baseline: 120000000, // FYI approx 30 mins per proof on 2020 macbook pro 2.5 ghz quadcore
+          vdf_difficulty_baseline: 160000000, // FYI approx 30 mins per proof on 2020 macbook pro 2.5 ghz quadcore
           vdf_security_baseline: 512,
           epoch_mining_thres_lower: 7, // NOTE: bootstrapping, allowance for operator error.
           epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
