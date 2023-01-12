@@ -12,18 +12,18 @@ use thiserror::Error;
 #[derive(Copy, Clone, Debug, Eq, Error, PartialEq)]
 pub enum ErrorKind {
     /// Error in configuration file
-    #[error("config error")]
+    #[error("Configuration error")]
     Config,
 
     /// Input/output error
     #[error("I/O error")]
     Io,
 
-    /// Input/output error
+    /// Wallet error
     #[error("Wallet")]
     Wallet,
 
-    /// Input/output error
+    /// Transaction error
     #[error("Transaction Error")]
     Transaction,
 }
