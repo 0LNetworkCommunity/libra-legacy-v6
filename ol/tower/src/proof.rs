@@ -5,7 +5,6 @@ use crate::{backlog, delay::*, preimage::genesis_preimage};
 use anyhow::{bail, Error};
 use diem_global_constants::{genesis_delay_difficulty, GENESIS_VDF_SECURITY_PARAM};
 use diem_types::chain_id::NamedChain;
-use diem_logger::{info, debug, error};
 use glob::glob;
 use ol::node::client;
 use ol_types::block::VDFProof;
@@ -21,11 +20,11 @@ fn mine_genesis(config: &AppCfg, difficulty: u64, security: u64) -> Result<VDFPr
     let preimage = genesis_preimage(&config);
     let now = Instant::now();
 
-    info!("Mining genesis proof");
+    println!("Mining genesis proof");
     let proof = do_delay(&preimage, difficulty, security)?;
     let elapsed_secs = now.elapsed().as_secs();
 
-    info!("Delay: {:?} seconds", elapsed_secs);
+    println!("Delay: {:?} seconds", elapsed_secs);
     let block = VDFProof {
         height: 0u64,
         elapsed_secs,
@@ -46,7 +45,7 @@ pub fn write_genesis(config: &AppCfg) -> Result<VDFProof, Error> {
     // TODO: check for overwriting file...
     write_json(&block, &config.get_block_dir())?;
     let genesis_proof_filename = &format!("{}_0.json", FILENAME);
-    debug!(
+    println!(
         "Proof zero mined, file saved to: {:?}",
         &config.get_block_dir().join(genesis_proof_filename)
     );
@@ -57,7 +56,7 @@ pub fn mine_once(config: &AppCfg, next: NextProof) -> Result<VDFProof, Error> {
     let now = Instant::now();
     let data = do_delay(&next.preimage, next.diff.difficulty, next.diff.security)?;
     let elapsed_secs = now.elapsed().as_secs();
-    info!("Delay: {:?} seconds", elapsed_secs);
+    println!("Delay: {:?} seconds", elapsed_secs);
 
     let block = VDFProof {
         height: next.next_height,
@@ -105,25 +104,25 @@ pub fn mine_and_submit(
             }
         };
 
-        debug!("Mining VDF Proof # {}", next.next_height);
-        debug!(
+        println!("Mining VDF Proof # {}", next.next_height);
+        println!(
             "difficulty: {}, security: {}",
             next.diff.difficulty, next.diff.security
         );
 
         let block = mine_once(&config, next)?;
 
-        debug!(
+        println!(
             "Proof mined: proof_{}.json created.",
             block.height.to_string()
         );
 
         // submits backlog to client
         match backlog::process_backlog(&config, &tx_params) {
-            Ok(()) => debug!("Success: Proof committed to chain"),
+            Ok(()) => println!("Success: Proof committed to chain"),
             Err(e) => {
                 // don't stop on tx errors
-                error!("Failed processing backlog, message: {:?}", e);
+                println!("Failed processing backlog, message: {:?}", e);
             }
         }
     }
@@ -154,7 +153,7 @@ pub fn get_highest_block(blocks_dir: &PathBuf) -> Result<(VDFProof, PathBuf), Er
             let block = match parse_block_file(&entry, false) {
                 Ok(v) => v,
                 Err(e) => {
-                    debug!("Could not parse the proof file: {}, skipping. Manually delete if this proof is not readable."
+                    println!("Could not parse the proof file: {}, skipping. Manually delete if this proof is not readable."
 			   , e.to_string());
                     continue;
                 }
