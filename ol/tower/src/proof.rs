@@ -37,7 +37,7 @@ fn mine_genesis(config: &AppCfg, difficulty: u64, security: u64) -> Result<VDFPr
     Ok(block)
 }
 
-/// Mines genesis and writes the file
+/// Mines the genesis proof and writes to file
 pub fn write_genesis(config: &AppCfg) -> Result<VDFProof, Error> {
     let difficulty = genesis_delay_difficulty();
     let security = GENESIS_VDF_SECURITY_PARAM;
@@ -51,7 +51,8 @@ pub fn write_genesis(config: &AppCfg) -> Result<VDFProof, Error> {
     );
     Ok(block)
 }
-/// Mine one block
+
+/// Mines one block
 pub fn mine_once(config: &AppCfg, next: NextProof) -> Result<VDFProof, Error> {
     let now = Instant::now();
     let data = do_delay(&next.preimage, next.diff.difficulty, next.diff.security)?;
@@ -78,46 +79,56 @@ pub fn mine_and_submit(
     local_mode: bool,
     swarm_path: Option<PathBuf>,
 ) -> Result<(), Error> {
-    // get the location of this miner's blocks
+    // Get the location of this miners blocks
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
 
     loop {
-        // the default behavior is to fetch info from the chain to produce the next proof, including dynamic params for VDF difficulty.
-        // if the user is offline, they must use local mode
-        // however the user may end up using stale config proofs if the epoch changes and the params are different now.
+        // The default behavior is to fetch info from the chain to produce the next proof, including
+        // dynamic params for VDF difficulty.
 
-        let next = match local_mode {
-            true => next_proof::get_next_proof_params_from_local(config)?,
-            false => {
-                let client = client::find_a_remote_jsonrpc(
-                    &config,
-                    config.get_waypoint(swarm_path.clone())?,
-                )?;
-                match next_proof::get_next_proof_from_chain(config, client, swarm_path.clone()) {
-                    Ok(n) => n,
-                    // failover to local mode, if no onchain data can be found.
-                    // TODO: this is important for migrating to the new protocol.
-                    // in future versions we should remove this since we may be producing bad proofs, and users should explicitly choose to use local mode.
-                    Err(_) => next_proof::get_next_proof_params_from_local(config)?,
+        // If the user is offline, they must use local mode however the user may end up using stale
+        // config proofs if the epoch changes and the params are different.
+        // Assumption: There is always at least one local proof.
+        let next_local_proof = next_proof::get_next_proof_params_from_local(config)?;
+        let next_proof = if local_mode {
+            next_local_proof
+        } else {
+            let client =
+                client::find_a_remote_jsonrpc(&config, config.get_waypoint(swarm_path.clone())?)?;
+            match next_proof::get_next_proof_from_chain(config, client, swarm_path.clone()) {
+                Ok(next_remote_proof) => {
+                    // If the local proof is > than the remote proof height then mine according to
+                    // the local proof. This fixes a bug where the tower mines a proof at a height
+                    // which has already been mined.
+                    if next_local_proof.next_height > next_remote_proof.next_height {
+                        next_local_proof
+                    } else {
+                        next_remote_proof
+                    }
                 }
+                // Failover to local mode, if no onchain data can be found.
+                // TODO: this is important for migrating to the new protocol.
+                // In future versions we should remove this since we may be producing bad proofs,
+                // and users should explicitly choose to use local mode.
+                Err(_) => next_local_proof,
             }
         };
 
-        println!("Mining VDF Proof # {}", next.next_height);
+        println!("Mining VDF Proof # {}", next_proof.next_height);
         println!(
             "difficulty: {}, security: {}",
-            next.diff.difficulty, next.diff.security
+            next_proof.diff.difficulty, next_proof.diff.security
         );
 
-        let block = mine_once(&config, next)?;
+        let block = mine_once(&config, next_proof)?;
 
         println!(
             "Proof mined: proof_{}.json created.",
             block.height.to_string()
         );
 
-        // submits backlog to client
+        // Submits backlog of proofs to the client
         match backlog::process_backlog(&config, &tx_params) {
             Ok(()) => println!("Success: Proof committed to chain"),
             Err(e) => {
@@ -174,13 +185,11 @@ pub fn get_highest_block(blocks_dir: &PathBuf) -> Result<(VDFProof, PathBuf), Er
     }
 
     if let Some(max_block) = max_block {
-	if let Some(max_block_path) = max_block_path {
-	    return Ok((max_block, max_block_path));
-	}
+        if let Some(max_block_path) = max_block_path {
+            return Ok((max_block, max_block_path));
+        }
     }
-    bail!(
-        "Cannot find a valid VDF proof in files to determine next proofs parameters. Exiting."
-    )
+    bail!("Cannot find a valid VDF proof in files to determine next proofs parameters. Exiting.")
 }
 
 /// Parse a proof_x.json file and return a VDFProof
