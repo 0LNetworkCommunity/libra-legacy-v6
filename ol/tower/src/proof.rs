@@ -12,17 +12,18 @@ use ol_types::config::AppCfg;
 use std::{fs, io::Write, path::PathBuf, time::Instant};
 use txs::tx_params::TxParams;
 
-/// name of the proof files
+/// The proofs filename
 pub const FILENAME: &str = "proof";
 
-// writes a JSON file with the first vdf proof
-fn mine_genesis(config: &AppCfg, difficulty: u64, security: u64) -> VDFProof {
-    println!("Mining Genesis Proof");
+/// Writes a JSON file with the first VDF proof
+fn mine_genesis(config: &AppCfg, difficulty: u64, security: u64) -> Result<VDFProof, Error> {
     let preimage = genesis_preimage(&config);
     let now = Instant::now();
 
-    let proof = do_delay(&preimage, difficulty, security).unwrap(); // Todo: make mine_genesis return a result.
+    println!("Mining genesis proof");
+    let proof = do_delay(&preimage, difficulty, security)?;
     let elapsed_secs = now.elapsed().as_secs();
+
     println!("Delay: {:?} seconds", elapsed_secs);
     let block = VDFProof {
         height: 0u64,
@@ -33,24 +34,25 @@ fn mine_genesis(config: &AppCfg, difficulty: u64, security: u64) -> VDFProof {
         security: Some(security),
     };
 
-    block
+    Ok(block)
 }
 
-/// Mines genesis and writes the file
+/// Mines the genesis proof and writes to file
 pub fn write_genesis(config: &AppCfg) -> Result<VDFProof, Error> {
     let difficulty = genesis_delay_difficulty();
     let security = GENESIS_VDF_SECURITY_PARAM;
-    let block = mine_genesis(config, difficulty, security);
-    //TODO: check for overwriting file...
+    let block = mine_genesis(config, difficulty, security)?;
+    // TODO: check for overwriting file...
     write_json(&block, &config.get_block_dir())?;
     let genesis_proof_filename = &format!("{}_0.json", FILENAME);
     println!(
-        "proof zero mined, file saved to: {:?}",
+        "Proof zero mined, file saved to: {:?}",
         &config.get_block_dir().join(genesis_proof_filename)
     );
     Ok(block)
 }
-/// Mine one block
+
+/// Mines one block
 pub fn mine_once(config: &AppCfg, next: NextProof) -> Result<VDFProof, Error> {
     let now = Instant::now();
     let data = do_delay(&next.preimage, next.diff.difficulty, next.diff.security)?;
@@ -77,51 +79,61 @@ pub fn mine_and_submit(
     local_mode: bool,
     swarm_path: Option<PathBuf>,
 ) -> Result<(), Error> {
-    // get the location of this miner's blocks
+    // Get the location of this miners blocks
     let mut blocks_dir = config.workspace.node_home.clone();
     blocks_dir.push(&config.workspace.block_dir);
 
     loop {
-        // the default behavior is to fetch info from the chain to produce the next proof, including dynamic params for VDF difficulty.
-        // if the user is offline, they must use local mode
-        // however the user may end up using stale config proofs if the epoch changes and the params are different now.
+        // The default behavior is to fetch info from the chain to produce the next proof, including
+        // dynamic params for VDF difficulty.
 
-        let next = match local_mode {
-            true => next_proof::get_next_proof_params_from_local(config)?,
-            false => {
-                let client = client::find_a_remote_jsonrpc(
-                    &config,
-                    config.get_waypoint(swarm_path.clone())?,
-                )?;
-                match next_proof::get_next_proof_from_chain(config, client, swarm_path.clone()) {
-                    Ok(n) => n,
-                    // failover to local mode, if no onchain data can be found.
-                    // TODO: this is important for migrating to the new protocol.
-                    // in future versions we should remove this since we may be producing bad proofs, and users should explicitly choose to use local mode.
-                    Err(_) => next_proof::get_next_proof_params_from_local(config)?,
+        // If the user is offline, they must use local mode however the user may end up using stale
+        // config proofs if the epoch changes and the params are different.
+        // Assumption: There is always at least one local proof.
+        let next_local_proof = next_proof::get_next_proof_params_from_local(config)?;
+        let next_proof = if local_mode {
+            next_local_proof
+        } else {
+            let client =
+                client::find_a_remote_jsonrpc(&config, config.get_waypoint(swarm_path.clone())?)?;
+            match next_proof::get_next_proof_from_chain(config, client, swarm_path.clone()) {
+                Ok(next_remote_proof) => {
+                    // If the local proof is > than the remote proof height then mine according to
+                    // the local proof. This fixes a bug where the tower mines a proof at a height
+                    // which has already been mined.
+                    if next_local_proof.next_height > next_remote_proof.next_height {
+                        next_local_proof
+                    } else {
+                        next_remote_proof
+                    }
                 }
+                // Failover to local mode, if no onchain data can be found.
+                // TODO: this is important for migrating to the new protocol.
+                // In future versions we should remove this since we may be producing bad proofs,
+                // and users should explicitly choose to use local mode.
+                Err(_) => next_local_proof,
             }
         };
 
-        println!("Mining VDF Proof # {}", next.next_height);
+        println!("Mining VDF Proof # {}", next_proof.next_height);
         println!(
             "difficulty: {}, security: {}",
-            next.diff.difficulty, next.diff.security
+            next_proof.diff.difficulty, next_proof.diff.security
         );
 
-        let block = mine_once(&config, next)?;
+        let block = mine_once(&config, next_proof)?;
 
         println!(
             "Proof mined: proof_{}.json created.",
             block.height.to_string()
         );
 
-        // submits backlog to client
+        // Submits backlog of proofs to the client
         match backlog::process_backlog(&config, &tx_params) {
             Ok(()) => println!("Success: Proof committed to chain"),
             Err(e) => {
                 // don't stop on tx errors
-                println!("ERROR: Failed processing backlog, message: {:?}", e);
+                println!("Failed processing backlog, message: {:?}", e);
             }
         }
     }
@@ -140,25 +152,20 @@ fn write_json(block: &VDFProof, blocks_dir: &PathBuf) -> Result<(), std::io::Err
     file.write_all(serde_json::to_string(&block)?.as_bytes())
 }
 
-/// parse the existing blocks in the miner's path. This function receives any path. Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
+/// Parse the existing blocks in the miner's path. This function receives any path.
+///   Note: the path is configured in miner.toml which abscissa Configurable parses, see commands.rs.
 pub fn get_highest_block(blocks_dir: &PathBuf) -> Result<(VDFProof, PathBuf), Error> {
     let mut max_block: Option<VDFProof> = None;
     let mut max_block_path: Option<PathBuf> = None;
 
     let file_list = glob(&format!("{}/{}_*.json", blocks_dir.display(), FILENAME))?;
-    // iterate through all json files in the directory.
-    // if file_list.last().is_none() {
-    //   bail!("cannot find any VDF proof files in, {:?}", blocks_dir);
-    // }
-
     for entry in file_list {
         if let Ok(entry) = entry {
-            // let file = fs::File::open(&entry).expect("Could not open block file");
-            // let reader = BufReader::new(file);
             let block = match parse_block_file(&entry, false) {
                 Ok(v) => v,
                 Err(e) => {
-                    println!("could not parse the proof file: {}, skipping. Manually delete if this proof is not readable.", e.to_string());
+                    println!("Could not parse the proof file: {}, skipping. Manually delete if this proof is not readable."
+			   , e.to_string());
                     continue;
                 }
             };
@@ -177,33 +184,30 @@ pub fn get_highest_block(blocks_dir: &PathBuf) -> Result<(VDFProof, PathBuf), Er
         }
     }
 
-    if max_block.is_some() && max_block_path.is_some() {
-        return Ok((max_block.unwrap(), max_block_path.unwrap()));
-    } else {
-        bail!(
-            "cannot find a valid VDF proof in files to determine next proof's parameters. Exiting."
-        )
+    if let Some(max_block) = max_block {
+        if let Some(max_block_path) = max_block_path {
+            return Ok((max_block, max_block_path));
+        }
     }
-    // (max_block, max_block_path)
+    bail!("Cannot find a valid VDF proof in files to determine next proofs parameters. Exiting.")
 }
 
 /// Parse a proof_x.json file and return a VDFProof
 pub fn parse_block_file(path: &PathBuf, purge_if_bad: bool) -> Result<VDFProof, Error> {
     let block_file = fs::read_to_string(path)?;
 
-    match serde_json::from_str(&block_file) {
-        Ok(v) => Ok(v),
-        Err(e) => {
-            if purge_if_bad {
-                fs::remove_file(&block_file)?
-            }
-            bail!(
-                "Could not read latest block file in path {:?}, message: {:?}",
-                &path,
-                e
-            )
+    let v = serde_json::from_str(&block_file);
+    if let Err(e) = v {
+        if purge_if_bad {
+            fs::remove_file(&block_file)?
         }
+        bail!(
+            "Could not read latest block file in path {:?}, message: {:?}",
+            &path,
+            e
+        )
     }
+    v.map_err(anyhow::Error::msg)
 }
 
 /// Parse a proof_x.json file and return a VDFProof
@@ -214,20 +218,17 @@ pub fn find_proof_number(num: u64, blocks_dir: &PathBuf) -> Result<(VDFProof, Pa
         FILENAME,
         num.to_string()
     ));
-    match parse_block_file(&file, false) {
-        Ok(p) => {
-            if p.height == num {
-                return Ok((p, file));
-            } else {
-                bail!(
-                    "file {} does not contain proof height {}, found {} instead",
-                    file.to_str().unwrap(),
-                    num,
-                    p.height
-                );
-            }
-        }
-        Err(e) => Err(e),
+
+    let p = parse_block_file(&file, false)?;
+    if p.height == num {
+        return Ok((p, file));
+    } else {
+        bail!(
+            "File {} does not contain proof height {}, found {} instead",
+            file.to_str().unwrap(),
+            num,
+            p.height
+        );
     }
 }
 
@@ -251,9 +252,10 @@ fn test_helper_clear_block_dir(blocks_dir: &PathBuf) {
         fs::remove_dir_all(blocks_dir).unwrap();
     }
 }
+
 #[test]
 #[ignore]
-//Not really a test, just a way to generate fixtures.
+// Not really a test, just a way to generate fixtures.
 fn create_fixtures() {
     use diem_wallet::WalletLibrary;
 
@@ -300,7 +302,7 @@ fn test_mine_once() {
     use diem_types::ol_vdf_difficulty::VDFDifficulty;
     use hex::decode;
 
-    // if no file is found, the block height is 0
+    // If no file is found, the block height is 0
     let mut configs_fixture = test_make_configs_fixture();
     configs_fixture.workspace.block_dir = "test_blocks_temp_2".to_owned();
 
@@ -353,11 +355,11 @@ fn test_mine_once() {
 
 #[test]
 fn test_mine_genesis() {
-    // if no file is found, the block height is 0
-    //let blocks_dir = Path::new("./test_blocks");
+    // If no file is found, the block height is 0
+    // let blocks_dir = Path::new("./test_blocks");
     let configs_fixture = test_make_configs_fixture();
 
-    //clear from sideffects.
+    // Clear from sideffects.
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 
     // mine
@@ -382,7 +384,7 @@ fn test_mine_genesis() {
 
 #[test]
 fn test_parse_no_files() {
-    // if no file is found, the block height is 0
+    // If no file is found, the block height is 0
     let blocks_dir = PathBuf::from(".");
 
     match get_highest_block(&blocks_dir) {
@@ -393,7 +395,7 @@ fn test_parse_no_files() {
 
 #[test]
 fn test_parse_one_file() {
-    // create a file temporarily in ./test_blocks with height 33
+    // Create a file temporarily in ./test_blocks with height 33
     let current_block_number = 33;
     let block = VDFProof {
         height: current_block_number,
@@ -404,7 +406,7 @@ fn test_parse_one_file() {
         security: Some(2048),
     };
 
-    // write the file temporarilty
+    // Write the file temporarilty
     let blocks_dir = PathBuf::from("./test_blocks_temp_3");
     // Clear at start. Clearing at end can pollute the path when tests fail.
     test_helper_clear_block_dir(&blocks_dir);
@@ -416,13 +418,13 @@ fn test_parse_one_file() {
     file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
         .expect("Could not write block");
 
-    // block height
+    // Block height
     assert_eq!(get_highest_block(&blocks_dir).unwrap().0.height, 33);
 
     test_helper_clear_block_dir(&blocks_dir)
 }
 
-/// make fixtures for file
+/// Make fixtures for file
 pub fn test_make_configs_fixture() -> AppCfg {
     let mut cfg = AppCfg::default();
     cfg.workspace.node_home = PathBuf::from(".");

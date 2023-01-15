@@ -18,8 +18,7 @@ use crate::garbage_collection::gc_failed_proof;
 use crate::proof::{get_highest_block, FILENAME};
 use crate::{tower_errors, EPOCH_MINING_THRES_UPPER};
 
-/// Submit a backlog of blocks that may have been mined while network is offline.
-/// Likely not more than 1.
+/// Submits a backlog of VDF proofs which may have been mined whilst the network was unavailable.
 pub fn process_backlog(config: &AppCfg, tx_params: &TxParams) -> Result<(), TxError> {
     // Getting remote miner state
     // there may not be any onchain state.
