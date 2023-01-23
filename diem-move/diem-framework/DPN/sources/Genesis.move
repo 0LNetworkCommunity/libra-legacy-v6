@@ -288,11 +288,9 @@ module DiemFramework::Genesis {
     }
 
     #[test_only]
-    public fun setup(dr_account: &signer, tc_account: &signer) {
+    public fun setup(dr_account: &signer) {
         initialize_internal(
             dr_account,
-            tc_account,
-            x"0000000000000000000000000000000000000000000000000000000000000000",
             x"0000000000000000000000000000000000000000000000000000000000000000",
             Vector::empty(), // not needed for unit tests
             false, // not needed for unit tests
