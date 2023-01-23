@@ -2,7 +2,6 @@
 /// It interacts with the other modules in the following ways:
 ///
 /// * Genesis: to initialize the timestamp
-/// * VASP: to keep track of when credentials expire
 /// * DiemSystem, DiemAccount, DiemConfig: to check if the current state is in the genesis state
 /// * DiemBlock: to reach consensus on the global wall clock time
 /// * AccountLimits: to limit the time of account limits
