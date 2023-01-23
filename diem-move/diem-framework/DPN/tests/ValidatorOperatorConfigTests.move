@@ -18,35 +18,35 @@ module DiemFramework::ValidatorOperatorConfigTests {
         VOC::publish(&s, &s, x"");
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(dr = @DiemRoot)]
     #[expected_failure(abort_code = 2)]
-    fun publish_post_genesis_non_dr(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
-        let s = get_signer();
-        VOC::publish(&s, &tc, x"");
-    }
-
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
-    #[expected_failure(abort_code = 5)]
-    fun publish_post_genesis_non_validator_operator(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun publish_post_genesis_non_dr(dr: signer) {
+        Genesis::setup(&dr);
         let s = get_signer();
         VOC::publish(&s, &dr, x"");
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
-    fun publish_post_genesis(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    #[test(dr = @DiemRoot)]
+    #[expected_failure(abort_code = 5)]
+    fun publish_post_genesis_non_validator_operator(dr: signer) {
+        Genesis::setup(&dr);
+        let s = get_signer();
+        VOC::publish(&s, &dr, x"");
+    }
+
+    #[test(dr = @DiemRoot)]
+    fun publish_post_genesis(dr: signer) {
+        Genesis::setup(&dr);
         let s = get_signer();
         Roles::new_validator_operator_role(&dr, &s);
         VOC::publish(&s, &dr, x"");
         assert!(VOC::has_validator_operator_config(Signer::address_of(&s)), 0);
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(dr = @DiemRoot)]
     #[expected_failure(abort_code = 6)]
-    fun publish_post_genesis_double_publish(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun publish_post_genesis_double_publish(dr: signer) {
+        Genesis::setup(&dr);
         let s = get_signer();
         Roles::new_validator_operator_role(&dr, &s);
         VOC::publish(&s, &dr, x"");
@@ -59,9 +59,9 @@ module DiemFramework::ValidatorOperatorConfigTests {
         VOC::get_human_name(@0x1);
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
-    fun get_human_name(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    #[test(dr = @DiemRoot)]
+    fun get_human_name(dr: signer) {
+        Genesis::setup(&dr);
         let s = get_signer();
         Roles::new_validator_operator_role(&dr, &s);
         VOC::publish(&s, &dr, b"test");

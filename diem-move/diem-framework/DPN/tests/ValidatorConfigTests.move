@@ -22,34 +22,34 @@ module DiemFramework::ValidatorConfigTests {
         VC::publish(&s, &s, x"");
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(dr = @DiemRoot)]
     #[expected_failure(abort_code = 2)]
-    fun publish_post_genesis_non_dr(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
-        let s = signer_at(0);
-        VC::publish(&s, &tc, x"");
-    }
-
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
-    #[expected_failure(abort_code = 5)]
-    fun publish_post_genesis_non_validator(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun publish_post_genesis_non_dr(dr: signer) {
+        Genesis::setup(&dr);
         let s = signer_at(0);
         VC::publish(&s, &dr, x"");
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
-    fun publish_post_genesis(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    #[test(dr = @DiemRoot)]
+    #[expected_failure(abort_code = 5)]
+    fun publish_post_genesis_non_validator(dr: signer) {
+        Genesis::setup(&dr);
+        let s = signer_at(0);
+        VC::publish(&s, &dr, x"");
+    }
+
+    #[test(dr = @DiemRoot)]
+    fun publish_post_genesis(dr: signer) {
+        Genesis::setup(&dr);
         let s = signer_at(0);
         Roles::new_validator_role(&dr, &s);
         VC::publish(&s, &dr, x"");
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(dr = @DiemRoot)]
     #[expected_failure(abort_code = 6)]
-    fun publish_post_genesis_double_publish(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun publish_post_genesis_double_publish(dr: signer) {
+        Genesis::setup(&dr);
         let s = signer_at(0);
         Roles::new_validator_role(&dr, &s);
         VC::publish(&s, &dr, x"");
@@ -63,19 +63,19 @@ module DiemFramework::ValidatorConfigTests {
         VC::set_operator(&s, @0x1);
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(dr = @DiemRoot)]
     #[expected_failure(abort_code = 775)]
-    fun set_operator_not_operator(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun set_operator_not_operator(dr: signer) {
+        Genesis::setup(&dr);
         let s = signer_at(0);
         Roles::new_validator_role(&dr, &s);
         VC::set_operator(&s, @0x1);
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(dr = @DiemRoot)]
     #[expected_failure(abort_code = 5)]
-    fun set_operator_no_validator_config_has_role(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun set_operator_no_validator_config_has_role(dr: signer) {
+        Genesis::setup(&dr);
         let validator = signer_at(0);
         let operator = signer_at(1);
         Roles::new_validator_role(&dr, &validator);
@@ -93,9 +93,9 @@ module DiemFramework::ValidatorConfigTests {
         VC::set_operator(validator, operator_addr);
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
-    fun set_operator_correct(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    #[test(dr = @DiemRoot)]
+    fun set_operator_correct(dr: signer) {
+        Genesis::setup(&dr);
         let validator = signer_at(0);
         let operator = signer_at(1);
         let operator_addr = Signer::address_of(&operator);
@@ -111,19 +111,19 @@ module DiemFramework::ValidatorConfigTests {
         VC::remove_operator(&s);
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(dr = @DiemRoot)]
     #[expected_failure(abort_code = 5)]
-    fun remove_operator_no_config(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun remove_operator_no_config(dr: signer) {
+        Genesis::setup(&dr);
         let s = signer_at(0);
         Roles::new_validator_role(&dr, &s);
         VC::remove_operator(&s);
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(dr = @DiemRoot)]
     #[expected_failure(abort_code = 7)]
-    fun remove_operator_correct(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun remove_operator_correct(dr: signer) {
+        Genesis::setup(&dr);
         let validator = signer_at(0);
         let operator = signer_at(1);
         let operator_addr = Signer::address_of(&operator);
@@ -134,10 +134,10 @@ module DiemFramework::ValidatorConfigTests {
         VC::get_operator(validator_addr);
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(dr = @DiemRoot)]
     #[expected_failure(abort_code = 263)]
-    fun set_config_operator_neq_operator(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun set_config_operator_neq_operator(dr: signer) {
+        Genesis::setup(&dr);
         let validator = signer_at(0);
         let operator = signer_at(1);
         let other_operator = signer_at(2);
@@ -146,10 +146,10 @@ module DiemFramework::ValidatorConfigTests {
         VC::set_config(&other_operator, validator_addr, x"", x"", x"")
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(dr = @DiemRoot)]
     #[expected_failure(abort_code = 519)]
-    fun set_config_invalid_consensus_pubkey(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun set_config_invalid_consensus_pubkey(dr: signer) {
+        Genesis::setup(&dr);
         let validator = signer_at(0);
         let operator = signer_at(1);
         let validator_addr = Signer::address_of(&validator);
@@ -157,9 +157,9 @@ module DiemFramework::ValidatorConfigTests {
         VC::set_config(&operator, validator_addr, x"", x"", x"")
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
-    fun set_config_correct(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    #[test(dr = @DiemRoot)]
+    fun set_config_correct(dr: signer) {
+        Genesis::setup(&dr);
         let validator = signer_at(0);
         let operator = signer_at(1);
         let validator_addr = Signer::address_of(&validator);
@@ -180,10 +180,10 @@ module DiemFramework::ValidatorConfigTests {
         VC::get_config(@0x1);
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
-    #[expected_failure(abort_code = 7)]
-    fun get_config_not_set(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    #[test(dr = @DiemRoot)]
+    #[expected_failure(abort_code = 7)] // Errors::already_published(EROLE_ID)
+    fun get_config_not_set(dr: signer) {
+        Genesis::setup(&dr);
         let validator = signer_at(0);
         let operator = signer_at(1);
         let validator_addr = Signer::address_of(&validator);
@@ -203,10 +203,10 @@ module DiemFramework::ValidatorConfigTests {
         VC::get_operator(@0x1);
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(dr = @DiemRoot)]
     #[expected_failure(abort_code = 7)]
-    fun get_operator_not_set(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun get_operator_not_set(dr: signer) {
+        Genesis::setup(&dr);
         let validator = signer_at(0);
         let validator_addr = Signer::address_of(&validator);
 

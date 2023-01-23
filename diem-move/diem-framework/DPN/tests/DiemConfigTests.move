@@ -9,31 +9,31 @@ module DiemFramework::OnChainConfigTests {
         DiemConfig::initialize(&account);
     }
 
-    #[test(account = @0x2, tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(account = @0x2, dr = @DiemRoot)]
     #[expected_failure(abort_code = 1)]
-    fun invalid_address_init(account: signer, tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun invalid_address_init(account: signer, dr: signer) {
+        Genesis::setup(&dr);
         DiemConfig::initialize(&account);
     }
 
-    #[test(tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(dr = @DiemRoot)]
     #[expected_failure(abort_code = 261)]
-    fun invalid_get(tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun invalid_get(dr: signer) {
+        Genesis::setup(&dr);
         DiemConfig::get<u64>();
     }
 
-    #[test(account = @0x1, tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(account = @0x1, dr = @DiemRoot)]
     #[expected_failure(abort_code = 516)]
-    fun invalid_set(account: signer, tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun invalid_set(account: signer, dr: signer) {
+        Genesis::setup(&dr);
         DiemConfig::set_for_testing(&account, 0);
     }
 
-    #[test(account = @0x1, tc = @TreasuryCompliance, dr = @DiemRoot)]
+    #[test(account = @0x1, dr = @DiemRoot)]
     #[expected_failure(abort_code = 2)]
-    fun invalid_publish(account: signer, tc: signer, dr: signer) {
-        Genesis::setup(&dr, &tc);
+    fun invalid_publish(account: signer, dr: signer) {
+        Genesis::setup(&dr);
         DiemConfig::publish_new_config_for_testing(&account, 0);
     }
 }
