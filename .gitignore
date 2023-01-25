@@ -71,8 +71,3 @@ key_store.json
 .vscode/
 
 *.swp
-
-# prevent mv files from being committed
-*.mv
-diem-move/diem-framework/DPN/releases/artifacts
-*/artifacts/

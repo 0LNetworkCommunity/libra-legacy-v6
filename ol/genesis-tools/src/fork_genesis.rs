@@ -22,17 +22,27 @@ use ol_types::fullnode_counter::FullnodeCounterResource;
 use ol_types::wallet::{CommunityWalletsResource, SlowWalletResource};
 use vm_genesis::encode_recovery_genesis_changeset;
 
-/// Make a recovery genesis blob
-pub async fn make_recovery_genesis(
+/// Make a recovery genesis blob from archive
+pub async fn make_recovery_genesis_from_archive(
     genesis_blob_path: PathBuf,
     archive_path: PathBuf,
     append: bool,
     is_legacy: bool,
 ) -> Result<(), Error> {
-    //TODO: have option to "swarmify" this so that the authkey and network addresses.
-
     // get the legacy data from archive
     let recovery = archive_into_recovery(&archive_path, is_legacy).await?;
+
+    make_recovery_genesis_from_recovery(recovery, genesis_blob_path, append)
+}
+
+/// Make a recovery genesis blob
+pub fn make_recovery_genesis_from_recovery(
+    recovery: Vec<LegacyRecovery>,
+    genesis_blob_path: PathBuf,
+    append: bool,
+) -> Result<(), Error> {
+    //TODO: have option to "swarmify" this so that the authkey and network addresses.
+
     // get consensus accounts
     let genesis_accounts = recover_consensus_accounts(&recovery)?;
     // create baseline genesis

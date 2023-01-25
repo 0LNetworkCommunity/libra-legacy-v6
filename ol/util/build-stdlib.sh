@@ -7,7 +7,8 @@ printf "This builds:
     diem-move/diem-framework/DPN/sources/0L/*
     diem-move/diem-framework/DPN/sources/0L_transaction_scripts/* \n\n"
 
-cargo r --release -p diem-framework -- $1
-# cargo r --release -p diem-framework -- $1 --no-doc # for dev. quick iteration
+cd diem-move/diem-framework
+cargo r --release -- $1
+# cargo r --release -- $1 --no-doc # for dev. quick iteration
 
 printf "Done\n"

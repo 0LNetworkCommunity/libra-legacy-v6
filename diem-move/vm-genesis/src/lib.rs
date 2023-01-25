@@ -198,7 +198,7 @@ pub fn encode_genesis_change_set(
 //////// 0L ////////
 pub fn encode_recovery_genesis_changeset(
     val_assignments: &[ValStateRecover],
-    operator_registrations: &[OperRecover],
+    operator_recovers: &[OperRecover],
     val_set: &[AccountAddress],
     chain: u8,
 ) -> Result<ChangeSet, Error> {
@@ -234,7 +234,7 @@ pub fn encode_recovery_genesis_changeset(
 
     // generate the genesis WriteSet
     recovery_owners_operators(
-        &mut session, val_assignments, operator_registrations, val_set
+        &mut session, val_assignments, operator_recovers, val_set
     );
 
     //////// 0L ////////
@@ -606,7 +606,7 @@ pub struct OperRecover {
 fn recovery_owners_operators(
     session: &mut Session<StateViewCache<GenesisStateView>>,
     val_assignments: &[ValStateRecover],
-    operator_registrations: &[OperRecover],
+    operator_recovers: &[OperRecover],
     val_set: &[AccountAddress],
 ) {
     let diem_root_address = account_config::diem_root_address();
@@ -668,7 +668,7 @@ fn recovery_owners_operators(
             ]),
         );
 
-        // let all_vals: Vec<AccountAddress> = operator_registrations.iter()
+        // let all_vals: Vec<AccountAddress> = operator_recovers.iter()
         //     .map(|a|{ a.validator_to_represent }).collect();
         // let mut vals = all_vals.clone();
         // vals.retain(|el|{ el != &i.val_account});
@@ -687,7 +687,7 @@ fn recovery_owners_operators(
 
     println!("1 ======== Create OP Accounts");
     // Create accounts for each validator operator
-    for i in operator_registrations {
+    for i in operator_recovers {
         let create_operator_script =
             transaction_builder::encode_create_validator_operator_account_script_function(
                 0,
@@ -704,25 +704,24 @@ fn recovery_owners_operators(
     }
 
     println!("2 ======== Link owner to OP");
-    // Authorize an operator for a validator/owner
-    for i in val_assignments {
+    // Set the validator operator for each validator owner
+    for val in val_assignments {
         let create_operator_script =
-            transaction_builder::encode_set_validator_operator_with_nonce_admin_script_function(
-                0,
-                i.operator_delegated_account.to_vec(),
-                i.operator_delegated_account,
+            transaction_builder::encode_set_validator_operator_script_function(
+                val.operator_delegated_account.to_vec(), 
+                val.operator_delegated_account
             )
             .into_script_function();
         exec_script_function(
             session,
-            i.val_account, //TODO: check the signer is correct
+            val.val_account, //TODO: check the signer is correct
             &create_operator_script,
         );
     }
 
     println!("3 ======== OP sends network info to Owner config");
     // Set the validator operator configs for each owner
-    for i in operator_registrations {
+    for i in operator_recovers {
         let create_operator_script =
             transaction_builder::encode_register_validator_config_script_function(
                 i.validator_to_represent,
