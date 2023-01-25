@@ -6571,6 +6571,7 @@ dependencies = [
  "diem-wallet",
  "futures",
  "gumdrop 0.8.1",
+ "language-e2e-tests",
  "move-core-types",
  "ol",
  "ol-keys",
