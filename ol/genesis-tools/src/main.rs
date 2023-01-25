@@ -10,7 +10,7 @@ use ol_genesis_tools::{
     process_snapshot::archive_into_recovery,
     recover::save_recovery_file,
     recover::read_from_recovery_file,
-    swarm_genesis::make_swarm_genesis
+    // swarm_genesis::make_swarm_genesis
 };
 
 #[tokio::main]
@@ -88,23 +88,22 @@ async fn main() -> Result<()> {
             .expect("ERROR: failed to create recovery from snapshot,");
 
         return Ok(());
-    } else if opts.daemon {
-        // start the live fork daemon
-
-        return Ok(());
     } else if opts.swarm {
-        // Write swarm genesis from snapshot, for CI and simulation
-        if let Some(s_path) = opts.snapshot_path {
-            if !s_path.exists() {
-                println!("ERROR: snapshot directory does not exist: {:?}", &s_path);
-                exit(1);
-            }
-            make_swarm_genesis(opts.output_path.unwrap(), s_path).await?;
-            return Ok(());
-        } else {
-            println!("ERROR: must provide a path with --snapshot, exiting.");
+        // // Write swarm genesis from snapshot, for CI and simulation
+        // if let Some(s_path) = opts.snapshot_path {
+        //     if !s_path.exists() {
+        //         println!("ERROR: snapshot directory does not exist: {:?}", &s_path);
+        //         exit(1);
+        //     }
+        //     make_swarm_genesis(opts.output_path.unwrap(), s_path).await?;
+        //     return Ok(());
+        // } else {
+        //     println!("ERROR: must provide a path with --snapshot, exiting.");
+        //     exit(1);
+        // }
+
+        println!("ERROR: must provide a path with --snapshot, exiting.");
             exit(1);
-        }
     } else {
         println!("ERROR: no options provided, exiting.");
         exit(1);
