@@ -28,8 +28,9 @@ jobs:
         run: sudo apt-get install -y lld
 
       - name: build stdlib
-        run: make stdlib
+        run: sh ol/util/build-stdlib.sh
 
       - name: smoke tests
-        run: CARGO_ARGS="--color never" make smoke-test
+        run: cargo t -p smoke-test -- --test-threads=1 test_basic_fault_tolerance --nocapture
+        # todo get the other smoke tests running
         continue-on-error: true

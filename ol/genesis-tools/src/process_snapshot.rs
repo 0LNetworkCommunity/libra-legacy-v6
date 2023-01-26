@@ -11,7 +11,7 @@ use diem_types::{
     account_config::AccountResource,
     account_state::AccountState,
     account_state_blob::AccountStateBlob,
-    write_set::{WriteOp, WriteSetMut}, ol_miner_state::TowerStateResource,
+    write_set::{WriteOp, WriteSetMut},
 };
 use move_core_types::move_resource::MoveResource;
 use ol_keys::wallet::get_account_from_mnem;
