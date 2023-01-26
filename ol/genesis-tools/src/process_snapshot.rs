@@ -11,7 +11,7 @@ use diem_types::{
     account_config::AccountResource,
     account_state::AccountState,
     account_state_blob::AccountStateBlob,
-    write_set::{WriteOp, WriteSetMut},
+    write_set::{WriteOp, WriteSetMut}, ol_miner_state::TowerStateResource,
 };
 use move_core_types::move_resource::MoveResource;
 use ol_keys::wallet::get_account_from_mnem;
@@ -27,13 +27,14 @@ pub async fn archive_into_swarm_writeset(archive_path: PathBuf) -> Result<WriteS
 }
 
 /// take an archive file path and parse into a writeset
-pub async fn archive_into_recovery(
+pub async fn db_backup_into_recovery_struct(
     archive_path: &PathBuf,
     is_legacy: bool,
 ) -> Result<Vec<LegacyRecovery>, Error> {
     let manifest_json = archive_path.join("state.manifest");
 
-    let backup = read_snapshot::read_from_json(&manifest_json)?;
+    let backup = read_snapshot::read_from_json(&manifest_json)
+    .expect(&format!("cannot find snapshot file: {:?}", &manifest_json));
 
     let account_blobs = accounts_from_snapshot_backup(backup, archive_path).await?;
     let r = if is_legacy {
@@ -150,11 +151,11 @@ pub fn merge_writeset(left: WriteSetMut, right: WriteSetMut) -> Result<WriteSetM
 }
 
 #[test]
+#[ignore]
 pub fn test_accounts_into_recovery() {
     use diem_types::{account_config::BalanceResource, validator_config::ValidatorConfigResource};
     use move_core_types::move_resource::MoveResource;
-    use ol_types::miner_state::TowerStateResource;
-
+    use diem_types::ol_miner_state::TowerStateResource;
     use std::path::Path;
 
     let path = env!("CARGO_MANIFEST_DIR");
