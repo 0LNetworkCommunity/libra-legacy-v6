@@ -1,7 +1,7 @@
-use std::{path::PathBuf, fs, str::FromStr};
+use std::{path::PathBuf, fs};
 // use std::str ::FromStr;
 // use diem_wallet::io_utils::recover;
-use ol_genesis_tools::{process_snapshot::db_backup_into_recovery_struct, recover::{save_recovery_file, read_from_recovery_file}, fork_genesis::{make_recovery_genesis_from_db_backup, make_recovery_genesis_from_vec_legacy_recovery}};
+use ol_genesis_tools::{recover::{read_from_recovery_file}, fork_genesis::{make_recovery_genesis_from_vec_legacy_recovery}};
 
 // The expected arguments of cli for exporting a V5 JSON recovery file from a db backup is:
 // cargo r -p ol-genesis-tools -- --recover /opt/rec.json --snapshot-path /opt/state_ver*

@@ -6,6 +6,7 @@ use std::process::Stdio;
 
 #[test]
 fn start_test_node() {
+    use std::path::Path;
     std::env::set_var("RUST_LOG", "debug");
     let source_path = Path::new(env!("CARGO_MANIFEST_DIR"));
     let blob_path = blob_path();
