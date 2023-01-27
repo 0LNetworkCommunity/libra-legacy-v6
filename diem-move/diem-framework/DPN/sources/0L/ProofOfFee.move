@@ -17,6 +17,10 @@ address DiemFramework {
     use DiemFramework::ValidatorUniverse;
     use Std::Vector;
 
+    use DiemFramework::DiemBlock;
+    use DiemFramework::Epoch;
+    use DiemFramework::Cases;
+
     // A struct on the validators account which indicates their
     // latest bid (and epoch)
     struct ProofOfFeeAuction has key {
@@ -124,6 +128,65 @@ address DiemFramework {
       Vector::reverse<address>(&mut eligible_validators);
 
       return eligible_validators
+    }
+
+    // here we place the bidders into their seats
+    // the order of the bids will determine placement.
+    // one important aspect of picking the next validator set:
+    // it should have 2/3rds of known good ("proven") validators
+    // from the previous epoch. Otherwise the unproven nodes, who
+    // may not be ready for consensus may be offline and cause a halt.
+    // So the selection algorithm needs to stop filling seats with unproven
+    // validators if the max unproven nodes limit is hit (1/3).
+
+    public fun fill_seats_and_get_price(set_size: u8): (vector<address>, u64) {
+      let seats_to_fill = Vector::singleton<address>();
+      let max_unproven = set_size / 3;
+
+      let num_unproven_added = 0;
+
+      let sorted_vals_by_bid = get_sorted_vals();
+
+      let i = 0;
+      while i < set_size {
+        let val =  Vector::borrow(i);
+        // fail fast if the validator is jailed.
+        // NOTE: epoch reconfigure needs to reset the jail
+        // before calling the proof of fee.
+        if (Jail::is_jailed(val)) return false;
+
+        // check if a proven node
+        if (val_is_proven(val)) {
+          Vector::push_back(&mut seats_to_fill, val);
+        } else {
+          // for unproven nodes, push it to list if we haven't hit limit
+          if (num_unproven_added < max_unproven ) {
+            Vector::push_back(&mut seats_to_fill, val);
+          }
+          num_unproven_added = num_unproven_added + 1;
+        }
+
+
+
+        i = i + 1;
+      };
+
+      let lowest_bidder = Vector::borrow(&seats_to_fill, 0);
+      let lowest_bid = current_bid(lowest_bidder);
+
+      return (seats_to_fill, lowest_bid)
+    }
+
+    fun val_is_proven(addr: address) {
+
+
+        let height_start = Epoch::get_timer_seconds_start();
+        let height_now = DiemBlock::get_current_block_height();
+        let case = Cases::get_case(vm, addr, height_start, height_now);
+        
+        if (case != 1) return false;
+        true
+
     }
 
     ////////// TRANSACTION APIS //////////
