@@ -168,7 +168,7 @@ address DiemFramework {
         i = i + 1;
       };
 
-      let lowest_bidder = Vector::borrow(&seats_to_fill, 0);
+      let lowest_bidder = Vector::borrow(&seats_to_fill, i);
       let lowest_bid = current_bid(lowest_bidder);
 
       return (seats_to_fill, lowest_bid)
