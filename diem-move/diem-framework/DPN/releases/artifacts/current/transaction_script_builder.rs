@@ -2232,6 +2232,8 @@ pub enum ScriptFunctionCall {
         to_freeze_account: AccountAddress,
     },
 
+    InitBidding {},
+
     InitVouch {},
 
     /// # Summary
@@ -3334,6 +3336,10 @@ pub enum ScriptFunctionCall {
         allow_minting: bool,
     },
 
+    UpdatePofBid {
+        bid: u64,
+    },
+
     ValAddSelf {},
 
     VouchFor {
@@ -3798,6 +3804,7 @@ impl ScriptFunctionCall {
                 sliding_nonce,
                 to_freeze_account,
             } => encode_freeze_account_script_function(sliding_nonce, to_freeze_account),
+            InitBidding {} => encode_init_bidding_script_function(),
             InitVouch {} => encode_init_vouch_script_function(),
             InitializeDiemConsensusConfig { sliding_nonce } => {
                 encode_initialize_diem_consensus_config_script_function(sliding_nonce)
@@ -4019,6 +4026,7 @@ impl ScriptFunctionCall {
                 currency,
                 allow_minting,
             } => encode_update_minting_ability_script_function(currency, allow_minting),
+            UpdatePofBid { bid } => encode_update_pof_bid_script_function(bid),
             ValAddSelf {} => encode_val_add_self_script_function(),
             VouchFor { val } => encode_vouch_for_script_function(val),
             VoucherUnjail { addr } => encode_voucher_unjail_script_function(addr),
@@ -5160,6 +5168,18 @@ pub fn encode_freeze_account_script_function(
             bcs::to_bytes(&sliding_nonce).unwrap(),
             bcs::to_bytes(&to_freeze_account).unwrap(),
         ],
+    ))
+}
+
+pub fn encode_init_bidding_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("ProofOfFee").to_owned(),
+        ),
+        ident_str!("init_bidding").to_owned(),
+        vec![],
+        vec![],
     ))
 }
 
@@ -6758,6 +6778,18 @@ pub fn encode_update_minting_ability_script_function(
         ident_str!("update_minting_ability").to_owned(),
         vec![currency],
         vec![bcs::to_bytes(&allow_minting).unwrap()],
+    ))
+}
+
+pub fn encode_update_pof_bid_script_function(bid: u64) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("ProofOfFee").to_owned(),
+        ),
+        ident_str!("update_pof_bid").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&bid).unwrap()],
     ))
 }
 
@@ -8824,6 +8856,14 @@ fn decode_freeze_account_script_function(
     }
 }
 
+fn decode_init_bidding_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::InitBidding {})
+    } else {
+        None
+    }
+}
+
 fn decode_init_vouch_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
         Some(ScriptFunctionCall::InitVouch {})
@@ -9359,6 +9399,18 @@ fn decode_update_minting_ability_script_function(
         Some(ScriptFunctionCall::UpdateMintingAbility {
             currency: script.ty_args().get(0)?.clone(),
             allow_minting: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_update_pof_bid_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::UpdatePofBid {
+            bid: bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
@@ -9905,6 +9957,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_freeze_account_script_function),
         );
         map.insert(
+            "ProofOfFeeinit_bidding".to_string(),
+            Box::new(decode_init_bidding_script_function),
+        );
+        map.insert(
             "VouchScriptsinit_vouch".to_string(),
             Box::new(decode_init_vouch_script_function),
         );
@@ -10072,6 +10128,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "TreasuryComplianceScriptsupdate_minting_ability".to_string(),
             Box::new(decode_update_minting_ability_script_function),
+        );
+        map.insert(
+            "ProofOfFeeupdate_pof_bid".to_string(),
+            Box::new(decode_update_pof_bid_script_function),
         );
         map.insert(
             "ValidatorScriptsval_add_self".to_string(),

@@ -44,7 +44,6 @@ and "configuration" are used for several distinct concepts.
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
-<b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -82,7 +81,7 @@ Information about a Validator Owner.
 <code>consensus_voting_power: u64</code>
 </dt>
 <dd>
- The voting power of the Validator Owner (currently always 1).
+ The voting power of the Validator Owner (since V6 is always 10).
 </dd>
 <dt>
 <code>config: <a href="ValidatorConfig.md#0x1_ValidatorConfig_Config">ValidatorConfig::Config</a></code>
@@ -1377,7 +1376,14 @@ Private function checks for membership of <code>addr</code> in validator set.
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> next_epoch_validators, <a href="DiemSystem.md#0x1_DiemSystem_ValidatorInfo">ValidatorInfo</a> {
             addr: account_address,
             config, // <b>copy</b> the config over <b>to</b> ValidatorSet
-            consensus_voting_power: 1 + <a href="NodeWeight.md#0x1_NodeWeight_proof_of_weight">NodeWeight::proof_of_weight</a>(account_address),
+            //// V6 ////
+            // CONSENSUS CRITICAL
+            // ALL EYES ON THIS
+            // PROOF OF FEE
+            // All nodes will have equal voting power <b>as</b> per the PoF paper.
+            consensus_voting_power: 10,
+            // "you can syndicate any boat you row"
+            //// end V6 ////
             last_config_update_time: <a href="DiemTimestamp.md#0x1_DiemTimestamp_now_microseconds">DiemTimestamp::now_microseconds</a>(),
         });
 
