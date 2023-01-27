@@ -203,6 +203,9 @@ compiled_package_info:
       name: PersistenceDemo
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: ProofOfFee
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Receipts
     : DiemFramework
     ? address: "00000000000000000000000000000001"

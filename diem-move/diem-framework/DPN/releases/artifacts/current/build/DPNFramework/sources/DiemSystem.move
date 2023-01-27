@@ -21,13 +21,13 @@ module DiemFramework::DiemSystem {
     use Std::FixedPoint32;
     use DiemFramework::Stats;
     use DiemFramework::Cases;
-    use DiemFramework::NodeWeight;
 
     /// Information about a Validator Owner.
     struct ValidatorInfo has copy, drop, store {
         /// The address (account) of the Validator Owner
         addr: address,
-        /// The voting power of the Validator Owner (currently always 1).
+        //////// 0L ////////
+        /// The voting power of the Validator Owner (since V6 is always 10).
         consensus_voting_power: u64,
         /// Configuration information about the Validator, such as the
         /// Validator Operator, human name, and info such as consensus key
@@ -734,7 +734,14 @@ module DiemFramework::DiemSystem {
             Vector::push_back(&mut next_epoch_validators, ValidatorInfo {
                 addr: account_address,
                 config, // copy the config over to ValidatorSet
-                consensus_voting_power: 1 + NodeWeight::proof_of_weight(account_address),
+                //// V6 ////
+                // CONSENSUS CRITICAL
+                // ALL EYES ON THIS
+                // PROOF OF FEE
+                // All nodes will have equal voting power as per the PoF paper.
+                consensus_voting_power: 10,
+                // "you can syndicate any boat you row"
+                //// end V6 ////
                 last_config_update_time: DiemTimestamp::now_microseconds(),
             });
 
