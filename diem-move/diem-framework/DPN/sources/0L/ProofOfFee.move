@@ -139,7 +139,7 @@ address DiemFramework {
     // So the selection algorithm needs to stop filling seats with unproven
     // validators if the max unproven nodes limit is hit (1/3).
 
-    public fun fill_seats_and_get_price(set_size: u8): (vector<address>, u64) {
+    public fun fill_seats_and_get_price(set_size: u8, proven_nodes: vector<address>): (vector<address>, u64) {
       let seats_to_fill = Vector::singleton<address>();
       let max_unproven = set_size / 3;
 
@@ -156,7 +156,7 @@ address DiemFramework {
         if (Jail::is_jailed(val)) return false;
 
         // check if a proven node
-        if (val_is_proven(val)) {
+        if (Vector::contains(&proven_nodes, val)) {
           Vector::push_back(&mut seats_to_fill, val);
         } else {
           // for unproven nodes, push it to list if we haven't hit limit
@@ -165,9 +165,6 @@ address DiemFramework {
           }
           num_unproven_added = num_unproven_added + 1;
         }
-
-
-
         i = i + 1;
       };
 
@@ -177,17 +174,6 @@ address DiemFramework {
       return (seats_to_fill, lowest_bid)
     }
 
-    fun val_is_proven(addr: address) {
-
-
-        let height_start = Epoch::get_timer_seconds_start();
-        let height_now = DiemBlock::get_current_block_height();
-        let case = Cases::get_case(vm, addr, height_start, height_now);
-        
-        if (case != 1) return false;
-        true
-
-    }
 
     ////////// TRANSACTION APIS //////////
     // manually init the struct, fallback in case of migration fail
