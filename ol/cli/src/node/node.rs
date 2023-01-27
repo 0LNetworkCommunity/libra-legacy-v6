@@ -276,7 +276,7 @@ impl Node {
             .into_iter()
             .filter(|i| match i.status() {
                 ProcessStatus::Run => true,
-                ProcessStatus::Sleep => true,
+                // ProcessStatus::Sleep => true,
                 _ => false,
             })
             .find(|i| !i.cmd().is_empty());
@@ -344,7 +344,7 @@ impl Node {
             .into_iter()
             .filter(|i| match i.status() {
                 ProcessStatus::Run => true,
-                ProcessStatus::Sleep => true,
+                // ProcessStatus::Sleep => true,
                 _ => false,
             })
             .find(|i| !i.cmd().is_empty());

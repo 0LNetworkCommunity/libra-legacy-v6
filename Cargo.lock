@@ -516,9 +516,9 @@ checksum = "349f9b6a179ed607305526ca489b34ad0a41aed5f7980fa90eb03160b69598fb"
 
 [[package]]
 name = "bitflags"
-version = "1.2.1"
+version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
+checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitmaps"
@@ -1482,31 +1482,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "crossterm"
-version = "0.19.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c36c10130df424b2f3552fcc2ddcd9b28a27b1e54b358b45874f88d1ca6888c"
-dependencies = [
- "bitflags",
- "crossterm_winapi",
- "lazy_static",
- "libc",
- "mio 0.7.9",
- "parking_lot",
- "signal-hook 0.1.17",
- "winapi 0.3.9",
-]
-
-[[package]]
-name = "crossterm_winapi"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0da8964ace4d3e4a044fd027919b2237000b24315a37c916f61809f1ff2140b9"
-dependencies = [
- "winapi 0.3.9",
-]
-
-[[package]]
 name = "crunchy"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1913,7 +1888,6 @@ dependencies = [
  "move-prover",
  "move-stdlib",
  "once_cell",
- "rayon",
  "sha2 0.9.3",
  "tempfile",
  "transaction-builder-generator",
@@ -2019,7 +1993,6 @@ dependencies = [
  "ol-keys",
  "ol-types",
  "rand 0.8.4",
- "rustyline 6.3.0",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -2235,18 +2208,13 @@ dependencies = [
  "diem-time-service",
  "diem-transaction-builder",
  "diem-types",
- "diem-wallet",
  "diem-workspace-hack",
- "dirs 2.0.2",
  "hex 0.4.3",
- "ol-keys",
- "rustyline 6.3.0",
  "serde",
  "serde_json",
  "serde_yaml",
  "structopt 0.3.21",
  "thiserror",
- "toml",
 ]
 
 [[package]]
@@ -3314,7 +3282,7 @@ dependencies = [
  "ethers-core",
  "futures-core",
  "futures-util",
- "pin-project 0.4.28",
+ "pin-project 0.4.29",
  "reqwest 0.10.10",
  "serde",
  "serde_json",
@@ -4882,9 +4850,9 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 
 [[package]]
 name = "libc"
-version = "0.2.89"
+version = "0.2.113"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "538c092e5586f4cdd7dd8078c4a79220e3e168880218124dcbce860f0ea938c6"
+checksum = "eef78b64d87775463c549fbd80e19249ef436ea3bf1de2a1eb7e717ec7fab1e9"
 
 [[package]]
 name = "libfuzzer-sys"
@@ -5022,9 +4990,9 @@ checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
 
 [[package]]
 name = "memoffset"
-version = "0.6.1"
+version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "157b4208e3059a8f9e78d559edc658e13df41410cb3ae03979c83130067fdd87"
+checksum = "5aa361d4faea93603064a027415f07bd8e1d5c88c9fbf68bf56a285428fd79ce"
 dependencies = [
  "autocfg",
 ]
@@ -6034,11 +6002,9 @@ dependencies = [
  "bcs",
  "bitflags",
  "byteorder",
- "cassowary",
  "chrono",
  "cli",
  "clokwerk",
- "crossterm",
  "dialoguer",
  "diem-config",
  "diem-crypto",
@@ -6061,7 +6027,7 @@ dependencies = [
  "move-binary-format",
  "move-core-types",
  "move-vm-types",
- "nix 0.18.0",
+ "nix 0.20.0",
  "num-format",
  "ol-keys",
  "ol-types",
@@ -6149,7 +6115,6 @@ dependencies = [
  "once_cell",
  "rand 0.8.4",
  "reqwest 0.11.2",
- "rustyline 6.3.0",
  "serde",
  "serde_json",
  "sha2 0.9.3",
@@ -6184,7 +6149,7 @@ dependencies = [
  "diem-wallet",
  "dirs 2.0.2",
  "gumdrop 0.7.0",
- "hex 0.3.2",
+ "hex 0.4.3",
  "ol",
  "ol-keys",
  "ol-types",
@@ -6462,11 +6427,11 @@ dependencies = [
 
 [[package]]
 name = "pin-project"
-version = "0.4.28"
+version = "0.4.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "918192b5c59119d51e0cd221f4d49dde9112824ba717369e903c97d076083d0f"
+checksum = "9615c18d31137579e9ff063499264ddc1278e7b1982757ebc111028c4d1dc909"
 dependencies = [
- "pin-project-internal 0.4.28",
+ "pin-project-internal 0.4.29",
 ]
 
 [[package]]
@@ -6480,9 +6445,9 @@ dependencies = [
 
 [[package]]
 name = "pin-project-internal"
-version = "0.4.28"
+version = "0.4.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3be26700300be6d9d23264c73211d8190e755b6b5ca7a1b28230025511b52a5e"
+checksum = "044964427019eed9d49d9d5bbce6047ef18f37100ea400912a9fa4a3523ab12a"
 dependencies = [
  "proc-macro2 1.0.27",
  "quote 1.0.9",
@@ -8113,7 +8078,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e31d442c16f047a671b5a71e2161d6e68814012b7f5379d269ebd915fac2729"
 dependencies = [
  "libc",
- "mio 0.7.9",
  "signal-hook-registry",
 ]
 
@@ -9607,7 +9571,6 @@ dependencies = [
  "criterion",
  "hex 0.3.2",
  "num-traits",
- "sha2 0.8.2",
  "sha3 0.8.2",
 ]
 
