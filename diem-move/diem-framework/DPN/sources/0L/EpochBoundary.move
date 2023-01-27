@@ -33,6 +33,7 @@ module EpochBoundary {
     use DiemFramework::Jail;
     use DiemFramework::Vouch;
 
+    //// V6 ////
     // THIS IS TEMPORARY
     // depends on the future "musical chairs" algo.
     const MOCK_VAL_SIZE = 21;
@@ -61,7 +62,12 @@ module EpochBoundary {
         process_validators(vm, subsidy_units, *&outgoing_compliant_set);
         print(&800600);
 
-        let proposed_set = propose_new_set(vm, height_start, height_now);
+        // let proposed_set = propose_new_set(vm, height_start, height_now);
+        //// V6 ////
+        // CONSENSUS CRITICAL
+        // pick the validators based on proof of fee.
+        let proposed_set = ProofOfFee::fill_seats_and_get_price(MOCK_VAL_SIZE, outgoing_compliant_set);
+
         print(&800700);
         // Update all slow wallet limits
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock()); // todo
@@ -129,132 +135,132 @@ module EpochBoundary {
         Subsidy::process_fees(vm, &outgoing_compliant_set);
     }
 
-    fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> 
-    {
-        // Propose upcoming validator set:
-        // we care if the validators are jailed. They do not qualify
-        // otherwise we only care if they paid the fee.
-        // but we can't have the validator set have more than 1/3 new participants in every epoch, since we don't know the preparedness.
-        // so we can drop successful vals who didn't bid high enough
-        // but we cannot add more than 1/3 new "unproven" validators.
+    // fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> 
+    // {
+    //     // Propose upcoming validator set:
+    //     // we care if the validators are jailed. They do not qualify
+    //     // otherwise we only care if they paid the fee.
+    //     // but we can't have the validator set have more than 1/3 new participants in every epoch, since we don't know the preparedness.
+    //     // so we can drop successful vals who didn't bid high enough
+    //     // but we cannot add more than 1/3 new "unproven" validators.
         
-        if (RecoveryMode::is_recovery()) {
-          let recovery_vals = RecoveryMode::get_debug_vals();
-          if (Vector::length(&recovery_vals) > 0) return recovery_vals;
-        };
+    //     if (RecoveryMode::is_recovery()) {
+    //       let recovery_vals = RecoveryMode::get_debug_vals();
+    //       if (Vector::length(&recovery_vals) > 0) return recovery_vals;
+    //     };
 
-        // Process all the jail terms of the previous validator set
-        let previous_set = DiemSystem::get_val_set_addr();
+    //     // Process all the jail terms of the previous validator set
+    //     let previous_set = DiemSystem::get_val_set_addr();
 
-        // Take advantage of this loop to get the expected size of
-        // the validator set that the new set doesn't have
-        // 25% of nodes that we don't know their current performance.
-        let len_proven_nodes = 0;
+    //     // Take advantage of this loop to get the expected size of
+    //     // the validator set that the new set doesn't have
+    //     // 25% of nodes that we don't know their current performance.
+    //     let len_proven_nodes = 0;
 
-        let i = 0;
-        while (i < Vector::length<address>(&previous_set)) {
-            let addr = *Vector::borrow(&previous_set, i);
-            let case = Cases::get_case(vm, addr, height_start, height_now);
+    //     let i = 0;
+    //     while (i < Vector::length<address>(&previous_set)) {
+    //         let addr = *Vector::borrow(&previous_set, i);
+    //         let case = Cases::get_case(vm, addr, height_start, height_now);
 
-            if (
-              // we care about nodes that are performing consensus correctly, case 1 and 2.
-              case < 3 &&
-              Audit::val_audit_passing(addr)
-            ) {
-                len_proven_nodes = len_proven_nodes + 1;
-                // also reset the jail counter for any successful unjails
-                Jail::remove_consecutive_fail(vm, addr);
-            } else {
+    //         if (
+    //           // we care about nodes that are performing consensus correctly, case 1 and 2.
+    //           case < 3 &&
+    //           Audit::val_audit_passing(addr)
+    //         ) {
+    //             len_proven_nodes = len_proven_nodes + 1;
+    //             // also reset the jail counter for any successful unjails
+    //             Jail::remove_consecutive_fail(vm, addr);
+    //         } else {
               
-              Jail::jail(vm, addr);
-            };
-            i = i+ 1;
-        };
+    //           Jail::jail(vm, addr);
+    //         };
+    //         i = i+ 1;
+    //     };
 
-        // let len_proven_nodes = Vector::length(&proven_nodes);
-        let max_unproven_nodes = len_proven_nodes / 6;
-        print(&len_proven_nodes);
-        print(&max_unproven_nodes);
-        // start from the proven nodes
+    //     // let len_proven_nodes = Vector::length(&proven_nodes);
+    //     let max_unproven_nodes = len_proven_nodes / 6;
+    //     print(&len_proven_nodes);
+    //     print(&max_unproven_nodes);
+    //     // start from the proven nodes
 
-        // Get all the bidders
-        // 
-        let sorted_val_universe = ProofOfFee::top_n_accounts(vm, MOCK_VAL_SIZE);
+    //     // Get all the bidders
+    //     // 
+    //     let sorted_val_universe = ProofOfFee::top_n_accounts(vm, MOCK_VAL_SIZE);
 
-        // // sort by jail index, prioritizes nodes joining that aren't
-        // // currently struggling to stay in the validator set.
-        // let top_accounts = Jail::sort_by_jail(sorted_val_universe);
-        // print(&top_accounts);
+    //     // // sort by jail index, prioritizes nodes joining that aren't
+    //     // // currently struggling to stay in the validator set.
+    //     // let top_accounts = Jail::sort_by_jail(sorted_val_universe);
+    //     // print(&top_accounts);
 
-        // // loop through all accounts, sorted by jail status, and then by consensus power
-        // let proposed_set = Vector::empty<address>();
+    //     // // loop through all accounts, sorted by jail status, and then by consensus power
+    //     // let proposed_set = Vector::empty<address>();
 
-        // let i = 0;
-        // while (
-        //   // can't be more than index of accounts
-        //   i < Vector::length(&top_accounts) &&
-        //   // the new proposed set can only only expand by 15%
-        //   Vector::length(&proposed_set) < (len_proven_nodes + max_unproven_nodes) &&
-        //   // Validator set can only be as big as the maximum set size
-        //   Vector::length(&proposed_set) < Globals::get_max_validators_per_set()
-        // ) {
-        //     let addr = *Vector::borrow(&top_accounts, i);
-        //     let mined_last_epoch = TowerState::node_above_thresh(addr);
-        //     let case = Cases::get_case(vm, addr, height_start, height_now);
-        //     print(&44444444);
-        //     print(&addr);
-        //     print(&case);
-        //     print(&Jail::is_jailed(addr));
-        //     print(&Audit::val_audit_passing(addr));
-        //     print(&Vouch::unrelated_buddies_above_thresh(addr));
+    //     // let i = 0;
+    //     // while (
+    //     //   // can't be more than index of accounts
+    //     //   i < Vector::length(&top_accounts) &&
+    //     //   // the new proposed set can only only expand by 15%
+    //     //   Vector::length(&proposed_set) < (len_proven_nodes + max_unproven_nodes) &&
+    //     //   // Validator set can only be as big as the maximum set size
+    //     //   Vector::length(&proposed_set) < Globals::get_max_validators_per_set()
+    //     // ) {
+    //     //     let addr = *Vector::borrow(&top_accounts, i);
+    //     //     let mined_last_epoch = TowerState::node_above_thresh(addr);
+    //     //     let case = Cases::get_case(vm, addr, height_start, height_now);
+    //     //     print(&44444444);
+    //     //     print(&addr);
+    //     //     print(&case);
+    //     //     print(&Jail::is_jailed(addr));
+    //     //     print(&Audit::val_audit_passing(addr));
+    //     //     print(&Vouch::unrelated_buddies_above_thresh(addr));
 
-        //     if (
-        //         // ignore proven nodes already on list
-        //         !Vector::contains<address>(&proposed_set, &addr) &&
-        //         // jail the current validators which did not perform.
-        //         !Jail::is_jailed(addr) &&
-        //         // if they are not a current case 1 or 2, then they are
-        //         // rejoining and need to have mining proofs.
-        //         // case 2 get grace
-        //         (case < 3 || mined_last_epoch) &&
-        //         // do the remaining configuration checks, incl vouching
-        //         Audit::val_audit_passing(addr) &&
-        //         // when being onboarded or being un-jailed check if the vouches
-        //         // are sufficient. I.e. don't do this check if the validator
-        //         // has proven themselves in the previous round. If your
-        //         // vouchers fall out of the set, you may also fall out,
-        //         // and this chain reaction would cause instability in the network.
-        //         Vouch::unrelated_buddies_above_thresh(addr)
-        //       ) {
-        //         print(&99990901);
-        //         Vector::push_back(&mut proposed_set, addr);
-        //     };
-        //     i = i + 1;
-        // };
+    //     //     if (
+    //     //         // ignore proven nodes already on list
+    //     //         !Vector::contains<address>(&proposed_set, &addr) &&
+    //     //         // jail the current validators which did not perform.
+    //     //         !Jail::is_jailed(addr) &&
+    //     //         // if they are not a current case 1 or 2, then they are
+    //     //         // rejoining and need to have mining proofs.
+    //     //         // case 2 get grace
+    //     //         (case < 3 || mined_last_epoch) &&
+    //     //         // do the remaining configuration checks, incl vouching
+    //     //         Audit::val_audit_passing(addr) &&
+    //     //         // when being onboarded or being un-jailed check if the vouches
+    //     //         // are sufficient. I.e. don't do this check if the validator
+    //     //         // has proven themselves in the previous round. If your
+    //     //         // vouchers fall out of the set, you may also fall out,
+    //     //         // and this chain reaction would cause instability in the network.
+    //     //         Vouch::unrelated_buddies_above_thresh(addr)
+    //     //       ) {
+    //     //         print(&99990901);
+    //     //         Vector::push_back(&mut proposed_set, addr);
+    //     //     };
+    //     //     i = i + 1;
+    //     // };
 
-        print(&proposed_set);
+    //     print(&proposed_set);
 
-        //////// Failover Rules ////////
-        // If the cardinality of validator_set in the next epoch is less than 4, 
-        // if we are failing to qualify anyone. Pick top 1/2 of validator set
-        // by proposals. They are probably online.
-        if (Vector::length<address>(&proposed_set) <= 3) 
-            proposed_set = 
-              Stats::get_sorted_vals_by_props(vm, Vector::length<address>(&top_accounts) / 2);
+    //     //////// Failover Rules ////////
+    //     // If the cardinality of validator_set in the next epoch is less than 4, 
+    //     // if we are failing to qualify anyone. Pick top 1/2 of validator set
+    //     // by proposals. They are probably online.
+    //     if (Vector::length<address>(&proposed_set) <= 3) 
+    //         proposed_set = 
+    //           Stats::get_sorted_vals_by_props(vm, Vector::length<address>(&top_accounts) / 2);
 
-        // If still failing...in extreme case if we cannot qualify anyone.
-        // Don't change the validator set. we keep the same validator set. 
-        if (Vector::length<address>(&proposed_set) <= 3)
-            proposed_set = DiemSystem::get_val_set_addr(); 
-                // Patch for april incident. Make no changes to validator set.
+    //     // If still failing...in extreme case if we cannot qualify anyone.
+    //     // Don't change the validator set. we keep the same validator set. 
+    //     if (Vector::length<address>(&proposed_set) <= 3)
+    //         proposed_set = DiemSystem::get_val_set_addr(); 
+    //             // Patch for april incident. Make no changes to validator set.
 
-        // Usually an issue in staging network for QA only.
-        // This is very rare and theoretically impossible for network with 
-        // at least 6 nodes and 6 rounds. If we reach an epoch boundary with 
-        // at least 6 rounds, we would have at least 2/3rd of the validator 
-        // set with at least 66% liveliness. 
-        proposed_set
-    }
+    //     // Usually an issue in staging network for QA only.
+    //     // This is very rare and theoretically impossible for network with 
+    //     // at least 6 nodes and 6 rounds. If we reach an epoch boundary with 
+    //     // at least 6 rounds, we would have at least 2/3rd of the validator 
+    //     // set with at least 66% liveliness. 
+    //     proposed_set
+    // }
 
     fun reset_counters(
         vm: &signer,
@@ -285,9 +291,6 @@ module EpochBoundary {
         print(&800900107);    
     }
 
-    // fun elect_validators() {
-
-    // }
     // // NOTE: this was previously in propose_new_set since it used the same loop.
     // // copied implementation from Teams proposal.
     // fun elect_validators(
