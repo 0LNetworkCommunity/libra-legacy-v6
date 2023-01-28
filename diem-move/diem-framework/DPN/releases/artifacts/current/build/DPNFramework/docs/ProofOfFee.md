@@ -11,6 +11,7 @@
 -  [Function `init`](#0x1_ProofOfFee_init)
 -  [Function `top_n_accounts`](#0x1_ProofOfFee_top_n_accounts)
 -  [Function `get_sorted_vals`](#0x1_ProofOfFee_get_sorted_vals)
+-  [Function `fill_seats_and_get_price`](#0x1_ProofOfFee_fill_seats_and_get_price)
 -  [Function `init_bidding`](#0x1_ProofOfFee_init_bidding)
 -  [Function `update_pof_bid`](#0x1_ProofOfFee_update_pof_bid)
 
@@ -18,6 +19,7 @@
 <pre><code><b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
+<b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
@@ -241,6 +243,61 @@
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_reverse">Vector::reverse</a>&lt;<b>address</b>&gt;(&<b>mut</b> eligible_validators);
 
   <b>return</b> eligible_validators
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ProofOfFee_fill_seats_and_get_price"></a>
+
+## Function `fill_seats_and_get_price`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">fill_seats_and_get_price</a>(set_size: u64, proven_nodes: vector&lt;<b>address</b>&gt;): (vector&lt;<b>address</b>&gt;, u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">fill_seats_and_get_price</a>(set_size: u64, proven_nodes: vector&lt;<b>address</b>&gt;): (vector&lt;<b>address</b>&gt;, u64) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a> {
+  <b>let</b> seats_to_fill = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
+  <b>let</b> max_unproven = set_size / 3;
+
+  <b>let</b> num_unproven_added = 0;
+
+  <b>let</b> sorted_vals_by_bid = <a href="ProofOfFee.md#0x1_ProofOfFee_get_sorted_vals">get_sorted_vals</a>();
+
+  <b>let</b> i = 0u64;
+  <b>while</b> (i &lt; set_size) {
+    <b>let</b> val = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&sorted_vals_by_bid, i);
+    // fail fast <b>if</b> the validator is jailed.
+    // NOTE: epoch reconfigure needs <b>to</b> reset the jail
+    // before calling the proof of fee.
+    <b>if</b> (<a href="Jail.md#0x1_Jail_is_jailed">Jail::is_jailed</a>(*val)) <b>continue</b>;
+
+    // check <b>if</b> a proven node
+    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&proven_nodes, val)) {
+      <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> seats_to_fill, *val);
+    } <b>else</b> {
+      // for unproven nodes, push it <b>to</b> list <b>if</b> we haven't hit limit
+      <b>if</b> (num_unproven_added &lt; max_unproven ) {
+        <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> seats_to_fill, *val);
+      };
+      num_unproven_added = num_unproven_added + 1;
+    };
+    i = i + 1;
+  };
+
+  <b>let</b> lowest_bidder = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&seats_to_fill, i);
+  <b>let</b> lowest_bid = <a href="ProofOfFee.md#0x1_ProofOfFee_current_bid">current_bid</a>(*lowest_bidder);
+
+  <b>return</b> (seats_to_fill, lowest_bid)
 }
 </code></pre>
 

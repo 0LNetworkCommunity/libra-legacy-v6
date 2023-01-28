@@ -11,7 +11,7 @@ address DiemFramework {
 module EpochBoundary {
     use DiemFramework::CoreAddresses;
     use DiemFramework::Subsidy;
-    use DiemFramework::NodeWeight;
+    use DiemFramework::ProofOfFee;
     use DiemFramework::DiemSystem;
     use DiemFramework::TowerState;
     use DiemFramework::Globals;
@@ -20,29 +20,29 @@ module EpochBoundary {
     use DiemFramework::AutoPay;
     use DiemFramework::Epoch;
     use DiemFramework::DiemConfig;
-    use DiemFramework::Audit;
+    // use DiemFramework::Audit;
     use DiemFramework::DiemAccount;
-    use DiemFramework::Burn;
+    // use DiemFramework::Burn;
     use DiemFramework::FullnodeSubsidy;
-    use DiemFramework::ValidatorUniverse;
+    // use DiemFramework::ValidatorUniverse;
     use DiemFramework::Debug::print;
-    use DiemFramework::Testnet;
-    use DiemFramework::StagingNet;    
+    // use DiemFramework::Testnet;
+    // use DiemFramework::StagingNet;    
     use DiemFramework::RecoveryMode;
-    use DiemFramework::Cases;
-    use DiemFramework::Jail;
-    use DiemFramework::Vouch;
+    // use DiemFramework::Cases;
+    // use DiemFramework::Jail;
+    // use DiemFramework::Vouch;
 
     //// V6 ////
     // THIS IS TEMPORARY
     // depends on the future "musical chairs" algo.
-    const MOCK_VAL_SIZE = 21;
+    const MOCK_VAL_SIZE: u64 = 21;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
         CoreAddresses::assert_vm(vm);
-        let height_start = Epoch::get_timer_height_start(vm);
+        let height_start = Epoch::get_timer_height_start();
         print(&800100);        
         let (outgoing_compliant_set, _) = 
             DiemSystem::get_fee_ratio(vm, height_start, height_now);
@@ -66,17 +66,19 @@ module EpochBoundary {
         //// V6 ////
         // CONSENSUS CRITICAL
         // pick the validators based on proof of fee.
-        let proposed_set = ProofOfFee::fill_seats_and_get_price(MOCK_VAL_SIZE, outgoing_compliant_set);
+        let (proposed_set, _price) = ProofOfFee::fill_seats_and_get_price(MOCK_VAL_SIZE, copy outgoing_compliant_set);
+        // TODO: Don't use copy above, do a borrow.
 
         print(&800700);
         // Update all slow wallet limits
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock()); // todo
         print(&800800);
 
-        if (!RecoveryMode::is_recovery()) {
-          elect_validators(vm,nominal_subsidy_per, &proposed_set);
-          print(&800900);
-        };
+        // TODO: What to do in recovery mode.
+        // if (!RecoveryMode::is_recovery()) {
+        //   elect_validators(vm,nominal_subsidy_per, &proposed_set);
+        //   print(&800900);
+        // };
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
         print(&801000);
     }

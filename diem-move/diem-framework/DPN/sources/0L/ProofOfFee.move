@@ -16,10 +16,11 @@ address DiemFramework {
     use Std::Signer;
     use DiemFramework::ValidatorUniverse;
     use Std::Vector;
+    use DiemFramework::Jail;
 
-    use DiemFramework::DiemBlock;
-    use DiemFramework::Epoch;
-    use DiemFramework::Cases;
+    // use DiemFramework::DiemBlock;
+    // use DiemFramework::Epoch;
+    // use DiemFramework::Cases;
 
     // A struct on the validators account which indicates their
     // latest bid (and epoch)
@@ -139,37 +140,37 @@ address DiemFramework {
     // So the selection algorithm needs to stop filling seats with unproven
     // validators if the max unproven nodes limit is hit (1/3).
 
-    public fun fill_seats_and_get_price(set_size: u8, proven_nodes: vector<address>): (vector<address>, u64) {
-      let seats_to_fill = Vector::singleton<address>();
+    public fun fill_seats_and_get_price(set_size: u64, proven_nodes: vector<address>): (vector<address>, u64) acquires ProofOfFeeAuction {
+      let seats_to_fill = Vector::empty<address>();
       let max_unproven = set_size / 3;
 
       let num_unproven_added = 0;
 
       let sorted_vals_by_bid = get_sorted_vals();
 
-      let i = 0;
-      while i < set_size {
-        let val =  Vector::borrow(i);
+      let i = 0u64;
+      while (i < set_size) {
+        let val = Vector::borrow(&sorted_vals_by_bid, i);
         // fail fast if the validator is jailed.
         // NOTE: epoch reconfigure needs to reset the jail
         // before calling the proof of fee.
-        if (Jail::is_jailed(val)) return false;
+        if (Jail::is_jailed(*val)) continue;
 
         // check if a proven node
         if (Vector::contains(&proven_nodes, val)) {
-          Vector::push_back(&mut seats_to_fill, val);
+          Vector::push_back(&mut seats_to_fill, *val);
         } else {
           // for unproven nodes, push it to list if we haven't hit limit
           if (num_unproven_added < max_unproven ) {
-            Vector::push_back(&mut seats_to_fill, val);
-          }
+            Vector::push_back(&mut seats_to_fill, *val);
+          };
           num_unproven_added = num_unproven_added + 1;
-        }
+        };
         i = i + 1;
       };
 
       let lowest_bidder = Vector::borrow(&seats_to_fill, i);
-      let lowest_bid = current_bid(lowest_bidder);
+      let lowest_bid = current_bid(*lowest_bidder);
 
       return (seats_to_fill, lowest_bid)
     }

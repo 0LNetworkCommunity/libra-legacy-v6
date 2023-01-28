@@ -179,7 +179,7 @@ Called by root in the reconfiguration process
 Accessor Function, returns the time (in seconds) of the start of the current epoch
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_get_timer_seconds_start">get_timer_seconds_start</a>(vm: &signer): u64
+<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_get_timer_seconds_start">get_timer_seconds_start</a>(): u64
 </code></pre>
 
 
@@ -188,8 +188,8 @@ Accessor Function, returns the time (in seconds) of the start of the current epo
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_get_timer_seconds_start">get_timer_seconds_start</a>(vm: &signer):u64 <b>acquires</b> <a href="Epoch.md#0x1_Epoch_Timer">Timer</a> {
-    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
+<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_get_timer_seconds_start">get_timer_seconds_start</a>():u64 <b>acquires</b> <a href="Epoch.md#0x1_Epoch_Timer">Timer</a> {
+    // <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
     <b>let</b> time = <b>borrow_global</b>&lt;<a href="Epoch.md#0x1_Epoch_Timer">Timer</a>&gt;(@DiemRoot);
     time.seconds_start
 }
@@ -206,7 +206,7 @@ Accessor Function, returns the time (in seconds) of the start of the current epo
 Accessor Function, returns the block height of the start of the current epoch
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_get_timer_height_start">get_timer_height_start</a>(vm: &signer): u64
+<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_get_timer_height_start">get_timer_height_start</a>(): u64
 </code></pre>
 
 
@@ -215,8 +215,8 @@ Accessor Function, returns the block height of the start of the current epoch
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_get_timer_height_start">get_timer_height_start</a>(vm: &signer):u64 <b>acquires</b> <a href="Epoch.md#0x1_Epoch_Timer">Timer</a> {
-    <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
+<pre><code><b>public</b> <b>fun</b> <a href="Epoch.md#0x1_Epoch_get_timer_height_start">get_timer_height_start</a>():u64 <b>acquires</b> <a href="Epoch.md#0x1_Epoch_Timer">Timer</a> {
+    // <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
     <b>let</b> time = <b>borrow_global</b>&lt;<a href="Epoch.md#0x1_Epoch_Timer">Timer</a>&gt;(@DiemRoot);
     time.height_start
 }
