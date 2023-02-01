@@ -6567,6 +6567,7 @@ dependencies = [
  "backup-service",
  "bcs",
  "diem-crypto",
+ "diem-logger 0.1.0",
  "diem-types",
  "diem-wallet",
  "futures",

@@ -46,7 +46,6 @@ pub fn make_recovery_genesis_from_vec_legacy_recovery(
     // get consensus accounts
     let genesis_accounts = recover_consensus_accounts(&recovery)?;
     // create baseline genesis
-
     // TODO: for testing letting all validators be in genesis set.
     let validator_set: Vec<AccountAddress> = genesis_accounts
         .vals
@@ -102,8 +101,9 @@ pub fn append_genesis(
     // there may also be migrations on other account state that may need to be done.
     for l in &legacy_vec {
         assert!(l.account.is_some());
-        println!("migrating: {} - {}", &l.account.unwrap(), &len);
-        
+
+        diem_logger::debug!("migrating: {} - {}", &l.account.unwrap(), &len);
+
         // get balance
         if let Some(b) = &l.balance {
             total_coin_value = total_coin_value + b.coin();
@@ -111,7 +111,6 @@ pub fn append_genesis(
         let ws = migrate_account(l)?;
         all_writesets = merge_writeset(all_writesets, ws)?;
         len = len + 1;
-        // dbg!(&len);
     }
 
     assert!(len == expected_len_all_users, "mismatched number of users in attempted recovery");
