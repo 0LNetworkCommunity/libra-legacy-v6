@@ -46,7 +46,7 @@ After displaying the new configs, you will be asked to confirm the changes.
 
 ```
 # send tx. Note the `-o` which means you are sending this from the "operator" account.
-txs -o val-config --val_ip <IP> --vfn-ip <OTHER/IP>
+txs -o val-config --val-ip <IP> --vfn-ip <OTHER/IP>
 
 # check if those changes persisted and if they are able to be read.
 ol query --val-config
