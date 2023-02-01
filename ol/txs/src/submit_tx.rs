@@ -22,6 +22,7 @@ use std::{
     path::PathBuf,
     thread, time,
 };
+use std::fmt::{Display, Formatter};
 
 // REFERENCE: All the parameters needed for a client transaction.
 // #[derive(Debug)]
@@ -93,6 +94,28 @@ impl From<Error> for TxError {
     }
 }
 
+impl Display for TxError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "TxError: ")?;
+        if let Some(err) = &self.err {
+            write!(f, "{}", err)?;
+        }
+        if let Some(tx_view) = &self.tx_view {
+            write!(f, "tx_view: {:?}", tx_view)?;
+        }
+        if let Some(location) = &self.location {
+            write!(f, "location: {}", location)?;
+        }
+        if let Some(abort_code) = &self.abort_code {
+            write!(f, "abort_code: {}", abort_code)?;
+        }
+        Ok(())
+    }
+}
+
+impl std::error::Error for TxError {
+}
+
 /// wrapper for sending a transaction.
 pub fn maybe_submit(
     script: TransactionPayload,
@@ -139,7 +162,7 @@ pub fn batch_wrapper(
     no_send: bool,
     save_path: Option<PathBuf>,
 ) -> Result<(), Error> {
-    batch.into_iter().enumerate().for_each(|(i, s)| {
+    for (i, s) in batch.into_iter().enumerate() {
         // TODO: format path for batch scripts
 
         let new_path = match &save_path {
@@ -150,11 +173,11 @@ pub fn batch_wrapper(
         // TODO: handle saving of batches to file.
         // The user may be expecting the batch transaction to be atomic.
         if no_send {
-            save_dont_send_tx(s.clone(), tx_params, new_path).unwrap();
+            save_dont_send_tx(s.clone(), tx_params, new_path)?;
         } else {
-            maybe_submit(s, tx_params, new_path).unwrap();
+            maybe_submit(s, tx_params, new_path)?;
         }
-    });
+    }
     Ok(())
 }
 
@@ -429,7 +452,10 @@ pub fn wait_for_tx(
         thread::sleep(time::Duration::from_millis(3_000));
         // prevent all the logging the client does while
         // it loops through the query.
-        stdout().flush().unwrap();
+        match stdout().flush() {
+            Ok(_) => (),
+            Err(e) => println!("{}", e)
+        }
 
         match client.get_account_transaction(signer_address, sequence_number, false) {
             Ok(response) => return response.into_inner(),
