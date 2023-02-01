@@ -42,7 +42,7 @@ impl Runnable for WhoamiCmd {
             app_cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
             None,
             None,
-        );
+        ).expect("unable to create validator config"); // Added .expect to exit in case config cannot be created (Michael64)
 
         println!("\n0L ACCOUNT\n");
         println!("address: {}", addr);

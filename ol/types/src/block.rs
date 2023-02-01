@@ -34,19 +34,21 @@ impl VDFProof {
     }
 
     /// new object deserialized from file
-    pub fn parse_block_file(path: PathBuf) -> VDFProof {
+    pub fn parse_block_file(path: PathBuf) -> Result<VDFProof, anyhow::Error> {
         let file = fs::File::open(&path)
             .expect(&format!("Could not open block file: {:?}", path.to_str()));
         let reader = BufReader::new(file);
-        serde_json::from_reader(reader).unwrap()
+        Ok(serde_json::from_reader(reader)?)  
     }
 
     /// get the difficulty/iterations of the block, or assume legacy
+    // TODO: Decide if/how to refactor the .unwrap of the option over here. Maybe set a default with unwrap_or. (Michael64)
     pub fn difficulty(&self) -> u64 {
         self.difficulty.unwrap() // if the block doesn't have this info, assume it's legacy block.
     }
 
     /// get the security param of the block, or assume legacy
+    // TODO: Decide if/how to refactor the .unwrap of the option over here. Maybe set a default with unwrap_or. (Michael64)
     pub fn security(&self) -> u64 {
         self.security.unwrap() as u64 // if the block doesn't have this info, assume it's legacy block.
     }
