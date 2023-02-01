@@ -27,8 +27,7 @@ fn start_test_node() {
         .expect("could not start diem-node");
 
     let stdout = cmd.stdout.take().expect("no stdout");
-    // let mut a = BufReader::new(stdout);
-    // let line = a
+
     BufReader::new(stdout)
     .lines()
     .find(|e| {
