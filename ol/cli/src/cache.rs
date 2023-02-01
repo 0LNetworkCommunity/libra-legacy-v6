@@ -44,12 +44,11 @@ pub struct Vitals {
 
 impl Vitals {
     /// reach the json cache
-    pub fn read_json(node_home: &PathBuf) -> Vitals {
+    pub fn read_json(node_home: &PathBuf) -> Result<Vitals, Error> {
         let cache_path = get_cache_path(node_home);
-        let file = fs::File::open(cache_path).expect("file should open read only");
-        let deser: Vitals = serde_json::from_reader(file).expect("file should be proper JSON");
-
-        deser
+        let file = fs::File::open(cache_path)?;
+        let value = serde_json::from_reader(file)?;
+        Ok(value)
     }
 
     /// write json cache
@@ -63,8 +62,7 @@ impl Vitals {
 
         // after writing temporary file renames and overwrite to cache file
         let cache_path = get_cache_path(node_home);
-        rename(temp_path, cache_path).expect("temporary cache file should be renamed");
-        Ok(())
+        Ok(rename(temp_path, cache_path)?)
     }
 }
 

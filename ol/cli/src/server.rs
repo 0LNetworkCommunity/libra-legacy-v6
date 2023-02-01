@@ -9,7 +9,6 @@ use std::{fs, io, path::PathBuf, process::Command, thread, time::Duration};
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 use warp::{sse::Event, Filter};
-use std::process::exit;
 
 use crate::{cache::Vitals, check::runner, node::node::Node};
 
@@ -31,8 +30,14 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
         let interval = interval(Duration::from_secs(10));
         let stream = IntervalStream::new(interval);
         let event_stream = stream.map(move |_| {
-            let vitals = Vitals::read_json(&path);
-            sse_vitals(vitals)
+            match Vitals::read_json(&path) {
+                Ok(v) => sse_vitals(v),
+                Err(e) => {
+                    println!("Error reading json cache: \nError {}", e);
+                    Event::default().json_data("404")
+                }
+            }
+            
         });
         // reply using server-sent events
         warp::sse::reply(event_stream)
@@ -47,18 +52,31 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
             Ok(value) => value,
             Err(msg) => {
                 println!("Could not read {}: \nError {}", account_file_name, msg);
-                exit(1)
-            },
+                "404".to_string()
+            }
         }
     });
 
     let node_home = cfg.clone().workspace.node_home.clone();
     let epoch_route = warp::path("epoch.json").and(warp::get()).map(move || {
         // let node_home = node_home_two.clone();
-        let vitals = Vitals::read_json(&node_home).chain_view.unwrap();
+        let chain_view = match Vitals::read_json(&node_home) {
+            Ok(vitals) => {
+                if let Some(v) = vitals.chain_view {
+                    v
+                } else {
+                    println!("No chain metadata found");
+                    return "404".to_string()
+                }
+            }
+            Err(e) => {
+                println!("{}", e);
+                return "404".to_string()
+            }
+        };
         let json = json!({
-          "epoch": vitals.epoch,
-          "waypoint": vitals.waypoint.unwrap().to_string()
+          "epoch": chain_view.epoch,
+          "waypoint": chain_view.waypoint.unwrap().to_string()
         });
         json.to_string()
     });
