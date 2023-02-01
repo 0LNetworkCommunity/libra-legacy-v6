@@ -7,6 +7,7 @@ use diem_global_constants::NODE_HOME;
 use diem_types::{account_address::AccountAddress, waypoint::Waypoint};
 use reqwest::Url;
 use std::path::PathBuf;
+use std::process::exit;
 
 use crate::commands;
 
@@ -175,17 +176,35 @@ pub fn get_args() -> EntryPointTxsCmd {
 /// in case of swarm like "....../swarm_temp/0" for alice
 /// in case of swarm like "....../swarm_temp/1" for bob
 pub fn get_node_home() -> PathBuf {
-    let mut config_path = dirs::home_dir().unwrap();
+    let mut config_path = match dirs::home_dir(){
+        Some(r) => r,
+        None => {
+            println!("Cannot return home directory path");
+            exit(1)
+        },
+    };
     config_path.push(NODE_HOME);
 
     let entry_args = get_args();
 
     if entry_args.swarm_path.is_some() {
-        config_path = PathBuf::from(entry_args.swarm_path.unwrap());
+        config_path = PathBuf::from(entry_args.swarm_path.expect("cannot get tx param"));
         if entry_args.swarm_persona.is_some() {
-            let persona = &entry_args.swarm_persona.unwrap();
+            let persona = match &entry_args.swarm_persona{
+                Some(r) => r,
+                None => {
+                    println!("Empty array");
+                    exit(1)
+                },
+            };
             let all_personas = vec!["alice", "bob", "carol", "dave", "eve"];
-            let index = all_personas.iter().position(|&r| r == persona).unwrap();
+            let index = match all_personas.iter().position(|&r| r == persona){
+                Some(r) => r,
+                None => {
+                    println!("False");
+                    exit(1)
+                },
+            };
             config_path.push(index.to_string());
         } else {
             config_path.push("0"); // default

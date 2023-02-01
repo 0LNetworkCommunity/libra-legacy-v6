@@ -16,7 +16,10 @@ use diem_types::{
 use move_core_types::move_resource::MoveResource;
 use ol_keys::wallet::get_account_from_mnem;
 use ol_types::fixtures;
-use std::convert::TryFrom;
+use std::{
+    convert::TryFrom, 
+    process::exit
+};
 use std::path::PathBuf;
 
 /// take an archive file path and parse into a writeset
@@ -97,8 +100,8 @@ fn get_unmodified_writeset(account_state: &AccountState) -> Result<WriteSetMut, 
         // iterate over all the account's resources\
         for (k, v) in account_state.iter() {
             let item_tuple = (
-                AccessPath::new(address, k.clone()),
-                WriteOp::Value(v.clone()),
+                AccessPath::new(address, k.to_vec()),
+                WriteOp::Value(v.to_vec()),
             );
             // push into the writeset
             ws.push(item_tuple);
@@ -122,14 +125,20 @@ fn authkey_rotate_change_item(
         // iterate over all the account's resources
         for (k, _v) in account_state.iter() {
             // if we find an AccountResource struc, which is where authkeys are kept
-            if k.clone() == AccountResource::resource_path() {
+            if k.to_vec() == AccountResource::resource_path() {
                 // let account_resource_option = account_state.get_account_resource()?;
                 if let Some(account_resource) = account_state.get_account_resource()? {
-                    let ar = account_resource.rotate_auth_key(authentication_key.clone());
+                    let ar = account_resource.rotate_auth_key(authentication_key.to_owned());
 
                     ws.push((
-                        AccessPath::new(address, k.clone()),
-                        WriteOp::Value(bcs::to_bytes(&ar).unwrap()),
+                        AccessPath::new(address, k.to_vec()),
+                        WriteOp::Value(match bcs::to_bytes(&ar){
+                            Ok(ar) => dbg!(ar),
+                            Err(e) => {
+                                println!("Error: {}", &e.to_string());
+                                exit(1)
+                            },
+                        }),
                     ));
                 }
             }
@@ -158,9 +167,15 @@ pub fn test_accounts_into_recovery() {
     use std::path::Path;
 
     let path = env!("CARGO_MANIFEST_DIR");
-    let buf = Path::new(path)
+    let buf = match Path::new(path)
         .parent()
-        .unwrap()
+        {
+            Some(r) => r,
+            None => {
+                println!("");;
+                exit(1)
+            },
+        }
         .join("fixtures/state-snapshot/194/state_ver_74694920.0889/");
     let path_man = buf.clone().join("state.manifest");
     println!("Running.....");
