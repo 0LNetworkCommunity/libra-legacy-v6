@@ -11,7 +11,10 @@ use diem_types::waypoint::Waypoint;
 use diem_types::{account_address::AccountAddress, account_state::AccountState};
 use diemdb::DiemDB;
 use std::path::PathBuf;
-use std::{process::Command, str};
+use std::{
+    process::{exit, Command},
+    str,
+};
 use storage_interface::DbReader;
 use sysinfo::SystemExt;
 use sysinfo::{ProcessExt, ProcessStatus};
@@ -90,7 +93,13 @@ impl Node {
     /// default node connection from configs
     pub fn default_from_cfg(mut cfg: AppCfg, swarm_path: Option<PathBuf>) -> Node {
         // NOTE: not intended for swarm.
-        let client = client::pick_client(swarm_path.clone(), &mut cfg).unwrap();
+        let client = match client::pick_client(swarm_path.clone(), &mut cfg) {
+            Ok(c) => c,
+            Err(e) => {
+                println!("ERROR: {}", e);
+                exit(1);
+            }
+        };
         Node::new(client, &cfg, swarm_path.is_some())
     }
 
@@ -237,7 +246,10 @@ impl Node {
 
     /// Check if node is running
     pub fn node_running() -> bool {
-        Node::node_proc_info().unwrap().is_running
+        match Node::node_proc_info() {
+            Ok(n) => n.is_running,
+            Err(_) => false,
+        }
     }
 
     /// Check if node is running
@@ -281,12 +293,14 @@ impl Node {
             })
             .find(|i| !i.cmd().is_empty());
 
-        process
-            .unwrap()
-            .cmd()
-            .into_iter()
-            .find(|s| s.contains(&"pilot".to_owned()))
-            .is_some()
+        match process {
+            Some(p) => p
+                .cmd()
+                .into_iter()
+                .find(|s| s.contains(&"pilot".to_owned()))
+                .is_some(),
+            None => false,
+        }
     }
 
     fn check_process(process_str: &str) -> bool {
@@ -322,7 +336,10 @@ impl Node {
             .output();
         match output {
             Ok(out) => {
-                let text = str::from_utf8(&out.stdout.as_slice()).unwrap();
+                let text = match str::from_utf8(&out.stdout.as_slice()) {
+                    Ok(t) => t,
+                    Err(_) => return Err(Error::msg("could not parse systemd output")),
+                };
                 if text.contains("validator") {
                     return Ok(NodeMode::Validator);
                 } else if text.contains("fullnode") {

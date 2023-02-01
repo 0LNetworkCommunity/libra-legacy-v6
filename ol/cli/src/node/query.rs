@@ -130,7 +130,9 @@ impl Node {
                                 "SlowWallet".to_string(),
                                 "unlocked".to_string(),
                             );
-                            value.unwrap().to_string()
+                            value
+                                .expect("Error, could not find unlocked balance")
+                                .to_string()
                         }
                     }
                     Err(e) => format!("Error retrieving unlocked balance. Message: {:#?}", e),
@@ -224,7 +226,13 @@ impl Node {
             } => {
                 // TODO: should borrow and not create a new client.
                 let mut print = "Events \n".to_string();
-                let handles = self.get_payment_event_handles(account).unwrap();
+                let handles = match self.get_payment_event_handles(account) {
+                    Ok(handles) => handles,
+                    Err(e) => {
+                        print.push_str(&format!("Error getting payment event handles: {:?}", e));
+                        return Ok(print);
+                    }
+                };
 
                 if let Some((sent_handle, received_handle)) = handles {
                     for evt in self.get_handle_events(&sent_handle, seq_start).unwrap() {
@@ -456,12 +464,12 @@ pub fn test_fixture_blob() -> AnnotatedAccountStateBlob {
 pub fn test_fixture_struct() -> AnnotatedMoveStruct {
     let module_tag = StructTag {
         address: AccountAddress::random(),
-        module: Identifier::new("TestModule").unwrap(),
-        name: Identifier::new("TestStructName").unwrap(),
+        module: Identifier::new("TestModule").expect("failed to create identifier"),
+        name: Identifier::new("TestStructName").expect("failed to create identifier"),
         type_params: vec![TypeTag::Bool],
     };
 
-    let key = Identifier::new("test_key").unwrap();
+    let key = Identifier::new("test_key").expect("failed to create identifier");
     let value = AnnotatedMoveValue::Bool(true);
 
     AnnotatedMoveStruct {
@@ -480,8 +488,8 @@ pub fn test_fixture_wallet_type(
     let mut s = BTreeMap::new();
     let module_tag = StructTag {
         address: AccountAddress::random(),
-        module: Identifier::new(module_name).unwrap(),
-        name: Identifier::new(struct_name).unwrap(),
+        module: Identifier::new(module_name).expect("failed to create identifier"),
+        name: Identifier::new(struct_name).expect("failed to create identifier"),
         type_params: vec![],
     };
 
@@ -518,7 +526,7 @@ fn test_find_annotated_move_value() {
 #[test]
 fn test_is_slow_wallet_should_return_true() {
     let value = vec![(
-        Identifier::new("unlocked").unwrap(),
+        Identifier::new("unlocked").expect("failed to create unlocked identifier"),
         AnnotatedMoveValue::U64(0),
     )];
     let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
@@ -528,7 +536,7 @@ fn test_is_slow_wallet_should_return_true() {
 #[test]
 fn test_is_slow_wallet_should_return_false_if_missing_unlocked() {
     let value = vec![(
-        Identifier::new("transferred").unwrap(),
+        Identifier::new("transferred").expect("failed to create transferred identifier"),
         AnnotatedMoveValue::U64(0),
     )];
     let s = test_fixture_wallet_type("DiemAccount", "SlowWallet", value);
@@ -539,11 +547,11 @@ fn test_is_slow_wallet_should_return_false_if_missing_unlocked() {
 fn test_is_slow_wallet_should_return_false_with_wrong_module_name() {
     let value = vec![
         (
-            Identifier::new("unlocked").unwrap(),
+            Identifier::new("unlocked").expect("failed to create unlocked identifier"),
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("transferred").unwrap(),
+            Identifier::new("transferred").expect("failed to create transferred identifier"),
             AnnotatedMoveValue::U64(1),
         ),
     ];
@@ -555,11 +563,11 @@ fn test_is_slow_wallet_should_return_false_with_wrong_module_name() {
 fn test_is_slow_wallet_should_return_false_with_wrong_struct_name() {
     let value = vec![
         (
-            Identifier::new("unlocked").unwrap(),
+            Identifier::new("unlocked").expect("failed to create unlocked identifier"),
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("transferred").unwrap(),
+            Identifier::new("transferred").expect("failed to create transferred identifier"),
             AnnotatedMoveValue::U64(1),
         ),
     ];
@@ -571,15 +579,16 @@ fn test_is_slow_wallet_should_return_false_with_wrong_struct_name() {
 fn test_is_community_wallet_should_return_true() {
     let value = vec![
         (
-            Identifier::new("is_frozen").unwrap(),
+            Identifier::new("is_frozen").expect("failed to create is_frozen identifier"),
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").unwrap(),
+            Identifier::new("consecutive_rejections")
+                .expect("failed to create consecutive_rejections identifier"),
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            Identifier::new("unfreeze_votes").expect("failed to create unfreeze_votes identifier"),
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
         ),
     ];
@@ -591,15 +600,16 @@ fn test_is_community_wallet_should_return_true() {
 fn test_is_community_wallet_should_return_false_with_wrong_is_frozen() {
     let value = vec![
         (
-            Identifier::new("is_frozen").unwrap(),
+            Identifier::new("is_frozen").expect("failed to create is_frozen identifier"),
             AnnotatedMoveValue::Bool(true),
         ),
         (
-            Identifier::new("consecutive_rejections").unwrap(),
+            Identifier::new("consecutive_rejections")
+                .expect("failed to create consecutive_rejections identifier"),
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            Identifier::new("unfreeze_votes").expect("failed to create unfreeze_votes identifier"),
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
         ),
     ];
@@ -611,15 +621,16 @@ fn test_is_community_wallet_should_return_false_with_wrong_is_frozen() {
 fn test_is_community_wallet_should_return_false_with_wrong_consecutive_rejections() {
     let value = vec![
         (
-            Identifier::new("is_frozen").unwrap(),
+            Identifier::new("is_frozen").expect("failed to create is_frozen identifier"),
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").unwrap(),
+            Identifier::new("consecutive_rejections")
+                .expect("failed to create consecutive_rejections identifier"),
             AnnotatedMoveValue::U64(1),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            Identifier::new("unfreeze_votes").expect("failed to create unfreeze_votes identifier"),
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
         ),
     ];
@@ -631,15 +642,16 @@ fn test_is_community_wallet_should_return_false_with_wrong_consecutive_rejection
 fn test_is_community_wallet_should_return_false_with_wrong_unfreeze_votes() {
     let value = vec![
         (
-            Identifier::new("is_frozen").unwrap(),
+            Identifier::new("is_frozen").expect("failed to create is_frozen identifier"),
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").unwrap(),
+            Identifier::new("consecutive_rejections")
+                .expect("failed to create consecutive_rejections identifier"),
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            Identifier::new("unfreeze_votes").expect("failed to create unfreeze_votes identifier"),
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![AnnotatedMoveValue::Bool(false)]),
         ),
     ];
@@ -651,11 +663,12 @@ fn test_is_community_wallet_should_return_false_with_wrong_unfreeze_votes() {
 fn test_is_community_wallet_should_return_false_if_missing_unfreeze_votes() {
     let value = vec![
         (
-            Identifier::new("consecutive_rejections").unwrap(),
+            Identifier::new("consecutive_rejections")
+                .expect("failed to create consecutive_rejections identifier"),
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            Identifier::new("unfreeze_votes").expect("failed to create unfreeze_votes identifier"),
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
         ),
     ];
@@ -667,11 +680,11 @@ fn test_is_community_wallet_should_return_false_if_missing_unfreeze_votes() {
 fn test_is_community_wallet_should_return_false_if_missing_consecutive_rejections() {
     let value = vec![
         (
-            Identifier::new("is_frozen").unwrap(),
+            Identifier::new("is_frozen").expect("failed to create is_frozen identifier"),
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            Identifier::new("unfreeze_votes").expect("failed to create unfreeze_votes identifier"),
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
         ),
     ];
@@ -683,15 +696,16 @@ fn test_is_community_wallet_should_return_false_if_missing_consecutive_rejection
 fn test_is_community_wallet_should_return_false_with_wrong_module_name() {
     let value = vec![
         (
-            Identifier::new("is_frozen").unwrap(),
+            Identifier::new("is_frozen").expect("failed to create is_frozen identifier"),
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").unwrap(),
+            Identifier::new("consecutive_rejections")
+                .expect("failed to create consecutive_rejections identifier"),
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            Identifier::new("unfreeze_votes").expect("failed to create unfreeze_votes identifier"),
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
         ),
     ];
@@ -703,15 +717,16 @@ fn test_is_community_wallet_should_return_false_with_wrong_module_name() {
 fn test_is_community_wallet_should_return_false_with_wrong_struct_name() {
     let value = vec![
         (
-            Identifier::new("is_frozen").unwrap(),
+            Identifier::new("is_frozen").expect("failed to create is_frozen identifier"),
             AnnotatedMoveValue::Bool(false),
         ),
         (
-            Identifier::new("consecutive_rejections").unwrap(),
+            Identifier::new("consecutive_rejections")
+                .expect("failed to create consecutive_rejections identifier"),
             AnnotatedMoveValue::U64(0),
         ),
         (
-            Identifier::new("unfreeze_votes").unwrap(),
+            Identifier::new("unfreeze_votes").expect("failed to create unfreeze_votes identifier"),
             AnnotatedMoveValue::Vector(TypeTag::Address, vec![]),
         ),
     ];

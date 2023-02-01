@@ -148,7 +148,10 @@ pub fn get_args() -> EntryPointTxsCmd {
 /// in case of swarm like "....../swarm_temp/0" for alice
 /// in case of swarm like "....../swarm_temp/1" for bob
 pub fn get_node_home() -> PathBuf {
-    let mut config_path = dirs::home_dir().unwrap();
+    let mut config_path = match dirs::home_dir() {
+        Some(home) => home.clone(),
+        None => PathBuf::from("/"),
+    };
     config_path.push(NODE_HOME);
 
     let entry_args = get_args();
@@ -156,9 +159,18 @@ pub fn get_node_home() -> PathBuf {
     if entry_args.swarm_path.is_some() {
         config_path = PathBuf::from(entry_args.swarm_path.unwrap());
         if entry_args.swarm_persona.is_some() {
-            let persona = &entry_args.swarm_persona.unwrap();
+            let persona = match &entry_args.swarm_persona {
+                Some(persona) => persona,
+                None => "alice",
+            };
             let all_personas = vec!["alice", "bob", "carol", "dave"];
-            let index = all_personas.iter().position(|&r| r == persona).unwrap();
+            let index = match all_personas.iter().position(|&r| r == persona) {
+                Some(index) => index,
+                None => {
+                    println!("persona {} not found, using alice", persona);
+                    0
+                }
+            };
             config_path.push(index.to_string());
         } else {
             config_path.push("0"); // default

@@ -214,7 +214,10 @@ impl Node {
         let vfn_full_ip = match v.config().fullnode_network_addresses() {
             Ok(ips) => {
                 if ips.len() > 0 {
-                    ips.last().unwrap().to_string()
+                    match ips.last() {
+                        Some(ip) => ip.to_string(),
+                        None => "".to_string(),
+                    }
                 } else {
                     "--".to_string()
                 }

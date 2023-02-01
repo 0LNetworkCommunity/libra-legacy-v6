@@ -6,6 +6,7 @@ use crate::{
     node::{client, node::Node},
 };
 use abscissa_core::{Command, Options, Runnable};
+use std::process::exit;
 
 /// management subcommands
 #[derive(Command, Debug, Options)]
@@ -31,7 +32,13 @@ impl Runnable for MgmtCmd {
         let args = entrypoint::get_args();
         let is_swarm = *&args.swarm_path.is_some();
         let mut cfg = app_config().clone();
-        let client = client::pick_client(args.swarm_path, &mut cfg).unwrap();
+        let client = match client::pick_client(args.swarm_path, &mut cfg) {
+            Ok(c) => c,
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                exit(1);
+            }
+        };
         let mut node = Node::new(client, &cfg, is_swarm);
 
         if self.start_node {

@@ -40,6 +40,7 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
 
     // TODO: re-assigning node_home because warp moves it.
     let node_home = cfg.clone().workspace.node_home.clone();
+
     let account_file_name = "account.json";
     let account_template = warp::path(account_file_name).and(warp::get()).map(move || {
         let account_path = node_home.join(account_file_name);

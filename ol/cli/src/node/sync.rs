@@ -5,6 +5,7 @@ use crate::node::client::*;
 use anyhow::{bail, Error};
 use backup_cli::utils::backup_service_client::{BackupServiceClient, BackupServiceClientOpt};
 use diemdb::backup::backup_handler::DbState;
+use std::process::exit;
 use tokio::runtime::Runtime;
 
 /// State of the node's sync
@@ -77,7 +78,13 @@ impl Node {
             };
             let client = BackupServiceClient::new_with_opt(bk);
 
-            let rt = Runtime::new().unwrap();
+            let rt = match Runtime::new() {
+                Ok(rt) => rt,
+                Err(e) => {
+                    println!("{}", e);
+                    exit(1);
+                }
+            };
             match rt.block_on(client.get_db_state())? {
                 Some(db) => return Ok(db),
                 None => {}

@@ -51,7 +51,13 @@ fn spawn_process(
 ) -> std::io::Result<std::process::Child> {
     // Create log file, and pipe stdout/err
     let outputs = create_log_file(log_file);
-    let errors = outputs.try_clone().unwrap();
+    let errors = match outputs.try_clone() {
+        Ok(errors) => errors,
+        Err(e) => {
+            eprintln!("Error: {:?}", e);
+            exit(1);
+        }
+    };
 
     Command::new(binary)
         .args(args)
@@ -75,7 +81,13 @@ impl Node {
 
         // Start as validator or fullnode
         let conf = app_config();
-        let node_home = conf.workspace.node_home.to_str().unwrap();
+        let node_home = match conf.workspace.node_home.to_str() {
+            Some(s) => s,
+            None => {
+                eprintln!("Error: node_home is not set");
+                exit(1);
+            }
+        };
         let config_file_name = format!("{}validator.node.yaml", node_home);
 
         let child = if *IS_PROD {
@@ -90,9 +102,21 @@ impl Node {
                 "failed to run 'diem-node', is it installed?",
             )
         } else {
-            let project_root = self.app_conf.workspace.source_path.clone().unwrap();
+            let project_root = match self.app_conf.workspace.source_path.clone() {
+                Some(s) => s,
+                None => {
+                    eprintln!("Error: source_path is not set");
+                    exit(1);
+                }
+            };
             let debug_bin = project_root.join(format!("target/debug/{}", NODE));
-            let bin_str = debug_bin.to_str().unwrap();
+            let bin_str = match debug_bin.to_str() {
+                Some(s) => s,
+                None => {
+                    eprintln!("Error: debug_bin {} is not set", NODE);
+                    exit(1);
+                }
+            };
             let args = vec!["--config", &config_file_name];
             if verbose {
                 println!("Starting 'diem-node' with args: {:?}", args.join(" "));
@@ -139,9 +163,21 @@ impl Node {
                 "failed to run 'miner', is it installed?",
             )
         } else {
-            let project_root = self.app_conf.workspace.source_path.clone().unwrap();
+            let project_root = match self.app_conf.workspace.source_path.clone() {
+                Some(s) => s,
+                None => {
+                    eprintln!("Error: source_path is not set");
+                    exit(1);
+                }
+            };
             let debug_bin = project_root.join(format!("target/debug/{}", MINER));
-            let bin_str = debug_bin.to_str().unwrap();
+            let bin_str = match debug_bin.to_str() {
+                Some(s) => s,
+                None => {
+                    eprintln!("Error: debug_bin {} is not set", MINER);
+                    exit(1);
+                }
+            };
             // start as operator, so that mnemonic is not needed.
             let args = vec!["-o", "start"];
             if _verbose {
@@ -196,7 +232,13 @@ impl Node {
             };
 
             let debug_bin = project_root.join("target/debug/ol");
-            let bin_str = debug_bin.to_str().unwrap();
+            let bin_str = match debug_bin.to_str() {
+                Some(s) => s,
+                None => {
+                    println!("ERROR: debug_bin is not set");
+                    exit(1);
+                }
+            };
 
             let args = vec!["serve"];
             if _verbose {
@@ -238,9 +280,21 @@ impl Node {
                 "failed to run 'ol', is it installed?",
             )
         } else {
-            let project_root = self.app_conf.workspace.source_path.clone().unwrap();
+            let project_root = match self.app_conf.workspace.source_path.clone() {
+                Some(p) => p,
+                None => {
+                    println!("ERROR: It doesn't seem like you have workspace.source_path set in 0L.toml. Exiting.");
+                    exit(1);
+                }
+            };
             let debug_bin = project_root.join("target/debug/ol");
-            let bin_str = debug_bin.to_str().unwrap();
+            let bin_str = match debug_bin.to_str() {
+                Some(s) => s,
+                None => {
+                    println!("ERROR: debug_bin is not set");
+                    exit(1);
+                }
+            };
             println!("Starting '{}' with args: {:?}", bin_str, args.join(" "));
             spawn_process(
                 bin_str,
@@ -250,7 +304,13 @@ impl Node {
             )
         };
 
-        let pid = &child.unwrap().id();
+        let pid = &match &child {
+            Ok(ch) => ch.id(),
+            Err(e) => {
+                println!("Error: {}", e);
+                exit(1);
+            }
+        };
         self.save_pid("pilot", *pid);
         println!("Started with PID {} in the background", pid);
     }
