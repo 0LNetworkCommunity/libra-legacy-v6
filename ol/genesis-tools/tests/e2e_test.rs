@@ -1,4 +1,5 @@
 use std::{path::PathBuf, fs};
+use diem_types::account_address::AccountAddress;
 use ol_genesis_tools::fork_genesis::make_recovery_genesis_from_vec_legacy_recovery;
 use ol_genesis_tools::recover::read_from_recovery_file;
 use ol_genesis_tools::{process_snapshot::db_backup_into_recovery_struct, recover::save_recovery_file};
@@ -7,6 +8,7 @@ use std::io::BufRead;
 use std::io::BufReader;
 use std::process::Command;
 use std::process::Stdio;
+use diem_json_rpc::views::AccountView;
 
 #[tokio::test]
 async fn test_e2e() {
@@ -42,6 +44,22 @@ async fn test_e2e() {
   assert!(blob_output_path.exists(), "file not created");
   
   start_test_node(blob_output_path.clone());
+
+  let root: AccountView = post_node_json(AccountAddress::ZERO).await.unwrap();
+  dbg!(&root);
+  assert!(root.balances[0].amount == 10000000, "root address has wrong balance");
+
+  // check a validators account
+  let user = AccountAddress::from_hex_literal("0xD0D62AE27A4E84B559DA089A1B15A79F").unwrap();
+  let acc = post_node_json(user).await;
+  assert!(root.balances[0].amount == 10214368210584, "validator address has wrong balance");
+
+  // check an end-user account
+  let user = AccountAddress::from_hex_literal("0xF43F043F49FA3ACB7C5F98DBD2DA997E").unwrap();
+  let acc = post_node_json(user).await;
+  assert!(root.balances[0].amount == 968472, "end user address has wrong balance");
+  
+  dbg!(&acc);
 
   fs::remove_file(blob_output_path)
     .expect("could not remove blob_output_pathfile");
@@ -91,4 +109,29 @@ fn start_test_node(blob_path: PathBuf) {
         dbg!(&e);
         e.as_ref().unwrap().contains("==== 10")
     });
+}
+
+async fn post_node_json(a: AccountAddress) -> anyhow::Result<AccountView>{
+  let url = format!("http://0.0.0.0:8080/v1");
+
+  let query = serde_json::json!( {
+    "jsonrpc":"2.0",
+    "method":"get_account",
+    "params":[&a.to_string()],
+    "id":1
+  });
+
+
+  let client = reqwest::Client::new();
+  let res: serde_json::Value = client.post(url)
+    .json(&query)
+    .send()
+    .await?
+    .json()
+    .await?;
+
+  let body = res["result"].to_owned();
+  dbg!(&body);
+  let view = serde_json::from_value(body)?;
+  Ok(view)
 }
