@@ -69,7 +69,7 @@ Let's first start out with a simple script that prints its `signer`:
 script {
 use 0x1::Debug;
 fun main(account: signer) {
-    Debug::print(account)
+    Debug::print(&account);
 }
 }
 ```
@@ -78,7 +78,7 @@ Place this in a file named `debug_script.move` under `src/scripts` and try
 
 ```shell
 $ move run src/scripts/debug_script.move --signers 0xf
-[debug] (&) { 0000000000000000000000000000000F }
+[move print] (&) { 0000000000000000000000000000000F }
 ```
 
 The `--signers 0xf` argument indicates which account address(es) have signed
@@ -111,7 +111,7 @@ address 0x2 {
 module Test {
     use 0x1::Signer;
 
-    struct Resource { i: u64 } has key
+    struct Resource has key { i: u64 }
 
     public fun publish(account: &signer) {
         move_to(account, Resource { i: 10 })
@@ -143,6 +143,9 @@ verbose flag to get a better understanding of what's happening):
 $ move publish -v
 Compiling Move modules...
 Found and compiled 1 modules
+Warning: Found script in specified files for publishing. But scripts cannot be published. Script found in: src/scripts/debug_script.move
+Publishing a new module 00000000000000000000000000000002::Test (wrote 253 bytes)
+Wrote 253 bytes of module ID's and code
 ```
 
 Now, if we take a look under `storage`, we will see the published bytecode
@@ -157,34 +160,34 @@ We can also inspect the compiled bytecode using `move view`:
 
 ```shell
 $ move view storage/0x00000000000000000000000000000002/modules/Test.mv
-module 00000000.Test {
-resource Resource {
-	i: u64
+module 2.Test {
+struct Resource has key {
+        i: u64
 }
 
 public publish() {
-	0: MoveLoc[0](Arg0: &signer)
-	1: LdU64(10)
-	2: Pack[0](Resource)
-	3: MoveTo[0](Resource)
-	4: Ret
+        0: MoveLoc[0](Arg0: &signer)
+        1: LdU64(10)
+        2: Pack[0](Resource)
+        3: MoveTo[0](Resource)
+        4: Ret
 }
 public unpublish() {
-	0: MoveLoc[0](Arg0: &signer)
-	1: Call[0](address_of(&signer): address)
-	2: MoveFrom[0](Resource)
-	3: Unpack[0](Resource)
-	4: Pop
-	5: Ret
+        0: MoveLoc[0](Arg0: &signer)
+        1: Call[3](address_of(&signer): address)
+        2: MoveFrom[0](Resource)
+        3: Unpack[0](Resource)
+        4: Pop
+        5: Ret
 }
 public write() {
-	0: CopyLoc[1](Arg1: u64)
-	1: MoveLoc[0](Arg0: &signer)
-	2: Call[0](address_of(&signer): address)
-	3: MutBorrowGlobal[0](Resource)
-	4: MutBorrowField[0](Resource.i: u64)
-	5: WriteRef
-	6: Ret
+        0: CopyLoc[1](Arg1: u64)
+        1: MoveLoc[0](Arg0: &signer)
+        2: Call[3](address_of(&signer): address)
+        3: MutBorrowGlobal[0](Resource)
+        4: MutBorrowField[0](Resource.i: u64)
+        5: WriteRef
+        6: Ret
 }
 }
 ```
@@ -217,7 +220,8 @@ $ move run src/scripts/test_script.move --signers 0xf -v --dry-run
 Compiling transaction script...
 Changed resource(s) under 1 address(es):
   Changed 1 resource(s) under address 0000000000000000000000000000000F:
-    Added type 0x2::Test::Resource: [U64(10)]
+    Added type 0x2::Test::Resource: [10, 0, 0, 0, 0, 0, 0, 0] (wrote 40 bytes)
+Wrote 40 bytes of resource ID's and data
 Discarding changes; re-run without --dry-run if you would like to keep them.
 ```
 
@@ -229,7 +233,8 @@ $ move run src/scripts/test_script.move --signers 0xf -v
 Compiling transaction script...
 Changed resource(s) under 1 address(es):
   Changed 1 resource(s) under address 0000000000000000000000000000000F:
-      Added type 0x2::Test::Resource: [U64(10)]
+    Added type 0x2::Test::Resource: [10, 0, 0, 0, 0, 0, 0, 0] (wrote 40 bytes)
+Wrote 40 bytes of resource ID's and data
 ```
 
 We can now inspect this newly published resource using `move view` since
@@ -237,8 +242,8 @@ the change has been committed:
 
 ```shell
 $ move view storage/0x0000000000000000000000000000000F/resources/0x00000000000000000000000000000002::Test::Resource.bcs
-resource 0x2::Test::Resource {
-        i: 10
+key 0x2::Test::Resource {
+    i: 10
 }
 ```
 
@@ -251,8 +256,8 @@ can be done using the `move clean` command which will remove the
 
 ```shell
 $ move view storage/0x0000000000000000000000000000000F/resources/0x00000000000000000000000000000002::Test::Resource.bcs
-resource 0x2::Test::Resource {
-        i: 10
+key 0x2::Test::Resource {
+    i: 10
 }
 $ move clean
 $ move view storage/0x0000000000000000000000000000000F/resources/0x00000000000000000000000000000002::Test::Resource.bcs
@@ -328,9 +333,9 @@ in the `args.txt` file:
 
 ```shell
 $ cat readme/args.exp
-Command `run scripts/debug_script.move --signers 0xf`:
-[debug] (&) { 0000000000000000000000000000000F }
-Command `run scripts/debug_script.move --signers 0xf --mode bare`:
+Command `run src/scripts/debug_script.move --signers 0xf`:
+[move print] (&) { 0000000000000000000000000000000F }
+Command `run src/scripts/debug_script.move --signers 0xf --mode bare`:
 ...
 ```
 
@@ -374,7 +379,7 @@ Module 00000000000000000000000000000002::Test
 ```
 
 The output indicates that not only the test is passed, but also that 100%
-instruction coverage is observed in the `publish` funciton. This is expected
+instruction coverage is observed in the `publish` function. This is expected
 as the whole purpose of our `test_script.move` is to run the `publish` function.
 At the same time, the other two functions, `unpublish` and `write`, are never
 executed, making the average coverage 27.78% for the whole `Test` module.
@@ -442,13 +447,22 @@ are the following:
 
 	```shell
 	$ move run src/scripts/debug_script.move --signers 0xf --mode bare
-	error:
+error:
 
-	   ┌── debug_script.move:2:5 ───
-	   │
-	 2 │ use 0x1::Debug;
-	   │     ^^^^^^^^^^ Invalid 'use'. Unbound module: '0x1::Debug'
-	   │
+   ┌── src/scripts/debug_script.move:2:5 ───
+   │
+ 2 │ use 0x1::Debug;
+   │     ^^^^^^^^^^ Invalid 'use'. Unbound module: '0x1::Debug'
+   │
+
+error:
+
+   ┌── src/scripts/debug_script.move:4:5 ───
+   │
+ 4 │     Debug::print(&account);
+   │     ^^^^^ Unbound module alias 'Debug'
+   │
+
 	```
 
 * **stdlib:** This includes a small set of utility modules published under the
