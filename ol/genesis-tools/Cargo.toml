@@ -27,5 +27,11 @@ ol-keys = { path = "../keys/", version = "0.1.0" }
 ol-types = { path = "../types/" }
 diem-logger = { path = "../../crates/diem-logger" }
 
+
+#for testing only
+diem-json-rpc = { path = "../../json-rpc" }
+reqwest = { version = "0.11.2", features = ["blocking", "json"], default_features = false }
+
 [dev-dependencies]
 tokio-test = "*"
+
