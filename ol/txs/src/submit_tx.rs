@@ -222,7 +222,7 @@ pub fn submit_tx(
 }
 
 /// Main get tx params logic based on the design in this URL:
-/// https://github.com/OLSF/libra/blob/tx-sender/txs/README.md#txs-logic--usage
+/// https://github.com/0LNetworkCommunity/libra/blob/tx-sender/txs/README.md#txs-logic--usage
 pub fn tx_params_wrapper(tx_type: TxType) -> Result<TxParams, Error> {
     let EntryPointTxsCmd {
         url,

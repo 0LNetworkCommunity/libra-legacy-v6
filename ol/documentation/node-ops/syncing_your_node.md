@@ -15,7 +15,7 @@ The backup and restore cycle consists of:
 - restore with backup-cli `db-restore`
 - Change node.yaml and key_store.json (validators only) with waypoint.
 
-0L maintains an archive of epochs of `experimental-network` here: https://github.com/OLSF/epoch-archive
+0L maintains an archive of epochs of `experimental-network` here: https://github.com/0LNetworkCommunity/epoch-archive
 
 # New backups
 

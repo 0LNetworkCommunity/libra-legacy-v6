@@ -29,4 +29,4 @@ diem-crypto = { path = "../diem-crypto" }
 diem-json-rpc-types = { path = "../../json-rpc/types" }
 diem-types = { path = "../../types" }
 diem-workspace-hack = { version = "0.1", path = "../diem-workspace-hack" }
-move-core-types = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }

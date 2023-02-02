@@ -12,7 +12,7 @@ env:
 
 jobs:
   release:
-    name: Release for OLSF
+    name: Release for 0LNetworkCommunity
     runs-on: self-hosted
 
     steps:

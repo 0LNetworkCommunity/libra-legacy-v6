@@ -31,7 +31,7 @@ sudo service libra-node stop
 Clone the project onto your machine. Cd into the project directory. Checkout the correct tag. Install all dependencies and compile in one step, with the Makefile helper.
 
 ```
-git clone https://github.com/OLSF/libra.git
+git clone https://github.com/0LNetworkCommunity/libra.git
 cd <project root>
 git checkout v4.0rc8
 sudo apt install make // install make (if needed)
@@ -42,7 +42,7 @@ make bins // builds the necessary binaries for registration
 
 
 #### Troubleshooting
-* You may encounter errors related to Rust, version should be same as: https://github.com/OLSF/libra/blob/OLv4/rust-toolchain.
+* You may encounter errors related to Rust, version should be same as: https://github.com/0LNetworkCommunity/libra/blob/OLv4/rust-toolchain.
 * You may encounter errors related to memory running out.
 * Dependencies such as jq and rq are platform specific. The makefile targets Ubuntu.
 
@@ -73,7 +73,7 @@ account: 3F48012938129deadbeef
 github_token: your0000000secret
 ip: 5.5.5.5
 node path: /root/.0L
-github_org: OLSF
+github_org: 0LNetworkCommunity
 github_repo: experimental-genesis
 env: prod
 test mode:

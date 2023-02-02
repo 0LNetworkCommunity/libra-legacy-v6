@@ -52,7 +52,7 @@ cd ~/Desktop
 2. Download the file, and make executable in one step.
 
 ```
-curl -L -o txs-mac  https://github.com/OLSF/libra/releases/download/v4.3.3-rc.2/txs-mac && chmod +x txs-mac
+curl -L -o txs-mac  https://github.com/0LNetworkCommunity/libra/releases/download/v4.3.3-rc.2/txs-mac && chmod +x txs-mac
 ```
 
 

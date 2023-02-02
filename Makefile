@@ -21,7 +21,7 @@ IP=$(shell toml get ${DATA_PATH}/0L.toml profile.ip)
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 
-REPO_ORG = OLSF
+REPO_ORG = 0LNetworkCommunity
 REPO_NAME = genesis-registration
 
 ifndef CARGO_ARGS
@@ -32,7 +32,7 @@ ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
 MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 CARGO_ARGS = --locked # just keeping this from doing --release mode, while in testnet mode.
-GITHUB_USER = OLSF
+GITHUB_USER = 0LNetworkCommunity
 endif
 
 # Registration params
@@ -42,10 +42,10 @@ GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_
 
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
-RELEASE_URL=https://github.com/OLSF/libra/releases/download
+RELEASE_URL=https://github.com/${REPO_ORG}/libra/releases/download
 
 ifndef RELEASE
-RELEASE=$(shell curl -sL https://api.github.com/repos/OLSF/libra/releases/latest | jq -r '.assets[].browser_download_url')
+RELEASE=$(shell curl -sL https://api.github.com/repos/${REPO_ORG}/libra/releases/latest | jq -r '.assets[].browser_download_url')
 endif
 
 BINS=db-backup db-backup-verify db-restore diem-node tower ol txs stdlib
@@ -68,7 +68,7 @@ download: web-files
 	done
 
 web-files: 
-	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor.tar.gz https://github.com/OLSF/libra/releases/latest/download/web-monitor.tar.gz
+	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor.tar.gz https://github.com/${REPO_ORG}/libra/releases/latest/download/web-monitor.tar.gz
 	mkdir ${DATA_PATH}/web-monitor | true
 	tar -xf ${DATA_PATH}/web-monitor.tar.gz --directory ${DATA_PATH}/web-monitor
 
@@ -463,7 +463,7 @@ debug:
 
 # 1. The first thing necessary is initializing testnet genesis validators. All genesis nodes need to set up environment variables for their namespace/personas e.g. NS=alice. Also the TEST=y mode must be set, as well as a chain environment e.g. NODE_ENV=test. These settings must be done manually, preferably in .bashrc
 
-# 2. Next those validators will register config data to a github repo OLSD/dev-genesis. Note: there could be github http errors, if validators attempt to write the same resource simultaneously
+# 2. Next those validators will register config data to a github repo 0LNetworkCommunity/dev-genesis. Note: there could be github http errors, if validators attempt to write the same resource simultaneously
 
 # THESE STEPS ARE ACHIEVED WITH `make testnet-register`
 
@@ -512,7 +512,7 @@ testnet: clear fix testnet-init testnet-genesis start
 
 # For subsequent validators joining the testnet. This will fetch the genesis information saved
 testnet-onboard: clear fix
-	MNEM='${MNEM}' cargo run -p onboard -- val --github-org OLSF --repo dev-genesis --chain-id 1
+	MNEM='${MNEM}' cargo run -p onboard -- val --github-org ${REPO_ORG} --repo dev-genesis --chain-id 1
 # start a node with fullnode.node.yaml configs
 	cargo r -p diem-node -- -f ~/.0L/fullnode.node.yaml
 

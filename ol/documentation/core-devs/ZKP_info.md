@@ -1,10 +1,10 @@
 # ZKP Info
 
 ### Secret Note Implementation using ZKP branch
-https://github.com/OLSF/libra/compare/zkp-note
+https://github.com/0LNetworkCommunity/libra/compare/zkp-note
 
 ### ZKP Branch - integrates rustSTARK into 0L
-https://github.com/OLSF/libra/compare/zkp
+https://github.com/0LNetworkCommunity/libra/compare/zkp
 
 ### rustSTARK - Our Rust library/wrapper/API for C++ ethSTARK library
 https://github.com/simsekgokhan/rustSTARK

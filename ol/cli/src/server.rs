@@ -107,7 +107,7 @@ pub fn update_web(home_path: &PathBuf) {
     let file_name = "web-monitor.tar.gz";
     let dir_name = "web-monitor/";
     let url = &format!(
-        "https://github.com/OLSF/libra/releases/latest/download/{}",
+        "https://github.com/0LNetworkCommunity/libra/releases/latest/download/{}",
         file_name
     );
     println!("Fetching web files from, {}", url);

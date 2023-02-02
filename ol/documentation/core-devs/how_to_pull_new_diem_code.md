@@ -59,15 +59,15 @@ Initializing with env: test
 [language/tools/vm-genesis/src/lib.rs:413] owner_address = E660402D586AD220ED9BEFF47D662D54
 [language/tools/vm-genesis/src/lib.rs:413] owner_address = 9E6BB3A75E9618FBA057E86E69338C94
 [language/tools/vm-genesis/src/lib.rs:413] owner_address = 4E1F81F77024B56DBB853CE7ED8E1C7E
-      // Note: 5th address is created randomly, it might change e.g. https://github.com/OLSF/libra/issues/645
+      // Note: 5th address is created randomly, it might change e.g. https://github.com/0LNetworkCommunity/libra/issues/645
 ```
 - [ ] Get mining working
 - [ ] Merge latest changes from main
-- [ ] Get integrations tests pass https://github.com/OLSF/libra/tree/main/ol/integration-tests
+- [ ] Get integrations tests pass https://github.com/0LNetworkCommunity/libra/tree/main/ol/integration-tests
 - [ ] Final check - all 0L tests and swarm work
 - [ ] Final cargo clean, cargo b --all and cargo b --all-targets
 
 ### Some more useful info might be found in these issues:  
-https://github.com/OLSF/libra/issues/616  
-https://github.com/OLSF/libra/issues/530 (this has the steps for manual patching instead of git auto-merge - due to name change "libra" to "diem")
+https://github.com/0LNetworkCommunity/libra/issues/616  
+https://github.com/0LNetworkCommunity/libra/issues/530 (this has the steps for manual patching instead of git auto-merge - due to name change "libra" to "diem")
 
