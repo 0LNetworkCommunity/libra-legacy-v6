@@ -35,7 +35,7 @@ impl Runnable for WhoamiCmd {
 
         let (auth, addr, wallet) = wallet::get_account_from_prompt();
 
-        let val_cfg = ValConfigs::new(
+        let val_cfg_res = ValConfigs::new(
             None,
             KeyScheme::new(&wallet),
             app_cfg.profile.ip,
@@ -43,6 +43,10 @@ impl Runnable for WhoamiCmd {
             None,
             None,
         );
+        let val_cfg = match val_cfg_res {
+            Ok(cfg) => cfg,
+            Err(error) => panic!("Could not create validator config: {:?}", error),
+        };
 
         println!("\n0L ACCOUNT\n");
         println!("address: {}", addr);

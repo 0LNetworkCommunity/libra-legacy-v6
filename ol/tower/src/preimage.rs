@@ -18,7 +18,7 @@ pub fn genesis_preimage(cfg: &AppCfg) -> Vec<u8> {
     let mut preimage: Vec<u8> = vec![];
 
     // AUTH_KEY_BYTES
-    let mut padded_key_bytes = match decode(cfg.profile.auth_key.clone().to_string()) {
+    let mut padded_key_bytes = match decode(cfg.profile.auth_key.to_string()) {
         Err(x) => panic!("Invalid 0L Auth Key: {}", x),
         Ok(key_bytes) => padding(key_bytes, AUTH_KEY_BYTES),
     };

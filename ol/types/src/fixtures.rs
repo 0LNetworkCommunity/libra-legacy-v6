@@ -75,7 +75,8 @@ pub fn get_persona_toml_configs(persona: &str) -> AppCfg {
         .unwrap()
         .join("fixtures/configs")
         .join(format!("{}.toml", persona));
-    parse_toml(buf).expect("could not get fixtures for persona")
+    let parse_buf = Some(buf);
+    parse_toml(parse_buf).expect("could not get fixtures for persona")
 }
 
 /// get block 0

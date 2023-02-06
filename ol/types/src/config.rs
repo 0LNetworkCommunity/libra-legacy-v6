@@ -1,11 +1,11 @@
 //! Configs for all 0L apps.
 
-use anyhow::{bail, Error};
+use anyhow::{bail, anyhow, Error};
 use diem_config::config::NodeConfig;
 use diem_global_constants::{CONFIG_FILE, NODE_HOME};
 use diem_types::{
     account_address::AccountAddress, chain_id::NamedChain,
-    transaction::authenticator::AuthenticationKey, waypoint::Waypoint,
+    transaction::authenticator::AuthenticationKey, waypoint::Waypoint, on_chain_config::DIEM_VERSION_2,
 };
 use dirs;
 use once_cell::sync::Lazy;
@@ -61,10 +61,23 @@ pub struct AppCfg {
 }
 
 /// Get a AppCfg object from toml file
-pub fn parse_toml(path: PathBuf) -> Result<AppCfg, Error> {
+pub fn parse_toml(path: Option<PathBuf>) -> Result<AppCfg, Error> {
     // let mut config_toml = path.to_str().unwrap().to_owned()).expect("could not parse app config from file");
+   
+    let cfg_path = match path {
+        Some(path_value) => path_value,
+        None => {
+            match dirs::home_dir() {
+                Some(dirs_value) => dirs_value.join(".0L").join("0L.toml"),
+                None => {
+                    anyhow::bail!("Could not construct default path");
+                }             
+            }
+        },
+    };
+
     let mut toml_buf = "".to_string();
-    let mut file = File::open(&path)?;
+    let mut file = File::open(&cfg_path)?;
     file.read_to_string(&mut toml_buf)?;
 
     let cfg: AppCfg = toml::from_str(&toml_buf)?;
@@ -73,7 +86,7 @@ pub fn parse_toml(path: PathBuf) -> Result<AppCfg, Error> {
 
 /// Get a AppCfg object from toml file
 pub fn fix_missing_fields(path: PathBuf) -> Result<(), Error> {
-    let cfg: AppCfg = parse_toml(path)?;
+    let cfg: AppCfg = parse_toml(Some(path))?;
     cfg.save_file()?;
     Ok(())
 }
@@ -123,14 +136,14 @@ impl AppCfg {
 
     /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self) -> PathBuf {
-        let mut home = self.workspace.node_home.clone();
+        let mut home = self.workspace.node_home.to_owned();
         home.push(&self.workspace.block_dir);
         home
     }
 
     /// Get where node key_store.json stored.
     pub fn get_key_store_path(&self) -> PathBuf {
-        let mut home = self.workspace.node_home.clone();
+        let mut home = self.workspace.node_home.to_owned();
         home.push("key_store.json");
         home
     }
@@ -161,7 +174,7 @@ impl AppCfg {
 
         default_config.profile.ip = match ip {
             Some(i) => i,
-            None => what_ip().unwrap(),
+            None => what_ip()?,
         };
 
         default_config.profile.vfn_ip = match ip {
@@ -170,7 +183,7 @@ impl AppCfg {
         };
 
         default_config.workspace.node_home =
-            config_path.clone().unwrap_or_else(|| what_home(None, None));
+            config_path.to_owned().unwrap_or_else(|| what_home(None, None));
 
         if let Some(u) = upstream_peer {
             default_config.profile.upstream_nodes = vec![u.to_owned()]
@@ -186,12 +199,15 @@ impl AppCfg {
 
         if source_path.is_some() {
             // let source_path = what_source();
-            default_config.workspace.source_path = source_path.clone();
+            default_config.workspace.source_path = source_path.to_owned();
+            let source_ref = match source_path.as_ref() {
+                Some(pbuf) => pbuf,
+                None => {
+                    anyhow::bail!("Could not construct source path");
+                },             
+            };
             default_config.workspace.stdlib_bin_path = Some(
-                source_path
-                    .as_ref()
-                    .unwrap()
-                    .join("language/diem-framework/staged/stdlib.mv"),
+                source_ref.join("language/diem-framework/staged/stdlib.mv"),
             );
         }
 
@@ -211,7 +227,8 @@ impl AppCfg {
 
             return Ok(default_config);
         }
-        fs::create_dir_all(&default_config.workspace.node_home).unwrap();
+        
+        fs::create_dir_all(&default_config.workspace.node_home)?;
         default_config.save_file()?;
 
         Ok(default_config)
@@ -226,7 +243,7 @@ impl AppCfg {
         source_path: Option<PathBuf>,
     ) -> Result<AppCfg, Error> {
         // println!("init_swarm_config: {:?}", swarm_path); already logged in commands.rs
-        let host_config = AppCfg::make_swarm_configs(swarm_path, node_home, source_path);
+        let host_config = AppCfg::make_swarm_configs(swarm_path, node_home, source_path)?;
         host_config.save_file()?;
         Ok(host_config)
     }
@@ -238,7 +255,7 @@ impl AppCfg {
         swarm_path: PathBuf,
         node_home: PathBuf,
         source_path: Option<PathBuf>,
-    ) -> AppCfg {
+    ) -> Result <AppCfg, Error> {
         let config_path = swarm_path.join(&node_home).join("node.yaml");
         let config = NodeConfig::load(&config_path)
             .unwrap_or_else(|_| panic!("Failed to load NodeConfig from file: {:?}", &config_path));
@@ -251,16 +268,23 @@ impl AppCfg {
                 &upstream_config_path
             )
         });
-        let upstream_url = Url::parse(
+
+        let up_res = Url::parse(
             format!(
                 "http://localhost:{}",
                 upstream_config.json_rpc.address.port()
             )
             .as_str(),
-        )
-        .unwrap();
-        // let waypoint = config.base.waypoint.waypoint();
-
+        );
+        
+        let upstream_url = match up_res {
+            Ok(up_url) => up_url,
+            Err(e)  => {
+                anyhow::bail!(e);
+            } 
+          
+        };
+     
         let mut cfg = AppCfg {
             workspace: Workspace::default(),
             profile: Profile::default(),
@@ -274,16 +298,16 @@ impl AppCfg {
         cfg.workspace.db_path = db_path;
         cfg.workspace.source_path = source_path;
         cfg.chain_info.base_waypoint = Some(config.base.waypoint.waypoint());
-        cfg.profile.account = "4C613C2F4B1E67CA8D98A542EE3F59F5".parse().unwrap(); // alice
+        cfg.profile.account = "4C613C2F4B1E67CA8D98A542EE3F59F5".parse()?; // alice
         cfg.profile.upstream_nodes = vec![upstream_url];
 
-        cfg
+        Ok(cfg)
     }
 
     /// save the config file to 0L.toml to the workspace home path
     pub fn save_file(&self) -> Result<(), Error> {
         let toml = toml::to_string(&self)?;
-        let home_path = &self.workspace.node_home.clone();
+        let home_path = &self.workspace.node_home;
         // create home path if doesn't exist, usually only in dev/ci environments.
         fs::create_dir_all(&home_path)?;
         let toml_path = home_path.join(CONFIG_FILE);
@@ -331,14 +355,16 @@ pub struct Workspace {
     pub stdlib_bin_path: Option<PathBuf>,
 }
 
+
 fn default_db_path() -> PathBuf {
     dirs::home_dir().unwrap().join(NODE_HOME).join("db")
 }
 
+
 impl Default for Workspace {
     fn default() -> Self {
         Self {
-            node_home: dirs::home_dir().unwrap().join(NODE_HOME),
+            node_home: dirs::home_dir().unwrap().join(NODE_HOME), //unwrap is benign. because it panics only if the filesystem cannot be read
             source_path: None,
             block_dir: "vdf_proofs".to_owned(),
             db_path: default_db_path(),
@@ -394,7 +420,6 @@ pub struct Profile {
 
     // /// Node URL and and port to submit transactions. Defaults to localhost:8080
     // pub default_node: Option<Url>,
-
     /// Other nodes to connect for fallback connections
     pub upstream_nodes: Vec<Url>,
 
@@ -456,7 +481,7 @@ pub struct TxConfigs {
 impl TxConfigs {
     /// get the user txs cost preferences for given transaction type
     pub fn get_cost(&self, tx_type: TxType) -> TxCost {
-        let ref baseline = self.baseline_cost.clone();
+        let ref baseline = self.baseline_cost;
         let cost = match tx_type {
             TxType::Critical => self.critical_txs_cost.as_ref().unwrap_or_else(|| baseline),
             TxType::Mgmt => self

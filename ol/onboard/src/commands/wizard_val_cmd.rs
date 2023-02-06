@@ -309,15 +309,22 @@ pub fn write_account_json(
     let keys = KeyScheme::new(&wallet);
     let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
 
-    match ValConfigs::new(
+    let val_cfg_res = ValConfigs::new(
         Some(block),
         keys,
         cfg.profile.ip,
         cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
         autopay_batch,
         autopay_signed,
-    )
-    .create_manifest(json_path)
+    );
+
+    let val_cfg = match val_cfg_res {
+        Ok(cfg) => cfg,
+        Err(error) => panic!("Could not create validator config: {:?}", error),
+    };
+
+    match val_cfg.create_manifest(json_path)
+
     {
         Ok(_) => {
             status_ok!(

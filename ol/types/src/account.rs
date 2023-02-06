@@ -6,7 +6,7 @@ use diem_crypto::x25519::PublicKey;
 use diem_global_constants::{DEFAULT_PUB_PORT, DEFAULT_VAL_PORT, DEFAULT_VFN_PORT};
 use diem_types::{
     account_address::AccountAddress,
-    network_address::{NetworkAddress},
+    network_address::NetworkAddress,
     transaction::{SignedTransaction, TransactionPayload},
 };
 
@@ -85,12 +85,11 @@ impl ValConfigs {
         vfn_ip_address: Ipv4Addr,
         autopay_instructions: Option<Vec<PayInstruction>>,
         autopay_signed: Option<Vec<SignedTransaction>>,
-    ) -> Self {
+    ) -> Result<ValConfigs, anyhow::Error> {
         let owner_address = keys.child_0_owner.get_address();
 
         let val_pubkey =
-            PublicKey::from_ed25519_public_bytes(&keys.child_2_val_network.get_public().to_bytes())
-                .unwrap();
+            PublicKey::from_ed25519_public_bytes(&keys.child_2_val_network.get_public().to_bytes())?;
 
         let val_addr_for_val_net =
             ValConfigs::make_unencrypted_addr(&val_ip_address, val_pubkey, NetworkId::Validator);
@@ -115,12 +114,11 @@ impl ValConfigs {
         // to connect to its fullnode.
         let vfn_pubkey = PublicKey::from_ed25519_public_bytes(
             &keys.child_3_fullnode_network.get_public().to_bytes(),
-        )
-        .unwrap();
+        )?;
         let vfn_addr_obj =
             ValConfigs::make_unencrypted_addr(&vfn_ip_address, vfn_pubkey, NetworkId::Public);
 
-        Self {
+        let new_conf = Self {
             /// Proof zero of the onboarded miner
             block_zero,
             ow_human_name: owner_address,
@@ -133,15 +131,16 @@ impl ValConfigs {
             op_consensus_pubkey: keys.child_4_consensus.get_public().to_bytes().to_vec(),
             // 0L todo diem-1.4.1
             // op_validator_network_addresses: bcs::to_bytes(&vec![encrypted_addr]).unwrap(),
-            op_validator_network_addresses: bcs::to_bytes(&vec![&val_addr_for_val_net]).unwrap(),
-            op_fullnode_network_addresses: bcs::to_bytes(&vec![&vfn_addr_obj]).unwrap(),
+            op_validator_network_addresses: bcs::to_bytes(&vec![&val_addr_for_val_net])?,
+            op_fullnode_network_addresses: bcs::to_bytes(&vec![&vfn_addr_obj])?,
             op_val_net_addr_for_vals: val_addr_for_val_net.to_owned(),
             op_val_net_addr_for_vfn: val_addr_for_vfn_net.to_owned(),
             op_vfn_net_addr_for_public: vfn_addr_obj.to_owned(),
             op_human_name: format!("{}-oper", owner_address), //NOTE: This must match  ol/types/src/config.rs format_oper_namespace
             autopay_instructions,
             autopay_signed,
-        }
+        };
+        Ok(new_conf)
     }
     /// Creates the json file needed for onchain account creation - validator
     pub fn create_manifest(&self, mut json_path: PathBuf) -> Result<(), anyhow::Error>{
@@ -231,7 +230,7 @@ impl ValConfigs {
                   let tx = signed.iter().nth(i).unwrap();
                   let payload = tx.clone().into_raw_transaction().into_payload();
                   if let TransactionPayload::Script(s) = payload {
-                      match instr.check_instruction_match_tx(s.clone()) {
+                        match instr.check_instruction_match_tx(&s) { // Now passing reference instead of s.clone() (Michael64)
                           Ok(_) => {}
                           Err(e) => {
                             // TODO: should this panic?

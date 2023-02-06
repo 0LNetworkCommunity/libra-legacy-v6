@@ -9,7 +9,7 @@ use crate::prelude::app_config;
 use diem_types::transaction::SignedTransaction;
 use diem_wallet::WalletLibrary;
 use ol_types::{account::ValConfigs, pay_instruction::PayInstruction};
-use std::path::PathBuf;
+use std::{path::PathBuf, process::exit};
 
 /// Creates an account.json file for the validator
 pub fn write_manifest(
@@ -31,14 +31,22 @@ pub fn write_manifest(
 
     let keys = KeyScheme::new(&wallet);
     let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
-
-    return ValConfigs::new(
+    let val_cfg_res = ValConfigs::new(
         Some(block),
         keys,
         cfg.profile.ip,
         cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
         autopay_batch,
         autopay_signed,
-    )
-    .create_manifest(miner_home)
+    );
+
+    let val_cfg = match val_cfg_res {
+        Ok(cfg) => cfg,
+        Err(error) => {
+            println!("Could not create validator config: {:?}", error);
+            exit(1);
+        }
+      
+    };
+    return val_cfg.create_manifest(miner_home)
 }

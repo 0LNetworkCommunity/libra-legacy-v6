@@ -158,7 +158,7 @@ impl Runnable for ForkCmd {
 
         let home_dir = cfg.workspace.node_home.to_owned();
         // 0L convention is for the namespace of the operator to be appended by '-oper'
-        let namespace = cfg.profile.auth_key.clone().to_string() + "-oper";
+        let namespace = cfg.profile.auth_key.to_string() + "-oper";
         let val_ip_address = cfg.profile.ip;
 
         // TODO: use node_config to get the seed peers and then write upstream_node vec in 0L.toml from that.
@@ -285,16 +285,21 @@ pub fn write_account_json(
     let json_path = json_path.clone().unwrap_or(cfg.workspace.node_home.clone());
     let keys = KeyScheme::new(&wallet);
     let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
-
-    match ValConfigs::new(
+    let val_cfg_res = ValConfigs::new(
         Some(block),
         keys,
         cfg.profile.ip,
         cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
         autopay_batch,
         autopay_signed,
-    )
-    .create_manifest(json_path)
+    );
+
+    let val_cfg = match val_cfg_res {
+        Ok(cfg) => cfg,
+        Err(error) => panic!("Could not create validator config: {:?}", error),
+    };
+
+    match val_cfg.create_manifest(json_path)
     {
         Ok(_) => {
             status_ok!(

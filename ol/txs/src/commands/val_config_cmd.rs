@@ -32,7 +32,7 @@ impl Runnable for ValConfigCmd {
         // let _entry_args = entrypoint::get_args();
         let (_, _, w) = wallet::get_account_from_prompt();
 
-        let val_cfg = ValConfigs::new(
+        let val_cfg_res = ValConfigs::new(
             None,
             KeyScheme::new(&w),
             self.val_ip.expect("neeed a validator ip address"),
@@ -40,6 +40,11 @@ impl Runnable for ValConfigCmd {
             None,
             None,
         );
+
+        let val_cfg = match val_cfg_res {
+            Ok(cfg) => cfg,
+            Err(error) => panic!("Could not create validator config: {:?}", error),
+        };
 
       let txt = format!("New consensus pubkey: {} \n 
         New validator network addresses: {}, \n
