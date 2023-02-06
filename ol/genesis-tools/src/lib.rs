@@ -10,6 +10,8 @@
 
 pub mod fetch_archive;
 // pub mod fork_daemon; // Note: 0L deleted: This is feature (fork daemon shouldn't be exposed yet, it will not ship with this version of the recovery tool)
+pub mod compare;
+pub mod db_utils;
 pub mod fork_genesis;
 pub mod process_snapshot;
 pub mod read_snapshot;

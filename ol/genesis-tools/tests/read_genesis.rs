@@ -1,12 +1,12 @@
 mod support;
+// read_db_and_compute_genesis
 
-use support::{path_utils::blob_path, db_utils::read_db_and_compute_genesis};
+use ol_genesis_tools::db_utils::read_db_and_compute_genesis;
 
 use diem_types::account_address::AccountAddress;
-use diem_types::{
-    account_state::AccountState, on_chain_config::ValidatorSet
-};
+use diem_types::{account_state::AccountState, on_chain_config::ValidatorSet};
 use std::convert::TryFrom;
+use support::path_utils::blob_path;
 
 #[test]
 // A meta test, to see if db reading works as expected.
@@ -32,35 +32,28 @@ fn test_read_db() {
 
     let account_state = AccountState::try_from(&state).unwrap();
 
-    let validator_set: ValidatorSet = account_state
-        .get_validator_set()
-        .unwrap()
-        .unwrap();
+    let validator_set: ValidatorSet = account_state.get_validator_set().unwrap().unwrap();
 
     assert_eq!(135, validator_set.payload().len());
 
-    validator_set
-    .into_iter()
-    .for_each(|v| {
-      let acc = v.account_address();
+    validator_set.into_iter().for_each(|v| {
+        let acc = v.account_address();
 
-      let val_state = db
-      .reader
-      .get_latest_account_state(acc.to_owned())
-      .expect("get account state")
-      .expect("option is None");
+        let val_state = db
+            .reader
+            .get_latest_account_state(acc.to_owned())
+            .expect("get account state")
+            .expect("option is None");
 
-      let account_state = AccountState::try_from(&val_state).unwrap();
+        let account_state = AccountState::try_from(&val_state).unwrap();
 
-      let bal = account_state.get_balance_resources().unwrap();
+        let bal = account_state.get_balance_resources().unwrap();
 
-      dbg!(&bal);
+        dbg!(&bal);
     })
-
 }
 
-
-// TODO: We need a way to get arbitrary Move resources extracted from an account blob. 
+// TODO: We need a way to get arbitrary Move resources extracted from an account blob.
 // We should be able to get an arbitrary resource from DiemDB with ResourceResolver, but it's not clear how to do that from a DbReader instance.
 
 // impl ResourceResolver for DiemDB {
