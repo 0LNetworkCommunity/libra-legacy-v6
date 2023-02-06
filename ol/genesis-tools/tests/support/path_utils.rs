@@ -3,6 +3,7 @@
 //! you can go your own way
 
 use std::path::PathBuf;
+
 /// path to file fixture with a db backup
 pub fn snapshot_path() -> PathBuf{
   use std::path::Path;
@@ -15,6 +16,7 @@ pub fn snapshot_path() -> PathBuf{
     .join("ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff").to_owned()
 
 }
+
 
 /// path to file fixture with JSON export of the data used in rescue genesis
 pub fn json_path() -> PathBuf {
