@@ -1,13 +1,12 @@
 mod support;
 
-use support::{path_utils::blob_path, db_utils};
+use support::path_utils::blob_path;
 use std::io::BufRead;
 use std::io::BufReader;
 use std::process::Command;
 use std::process::Stdio;
 use diem_json_rpc::views::AccountView;
 use diem_types::account_address::AccountAddress;
-// use move_core_types::move_resource::MoveResource;
 
 #[test]
 fn start_test_node() {
