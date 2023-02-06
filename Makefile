@@ -38,7 +38,7 @@ endif
 # Registration params
 REMOTE = 'backend=github;repository_owner=${GITHUB_USER};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}'
 
-GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC};branch=main'
+GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC};branch=master'
 
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
