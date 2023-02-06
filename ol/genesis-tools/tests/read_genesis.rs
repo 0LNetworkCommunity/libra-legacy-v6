@@ -1,12 +1,13 @@
 mod support;
 // read_db_and_compute_genesis
 
+use ol_genesis_tools::compare;
 use ol_genesis_tools::db_utils::read_db_and_compute_genesis;
 
 use diem_types::account_address::AccountAddress;
 use diem_types::{account_state::AccountState, on_chain_config::ValidatorSet};
 use std::convert::TryFrom;
-use support::path_utils::blob_path;
+use support::path_utils::{blob_path, json_path};
 
 #[test]
 // A meta test, to see if db reading works as expected.
@@ -36,21 +37,29 @@ fn test_read_db() {
 
     assert_eq!(135, validator_set.payload().len());
 
-    validator_set.into_iter().for_each(|v| {
-        let acc = v.account_address();
+    let acc = validator_set.payload().first().unwrap().account_address();
 
-        let val_state = db
-            .reader
-            .get_latest_account_state(acc.to_owned())
-            .expect("get account state")
-            .expect("option is None");
+    let val_state = db
+        .reader
+        .get_latest_account_state(acc.to_owned())
+        .expect("get account state")
+        .expect("option is None");
 
-        let account_state = AccountState::try_from(&val_state).unwrap();
+    let account_state = AccountState::try_from(&val_state).unwrap();
 
-        let bal = account_state.get_balance_resources().unwrap();
+    let bal = account_state.get_balance_resources().unwrap();
 
-        dbg!(&bal);
-    })
+    assert!(bal.iter().next().unwrap().1.coin() > 0, "balance is not greater than 0");
+}
+
+#[test]
+fn test_compare() {
+    let j = json_path();
+    let b = blob_path();
+
+    let list = compare::compare_json_to_genesis_blob(j, b);
+
+    assert_eq!(list.unwrap().len(), 0);
 }
 
 // TODO: We need a way to get arbitrary Move resources extracted from an account blob.

@@ -93,10 +93,20 @@ async fn main() -> Result<()> {
             panic!("ERROR: must provide --snapshot-path or --recovery-json-path, exiting.");
         }
     } else if opts.output_path.is_some() && opts.recovery_json_path.is_some() && opts.check {
-        return compare::compare_json_to_genesis_blob(
+        let err_list = compare::compare_json_to_genesis_blob(
             opts.output_path.unwrap(),
             opts.recovery_json_path.unwrap(),
-        );
+        )?;
+        if err_list.len() > 0 {
+          println!("ERROR: found errors:");
+
+          err_list.into_iter().for_each(|ce| {
+            println!("account: {:?}, msg: {}, balance_diff {}", ce.account, ce.message, ce.bal_diff);
+          });
+        } else {
+          println!("SUCCESS: no errors found");
+        }
+        Ok(())
     } else if let Some(json_destination_path) = opts.export_json {
         // just create recovery file
         let snapshot_path = opts
