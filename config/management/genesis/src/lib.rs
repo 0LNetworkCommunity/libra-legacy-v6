@@ -14,7 +14,7 @@ mod move_modules;
 pub mod validator_builder;
 mod validator_config;
 mod validator_operator;
-mod verify;
+pub mod verify; //////// 0L ///////// make public
 
 //////// 0L ////////
 pub mod init;

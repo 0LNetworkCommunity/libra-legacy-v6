@@ -1,4 +1,7 @@
-use std::{path::PathBuf, fs};
+mod support;
+
+use support::snapshot_path;
+use std::fs;
 // use std::str ::FromStr;
 // use diem_wallet::io_utils::recover;
 use ol_genesis_tools::{fork_genesis::{make_recovery_genesis_from_db_backup}};
@@ -17,17 +20,5 @@ async fn test_read_db_backup_and_save_blob() {
   ).await.expect("ERROR: could not create genesis from db backup");
 
   assert!(output_path.exists(), "file not created");
-  fs::remove_file(output_path);
-}
-
-fn snapshot_path() -> PathBuf{
-  use std::path::Path;
-  let path = env!("CARGO_MANIFEST_DIR");
-  Path::new(path)
-    .parent()
-    .unwrap()
-    .parent()
-    .unwrap()
-    .join("ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff").to_owned()
-
+  fs::remove_file(output_path).unwrap();
 }

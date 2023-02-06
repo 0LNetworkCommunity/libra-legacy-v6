@@ -1,3 +1,6 @@
+mod support;
+
+use support::snapshot_path;
 use std::{path::PathBuf, fs};
 use diem_types::account_address::AccountAddress;
 use ol_genesis_tools::fork_genesis::make_recovery_genesis_from_vec_legacy_recovery;
@@ -51,7 +54,7 @@ async fn test_e2e() {
 
   // check a validators account
   let user = AccountAddress::from_hex_literal("0xD0D62AE27A4E84B559DA089A1B15A79F").unwrap();
-  let acc = post_node_json(user).await;
+  let _acc = post_node_json(user).await;
   assert!(root.balances[0].amount == 10214368210584, "validator address has wrong balance");
 
   // check an end-user account
@@ -65,18 +68,6 @@ async fn test_e2e() {
     .expect("could not remove blob_output_pathfile");
   fs::remove_file(recover_json_output_path)
     .expect("could not remove recover_json_output_path file");
-}
-
-fn snapshot_path() -> PathBuf{
-  use std::path::Path;
-  let path = env!("CARGO_MANIFEST_DIR");
-  Path::new(path)
-    .parent()
-    .unwrap()
-    .parent()
-    .unwrap()
-    .join("ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff").to_owned()
-
 }
 
 // TODO: This is duplicated in the start_node_from_blob
