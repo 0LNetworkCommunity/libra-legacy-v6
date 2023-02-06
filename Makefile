@@ -21,7 +21,7 @@ IP=$(shell toml get ${DATA_PATH}/0L.toml profile.ip)
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 
-REPO_ORG = OLSF
+REPO_ORG = 0LNetworkCommunity
 REPO_NAME = genesis-registration
 
 ifndef CARGO_ARGS
@@ -32,7 +32,7 @@ ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
 MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 CARGO_ARGS = --locked # just keeping this from doing --release mode, while in testnet mode.
-GITHUB_USER = OLSF
+GITHUB_USER = 0LNetworkCommunity
 endif
 
 # Registration params
@@ -42,10 +42,10 @@ GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_
 
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
-RELEASE_URL=https://github.com/OLSF/libra/releases/download
+RELEASE_URL=https://github.com/0LNetworkCommunity/libra/releases/download
 
 ifndef RELEASE
-RELEASE=$(shell curl -sL https://api.github.com/repos/OLSF/libra/releases/latest | jq -r '.assets[].browser_download_url')
+RELEASE=$(shell curl -sL https://api.github.com/repos/0LNetworkCommunity/libra/releases/latest | jq -r '.assets[].browser_download_url')
 endif
 
 BINS=db-backup db-backup-verify db-restore diem-node tower ol txs stdlib
@@ -68,7 +68,7 @@ download: web-files
 	done
 
 web-files: 
-	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor.tar.gz https://github.com/OLSF/libra/releases/latest/download/web-monitor.tar.gz
+	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor.tar.gz https://github.com/0LNetworkCommunity/libra/releases/latest/download/web-monitor.tar.gz
 	mkdir ${DATA_PATH}/web-monitor | true
 	tar -xf ${DATA_PATH}/web-monitor.tar.gz --directory ${DATA_PATH}/web-monitor
 
