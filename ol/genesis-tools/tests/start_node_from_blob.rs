@@ -1,6 +1,8 @@
+mod support;
+
+use support::blob_path;
 use std::io::BufRead;
 use std::io::BufReader;
-use std::path::PathBuf;
 use std::process::Command;
 use std::process::Stdio;
 use diem_json_rpc::views::AccountView;
@@ -42,17 +44,7 @@ fn start_test_node() {
 
 }
 
-fn blob_path() -> PathBuf {
-    use std::path::Path;
-    let path = env!("CARGO_MANIFEST_DIR");
-    Path::new(path)
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .join("ol/fixtures/rescue/sample_export_recovery.json")
-        .to_owned()
-}
+
 
 
 
