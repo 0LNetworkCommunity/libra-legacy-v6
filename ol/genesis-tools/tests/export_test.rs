@@ -1,6 +1,6 @@
 mod support;
 
-use support::snapshot_path;
+use support::path_utils::snapshot_path;
 use std::fs;
 use ol_genesis_tools::{process_snapshot::db_backup_into_recovery_struct, recover::save_recovery_file};
 

@@ -1,6 +1,6 @@
 mod support;
 
-use support::snapshot_path;
+use support::path_utils::snapshot_path;
 use std::{path::PathBuf, fs};
 use diem_types::account_address::AccountAddress;
 use ol_genesis_tools::fork_genesis::make_recovery_genesis_from_vec_legacy_recovery;

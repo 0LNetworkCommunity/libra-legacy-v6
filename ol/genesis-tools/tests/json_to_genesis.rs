@@ -1,9 +1,8 @@
 mod support;
 
-use support::json_path;
+
+use support::path_utils::json_path;
 use std::fs;
-// use std::str ::FromStr;
-// use diem_wallet::io_utils::recover;
 use ol_genesis_tools::{recover::{read_from_recovery_file}, fork_genesis::{make_recovery_genesis_from_vec_legacy_recovery}};
 
 // The expected arguments of cli for exporting a V5 JSON recovery file from a db backup is:
