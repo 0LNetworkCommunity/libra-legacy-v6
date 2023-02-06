@@ -53,7 +53,7 @@ pub fn make_recovery_genesis_from_vec_legacy_recovery(
         .into_iter()
         .map(|a| return a.val_account)
         .collect();
-    
+
     let cs_validators_only = get_baseline_genesis_change_set(genesis_accounts, &validator_set)?;
 
     // For a real upgrade or fork, we want to include all user accounts.
@@ -113,7 +113,10 @@ pub fn append_genesis(
         len = len + 1;
     }
 
-    assert!(len == expected_len_all_users, "mismatched number of users in attempted recovery");
+    assert!(
+        len == expected_len_all_users,
+        "mismatched number of users in attempted recovery"
+    );
 
     // after counting balance, reset total coin value.
     let coin_ws = total_coin_value_restore(legacy_vec, total_coin_value as u128)?;

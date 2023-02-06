@@ -34,7 +34,7 @@ pub async fn db_backup_into_recovery_struct(
     let manifest_json = archive_path.join("state.manifest");
 
     let backup = read_snapshot::read_from_json(&manifest_json)
-    .expect(&format!("cannot find snapshot file: {:?}", &manifest_json));
+        .expect(&format!("cannot find snapshot file: {:?}", &manifest_json));
 
     let account_blobs = accounts_from_snapshot_backup(backup, archive_path).await?;
     let r = if is_legacy {
@@ -153,9 +153,9 @@ pub fn merge_writeset(left: WriteSetMut, right: WriteSetMut) -> Result<WriteSetM
 #[test]
 #[ignore]
 pub fn test_accounts_into_recovery() {
+    use diem_types::ol_miner_state::TowerStateResource;
     use diem_types::{account_config::BalanceResource, validator_config::ValidatorConfigResource};
     use move_core_types::move_resource::MoveResource;
-    use diem_types::ol_miner_state::TowerStateResource;
     use std::path::Path;
 
     let path = env!("CARGO_MANIFEST_DIR");

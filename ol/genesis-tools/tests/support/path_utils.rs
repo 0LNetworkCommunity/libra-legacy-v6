@@ -5,18 +5,17 @@
 use std::path::PathBuf;
 
 /// path to file fixture with a db backup
-pub fn snapshot_path() -> PathBuf{
-  use std::path::Path;
-  let path = env!("CARGO_MANIFEST_DIR");
-  Path::new(path)
-    .parent()
-    .unwrap()
-    .parent()
-    .unwrap()
-    .join("ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff").to_owned()
-
+pub fn snapshot_path() -> PathBuf {
+    use std::path::Path;
+    let path = env!("CARGO_MANIFEST_DIR");
+    Path::new(path)
+        .parent()
+        .unwrap()
+        .parent()
+        .unwrap()
+        .join("ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff")
+        .to_owned()
 }
-
 
 /// path to file fixture with JSON export of the data used in rescue genesis
 pub fn json_path() -> PathBuf {
