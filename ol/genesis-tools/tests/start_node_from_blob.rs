@@ -1,6 +1,6 @@
 mod support;
 
-use support::blob_path;
+use support::{path_utils::blob_path, db_utils};
 use std::io::BufRead;
 use std::io::BufReader;
 use std::process::Command;

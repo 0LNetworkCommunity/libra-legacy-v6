@@ -1,6 +1,6 @@
 mod support;
 
-use support::snapshot_path;
+use support::path_utils::snapshot_path;
 use std::fs;
 // use std::str ::FromStr;
 // use diem_wallet::io_utils::recover;
