@@ -47,7 +47,17 @@ pub fn compare_recovery_vec_to_genesis_blob(
                 message: "account is None".to_string(),
             }); // instead of balance, if there is an account that is None, we insert the index of the recovery file
             return;
-        }; //TODO: make this raise error
+        };
+
+        if v.balance.is_none() {
+            err_list.push(CompareError{
+                index: i as u64,
+                account: v.account,
+                bal_diff: 0,
+                message: "recovery file balance is None".to_string(),
+            });
+            return;
+        }
 
         let val_state = match db_rw
             .reader
@@ -103,24 +113,17 @@ pub fn compare_recovery_vec_to_genesis_blob(
                 return;
             }
         };
-
-        if let Some(b) = v.balance {
+        
+        let recovery_bal = v.balance.unwrap().coin();
+        if recovery_bal != genesis_bal {
             err_list.push(CompareError{
                 index: i as u64,
                 account: v.account,
-                bal_diff: b.coin() as i64 - genesis_bal as i64,
+                bal_diff: recovery_bal as i64 - genesis_bal as i64,
                 message: "balance mismatch".to_string(),
-            });
-        } else {
-            err_list.push(CompareError{
-                index: i as u64,
-                account: v.account,
-                bal_diff: 0,
-                message: "recovery file balance is None".to_string(),
             });
         }
     });
-
 
     Ok(err_list)
 }
