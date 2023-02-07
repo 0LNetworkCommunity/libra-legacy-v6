@@ -1076,7 +1076,7 @@ fn initialize_testnet(
 pub fn test_helper_clean_genesis_modules_only() -> Result<ChangeSet, Error> {
     let mut stdlib_modules = Vec::new();
     // create a data view for move_vm
-    let mut state_view = GenesisStateView::new();
+    let state_view = GenesisStateView::new();
     for module_bytes in current_module_blobs() {
         let module = CompiledModule::deserialize(module_bytes).unwrap();
         // state_view.add_module(&module.self_id(), &module_bytes);
@@ -1089,7 +1089,7 @@ pub fn test_helper_clean_genesis_modules_only() -> Result<ChangeSet, Error> {
 
     publish_stdlib(&mut session, Modules::new(stdlib_modules.iter()));
     
-    let (mut changeset1, mut events1) = session.finish().unwrap();
+    let (changeset1, events1) = session.finish().unwrap();
 
     let (write_set, events) = convert_changeset_and_events(changeset1, events1).unwrap();
 

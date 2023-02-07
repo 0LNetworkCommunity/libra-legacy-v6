@@ -5,6 +5,7 @@
 // use crate::ol_genesis_context;
 use crate::recover::LegacyRecovery;
 use anyhow::Error;
+use diem_framework_releases::current_module_blobs;
 use diem_types::PeerId;
 use diem_types::account_config;
 use diem_types::contract_event;
@@ -12,6 +13,7 @@ use diem_types::write_set::WriteSet;
 use diem_types::write_set::WriteSetMut;
 use language_e2e_tests::data_store::FakeDataStore;
 use language_e2e_tests::executor::FakeExecutor;
+use move_binary_format::CompiledModule;
 use move_core_types::{
     language_storage::TypeTag,
     value::{serialize_values, MoveValue},
@@ -28,13 +30,26 @@ use diem_types::account_address::AccountAddress;
 use move_vm_types::gas_schedule::GasStatus;
 
 #[test]
-pub fn test_changes_to_clean_genesis() -> Result<ChangeSet, Error> {
+pub fn test_changes_to_clean_genesis(){
     let storage = FakeDataStore::default();
     let data_cache = StateViewCache::new(&storage);
+
+    let move_vm = MoveVM::new(diem_vm::natives::diem_natives()).unwrap();
     let mut session = move_vm.new_session(&data_cache);
+    
+    let mut stdlib_modules = Vec::new();
 
+    for module_bytes in current_module_blobs() {
+    let module = CompiledModule::deserialize(module_bytes).unwrap();
+    // state_view.add_module(&module.self_id(), &module_bytes);
+    stdlib_modules.push(module)
+    }
+
+    publish_stdlib(&mut session, Modules::new(stdlib_modules.iter()));
   // let a = test_helper_clean_genesis_modules_only()?;
+    let (changeset1, events1) = session.finish().unwrap();
 
+    // Ok(changeset1)
     // generate_genesis_change_set_for_testing_ol
 
     // let mut stdlib_modules = Vec::new();
