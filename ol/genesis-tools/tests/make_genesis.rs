@@ -50,6 +50,7 @@ fn test_make_genesis() {
     let list = compare::compare_json_to_genesis_blob(json, temp_genesis_blob_path.clone());
 
     dbg!(&list);
+    assert!(list.expect("no list").len() == 0, "list is not empty");
     fs::remove_file(temp_genesis_blob_path).unwrap();
 }
 

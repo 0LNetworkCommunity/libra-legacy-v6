@@ -40,6 +40,7 @@ pub fn compare_recovery_vec_to_genesis_blob(
       .into_iter()
       .enumerate()
       .for_each(|(i, v)| {
+
         if v.account.is_none() {
             err_list.push(CompareError{
                 index: i as u64,
@@ -50,6 +51,9 @@ pub fn compare_recovery_vec_to_genesis_blob(
             return;
         };
 
+            if v.account.unwrap() == AccountAddress::ZERO {
+            return;
+        };
         if v.balance.is_none() {
             err_list.push(CompareError{
                 index: i as u64,
