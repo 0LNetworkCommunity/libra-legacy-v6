@@ -1,29 +1,16 @@
 //! Tests for the `make_genesis` binary.
 mod support;
 
-
-
-
-
-use ol_genesis_tools::{compare};
+use ol_genesis_tools::compare;
 use ol_genesis_tools::{
-    fork_genesis::make_recovery_genesis_from_vec_legacy_recovery,
-    recover::{LegacyRecovery},
+    fork_genesis::make_recovery_genesis_from_vec_legacy_recovery, recover::LegacyRecovery,
 };
 use std::fs;
 use support::path_utils::json_path;
 
-
-
-
-
-
-
-
 #[test]
 // test that a genesis blob created from struct, will actually contain the data
 fn test_make_genesis() {
-    
     // let recovery_json_path = json_path();
 
     let json = json_path().parent().unwrap().join("single_json_entry.json");
@@ -36,7 +23,7 @@ fn test_make_genesis() {
     let temp_genesis_blob_path = json_path().parent().unwrap().join("fork_genesis.blob");
 
     make_recovery_genesis_from_vec_legacy_recovery(mock_val, temp_genesis_blob_path.clone(), true)
-    .unwrap();
+        .unwrap();
 
     assert!(temp_genesis_blob_path.exists(), "file not created");
 
