@@ -49,7 +49,10 @@ fn test_read_db() {
 
     let bal = account_state.get_balance_resources().unwrap();
 
-    assert!(bal.iter().next().unwrap().1.coin() > 0, "balance is not greater than 0");
+    assert!(
+        bal.iter().next().unwrap().1.coin() > 0,
+        "balance is not greater than 0"
+    );
 }
 
 #[test]

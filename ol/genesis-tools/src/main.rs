@@ -98,13 +98,16 @@ async fn main() -> Result<()> {
             opts.recovery_json_path.unwrap(),
         )?;
         if err_list.len() > 0 {
-          println!("ERROR: found errors:");
+            println!("ERROR: found errors:");
 
-          err_list.into_iter().for_each(|ce| {
-            println!("account: {:?}, msg: {}, balance_diff {}", ce.account, ce.message, ce.bal_diff);
-          });
+            err_list.into_iter().for_each(|ce| {
+                println!(
+                    "account: {:?}, msg: {}, balance_diff {}",
+                    ce.account, ce.message, ce.bal_diff
+                );
+            });
         } else {
-          println!("SUCCESS: no errors found");
+            println!("SUCCESS: no errors found");
         }
         Ok(())
     } else if let Some(json_destination_path) = opts.export_json {
