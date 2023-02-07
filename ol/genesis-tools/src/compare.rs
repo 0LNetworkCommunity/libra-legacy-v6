@@ -12,6 +12,7 @@ use std::convert::TryFrom;
 use std::path::PathBuf;
 
 
+#[derive(Debug)]
 /// struct for holding the results of a comparison
 pub struct CompareError {
     /// index of LegacyRecover

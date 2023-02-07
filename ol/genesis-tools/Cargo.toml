@@ -40,3 +40,5 @@ diem-temppath = { path = "../../crates/diem-temppath", version = "0.1.0" }
 
 [dev-dependencies]
 tokio-test = "*"
+rand = "0.8.3"
+diem-framework-releases = { path = "../../diem-move/diem-framework/DPN/releases" }
