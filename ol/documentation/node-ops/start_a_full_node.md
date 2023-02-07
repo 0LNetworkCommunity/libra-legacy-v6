@@ -16,7 +16,7 @@ These instructions target Ubuntu.
 1.2. You'll want to use `screen` (or `tmux`) to persist the terminal session of the building. `screen -S build`, then you can rejoin the session with `screen -rd build`
 1.3. Clone this repo: 
 
-`git clone https://github.com/OLSF/libra.git`
+`git clone https://github.com/0LNetworkCommunity/libra.git`
 
 1.4. Config dependencies: 
 

@@ -22,7 +22,7 @@ Export the `~/bins` directory to be in search path, and download the binaries wi
 ```
 export PATH=$PATH:~/bin && echo export PATH=\$PATH:~/bin >> ~/.bashrc
 
-curl -sL https://raw.githubusercontent.com/OLSF/libra/main/ol/util/install.sh | bash
+curl -sL https://raw.githubusercontent.com/0LNetworkCommunity/libra/main/ol/util/install.sh | bash
 ```
 # 2. Start a persistent terminal session
 

@@ -23,7 +23,7 @@ use std::{
     process::Command,
 };
 
-const GITHUB_ORG: &str = "OLSF";
+const GITHUB_ORG: &str = "0LNetworkCommunity";
 /// Check if we are in testnet mode
 pub static GITHUB_REPO: Lazy<&str> = Lazy::new(|| {
     if *IS_DEVNET {

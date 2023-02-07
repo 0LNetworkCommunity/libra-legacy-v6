@@ -147,5 +147,5 @@ ERROR: could not create client connection, message: Cannot connect to any JSON R
 ```
 **Solution:**
 
-There may be a bad IP address, `upstream_nodes`, being used in `~/.0L/0L.toml`. Try changing the ip address there to one from [here](https://github.com/OLSF/carpe/blob/main/seed_peers/fullnode_seed_playlist.json). 
+There may be a bad IP address, `upstream_nodes`, being used in `~/.0L/0L.toml`. Try changing the ip address there to one from [here](https://github.com/0LNetworkCommunity/carpe/blob/main/seed_peers/fullnode_seed_playlist.json). 
 ::

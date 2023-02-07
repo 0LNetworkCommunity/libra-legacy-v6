@@ -166,7 +166,7 @@ The following command would send an onboarding transaction from alice to eve:
 cargo r -p txs -- --swarm-path=$HOME/swarm_temp/ --swarm-persona=alice create-validator -f ./ol/fixtures/onboarding/eve_init_test.json
 ```
 
-(the create-validator step for swarm still throws an arror "could not find autopay instructions" in release-v4.3.0, even with https://github.com/OLSF/diem/pull/499)
+(the create-validator step for swarm still throws an arror "could not find autopay instructions" in release-v4.3.0, even with https://github.com/0LNetworkCommunity/diem/pull/499)
 
 
 ### Relay

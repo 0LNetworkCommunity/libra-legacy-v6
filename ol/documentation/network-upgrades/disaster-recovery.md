@@ -13,7 +13,7 @@ These instructions assume the database is at rest, and diem-node is not running.
 These instructions assumes you are building binaries from /libra source.
 
 The CLI Tools you will use:
- - `db-restore`: The `backup-cli` tool to take archived snapshots and restore a database. We provide wrappers to those tools in: https://github.com/OLSF/epoch-archive
+ - `db-restore`: The `backup-cli` tool to take archived snapshots and restore a database. We provide wrappers to those tools in: https://github.com/0LNetworkCommunity/epoch-archive
 
 - `diem-transaction-replay`: To inspect state of the DB.
 - `diem-writeset-generator`: Create transaction binaries, and save the files. Those file will be applied to db at a later step.
@@ -55,7 +55,7 @@ Solution: This can be achieved by creating a validator.node.yaml file, which has
 5. The new epochs on the restored network will be discontinuous.
 Nodes that were previously on the network will not be able to automatically sync to recovery nodes. They will see an `epochChangeProof certificate is not valid`. This is because the previous epoch validators did not "sign off" on the epoch transition.
 
-Solution: fullnodes, validators, etc. that join the network after recovery will need to do so with a `db-restore` operation. Either using `ol restore` or otherwise with instructions `https://github.com/OLSF/epoch-archive`
+Solution: fullnodes, validators, etc. that join the network after recovery will need to do so with a `db-restore` operation. Either using `ol restore` or otherwise with instructions `https://github.com/0LNetworkCommunity/epoch-archive`
 ##  Cheatsheet
 
 
@@ -94,7 +94,7 @@ make start
 # Get a DB
 1. Take a known good state snapshot (Snapshot A)
 
-Either from https://github.com/OLSF/epoch-archive, or from a tar.gz file of someone's database.
+Either from https://github.com/0LNetworkCommunity/epoch-archive, or from a tar.gz file of someone's database.
 
 Note: the DB should not be at the epoch boundary block.
 

@@ -1,7 +1,7 @@
 # QA onboarding validator
 
 
-OLSF devnet should be running. To reconfigure follow this: 
+0LNetworkCommunity devnet should be running. To reconfigure follow this: 
 
 (provision_dev_net.md)
 
@@ -48,7 +48,7 @@ You'll need to add some devnet flags so that the wizard uses the dev-genesis gen
 make smoke-new
 
 # Is equivalent to running this command:
-cargo r -p miner -- val-wizard --chain-id 1 --github-org OLSF --repo dev-genesis --rebuild-genesis
+cargo r -p miner -- val-wizard --chain-id 1 --github-org 0LNetworkCommunity --repo dev-genesis --rebuild-genesis
 ```
 
 The expected output from eve's node is that it cannot connect to anyone:

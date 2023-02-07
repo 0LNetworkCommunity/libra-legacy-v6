@@ -87,12 +87,12 @@ These instructions target Ubuntu.
 1.2. Associate a static IP with your host, this will be tied to you account. This address will be shared on the chain, so that other nodes will be able to find you through the peer discovery mechanism.
 
 1.3. 0L binaries should be run in a linux user that has very narrow permissions. Before you can create binaries you'll need some tools installed probably by `sudo` and likely in root.
-A helpful script to install dependencies exists here: github.com/OLSF/libra/main/ol/util/setup.sh
+A helpful script to install dependencies exists here: github.com/0LNetworkCommunity/libra/main/ol/util/setup.sh
 
 You can run it with a curl bash:
 
 ```bash
-curl -sL https://raw.githubusercontent.com/OLSF/libra/main/ol/util/setup.sh | bash
+curl -sL https://raw.githubusercontent.com/0LNetworkCommunity/libra/main/ol/util/setup.sh | bash
 ```
 
 1.4. Use `tmux` to persist the terminal session for build, as well as for running the nodes and tower app. Also this setup requires `git` and `make`, which might be installed already on your host. If not, perform the following steps now:
@@ -139,7 +139,7 @@ tmux new -s installation
 
 1.8. Clone this repo:
 
-`git clone https://github.com/OLSF/libra.git`
+`git clone https://github.com/0LNetworkCommunity/libra.git`
 
 For more details: (../devs/OS_dependencies.md)
 

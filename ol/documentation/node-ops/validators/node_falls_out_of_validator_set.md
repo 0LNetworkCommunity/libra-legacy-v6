@@ -21,7 +21,7 @@ Now restart the tower app with the --use-upstream-url flag, like this:
 
 NOTE: you may wish to save a copy of diem-node.service at this point for later use.
 
-OL does not support a node easily changing between being a validator and a full node. You must manually make some configuration changes and restart the node. To do this, create a config file for the full node from this template: https://github.com/OLSF/epoch-archive/blob/main/fullnode_template.node.yaml ... and then modify the --config path in the ExecService to point to that file.
+OL does not support a node easily changing between being a validator and a full node. You must manually make some configuration changes and restart the node. To do this, create a config file for the full node from this template: https://github.com/0LNetworkCommunity/epoch-archive/blob/main/fullnode_template.node.yaml ... and then modify the --config path in the ExecService to point to that file.
 
 Finally, you can restart your node:
 

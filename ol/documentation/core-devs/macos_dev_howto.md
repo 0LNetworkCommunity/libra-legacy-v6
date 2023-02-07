@@ -22,7 +22,7 @@ For all the following commands you need to open the Terminal app.
 1. Clone the libra source into a local folder of your choice (denoted as `<<your project folder>>` in the following statements)
 ```
 $ cd <<your project folder>>
-$ git clone git@github.com:OLSF/libra.git
+$ git clone git@github.com:0LNetworkCommunity/libra.git
 ```
 2. Install the Rust programming language and some tools.
 ```

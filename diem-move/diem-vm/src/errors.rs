@@ -190,7 +190,7 @@ pub fn expect_only_successful_execution(
             );
 
             //////// 0L ////////
-            // TODO: Improve error reporting for devs https://github.com/OLSF/libra/issues/760
+            // TODO: Improve error reporting for devs https://github.com/0LNetworkCommunity/libra/issues/760
             VMStatus::Error(StatusCode::UNEXPECTED_ERROR_FROM_KNOWN_MOVE_FUNCTION)
         }
     })

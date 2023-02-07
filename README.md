@@ -3,7 +3,7 @@
 A reference implementation of a neutral replicated state machine. Forked from the Libra/Diem technologies.
 # TL;DR
 
-#### Run *Carpe*  our desktop wallet and miner. [Anyone with a laptop can mine and make 0L Gas Coins. Download for Windows and Mac here.](https://github.com/OLSF/carpe)
+#### Run *Carpe*  our desktop wallet and miner. [Anyone with a laptop can mine and make 0L Gas Coins. Download for Windows and Mac here.](https://github.com/0LNetworkCommunity/carpe)
 
 #### Join a network with a [validator node](ol/documentation/node-ops/validators/validator_onboarding_easy_mode.md), to secure the state machine and earn transaction fees.
 
@@ -21,7 +21,7 @@ Read our documentation [here](ol/documentation/README.md).
 
 Skip straight to [toubleshooting onboarding a node to network.](ol/documentation/node-ops/validators/troubleshoting_onboarding.md)
 
-Contribute to [issues](https://github.com/OLSF/libra/issues).
+Contribute to [issues](https://github.com/0LNetworkCommunity/libra/issues).
 
 
 # 0L's Tech Stack
