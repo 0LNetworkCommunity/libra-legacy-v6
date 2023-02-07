@@ -42,6 +42,7 @@ GENESIS_REMOTE = 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_
 
 LOCAL = 'backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}'
 
+
 RELEASE_URL=https://github.com/${REPO_ORG}/libra/releases/download
 
 ifndef RELEASE
@@ -67,7 +68,7 @@ download: web-files
 		chmod 744 ${USER_BIN_PATH}/$$(echo $$b | rev | cut -d"/" -f1 | rev) ;\
 	done
 
-web-files: 
+web-files:
 	curl -L --progress-bar --create-dirs -o ${DATA_PATH}/web-monitor.tar.gz https://github.com/${REPO_ORG}/libra/releases/latest/download/web-monitor.tar.gz
 	mkdir ${DATA_PATH}/web-monitor | true
 	tar -xf ${DATA_PATH}/web-monitor.tar.gz --directory ${DATA_PATH}/web-monitor
