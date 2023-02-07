@@ -15,3 +15,4 @@ pub mod process_snapshot;
 pub mod read_snapshot;
 pub mod recover;
 pub mod swarm_genesis;
+pub mod exec_migration;
