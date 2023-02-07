@@ -3,13 +3,12 @@
 //! manually in rust, instead we execute functions in a Move session.
 
 #[cfg(test)]
-use diem_types::account_config;
 use diem_types::write_set::WriteSetMut;
 use language_e2e_tests::executor::FakeExecutor;
-use move_core_types::value::{MoveValue, serialize_values};
+use move_core_types::value::serialize_values;
 
 #[test]
-fn sanity_Check() {
+fn sanity_check() {
     let mut executor = FakeExecutor::from_fresh_genesis();    
     let output = executor.try_exec(
         "Debug",

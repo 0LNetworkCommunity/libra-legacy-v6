@@ -250,6 +250,7 @@ pub fn encode_recovery_genesis_changeset(
     let data_cache = StateViewCache::new(&state_view);
     let mut session = move_vm.new_session(&data_cache);
     publish_stdlib(&mut session, Modules::new(stdlib_modules.iter()));
+
     let (changeset2, events2) = session.finish().unwrap();
 
     changeset1.squash(changeset2).unwrap();
@@ -1068,4 +1069,31 @@ fn initialize_testnet(
         vec![],
         serialize_values(&vec![MoveValue::Signer(diem_root_address)]),
     );
+}
+
+//////// 0L ////////
+// for ol_genesis_tools testing, create a genesis with only stdlib modules
+pub fn test_helper_clean_genesis_modules_only() -> Result<ChangeSet, Error> {
+    let mut stdlib_modules = Vec::new();
+    // create a data view for move_vm
+    let mut state_view = GenesisStateView::new();
+    for module_bytes in current_module_blobs() {
+        let module = CompiledModule::deserialize(module_bytes).unwrap();
+        // state_view.add_module(&module.self_id(), &module_bytes);
+        stdlib_modules.push(module)
+    }
+    let data_cache = StateViewCache::new(&state_view);
+
+    let move_vm = MoveVM::new(diem_vm::natives::diem_natives()).unwrap();
+    let mut session = move_vm.new_session(&data_cache);
+
+    publish_stdlib(&mut session, Modules::new(stdlib_modules.iter()));
+    
+    let (mut changeset1, mut events1) = session.finish().unwrap();
+
+    let (write_set, events) = convert_changeset_and_events(changeset1, events1).unwrap();
+
+    assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
+    verify_genesis_write_set(&events);
+    Ok(ChangeSet::new(write_set, events))
 }
