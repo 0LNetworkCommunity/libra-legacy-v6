@@ -44,7 +44,7 @@ async fn test_parse_json_for_validators_and_save_blob() {
 
     make_recovery_genesis_from_vec_legacy_recovery(
       recovery,
-      vec![],
+      vec!["012345062CE76E68F1AC6D5506527AA1".parse().unwrap()],
       output_path.clone(), 
       false
     )

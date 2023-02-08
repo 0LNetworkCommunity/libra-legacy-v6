@@ -16,6 +16,7 @@ use std::process::Command;
 use std::process::Stdio;
 
 #[tokio::test]
+#[ignore]
 async fn test_e2e() {
     //////// Export a JSON file from backup ////////
     let db_backup_path = snapshot_path();

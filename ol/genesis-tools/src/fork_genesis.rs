@@ -51,6 +51,18 @@ pub fn make_recovery_genesis_from_vec_legacy_recovery(
     // get consensus accounts
     let all_validator_configs = recover_validator_configs(&recovery)?;
 
+    let count = all_validator_configs.vals
+    .iter()
+    .filter(
+      |v| {
+        genesis_vals.contains(&v.val_account)
+      }
+    )
+    .count();
+    if (count == 0) {
+      anyhow::bail!("no val configs found for genesis set");
+    }
+
     // we use the vm-genesis to properly migrate EVERY validator account.
     // then we select a subset which will be the validators of the first epoch.
     let genesis_changeset_with_validators = get_baseline_genesis_change_set(all_validator_configs, &genesis_vals)?;

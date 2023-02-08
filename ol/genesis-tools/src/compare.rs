@@ -1,4 +1,5 @@
 //! functions for comparing LegacyRecovery data to a genesis blob
+//! 
 //! every day is like sunday
 //! -- morrissey via github copilot
 
@@ -134,4 +135,42 @@ pub fn compare_json_to_genesis_blob(
 ) -> Result<Vec<CompareError>, anyhow::Error> {
     let recovery = recover::read_from_recovery_file(&json_path);
     compare_recovery_vec_to_genesis_blob(recovery, genesis_path)
+}
+
+
+/// Check that the genesis validators are present in the genesis blob file, once we read the db.
+
+pub fn check_val_set(
+  expected_vals: Vec<AccountAddress>,
+  genesis_path: PathBuf,
+) -> Result<(), anyhow::Error>{
+      let (db_rw, _) = db_utils::read_db_and_compute_genesis(genesis_path)?;
+
+      let root_blob = db_rw
+      .reader
+      .get_latest_account_state(AccountAddress::ZERO)?
+      .expect("no account state blob");
+
+      let root_state = AccountState::try_from(&root_blob)?;
+
+      let val_set = root_state.get_validator_set()?
+      .expect("no validator config state");
+
+      let addrs = val_set.payload()
+      .iter()
+      .map(|v| {
+        dbg!(&v);
+        *v.account_address()
+      })
+      .collect::<Vec<AccountAddress>>();
+
+      assert!(addrs.len() == expected_vals.len(), "validator set length mismatch");
+
+      for v in expected_vals {
+        dbg!(&v);
+        assert!(addrs.contains(&v), "genesis does not contain validator");
+      }
+
+      Ok(())
+
 }

@@ -12,6 +12,7 @@ use support::path_utils::json_path;
 // test that a genesis blob created from struct, will actually contain the data
 fn test_make_genesis() {
     // let recovery_json_path = json_path();
+    let genesis_vals = vec!["ADCB1D42A46292AE89E938BD982F2867".parse().unwrap()];
 
     let json = json_path().parent().unwrap().join("single_json_entry.json");
 
@@ -24,7 +25,7 @@ fn test_make_genesis() {
 
     make_recovery_genesis_from_vec_legacy_recovery(
       user_accounts,
-      vec![],
+      genesis_vals.clone(),
       temp_genesis_blob_path.clone(), 
       true,
       // TODO: add validators
@@ -37,6 +38,9 @@ fn test_make_genesis() {
 
     dbg!(&list);
     assert!(list.expect("no list").len() == 0, "list is not empty");
+    
+    compare::check_val_set(genesis_vals, temp_genesis_blob_path.clone()).unwrap();
+
     fs::remove_file(temp_genesis_blob_path).unwrap();
 }
 
