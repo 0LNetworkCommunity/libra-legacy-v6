@@ -197,7 +197,7 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
 }
 
 /// Make recovery file in format needed
-pub fn recover_consensus_accounts(
+pub fn recover_validator_configs(
     recover: &Vec<LegacyRecovery>,
 ) -> Result<RecoverConsensusAccounts, Error> {
     use AccountRole::*;

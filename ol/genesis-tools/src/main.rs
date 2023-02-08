@@ -1,4 +1,5 @@
 use anyhow::Result;
+use diem_types::account_address::AccountAddress;
 use std::{path::PathBuf, process::exit};
 
 use gumdrop::Options;
@@ -17,6 +18,9 @@ use ol_genesis_tools::{
 async fn main() -> Result<()> {
     #[derive(Debug, Options)]
     struct Args {
+        #[options(help = "path to snapshot dir to read", short="v")]
+        genesis_vals: Vec<AccountAddress>,
+
         #[options(help = "path to snapshot dir to read")]
         snapshot_path: Option<PathBuf>,
 
@@ -72,6 +76,7 @@ async fn main() -> Result<()> {
                 snapshot_path,
                 !opts.debug,
                 opts.legacy,
+                opts.genesis_vals
             )
             .await
             .expect("ERROR: could not create genesis from snapshot");
@@ -86,7 +91,12 @@ async fn main() -> Result<()> {
                 panic!("ERROR: recovery_json_path does not exist");
             }
             let recovery = read_from_recovery_file(&recovery_json_path);
-            make_recovery_genesis_from_vec_legacy_recovery(recovery, output_path, opts.legacy)
+            make_recovery_genesis_from_vec_legacy_recovery(
+              recovery,
+              vec![],
+              output_path, 
+              opts.legacy
+            )
                 .expect("ERROR: failed to create genesis from recovery file");
             return Ok(());
         } else {

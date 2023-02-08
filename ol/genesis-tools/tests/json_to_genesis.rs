@@ -21,7 +21,12 @@ async fn test_parse_json_for_all_users_and_save_blob() {
     let len = recovery.len();
     dbg!(&len);
 
-    make_recovery_genesis_from_vec_legacy_recovery(recovery, output_path.clone(), true)
+    make_recovery_genesis_from_vec_legacy_recovery(
+      recovery,
+      vec![],
+      output_path.clone(), 
+      true
+    )
         .expect("ERROR: failed to create genesis from recovery file");
 
     assert!(output_path.exists(), "file not created");
@@ -37,7 +42,12 @@ async fn test_parse_json_for_validators_and_save_blob() {
 
     let recovery = read_from_recovery_file(&recovery_json_path);
 
-    make_recovery_genesis_from_vec_legacy_recovery(recovery, output_path.clone(), false)
+    make_recovery_genesis_from_vec_legacy_recovery(
+      recovery,
+      vec![],
+      output_path.clone(), 
+      false
+    )
         .expect("ERROR: failed to create genesis from recovery file");
 
     assert!(output_path.exists(), "file not created");

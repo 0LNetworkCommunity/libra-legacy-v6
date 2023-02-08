@@ -16,13 +16,19 @@ fn test_make_genesis() {
     let json = json_path().parent().unwrap().join("single_json_entry.json");
 
     let json_str = fs::read_to_string(json.clone()).unwrap();
-    let mock_val: Vec<LegacyRecovery> = serde_json::from_str(&json_str).unwrap();
+    let user_accounts: Vec<LegacyRecovery> = serde_json::from_str(&json_str).unwrap();
 
     // dbg!(&mock_val);
 
     let temp_genesis_blob_path = json_path().parent().unwrap().join("fork_genesis.blob");
 
-    make_recovery_genesis_from_vec_legacy_recovery(mock_val, temp_genesis_blob_path.clone(), true)
+    make_recovery_genesis_from_vec_legacy_recovery(
+      user_accounts,
+      vec![],
+      temp_genesis_blob_path.clone(), 
+      true,
+      // TODO: add validators
+    )
         .unwrap();
 
     assert!(temp_genesis_blob_path.exists(), "file not created");

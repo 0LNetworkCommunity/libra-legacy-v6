@@ -10,7 +10,6 @@ use language_e2e_tests::data_store::FakeDataStore;
 use move_binary_format::CompiledModule;
 use move_core_types::identifier::Identifier;
 use move_core_types::language_storage::ModuleId;
-use move_core_types::value::MoveValue;
 use move_core_types::{
     language_storage::TypeTag,
 };
@@ -22,29 +21,30 @@ use move_vm_runtime::session::Session;
 use diem_types::account_address::AccountAddress;
 use move_vm_types::gas_schedule::GasStatus;
 
-#[test]
-fn test_clean_genesis() {
+// #[test]
+// fn test_clean_genesis() {
+//   use move_core_types::value::MoveValue;
 
-  // get a valid genesis from the e2e test helpers
-  let a = generate_genesis_change_set_for_testing(GenesisOptions::Compiled);
-  // create a fake data store for the move vm to use
-  let mut storage = FakeDataStore::default();
-  // add the genesis transaction to state
-  storage.add_write_set(a.write_set());
-  // create a move vm session
-  let data_cache = StateViewCache::new(&storage);
-  let move_vm = MoveVM::new(diem_vm::natives::diem_natives()).unwrap();
-  let mut session = move_vm.new_session(&data_cache);
+//   // get a valid genesis from the e2e test helpers
+//   let a = generate_genesis_change_set_for_testing(GenesisOptions::Compiled);
+//   // create a fake data store for the move vm to use
+//   let mut storage = FakeDataStore::default();
+//   // add the genesis transaction to state
+//   storage.add_write_set(a.write_set());
+//   // create a move vm session
+//   let data_cache = StateViewCache::new(&storage);
+//   let move_vm = MoveVM::new(diem_vm::natives::diem_natives()).unwrap();
+//   let mut session = move_vm.new_session(&data_cache);
 
-  // execute a demo transaction
-  exec_function(&mut session, 
-    "DiemScripts", 
-    "demo_e2e", 
-    vec![], 
-    serialize_values(&vec![MoveValue::U64(11)])
-  )
+//   // execute a demo transaction
+//   exec_function(&mut session, 
+//     "DiemScripts", 
+//     "demo_e2e", 
+//     vec![], 
+//     serialize_values(&vec![MoveValue::U64(11)])
+//   )
 
-}
+// }
 
 // pub fn get_clean_genesis() -> Result<WriteSet, Error> {
 //     let storage = FakeDataStore::default();

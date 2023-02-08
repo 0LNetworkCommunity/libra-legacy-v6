@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use crate::process_snapshot::{db_backup_into_recovery_struct, merge_writeset};
 use crate::recover::{
-    recover_consensus_accounts, AccountRole, LegacyRecovery, RecoverConsensusAccounts,
+    recover_validator_configs, AccountRole, LegacyRecovery, RecoverConsensusAccounts,
 };
 use anyhow::{bail, Error};
 use diem_types::access_path::AccessPath;
@@ -28,44 +28,48 @@ pub async fn make_recovery_genesis_from_db_backup(
     archive_path: PathBuf,
     append: bool,
     is_legacy: bool,
+    genesis_vals: Vec<AccountAddress>,
 ) -> Result<(), Error> {
     // get the legacy data from archive
     let recovery = db_backup_into_recovery_struct(&archive_path, is_legacy).await?;
 
-    make_recovery_genesis_from_vec_legacy_recovery(recovery, genesis_blob_path, append)
+    make_recovery_genesis_from_vec_legacy_recovery(
+      recovery, 
+      genesis_vals,
+      genesis_blob_path, 
+      append
+    )
 }
 
 /// Make a recovery genesis blob
 pub fn make_recovery_genesis_from_vec_legacy_recovery(
     recovery: Vec<LegacyRecovery>,
+    genesis_vals: Vec<AccountAddress>,
     genesis_blob_path: PathBuf,
     append_user_accounts: bool,
 ) -> Result<(), Error> {
-    //TODO: have option to "swarmify" this so that the authkey and network addresses.
-
     // get consensus accounts
-    let genesis_accounts = recover_consensus_accounts(&recovery)?;
-    // create baseline genesis
-    // TODO: for testing letting all validators be in genesis set.
-    let validator_set: Vec<AccountAddress> = genesis_accounts
-        .vals
-        .clone()
-        .into_iter()
-        .map(|a| return a.val_account)
-        .collect();
+    let all_validator_configs = recover_validator_configs(&recovery)?;
 
-    let cs_validators_only = get_baseline_genesis_change_set(genesis_accounts, &validator_set)?;
+    // we use the vm-genesis to properly migrate EVERY validator account.
+    // then we select a subset which will be the validators of the first epoch.
+    let genesis_changeset_with_validators = get_baseline_genesis_change_set(all_validator_configs, &genesis_vals)?;
 
     // For a real upgrade or fork, we want to include all user accounts.
     // this is the default.
     // Otherwise, we might need to just collect the validator accounts
     // for debugging or other test purposes.
     let expected_len_all_users = recovery.len() as u64;
+
     let gen_tx = if append_user_accounts {
         // append further writeset to genesis
-        append_genesis(cs_validators_only, recovery, expected_len_all_users)?
+        append_genesis(
+          genesis_changeset_with_validators,
+          recovery,
+          expected_len_all_users
+        )?
     } else {
-        Transaction::GenesisTransaction(WriteSetPayload::Direct(cs_validators_only))
+        Transaction::GenesisTransaction(WriteSetPayload::Direct(genesis_changeset_with_validators))
     };
     // save genesis
     save_genesis(gen_tx, genesis_blob_path)
