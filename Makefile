@@ -500,6 +500,15 @@ testnet-genesis: genesis set-waypoint
 	--publish-genesis ${DATA_PATH}/genesis_waypoint.txt \
 	--shared-backend ${GENESIS_REMOTE}
 
+testnet-genesis-noway: genesis
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--publish-genesis ${DATA_PATH}/genesis.blob \
+	--shared-backend ${GENESIS_REMOTE}
+
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
+	--publish-genesis ${DATA_PATH}/genesis_waypoint.txt \
+	--shared-backend ${GENESIS_REMOTE}
+
 #### 2. TESTNET START ####
 
 # Do this to restart the network with new code. Assumes a registration has been completed, and the genesis validators are unchanged. If new IP addresses or number of genesis nodes changed, you must RERUN SETUP below.
