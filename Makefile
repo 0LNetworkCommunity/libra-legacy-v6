@@ -500,14 +500,6 @@ testnet-genesis: genesis set-waypoint
 	--publish-genesis ${DATA_PATH}/genesis_waypoint.txt \
 	--shared-backend ${GENESIS_REMOTE}
 
-testnet-genesis-noway: genesis
-	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
-	--publish-genesis ${DATA_PATH}/genesis.blob \
-	--shared-backend ${GENESIS_REMOTE}
-
-	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
-	--publish-genesis ${DATA_PATH}/genesis_waypoint.txt \
-	--shared-backend ${GENESIS_REMOTE}
 
 #### 2. TESTNET START ####
 
