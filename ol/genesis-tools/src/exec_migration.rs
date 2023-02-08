@@ -15,7 +15,7 @@ use move_core_types::{
 pub fn start_vm_and_transform(
     genesis_baseline: &WriteSet,
     subset_of_legacy_accounts: Vec<LegacyRecovery>,
-    user_signs: bool, // otherwise the writeset is signed by the diem root
+    _user_signs: bool, // otherwise the writeset is signed by the diem root
     module_name: &str,
     function_name: &str,
     type_params: Option<Vec<TypeTag>>,
