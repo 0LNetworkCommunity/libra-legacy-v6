@@ -6566,6 +6566,7 @@ dependencies = [
  "backup-cli",
  "backup-service",
  "bcs",
+ "diem-config",
  "diem-crypto",
  "diem-framework-releases",
  "diem-genesis-tool",

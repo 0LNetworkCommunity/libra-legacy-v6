@@ -29,7 +29,7 @@ pub async fn make_recovery_genesis_from_db_backup(
     append: bool,
     is_legacy: bool,
     genesis_vals: Vec<AccountAddress>,
-) -> Result<(), Error> {
+) -> Result<Transaction, Error> {
     // get the legacy data from archive
     let recovery = db_backup_into_recovery_struct(&archive_path, is_legacy).await?;
 
@@ -47,7 +47,7 @@ pub fn make_recovery_genesis_from_vec_legacy_recovery(
     genesis_vals: Vec<AccountAddress>,
     genesis_blob_path: PathBuf,
     append_user_accounts: bool,
-) -> Result<(), Error> {
+) -> Result<Transaction, Error> {
     // get consensus accounts
     let all_validator_configs = recover_validator_configs(&recovery)?;
 
@@ -84,7 +84,9 @@ pub fn make_recovery_genesis_from_vec_legacy_recovery(
         Transaction::GenesisTransaction(WriteSetPayload::Direct(genesis_changeset_with_validators))
     };
     // save genesis
-    save_genesis(gen_tx, genesis_blob_path)
+    save_genesis(&gen_tx, genesis_blob_path);
+
+    Ok(gen_tx)
 }
 
 /// Get the minimal viable genesis from consensus accounts.
@@ -267,7 +269,7 @@ pub fn total_coin_value_restore(
 }
 
 /// save the genesis blob
-pub fn save_genesis(gen_tx: Transaction, output_path: PathBuf) -> Result<(), Error> {
+pub fn save_genesis(gen_tx: &Transaction, output_path: PathBuf) -> Result<(), Error> {
     let mut file = File::create(output_path)?;
     let bytes = bcs::to_bytes(&gen_tx)?;
     file.write_all(&bytes)?;
