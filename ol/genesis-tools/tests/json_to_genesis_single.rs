@@ -10,9 +10,9 @@ use support::path_utils::json_path;
 
 #[test]
 // test that a genesis blob created from struct, will actually contain the data
-fn test_make_genesis() {
-    // let recovery_json_path = json_path();
-    let genesis_vals = vec!["ADCB1D42A46292AE89E938BD982F2867".parse().unwrap()];
+fn test_parse_json_for_one_validator_and_save_blob() {
+
+  let genesis_vals = vec!["ADCB1D42A46292AE89E938BD982F2867".parse().unwrap()];
 
     let json = json_path().parent().unwrap().join("single_json_entry.json");
 

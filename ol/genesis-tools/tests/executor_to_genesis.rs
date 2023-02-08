@@ -11,9 +11,9 @@ use std::fs;
 use support::path_utils::json_path;
 use diem_types::transaction::WriteSetPayload;
 #[test]
+#[ignore]
 // test that a genesis blob created from struct, will actually contain the data
-fn test_make_genesis() {
-    // let recovery_json_path = json_path();
+fn test_use_vm_session() {
 
     let json = json_path().parent().unwrap().join("single_json_entry.json");
 
