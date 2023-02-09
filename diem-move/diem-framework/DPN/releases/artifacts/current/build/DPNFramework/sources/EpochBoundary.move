@@ -20,7 +20,7 @@ module EpochBoundary {
     use DiemFramework::AutoPay;
     use DiemFramework::Epoch;
     use DiemFramework::DiemConfig;
-    // use DiemFramework::Audit;
+    use DiemFramework::Audit;
     use DiemFramework::DiemAccount;
     // use DiemFramework::Burn;
     use DiemFramework::FullnodeSubsidy;
@@ -30,7 +30,7 @@ module EpochBoundary {
     // use DiemFramework::StagingNet;    
     use DiemFramework::RecoveryMode;
     // use DiemFramework::Cases;
-    // use DiemFramework::Jail;
+    use DiemFramework::Jail;
     // use DiemFramework::Vouch;
 
     //// V6 ////
@@ -138,27 +138,29 @@ module EpochBoundary {
         Subsidy::process_fees(vm, outgoing_compliant_set);
     }
 
-    // fun process_jail() {
-    //     let i = 0;
-    //     while (i < Vector::length<address>(&previous_set)) {
-    //         let addr = *Vector::borrow(&previous_set, i);
-    //         let case = Cases::get_case(vm, addr, height_start, height_now);
-
-    //         if (
-    //           // we care about nodes that are performing consensus correctly, case 1 and 2.
-    //           case < 3 &&
-    //           Audit::val_audit_passing(addr)
-    //         ) {
-    //             len_proven_nodes = len_proven_nodes + 1;
-    //             // also reset the jail counter for any successful unjails
-    //             Jail::remove_consecutive_fail(vm, addr);
-    //         } else {
+    fun process_jail(vm: &signer, outgoing_compliant_set: &vector<address>) {
+        let all_previous_vals = DiemSystem::get_val_set_addr();
+        let i = 0;
+        while (i < Vector::length<address>(&all_previous_vals)) {
+            let addr = *Vector::borrow(&all_previous_vals, i);
+            // let case = Cases::get_case(vm, addr, height_start, height_now);
+            
+            // TODO: Cases will be deprecated with removal of Proof of Height
+            if (
+              // if they are compliant, remove the consecutive fail, otherwise jail
+              Audit::val_audit_passing(addr) &&
+              Vector::contains(outgoing_compliant_set, &addr)
+            ) {
+                // len_proven_nodes = len_proven_nodes + 1;
+                // also reset the jail counter for any successful unjails
+                Jail::remove_consecutive_fail(vm, addr);
+            } else {
               
-    //           Jail::jail(vm, addr);
-    //         };
-    //         i = i+ 1;
-    //     };
-    // }
+              Jail::jail(vm, addr);
+            };
+            i = i+ 1;
+        };
+    }
 
     fun propose_new_set(vm: &signer, outgoing_compliant_set: &vector<address>): vector<address> 
     {
@@ -234,59 +236,12 @@ module EpochBoundary {
         
         print(&800900105);
         RecoveryMode::maybe_remove_debug_at_epoch(vm);
-        // Reconfig should be the last event.
-        // Reconfigure the network
         print(&800900106);
 
+        // Reconfig should be the last event.
+        // Reconfigure the network
         DiemSystem::bulk_update_validators(vm, proposed_set);
         print(&800900107);
     }
-
-    // // NOTE: this was previously in propose_new_set since it used the same loop.
-    // // copied implementation from Teams proposal.
-    // fun elect_validators(
-    //   vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector<address>
-    // ) {
-    //     print(&800800100);
-    //     CoreAddresses::assert_vm(vm);
-    //     DiemAccount::migrate_cumu_deposits(vm); // may need to populate data on a migration.
-    //     print(&800800101);
-    //     Burn::reset_ratios(vm);
-    //     print(&800800102);
-    //     // 50% of the current per validator reward
-    //     let burn_value = nominal_subsidy_per / 2;
-    //     print(&800800103);
-    //     let vals_to_burn = if (
-    //       !Testnet::is_testnet() &&
-    //       !StagingNet::is_staging_net() &&
-    //       DiemConfig::get_current_epoch() > 290 && 
-    //       // bump up to epoch 290 so people can discuss.
-    //       // only implement this burn at a steady state with 90/100 validator
-    //       // positions full. Will make the burn amount much smaller over time.
-    //       Vector::length<address>(proposed_set) > 90
-    //     ) {
-    //       print(&800800104);
-    //       //// V6 ////
-    //       // CONSENSUS CRITICAL
-    //       // pick the top N bidders in proof of fee.
-    //       &ValidatorUniverse::get_eligible_validators()
-    //     } else {
-    //       print(&800800105);
-    //       proposed_set
-    //     };
-    //     print(&800800106);
-    //     print(vals_to_burn);
-    //     let i = 0;
-    //     while (i < Vector::length<address>(vals_to_burn)) {
-    //       let addr = *Vector::borrow(vals_to_burn, i);
-    //       print(&addr);
-    //       print(&burn_value);
-
-
-    //       Burn::epoch_start_burn(vm, addr, burn_value);
-    //       i = i + 1;
-    //     };
-    //     print(&800800107);
-    // }
 }
 }

@@ -9,11 +9,13 @@
 -  [Function `reconfigure`](#0x1_EpochBoundary_reconfigure)
 -  [Function `process_fullnodes`](#0x1_EpochBoundary_process_fullnodes)
 -  [Function `process_validators`](#0x1_EpochBoundary_process_validators)
+-  [Function `process_jail`](#0x1_EpochBoundary_process_jail)
 -  [Function `propose_new_set`](#0x1_EpochBoundary_propose_new_set)
 -  [Function `reset_counters`](#0x1_EpochBoundary_reset_counters)
 
 
-<pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
+<pre><code><b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
+<b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
@@ -23,6 +25,7 @@
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
+<b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
 <b>use</b> <a href="ProofOfFee.md#0x1_ProofOfFee">0x1::ProofOfFee</a>;
 <b>use</b> <a href="RecoveryMode.md#0x1_RecoveryMode">0x1::RecoveryMode</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
@@ -210,6 +213,50 @@
 
 </details>
 
+<a name="0x1_EpochBoundary_process_jail"></a>
+
+## Function `process_jail`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_jail">process_jail</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_jail">process_jail</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;) {
+    <b>let</b> all_previous_vals = <a href="DiemSystem.md#0x1_DiemSystem_get_val_set_addr">DiemSystem::get_val_set_addr</a>();
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&all_previous_vals)) {
+        <b>let</b> addr = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&all_previous_vals, i);
+        // <b>let</b> case = <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_now);
+
+        // TODO: <a href="Cases.md#0x1_Cases">Cases</a> will be deprecated <b>with</b> removal of Proof of Height
+        <b>if</b> (
+          // <b>if</b> they are compliant, remove the consecutive fail, otherwise jail
+          <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr) &&
+          <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(outgoing_compliant_set, &addr)
+        ) {
+            // len_proven_nodes = len_proven_nodes + 1;
+            // also reset the jail counter for any successful unjails
+            <a href="Jail.md#0x1_Jail_remove_consecutive_fail">Jail::remove_consecutive_fail</a>(vm, addr);
+        } <b>else</b> {
+
+          <a href="Jail.md#0x1_Jail_jail">Jail::jail</a>(vm, addr);
+        };
+        i = i+ 1;
+    };
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_EpochBoundary_propose_new_set"></a>
 
 ## Function `propose_new_set`
@@ -319,10 +366,10 @@
 
     print(&800900105);
     <a href="RecoveryMode.md#0x1_RecoveryMode_maybe_remove_debug_at_epoch">RecoveryMode::maybe_remove_debug_at_epoch</a>(vm);
-    // Reconfig should be the last event.
-    // Reconfigure the network
     print(&800900106);
 
+    // Reconfig should be the last event.
+    // Reconfigure the network
     <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
     print(&800900107);
 }
