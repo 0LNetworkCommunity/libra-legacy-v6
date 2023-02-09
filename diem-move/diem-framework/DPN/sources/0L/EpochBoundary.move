@@ -71,11 +71,11 @@ module EpochBoundary {
         //// V6 ////
         // CONSENSUS CRITICAL
         // pick the validators based on proof of fee.
-        let (proposed_set, _price) = ProofOfFee::fill_seats_and_get_price(MOCK_VAL_SIZE, copy outgoing_compliant_set);
+        let (proposed_set, price) = ProofOfFee::fill_seats_and_get_price(MOCK_VAL_SIZE, copy outgoing_compliant_set);
         // TODO: Don't use copy above, do a borrow.
 
         // charge the validators for the proof of fee in advance of the epoch
-        // ProofOfFee::pay_fee(vm, &proposed_set, price);
+        ProofOfFee::all_vals_pay_entry(vm, &proposed_set, price);
 
         print(&800700);
         // Update all slow wallet limits

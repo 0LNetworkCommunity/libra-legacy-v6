@@ -172,13 +172,28 @@ address DiemFramework {
       return (seats_to_fill, lowest_bid)
     }
 
+    // all upcoming validators pay PoF fee in advance.
+    public fun all_vals_pay_entry(vm: &signer, vals: &vector<address>, fee: u64) {
+
+      let i = 0u64;
+      while (i < Vector::length(vals)) {
+        let val = Vector::borrow(vals, i);
+        pay_one_fee(vm, *val, fee);
+        i = i + 1;
+      };
+    }
+
     // validator pays the fee
     fun pay_one_fee(vm: &signer, addr: address, fee: u64) {
       // TODO: don't use ASSERT! just exit
-      // CoreAddresses::assert_diem_root(vm);
+      if (Signer::address_of(vm) != @VMReserved) {
+        return
+      };
 
-      // assert!(DiemSystem::is_validator(acc), Errors::requires_role(190001));
-      // assert!(exists<ProofOfFeeAuction>(acc), Errors::not_published(190001));
+      if (!exists<ProofOfFeeAuction>(addr)) {
+        return
+      };
+
       DiemAccount::vm_pay_user_fee(vm, addr, fee, b"Proof of Fee");
     }
 
