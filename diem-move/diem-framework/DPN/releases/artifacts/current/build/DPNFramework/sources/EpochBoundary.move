@@ -245,6 +245,7 @@ module EpochBoundary {
         print(&800900104);
 
         Epoch::reset_timer(vm, height_now);
+        
         print(&800900105);
 
         RecoveryMode::maybe_remove_debug_at_epoch(vm);
