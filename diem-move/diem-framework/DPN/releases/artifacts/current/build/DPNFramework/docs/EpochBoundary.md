@@ -92,11 +92,11 @@
     //// V6 ////
     // CONSENSUS CRITICAL
     // pick the validators based on proof of fee.
-    <b>let</b> (proposed_set, _price) = <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">ProofOfFee::fill_seats_and_get_price</a>(<a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_VAL_SIZE">MOCK_VAL_SIZE</a>, <b>copy</b> outgoing_compliant_set);
+    <b>let</b> (proposed_set, price) = <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">ProofOfFee::fill_seats_and_get_price</a>(<a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_VAL_SIZE">MOCK_VAL_SIZE</a>, <b>copy</b> outgoing_compliant_set);
     // TODO: Don't <b>use</b> <b>copy</b> above, do a borrow.
 
     // charge the validators for the proof of fee in advance of the epoch
-    // ProofOfFee::pay_fee(vm, &proposed_set, price);
+    <a href="ProofOfFee.md#0x1_ProofOfFee_all_vals_pay_entry">ProofOfFee::all_vals_pay_entry</a>(vm, &proposed_set, price);
 
     print(&800700);
     // Update all slow wallet limits
