@@ -19,6 +19,7 @@ address DiemFramework {
     use DiemFramework::Jail;
     use DiemFramework::DiemAccount;
     use DiemFramework::Debug::print;
+    use DiemFramework::Vouch;
 
     // A struct on the validators account which indicates their
     // latest bid (and epoch)
@@ -165,6 +166,8 @@ address DiemFramework {
         // NOTE: epoch reconfigure needs to reset the jail
         // before calling the proof of fee.
         if (Jail::is_jailed(*val)) continue;
+
+        if (!Vouch::unrelated_buddies_above_thresh(*val)) continue;
 
         // check if a proven node
         if (Vector::contains(proven_nodes, val)) {
