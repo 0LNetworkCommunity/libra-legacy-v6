@@ -18,6 +18,7 @@ address DiemFramework {
     use Std::Vector;
     use DiemFramework::Jail;
     use DiemFramework::DiemAccount;
+    use DiemFramework::Debug::print;
 
     // A struct on the validators account which indicates their
     // latest bid (and epoch)
@@ -144,14 +145,21 @@ address DiemFramework {
     // TODO: need to filter by Vouches
     public fun fill_seats_and_get_price(set_size: u64, proven_nodes: &vector<address>): (vector<address>, u64) acquires ProofOfFeeAuction {
       let seats_to_fill = Vector::empty<address>();
+      // print(&set_size);
       let max_unproven = set_size / 3;
 
       let num_unproven_added = 0;
 
       let sorted_vals_by_bid = get_sorted_vals();
 
+      // print(&sorted_vals_by_bid);
+
       let i = 0u64;
-      while (i < set_size) {
+      while (
+        (i < set_size) && 
+        (i < Vector::length(&sorted_vals_by_bid))
+      ) {
+        // print(&i);
         let val = Vector::borrow(&sorted_vals_by_bid, i);
         // fail fast if the validator is jailed.
         // NOTE: epoch reconfigure needs to reset the jail
@@ -160,20 +168,26 @@ address DiemFramework {
 
         // check if a proven node
         if (Vector::contains(proven_nodes, val)) {
+          // print(&01);
           Vector::push_back(&mut seats_to_fill, *val);
         } else {
+          // print(&02);
           // for unproven nodes, push it to list if we haven't hit limit
           if (num_unproven_added < max_unproven ) {
+            // print(&03);
             Vector::push_back(&mut seats_to_fill, *val);
           };
+          // print(&04);
           num_unproven_added = num_unproven_added + 1;
         };
         i = i + 1;
       };
+      // print(&05);
+      print(&seats_to_fill);
 
-      let lowest_bidder = Vector::borrow(&seats_to_fill, i);
+      let lowest_bidder = Vector::borrow(&seats_to_fill, Vector::length(&seats_to_fill) - 1);
+
       let lowest_bid = current_bid(*lowest_bidder);
-
       return (seats_to_fill, lowest_bid)
     }
 

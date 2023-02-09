@@ -215,26 +215,26 @@ module EpochBoundary {
         outgoing_compliant: vector<address>,
         height_now: u64
     ) {
-
-      // TODO: where to place the Jail reputation reset
-      // Jail::remove_consecutive_fail(vm, addr);
-
         print(&800900100);
+        
         // Reset Stats
         Stats::reconfig(vm, &proposed_set);
         print(&800900101);
+
         // Migrate TowerState list from elegible.
         TowerState::reconfig(vm, &outgoing_compliant);
         print(&800900102);
+
         // process community wallets
         DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
         print(&800900103);
-        // reset counters
+
         AutoPay::reconfig_reset_tick(vm);
         print(&800900104);
+
         Epoch::reset_timer(vm, height_now);
-        
         print(&800900105);
+
         RecoveryMode::maybe_remove_debug_at_epoch(vm);
         print(&800900106);
 
