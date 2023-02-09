@@ -17,7 +17,7 @@ address DiemFramework {
     use DiemFramework::ValidatorUniverse;
     use Std::Vector;
     use DiemFramework::Jail;
-    use DiemFramework::DiemAccount;
+    // use DiemFramework::DiemAccount;
     use DiemFramework::Debug::print;
     use DiemFramework::Vouch;
 
@@ -45,7 +45,9 @@ address DiemFramework {
     // validator can set a bid. See transaction script below.
     public fun set_bid(account_sig: &signer, bid: u64) acquires ProofOfFeeAuction {
       let acc = Signer::address_of(account_sig);
-      assert!(exists<ProofOfFeeAuction>(acc), Errors::not_published(190001));
+      if (!exists<ProofOfFeeAuction>(acc)) {
+        init(account_sig);
+      };
       let pof = borrow_global_mut<ProofOfFeeAuction>(acc);
       pof.epoch = DiemConfig::get_current_epoch();
       pof.bid = bid;
@@ -194,30 +196,7 @@ address DiemFramework {
       return (seats_to_fill, lowest_bid)
     }
 
-    // all upcoming validators pay PoF fee in advance.
-    public fun all_vals_pay_entry(vm: &signer, vals: &vector<address>, fee: u64) {
 
-      let i = 0u64;
-      while (i < Vector::length(vals)) {
-        let val = Vector::borrow(vals, i);
-        pay_one_fee(vm, *val, fee);
-        i = i + 1;
-      };
-    }
-
-    // validator pays the fee
-    fun pay_one_fee(vm: &signer, addr: address, fee: u64) {
-      // TODO: don't use ASSERT! just exit
-      if (Signer::address_of(vm) != @VMReserved) {
-        return
-      };
-
-      if (!exists<ProofOfFeeAuction>(addr)) {
-        return
-      };
-
-      DiemAccount::vm_pay_user_fee(vm, addr, fee, b"Proof of Fee");
-    }
 
 
     ////////// TRANSACTION APIS //////////

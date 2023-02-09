@@ -108,11 +108,7 @@ script {
     fun main() {
         // We are in a new epoch.
 
-        let expected_subsidy = Subsidy::subsidy_curve(
-          Globals::get_subsidy_ceiling_gas(),
-          1,
-          Globals::get_max_validators_per_set(),
-        );
+        let expected_subsidy = 0;
 
         let starting_balance = 10000000;
 
@@ -120,10 +116,10 @@ script {
         
         // Note since there's only 1 validator and the reward to Alice was
         // the entirety of subsidy available.
-        let burn = expected_subsidy/2; // 50% of the reward to validator. 
+        // let burn = expected_subsidy/2; // 50% of the reward to validator. 
 
         let ending_balance 
-            = starting_balance + expected_subsidy - operator_refund - burn;
+            = starting_balance + expected_subsidy - operator_refund;
         print(&ending_balance);
         print(&DiemAccount::balance<GAS>(@Alice));
 

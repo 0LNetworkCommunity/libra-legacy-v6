@@ -55,6 +55,7 @@ module DiemFramework::DiemAccount {
     use DiemFramework::Debug::print;
     use DiemFramework::Jail;
     use DiemFramework::Testnet;
+    use DiemFramework::ProofOfFee;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -685,6 +686,7 @@ module DiemFramework::DiemAccount {
         Ancestry::init(sender, &new_signer);
         Vouch::init(&new_signer);
         Vouch::vouch_for(sender, new_account_address);
+        ProofOfFee::set_bid(&new_signer, 1);
         set_slow(&new_signer);
 
         new_account_address
@@ -3557,6 +3559,22 @@ module DiemFramework::DiemAccount {
         /// not all accounts will have this enabled.
         value: u64,
         index: u64, 
+    }
+
+    //////// 0L ////////
+    // Blockchain Fee helpers
+    // used for example in making all upcoming validators pay PoF fee in advance.
+    public fun vm_multi_pay_fee(vm: &signer, vals: &vector<address>, fee: u64, metadata: &vector<u8>) acquires DiemAccount, AccountOperationsCapability, Balance {
+      if (Signer::address_of(vm) != @VMReserved) {
+        return
+      };
+
+      let i = 0u64;
+      while (i < Vector::length(vals)) {
+        let val = Vector::borrow(vals, i);
+        vm_pay_user_fee(vm, *val, fee, *metadata);
+        i = i + 1;
+      };
     }
 
     //////// 0L ////////

@@ -291,7 +291,7 @@
         print(&800700);
 
         // charge the validators for the proof of fee in advance of the epoch
-        <a href="ProofOfFee.md#0x1_ProofOfFee_all_vals_pay_entry">ProofOfFee::all_vals_pay_entry</a>(vm, &auction_winners, price);
+        <a href="DiemAccount.md#0x1_DiemAccount_vm_multi_pay_fee">DiemAccount::vm_multi_pay_fee</a>(vm, &auction_winners, price, &b"proof of fee");
         print(&800800);
 
         proposed_set = auction_winners
