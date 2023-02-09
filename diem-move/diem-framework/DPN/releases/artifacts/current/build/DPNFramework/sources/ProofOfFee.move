@@ -17,7 +17,9 @@ address DiemFramework {
     use DiemFramework::ValidatorUniverse;
     use Std::Vector;
     use DiemFramework::Jail;
-    use DiemFramework::DiemAccount;
+    // use DiemFramework::DiemAccount;
+    use DiemFramework::Debug::print;
+    use DiemFramework::Vouch;
 
     // A struct on the validators account which indicates their
     // latest bid (and epoch)
@@ -43,7 +45,9 @@ address DiemFramework {
     // validator can set a bid. See transaction script below.
     public fun set_bid(account_sig: &signer, bid: u64) acquires ProofOfFeeAuction {
       let acc = Signer::address_of(account_sig);
-      assert!(exists<ProofOfFeeAuction>(acc), Errors::not_published(190001));
+      if (!exists<ProofOfFeeAuction>(acc)) {
+        init(account_sig);
+      };
       let pof = borrow_global_mut<ProofOfFeeAuction>(acc);
       pof.epoch = DiemConfig::get_current_epoch();
       pof.bid = bid;
@@ -144,63 +148,55 @@ address DiemFramework {
     // TODO: need to filter by Vouches
     public fun fill_seats_and_get_price(set_size: u64, proven_nodes: &vector<address>): (vector<address>, u64) acquires ProofOfFeeAuction {
       let seats_to_fill = Vector::empty<address>();
+      // print(&set_size);
       let max_unproven = set_size / 3;
 
       let num_unproven_added = 0;
 
       let sorted_vals_by_bid = get_sorted_vals();
 
+      // print(&sorted_vals_by_bid);
+
       let i = 0u64;
-      while (i < set_size) {
+      while (
+        (i < set_size) && 
+        (i < Vector::length(&sorted_vals_by_bid))
+      ) {
+        // print(&i);
         let val = Vector::borrow(&sorted_vals_by_bid, i);
         // fail fast if the validator is jailed.
         // NOTE: epoch reconfigure needs to reset the jail
         // before calling the proof of fee.
         if (Jail::is_jailed(*val)) continue;
 
+        if (!Vouch::unrelated_buddies_above_thresh(*val)) continue;
+
         // check if a proven node
         if (Vector::contains(proven_nodes, val)) {
+          // print(&01);
           Vector::push_back(&mut seats_to_fill, *val);
         } else {
+          // print(&02);
           // for unproven nodes, push it to list if we haven't hit limit
           if (num_unproven_added < max_unproven ) {
+            // print(&03);
             Vector::push_back(&mut seats_to_fill, *val);
           };
+          // print(&04);
           num_unproven_added = num_unproven_added + 1;
         };
         i = i + 1;
       };
+      // print(&05);
+      print(&seats_to_fill);
 
-      let lowest_bidder = Vector::borrow(&seats_to_fill, i);
+      let lowest_bidder = Vector::borrow(&seats_to_fill, Vector::length(&seats_to_fill) - 1);
+
       let lowest_bid = current_bid(*lowest_bidder);
-
       return (seats_to_fill, lowest_bid)
     }
 
-    // all upcoming validators pay PoF fee in advance.
-    public fun all_vals_pay_entry(vm: &signer, vals: &vector<address>, fee: u64) {
 
-      let i = 0u64;
-      while (i < Vector::length(vals)) {
-        let val = Vector::borrow(vals, i);
-        pay_one_fee(vm, *val, fee);
-        i = i + 1;
-      };
-    }
-
-    // validator pays the fee
-    fun pay_one_fee(vm: &signer, addr: address, fee: u64) {
-      // TODO: don't use ASSERT! just exit
-      if (Signer::address_of(vm) != @VMReserved) {
-        return
-      };
-
-      if (!exists<ProofOfFeeAuction>(addr)) {
-        return
-      };
-
-      DiemAccount::vm_pay_user_fee(vm, addr, fee, b"Proof of Fee");
-    }
 
 
     ////////// TRANSACTION APIS //////////

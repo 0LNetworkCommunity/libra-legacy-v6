@@ -181,7 +181,7 @@ module EpochBoundary {
             print(&800700);
 
             // charge the validators for the proof of fee in advance of the epoch
-            ProofOfFee::all_vals_pay_entry(vm, &auction_winners, price);
+            DiemAccount::vm_multi_pay_fee(vm, &auction_winners, price, &b"proof of fee");
             print(&800800);
 
             proposed_set = auction_winners
@@ -216,7 +216,7 @@ module EpochBoundary {
         height_now: u64
     ) {
         print(&800900100);
-        
+
         // Reset Stats
         Stats::reconfig(vm, &proposed_set);
         print(&800900101);

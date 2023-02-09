@@ -12,13 +12,11 @@
 -  [Function `top_n_accounts`](#0x1_ProofOfFee_top_n_accounts)
 -  [Function `get_sorted_vals`](#0x1_ProofOfFee_get_sorted_vals)
 -  [Function `fill_seats_and_get_price`](#0x1_ProofOfFee_fill_seats_and_get_price)
--  [Function `all_vals_pay_entry`](#0x1_ProofOfFee_all_vals_pay_entry)
--  [Function `pay_one_fee`](#0x1_ProofOfFee_pay_one_fee)
 -  [Function `init_bidding`](#0x1_ProofOfFee_init_bidding)
 -  [Function `update_pof_bid`](#0x1_ProofOfFee_update_pof_bid)
 
 
-<pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<pre><code><b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
@@ -26,6 +24,7 @@
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
+<b>use</b> <a href="Vouch.md#0x1_Vouch">0x1::Vouch</a>;
 </code></pre>
 
 
@@ -111,7 +110,9 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_set_bid">set_bid</a>(account_sig: &signer, bid: u64) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a> {
   <b>let</b> acc = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account_sig);
-  <b>assert</b>!(<b>exists</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>&gt;(acc), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(190001));
+  <b>if</b> (!<b>exists</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>&gt;(acc)) {
+    <a href="ProofOfFee.md#0x1_ProofOfFee_init">init</a>(account_sig);
+  };
   <b>let</b> pof = <b>borrow_global_mut</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>&gt;(acc);
   pof.epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
   pof.bid = bid;
@@ -270,100 +271,52 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">fill_seats_and_get_price</a>(set_size: u64, proven_nodes: &vector&lt;<b>address</b>&gt;): (vector&lt;<b>address</b>&gt;, u64) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a> {
   <b>let</b> seats_to_fill = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
+  // print(&set_size);
   <b>let</b> max_unproven = set_size / 3;
 
   <b>let</b> num_unproven_added = 0;
 
   <b>let</b> sorted_vals_by_bid = <a href="ProofOfFee.md#0x1_ProofOfFee_get_sorted_vals">get_sorted_vals</a>();
 
+  // print(&sorted_vals_by_bid);
+
   <b>let</b> i = 0u64;
-  <b>while</b> (i &lt; set_size) {
+  <b>while</b> (
+    (i &lt; set_size) &&
+    (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&sorted_vals_by_bid))
+  ) {
+    // print(&i);
     <b>let</b> val = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&sorted_vals_by_bid, i);
     // fail fast <b>if</b> the validator is jailed.
     // NOTE: epoch reconfigure needs <b>to</b> reset the jail
     // before calling the proof of fee.
     <b>if</b> (<a href="Jail.md#0x1_Jail_is_jailed">Jail::is_jailed</a>(*val)) <b>continue</b>;
 
+    <b>if</b> (!<a href="Vouch.md#0x1_Vouch_unrelated_buddies_above_thresh">Vouch::unrelated_buddies_above_thresh</a>(*val)) <b>continue</b>;
+
     // check <b>if</b> a proven node
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(proven_nodes, val)) {
+      // print(&01);
       <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> seats_to_fill, *val);
     } <b>else</b> {
+      // print(&02);
       // for unproven nodes, push it <b>to</b> list <b>if</b> we haven't hit limit
       <b>if</b> (num_unproven_added &lt; max_unproven ) {
+        // print(&03);
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> seats_to_fill, *val);
       };
+      // print(&04);
       num_unproven_added = num_unproven_added + 1;
     };
     i = i + 1;
   };
+  // print(&05);
+  print(&seats_to_fill);
 
-  <b>let</b> lowest_bidder = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&seats_to_fill, i);
+  <b>let</b> lowest_bidder = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&seats_to_fill, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&seats_to_fill) - 1);
+
   <b>let</b> lowest_bid = <a href="ProofOfFee.md#0x1_ProofOfFee_current_bid">current_bid</a>(*lowest_bidder);
-
   <b>return</b> (seats_to_fill, lowest_bid)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_ProofOfFee_all_vals_pay_entry"></a>
-
-## Function `all_vals_pay_entry`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_all_vals_pay_entry">all_vals_pay_entry</a>(vm: &signer, vals: &vector&lt;<b>address</b>&gt;, fee: u64)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_all_vals_pay_entry">all_vals_pay_entry</a>(vm: &signer, vals: &vector&lt;<b>address</b>&gt;, fee: u64) {
-
-  <b>let</b> i = 0u64;
-  <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(vals)) {
-    <b>let</b> val = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(vals, i);
-    <a href="ProofOfFee.md#0x1_ProofOfFee_pay_one_fee">pay_one_fee</a>(vm, *val, fee);
-    i = i + 1;
-  };
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_ProofOfFee_pay_one_fee"></a>
-
-## Function `pay_one_fee`
-
-
-
-<pre><code><b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_pay_one_fee">pay_one_fee</a>(vm: &signer, addr: <b>address</b>, fee: u64)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_pay_one_fee">pay_one_fee</a>(vm: &signer, addr: <b>address</b>, fee: u64) {
-  // TODO: don't <b>use</b> ASSERT! just exit
-  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @VMReserved) {
-    <b>return</b>
-  };
-
-  <b>if</b> (!<b>exists</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>&gt;(addr)) {
-    <b>return</b>
-  };
-
-  <a href="DiemAccount.md#0x1_DiemAccount_vm_pay_user_fee">DiemAccount::vm_pay_user_fee</a>(vm, addr, fee, b"Proof of Fee");
 }
 </code></pre>
 

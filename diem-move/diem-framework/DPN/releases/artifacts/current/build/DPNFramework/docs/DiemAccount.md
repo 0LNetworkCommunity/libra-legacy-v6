@@ -99,6 +99,7 @@ before and after every transaction.
 -  [Function `create_validator_operator_account`](#0x1_DiemAccount_create_validator_operator_account)
 -  [Function `vm_deposit_with_metadata`](#0x1_DiemAccount_vm_deposit_with_metadata)
 -  [Function `vm_migrate_slow_wallet`](#0x1_DiemAccount_vm_migrate_slow_wallet)
+-  [Function `vm_multi_pay_fee`](#0x1_DiemAccount_vm_multi_pay_fee)
 -  [Function `init_cumulative_deposits`](#0x1_DiemAccount_init_cumulative_deposits)
 -  [Function `maybe_update_deposit`](#0x1_DiemAccount_maybe_update_deposit)
 -  [Function `deposit_index_curve`](#0x1_DiemAccount_deposit_index_curve)
@@ -152,6 +153,7 @@ before and after every transaction.
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
 <b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
+<b>use</b> <a href="ProofOfFee.md#0x1_ProofOfFee">0x1::ProofOfFee</a>;
 <b>use</b> <a href="Receipts.md#0x1_Receipts">0x1::Receipts</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -1743,6 +1745,7 @@ Initialize this module. This is only callable from genesis.
     <a href="Ancestry.md#0x1_Ancestry_init">Ancestry::init</a>(sender, &new_signer);
     <a href="Vouch.md#0x1_Vouch_init">Vouch::init</a>(&new_signer);
     <a href="Vouch.md#0x1_Vouch_vouch_for">Vouch::vouch_for</a>(sender, new_account_address);
+    <a href="ProofOfFee.md#0x1_ProofOfFee_set_bid">ProofOfFee::set_bid</a>(&new_signer, 1);
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_signer);
 
     new_account_address
@@ -6541,6 +6544,39 @@ Create a Validator Operator account
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
   <b>let</b> sig = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(addr);
   <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&sig);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_vm_multi_pay_fee"></a>
+
+## Function `vm_multi_pay_fee`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_multi_pay_fee">vm_multi_pay_fee</a>(vm: &signer, vals: &vector&lt;<b>address</b>&gt;, fee: u64, metadata: &vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_multi_pay_fee">vm_multi_pay_fee</a>(vm: &signer, vals: &vector&lt;<b>address</b>&gt;, fee: u64, metadata: &vector&lt;u8&gt;) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> {
+  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @VMReserved) {
+    <b>return</b>
+  };
+
+  <b>let</b> i = 0u64;
+  <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(vals)) {
+    <b>let</b> val = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(vals, i);
+    <a href="DiemAccount.md#0x1_DiemAccount_vm_pay_user_fee">vm_pay_user_fee</a>(vm, *val, fee, *metadata);
+    i = i + 1;
+  };
 }
 </code></pre>
 
