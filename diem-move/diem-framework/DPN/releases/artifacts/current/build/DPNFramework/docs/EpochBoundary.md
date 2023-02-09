@@ -41,6 +41,15 @@
 ## Constants
 
 
+<a name="0x1_EpochBoundary_MOCK_BASELINE_CONSENSUS_FEES"></a>
+
+
+
+<pre><code><b>const</b> <a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_BASELINE_CONSENSUS_FEES">MOCK_BASELINE_CONSENSUS_FEES</a>: u64 = 1000000;
+</code></pre>
+
+
+
 <a name="0x1_EpochBoundary_MOCK_VAL_SIZE"></a>
 
 
@@ -348,6 +357,10 @@
     outgoing_compliant: vector&lt;<b>address</b>&gt;,
     height_now: u64
 ) {
+
+  // TODO: <b>where</b> <b>to</b> place the <a href="Jail.md#0x1_Jail">Jail</a> reputation reset
+  // <a href="Jail.md#0x1_Jail_remove_consecutive_fail">Jail::remove_consecutive_fail</a>(vm, addr);
+
     print(&800900100);
 
     // Reset <a href="Stats.md#0x1_Stats">Stats</a>

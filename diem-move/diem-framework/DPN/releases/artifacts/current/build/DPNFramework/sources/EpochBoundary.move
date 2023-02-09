@@ -221,12 +221,63 @@ module EpochBoundary {
         proposed_set
     }
 
+    fun propose_new_set(vm: &signer, outgoing_compliant_set: &vector<address>): vector<address> 
+    {
+        let proposed_set = Vector::empty<address>();
+
+        // If we are in recovery mode, we use the recovery set.
+        if (RecoveryMode::is_recovery()) {
+            let recovery_vals = RecoveryMode::get_debug_vals();
+            if (Vector::length(&recovery_vals) > 0) {
+              proposed_set = recovery_vals
+            }
+        } else { // Default case: Proof of Fee
+            //// V6 ////
+            // CONSENSUS CRITICAL
+            // pick the validators based on proof of fee.
+            let (auction_winners, price) = ProofOfFee::fill_seats_and_get_price(MOCK_VAL_SIZE, outgoing_compliant_set);
+            // TODO: Don't use copy above, do a borrow.
+            print(&800700);
+
+            // charge the validators for the proof of fee in advance of the epoch
+            ProofOfFee::all_vals_pay_entry(vm, &auction_winners, price);
+            print(&800800);
+
+            proposed_set = auction_winners
+        };
+
+        //////// Failover Rules ////////
+        // If the cardinality of validator_set in the next epoch is less than 4, 
+        // if we are failing to qualify anyone. Pick top 1/2 of outgoing compliant validator set
+        // by proposals. They are probably online.
+        if (Vector::length<address>(&proposed_set) <= 3) 
+            proposed_set = 
+              Stats::get_sorted_vals_by_props(vm, Vector::length<address>(outgoing_compliant_set) / 2);
+
+        // If still failing...in extreme case if we cannot qualify anyone.
+        // Don't change the validator set. we keep the same validator set. 
+        if (Vector::length<address>(&proposed_set) <= 3)
+            proposed_set = DiemSystem::get_val_set_addr(); 
+                // Patch for april incident. Make no changes to validator set.
+
+        // Usually an issue in staging network for QA only.
+        // This is very rare and theoretically impossible for network with 
+        // at least 6 nodes and 6 rounds. If we reach an epoch boundary with 
+        // at least 6 rounds, we would have at least 2/3rd of the validator 
+        // set with at least 66% liveliness. 
+        proposed_set
+    }
+
     fun reset_counters(
         vm: &signer,
         proposed_set: vector<address>,
         outgoing_compliant: vector<address>,
         height_now: u64
     ) {
+
+      // TODO: where to place the Jail reputation reset
+      // Jail::remove_consecutive_fail(vm, addr);
+
         print(&800900100);
 
         // Reset Stats
