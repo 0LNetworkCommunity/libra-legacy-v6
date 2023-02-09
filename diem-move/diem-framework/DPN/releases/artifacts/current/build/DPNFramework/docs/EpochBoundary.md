@@ -9,6 +9,7 @@
 -  [Function `reconfigure`](#0x1_EpochBoundary_reconfigure)
 -  [Function `process_fullnodes`](#0x1_EpochBoundary_process_fullnodes)
 -  [Function `process_validators`](#0x1_EpochBoundary_process_validators)
+-  [Function `propose_new_set`](#0x1_EpochBoundary_propose_new_set)
 -  [Function `reset_counters`](#0x1_EpochBoundary_reset_counters)
 
 
@@ -35,6 +36,15 @@
 <a name="@Constants_0"></a>
 
 ## Constants
+
+
+<a name="0x1_EpochBoundary_MOCK_BASELINE_CONSENSUS_FEES"></a>
+
+
+
+<pre><code><b>const</b> <a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_BASELINE_CONSENSUS_FEES">MOCK_BASELINE_CONSENSUS_FEES</a>: u64 = 1000000;
+</code></pre>
+
 
 
 <a name="0x1_EpochBoundary_MOCK_VAL_SIZE"></a>
@@ -73,43 +83,33 @@
     print(&800200);
 
     // NOTE: This is "nominal" because it doesn't check
-    <b>let</b> compliant_nodes_count = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&outgoing_compliant_set);
+    // <b>let</b> compliant_nodes_count = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&outgoing_compliant_set);
     print(&800300);
 
-    <b>let</b> (subsidy_units, nominal_subsidy_per) =
-        <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
-
+    // TODO: subsidy units are fixed
+    // <b>let</b> (subsidy_units, nominal_subsidy_per) =
+    //     <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
     print(&800400);
 
-    <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
+    <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, <a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_BASELINE_CONSENSUS_FEES">MOCK_BASELINE_CONSENSUS_FEES</a>);
 
     print(&800500);
 
-    <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, subsidy_units, *&outgoing_compliant_set);
+    <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, <a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_BASELINE_CONSENSUS_FEES">MOCK_BASELINE_CONSENSUS_FEES</a>, &outgoing_compliant_set);
     print(&800600);
 
-    // <b>let</b> proposed_set = propose_new_set(vm, height_start, height_now);
-    //// V6 ////
-    // CONSENSUS CRITICAL
-    // pick the validators based on proof of fee.
-    <b>let</b> (proposed_set, price) = <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">ProofOfFee::fill_seats_and_get_price</a>(<a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_VAL_SIZE">MOCK_VAL_SIZE</a>, <b>copy</b> outgoing_compliant_set);
-    // TODO: Don't <b>use</b> <b>copy</b> above, do a borrow.
 
-    // charge the validators for the proof of fee in advance of the epoch
-    <a href="ProofOfFee.md#0x1_ProofOfFee_all_vals_pay_entry">ProofOfFee::all_vals_pay_entry</a>(vm, &proposed_set, price);
+    <b>let</b> proposed_set = <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, &outgoing_compliant_set);
 
-    print(&800700);
+
     // Update all slow wallet limits
     <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>()); // todo
-    print(&800800);
-
-    // TODO: What <b>to</b> do in recovery mode.
-    // <b>if</b> (!<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()) {
-    //   elect_validators(vm,nominal_subsidy_per, &proposed_set);
-    //   print(&800900);
-    // };
-    <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, outgoing_compliant_set, height_now);
     print(&801000);
+
+
+    <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, outgoing_compliant_set, height_now);
+    print(&801100);
+
 }
 </code></pre>
 
@@ -179,7 +179,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;<b>address</b>&gt;)
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm: &signer, subsidy_units: u64, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;)
 </code></pre>
 
 
@@ -189,20 +189,87 @@
 
 
 <pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(
-    vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector&lt;<b>address</b>&gt;
+    vm: &signer, subsidy_units: u64, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;
 ) {
     // Process outgoing validators:
     // Distribute Transaction fees and subsidy payments <b>to</b> all outgoing validators
 
-    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>&lt;<b>address</b>&gt;(&outgoing_compliant_set)) <b>return</b>;
+    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>&lt;<b>address</b>&gt;(outgoing_compliant_set)) <b>return</b>;
 
     // don't pay <b>while</b> we are in recovery mode, since that creates
     // a frontrunning opportunity
     <b>if</b> (subsidy_units &gt; 0 && !<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()) {
-        <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, &outgoing_compliant_set);
+        <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, outgoing_compliant_set);
     };
 
-    <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, &outgoing_compliant_set);
+    <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, outgoing_compliant_set);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_propose_new_set"></a>
+
+## Function `propose_new_set`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;): vector&lt;<b>address</b>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;): vector&lt;<b>address</b>&gt;
+{
+    <b>let</b> proposed_set = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
+
+    // If we are in recovery mode, we <b>use</b> the recovery set.
+    <b>if</b> (<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()) {
+        <b>let</b> recovery_vals = <a href="RecoveryMode.md#0x1_RecoveryMode_get_debug_vals">RecoveryMode::get_debug_vals</a>();
+        <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&recovery_vals) &gt; 0) {
+          proposed_set = recovery_vals
+        }
+    } <b>else</b> { // Default case: Proof of Fee
+        //// V6 ////
+        // CONSENSUS CRITICAL
+        // pick the validators based on proof of fee.
+        <b>let</b> (auction_winners, price) = <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">ProofOfFee::fill_seats_and_get_price</a>(<a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_VAL_SIZE">MOCK_VAL_SIZE</a>, outgoing_compliant_set);
+        // TODO: Don't <b>use</b> <b>copy</b> above, do a borrow.
+        print(&800700);
+
+        // charge the validators for the proof of fee in advance of the epoch
+        <a href="ProofOfFee.md#0x1_ProofOfFee_all_vals_pay_entry">ProofOfFee::all_vals_pay_entry</a>(vm, &auction_winners, price);
+        print(&800800);
+
+        proposed_set = auction_winners
+    };
+
+    //////// Failover Rules ////////
+    // If the cardinality of validator_set in the next epoch is less than 4,
+    // <b>if</b> we are failing <b>to</b> qualify anyone. Pick top 1/2 of outgoing compliant validator set
+    // by proposals. They are probably online.
+    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&proposed_set) &lt;= 3)
+        proposed_set =
+          <a href="Stats.md#0x1_Stats_get_sorted_vals_by_props">Stats::get_sorted_vals_by_props</a>(vm, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(outgoing_compliant_set) / 2);
+
+    // If still failing...in extreme case <b>if</b> we cannot qualify anyone.
+    // Don't change the validator set. we keep the same validator set.
+    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&proposed_set) &lt;= 3)
+        proposed_set = <a href="DiemSystem.md#0x1_DiemSystem_get_val_set_addr">DiemSystem::get_val_set_addr</a>();
+            // Patch for april incident. Make no changes <b>to</b> validator set.
+
+    // Usually an issue in staging network for QA only.
+    // This is very rare and theoretically impossible for network <b>with</b>
+    // at least 6 nodes and 6 rounds. If we reach an epoch boundary <b>with</b>
+    // at least 6 rounds, we would have at least 2/3rd of the validator
+    // set <b>with</b> at least 66% liveliness.
+    proposed_set
 }
 </code></pre>
 
@@ -231,6 +298,10 @@
     outgoing_compliant: vector&lt;<b>address</b>&gt;,
     height_now: u64
 ) {
+
+  // TODO: <b>where</b> <b>to</b> place the <a href="Jail.md#0x1_Jail">Jail</a> reputation reset
+  // <a href="Jail.md#0x1_Jail_remove_consecutive_fail">Jail::remove_consecutive_fail</a>(vm, addr);
+
     print(&800900100);
     // Reset <a href="Stats.md#0x1_Stats">Stats</a>
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
