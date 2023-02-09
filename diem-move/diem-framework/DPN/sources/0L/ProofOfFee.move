@@ -12,7 +12,7 @@ address DiemFramework {
   module ProofOfFee {
     use Std::Errors;
     use DiemFramework::DiemConfig;
-    use DiemFramework::DiemSystem;
+    // use DiemFramework::ValidatorConfig;
     use Std::Signer;
     use DiemFramework::ValidatorUniverse;
     use Std::Vector;
@@ -21,54 +21,66 @@ address DiemFramework {
     use DiemFramework::Debug::print;
     use DiemFramework::Vouch;
 
+    const ENOT_AN_ACTIVE_VALIDATOR: u64 = 190022;
     // A struct on the validators account which indicates their
     // latest bid (and epoch)
     struct ProofOfFeeAuction has key {
       bid: u64,
-      epoch: u64
-    }
-
-    // CONSENSUS CRITICAL 
-    // ALL EYES ON THIS
-    // Proof of Fee returns the current bid of the validator during the auction for upcoming epoch seats.
-    public fun current_bid(node_addr: address): u64 acquires ProofOfFeeAuction {
-      if (exists<ProofOfFeeAuction>(node_addr)) {
-        let pof = borrow_global<ProofOfFeeAuction>(node_addr);
-        let e = DiemConfig::get_current_epoch();
-        if (pof.epoch == e) {
-          return pof.bid
-        };
-      };
-      return 0
-    }
-
-    // validator can set a bid. See transaction script below.
-    public fun set_bid(account_sig: &signer, bid: u64) acquires ProofOfFeeAuction {
-      let acc = Signer::address_of(account_sig);
-      if (!exists<ProofOfFeeAuction>(acc)) {
-        init(account_sig);
-      };
-      let pof = borrow_global_mut<ProofOfFeeAuction>(acc);
-      pof.epoch = DiemConfig::get_current_epoch();
-      pof.bid = bid;
+      epoch_expiration: u64,
+      // TODO: show past 5 bids
     }
 
     public fun init(account_sig: &signer) {
-      // TODO: check if this is a validator.
       
       let acc = Signer::address_of(account_sig);
-      assert!(DiemSystem::is_validator(acc), Errors::requires_role(190001));
+
+      assert!(ValidatorUniverse::is_in_universe(acc), Errors::requires_role(ENOT_AN_ACTIVE_VALIDATOR));
 
       if (!exists<ProofOfFeeAuction>(acc)) {
         move_to<ProofOfFeeAuction>(
         account_sig, 
           ProofOfFeeAuction {
             bid: 0,
-            epoch: 0 
+            epoch_expiration: 0 
           }
         );
       }
     }
+
+    // CONSENSUS CRITICAL 
+    // ALL EYES ON THIS
+    // Proof of Fee returns the current bid of the validator during the auction for upcoming epoch seats.
+    // returns (current bid, expiration epoch)
+    public fun current_bid(node_addr: address): (u64, u64) acquires ProofOfFeeAuction {
+      if (exists<ProofOfFeeAuction>(node_addr)) {
+        let pof = borrow_global<ProofOfFeeAuction>(node_addr);
+        let e = DiemConfig::get_current_epoch();
+        // check the expiration of the bid
+        // the bid is zero if it expires.
+        // The expiration epoch number is inclusive of the epoch.
+        // i.e. the bid expires on e + 1.
+        if (pof.epoch_expiration >= e || pof.epoch_expiration == 0) {
+          return (pof.bid, pof.epoch_expiration)
+        };
+        return (0, pof.epoch_expiration)
+      };
+      return (0, 0)
+    }
+
+    // validator can set a bid. See transaction script below.
+    // the validator can set an "expiry epoch:  for the bid.
+    // Zero means never expires.
+    public fun set_bid(account_sig: &signer, bid: u64, expiry_epoch: u64) acquires ProofOfFeeAuction {
+      let acc = Signer::address_of(account_sig);
+      if (!exists<ProofOfFeeAuction>(acc)) {
+        init(account_sig);
+      };
+      let pof = borrow_global_mut<ProofOfFeeAuction>(acc);
+      pof.epoch_expiration = expiry_epoch;
+      pof.bid = bid;
+    }
+
+
 
 
 
@@ -104,7 +116,8 @@ address DiemFramework {
 
         let cur_address = *Vector::borrow<address>(&eligible_validators, k);
         // Ensure that this address is an active validator
-        Vector::push_back<u64>(&mut weights, current_bid(cur_address));
+        let (bid, _) = current_bid(cur_address);
+        Vector::push_back<u64>(&mut weights, bid);
         k = k + 1;
       };
 
@@ -192,7 +205,7 @@ address DiemFramework {
 
       let lowest_bidder = Vector::borrow(&seats_to_fill, Vector::length(&seats_to_fill) - 1);
 
-      let lowest_bid = current_bid(*lowest_bidder);
+      let (lowest_bid, _) = current_bid(*lowest_bidder);
       return (seats_to_fill, lowest_bid)
     }
 
@@ -206,11 +219,9 @@ address DiemFramework {
     }
 
     // update the bid for the sender
-    public(script) fun update_pof_bid(sender: signer, bid: u64) acquires ProofOfFeeAuction {
-      // init just for safety
-      init(&sender);
-      // update the bid
-      set_bid(&sender, bid);
+    public(script) fun update_pof_bid(sender: signer, bid: u64, epoch_expiry: u64) acquires ProofOfFeeAuction {
+      // update the bid, initializes if not already.
+      set_bid(&sender, bid, epoch_expiry);
     }
   }
 }
