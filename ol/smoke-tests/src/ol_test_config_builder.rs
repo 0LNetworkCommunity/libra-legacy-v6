@@ -2,13 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // NOTE: This is modified from /config/management/genesis/src/config_builder.rs
-use diem_genesis_tool::validator_builder::ValidatorBuilder;
+use diem_genesis_tool::validator_builder::{ValidatorBuilder, ValidatorConfig};
 use diem_config::config::NodeConfig;
 use diem_crypto::ed25519::Ed25519PrivateKey;
+use diem_management::validator_config;
 use diem_secure_storage::{CryptoStorage, KVStorage, Storage};
 use diem_temppath::TempPath;
+use diem_types::{transaction::ChangeSet, chain_id};
+use diem_writeset_generator::admin_script_builder;
 use rand::{rngs::StdRng, SeedableRng};
-use diem_global_constants;
+use diem_global_constants::OWNER_ACCOUNT;
+use diem_types::account_address::AccountAddress;
+use diem_types::transaction::Transaction;
 
 /////// 0L ////////
 pub fn test_config(persist: bool) -> (NodeConfig, Ed25519PrivateKey) {
@@ -17,8 +22,10 @@ pub fn test_config(persist: bool) -> (NodeConfig, Ed25519PrivateKey) {
     if persist {
         path.persist();
     }
+    diem_logger::info!("config path: {:?}", path.path().to_str().unwrap());
 
-    dbg!(&path);
+    // do a bunch of stuff to get a config
+    // runs a genesis ceremony from one node, with a single random validator config.
     let (root_keys, _genesis, _genesis_waypoint, validators) = ValidatorBuilder::new(
         path.path(),
         diem_framework_releases::current_module_blobs().to_vec(),
@@ -26,10 +33,12 @@ pub fn test_config(persist: bool) -> (NodeConfig, Ed25519PrivateKey) {
     .template(NodeConfig::default_for_validator())
     .build(StdRng::from_seed([0; 32]))
     .unwrap();
-    let mut configs = validators.into_iter().map(|v| v.config).collect::<Vec<_>>();
-    let key = root_keys.root_key;
 
-    let mut config = configs.swap_remove(0);
+    let root_pri_key = root_keys.root_key;
+
+    let val_cfg = validators.iter().next().unwrap();
+    let mut config = val_cfg.config.to_owned();
+    // .get(0).expect("where's the val config?").clone().config;
     config.set_data_dir(path.path().to_path_buf());
     let backend = &config
         .validator_network
@@ -38,6 +47,9 @@ pub fn test_config(persist: bool) -> (NodeConfig, Ed25519PrivateKey) {
         .identity_from_storage()
         .backend;
     let storage: Storage = std::convert::TryFrom::try_from(backend).unwrap();
+
+    // Now we are configuring this node as a "test" node. This means we place a number of keys into the config file itself. (As opposed the securre-storage.json).
+    // NOTE: 0L: unclear why this needs to happen for our purposes. (e.g. starting a node with a specific genesis).
 
     let mut test = diem_config::config::TestConfig::new_with_temp_dir(Some(path));
     test.execution_key(
@@ -57,6 +69,7 @@ pub fn test_config(persist: bool) -> (NodeConfig, Ed25519PrivateKey) {
     );
     config.test = Some(test);
 
+    // Since we are starting a "test" type node, we want to place the "safety rules" information in the config file itself. And not in the secure-storage.json as in production.
     let owner_account = storage
         .get(diem_global_constants::OWNER_ACCOUNT)
         .unwrap()
@@ -74,5 +87,55 @@ pub fn test_config(persist: bool) -> (NodeConfig, Ed25519PrivateKey) {
     );
     config.consensus.safety_rules.test = Some(sr_test);
 
-    (config, key)
+    (config, root_pri_key)
+}
+
+
+/// extract validator keys from NodeConfig
+
+pub fn get_val_consensus_keys(n: NodeConfig) {
+}
+
+/// Replace the Genesis file
+/// Note, if your genesis file does not contain the test config validator keys, the blockchain will start but will not be able to make progress.
+
+pub fn replace_genesis_validators_tx(validator: ValidatorConfig, base_genesis: ChangeSet) -> Result<(), anyhow::Error>{
+
+  // add the test validator network configs to the genesis with a transaction.
+    let validator_config = validator_config::build_validator_config_transaction(
+      validator.storage(),
+      chain_id::ChainId::test(),
+      0, // sequence_number
+      validator.config.full_node_networks[0]
+          .listen_address
+          .clone(),
+      validator
+          .config
+          .validator_network
+          .as_ref()
+          .map(|a| a.listen_address.clone())
+          .unwrap(),
+      false, // This isn't a reconfiguration
+      false, // Don't disable address validation
+  )?;
+
+  // let addr = validator.storage().get(OWNER_ACCOUNT).unwrap().value;
+  
+  let owner_account = validator.storage()
+        .get::<AccountAddress>(OWNER_ACCOUNT)
+        .map(|v| v.value)?;
+
+  admin_script_builder::script_bulk_update_vals_payload(
+    vec![owner_account],
+  );
+  // replace the validator set with the new validator config.
+  // must issue a reconfiguration event.
+  Ok(())
+
+}
+pub fn replace_test_genesis(validator: ValidatorConfig, genesis: &Transaction) {
+  // the test generator creates a blob file. We may not want to use it depending on our needs. For example: if we are testing a migration, we want 
+  // to use a specific genesis and only replace the validators with a single test validator.
+  // validator.insert_genesis(genesis);
+  // insert the genesis binary into the config file (not reading from a separate .blob file.)
 }

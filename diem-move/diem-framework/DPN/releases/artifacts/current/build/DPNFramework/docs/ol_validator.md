@@ -6,10 +6,10 @@
 
 
 -  [Constants](#@Constants_0)
--  [Function `ol_reconfig_bulk_update_setup`](#0x1_ValidatorScripts_ol_reconfig_bulk_update_setup)
 -  [Function `self_unjail`](#0x1_ValidatorScripts_self_unjail)
 -  [Function `voucher_unjail`](#0x1_ValidatorScripts_voucher_unjail)
 -  [Function `val_add_self`](#0x1_ValidatorScripts_val_add_self)
+-  [Function `ol_reconfig_bulk_update_setup`](#0x1_ValidatorScripts_ol_reconfig_bulk_update_setup)
 
 
 <pre><code><b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
@@ -63,51 +63,6 @@
 </code></pre>
 
 
-
-<a name="0x1_ValidatorScripts_ol_reconfig_bulk_update_setup"></a>
-
-## Function `ol_reconfig_bulk_update_setup`
-
-
-
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_ol_reconfig_bulk_update_setup">ol_reconfig_bulk_update_setup</a>(account: signer, alice: <b>address</b>, bob: <b>address</b>, carol: <b>address</b>, sha: <b>address</b>, ram: <b>address</b>)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_ol_reconfig_bulk_update_setup">ol_reconfig_bulk_update_setup</a>(
-    account: signer, alice: <b>address</b>,
-    bob: <b>address</b>,
-    carol: <b>address</b>,
-    sha: <b>address</b>,
-    ram: <b>address</b>
-) {
-    // Create vector of desired validators
-    <b>let</b> vec = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>();
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> vec, alice);
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> vec, bob);
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> vec, carol);
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> vec, sha);
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> vec, ram);
-    <b>assert</b>!(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&vec) == 5, 1);
-
-    // Set this <b>to</b> be the validator set
-    <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(&account, vec);
-
-    // Tests on initial validator set
-    <b>assert</b>!(<a href="DiemSystem.md#0x1_DiemSystem_validator_set_size">DiemSystem::validator_set_size</a>() == 5, 2);
-    <b>assert</b>!(<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(sha) == <b>true</b>, 3);
-    <b>assert</b>!(<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(alice) == <b>true</b>, 4);
-}
-</code></pre>
-
-
-
-</details>
 
 <a name="0x1_ValidatorScripts_self_unjail"></a>
 
@@ -223,6 +178,51 @@
     <b>if</b> (!<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(addr)) {
         <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(validator);
     };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ValidatorScripts_ol_reconfig_bulk_update_setup"></a>
+
+## Function `ol_reconfig_bulk_update_setup`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_ol_reconfig_bulk_update_setup">ol_reconfig_bulk_update_setup</a>(vm: signer, alice: <b>address</b>, bob: <b>address</b>, carol: <b>address</b>, sha: <b>address</b>, ram: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_ol_reconfig_bulk_update_setup">ol_reconfig_bulk_update_setup</a>(
+    vm: signer, alice: <b>address</b>,
+    bob: <b>address</b>,
+    carol: <b>address</b>,
+    sha: <b>address</b>,
+    ram: <b>address</b>
+) {
+    // Create vector of desired validators
+    <b>let</b> vec = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>();
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> vec, alice);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> vec, bob);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> vec, carol);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> vec, sha);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> vec, ram);
+    <b>assert</b>!(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&vec) == 5, 1);
+
+    // Set this <b>to</b> be the validator set
+    <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(&vm, vec);
+
+    // Tests on initial validator set
+    <b>assert</b>!(<a href="DiemSystem.md#0x1_DiemSystem_validator_set_size">DiemSystem::validator_set_size</a>() == 5, 2);
+    <b>assert</b>!(<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(sha) == <b>true</b>, 3);
+    <b>assert</b>!(<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(alice) == <b>true</b>, 4);
 }
 </code></pre>
 

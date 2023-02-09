@@ -88,9 +88,9 @@ fn meta_test_node() {
 
 fn get_test_configs() -> Result<(NodeConfig, PathBuf), anyhow::Error> {
     let gen_blob = path_utils::blob_path();
-    dbg!(&gen_blob);
+    // dbg!(&gen_blob);
     let (_db, wp) = read_db_and_compute_genesis(gen_blob.clone()).expect("parse genesis.blob");
-    dbg!(&wp);
+    // dbg!(&wp);
 
     let (mut cfg, _) = test_config(true);
     let save_path = gen_blob
