@@ -63,10 +63,13 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>();
     print(&800100);
+
     <b>let</b> (outgoing_compliant_set, _) =
         <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a>(vm, height_start, height_now);
+
     print(&800200);
 
     // NOTE: This is "nominal" because it doesn't check
@@ -79,7 +82,9 @@
     print(&800400);
 
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, nominal_subsidy_per);
+
     print(&800500);
+
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, subsidy_units, *&outgoing_compliant_set);
     print(&800600);
 
@@ -88,6 +93,10 @@
     // CONSENSUS CRITICAL
     // pick the validators based on proof of fee.
     <b>let</b> (proposed_set, _price) = <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">ProofOfFee::fill_seats_and_get_price</a>(<a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_VAL_SIZE">MOCK_VAL_SIZE</a>, <b>copy</b> outgoing_compliant_set);
+    // TODO: Don't <b>use</b> <b>copy</b> above, do a borrow.
+
+    // charge the validators for the proof of fee in advance of the epoch
+    // ProofOfFee::pay_fee(vm, &proposed_set, price);
 
     print(&800700);
     // Update all slow wallet limits
@@ -236,11 +245,13 @@
     <a href="AutoPay.md#0x1_AutoPay_reconfig_reset_tick">AutoPay::reconfig_reset_tick</a>(vm);
     print(&800900104);
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
+
     print(&800900105);
     <a href="RecoveryMode.md#0x1_RecoveryMode_maybe_remove_debug_at_epoch">RecoveryMode::maybe_remove_debug_at_epoch</a>(vm);
     // Reconfig should be the last event.
     // Reconfigure the network
     print(&800900106);
+
     <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
     print(&800900107);
 }
