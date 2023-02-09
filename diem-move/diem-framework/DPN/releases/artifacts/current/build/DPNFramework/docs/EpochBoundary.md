@@ -401,10 +401,6 @@
     outgoing_compliant: vector&lt;<b>address</b>&gt;,
     height_now: u64
 ) {
-
-  // TODO: <b>where</b> <b>to</b> place the <a href="Jail.md#0x1_Jail">Jail</a> reputation reset
-  // <a href="Jail.md#0x1_Jail_remove_consecutive_fail">Jail::remove_consecutive_fail</a>(vm, addr);
-
     print(&800900100);
 
     // Reset <a href="Stats.md#0x1_Stats">Stats</a>
@@ -424,6 +420,7 @@
 
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
 
+    <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
     print(&800900105);
 
     <a href="RecoveryMode.md#0x1_RecoveryMode_maybe_remove_debug_at_epoch">RecoveryMode::maybe_remove_debug_at_epoch</a>(vm);
