@@ -42,10 +42,13 @@ module EpochBoundary {
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
         CoreAddresses::assert_vm(vm);
+        
         let height_start = Epoch::get_timer_height_start();
         print(&800100);        
+        
         let (outgoing_compliant_set, _) = 
             DiemSystem::get_fee_ratio(vm, height_start, height_now);
+        
         print(&800200);
 
         // NOTE: This is "nominal" because it doesn't check
@@ -58,7 +61,9 @@ module EpochBoundary {
         print(&800400);
 
         process_fullnodes(vm, nominal_subsidy_per);
+        
         print(&800500);
+        
         process_validators(vm, subsidy_units, *&outgoing_compliant_set);
         print(&800600);
 
@@ -67,6 +72,10 @@ module EpochBoundary {
         // CONSENSUS CRITICAL
         // pick the validators based on proof of fee.
         let (proposed_set, _price) = ProofOfFee::fill_seats_and_get_price(MOCK_VAL_SIZE, copy outgoing_compliant_set);
+        // TODO: Don't use copy above, do a borrow.
+
+        // charge the validators for the proof of fee in advance of the epoch
+        // ProofOfFee::pay_fee(vm, &proposed_set, price);
 
         print(&800700);
         // Update all slow wallet limits
@@ -283,13 +292,15 @@ module EpochBoundary {
         AutoPay::reconfig_reset_tick(vm);
         print(&800900104);
         Epoch::reset_timer(vm, height_now);
+        
         print(&800900105);
         RecoveryMode::maybe_remove_debug_at_epoch(vm);
         // Reconfig should be the last event.
         // Reconfigure the network
         print(&800900106);
+
         DiemSystem::bulk_update_validators(vm, proposed_set);
-        print(&800900107);    
+        print(&800900107);
     }
 
     // // NOTE: this was previously in propose_new_set since it used the same loop.

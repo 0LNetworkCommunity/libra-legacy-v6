@@ -78,7 +78,7 @@ module DiemFramework::TransactionFee {
     public fun pay_fee<CoinType>(coin: Diem<CoinType>) acquires TransactionFee {
         DiemTimestamp::assert_operating();
         assert!(is_coin_initialized<CoinType>(), Errors::not_published(ETRANSACTION_FEE));
-        let fees = borrow_global_mut<TransactionFee<CoinType>>(@TreasuryCompliance);
+        let fees = borrow_global_mut<TransactionFee<CoinType>>(@TreasuryCompliance); // TODO: this is just the VM root actually
         Diem::deposit(&mut fees.balance, coin)
     }
 

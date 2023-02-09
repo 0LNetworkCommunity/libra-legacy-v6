@@ -1466,7 +1466,48 @@ module DiemFramework::DiemAccount {
 
         restore_withdraw_capability(cap);
     }
-    
+
+    /// VM authorized to withdraw a coin if it is to pay a network fee
+    /// e.g. transaction fees, validator PoF auction, etc. 
+    /// the amount can be above the transaction limit that
+    /// may exist on an account.
+    public fun vm_pay_user_fee(
+        vm: &signer,
+        payer : address,
+        amount: u64,
+        metadata: vector<u8>,        
+    ) acquires DiemAccount, Balance, AccountOperationsCapability { //////// 0L ////////
+        if (Signer::address_of(vm) != @DiemRoot) return;
+        // don't try to send a 0 balance, will halt.
+        if (amount < 1) return;
+        // Check there is a payer
+        if (!exists_at(payer)) return; 
+        // Check payer's balance is initialized (sanity).
+        if (!exists<Balance<GAS>>(payer)) return; 
+
+        // Check the payer is in possession of withdraw token.
+        if (delegated_withdraw_capability(payer)) return; 
+
+        // VM should not force an account below 1GAS, since the account may not recover.
+        if (balance<GAS>(payer) < BOOTSTRAP_COIN_VALUE) return;
+
+        // prevent halting on low balance.
+        // charge the remaining balance if the amount is greater than balance.
+        // User does not accumulate a debt.
+        if (balance<GAS>(payer) < amount) { 
+          amount = balance<GAS>(payer);
+        };
+
+        // VM can extract the withdraw token.
+        let account = borrow_global_mut<DiemAccount>(payer);
+        let cap = Option::extract(&mut account.withdraw_capability);
+        
+        let coin = withdraw_from<GAS>(&cap, payer, amount, copy metadata);
+        TransactionFee::pay_fee(coin);
+
+        restore_withdraw_capability(cap);
+    }
+
     //////// 0L ////////
     /// VM can burn from an account's balance for administrative purposes (e.g. at epoch boundaries)
     public fun vm_burn_from_balance<Token: store>(

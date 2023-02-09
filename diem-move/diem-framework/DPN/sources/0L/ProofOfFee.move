@@ -17,10 +17,7 @@ address DiemFramework {
     use DiemFramework::ValidatorUniverse;
     use Std::Vector;
     use DiemFramework::Jail;
-
-    // use DiemFramework::DiemBlock;
-    // use DiemFramework::Epoch;
-    // use DiemFramework::Cases;
+    use DiemFramework::DiemAccount;
 
     // A struct on the validators account which indicates their
     // latest bid (and epoch)
@@ -31,7 +28,7 @@ address DiemFramework {
 
     // CONSENSUS CRITICAL 
     // ALL EYES ON THIS
-    // Proof of Fee returns the current bid of the validator in the
+    // Proof of Fee returns the current bid of the validator during the auction for upcoming epoch seats.
     public fun current_bid(node_addr: address): u64 acquires ProofOfFeeAuction {
       if (exists<ProofOfFeeAuction>(node_addr)) {
         let pof = borrow_global<ProofOfFeeAuction>(node_addr);
@@ -173,6 +170,16 @@ address DiemFramework {
       let lowest_bid = current_bid(*lowest_bidder);
 
       return (seats_to_fill, lowest_bid)
+    }
+
+    // validator pays the fee
+    fun pay_one_fee(vm: &signer, addr: address, fee: u64) {
+      // TODO: don't use ASSERT! just exit
+      // CoreAddresses::assert_diem_root(vm);
+
+      // assert!(DiemSystem::is_validator(acc), Errors::requires_role(190001));
+      // assert!(exists<ProofOfFeeAuction>(acc), Errors::not_published(190001));
+      DiemAccount::vm_pay_user_fee(vm, addr, fee, b"Proof of Fee");
     }
 
 

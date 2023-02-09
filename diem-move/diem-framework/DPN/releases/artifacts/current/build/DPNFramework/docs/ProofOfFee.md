@@ -12,11 +12,13 @@
 -  [Function `top_n_accounts`](#0x1_ProofOfFee_top_n_accounts)
 -  [Function `get_sorted_vals`](#0x1_ProofOfFee_get_sorted_vals)
 -  [Function `fill_seats_and_get_price`](#0x1_ProofOfFee_fill_seats_and_get_price)
+-  [Function `pay_one_fee`](#0x1_ProofOfFee_pay_one_fee)
 -  [Function `init_bidding`](#0x1_ProofOfFee_init_bidding)
 -  [Function `update_pof_bid`](#0x1_ProofOfFee_update_pof_bid)
 
 
-<pre><code><b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
+<pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
@@ -298,6 +300,35 @@
   <b>let</b> lowest_bid = <a href="ProofOfFee.md#0x1_ProofOfFee_current_bid">current_bid</a>(*lowest_bidder);
 
   <b>return</b> (seats_to_fill, lowest_bid)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ProofOfFee_pay_one_fee"></a>
+
+## Function `pay_one_fee`
+
+
+
+<pre><code><b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_pay_one_fee">pay_one_fee</a>(vm: &signer, addr: <b>address</b>, fee: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_pay_one_fee">pay_one_fee</a>(vm: &signer, addr: <b>address</b>, fee: u64) {
+  // TODO: don't <b>use</b> ASSERT! just exit
+  // <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+
+  // <b>assert</b>!(<a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(acc), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190001));
+  // <b>assert</b>!(<b>exists</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>&gt;(acc), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(190001));
+  <a href="DiemAccount.md#0x1_DiemAccount_vm_pay_user_fee">DiemAccount::vm_pay_user_fee</a>(vm, addr, fee, b"Proof of Fee");
 }
 </code></pre>
 
