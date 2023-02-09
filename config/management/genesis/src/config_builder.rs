@@ -8,10 +8,14 @@ use diem_secure_storage::{CryptoStorage, KVStorage, Storage};
 use diem_temppath::TempPath;
 use rand::{rngs::StdRng, SeedableRng};
 
-pub fn test_config() -> (NodeConfig, Ed25519PrivateKey) {
+/////// 0L ////////
+pub fn test_config(persist: bool) -> (NodeConfig, Ed25519PrivateKey) {
     let mut path = TempPath::new();
     path.create_as_dir().unwrap();
-    path.persist();
+    if persist {
+        path.persist();
+    }
+
     dbg!(&path);
     let (root_keys, _genesis, _genesis_waypoint, validators) = ValidatorBuilder::new(
         path.path(),

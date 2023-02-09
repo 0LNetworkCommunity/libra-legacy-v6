@@ -1,4 +1,5 @@
 mod support;
+use diem_config::config::NodeConfig;
 use diem_config::config::OnDiskStorageConfig;
 use diem_config::config::PersistableConfig;
 use diem_config::config::SecureBackend;
@@ -18,6 +19,7 @@ use std::process::Stdio;
 use support::path_utils;
 use diem_secure_storage::KVStorage;
 use diem_types::waypoint::Waypoint;
+use std::net::SocketAddr;
 
 #[test]
 fn start_test_node() {
@@ -26,7 +28,7 @@ fn start_test_node() {
     let source_path = Path::new(env!("CARGO_MANIFEST_DIR"));
     // let blob_path = path_utils::blob_path();
 
-    let cfg_path = get_test_configs().unwrap();
+    let (_cfg, cfg_path) = get_test_configs().unwrap();
     let mut process = Command::new("cargo");
     process.current_dir(&source_path.as_os_str());
     process
@@ -48,8 +50,11 @@ fn start_test_node() {
     // Listen to stdout and wait until the tenth block is reported.
     BufReader::new(stdout).lines().find(|e| {
         dbg!(&e);
-        e.as_ref().unwrap().contains("==== 10")
+        e.as_ref().unwrap().contains("==== 1")
     });
+    
+    let val: AccountAddress ="ADCB1D42A46292AE89E938BD982F2867".parse().unwrap();
+    post_node_json(val).unwrap();
     
 }
 
@@ -80,14 +85,14 @@ fn meta_test_node() {
 }
 
 
-fn get_test_configs() -> Result<PathBuf, anyhow::Error>{
+fn get_test_configs() -> Result<(NodeConfig, PathBuf), anyhow::Error>{
   use diem_genesis_tool::config_builder::test_config;
   let gen_blob = path_utils::blob_path();
   dbg!(&gen_blob);
   let (_db, wp) = read_db_and_compute_genesis(gen_blob.clone()).expect("parse genesis.blob");
   dbg!(&wp);
 
-  let (mut cfg, _) = test_config();
+  let (mut cfg, _) = test_config(true);
   let save_path = gen_blob.clone()
   .parent()
   .unwrap()
@@ -96,7 +101,7 @@ fn get_test_configs() -> Result<PathBuf, anyhow::Error>{
   cfg.execution.genesis_file_location = gen_blob.clone();
   cfg.base.waypoint = WaypointConfig::FromConfig(wp);
   cfg.set_data_dir(gen_blob.parent().unwrap().join("test_data"));
-
+  cfg.json_rpc.address = SocketAddr::from(([0, 0, 0, 0], 8080));
   if let Some(mut t) = cfg.consensus.safety_rules.test {
     t.waypoint = Some(wp);
     cfg.consensus.safety_rules.test = Some(t);
@@ -104,17 +109,17 @@ fn get_test_configs() -> Result<PathBuf, anyhow::Error>{
   cfg.save_config(save_path.clone())?;
 
   // fix the secure backend from default
-  if let SecureBackend::OnDiskStorage(on_disk) = cfg.execution.backend {
-    let on = OnDiskStorage::new(on_disk.path());
-    let mut storage = Storage::OnDiskStorage(on);
+  // if let SecureBackend::OnDiskStorage(on_disk) = cfg.execution.backend {
+  //   let on = OnDiskStorage::new(on_disk.path());
+  //   let mut storage = Storage::OnDiskStorage(on);
     
-    // needs waypoint
-    storage.set("waypoint", wp)?;
-    dbg!(&storage.get::<Waypoint>("waypoint")?);
-  }
+  //   // needs waypoint
+  //   storage.set("waypoint", wp)?;
+  //   dbg!(&storage.get::<Waypoint>("waypoint")?);
+  // }
 
 
-  Ok(save_path)
+  Ok((cfg, save_path))
 }
 
 #[test]
