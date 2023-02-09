@@ -137,7 +137,12 @@ address DiemFramework {
     // So the selection algorithm needs to stop filling seats with unproven
     // validators if the max unproven nodes limit is hit (1/3).
 
-    public fun fill_seats_and_get_price(set_size: u64, proven_nodes: vector<address>): (vector<address>, u64) acquires ProofOfFeeAuction {
+    // TODO: the paper does not specify what happens with the Jail reputation
+    // of a validator. E.g. if a validator has a bid with no expiry
+    // but has a bad jail reputation does this penalize in the ordering?
+    
+    // TODO: need to filter by Vouches
+    public fun fill_seats_and_get_price(set_size: u64, proven_nodes: &vector<address>): (vector<address>, u64) acquires ProofOfFeeAuction {
       let seats_to_fill = Vector::empty<address>();
       let max_unproven = set_size / 3;
 
@@ -154,7 +159,7 @@ address DiemFramework {
         if (Jail::is_jailed(*val)) continue;
 
         // check if a proven node
-        if (Vector::contains(&proven_nodes, val)) {
+        if (Vector::contains(proven_nodes, val)) {
           Vector::push_back(&mut seats_to_fill, *val);
         } else {
           // for unproven nodes, push it to list if we haven't hit limit
