@@ -374,7 +374,12 @@
   // 2a. seat the vals <b>with</b> jail reputation &lt; 2
   // 2b. seat the remainder of the unproven vals <b>with</b> any jail reputation.
 
+<<<<<<< HEAD
   <b>let</b> num_unproven_added = 0;
+=======
+  // print(&sorted_vals_by_bid);
+
+>>>>>>> 215298a001 (initialize val account with a PoF struct)
   <b>let</b> i = 0u64;
   <b>while</b> (
     (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&seats_to_fill) &lt; set_size) &&
@@ -389,6 +394,8 @@
     //   <b>continue</b>
     // };
 
+
+    <b>if</b> (!<a href="Vouch.md#0x1_Vouch_unrelated_buddies_above_thresh">Vouch::unrelated_buddies_above_thresh</a>(*val)) <b>continue</b>;
 
     // check <b>if</b> a proven node
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(proven_nodes, val)) {

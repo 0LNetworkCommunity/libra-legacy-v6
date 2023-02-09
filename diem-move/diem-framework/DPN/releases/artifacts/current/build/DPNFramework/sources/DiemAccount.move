@@ -57,6 +57,7 @@ module DiemFramework::DiemAccount {
     use DiemFramework::Debug::print;
     use DiemFramework::Jail;
     use DiemFramework::Testnet;
+    use DiemFramework::ProofOfFee;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
