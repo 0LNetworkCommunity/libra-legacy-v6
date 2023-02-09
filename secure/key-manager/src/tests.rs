@@ -304,7 +304,7 @@ impl DiemInterface for MockDiemInterface {
 
 // Creates and returns NodeConfig and KeyManagerConfig structs that are consistent for testing.
 fn get_test_configs() -> (NodeConfig, KeyManagerConfig) {
-    let (node_config, _) = diem_genesis_tool::test_config(false); //////// 0L ////////
+    let (node_config, _) = diem_genesis_tool::test_config();
     let key_manager_config = KeyManagerConfig::default();
     (node_config, key_manager_config)
 }

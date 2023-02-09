@@ -1,7 +1,7 @@
 //! Tests for the `make_genesis` binary.
 mod support;
 
-use diem_types::transaction::Transaction;
+// use diem_types::transaction::Transaction;
 use language_e2e_tests::data_store::GENESIS_CHANGE_SET_FRESH;
 use move_core_types::language_storage::TypeTag;
 use move_core_types::value::MoveValue;
@@ -9,7 +9,7 @@ use ol_genesis_tools::exec_migration;
 use ol_genesis_tools::recover::LegacyRecovery;
 use std::fs;
 use support::path_utils::json_path;
-use diem_types::transaction::WriteSetPayload;
+// use diem_types::transaction::WriteSetPayload;
 #[test]
 #[ignore]
 // test that a genesis blob created from struct, will actually contain the data
@@ -21,7 +21,7 @@ fn test_use_vm_session() {
     let mock_val: Vec<LegacyRecovery> = serde_json::from_str(&json_str).unwrap();
 
     let genesis_baseline = GENESIS_CHANGE_SET_FRESH.write_set().clone();
-    let out = exec_migration::start_vm_and_transform(
+    let _out = exec_migration::start_vm_and_transform(
       &genesis_baseline,
       mock_val,
       false,
@@ -31,7 +31,7 @@ fn test_use_vm_session() {
       no_op,
     ).unwrap();
 
-    let merge = genesis_baseline.into_mut().extend(out.into_mut().get()).freeze().unwrap();
+    // let merge = genesis_baseline.into_mut().extend(out.into_mut().get()).freeze().unwrap();
 
     // let gen_tx = Transaction::GenesisTransaction(WriteSetPayload::Direct(merge));
 

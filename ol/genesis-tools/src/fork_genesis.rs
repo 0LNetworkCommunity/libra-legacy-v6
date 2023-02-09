@@ -59,7 +59,7 @@ pub fn make_recovery_genesis_from_vec_legacy_recovery(
       }
     )
     .count();
-    if (count == 0) {
+    if count == 0 {
       anyhow::bail!("no val configs found for genesis set");
     }
 
@@ -84,7 +84,7 @@ pub fn make_recovery_genesis_from_vec_legacy_recovery(
         Transaction::GenesisTransaction(WriteSetPayload::Direct(genesis_changeset_with_validators))
     };
     // save genesis
-    save_genesis(&gen_tx, genesis_blob_path);
+    save_genesis(&gen_tx, genesis_blob_path)?;
 
     Ok(gen_tx)
 }

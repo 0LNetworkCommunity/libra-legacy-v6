@@ -1,17 +1,24 @@
 // Copyright (c) The Diem Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::validator_builder::ValidatorBuilder;
+// NOTE: This is modified from /config/management/genesis/src/config_builder.rs
+use diem_genesis_tool::validator_builder::ValidatorBuilder;
 use diem_config::config::NodeConfig;
 use diem_crypto::ed25519::Ed25519PrivateKey;
 use diem_secure_storage::{CryptoStorage, KVStorage, Storage};
 use diem_temppath::TempPath;
 use rand::{rngs::StdRng, SeedableRng};
+use diem_global_constants;
 
-pub fn test_config() -> (NodeConfig, Ed25519PrivateKey) {
-    let path = TempPath::new();
+/////// 0L ////////
+pub fn test_config(persist: bool) -> (NodeConfig, Ed25519PrivateKey) {
+    let mut path = TempPath::new();
     path.create_as_dir().unwrap();
+    if persist {
+        path.persist();
+    }
 
+    dbg!(&path);
     let (root_keys, _genesis, _genesis_waypoint, validators) = ValidatorBuilder::new(
         path.path(),
         diem_framework_releases::current_module_blobs().to_vec(),

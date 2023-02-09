@@ -197,7 +197,7 @@ mod tests {
         let (_, db_rw) = DbReaderWriter::wrap(db);
 
         // Bootstrap the database
-        let (node_config, _) = test_config(false); //////// 0L ////////
+        let (node_config, _) = test_config();
         bootstrap_genesis::<DiemVM>(&db_rw, get_genesis_txn(&node_config).unwrap()).unwrap();
 
         // Create mempool and consensus notifiers
