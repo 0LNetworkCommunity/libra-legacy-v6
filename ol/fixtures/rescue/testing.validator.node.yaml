@@ -1,9 +1,9 @@
 ---
 base:
-  data_dir: /var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/01bca431b96b007549bdf74133885a5e
+  data_dir: /Users/lucas/code/rust/libra/ol/fixtures/rescue/test_data
   role: validator
   waypoint:
-    from_config: "0:678678ce9e3821f6d57e75049b5c18c4329fceab3190219219b8b5d3ce890f89"
+    from_config: "0:c63c2b4d382ad57b8f4464936c5d465fcb8e837e0eb4731bafd679992e7b2ff0"
 consensus:
   contiguous_rounds: 2
   max_block_size: 3000
@@ -18,7 +18,7 @@ consensus:
   safety_rules:
     backend:
       type: on_disk_storage
-      path: /private/var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/01bca431b96b007549bdf74133885a5e/0/secure-storage.json
+      path: /private/var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/282c34afe5a26c430db732371b11f979/0/secure-storage.json
       namespace: ~
     logger:
       chan_size: 10000
@@ -32,7 +32,7 @@ consensus:
         key: b20cd67c4bdecc538e8be990c1b6425d68bfd3a6fe97693e4846351596cca8ab
       execution_key:
         key: f59fddd0b7f52dcc0c60a448cbf9511610b0a742f1e4d238a7a45cae054ec21c
-      waypoint: ~
+      waypoint: "0:c63c2b4d382ad57b8f4464936c5d465fcb8e837e0eb4731bafd679992e7b2ff0"
     verify_vote_proposal_signature: false
     export_consensus_key: false
     network_timeout_ms: 30000
@@ -43,10 +43,10 @@ consensus:
   decoupled_execution: false
   back_pressure_limit: 0
 debug_interface:
-  admission_control_node_debug_port: 49666
+  admission_control_node_debug_port: 51670
   address: 0.0.0.0
-  metrics_server_port: 49668
-  public_metrics_server_port: 49670
+  metrics_server_port: 51672
+  public_metrics_server_port: 51674
 execution:
   sign_vote_proposal: true
   genesis_file_location: /Users/lucas/code/rust/libra/ol/fixtures/rescue/sample_rescue_genesis.blob
@@ -54,7 +54,7 @@ execution:
     type: local
   backend:
     type: on_disk_storage
-    path: /private/var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/01bca431b96b007549bdf74133885a5e/0/secure-storage.json
+    path: /private/var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/282c34afe5a26c430db732371b11f979/0/secure-storage.json
     namespace: ~
   network_timeout_ms: 30000
 full_node_networks:
@@ -69,11 +69,11 @@ full_node_networks:
       type: from_storage
       backend:
         type: on_disk_storage
-        path: /private/var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/01bca431b96b007549bdf74133885a5e/0/secure-storage.json
+        path: /private/var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/282c34afe5a26c430db732371b11f979/0/secure-storage.json
         namespace: ~
       key_name: fullnode_network
       peer_id_name: owner_account
-    listen_address: /ip4/0.0.0.0/tcp/49682
+    listen_address: /ip4/0.0.0.0/tcp/51686
     mutual_authentication: false
     network_address_key_backend: ~
     network_id: public
@@ -99,11 +99,11 @@ full_node_networks:
       type: from_storage
       backend:
         type: on_disk_storage
-        path: /private/var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/01bca431b96b007549bdf74133885a5e/0/secure-storage.json
+        path: /private/var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/282c34afe5a26c430db732371b11f979/0/secure-storage.json
         namespace: ~
       key_name: fullnode_network
       peer_id_name: owner_account
-    listen_address: /ip4/0.0.0.0/tcp/49684
+    listen_address: /ip4/0.0.0.0/tcp/51688
     mutual_authentication: false
     network_address_key_backend: ~
     network_id:
@@ -138,7 +138,7 @@ mempool:
   system_transaction_gc_interval_ms: 1000
 metrics: {}
 json_rpc:
-  address: "127.0.0.1:49672"
+  address: "127.0.0.1:51676"
   batch_size_limit: 20
   page_size_limit: 1000
   content_length_limit: 4194304
@@ -146,7 +146,7 @@ json_rpc:
   tls_key_path: ~
 api:
   enabled: true
-  address: "127.0.0.1:49674"
+  address: "127.0.0.1:51678"
 state_sync:
   chunk_limit: 1000
   client_commit_timeout_ms: 5000
@@ -179,8 +179,8 @@ state_sync:
     max_transaction_chunk_size: 3000
     max_transaction_output_chunk_size: 3000
 storage:
-  address: "127.0.0.1:49676"
-  backup_service_address: "127.0.0.1:49678"
+  address: "127.0.0.1:51680"
+  backup_service_address: "127.0.0.1:51682"
   dir: db
   grpc_max_receive_len: 100000000
   prune_window: 1000000
@@ -212,15 +212,15 @@ validator_network:
     type: from_storage
     backend:
       type: on_disk_storage
-      path: /private/var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/01bca431b96b007549bdf74133885a5e/0/secure-storage.json
+      path: /private/var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/282c34afe5a26c430db732371b11f979/0/secure-storage.json
       namespace: ~
     key_name: validator_network
     peer_id_name: owner_account
-  listen_address: /ip4/0.0.0.0/tcp/49680
+  listen_address: /ip4/0.0.0.0/tcp/51684
   mutual_authentication: true
   network_address_key_backend:
     type: on_disk_storage
-    path: /private/var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/01bca431b96b007549bdf74133885a5e/0/secure-storage.json
+    path: /private/var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/282c34afe5a26c430db732371b11f979/0/secure-storage.json
     namespace: ~
   network_id: validator
   seed_addrs: {}

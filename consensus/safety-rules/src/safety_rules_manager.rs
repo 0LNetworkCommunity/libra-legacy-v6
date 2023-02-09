@@ -10,7 +10,7 @@ use crate::{
     thread::ThreadService,
     SafetyRules, TSafetyRules,
 };
-use diem_config::config::{SafetyRulesConfig, SafetyRulesService};
+use diem_config::config::{SafetyRulesConfig, SafetyRulesService, SecureBackend};
 use diem_infallible::RwLock;
 use diem_secure_storage::{KVStorage, Storage};
 use std::{convert::TryInto, net::SocketAddr, sync::Arc};
@@ -34,6 +34,8 @@ pub fn storage(config: &SafetyRulesConfig) -> PersistentSafetyStorage {
             .as_ref()
             .expect("Missing execution key in test config")
             .private_key();
+
+        dbg!(&test_config);
         let waypoint = test_config.waypoint.expect("No waypoint in config");
 
         PersistentSafetyStorage::initialize(

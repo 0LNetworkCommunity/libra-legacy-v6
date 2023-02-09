@@ -16,7 +16,7 @@ fn test_extract_waypoint() {
 
     let (_db, wp) = read_db_and_compute_genesis(p).expect("parse genesis.blob");
     dbg!(&wp.to_string());
-    assert!(wp.to_string().starts_with("0:4314c"));
+    assert!(wp.to_string().starts_with("0:c63c2"));
 }
 
 #[test]

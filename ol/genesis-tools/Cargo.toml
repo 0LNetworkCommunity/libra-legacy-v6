@@ -41,7 +41,7 @@ move-vm-runtime = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf
 move-bytecode-utils = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
 move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
 diem-config = { path = "../../config" }
-
+diem-secure-storage = { path = "../../secure/storage/", version = "0.1.0" }
 diem-vm = { path = "../../diem-move/diem-vm", version = "0.1.0" }
 diem-framework-releases = { path = "../../diem-move/diem-framework/DPN/releases" }
 

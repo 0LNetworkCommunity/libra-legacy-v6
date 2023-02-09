@@ -6572,6 +6572,7 @@ dependencies = [
  "diem-genesis-tool",
  "diem-json-rpc",
  "diem-logger 0.1.0",
+ "diem-secure-storage",
  "diem-state-view",
  "diem-temppath",
  "diem-types",

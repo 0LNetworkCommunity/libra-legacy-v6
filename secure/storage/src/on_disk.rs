@@ -33,6 +33,7 @@ impl OnDiskStorage {
 
     fn new_with_time_service(file_path: PathBuf, time_service: TimeService) -> Self {
         if !file_path.exists() {
+            dbg!(&file_path);
             File::create(&file_path).expect("Unable to create storage");
         }
 
