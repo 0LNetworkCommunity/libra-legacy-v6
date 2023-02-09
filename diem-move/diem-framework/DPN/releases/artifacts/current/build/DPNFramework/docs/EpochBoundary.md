@@ -267,6 +267,50 @@
 
 </details>
 
+<a name="0x1_EpochBoundary_process_jail"></a>
+
+## Function `process_jail`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_jail">process_jail</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_jail">process_jail</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;) {
+    <b>let</b> all_previous_vals = <a href="DiemSystem.md#0x1_DiemSystem_get_val_set_addr">DiemSystem::get_val_set_addr</a>();
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&all_previous_vals)) {
+        <b>let</b> addr = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&all_previous_vals, i);
+        // <b>let</b> case = <a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, height_start, height_now);
+
+        // TODO: <a href="Cases.md#0x1_Cases">Cases</a> will be deprecated <b>with</b> removal of Proof of Height
+        <b>if</b> (
+          // <b>if</b> they are compliant, remove the consecutive fail, otherwise jail
+          <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr) &&
+          <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(outgoing_compliant_set, &addr)
+        ) {
+            // len_proven_nodes = len_proven_nodes + 1;
+            // also reset the jail counter for any successful unjails
+            <a href="Jail.md#0x1_Jail_remove_consecutive_fail">Jail::remove_consecutive_fail</a>(vm, addr);
+        } <b>else</b> {
+
+          <a href="Jail.md#0x1_Jail_jail">Jail::jail</a>(vm, addr);
+        };
+        i = i+ 1;
+    };
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_EpochBoundary_propose_new_set"></a>
 
 ## Function `propose_new_set`

@@ -20,7 +20,7 @@ module EpochBoundary {
     use DiemFramework::AutoPay;
     use DiemFramework::Epoch;
     use DiemFramework::DiemConfig;
-    // use DiemFramework::Audit;
+    use DiemFramework::Audit;
     use DiemFramework::DiemAccount;
     // use DiemFramework::Burn;
     use DiemFramework::FullnodeSubsidy;
