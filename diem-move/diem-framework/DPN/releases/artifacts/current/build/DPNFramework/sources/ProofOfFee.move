@@ -12,7 +12,7 @@ address DiemFramework {
   module ProofOfFee {
     use Std::Errors;
     use DiemFramework::DiemConfig;
-    use DiemFramework::DiemSystem;
+    // use DiemFramework::ValidatorConfig;
     use Std::Signer;
     use DiemFramework::ValidatorUniverse;
     use Std::Vector;
@@ -21,6 +21,7 @@ address DiemFramework {
     use DiemFramework::Debug::print;
     use DiemFramework::Vouch;
 
+    const ENOT_AN_ACTIVE_VALIDATOR: u64 = 190022;
     // A struct on the validators account which indicates their
     // latest bid (and epoch)
     struct ProofOfFeeAuction has key {
@@ -57,7 +58,7 @@ address DiemFramework {
       // TODO: check if this is a validator.
       
       let acc = Signer::address_of(account_sig);
-      assert!(DiemSystem::is_validator(acc), Errors::requires_role(190001));
+      assert!(ValidatorUniverse::is_in_universe(addr), Errors::requires_role(ENOT_AN_ACTIVE_VALIDATOR));
 
       if (!exists<ProofOfFeeAuction>(acc)) {
         move_to<ProofOfFeeAuction>(
