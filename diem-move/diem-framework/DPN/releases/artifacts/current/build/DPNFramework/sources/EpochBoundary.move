@@ -182,7 +182,7 @@ module EpochBoundary {
             //// V6 ////
             // CONSENSUS CRITICAL
             // pick the validators based on proof of fee.
-            let (auction_winners, price) = ProofOfFee::fill_seats_and_get_price(MOCK_VAL_SIZE, outgoing_compliant_set);
+            let (auction_winners, price) = ProofOfFee::fill_seats_and_get_price(vm, MOCK_VAL_SIZE, outgoing_compliant_set);
             // TODO: Don't use copy above, do a borrow.
             print(&800700);
 
@@ -244,10 +244,13 @@ module EpochBoundary {
         RecoveryMode::maybe_remove_debug_at_epoch(vm);
         print(&800900106);
 
+        // trigger the thermostat if the reward needs to be adjusted
+        ProofOfFee::reward_thermostat(vm);
+        print(&800900107);
         // Reconfig should be the last event.
         // Reconfigure the network
         DiemSystem::bulk_update_validators(vm, proposed_set);
-        print(&800900107);
+        print(&800900108);
     }
 }
 }

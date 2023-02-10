@@ -37,6 +37,7 @@ address DiemFramework {
       value: u64,
       clearing_price: u64,
       average_winning_bid: u64,
+      avg_bid_history: vector<u64>,
     }
     public fun init_genesis_baseline_reward(vm: &signer) {
       if (Signer::address_of(vm) != @VMReserved) return;
@@ -48,6 +49,7 @@ address DiemFramework {
             value: GENESIS_BASELINE_REWARD,
             clearing_price: 0,
             average_winning_bid: 0,
+            avg_bid_history: Vector::empty<u64>(),
           }
         );
       }
@@ -151,7 +153,8 @@ address DiemFramework {
     // of a validator. E.g. if a validator has a bid with no expiry
     // but has a bad jail reputation does this penalize in the ordering?
     
-    public fun fill_seats_and_get_price(set_size: u64, proven_nodes: &vector<address>): (vector<address>, u64) acquires ProofOfFeeAuction, ConsensusReward {
+    public fun fill_seats_and_get_price(vm: &signer, set_size: u64, proven_nodes: &vector<address>): (vector<address>, u64) acquires ProofOfFeeAuction, ConsensusReward {
+      if (Signer::address_of(vm) != @VMReserved) return (Vector::empty<address>(), 0);
 
       let baseline_reward = get_consensus_reward();
 
@@ -232,14 +235,134 @@ address DiemFramework {
       print(&8006010208);
       print(&seats_to_fill);
 
+      set_history(vm, &seats_to_fill);
+
       if (Vector::is_empty(&seats_to_fill)) {
         return (seats_to_fill, 0)
       };
-      
+
+      // Find the clearing price which all validators will pay
       let lowest_bidder = Vector::borrow(&seats_to_fill, Vector::length(&seats_to_fill) - 1);
 
       let (lowest_bid, _) = current_bid(*lowest_bidder);
       return (seats_to_fill, lowest_bid)
+    }
+
+    // Adjust the reward at the end of the epoch
+    // as described in the paper, the epoch reward needs to be adjustable
+    // given that the implicit bond needs to be sufficient, eg 5-10x the reward.
+    public fun reward_thermostat(vm: &signer) acquires ConsensusReward {
+      if (Signer::address_of(vm) != @VMReserved) {
+        return
+      };
+      // check the bid history
+      // if there are 5 days above 95% adjust the reward up by 5%
+      // adjust by more if it has been 10 days then, 10%
+      // if there are 5 days below 50% adjust the reward down.
+      // adjust by more if it has been 10 days then 10%
+      
+      let bid_upper_bound = 0950;
+      let bid_lower_bound = 0500;
+
+      let short_window: u64 = 5;
+      let long_window: u64 = 10;
+
+      let cr = borrow_global_mut<ConsensusReward>(@VMReserved);
+
+      let len = Vector::length<u64>(&cr.avg_bid_history);
+      let i = 0;
+
+      let epochs_above = 0;
+      let epochs_below = 0;
+      while (i < 10 || i < len) { // max ten days, but may have less in history, filling set should truncate the history at 10 epochs.
+        let avg_bid = *Vector::borrow<u64>(&cr.avg_bid_history, i);
+        if (avg_bid > bid_upper_bound) {
+          epochs_above = epochs_above + 1;
+        } else if (avg_bid < bid_lower_bound) {
+          epochs_below = epochs_below + 1;
+        };
+  
+        i = i + 1;
+      };
+
+      if (cr.value > 0) {
+        // TODO: this is an initial implementation, we need to
+        // decide if we want more granularity in the reward adjustment
+        // Note: making this readable for now, but we can optimize later
+        if (epochs_above > short_window) {
+          // check for zeros.
+          // TODO: put a better safety check here
+          if ((cr.value / 10) > cr.value){
+            return
+          };
+          // If the Validators are bidding near 100% that means
+          // the reward is very generous, i.e. their opportunity
+          // cost is met at small percentages. This means the
+          // implicit bond is very high on validators. E.g.
+          // at 1% median bid, the implicit bond is 100x the reward.
+          // We need to DECREASE the reward
+
+          if (epochs_above > short_window) {
+            // decrease the reward by 10%
+            cr.value = cr.value - (cr.value / 10);
+            return // return early since we can't increase and decrease simultaneously
+          } else if (epochs_above > long_window) {
+            // decrease the reward by 5%
+            cr.value = cr.value - (cr.value / 20);
+            return // return early since we can't increase and decrease simultaneously
+          };
+            
+          // if validators are bidding low percentages
+          // it means the nominal reward is not high enough.
+          // That is the validator's opportunity cost is not met within a
+          // range where the bond is meaningful.
+          // For example: if the bids for the epoch's reward is 50% of the  value, that means the potential profit, is the same as the potential loss.
+          // At a 25% bid (potential loss), the profit is thus 75% of the value, which means the implicit bond is 25/75, or 1/3 of the bond, the risk favors the validator. This means among other things, that an attacker can pay for the cost of the attack with the profits. See paper, for more details.
+
+          // we need to INCREASE the reward, so that the bond is more meaningful.
+          if (epochs_below > short_window) {
+            // decrease the reward by 5%
+            cr.value = cr.value + (cr.value / 20);
+          } else if (epochs_above > long_window) {
+            // decrease the reward by 10%
+            cr.value = cr.value + (cr.value / 10);
+          };
+        };
+      };
+    }
+
+    /// find the median bid to push to history
+    // this is needed for reward_thermostat
+    public fun set_history(vm: &signer, seats_to_fill: &vector<address>) acquires ProofOfFeeAuction, ConsensusReward {
+      if (Signer::address_of(vm) != @VMReserved) {
+        return
+      };
+
+      let median_bid = get_median(seats_to_fill);
+      // push to history
+      let cr = borrow_global_mut<ConsensusReward>(@VMReserved);
+      if (Vector::length(&cr.avg_bid_history) < 10) {
+        Vector::push_back(&mut cr.avg_bid_history, median_bid);
+      } else {
+        Vector::remove(&mut cr.avg_bid_history, 0);
+        Vector::push_back(&mut cr.avg_bid_history, median_bid);
+      };
+    }
+
+    fun get_median(seats_to_fill: &vector<address>):u64 acquires ProofOfFeeAuction { 
+      // TODO: the list is sorted above, so
+      // we assume the median is the middle element
+      let len = Vector::length(seats_to_fill);
+      if (len == 0) {
+        return 0
+      };
+      let median_bidder = if (len > 2) {
+        Vector::borrow(seats_to_fill, len/2)
+      } else {
+        Vector::borrow(seats_to_fill, 0)
+      };
+      let (median_bid, _) = current_bid(*median_bidder);
+      return median_bid
     }
 
     //////////////// GETTERS ////////////////
