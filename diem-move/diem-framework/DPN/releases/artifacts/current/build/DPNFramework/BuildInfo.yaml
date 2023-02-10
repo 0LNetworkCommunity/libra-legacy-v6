@@ -176,6 +176,9 @@ compiled_package_info:
       name: Mock
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: MusicalChairs
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: NetworkIdentity
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -316,7 +319,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 51040330F757378BD6E3ABA93A5A4B56F5863AA63100508E82329A0618C08780
+  source_digest: 5E61FF223B8918EA7767D5BECADDC1EE2837E01BAB5BD5A1F560EE96831C3756
   build_flags:
     dev_mode: false
     test_mode: false
