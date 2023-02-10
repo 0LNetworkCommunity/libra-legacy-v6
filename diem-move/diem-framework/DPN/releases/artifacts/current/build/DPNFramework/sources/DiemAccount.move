@@ -55,7 +55,6 @@ module DiemFramework::DiemAccount {
     use DiemFramework::Debug::print;
     use DiemFramework::Jail;
     use DiemFramework::Testnet;
-    use DiemFramework::ProofOfFee;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -686,7 +685,8 @@ module DiemFramework::DiemAccount {
         Ancestry::init(sender, &new_signer);
         Vouch::init(&new_signer);
         Vouch::vouch_for(sender, new_account_address);
-        ProofOfFee::set_bid(&new_signer, 1);
+        // ProofOfFee::init(&new_signer); // proof of fee causes circular depency if called on account creation.
+        // creation script should call proof of fee after.
         set_slow(&new_signer);
 
         new_account_address
@@ -3171,16 +3171,16 @@ module DiemFramework::DiemAccount {
         Roles::new_validator_role(dr_account, &new_account);
         ValidatorConfig::publish(&new_account, dr_account, human_name);
         make_account(&new_account, auth_key_prefix);
-        /////// 0L /////////
-        add_currencies_for_account<GAS>(&new_account, false);
 
+        add_currencies_for_account<GAS>(&new_account, false);
         let new_account = create_signer(new_account_address);
         set_slow(&new_account);
 
-        /////// 0L /////////
+        // NOTE: issues with testnet
         Jail::init(&new_account);
-        // ValidatorUniverse::add_self(&new_account);
-        // Vouch::init(&new_account);
+        // TODO: why does this fail?
+        // assert!(ValidatorConfig::is_valid(new_account_address), 07171717171);
+
     }
     spec create_validator_account {
         pragma disable_invariants_in_body;

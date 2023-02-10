@@ -41,15 +41,6 @@
 ## Constants
 
 
-<a name="0x1_EpochBoundary_MOCK_BASELINE_CONSENSUS_FEES"></a>
-
-
-
-<pre><code><b>const</b> <a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_BASELINE_CONSENSUS_FEES">MOCK_BASELINE_CONSENSUS_FEES</a>: u64 = 1000000;
-</code></pre>
-
-
-
 <a name="0x1_EpochBoundary_MOCK_VAL_SIZE"></a>
 
 
@@ -94,11 +85,12 @@
     //     <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
     print(&800400);
 
-    <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, <a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_BASELINE_CONSENSUS_FEES">MOCK_BASELINE_CONSENSUS_FEES</a>);
+    <b>let</b> reward = <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">ProofOfFee::get_consensus_reward</a>();
+    <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, reward);
 
     print(&800500);
 
-    <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, <a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_BASELINE_CONSENSUS_FEES">MOCK_BASELINE_CONSENSUS_FEES</a>, &outgoing_compliant_set);
+    <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, reward, &outgoing_compliant_set);
     print(&800600);
 
 
