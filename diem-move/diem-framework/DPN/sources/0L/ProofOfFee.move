@@ -18,7 +18,7 @@ address DiemFramework {
     use DiemFramework::ValidatorUniverse;
     use Std::Vector;
     use DiemFramework::Jail;
-    // use DiemFramework::DiemAccount;
+    use DiemFramework::DiemAccount;
     use DiemFramework::Debug::print;
     use DiemFramework::Vouch;
     use Std::FixedPoint32;

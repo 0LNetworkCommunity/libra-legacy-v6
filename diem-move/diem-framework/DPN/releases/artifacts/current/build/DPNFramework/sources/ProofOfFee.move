@@ -242,6 +242,7 @@ address DiemFramework {
 
       print(&8006010201);
 
+<<<<<<< HEAD
       // Now we can seat the validators based on the algo above:
       // 1. seat the proven nodes of previous epoch
       // 2. seat validators who did not participate in the previous epoch:
@@ -249,6 +250,8 @@ address DiemFramework {
       // 2b. seat the remainder of the unproven vals with any jail reputation.
 
       let num_unproven_added = 0;
+=======
+>>>>>>> ce814ac7ba (add bid restrictions, and checking upon seating)
       let i = 0u64;
       while (
         (Vector::length(&seats_to_fill) < set_size) &&
@@ -263,6 +266,40 @@ address DiemFramework {
         //   continue
         // };
 
+<<<<<<< HEAD
+=======
+        // NOTE: I know the multiple i = i+1 is ugly, but debugging
+        // is much harder if we have all the checks in one 'if' statement.
+        print(&8006010203);
+        if (Jail::is_jailed(*val)) { 
+          i = i + 1; 
+          continue
+        };
+        print(&8006010204);
+        if (!Vouch::unrelated_buddies_above_thresh(*val)) { 
+          i = i + 1; 
+          continue
+        };
+
+        print(&80060102041);
+        // skip the user if they don't have sufficient UNLOCKED funds
+        // or if the bid expired.
+
+        // belt and suspenders, expiry
+        if (DiemConfig::get_current_epoch() > expire) {
+          i = i + 1; 
+          continue
+        };
+
+        let coin_required = bid * baseline_reward;
+        if (
+          DiemAccount::unlocked_amount(*val) < coin_required
+        ) { 
+          i = i + 1; 
+          continue
+        };
+        
+>>>>>>> ce814ac7ba (add bid restrictions, and checking upon seating)
 
         // check if a proven node
         if (Vector::contains(proven_nodes, val)) {
@@ -586,6 +623,53 @@ address DiemFramework {
       
       // bid must be below 110%
       assert!(bid <= 1100, Errors::ol_tx(EBID_ABOVE_MAX_PCT));
+
+      let pof = borrow_global_mut<ProofOfFeeAuction>(acc);
+      pof.epoch_expiration = expiry_epoch;
+      pof.bid = bid;
+    }
+
+    // get the baseline reward from ConsensusReward 
+    public fun get_consensus_reward(): u64 acquires ConsensusReward {
+      let b = borrow_global<ConsensusReward>(@VMReserved );
+      return b.value
+    }
+
+    // CONSENSUS CRITICAL 
+    // ALL EYES ON THIS
+    // Proof of Fee returns the current bid of the validator during the auction for upcoming epoch seats.
+    // returns (current bid, expiration epoch)
+    public fun current_bid(node_addr: address): (u64, u64) acquires ProofOfFeeAuction {
+      if (exists<ProofOfFeeAuction>(node_addr)) {
+        let pof = borrow_global<ProofOfFeeAuction>(node_addr);
+        let e = DiemConfig::get_current_epoch();
+        // check the expiration of the bid
+        // the bid is zero if it expires.
+        // The expiration epoch number is inclusive of the epoch.
+        // i.e. the bid expires on e + 1.
+        if (pof.epoch_expiration >= e || pof.epoch_expiration == 0) {
+          return (pof.bid, pof.epoch_expiration)
+        };
+        return (0, pof.epoch_expiration)
+      };
+      return (0, 0)
+    }
+
+    ////////// SETTERS //////////
+    // validator can set a bid. See transaction script below.
+    // the validator can set an "expiry epoch:  for the bid.
+    // Zero means never expires.
+    // Bids are denomiated in percentages, with two decimal places..
+    // i.e. 1234 = 12.34%
+    // Provisionally 110% is the maximum bid. Which could be reviewed.
+    public fun set_bid(account_sig: &signer, bid: u64, expiry_epoch: u64) acquires ProofOfFeeAuction {
+
+      let acc = Signer::address_of(account_sig);
+      if (!exists<ProofOfFeeAuction>(acc)) {
+        init(account_sig);
+      };
+
+      assert!(bid <= 11000, Errors::ol_tx(EBID_ABOVE_MAX_PCT));
 
       let pof = borrow_global_mut<ProofOfFeeAuction>(acc);
       pof.epoch_expiration = expiry_epoch;
