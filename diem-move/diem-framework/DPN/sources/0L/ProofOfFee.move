@@ -162,10 +162,12 @@ address DiemFramework {
     public fun fill_seats_and_get_price(set_size: u64, proven_nodes: &vector<address>): (vector<address>, u64) acquires ProofOfFeeAuction {
       let seats_to_fill = Vector::empty<address>();
       // print(&set_size);
+      print(&8006010201);
       let max_unproven = set_size / 3;
 
       let num_unproven_added = 0;
 
+      print(&8006010202);
       let sorted_vals_by_bid = get_sorted_vals();
 
       // print(&sorted_vals_by_bid);
@@ -180,15 +182,24 @@ address DiemFramework {
         // fail fast if the validator is jailed.
         // NOTE: epoch reconfigure needs to reset the jail
         // before calling the proof of fee.
-        if (Jail::is_jailed(*val)) continue;
-
-        if (!Vouch::unrelated_buddies_above_thresh(*val)) continue;
+        print(&8006010203);
+        if (Jail::is_jailed(*val)) { 
+          i = i + 1; 
+          continue
+        };
+        print(&8006010204);
+        if (!Vouch::unrelated_buddies_above_thresh(*val)) { 
+          i = i + 1; 
+          continue
+        };
 
         // check if a proven node
         if (Vector::contains(proven_nodes, val)) {
+          print(&8006010205);
           // print(&01);
           Vector::push_back(&mut seats_to_fill, *val);
         } else {
+          print(&8006010206);
           // print(&02);
           // for unproven nodes, push it to list if we haven't hit limit
           if (num_unproven_added < max_unproven ) {
@@ -196,13 +207,19 @@ address DiemFramework {
             Vector::push_back(&mut seats_to_fill, *val);
           };
           // print(&04);
+          print(&8006010207);
           num_unproven_added = num_unproven_added + 1;
         };
         i = i + 1;
       };
       // print(&05);
+      print(&8006010208);
       print(&seats_to_fill);
 
+      if (Vector::is_empty(&seats_to_fill)) {
+        return (seats_to_fill, 0)
+      };
+      
       let lowest_bidder = Vector::borrow(&seats_to_fill, Vector::length(&seats_to_fill) - 1);
 
       let (lowest_bid, _) = current_bid(*lowest_bidder);

@@ -165,24 +165,27 @@ module EpochBoundary {
     fun propose_new_set(vm: &signer, outgoing_compliant_set: &vector<address>): vector<address> 
     {
         let proposed_set = Vector::empty<address>();
-
+        
+        print(&800601);
         // If we are in recovery mode, we use the recovery set.
         if (RecoveryMode::is_recovery()) {
+          print(&80060101);
             let recovery_vals = RecoveryMode::get_debug_vals();
             if (Vector::length(&recovery_vals) > 0) {
               proposed_set = recovery_vals
             }
         } else { // Default case: Proof of Fee
             //// V6 ////
+            print(&80060102);
             // CONSENSUS CRITICAL
             // pick the validators based on proof of fee.
             let (auction_winners, price) = ProofOfFee::fill_seats_and_get_price(MOCK_VAL_SIZE, outgoing_compliant_set);
             // TODO: Don't use copy above, do a borrow.
-            print(&800700);
+            print(&80060103);
 
             // charge the validators for the proof of fee in advance of the epoch
             DiemAccount::vm_multi_pay_fee(vm, &auction_winners, price, &b"proof of fee");
-            print(&800800);
+            print(&80060104);
 
             proposed_set = auction_winners
         };
