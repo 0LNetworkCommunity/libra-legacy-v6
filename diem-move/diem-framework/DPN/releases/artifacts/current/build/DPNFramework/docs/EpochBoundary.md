@@ -284,7 +284,7 @@
         //// V6 ////
         // CONSENSUS CRITICAL
         // pick the validators based on proof of fee.
-        <b>let</b> (auction_winners, price) = <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">ProofOfFee::fill_seats_and_get_price</a>(<a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_VAL_SIZE">MOCK_VAL_SIZE</a>, outgoing_compliant_set);
+        <b>let</b> (auction_winners, price) = <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">ProofOfFee::fill_seats_and_get_price</a>(vm, <a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_VAL_SIZE">MOCK_VAL_SIZE</a>, outgoing_compliant_set);
         // TODO: Don't <b>use</b> <b>copy</b> above, do a borrow.
         print(&800700);
 
@@ -366,10 +366,13 @@
     <a href="RecoveryMode.md#0x1_RecoveryMode_maybe_remove_debug_at_epoch">RecoveryMode::maybe_remove_debug_at_epoch</a>(vm);
     print(&800900106);
 
+    // trigger the thermostat <b>if</b> the reward needs <b>to</b> be adjusted
+    <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">ProofOfFee::reward_thermostat</a>(vm);
+    print(&800900107);
     // Reconfig should be the last event.
     // Reconfigure the network
     <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
-    print(&800900107);
+    print(&800900108);
 }
 </code></pre>
 

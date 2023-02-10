@@ -13,6 +13,9 @@
 -  [Function `top_n_accounts`](#0x1_ProofOfFee_top_n_accounts)
 -  [Function `get_sorted_vals`](#0x1_ProofOfFee_get_sorted_vals)
 -  [Function `fill_seats_and_get_price`](#0x1_ProofOfFee_fill_seats_and_get_price)
+-  [Function `reward_thermostat`](#0x1_ProofOfFee_reward_thermostat)
+-  [Function `set_history`](#0x1_ProofOfFee_set_history)
+-  [Function `get_median`](#0x1_ProofOfFee_get_median)
 -  [Function `get_consensus_reward`](#0x1_ProofOfFee_get_consensus_reward)
 -  [Function `current_bid`](#0x1_ProofOfFee_current_bid)
 -  [Function `set_bid`](#0x1_ProofOfFee_set_bid)
@@ -100,6 +103,12 @@
 <dd>
 
 </dd>
+<dt>
+<code>avg_bid_history: vector&lt;u64&gt;</code>
+</dt>
+<dd>
+
+</dd>
 </dl>
 
 
@@ -162,6 +171,7 @@
         value: <a href="ProofOfFee.md#0x1_ProofOfFee_GENESIS_BASELINE_REWARD">GENESIS_BASELINE_REWARD</a>,
         clearing_price: 0,
         average_winning_bid: 0,
+        avg_bid_history: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;(),
       }
     );
   }
@@ -310,7 +320,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">fill_seats_and_get_price</a>(set_size: u64, proven_nodes: &vector&lt;<b>address</b>&gt;): (vector&lt;<b>address</b>&gt;, u64)
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">fill_seats_and_get_price</a>(vm: &signer, set_size: u64, proven_nodes: &vector&lt;<b>address</b>&gt;): (vector&lt;<b>address</b>&gt;, u64)
 </code></pre>
 
 
@@ -319,7 +329,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">fill_seats_and_get_price</a>(set_size: u64, proven_nodes: &vector&lt;<b>address</b>&gt;): (vector&lt;<b>address</b>&gt;, u64) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>, <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">fill_seats_and_get_price</a>(vm: &signer, set_size: u64, proven_nodes: &vector&lt;<b>address</b>&gt;): (vector&lt;<b>address</b>&gt;, u64) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>, <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
+  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @VMReserved) <b>return</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;(), 0);
 
   <b>let</b> baseline_reward = <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">get_consensus_reward</a>();
 
@@ -400,14 +411,190 @@
   print(&8006010208);
   print(&seats_to_fill);
 
+  <a href="ProofOfFee.md#0x1_ProofOfFee_set_history">set_history</a>(vm, &seats_to_fill);
+
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>(&seats_to_fill)) {
     <b>return</b> (seats_to_fill, 0)
   };
 
+  // Find the clearing price which all validators will pay
   <b>let</b> lowest_bidder = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&seats_to_fill, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&seats_to_fill) - 1);
 
   <b>let</b> (lowest_bid, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_current_bid">current_bid</a>(*lowest_bidder);
   <b>return</b> (seats_to_fill, lowest_bid)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ProofOfFee_reward_thermostat"></a>
+
+## Function `reward_thermostat`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">reward_thermostat</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">reward_thermostat</a>(vm: &signer) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
+  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @VMReserved) {
+    <b>return</b>
+  };
+  // check the bid history
+  // <b>if</b> there are 5 days above 95% adjust the reward up by 5%
+  // adjust by more <b>if</b> it <b>has</b> been 10 days then, 10%
+  // <b>if</b> there are 5 days below 50% adjust the reward down.
+  // adjust by more <b>if</b> it <b>has</b> been 10 days then 10%
+
+  <b>let</b> bid_upper_bound = 0950;
+  <b>let</b> bid_lower_bound = 0500;
+
+  <b>let</b> short_window: u64 = 5;
+  <b>let</b> long_window: u64 = 10;
+
+  <b>let</b> cr = <b>borrow_global_mut</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a>&gt;(@VMReserved);
+
+  <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;u64&gt;(&cr.avg_bid_history);
+  <b>let</b> i = 0;
+
+  <b>let</b> epochs_above = 0;
+  <b>let</b> epochs_below = 0;
+  <b>while</b> (i &lt; 10 || i &lt; len) { // max ten days, but may have less in history, filling set should truncate the history at 10 epochs.
+    <b>let</b> avg_bid = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&cr.avg_bid_history, i);
+    <b>if</b> (avg_bid &gt; bid_upper_bound) {
+      epochs_above = epochs_above + 1;
+    } <b>else</b> <b>if</b> (avg_bid &lt; bid_lower_bound) {
+      epochs_below = epochs_below + 1;
+    };
+
+    i = i + 1;
+  };
+
+  <b>if</b> (cr.value &gt; 0) {
+    // TODO: this is an initial implementation, we need <b>to</b>
+    // decide <b>if</b> we want more granularity in the reward adjustment
+    // Note: making this readable for now, but we can optimize later
+    <b>if</b> (epochs_above &gt; short_window) {
+      // check for zeros.
+      // TODO: put a better safety check here
+      <b>if</b> ((cr.value / 10) &gt; cr.value){
+        <b>return</b>
+      };
+      // If the Validators are bidding near 100% that means
+      // the reward is very generous, i.e. their opportunity
+      // cost is met at small percentages. This means the
+      // implicit bond is very high on validators. E.g.
+      // at 1% median bid, the implicit bond is 100x the reward.
+      // We need <b>to</b> DECREASE the reward
+
+      <b>if</b> (epochs_above &gt; short_window) {
+        // decrease the reward by 10%
+        cr.value = cr.value - (cr.value / 10);
+        <b>return</b> // <b>return</b> early since we can't increase and decrease simultaneously
+      } <b>else</b> <b>if</b> (epochs_above &gt; long_window) {
+        // decrease the reward by 5%
+        cr.value = cr.value - (cr.value / 20);
+        <b>return</b> // <b>return</b> early since we can't increase and decrease simultaneously
+      };
+
+      // <b>if</b> validators are bidding low percentages
+      // it means the nominal reward is not high enough.
+      // That is the validator's opportunity cost is not met within a
+      // range <b>where</b> the bond is meaningful.
+      // For example: <b>if</b> the bids for the epoch's reward is 50% of the  value, that means the potential profit, is the same <b>as</b> the potential loss.
+      // At a 25% bid (potential loss), the profit is thus 75% of the value, which means the implicit bond is 25/75, or 1/3 of the bond, the risk favors the validator. This means among other things, that an attacker can pay for the cost of the attack <b>with</b> the profits. See paper, for more details.
+
+      // we need <b>to</b> INCREASE the reward, so that the bond is more meaningful.
+      <b>if</b> (epochs_below &gt; short_window) {
+        // decrease the reward by 5%
+        cr.value = cr.value + (cr.value / 20);
+      } <b>else</b> <b>if</b> (epochs_above &gt; long_window) {
+        // decrease the reward by 10%
+        cr.value = cr.value + (cr.value / 10);
+      };
+    };
+  };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ProofOfFee_set_history"></a>
+
+## Function `set_history`
+
+find the median bid to push to history
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_set_history">set_history</a>(vm: &signer, seats_to_fill: &vector&lt;<b>address</b>&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_set_history">set_history</a>(vm: &signer, seats_to_fill: &vector&lt;<b>address</b>&gt;) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>, <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
+  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @VMReserved) {
+    <b>return</b>
+  };
+
+  <b>let</b> median_bid = <a href="ProofOfFee.md#0x1_ProofOfFee_get_median">get_median</a>(seats_to_fill);
+  // push <b>to</b> history
+  <b>let</b> cr = <b>borrow_global_mut</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a>&gt;(@VMReserved);
+  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&cr.avg_bid_history) &lt; 10) {
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> cr.avg_bid_history, median_bid);
+  } <b>else</b> {
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> cr.avg_bid_history, 0);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> cr.avg_bid_history, median_bid);
+  };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ProofOfFee_get_median"></a>
+
+## Function `get_median`
+
+
+
+<pre><code><b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_get_median">get_median</a>(seats_to_fill: &vector&lt;<b>address</b>&gt;): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_get_median">get_median</a>(seats_to_fill: &vector&lt;<b>address</b>&gt;):u64 <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a> {
+  // TODO: the list is sorted above, so
+  // we <b>assume</b> the median is the middle element
+  <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(seats_to_fill);
+  <b>if</b> (len == 0) {
+    <b>return</b> 0
+  };
+  <b>let</b> median_bidder = <b>if</b> (len &gt; 2) {
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(seats_to_fill, len/2)
+  } <b>else</b> {
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(seats_to_fill, 0)
+  };
+  <b>let</b> (median_bid, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_current_bid">current_bid</a>(*median_bidder);
+  <b>return</b> median_bid
 }
 </code></pre>
 
