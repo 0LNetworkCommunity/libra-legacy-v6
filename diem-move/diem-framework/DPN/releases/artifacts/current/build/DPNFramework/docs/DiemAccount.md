@@ -153,7 +153,6 @@ before and after every transaction.
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
 <b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
-<b>use</b> <a href="ProofOfFee.md#0x1_ProofOfFee">0x1::ProofOfFee</a>;
 <b>use</b> <a href="Receipts.md#0x1_Receipts">0x1::Receipts</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -1745,7 +1744,8 @@ Initialize this module. This is only callable from genesis.
     <a href="Ancestry.md#0x1_Ancestry_init">Ancestry::init</a>(sender, &new_signer);
     <a href="Vouch.md#0x1_Vouch_init">Vouch::init</a>(&new_signer);
     <a href="Vouch.md#0x1_Vouch_vouch_for">Vouch::vouch_for</a>(sender, new_account_address);
-    <a href="ProofOfFee.md#0x1_ProofOfFee_set_bid">ProofOfFee::set_bid</a>(&new_signer, 1);
+    // <a href="ProofOfFee.md#0x1_ProofOfFee_init">ProofOfFee::init</a>(&new_signer); // proof of fee causes circular depency <b>if</b> called on account creation.
+    // creation <b>script</b> should call proof of fee after.
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_signer);
 
     new_account_address
@@ -6345,16 +6345,16 @@ Create a Validator account
     <a href="Roles.md#0x1_Roles_new_validator_role">Roles::new_validator_role</a>(dr_account, &new_account);
     <a href="ValidatorConfig.md#0x1_ValidatorConfig_publish">ValidatorConfig::publish</a>(&new_account, dr_account, human_name);
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(&new_account, auth_key_prefix);
-    /////// 0L /////////
-    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_account, <b>false</b>);
 
+    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_account, <b>false</b>);
     <b>let</b> new_account = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_account);
 
-    /////// 0L /////////
+    // NOTE: issues <b>with</b> testnet
     <a href="Jail.md#0x1_Jail_init">Jail::init</a>(&new_account);
-    // <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(&new_account);
-    // <a href="Vouch.md#0x1_Vouch_init">Vouch::init</a>(&new_account);
+    // TODO: why does this fail?
+    // <b>assert</b>!(<a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(new_account_address), 07171717171);
+
 }
 </code></pre>
 

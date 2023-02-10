@@ -3338,6 +3338,7 @@ pub enum ScriptFunctionCall {
 
     UpdatePofBid {
         bid: u64,
+        epoch_expiry: u64,
     },
 
     ValAddSelf {},
@@ -4026,7 +4027,9 @@ impl ScriptFunctionCall {
                 currency,
                 allow_minting,
             } => encode_update_minting_ability_script_function(currency, allow_minting),
-            UpdatePofBid { bid } => encode_update_pof_bid_script_function(bid),
+            UpdatePofBid { bid, epoch_expiry } => {
+                encode_update_pof_bid_script_function(bid, epoch_expiry)
+            }
             ValAddSelf {} => encode_val_add_self_script_function(),
             VouchFor { val } => encode_vouch_for_script_function(val),
             VoucherUnjail { addr } => encode_voucher_unjail_script_function(addr),
@@ -6781,7 +6784,7 @@ pub fn encode_update_minting_ability_script_function(
     ))
 }
 
-pub fn encode_update_pof_bid_script_function(bid: u64) -> TransactionPayload {
+pub fn encode_update_pof_bid_script_function(bid: u64, epoch_expiry: u64) -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
@@ -6789,7 +6792,10 @@ pub fn encode_update_pof_bid_script_function(bid: u64) -> TransactionPayload {
         ),
         ident_str!("update_pof_bid").to_owned(),
         vec![],
-        vec![bcs::to_bytes(&bid).unwrap()],
+        vec![
+            bcs::to_bytes(&bid).unwrap(),
+            bcs::to_bytes(&epoch_expiry).unwrap(),
+        ],
     ))
 }
 
@@ -9411,6 +9417,7 @@ fn decode_update_pof_bid_script_function(
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::UpdatePofBid {
             bid: bcs::from_bytes(script.args().get(0)?).ok()?,
+            epoch_expiry: bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None

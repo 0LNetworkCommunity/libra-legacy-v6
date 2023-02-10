@@ -39,7 +39,7 @@ module EpochBoundary {
     const MOCK_VAL_SIZE: u64 = 21;
 
     // TODO: this will depend on an adjustment algo.
-    const MOCK_BASELINE_CONSENSUS_FEES: u64 = 1000000;
+    // const MOCK_BASELINE_CONSENSUS_FEES: u64 = 1000000;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -63,11 +63,12 @@ module EpochBoundary {
         //     Subsidy::calculate_subsidy(vm, compliant_nodes_count);
         print(&800400);
 
-        process_fullnodes(vm, MOCK_BASELINE_CONSENSUS_FEES);
+        let reward = ProofOfFee::get_consensus_reward();
+        process_fullnodes(vm, reward);
         
         print(&800500);
         
-        process_validators(vm, MOCK_BASELINE_CONSENSUS_FEES, &outgoing_compliant_set);
+        process_validators(vm, reward, &outgoing_compliant_set);
         print(&800600);
 
 
