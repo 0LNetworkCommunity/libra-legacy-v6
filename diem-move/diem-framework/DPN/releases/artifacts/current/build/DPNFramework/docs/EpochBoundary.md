@@ -31,6 +31,7 @@
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Subsidy.md#0x1_Subsidy">0x1::Subsidy</a>;
 <b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
+<b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
@@ -197,7 +198,12 @@
         <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, outgoing_compliant_set);
     };
 
-    <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, outgoing_compliant_set);
+    // after everyone is paid from the chain's Fee account
+    // we can burn the remainder.
+
+    // TODO: implamente what happens <b>to</b> the matching donation algo
+    // depending on the validator's preferences.
+    <a href="TransactionFee.md#0x1_TransactionFee_ol_burn_fees">TransactionFee::ol_burn_fees</a>(vm);
 }
 </code></pre>
 
