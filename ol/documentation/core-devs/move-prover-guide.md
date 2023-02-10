@@ -2,7 +2,7 @@
 ### Step 1. Install tools
 
 Follow:   
-https://github.com/OLSF/libra/blob/main/language/move-prover/doc/user/install.md  
+https://github.com/0LNetworkCommunity/libra/blob/main/language/move-prover/doc/user/install.md  
 
 **Hint**: If `./scripts/dev_setup.sh` does not work, install the followings manually with the following order:
 
@@ -80,8 +80,8 @@ Uncomment the line above to see the prover error.
 
 **References:**  
 (be aware these docs were un-updated at the time of writing, so combine them with the notes in this doc.)
-https://github.com/OLSF/libra/blob/main/language/move-prover/doc/user/prover-guide.md  
-https://github.com/OLSF/libra/blob/main/ol/documentation/writing_and_publishing_thirdparty_modules.md#formal-verification  
+https://github.com/0LNetworkCommunity/libra/blob/main/language/move-prover/doc/user/prover-guide.md  
+https://github.com/0LNetworkCommunity/libra/blob/main/ol/documentation/writing_and_publishing_thirdparty_modules.md#formal-verification  
 
 ### Troubleshooting
 

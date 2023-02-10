@@ -2,7 +2,7 @@
 
 # Quick start
 
-A OLSF devnet runs with the following nodes. If you have permissions connect with `shh root@ip-address`
+A 0LNetworkCommunity devnet runs with the following nodes. If you have permissions connect with `shh root@ip-address`
 ```
 alice = 161.35.13.169 
 bob = 167.71.84.248
@@ -29,7 +29,7 @@ Upon logging in, administrators should check the saved terminal sessions with `t
 
 # Devnet Genesis ceremony (optional)
 
-This assumes there is a github repo which is dedicated to devnet. These instruction assume the layout of the genesis set is found in: `github.com/OLSF/dev-genesis`.
+This assumes there is a github repo which is dedicated to devnet. These instruction assume the layout of the genesis set is found in: `github.com/0LNetworkCommunity/dev-genesis`.
 
 The defaults use personas in the genesis set are: `alice`, `bob`, `carol` whose configs and mnemonics can be found in `/fixtures/`
 
@@ -41,8 +41,8 @@ Optionally change the set layout with:
 
 These repos are necessary for accurate mocking of main net. 
 
-* OLSF/dev-genesis: the mock repo for genesis registrations.
-* OLSF/dev-epoch-archive: the mock repo for epoch archives.
+* 0LNetworkCommunity/dev-genesis: the mock repo for genesis registrations.
+* 0LNetworkCommunity/dev-epoch-archive: the mock repo for epoch archives.
 
 
 This only needs to be done once per session, or time the devnet configs change: Move standard library, set_layout, IP addresses.
@@ -116,7 +116,7 @@ Preferably run these commands in a `screen` or `tmux`, such as `screen -S node`,
 
 ### End-to-end devnet setup
 
-If something is wrong with the genesis ceremony repository (github.com/OLSF/dev-genesis) then the ceremony needs to be rerun (instead of using the fixtures).
+If something is wrong with the genesis ceremony repository (github.com/0LNetworkCommunity/dev-genesis) then the ceremony needs to be rerun (instead of using the fixtures).
 
 1. (OPTIONAL) This instruciton is in the INFRA section above. But if standard library changes for genesis, need to reregister, alice, bob, carol to the mock genesis repo. Do this on all hosts. 
 
@@ -155,7 +155,7 @@ make dev-join
 ```
 
 ### Join a new blank validator
-NOTE: backups of devnet should be created for this version number at this repo: github.com/OLSF/dev-epoch-archive 
+NOTE: backups of devnet should be created for this version number at this repo: github.com/0LNetworkCommunity/dev-epoch-archive 
 Do as the typical onboarding procedure.
 
 0. pull same <version> number as above, and build with `make bins`

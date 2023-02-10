@@ -46,7 +46,7 @@ sudo cp /usr/local/bin/* ~/bin
 ## Fetch latest code
 
 ```
-git clone https://github.com/OLSF/libra.git --branch main --depth 1 --single-branch
+git clone https://github.com/0LNetworkCommunity/libra.git --branch main --depth 1 --single-branch
 ```
 
 ##  Build binaries

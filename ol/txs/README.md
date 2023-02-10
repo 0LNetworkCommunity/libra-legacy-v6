@@ -45,7 +45,7 @@ pub struct TxParams {
     pub user_tx_timeout: u64, // for compatibility with UTC's timestamp.
 }
 ```
-Ref: https://github.com/OLSF/libra/blob/tx-sender/txs/src/submit_tx.rs#L26
+Ref: https://github.com/0LNetworkCommunity/libra/blob/tx-sender/txs/src/submit_tx.rs#L26
 
 
 #### Get TxParams from Local swarm

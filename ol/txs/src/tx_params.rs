@@ -1,28 +1,30 @@
 //! Txs App submit_tx module
 #![forbid(unsafe_code)]
-use crate::config::AppCfg;
+
+use std::io;
+use std::path::PathBuf;
+
 use anyhow::Error;
+use reqwest::Url;
 
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     test_utils::KeyPair,
 };
 use diem_global_constants::OPERATOR_KEY;
-
 use diem_secure_storage::{CryptoStorage, Namespaced, OnDiskStorage, Storage};
 use diem_types::{account_address::AccountAddress, chain_id::NamedChain, waypoint::Waypoint};
 use diem_types::{chain_id::ChainId, transaction::authenticator::AuthenticationKey};
+use diem_wallet::WalletLibrary;
 use ol::node::client::find_a_remote_jsonrpc;
 use ol_keys::{scheme::KeyScheme, wallet};
-
-use diem_wallet::WalletLibrary;
 use ol_types::{
     self,
     config::{TxCost, TxType},
     fixtures,
 };
-use reqwest::Url;
-use std::path::PathBuf;
+
+use crate::config::AppCfg;
 
 /// All the parameters needed for a client transaction.
 #[derive(Debug)]
@@ -108,6 +110,39 @@ impl TxParams {
                 }
             }
         };
+
+        println!("OPTIONAL: If you have changed your account's authkey \
+            then input the old address below, enter to skip.");
+        let mut account_address: Option<AccountAddress> = None;
+        let mut input = String::new();
+        loop {
+            match io::stdin().read_line(&mut input) {
+                Ok(_) => {
+                    if let Some('\n') = input.chars().next_back() {
+                        input.pop();
+                    }
+                    if let Some('\r') = input.chars().next_back() {
+                        input.pop();
+                    }
+                    if input.len() == 0 {
+                        break;
+                    }
+                    if let Ok(address) = AccountAddress::from_hex_literal(&format!("0x{}", input)) {
+                        account_address = Some(address);
+                        break;
+                    };
+                    println!("Invalid address. Try again!");
+                    input.clear();
+                }
+                Err(error) => println!("{}", error)
+            }
+        }
+        if let Some(address) = account_address {
+            tx_params.signer_address = address;
+            if !is_operator {
+                tx_params.owner_address = address;
+            }
+        }
 
         if let Some(w) = waypoint {
             tx_params.waypoint = w

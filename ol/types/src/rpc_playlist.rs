@@ -27,7 +27,7 @@ pub struct HostInfo {
 /// try to fetch current fullnodes from a URL, or default to a seed peer list
 pub fn get_known_fullnodes(seed_url: Option<Url>) -> Result<FullnodePlaylist, Error> {
     let url = seed_url.unwrap_or(
-        "https://raw.githubusercontent.com/OLSF/seed-peers/main/fullnode_seed_playlist.json"
+        "https://raw.githubusercontent.com/0LNetworkCommunity/seed-peers/main/fullnode_seed_playlist.json"
             .parse()
             .unwrap(),
     );

@@ -4,8 +4,8 @@ version = "5.2.0"
 edition = "2018"
 authors = ["0L contributors"]
 description = "0L onboarding wizard"
-repository = "https://github.com/OLSF/libra"
-homepage = "https://github.com/olsf/"
+repository = "https://github.com/0LNetworkCommunity/libra"
+homepage = "https://github.com/0LNetworkCommunity/"
 
 [dependencies]
 wait-timeout = "0.2.0"

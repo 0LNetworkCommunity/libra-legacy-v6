@@ -95,7 +95,7 @@ Clone the project onto your machine. `cd` into the project directory. Checkout t
 
 
 ```
-git clone https://github.com/OLSF/libra.git
+git clone https://github.com/0LNetworkCommunity/libra.git
 cd <project root>
 git checkout <version> -f
 
@@ -112,7 +112,7 @@ make bins install
 
 
 #### Troubleshooting
-* You may encounter errors related to Rust, version should be same as: https://github.com/OLSF/libra/blob/OLv4/rust-toolchain.
+* You may encounter errors related to Rust, version should be same as: https://github.com/0LNetworkCommunity/libra/blob/OLv4/rust-toolchain.
 * You may encounter errors related to memory running out.
 * Dependencies such as jq and rq are platform specific. The makefile targets Ubuntu.
 * `toml` may not be installed, you can install with `cargo install toml-cli`
@@ -166,7 +166,7 @@ account: 3F48012938129deadbeef
 github_token: <secret>
 ip: 5.5.5.5
 node path: /root/.0L
-github_org: OLSF
+github_org: 0LNetworkCommunity
 github_repo: genesis-registration
 env: prod
 test mode:

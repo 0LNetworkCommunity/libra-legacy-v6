@@ -59,7 +59,7 @@ If all goes well, debug sessions should start and you should see `debug tower` o
 Note: You can see/select other debug targets if you added more than one package into `"configurations":` array in step 2.  
 
 ### Known Issues
-https://github.com/OLSF/libra/issues/589
+https://github.com/0LNetworkCommunity/libra/issues/589
 
 ### Sources:   
 https://www.forrestthewoods.com/blog/how-to-debug-rust-with-visual-studio-code/  
