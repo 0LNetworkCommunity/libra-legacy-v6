@@ -41,15 +41,6 @@
 ## Constants
 
 
-<a name="0x1_EpochBoundary_MOCK_BASELINE_CONSENSUS_FEES"></a>
-
-
-
-<pre><code><b>const</b> <a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_BASELINE_CONSENSUS_FEES">MOCK_BASELINE_CONSENSUS_FEES</a>: u64 = 1000000;
-</code></pre>
-
-
-
 <a name="0x1_EpochBoundary_MOCK_VAL_SIZE"></a>
 
 
