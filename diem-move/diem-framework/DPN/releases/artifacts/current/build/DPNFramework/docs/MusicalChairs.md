@@ -97,7 +97,7 @@ Called by root in genesis to initialize the GAS coin
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MusicalChairs.md#0x1_MusicalChairs_stop_the_music">stop_the_music</a>(vm: &signer, height_start: u64, height_end: u64): u64
+<pre><code><b>public</b> <b>fun</b> <a href="MusicalChairs.md#0x1_MusicalChairs_stop_the_music">stop_the_music</a>(vm: &signer, height_start: u64, height_end: u64): (vector&lt;<b>address</b>&gt;, u64)
 </code></pre>
 
 
@@ -110,7 +110,7 @@ Called by root in genesis to initialize the GAS coin
   vm: &signer,
   height_start: u64,
   height_end: u64
-): u64  <b>acquires</b> <a href="MusicalChairs.md#0x1_MusicalChairs_Chairs">Chairs</a> {
+): (vector&lt;<b>address</b>&gt;, u64) <b>acquires</b> <a href="MusicalChairs.md#0x1_MusicalChairs_Chairs">Chairs</a> {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
     <b>let</b> (compliant, _non, ratio) = <a href="MusicalChairs.md#0x1_MusicalChairs_eval_compliance">eval_compliance</a>(vm, height_start, height_end);
 
@@ -124,7 +124,7 @@ Called by root in genesis to initialize the GAS coin
     };
     // otherwise do nothing, the validator set is within a tolerable range.
 
-    chairs.current_seats
+    (compliant, chairs.current_seats)
 }
 </code></pre>
 

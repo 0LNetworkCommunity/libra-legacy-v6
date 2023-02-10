@@ -62,7 +62,7 @@ module MusicalChairs {
       vm: &signer,
       height_start: u64,
       height_end: u64
-    ): u64  acquires Chairs {
+    ): (vector<address>, u64) acquires Chairs {
         CoreAddresses::assert_diem_root(vm);
         let (compliant, _non, ratio) = eval_compliance(vm, height_start, height_end);
 
@@ -76,7 +76,7 @@ module MusicalChairs {
         };
         // otherwise do nothing, the validator set is within a tolerable range.
 
-        chairs.current_seats
+        (compliant, chairs.current_seats)
     }
 
     // use the Case statistic to determine what proportion of the network is compliant.
