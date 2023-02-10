@@ -31,7 +31,7 @@ module EpochBoundary {
     use DiemFramework::RecoveryMode;
     // use DiemFramework::Cases;
     use DiemFramework::Jail;
-    // use DiemFramework::Vouch;
+    use DiemFramework::TransactionFee;
 
     //// V6 ////
     // THIS IS TEMPORARY
@@ -136,7 +136,12 @@ module EpochBoundary {
             Subsidy::process_subsidy(vm, subsidy_units, outgoing_compliant_set);
         };
 
-        Subsidy::process_fees(vm, outgoing_compliant_set);
+        // after everyone is paid from the chain's Fee account
+        // we can burn the remainder.
+
+        // TODO: implamente what happens to the matching donation algo
+        // depending on the validator's preferences.
+        TransactionFee::ol_burn_fees(vm);
     }
 
     fun process_jail(vm: &signer, outgoing_compliant_set: &vector<address>) {

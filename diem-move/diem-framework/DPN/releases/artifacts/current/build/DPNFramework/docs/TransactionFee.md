@@ -13,14 +13,13 @@
 -  [Function `add_txn_fee_currency`](#0x1_TransactionFee_add_txn_fee_currency)
 -  [Function `pay_fee`](#0x1_TransactionFee_pay_fee)
 -  [Function `burn_fees`](#0x1_TransactionFee_burn_fees)
-    -  [Specification of the case where burn type is XDX.](#@Specification_of_the_case_where_burn_type_is_XDX._1)
-    -  [Specification of the case where burn type is not XDX.](#@Specification_of_the_case_where_burn_type_is_not_XDX._2)
+-  [Function `ol_burn_fees`](#0x1_TransactionFee_ol_burn_fees)
 -  [Function `get_amount_to_distribute`](#0x1_TransactionFee_get_amount_to_distribute)
 -  [Function `get_transaction_fees_coins`](#0x1_TransactionFee_get_transaction_fees_coins)
 -  [Function `get_transaction_fees_coins_amount`](#0x1_TransactionFee_get_transaction_fees_coins_amount)
--  [Module Specification](#@Module_Specification_3)
-    -  [Initialization](#@Initialization_4)
-    -  [Helper Function](#@Helper_Function_5)
+-  [Module Specification](#@Module_Specification_1)
+    -  [Initialization](#@Initialization_2)
+    -  [Helper Function](#@Helper_Function_3)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -29,6 +28,7 @@
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="XDX.md#0x1_XDX">0x1::XDX</a>;
 </code></pre>
 
@@ -384,58 +384,34 @@ All the fees is burnt so the balance becomes 0.
 </code></pre>
 
 
-STUB: To be filled in at a later date once the makeup of the XDX has been determined.
+
+</details>
+
+<a name="0x1_TransactionFee_ol_burn_fees"></a>
+
+## Function `ol_burn_fees`
 
 
-<a name="@Specification_of_the_case_where_burn_type_is_XDX._1"></a>
 
-### Specification of the case where burn type is XDX.
-
-
-
-<a name="0x1_TransactionFee_BurnFeesXDX"></a>
-
-
-<pre><code><b>schema</b> <a href="TransactionFee.md#0x1_TransactionFee_BurnFeesXDX">BurnFeesXDX</a> {
-    dr_account: signer;
-    <b>aborts_if</b> <b>true</b> <b>with</b> Errors::INVALID_STATE;
-}
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_ol_burn_fees">ol_burn_fees</a>(vm: &signer)
 </code></pre>
 
 
 
-<a name="@Specification_of_the_case_where_burn_type_is_not_XDX._2"></a>
-
-### Specification of the case where burn type is not XDX.
-
+<details>
+<summary>Implementation</summary>
 
 
-<a name="0x1_TransactionFee_BurnFeesNotXDX"></a>
-
-
-<pre><code><b>schema</b> <a href="TransactionFee.md#0x1_TransactionFee_BurnFeesNotXDX">BurnFeesNotXDX</a>&lt;CoinType&gt; {
-    dr_account: signer;
-}
-</code></pre>
-
-
-Must abort if the account does not have BurnCapability [[H3]][PERMISSION].
-
-
-<pre><code><b>schema</b> <a href="TransactionFee.md#0x1_TransactionFee_BurnFeesNotXDX">BurnFeesNotXDX</a>&lt;CoinType&gt; {
-    <b>include</b> <a href="Diem.md#0x1_Diem_AbortsIfNoBurnCapability">Diem::AbortsIfNoBurnCapability</a>&lt;CoinType&gt;{account: dr_account};
-    <b>let</b> fees = <a href="TransactionFee.md#0x1_TransactionFee_spec_transaction_fee">spec_transaction_fee</a>&lt;CoinType&gt;();
-    <b>include</b> <a href="Diem.md#0x1_Diem_BurnNowAbortsIf">Diem::BurnNowAbortsIf</a>&lt;CoinType&gt;{coin: fees.balance, preburn: fees.preburn};
-}
-</code></pre>
-
-
-dr_account retrieves BurnCapability [[H3]][PERMISSION].
-BurnCapability is not transferrable [[J3]][PERMISSION].
-
-
-<pre><code><b>schema</b> <a href="TransactionFee.md#0x1_TransactionFee_BurnFeesNotXDX">BurnFeesNotXDX</a>&lt;CoinType&gt; {
-    <b>ensures</b> <b>exists</b>&lt;<a href="Diem.md#0x1_Diem_BurnCapability">Diem::BurnCapability</a>&lt;CoinType&gt;&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(dr_account));
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_ol_burn_fees">ol_burn_fees</a>(
+    vm: &signer,
+) <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a> {
+    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @VMReserved) {
+        <b>return</b>
+    };
+    // extract fees
+    <b>let</b> fees = <b>borrow_global_mut</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(@TreasuryCompliance); // TODO: this is same <b>as</b> VM <b>address</b>
+    <b>let</b> coin = <a href="Diem.md#0x1_Diem_withdraw_all">Diem::withdraw_all</a>(&<b>mut</b> fees.balance);
+    <a href="Diem.md#0x1_Diem_vm_burn_this_coin">Diem::vm_burn_this_coin</a>(vm, coin);
 }
 </code></pre>
 
@@ -547,13 +523,13 @@ BurnCapability is not transferrable [[J3]][PERMISSION].
 
 </details>
 
-<a name="@Module_Specification_3"></a>
+<a name="@Module_Specification_1"></a>
 
 ## Module Specification
 
 
 
-<a name="@Initialization_4"></a>
+<a name="@Initialization_2"></a>
 
 ### Initialization
 
@@ -566,7 +542,7 @@ If time has started ticking, then <code><a href="TransactionFee.md#0x1_Transacti
 
 
 
-<a name="@Helper_Function_5"></a>
+<a name="@Helper_Function_3"></a>
 
 ### Helper Function
 
