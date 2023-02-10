@@ -20,7 +20,7 @@ module EpochBoundary {
     use DiemFramework::AutoPay;
     use DiemFramework::Epoch;
     use DiemFramework::DiemConfig;
-    use DiemFramework::Audit;
+    // use DiemFramework::Audit;
     use DiemFramework::DiemAccount;
     // use DiemFramework::Burn;
     use DiemFramework::FullnodeSubsidy;
@@ -71,6 +71,9 @@ module EpochBoundary {
         process_validators(vm, reward, &outgoing_compliant_set);
         print(&800600);
 
+        // process the non performing nodes: jail
+        process_jail(vm, &outgoing_compliant_set);
+
 
         let proposed_set = propose_new_set(vm, &outgoing_compliant_set);
 
@@ -78,7 +81,6 @@ module EpochBoundary {
         // Update all slow wallet limits
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock()); // todo
         print(&801000);
-
 
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
         print(&801100);
@@ -149,10 +151,9 @@ module EpochBoundary {
         let i = 0;
         while (i < Vector::length<address>(&all_previous_vals)) {
             let addr = *Vector::borrow(&all_previous_vals, i);
-            // let case = Cases::get_case(vm, addr, height_start, height_now);
-            
-            // TODO: Cases will be deprecated with removal of Proof of Height
+
             if (
+              
               // if they are compliant, remove the consecutive fail, otherwise jail
               // V6 Note: audit functions are now all contained in
               // ProofOfFee.move and exludes at auction time.
@@ -161,15 +162,17 @@ module EpochBoundary {
 
               Vector::contains(outgoing_compliant_set, &addr)
             ) {
+              print(&902);
                 // len_proven_nodes = len_proven_nodes + 1;
                 // also reset the jail counter for any successful unjails
                 Jail::remove_consecutive_fail(vm, addr);
             } else {
-              
+              print(&903);
               Jail::jail(vm, addr);
             };
             i = i+ 1;
         };
+        print(&904);
     }
 
     fun propose_new_set(vm: &signer, outgoing_compliant_set: &vector<address>): vector<address> 
@@ -220,54 +223,7 @@ module EpochBoundary {
         // set with at least 66% liveliness. 
         proposed_set
     }
-
-    fun propose_new_set(vm: &signer, outgoing_compliant_set: &vector<address>): vector<address> 
-    {
-        let proposed_set = Vector::empty<address>();
-
-        // If we are in recovery mode, we use the recovery set.
-        if (RecoveryMode::is_recovery()) {
-            let recovery_vals = RecoveryMode::get_debug_vals();
-            if (Vector::length(&recovery_vals) > 0) {
-              proposed_set = recovery_vals
-            }
-        } else { // Default case: Proof of Fee
-            //// V6 ////
-            // CONSENSUS CRITICAL
-            // pick the validators based on proof of fee.
-            let (auction_winners, price) = ProofOfFee::fill_seats_and_get_price(MOCK_VAL_SIZE, outgoing_compliant_set);
-            // TODO: Don't use copy above, do a borrow.
-            print(&800700);
-
-            // charge the validators for the proof of fee in advance of the epoch
-            DiemAccount::vm_multi_pay_fee(vm, &auction_winners, price, &b"proof of fee");
-            print(&800800);
-
-            proposed_set = auction_winners
-        };
-
-        //////// Failover Rules ////////
-        // If the cardinality of validator_set in the next epoch is less than 4, 
-        // if we are failing to qualify anyone. Pick top 1/2 of outgoing compliant validator set
-        // by proposals. They are probably online.
-        if (Vector::length<address>(&proposed_set) <= 3) 
-            proposed_set = 
-              Stats::get_sorted_vals_by_props(vm, Vector::length<address>(outgoing_compliant_set) / 2);
-
-        // If still failing...in extreme case if we cannot qualify anyone.
-        // Don't change the validator set. we keep the same validator set. 
-        if (Vector::length<address>(&proposed_set) <= 3)
-            proposed_set = DiemSystem::get_val_set_addr(); 
-                // Patch for april incident. Make no changes to validator set.
-
-        // Usually an issue in staging network for QA only.
-        // This is very rare and theoretically impossible for network with 
-        // at least 6 nodes and 6 rounds. If we reach an epoch boundary with 
-        // at least 6 rounds, we would have at least 2/3rd of the validator 
-        // set with at least 66% liveliness. 
-        proposed_set
-    }
-
+    
     fun reset_counters(
         vm: &signer,
         proposed_set: vector<address>,

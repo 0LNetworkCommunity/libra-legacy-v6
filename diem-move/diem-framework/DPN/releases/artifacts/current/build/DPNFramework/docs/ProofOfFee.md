@@ -23,6 +23,7 @@
 -  [Function `init_bidding`](#0x1_ProofOfFee_init_bidding)
 -  [Function `update_pof_bid`](#0x1_ProofOfFee_update_pof_bid)
 -  [Function `test_set_val_bids`](#0x1_ProofOfFee_test_set_val_bids)
+-  [Function `test_set_one_bid`](#0x1_ProofOfFee_test_set_one_bid)
 -  [Function `test_mock_reward`](#0x1_ProofOfFee_test_mock_reward)
 
 
@@ -374,15 +375,7 @@
   // 2a. seat the vals <b>with</b> jail reputation &lt; 2
   // 2b. seat the remainder of the unproven vals <b>with</b> any jail reputation.
 
-<<<<<<< HEAD
-<<<<<<< HEAD
   <b>let</b> num_unproven_added = 0;
-=======
-  // print(&sorted_vals_by_bid);
-
->>>>>>> 215298a001 (initialize val account with a PoF struct)
-=======
->>>>>>> ce814ac7ba (add bid restrictions, and checking upon seating)
   <b>let</b> i = 0u64;
   <b>while</b> (
     (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&seats_to_fill) &lt; set_size) &&
@@ -396,38 +389,6 @@
     //   i = i + 1;
     //   <b>continue</b>
     // };
-
-
-    // NOTE: I know the multiple i = i+1 is ugly, but debugging
-    // is much harder <b>if</b> we have all the checks in one '<b>if</b>' statement.
-    print(&8006010203);
-    <b>if</b> (<a href="Jail.md#0x1_Jail_is_jailed">Jail::is_jailed</a>(*val)) {
-      i = i + 1;
-      <b>continue</b>
-    };
-    print(&8006010204);
-    <b>if</b> (!<a href="Vouch.md#0x1_Vouch_unrelated_buddies_above_thresh">Vouch::unrelated_buddies_above_thresh</a>(*val)) {
-      i = i + 1;
-      <b>continue</b>
-    };
-
-    print(&80060102041);
-    // skip the user <b>if</b> they don't have sufficient UNLOCKED funds
-    // or <b>if</b> the bid expired.
-
-    // belt and suspenders, expiry
-    <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() &gt; expire) {
-      i = i + 1;
-      <b>continue</b>
-    };
-
-    <b>let</b> coin_required = bid * baseline_reward;
-    <b>if</b> (
-      <a href="DiemAccount.md#0x1_DiemAccount_unlocked_amount">DiemAccount::unlocked_amount</a>(*val) &lt; coin_required
-    ) {
-      i = i + 1;
-      <b>continue</b>
-    };
 
 
     // check <b>if</b> a proven node
@@ -965,11 +926,36 @@ find the median bid to push to history
     <b>let</b> bid = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(bids, i);
     <b>let</b> exp = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(expiry, i);
     <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(vals, i);
-    <b>let</b> pof = <b>borrow_global_mut</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>&gt;(*addr);
-    pof.epoch_expiration = *exp;
-    pof.bid = *bid;
+    <a href="ProofOfFee.md#0x1_ProofOfFee_test_set_one_bid">test_set_one_bid</a>(vm, addr, *bid, *exp);
     i = i + 1;
   };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ProofOfFee_test_set_one_bid"></a>
+
+## Function `test_set_one_bid`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_test_set_one_bid">test_set_one_bid</a>(vm: &signer, val: &<b>address</b>, bid: u64, exp: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_test_set_one_bid">test_set_one_bid</a>(vm: &signer, val: &<b>address</b>, bid:  u64, exp: u64) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a> {
+  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
+  <b>let</b> pof = <b>borrow_global_mut</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>&gt;(*val);
+  pof.epoch_expiration = exp;
+  pof.bid = bid;
 }
 </code></pre>
 
