@@ -13,6 +13,8 @@
 -  [Function `initialize_my_pledges`](#0x1_PledgeAccounts_initialize_my_pledges)
 -  [Function `create_pledge_account`](#0x1_PledgeAccounts_create_pledge_account)
 -  [Function `add_funds_to_pledge_account`](#0x1_PledgeAccounts_add_funds_to_pledge_account)
+-  [Function `withdraw_from_all_pledge_accounts`](#0x1_PledgeAccounts_withdraw_from_all_pledge_accounts)
+-  [Function `withdraw_from_one_pledge_account`](#0x1_PledgeAccounts_withdraw_from_one_pledge_account)
 
 
 <pre><code><b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
@@ -308,6 +310,81 @@
 
   // exits silently <b>if</b> nothing is found.
   // this is <b>to</b> prevent halting in the event that a VM route is calling the function and is unable <b>to</b> check the <b>return</b> value.
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_PledgeAccounts_withdraw_from_all_pledge_accounts"></a>
+
+## Function `withdraw_from_all_pledge_accounts`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_withdraw_from_all_pledge_accounts">withdraw_from_all_pledge_accounts</a>(sig_beneficiary: &signer, amount: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_withdraw_from_all_pledge_accounts">withdraw_from_all_pledge_accounts</a>(sig_beneficiary: &signer, amount: u64) <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a>, <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a> {
+    <b>let</b> bp = <b>borrow_global_mut</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig_beneficiary));
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&bp.pledgers)) {
+        <b>let</b> pledge_account = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&bp.pledgers, i);
+        <a href="PledgeAccounts.md#0x1_PledgeAccounts_withdraw_from_one_pledge_account">withdraw_from_one_pledge_account</a>(sig_beneficiary, pledge_account, amount);
+        i = i + 1;
+    };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_PledgeAccounts_withdraw_from_one_pledge_account"></a>
+
+## Function `withdraw_from_one_pledge_account`
+
+
+
+<pre><code><b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_withdraw_from_one_pledge_account">withdraw_from_one_pledge_account</a>(sig_beneficiary: &signer, payer: &<b>address</b>, amount: u64): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_withdraw_from_one_pledge_account">withdraw_from_one_pledge_account</a>(sig_beneficiary: &signer, payer: &<b>address</b>, amount: u64): u64 <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a> {
+    <b>let</b> pledge_state = <b>borrow_global_mut</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a>&gt;(*payer);
+
+    <b>let</b> address_of_beneficiary = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig_beneficiary);
+    // TODO: this will be replaced <b>with</b> an actual coin.
+    <b>let</b> coin = 0;
+
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&pledge_state.list)) {
+        <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&pledge_state.list, i).address_of_beneficiary == address_of_beneficiary) {
+            <b>let</b> pledge_account = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>(&<b>mut</b> pledge_state.list, i);
+            pledge_account.amount = pledge_account.amount - amount;
+            pledge_account.lifetime_withdrawn = pledge_account.lifetime_withdrawn + amount;
+
+            coin = amount;
+            <b>break</b>
+        };
+        i = i + 1;
+    };
+
+  // exits silently <b>if</b> nothing is found.
+  // this is <b>to</b> prevent halting in the event that a VM route is calling the function and is unable <b>to</b> check the <b>return</b> value.
+  coin
 }
 </code></pre>
 
