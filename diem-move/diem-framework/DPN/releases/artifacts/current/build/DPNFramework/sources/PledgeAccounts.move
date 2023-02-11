@@ -130,5 +130,43 @@ address DiemFramework{
           // exits silently if nothing is found.
           // this is to prevent halting in the event that a VM route is calling the function and is unable to check the return value.
         }
-    }
+
+        // withdraw an amount from all pledge accounts. Check first that there are remaining funds before attempting to withdraw.
+        public fun withdraw_from_all_pledge_accounts(sig_beneficiary: &signer, amount: u64) acquires MyPledges, BeneficiaryPolicy {
+            let bp = borrow_global_mut<BeneficiaryPolicy>(Signer::address_of(sig_beneficiary));
+            let i = 0;
+            while (i < Vector::length(&bp.pledgers)) {
+                let pledge_account = Vector::borrow(&bp.pledgers, i);
+                withdraw_from_one_pledge_account(sig_beneficiary, pledge_account, amount);
+                i = i + 1;
+            };
+        }
+
+
+        // withdraw funds from one pledge account
+        fun withdraw_from_one_pledge_account(sig_beneficiary: &signer, payer: &address, amount: u64): u64 acquires MyPledges {
+            let pledge_state = borrow_global_mut<MyPledges>(*payer);
+
+            let address_of_beneficiary = Signer::address_of(sig_beneficiary);
+            // TODO: this will be replaced with an actual coin.
+            let coin = 0;
+
+            let i = 0;
+            while (i < Vector::length(&pledge_state.list)) {
+                if (Vector::borrow(&pledge_state.list, i).address_of_beneficiary == address_of_beneficiary) {
+                    let pledge_account = Vector::borrow_mut(&mut pledge_state.list, i);
+                    pledge_account.amount = pledge_account.amount - amount;
+                    pledge_account.lifetime_withdrawn = pledge_account.lifetime_withdrawn + amount;
+                    
+                    coin = amount;
+                    break
+                };
+                i = i + 1;
+            };
+
+          // exits silently if nothing is found.
+          // this is to prevent halting in the event that a VM route is calling the function and is unable to check the return value.
+          coin
+        }
+}
 }

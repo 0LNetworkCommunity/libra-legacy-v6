@@ -324,6 +324,7 @@ compiled_package_info:
     : DiemFramework
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   source_digest: C02DA14957E43701C2FB5035F7ECFC15BDB0A8993D8F202039CCCB86F87DD672
 =======
   source_digest: 4483FB8EE589C78A7E3D26F7F54D44FBC751F9764D1641CFDC7E3A4FE9922842
@@ -331,6 +332,9 @@ compiled_package_info:
 =======
   source_digest: 67716375940F4996E0B0E2F00D5013E91846A1BC12808AB25F16D749362CB933
 >>>>>>> 5bac9c4143 (list pledgers on beneficiary struct)
+=======
+  source_digest: 60A9756C670CFDFA823ACB697FBA98AC3FE5763A36FED39B5B9160BD0E4FEF39
+>>>>>>> b9d00344f8 (can withdraw from all accounts)
   build_flags:
     dev_mode: false
     test_mode: false
