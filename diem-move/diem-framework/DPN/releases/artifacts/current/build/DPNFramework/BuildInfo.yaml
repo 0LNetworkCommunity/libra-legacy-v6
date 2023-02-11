@@ -323,10 +323,14 @@ compiled_package_info:
       name: XUS
     : DiemFramework
 <<<<<<< HEAD
+<<<<<<< HEAD
   source_digest: C02DA14957E43701C2FB5035F7ECFC15BDB0A8993D8F202039CCCB86F87DD672
 =======
   source_digest: 4483FB8EE589C78A7E3D26F7F54D44FBC751F9764D1641CFDC7E3A4FE9922842
 >>>>>>> b94b60fca9 (create first stubs of Pledge Accounts, a primitive service for infra escrow.)
+=======
+  source_digest: 67716375940F4996E0B0E2F00D5013E91846A1BC12808AB25F16D749362CB933
+>>>>>>> 5bac9c4143 (list pledgers on beneficiary struct)
   build_flags:
     dev_mode: false
     test_mode: false

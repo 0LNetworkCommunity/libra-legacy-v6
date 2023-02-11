@@ -141,6 +141,12 @@
 <dd>
 
 </dd>
+<dt>
+<code>pledgers: vector&lt;<b>address</b>&gt;</code>
+</dt>
+<dd>
+
+</dd>
 </dl>
 
 
@@ -175,16 +181,25 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_publish_beneficiary_policy">publish_beneficiary_policy</a>(account: &signer, purpose: vector&lt;u8&gt;, vote_threshold_to_revoke: u64, burn_funds_on_revoke: bool) {
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_publish_beneficiary_policy">publish_beneficiary_policy</a>(account: &signer, purpose: vector&lt;u8&gt;, vote_threshold_to_revoke: u64, burn_funds_on_revoke: bool) <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a> {
     <b>if</b> (!<b>exists</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account))) {
         <b>let</b> beneficiary_policy = <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a> {
             purpose: purpose,
             vote_threshold_to_revoke: vote_threshold_to_revoke,
-            burn_funds_on_revoke: burn_funds_on_revoke
+            burn_funds_on_revoke: burn_funds_on_revoke,
+            pledgers: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
         };
         <b>move_to</b>(account, beneficiary_policy);
+    } <b>else</b> {
+      // allow the beneficiary <b>to</b> write drafts, and modify the policy, <b>as</b> long <b>as</b> no pledge <b>has</b> been made.
+      <b>let</b> b = <b>borrow_global_mut</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account));
+      <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&b.pledgers) == 0) {
+        b.purpose = purpose;
+        b.vote_threshold_to_revoke = vote_threshold_to_revoke;
+        b.burn_funds_on_revoke = burn_funds_on_revoke;
+      }
     }
-    // TODO: make the controllers <b>to</b> be able <b>to</b> modify the policy <b>as</b> long <b>as</b> no pledge <b>has</b> been made.
+    // no changes can be made <b>if</b> a pledge <b>has</b> been made.
 }
 </code></pre>
 
@@ -271,7 +286,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_add_funds_to_pledge_account">add_funds_to_pledge_account</a>(account: &signer, address_of_beneficiary: <b>address</b>, amount: u64) <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_add_funds_to_pledge_account">add_funds_to_pledge_account</a>(account: &signer, address_of_beneficiary: <b>address</b>, amount: u64) <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a>, <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a> {
     <b>let</b> my_pledges = <b>borrow_global_mut</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account));
     <b>let</b> i = 0;
     <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&my_pledges.list)) {
@@ -280,6 +295,12 @@
             pledge_account.amount = pledge_account.amount + amount;
             pledge_account.epoch_of_last_deposit = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
             pledge_account.lifetime_deposited = pledge_account.lifetime_deposited + amount;
+
+            // must add pledger <b>address</b> the ProjectPledgers list on beneficiary account
+
+            <b>let</b> b = <b>borrow_global_mut</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(address_of_beneficiary);
+            <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> b.pledgers, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account));
+
             <b>break</b>
         };
         i = i + 1;

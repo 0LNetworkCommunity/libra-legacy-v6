@@ -29,6 +29,7 @@ address DiemFramework{
         use Std::Errors;
         use DiemFramework::DiemConfig;
 
+
         const ENO_BENEFICIARY_POLICY: u64 = 150001;
 
         struct MyPledges has key {
@@ -52,21 +53,31 @@ address DiemFramework{
         struct BeneficiaryPolicy has key, store {
           purpose: vector<u8>, // a string that describes the purpose of the pledge
           vote_threshold_to_revoke: u64, // the threshold of votes, weighted by pledged balance, needed to dissolve, and revoke the pledge.
-          burn_funds_on_revoke: bool // neither the beneficiary not the pledger can get the funds back, they are burned. Changes the game theory, may be necessary to in certain cases to prevent attacks in high stakes projects.
+          burn_funds_on_revoke: bool, // neither the beneficiary not the pledger can get the funds back, they are burned. Changes the game theory, may be necessary to in certain cases to prevent attacks in high stakes projects.
+          pledgers: vector<address>
         }
 
         // beneficiary publishes a policy to their account.
         // NOTE: It cannot be modified after a first pledge is made!.
-        public fun publish_beneficiary_policy(account: &signer, purpose: vector<u8>, vote_threshold_to_revoke: u64, burn_funds_on_revoke: bool) {
+        public fun publish_beneficiary_policy(account: &signer, purpose: vector<u8>, vote_threshold_to_revoke: u64, burn_funds_on_revoke: bool) acquires BeneficiaryPolicy {
             if (!exists<BeneficiaryPolicy>(Signer::address_of(account))) {
                 let beneficiary_policy = BeneficiaryPolicy {
                     purpose: purpose,
                     vote_threshold_to_revoke: vote_threshold_to_revoke,
-                    burn_funds_on_revoke: burn_funds_on_revoke
+                    burn_funds_on_revoke: burn_funds_on_revoke,
+                    pledgers: Vector::empty(),
                 };
                 move_to(account, beneficiary_policy);
+            } else {
+              // allow the beneficiary to write drafts, and modify the policy, as long as no pledge has been made.
+              let b = borrow_global_mut<BeneficiaryPolicy>(Signer::address_of(account));
+              if (Vector::length(&b.pledgers) == 0) {
+                b.purpose = purpose;
+                b.vote_threshold_to_revoke = vote_threshold_to_revoke;
+                b.burn_funds_on_revoke = burn_funds_on_revoke;
+              } 
             }
-            // TODO: make the controllers to be able to modify the policy as long as no pledge has been made.
+            // no changes can be made if a pledge has been made.
         }
 
         // Initialize a list of pledges on a user's account
@@ -96,7 +107,7 @@ address DiemFramework{
         }
 
         // add funds to an existing pledge account
-        public fun add_funds_to_pledge_account(account: &signer, address_of_beneficiary: address, amount: u64) acquires MyPledges {
+        public fun add_funds_to_pledge_account(account: &signer, address_of_beneficiary: address, amount: u64) acquires MyPledges, BeneficiaryPolicy {
             let my_pledges = borrow_global_mut<MyPledges>(Signer::address_of(account));
             let i = 0;
             while (i < Vector::length(&my_pledges.list)) {
@@ -105,6 +116,12 @@ address DiemFramework{
                     pledge_account.amount = pledge_account.amount + amount;
                     pledge_account.epoch_of_last_deposit = DiemConfig::get_current_epoch();
                     pledge_account.lifetime_deposited = pledge_account.lifetime_deposited + amount;
+
+                    // must add pledger address the ProjectPledgers list on beneficiary account
+                    
+                    let b = borrow_global_mut<BeneficiaryPolicy>(address_of_beneficiary);
+                    Vector::push_back(&mut b.pledgers, Signer::address_of(account));
+
                     break
                 };
                 i = i + 1;
