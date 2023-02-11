@@ -203,6 +203,9 @@ compiled_package_info:
       name: PersistenceDemo
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: PledgeAccounts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: ProofOfFee
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -319,7 +322,11 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
+<<<<<<< HEAD
   source_digest: C02DA14957E43701C2FB5035F7ECFC15BDB0A8993D8F202039CCCB86F87DD672
+=======
+  source_digest: 4483FB8EE589C78A7E3D26F7F54D44FBC751F9764D1641CFDC7E3A4FE9922842
+>>>>>>> b94b60fca9 (create first stubs of Pledge Accounts, a primitive service for infra escrow.)
   build_flags:
     dev_mode: false
     test_mode: false
