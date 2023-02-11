@@ -325,6 +325,7 @@ compiled_package_info:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   source_digest: C02DA14957E43701C2FB5035F7ECFC15BDB0A8993D8F202039CCCB86F87DD672
 =======
   source_digest: 4483FB8EE589C78A7E3D26F7F54D44FBC751F9764D1641CFDC7E3A4FE9922842
@@ -335,6 +336,9 @@ compiled_package_info:
 =======
   source_digest: 60A9756C670CFDFA823ACB697FBA98AC3FE5763A36FED39B5B9160BD0E4FEF39
 >>>>>>> b9d00344f8 (can withdraw from all accounts)
+=======
+  source_digest: E78BBD61363B4F6FEBE6A195ECC25D4097C7B0E1430C47DE64B6EA53EDAB7037
+>>>>>>> d59fd2928f (pledge account feature complete, except for withdrawing of coins)
   build_flags:
     dev_mode: false
     test_mode: false
