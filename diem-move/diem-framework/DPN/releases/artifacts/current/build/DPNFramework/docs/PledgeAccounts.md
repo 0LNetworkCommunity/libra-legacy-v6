@@ -10,7 +10,7 @@
 -  [Resource `BeneficiaryPolicy`](#0x1_PledgeAccounts_BeneficiaryPolicy)
 -  [Constants](#@Constants_0)
 -  [Function `publish_beneficiary_policy`](#0x1_PledgeAccounts_publish_beneficiary_policy)
--  [Function `initialize_my_pledges`](#0x1_PledgeAccounts_initialize_my_pledges)
+-  [Function `maybe_initialize_my_pledges`](#0x1_PledgeAccounts_maybe_initialize_my_pledges)
 -  [Function `create_pledge_account`](#0x1_PledgeAccounts_create_pledge_account)
 -  [Function `add_funds_to_pledge_account`](#0x1_PledgeAccounts_add_funds_to_pledge_account)
 -  [Function `withdraw_from_all_pledge_accounts`](#0x1_PledgeAccounts_withdraw_from_all_pledge_accounts)
@@ -74,12 +74,6 @@
 
 
 <dl>
-<dt>
-<code>project_id: vector&lt;u8&gt;</code>
-</dt>
-<dd>
-
-</dd>
 <dt>
 <code>address_of_beneficiary: <b>address</b></code>
 </dt>
@@ -228,7 +222,12 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_publish_beneficiary_policy">publish_beneficiary_policy</a>(account: &signer, purpose: vector&lt;u8&gt;, vote_threshold_to_revoke: u64, burn_funds_on_revoke: bool) <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_publish_beneficiary_policy">publish_beneficiary_policy</a>(
+  account: &signer,
+  purpose: vector&lt;u8&gt;,
+  vote_threshold_to_revoke: u64,
+  burn_funds_on_revoke: bool
+) <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a> {
     <b>if</b> (!<b>exists</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account))) {
         <b>let</b> beneficiary_policy = <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a> {
             purpose: purpose,
@@ -260,13 +259,13 @@
 
 </details>
 
-<a name="0x1_PledgeAccounts_initialize_my_pledges"></a>
+<a name="0x1_PledgeAccounts_maybe_initialize_my_pledges"></a>
 
-## Function `initialize_my_pledges`
+## Function `maybe_initialize_my_pledges`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_initialize_my_pledges">initialize_my_pledges</a>(account: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_maybe_initialize_my_pledges">maybe_initialize_my_pledges</a>(account: &signer)
 </code></pre>
 
 
@@ -275,7 +274,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_initialize_my_pledges">initialize_my_pledges</a>(account: &signer) {
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_maybe_initialize_my_pledges">maybe_initialize_my_pledges</a>(account: &signer) {
     <b>if</b> (!<b>exists</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account))) {
         <b>let</b> my_pledges = <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a> { list: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>() };
         <b>move_to</b>(account, my_pledges);
@@ -293,7 +292,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_create_pledge_account">create_pledge_account</a>(account: &signer, project_id: vector&lt;u8&gt;, address_of_beneficiary: <b>address</b>, amount: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_create_pledge_account">create_pledge_account</a>(sig: &signer, address_of_beneficiary: <b>address</b>, amount: u64)
 </code></pre>
 
 
@@ -302,14 +301,21 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_create_pledge_account">create_pledge_account</a>(account: &signer, project_id: vector&lt;u8&gt;, address_of_beneficiary: <b>address</b>, amount: u64) <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a> {
-    <b>let</b> my_pledges = <b>borrow_global_mut</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account));
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_create_pledge_account">create_pledge_account</a>(
+  sig: &signer,
+  // project_id: vector&lt;u8&gt;,
+  address_of_beneficiary: <b>address</b>,
+  amount: u64
+) <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a> {
+    <b>let</b> account = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
+    <a href="PledgeAccounts.md#0x1_PledgeAccounts_maybe_initialize_my_pledges">maybe_initialize_my_pledges</a>(sig);
+    <b>let</b> my_pledges = <b>borrow_global_mut</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a>&gt;(account);
 
     // check a beneficiary policy <b>exists</b>
     <b>assert</b>!(<b>exists</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(address_of_beneficiary), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="PledgeAccounts.md#0x1_PledgeAccounts_ENO_BENEFICIARY_POLICY">ENO_BENEFICIARY_POLICY</a>));
 
     <b>let</b> new_pledge_account = <a href="PledgeAccounts.md#0x1_PledgeAccounts_PledgeAccount">PledgeAccount</a> {
-        project_id: project_id,
+        // project_id: project_id,
         address_of_beneficiary: address_of_beneficiary,
         amount: amount,
         epoch_of_last_deposit: <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>(),
