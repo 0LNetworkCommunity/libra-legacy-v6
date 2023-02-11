@@ -54,7 +54,7 @@ address DiemFramework{
 
         // A Pledge Account is a sub-account on a user's account.
         struct PledgeAccount has key, store {
-            project_id: vector<u8>, // a string that identifies the project
+            // project_id: vector<u8>, // a string that identifies the project
             address_of_beneficiary: address, // the address of the project, also where the BeneficiaryPolicy is stored for reference.
             amount: u64,
             epoch_of_last_deposit: u64,
@@ -85,7 +85,12 @@ address DiemFramework{
 
         // beneficiary publishes a policy to their account.
         // NOTE: It cannot be modified after a first pledge is made!.
-        public fun publish_beneficiary_policy(account: &signer, purpose: vector<u8>, vote_threshold_to_revoke: u64, burn_funds_on_revoke: bool) acquires BeneficiaryPolicy {
+        public fun publish_beneficiary_policy(
+          account: &signer, 
+          purpose: vector<u8>, 
+          vote_threshold_to_revoke: u64, 
+          burn_funds_on_revoke: bool
+        ) acquires BeneficiaryPolicy {
             if (!exists<BeneficiaryPolicy>(Signer::address_of(account))) {
                 let beneficiary_policy = BeneficiaryPolicy {
                     purpose: purpose,
@@ -113,7 +118,7 @@ address DiemFramework{
         }
 
         // Initialize a list of pledges on a user's account
-        public fun initialize_my_pledges(account: &signer) {
+        public fun maybe_initialize_my_pledges(account: &signer) {
             if (!exists<MyPledges>(Signer::address_of(account))) {
                 let my_pledges = MyPledges { list: Vector::empty() };
                 move_to(account, my_pledges);
@@ -121,14 +126,21 @@ address DiemFramework{
         }
 
         // Create a new pledge account on a user's list of pledges
-        public fun create_pledge_account(account: &signer, project_id: vector<u8>, address_of_beneficiary: address, amount: u64) acquires MyPledges {
-            let my_pledges = borrow_global_mut<MyPledges>(Signer::address_of(account));
+        public fun create_pledge_account(
+          sig: &signer,
+          // project_id: vector<u8>,
+          address_of_beneficiary: address,
+          amount: u64
+        ) acquires MyPledges {
+            let account = Signer::address_of(sig);
+            maybe_initialize_my_pledges(sig);
+            let my_pledges = borrow_global_mut<MyPledges>(account);
 
             // check a beneficiary policy exists
             assert!(exists<BeneficiaryPolicy>(address_of_beneficiary), Errors::invalid_argument(ENO_BENEFICIARY_POLICY));
 
             let new_pledge_account = PledgeAccount {
-                project_id: project_id,
+                // project_id: project_id,
                 address_of_beneficiary: address_of_beneficiary,
                 amount: amount,
                 epoch_of_last_deposit: DiemConfig::get_current_epoch(),
