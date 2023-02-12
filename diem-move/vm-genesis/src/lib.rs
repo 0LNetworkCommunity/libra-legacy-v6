@@ -295,7 +295,7 @@ fn migrate_users(session: &mut Session<StateViewCache<GenesisStateView>>, legacy
             // both the VM and the user signatures need to be mocked.
             MoveValue::Signer(account_config::diem_root_address()),
             // MoveValue::Signer(user.account.unwrap_or_else(bail!("Account address is missing"))),
-            MoveValue::Signer(user.account.expect("Account address is missing")),
+            MoveValue::Address(user.account.expect("Account address is missing")),
             // MoveValue::Address(user.account_address.unwrap_or_else(bail!("Account address is missing"))),
             MoveValue::vector_u8(user.auth_key.expect("no authkey found").to_vec()),
             // vector_u8(user.role.expect("no role found")),
