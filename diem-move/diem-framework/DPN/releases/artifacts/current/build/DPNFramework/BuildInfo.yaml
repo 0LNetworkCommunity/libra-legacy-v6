@@ -330,6 +330,7 @@ compiled_package_info:
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   source_digest: C02DA14957E43701C2FB5035F7ECFC15BDB0A8993D8F202039CCCB86F87DD672
 =======
   source_digest: 4483FB8EE589C78A7E3D26F7F54D44FBC751F9764D1641CFDC7E3A4FE9922842
@@ -346,6 +347,9 @@ compiled_package_info:
 =======
   source_digest: 5B1EFB5EFC3F049CA88B6C0B6D41442357318B7B038ED65C187B45529DDF8EAB
 >>>>>>> dc50d48ba9 (finalize infraescrow wrapper on pledge accounts)
+=======
+  source_digest: 7C96AB0F9B0E7D36E1FEE35036F2E261096D7BF8729CB7F504BBBDFC5D9177DC
+>>>>>>> ba6b8eef90 (infra escrow can withdraw)
   build_flags:
     dev_mode: false
     test_mode: false

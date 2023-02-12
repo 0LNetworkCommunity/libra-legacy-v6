@@ -28,6 +28,12 @@ address DiemFramework{
         );
     }
 
+    /// VM can call down pledged funds.
+    public fun infra_pledge_withdraw(vm: &signer, amount: u64) {
+        CoreAddresses::assert_diem_root(vm);
+        PledgeAccounts::withdraw_from_all_pledge_accounts(vm, amount);
+    }
+
     /// for end users to pledge to the infra escrow
     public(script) fun user_pledge_tx(user_sig: signer, amount: u64) {
       PledgeAccounts::create_pledge_account(&user_sig, @VMReserved, amount);
