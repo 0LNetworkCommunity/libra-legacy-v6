@@ -2,7 +2,6 @@
 //! from Move system contracts. i.e. we don't craft the writesets
 //! manually in rust, instead we execute functions in a Move session.
 
-use crate::recover::LegacyRecovery;
 use diem_types::write_set::WriteSet;
 use diem_types::write_set::WriteSetMut;
 use language_e2e_tests::executor::FakeExecutor;
@@ -10,6 +9,7 @@ use move_core_types::{
     language_storage::TypeTag,
     value::{serialize_values, MoveValue},
 };
+use ol_types::legacy_recovery::LegacyRecovery;
 
 /// creates an executor vm session to create writesets
 pub fn start_vm_and_transform(

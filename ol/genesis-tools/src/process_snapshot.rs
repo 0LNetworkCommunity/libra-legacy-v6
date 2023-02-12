@@ -2,7 +2,7 @@
 
 use crate::{
     read_snapshot::{self},
-    recover::{accounts_into_recovery, LegacyRecovery},
+    recover::{accounts_into_recovery},
 };
 use anyhow::{bail, Error, Result};
 use backup_cli::backup_types::state_snapshot::manifest::StateSnapshotBackup;
@@ -15,7 +15,7 @@ use diem_types::{
 };
 use move_core_types::move_resource::MoveResource;
 use ol_keys::wallet::get_account_from_mnem;
-use ol_types::fixtures;
+use ol_types::{fixtures, legacy_recovery::LegacyRecovery};
 use std::convert::TryFrom;
 use std::path::PathBuf;
 

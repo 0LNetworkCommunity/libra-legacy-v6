@@ -6,7 +6,7 @@ use language_e2e_tests::data_store::GENESIS_CHANGE_SET_FRESH;
 use move_core_types::language_storage::TypeTag;
 use move_core_types::value::MoveValue;
 use ol_genesis_tools::exec_migration;
-use ol_genesis_tools::recover::LegacyRecovery;
+use ol_types::legacy_recovery::LegacyRecovery;
 use std::fs;
 use support::path_utils::json_path;
 // use diem_types::transaction::WriteSetPayload;

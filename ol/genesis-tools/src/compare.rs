@@ -5,10 +5,10 @@
 
 use crate::db_utils;
 use crate::recover;
-use crate::recover::LegacyRecovery;
 use anyhow;
 use diem_types::account_address::AccountAddress;
 use diem_types::account_state::AccountState;
+use ol_types::legacy_recovery::LegacyRecovery;
 use std::convert::TryFrom;
 use std::path::PathBuf;
 

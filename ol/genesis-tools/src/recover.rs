@@ -15,83 +15,83 @@ use diem_types::{
 use move_core_types::{identifier::Identifier, move_resource::MoveResource};
 use ol_types::{
     autopay::AutoPayResource, fullnode_counter::FullnodeCounterResource,
-    wallet::CommunityWalletsResource, legacy_recovery::{ValStateRecover, OperRecover},
+    wallet::CommunityWalletsResource, legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery, RecoverConsensusAccounts, AccountRole},
     
 };
-use serde::{Deserialize, Serialize};
+
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
 // use vm_genesis::{OperRecover, ValStateRecover};
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-/// Account role
-pub enum AccountRole {
-    /// System Accounts
-    System,
-    /// Vals
-    Validator,
-    /// Opers
-    Operator,
-    /// Users
-    EndUser,
-}
+// #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+// /// Account role
+// pub enum AccountRole {
+//     /// System Accounts
+//     System,
+//     /// Vals
+//     Validator,
+//     /// Opers
+//     Operator,
+//     /// Users
+//     EndUser,
+// }
 
-/// Wallet type
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum WalletType {
-    ///
-    Normal,
-    ///
-    Slow,
-    ///
-    Community,
-}
+// /// Wallet type
+// #[derive(Debug, Clone, Serialize, Deserialize)]
+// pub enum WalletType {
+//     ///
+//     Normal,
+//     ///
+//     Slow,
+//     ///
+//     Community,
+// }
 
-/// The basic structs needed to recover account state in a new network.
-/// This is necessary for catastrophic recoveries, when the source code changes too much.
-/// Like what is going to happen between v4 and v5, where the source code of v5
-/// will not be able to work with objects from v4. We need an intermediary file.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LegacyRecovery {
-    ///
-    pub account: Option<AccountAddress>,
-    ///
-    pub auth_key: Option<AuthenticationKey>,
-    ///
-    pub role: AccountRole,
-    ///
-    pub balance: Option<BalanceResource>,
-    ///
-    pub val_cfg: Option<ValidatorConfigResource>,
-    ///
-    pub miner_state: Option<TowerStateResource>,
-    ///
-    pub comm_wallet: Option<CommunityWalletsResource>,
-    ///
-    pub fullnode_counter: Option<FullnodeCounterResource>,
-    ///
-    pub autopay: Option<AutoPayResource>,
-    ///
-    pub currency_info: Option<CurrencyInfoResource>,
-    // TODO: Autopay? // rust struct does not exist
-}
+// /// The basic structs needed to recover account state in a new network.
+// /// This is necessary for catastrophic recoveries, when the source code changes too much.
+// /// Like what is going to happen between v4 and v5, where the source code of v5
+// /// will not be able to work with objects from v4. We need an intermediary file.
+// #[derive(Debug, Serialize, Deserialize)]
+// pub struct LegacyRecovery {
+//     ///
+//     pub account: Option<AccountAddress>,
+//     ///
+//     pub auth_key: Option<AuthenticationKey>,
+//     ///
+//     pub role: AccountRole,
+//     ///
+//     pub balance: Option<BalanceResource>,
+//     ///
+//     pub val_cfg: Option<ValidatorConfigResource>,
+//     ///
+//     pub miner_state: Option<TowerStateResource>,
+//     ///
+//     pub comm_wallet: Option<CommunityWalletsResource>,
+//     ///
+//     pub fullnode_counter: Option<FullnodeCounterResource>,
+//     ///
+//     pub autopay: Option<AutoPayResource>,
+//     ///
+//     pub currency_info: Option<CurrencyInfoResource>,
+//     // TODO: Autopay? // rust struct does not exist
+// }
 
-/// RecoveryFile
-#[derive(Debug, Clone)]
-pub struct RecoverConsensusAccounts {
-    ///
-    pub vals: Vec<ValStateRecover>,
-    ///
-    pub opers: Vec<OperRecover>,
-}
+// /// RecoveryFile
+// #[derive(Debug, Clone)]
+// pub struct RecoverConsensusAccounts {
+//     ///
+//     pub vals: Vec<ValStateRecover>,
+//     ///
+//     pub opers: Vec<OperRecover>,
+// }
 
-impl Default for RecoverConsensusAccounts {
-    fn default() -> Self {
-        RecoverConsensusAccounts {
-            vals: vec![],
-            opers: vec![],
-        }
-    }
-}
+// impl Default for RecoverConsensusAccounts {
+//     fn default() -> Self {
+//         RecoverConsensusAccounts {
+//             vals: vec![],
+//             opers: vec![],
+//         }
+//     }
+// }
 
 /// make the writeset for the genesis case. Starts with an unmodified account
 /// state and make into a writeset.

@@ -3,8 +3,9 @@ mod support;
 
 use ol_genesis_tools::compare;
 use ol_genesis_tools::{
-    fork_genesis::make_recovery_genesis_from_vec_legacy_recovery, recover::LegacyRecovery,
+    fork_genesis::make_recovery_genesis_from_vec_legacy_recovery
 };
+use ol_types::legacy_recovery::LegacyRecovery;
 use std::fs;
 use support::path_utils::json_path;
 

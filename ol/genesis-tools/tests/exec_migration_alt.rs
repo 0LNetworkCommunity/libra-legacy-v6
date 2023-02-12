@@ -25,9 +25,10 @@ use move_vm_runtime::move_vm::MoveVM;
 use move_vm_runtime::session::Session;
 use move_vm_types::gas_schedule::GasStatus;
 use ol_genesis_tools::fork_genesis::make_recovery_genesis_from_vec_legacy_recovery;
-use ol_genesis_tools::recover::LegacyRecovery;
+
 use move_core_types::value::MoveValue;
 use move_core_types::value::serialize_values;
+use ol_types::legacy_recovery::LegacyRecovery;
 
 #[test]
 fn test_clean_genesis() {
