@@ -9,6 +9,8 @@ address DiemFramework {
 
 module GenesisMigration {
   use DiemFramework::DiemAccount;
+  use DiemFramework::Diem;
+  use DiemFramework::GAS::GAS;
 
     /// Called by root in genesis to initialize the GAS coin 
     public fun migrate_user(
@@ -17,11 +19,29 @@ module GenesisMigration {
         auth_key: vector<u8>,
         balance: u64,
     ) {
-      DiemAccount::create_user_account_with_coin(
+      // let minted_coins = Diem::mint<GAS>(vm, balance);
+      // DiemAccount::vm_deposit_with_metadata<GAS>(
+      //   vm,
+      //   @VMReserved,
+      //   minted_coins,
+      //   b"genesis_migration",
+      //   b""
+      // );
+
+      DiemAccount::vm_create_account_migration(
         vm,
         user_addr,
         auth_key,
-        balance
+        // balance
+      );
+
+      let minted_coins = Diem::mint<GAS>(vm, balance);
+      DiemAccount::vm_deposit_with_metadata<GAS>(
+        vm,
+        user_addr,
+        minted_coins,
+        b"genesis migration",
+        b""
       );
     }
 }

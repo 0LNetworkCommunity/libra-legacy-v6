@@ -92,7 +92,7 @@ async fn main() -> Result<()> {
             }
             let recovery = read_from_recovery_file(&recovery_json_path);
             make_recovery_genesis_from_vec_legacy_recovery(
-              recovery,
+              &recovery,
               vec![],
               output_path, 
               opts.legacy

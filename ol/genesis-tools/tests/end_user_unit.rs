@@ -11,31 +11,39 @@ use support::path_utils::json_path;
 
 #[test]
 // test that a genesis blob created from struct, will actually contain the data
-fn test_parse_json_for_one_validator_and_save_blob() {
+fn test_end_user_migrate() {
 
   let genesis_vals = vec!["ADCB1D42A46292AE89E938BD982F2867".parse().unwrap()];
 
-    let json = json_path().parent().unwrap().join("single_json_entry.json");
+  let json = json_path().parent().unwrap().join("single_json_entry.json");
 
-    let json_str = fs::read_to_string(json.clone()).unwrap();
-    let user_accounts: Vec<LegacyRecovery> = serde_json::from_str(&json_str).unwrap();
+  let json_str = fs::read_to_string(json.clone()).unwrap();
+  let mut val_accounts: Vec<LegacyRecovery> = serde_json::from_str(&json_str).unwrap();
+
+  let json = json_path().parent().unwrap().join("sample_end_user_single.json");
+
+  let json_str = fs::read_to_string(json.clone()).unwrap();
+  let mut user_accounts: Vec<LegacyRecovery> = serde_json::from_str(&json_str).unwrap();
+  
+  val_accounts.append(&mut user_accounts);
+  
 
     // dbg!(&mock_val);
 
     let temp_genesis_blob_path = json_path().parent().unwrap().join("fork_genesis.blob");
 
     make_recovery_genesis_from_vec_legacy_recovery(
-      &user_accounts,
+      &val_accounts,
       genesis_vals.clone(),
       temp_genesis_blob_path.clone(), 
       true,
       // TODO: add validators
     )
-        .unwrap();
+    .unwrap();
 
     assert!(temp_genesis_blob_path.exists(), "file not created");
 
-    let list = compare::compare_json_to_genesis_blob(json, temp_genesis_blob_path.clone());
+    let list = compare::compare_recovery_vec_to_genesis_blob(&val_accounts, temp_genesis_blob_path.clone());
 
     dbg!(&list);
     assert!(list.expect("no list").len() == 0, "list is not empty");

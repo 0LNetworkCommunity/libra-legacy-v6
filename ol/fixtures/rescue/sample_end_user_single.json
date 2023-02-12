@@ -1,0 +1,57 @@
+[
+    {
+      "account": "b78ba84a443873f2e324c80f3e4e2334",
+      "auth_key": "c99e93112458b404daaed49c019c6de5b78ba84a443873f2e324c80f3e4e2334",
+      "role": "EndUser",
+      "balance": {
+        "coin": 1775895358
+      },
+      "val_cfg": null,
+      "miner_state": {
+        "previous_proof_hash": [
+          146,
+          202,
+          170,
+          181,
+          22,
+          66,
+          17,
+          59,
+          146,
+          129,
+          61,
+          200,
+          78,
+          19,
+          112,
+          68,
+          39,
+          154,
+          88,
+          78,
+          228,
+          167,
+          26,
+          110,
+          139,
+          102,
+          37,
+          37,
+          125,
+          218,
+          93,
+          74
+        ],
+        "verified_tower_height": 1916,
+        "latest_epoch_mining": 359,
+        "count_proofs_in_epoch": 1,
+        "epochs_validating_and_mining": 0,
+        "contiguous_epochs_validating_and_mining": 0,
+        "epochs_since_last_account_creation": 0
+      },
+      "comm_wallet": null,
+      "fullnode_counter": null,
+      "autopay": null,
+      "currency_info": null
+    }
+]

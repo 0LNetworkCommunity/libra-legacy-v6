@@ -26,7 +26,7 @@ async fn test_parse_json_for_all_users_and_save_blob() {
     dbg!(&len);
 
     make_recovery_genesis_from_vec_legacy_recovery(
-      recovery,
+      &recovery,
       genesis_vals,
       output_path.clone(), 
       true
@@ -49,7 +49,7 @@ async fn test_parse_json_for_validators_and_save_blob() {
     let recovery = read_from_recovery_file(&recovery_json_path);
 
     make_recovery_genesis_from_vec_legacy_recovery(
-      recovery,
+      &recovery,
       genesis_vals.clone(),
       output_path.clone(), 
       false

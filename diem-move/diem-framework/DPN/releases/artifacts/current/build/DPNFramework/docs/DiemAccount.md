@@ -34,6 +34,7 @@ before and after every transaction.
 -  [Function `initialize`](#0x1_DiemAccount_initialize)
 -  [Function `create_user_account_with_proof`](#0x1_DiemAccount_create_user_account_with_proof)
 -  [Function `create_user_account_with_coin`](#0x1_DiemAccount_create_user_account_with_coin)
+-  [Function `vm_create_account_migration`](#0x1_DiemAccount_vm_create_account_migration)
 -  [Function `test_harness_create_user`](#0x1_DiemAccount_test_harness_create_user)
 -  [Function `create_validator_account_with_proof`](#0x1_DiemAccount_create_validator_account_with_proof)
 -  [Function `upgrade_validator_account_with_proof`](#0x1_DiemAccount_upgrade_validator_account_with_proof)
@@ -1553,6 +1554,47 @@ Initialize this module. This is only callable from genesis.
         <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">restore_withdraw_capability</a>(with_cap);
         new_account
     }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_vm_create_account_migration"></a>
+
+## Function `vm_create_account_migration`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_create_account_migration">vm_create_account_migration</a>(vm: &signer, new_account: <b>address</b>, new_account_authkey_prefix: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_create_account_migration">vm_create_account_migration</a>(
+    vm: &signer,
+    new_account: <b>address</b>,
+    new_account_authkey_prefix: vector&lt;u8&gt;,
+    // value: u64,
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>  {
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+    print(&20001);
+    <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account);
+    print(&20002);
+    <a href="Roles.md#0x1_Roles_new_user_role_with_proof">Roles::new_user_role_with_proof</a>(&new_signer);
+    print(&20003);
+    <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(&new_signer, new_account_authkey_prefix);
+    print(&20004);
+    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
+    print(&20005);
+
+    // <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account);
+    // <a href="Ancestry.md#0x1_Ancestry_init">Ancestry::init</a>(sender, &new_signer);
 }
 </code></pre>
 

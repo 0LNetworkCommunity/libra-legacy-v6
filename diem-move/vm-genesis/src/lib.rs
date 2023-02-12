@@ -5,7 +5,7 @@
 
 mod genesis_context;
 use anyhow::{bail, Error};
-use ol_types::legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery};
+use ol_types::legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery, AccountRole};
 use std::env;
 use crate::genesis_context::GenesisStateView;
 use diem_crypto::{
@@ -203,7 +203,7 @@ pub fn encode_recovery_genesis_changeset(
     val_set: &[AccountAddress],
     chain: u8,
     append_users: bool,
-    legacy_data: Vec<LegacyRecovery>,
+    legacy_data: &Vec<LegacyRecovery>,
 ) -> Result<ChangeSet, Error> {
     let mut stdlib_modules = Vec::new();
     // create a data view for move_vm
@@ -243,11 +243,25 @@ pub fn encode_recovery_genesis_changeset(
     );
     diem_logger::info!("OK recovered validator accounts =============== ");
 
+        // Recover the user accounts
+    diem_logger::info!("Starting user migration... ");
+    if append_users  {
+      migrate_end_users(&mut session, &legacy_data).expect("failed to recover users");
+    }
+
     // Trigger reconfiguration so that the validator set is updated.
     // genesis cannot start without a reconfiguration event.
     reconfigure(&mut session);
 
+
+
+
+
+
     let (mut changeset1, mut events1) = session.finish().unwrap();
+    
+
+
 
     let state_view = GenesisStateView::new();
     let data_cache = StateViewCache::new(&state_view);
@@ -256,17 +270,7 @@ pub fn encode_recovery_genesis_changeset(
     // Todo: not sure why we are publishing this again.
     publish_stdlib(&mut session, Modules::new(stdlib_modules.iter()));
 
-    // Recover the user accounts if needed.
 
-    if append_users  {
-        diem_logger::info!("Starting user migration... ");
-
-        // call recover users function
-
-        migrate_users(&mut session, legacy_data).expect("failed to recover users");
-
-        
-    }
 
     let (changeset2, events2) = session.finish().unwrap();
 
@@ -282,8 +286,15 @@ pub fn encode_recovery_genesis_changeset(
 
 /// fuction to iterate through a list of LegacyRecovery and recover the user accounts by calling a GenesisMigration.move in the VM. (as opposed to crafting writesets individually which could be fallible).
 
-fn migrate_users(session: &mut Session<StateViewCache<GenesisStateView>>, legacy_data: Vec<LegacyRecovery>) -> Result<(), anyhow::Error>{
-    for user in legacy_data {
+fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, legacy_data: &Vec<LegacyRecovery>) -> Result<(), anyhow::Error>{
+    
+  let filtered_data: Vec<&LegacyRecovery>= legacy_data.iter()
+    .filter(|d| {
+        d.role == AccountRole::EndUser
+    })
+    .collect();
+
+    for user in filtered_data {
 
         if user.account.is_none() {
             bail!("Account address is missing");
@@ -297,9 +308,9 @@ fn migrate_users(session: &mut Session<StateViewCache<GenesisStateView>>, legacy
             // MoveValue::Signer(user.account.unwrap_or_else(bail!("Account address is missing"))),
             MoveValue::Address(user.account.expect("Account address is missing")),
             // MoveValue::Address(user.account_address.unwrap_or_else(bail!("Account address is missing"))),
-            MoveValue::vector_u8(user.auth_key.expect("no authkey found").to_vec()),
+            MoveValue::vector_u8(user.auth_key.expect("no authkey found").prefix().to_vec()),
             // vector_u8(user.role.expect("no role found")),
-            MoveValue::U64(user.balance.expect("no balance").coin()),
+            MoveValue::U64(user.balance.as_ref().expect("no balance").coin()),
 
             // MoveValue::vector_u8(user.sequence_number.to_vec()),
             // MoveValue::vector_u8(user.delegated_key_rotation_capability.to_vec()),

@@ -97,7 +97,7 @@ fn get_gen_tx() -> Result<Transaction, Error> {
     let temp_genesis_blob_path = json.parent().unwrap().join("fork_genesis.blob");
 
     make_recovery_genesis_from_vec_legacy_recovery(
-        user_accounts,
+        &user_accounts,
         genesis_vals.clone(),
         temp_genesis_blob_path.clone(),
         true,

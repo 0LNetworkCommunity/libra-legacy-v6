@@ -42,7 +42,7 @@ async fn test_e2e() {
     let recovery = read_from_recovery_file(&recover_json_output_path);
 
     make_recovery_genesis_from_vec_legacy_recovery(
-      recovery,
+      &recovery,
       vec![], // Todo: add validators
       blob_output_path.clone(), 
       true

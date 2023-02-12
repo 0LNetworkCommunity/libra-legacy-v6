@@ -35,7 +35,7 @@ pub async fn make_recovery_genesis_from_db_backup(
     let recovery = db_backup_into_recovery_struct(&archive_path, is_legacy).await?;
 
     make_recovery_genesis_from_vec_legacy_recovery(
-      recovery, 
+      &recovery, 
       genesis_vals,
       genesis_blob_path, 
       append
@@ -44,13 +44,13 @@ pub async fn make_recovery_genesis_from_db_backup(
 
 /// Make a recovery genesis blob
 pub fn make_recovery_genesis_from_vec_legacy_recovery(
-    recovery: Vec<LegacyRecovery>,
+    recovery: &Vec<LegacyRecovery>,
     genesis_vals: Vec<AccountAddress>,
     genesis_blob_path: PathBuf,
     append_user_accounts: bool,
 ) -> Result<Transaction, Error> {
     // get consensus accounts
-    let all_validator_configs = recover_validator_configs(&recovery)?;
+    let all_validator_configs = recover_validator_configs(recovery)?;
 
     // check the validators that are joining genesis actually have legacy data
     let count = all_validator_configs.vals

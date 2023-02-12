@@ -8,7 +8,9 @@
 -  [Function `migrate_user`](#0x1_GenesisMigration_migrate_user)
 
 
-<pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<pre><code><b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
+<b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 </code></pre>
 
 
@@ -35,11 +37,29 @@ Called by root in genesis to initialize the GAS coin
     auth_key: vector&lt;u8&gt;,
     balance: u64,
 ) {
-  <a href="DiemAccount.md#0x1_DiemAccount_create_user_account_with_coin">DiemAccount::create_user_account_with_coin</a>(
+  // <b>let</b> minted_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, balance);
+  // <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+  //   vm,
+  //   @VMReserved,
+  //   minted_coins,
+  //   b"genesis_migration",
+  //   b""
+  // );
+
+  <a href="DiemAccount.md#0x1_DiemAccount_vm_create_account_migration">DiemAccount::vm_create_account_migration</a>(
     vm,
     user_addr,
     auth_key,
-    balance
+    // balance
+  );
+
+  <b>let</b> minted_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, balance);
+  <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+    vm,
+    user_addr,
+    minted_coins,
+    b"genesis migration",
+    b""
   );
 }
 </code></pre>

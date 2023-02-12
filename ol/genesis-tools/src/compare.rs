@@ -26,7 +26,7 @@ pub struct CompareError {
 }
 /// Compare the balances in a recovery file to the balances in a genesis blob.
 pub fn compare_recovery_vec_to_genesis_blob(
-    recovery: Vec<LegacyRecovery>,
+    recovery: &Vec<LegacyRecovery>,
     genesis_path: PathBuf,
 ) -> Result<Vec<CompareError>, anyhow::Error> {
     // start an empty btree map
@@ -114,7 +114,7 @@ pub fn compare_recovery_vec_to_genesis_blob(
             }
         };
 
-        let recovery_bal = v.balance.unwrap().coin();
+        let recovery_bal = v.balance.as_ref().unwrap().coin();
         if recovery_bal != genesis_bal {
             err_list.push(CompareError {
                 index: i as u64,
@@ -134,7 +134,7 @@ pub fn compare_json_to_genesis_blob(
     genesis_path: PathBuf,
 ) -> Result<Vec<CompareError>, anyhow::Error> {
     let recovery = recover::read_from_recovery_file(&json_path);
-    compare_recovery_vec_to_genesis_blob(recovery, genesis_path)
+    compare_recovery_vec_to_genesis_blob(&recovery, genesis_path)
 }
 
 
