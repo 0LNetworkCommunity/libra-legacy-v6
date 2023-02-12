@@ -90,19 +90,13 @@ pub fn test_config(persist: bool) -> (NodeConfig, Ed25519PrivateKey) {
     (config, root_pri_key)
 }
 
-
-/// extract validator keys from NodeConfig
-
-pub fn get_val_consensus_keys(n: NodeConfig) {
-}
-
 /// Replace the Genesis file
 /// Note, if your genesis file does not contain the test config validator keys, the blockchain will start but will not be able to make progress.
 
-pub fn replace_genesis_validators_tx(validator: ValidatorConfig, base_genesis: ChangeSet) -> Result<(), anyhow::Error>{
+pub fn replace_genesis_validators_tx(validator: ValidatorConfig, _base_genesis: ChangeSet) -> Result<(), anyhow::Error>{
 
   // add the test validator network configs to the genesis with a transaction.
-    let validator_config = validator_config::build_validator_config_transaction(
+    let _validator_config = validator_config::build_validator_config_transaction(
       validator.storage(),
       chain_id::ChainId::test(),
       0, // sequence_number
@@ -133,7 +127,7 @@ pub fn replace_genesis_validators_tx(validator: ValidatorConfig, base_genesis: C
   Ok(())
 
 }
-pub fn replace_test_genesis(validator: ValidatorConfig, genesis: &Transaction) {
+pub fn replace_test_genesis(_validator: ValidatorConfig, _genesis: &Transaction) {
   // the test generator creates a blob file. We may not want to use it depending on our needs. For example: if we are testing a migration, we want 
   // to use a specific genesis and only replace the validators with a single test validator.
   // validator.insert_genesis(genesis);

@@ -15,11 +15,12 @@ use diem_types::{
 use move_core_types::{identifier::Identifier, move_resource::MoveResource};
 use ol_types::{
     autopay::AutoPayResource, fullnode_counter::FullnodeCounterResource,
-    wallet::CommunityWalletsResource,
+    wallet::CommunityWalletsResource, legacy_recovery::{ValStateRecover, OperRecover},
+    
 };
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
-use vm_genesis::{OperRecover, ValStateRecover};
+// use vm_genesis::{OperRecover, ValStateRecover};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 /// Account role
