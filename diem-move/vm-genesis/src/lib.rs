@@ -4,7 +4,8 @@
 #![forbid(unsafe_code)]
 
 mod genesis_context;
-use anyhow::Error;
+use anyhow::{bail, Error};
+use ol_types::legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery};
 use std::env;
 use crate::genesis_context::GenesisStateView;
 use diem_crypto::{
@@ -41,7 +42,7 @@ use move_core_types::{
     value::{serialize_values, MoveValue},
 };
 use move_vm_runtime::{move_vm::MoveVM, session::Session};
-use move_vm_types::gas_schedule::{GasStatus, INITIAL_GAS_SCHEDULE};
+use move_vm_types::{gas_schedule::{GasStatus, INITIAL_GAS_SCHEDULE}};
 use once_cell::sync::Lazy;
 use rand::prelude::*;
 use transaction_builder::encode_create_designated_dealer_script_function;
@@ -201,6 +202,8 @@ pub fn encode_recovery_genesis_changeset(
     operator_recovers: &[OperRecover],
     val_set: &[AccountAddress],
     chain: u8,
+    append_users: bool,
+    legacy_data: Vec<LegacyRecovery>,
 ) -> Result<ChangeSet, Error> {
     let mut stdlib_modules = Vec::new();
     // create a data view for move_vm
@@ -225,9 +228,11 @@ pub fn encode_recovery_genesis_changeset(
         ChainId::new(chain),
     );
     //////// 0L ////////
-    println!("OK create_and_initialize_main_accounts =============== ");
+    
+    diem_logger::info!("OK create_and_initialize_root_accounts =============== ");
+    // println!("OK create_and_initialize_main_accounts =============== ");
     let genesis_env = get_env();
-    println!("Initializing with env: {}", genesis_env);
+    diem_logger::info!("Initializing with env: {}", genesis_env);
     if genesis_env != "prod" {
         initialize_testnet(&mut session);
     }
@@ -236,12 +241,10 @@ pub fn encode_recovery_genesis_changeset(
     recovery_owners_operators(
         &mut session, val_assignments, operator_recovers, val_set
     );
+    diem_logger::info!("OK recovered validator accounts =============== ");
 
-    //////// 0L ////////
-    // println!("OK recovery_owners_operators =============== ");
-    // distribute_genesis_subsidy(&mut session);
-    // println!("OK Genesis subsidy =============== ");
-
+    // Trigger reconfiguration so that the validator set is updated.
+    // genesis cannot start without a reconfiguration event.
     reconfigure(&mut session);
 
     let (mut changeset1, mut events1) = session.finish().unwrap();
@@ -249,7 +252,21 @@ pub fn encode_recovery_genesis_changeset(
     let state_view = GenesisStateView::new();
     let data_cache = StateViewCache::new(&state_view);
     let mut session = move_vm.new_session(&data_cache);
+
+    // Todo: not sure why we are publishing this again.
     publish_stdlib(&mut session, Modules::new(stdlib_modules.iter()));
+
+    // Recover the user accounts if needed.
+
+    if append_users  {
+        diem_logger::info!("Starting user migration... ");
+
+        // call recover users function
+
+        migrate_users(&mut session, legacy_data).expect("failed to recover users");
+
+        
+    }
 
     let (changeset2, events2) = session.finish().unwrap();
 
@@ -262,6 +279,48 @@ pub fn encode_recovery_genesis_changeset(
     verify_genesis_write_set(&events);
     Ok(ChangeSet::new(write_set, events))
 }
+
+/// fuction to iterate through a list of LegacyRecovery and recover the user accounts by calling a GenesisMigration.move in the VM. (as opposed to crafting writesets individually which could be fallible).
+
+fn migrate_users(session: &mut Session<StateViewCache<GenesisStateView>>, legacy_data: Vec<LegacyRecovery>) -> Result<(), anyhow::Error>{
+    for user in legacy_data {
+
+        if user.account.is_none() {
+            bail!("Account address is missing");
+        }
+        if user.account.unwrap() == account_config::diem_root_address() {
+            continue;
+        }
+        let args = vec![
+            // both the VM and the user signatures need to be mocked.
+            MoveValue::Signer(account_config::diem_root_address()),
+            // MoveValue::Signer(user.account.unwrap_or_else(bail!("Account address is missing"))),
+            MoveValue::Signer(user.account.expect("Account address is missing")),
+            // MoveValue::Address(user.account_address.unwrap_or_else(bail!("Account address is missing"))),
+            MoveValue::vector_u8(user.auth_key.expect("no authkey found").to_vec()),
+            // vector_u8(user.role.expect("no role found")),
+            MoveValue::U64(user.balance.expect("no balance").coin()),
+
+            // MoveValue::vector_u8(user.sequence_number.to_vec()),
+            // MoveValue::vector_u8(user.delegated_key_rotation_capability.to_vec()),
+            // MoveValue::vector_u8(user.delegated_withdrawal_capability.to_vec()),
+            // MoveValue::vector_u8(user.received_minters.to_vec()),
+            // MoveValue::vector_u8(user.sent_events.to_vec()),
+            // MoveValue::vector_u8(user.received_events.to_vec()),
+        ];
+        
+        exec_function(
+          session,
+          "GenesisMigration",
+          "migrate_user",
+          vec![],
+          serialize_values(&args)
+        )
+    }
+    Ok(())
+}
+
+
 
 fn exec_function(
     session: &mut Session<StateViewCache<GenesisStateView>>,
@@ -568,35 +627,35 @@ fn create_and_initialize_owners_operators(
     }
 }
 
-//////// 0L ///////
-// Validator/owner state to recover in genesis recovery mode
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
-pub struct ValStateRecover {
-    ///
-    pub val_account: AccountAddress,
-    ///
-    pub operator_delegated_account: AccountAddress,
-    ///
-    pub val_auth_key: AuthenticationKey,
-}
+// //////// 0L ///////
+// // Validator/owner state to recover in genesis recovery mode
+// #[derive(Debug, Clone, PartialEq, PartialOrd)]
+// pub struct ValStateRecover {
+//     ///
+//     pub val_account: AccountAddress,
+//     ///
+//     pub operator_delegated_account: AccountAddress,
+//     ///
+//     pub val_auth_key: AuthenticationKey,
+// }
 
-//////// 0L ///////
-/// Operator state to recover in genesis recovery mode
-#[derive(Debug, Clone, PartialEq)]
-pub struct OperRecover {
-    ///
-    pub operator_account: AccountAddress,
-    ///
-    pub operator_auth_key: AuthenticationKey,
-    ///
-    pub validator_to_represent: AccountAddress,
-    ///
-    pub operator_consensus_pubkey: Vec<u8>,
-    ///
-    pub validator_network_addresses: Vec<u8>,
-    ///
-    pub fullnode_network_addresses: Vec<u8>,
-}
+// //////// 0L ///////
+// /// Operator state to recover in genesis recovery mode
+// #[derive(Debug, Clone, PartialEq)]
+// pub struct OperRecover {
+//     ///
+//     pub operator_account: AccountAddress,
+//     ///
+//     pub operator_auth_key: AuthenticationKey,
+//     ///
+//     pub validator_to_represent: AccountAddress,
+//     ///
+//     pub operator_consensus_pubkey: Vec<u8>,
+//     ///
+//     pub validator_network_addresses: Vec<u8>,
+//     ///
+//     pub fullnode_network_addresses: Vec<u8>,
+// }
 
 //////// 0L ////////
 /// TODO: recovery mode is WIP.
