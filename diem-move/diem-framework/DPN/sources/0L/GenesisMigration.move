@@ -11,6 +11,7 @@ module GenesisMigration {
   use DiemFramework::DiemAccount;
   use DiemFramework::Diem;
   use DiemFramework::GAS::GAS;
+  use DiemFramework::ValidatorUniverse;
 
     /// Called by root in genesis to initialize the GAS coin 
     public fun migrate_user(
@@ -19,21 +20,17 @@ module GenesisMigration {
         auth_key: vector<u8>,
         balance: u64,
     ) {
-      // let minted_coins = Diem::mint<GAS>(vm, balance);
-      // DiemAccount::vm_deposit_with_metadata<GAS>(
-      //   vm,
-      //   @VMReserved,
-      //   minted_coins,
-      //   b"genesis_migration",
-      //   b""
-      // );
+      // if not a validator, create a new account
+      // previously validators were already created
+      if (!ValidatorUniverse::is_in_universe(user_addr)) {
+        DiemAccount::vm_create_account_migration(
+          vm,
+          user_addr,
+          auth_key,
+          // balance
+        );
+      };
 
-      DiemAccount::vm_create_account_migration(
-        vm,
-        user_addr,
-        auth_key,
-        // balance
-      );
 
       let minted_coins = Diem::mint<GAS>(vm, balance);
       DiemAccount::vm_deposit_with_metadata<GAS>(
@@ -44,5 +41,6 @@ module GenesisMigration {
         b""
       );
     }
+
 }
 }

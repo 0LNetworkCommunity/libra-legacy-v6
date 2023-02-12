@@ -294,7 +294,7 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
     })
     .collect();
 
-    for user in filtered_data {
+    for user in filtered_data {      
 
         if user.account.is_none() {
             bail!("Account address is missing");

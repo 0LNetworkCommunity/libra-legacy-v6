@@ -159,7 +159,7 @@ pub fn check_val_set(
       let addrs = val_set.payload()
       .iter()
       .map(|v| {
-        dbg!(&v);
+        // dbg!(&v);
         *v.account_address()
       })
       .collect::<Vec<AccountAddress>>();
@@ -167,7 +167,6 @@ pub fn check_val_set(
       assert!(addrs.len() == expected_vals.len(), "validator set length mismatch");
 
       for v in expected_vals {
-        dbg!(&v);
         assert!(addrs.contains(&v), "genesis does not contain validator");
       }
 

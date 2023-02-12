@@ -25,10 +25,10 @@ fn test_end_user_migrate() {
   let json_str = fs::read_to_string(json.clone()).unwrap();
   let mut user_accounts: Vec<LegacyRecovery> = serde_json::from_str(&json_str).unwrap();
   
-  val_accounts.append(&mut user_accounts);
+  val_accounts.push(user_accounts.pop().unwrap());
   
-
-    // dbg!(&mock_val);
+  // includes root account
+  assert!(val_accounts.len() == 4, "not all users");
 
     let temp_genesis_blob_path = json_path().parent().unwrap().join("fork_genesis.blob");
 
@@ -43,12 +43,31 @@ fn test_end_user_migrate() {
 
     assert!(temp_genesis_blob_path.exists(), "file not created");
 
-    let list = compare::compare_recovery_vec_to_genesis_blob(&val_accounts, temp_genesis_blob_path.clone());
+    match compare::compare_json_to_genesis_blob(json, temp_genesis_blob_path.clone()){
+        Ok(list) => {
+          if list.len() > 0 {
+            println!("{:?}", &list);
+            fs::remove_file(&temp_genesis_blob_path).unwrap();
+            assert!(false, "list is not empty");
+          }
+        },
+        Err(_e) => assert!(false, "error comparison"),
+    }
 
-    dbg!(&list);
-    assert!(list.expect("no list").len() == 0, "list is not empty");
+    // // dbg!(&list);
+    // if list.expect("no list").len() > 0 {
+    //   dbg!(&list.len());
+    //   fs::remove_file(&temp_genesis_blob_path).unwrap();
+    //   assert!(false, "list is not empty");
+    // }
     
-    compare::check_val_set(genesis_vals, temp_genesis_blob_path.clone()).unwrap();
+    match compare::check_val_set(genesis_vals, temp_genesis_blob_path.clone()){
+        Ok(_) => {},
+        Err(_) => {
+          assert!(false, "validator set not correct");
+          fs::remove_file(&temp_genesis_blob_path).unwrap()
+        },
+    }
 
     fs::remove_file(temp_genesis_blob_path).unwrap();
 }

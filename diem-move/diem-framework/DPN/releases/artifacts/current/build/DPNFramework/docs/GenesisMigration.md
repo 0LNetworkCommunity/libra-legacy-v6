@@ -11,6 +11,7 @@
 <pre><code><b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
+<b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 </code></pre>
 
 
@@ -45,13 +46,17 @@ Called by root in genesis to initialize the GAS coin
   //   b"genesis_migration",
   //   b""
   // );
+  // <b>if</b> not a validator, create a new account
+  // previously validators were already created
+  <b>if</b> (!<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(user_addr)) {
+    <a href="DiemAccount.md#0x1_DiemAccount_vm_create_account_migration">DiemAccount::vm_create_account_migration</a>(
+      vm,
+      user_addr,
+      auth_key,
+      // balance
+    );
+  };
 
-  <a href="DiemAccount.md#0x1_DiemAccount_vm_create_account_migration">DiemAccount::vm_create_account_migration</a>(
-    vm,
-    user_addr,
-    auth_key,
-    // balance
-  );
 
   <b>let</b> minted_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, balance);
   <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
