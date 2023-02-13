@@ -77,40 +77,40 @@ address DiemFramework {
     public fun is_family(left: address, right: address): (bool, address) acquires Ancestry {
       let is_family = false;
       let common_ancestor = @0x0;
-      print(&100300);
+      // print(&100300);
       print(&exists<Ancestry>(left));
       print(&exists<Ancestry>(right));
 
       // if (exists<Ancestry>(left) && exists<Ancestry>(right)) {
         // if tree is empty it will still work.
-        print(&100310);
+        // print(&100310);
         let left_tree = get_tree(left);
-        print(&100311);
+        // print(&100311);
         let right_tree = get_tree(right);
 
-        print(&100320);
+        // print(&100320);
 
         // check for direct relationship.
         if (Vector::contains(&left_tree, &right)) return (true, right);
         if (Vector::contains(&right_tree, &left)) return (true, left);
         
-        print(&100330);
+        // print(&100330);
         let i = 0;
         // check every address on the list if there are overlaps.
         while (i < Vector::length<address>(&left_tree)) {
-          print(&100341);
+          // print(&100341);
           let family_addr = Vector::borrow(&left_tree, i);
           if (Vector::contains(&right_tree, family_addr)) {
             is_family = true;
             common_ancestor = *family_addr;
-            print(&100342);
+            // print(&100342);
             break
           };
           i = i + 1;
         };
-        print(&100350);
+        // print(&100350);
       // };
-      print(&100360);
+      // print(&100360);
       (is_family, common_ancestor)
     }
 
