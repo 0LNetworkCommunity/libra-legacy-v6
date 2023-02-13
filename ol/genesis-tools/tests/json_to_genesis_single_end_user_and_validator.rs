@@ -15,15 +15,15 @@ fn test_end_user_migrate() {
 
   let genesis_vals = vec!["ADCB1D42A46292AE89E938BD982F2867".parse().unwrap()];
 
-  let json = json_path().parent().unwrap().join("single_json_entry.json");
+  let val_json = json_path().parent().unwrap().join("single_json_entry.json");
 
-  let json_str = fs::read_to_string(json.clone()).unwrap();
+  let json_str = fs::read_to_string(val_json.clone()).unwrap();
   let mut val_accounts: Vec<LegacyRecovery> = serde_json::from_str(&json_str).unwrap();
 
-  let json = json_path().parent().unwrap().join("sample_end_user_single.json");
+  let user_json = json_path().parent().unwrap().join("sample_end_user_single.json");
 
-  let json_str = fs::read_to_string(json.clone()).unwrap();
-  let mut user_accounts: Vec<LegacyRecovery> = serde_json::from_str(&json_str).unwrap();
+  let user_json_str = fs::read_to_string(user_json.clone()).unwrap();
+  let mut user_accounts: Vec<LegacyRecovery> = serde_json::from_str(&user_json_str).unwrap();
   
   val_accounts.push(user_accounts.pop().unwrap());
   
@@ -43,24 +43,30 @@ fn test_end_user_migrate() {
 
     assert!(temp_genesis_blob_path.exists(), "file not created");
 
-    match compare::compare_json_to_genesis_blob(json, temp_genesis_blob_path.clone()){
+    // compare the user json to the genesis blob
+    match compare::compare_json_to_genesis_blob(user_json, temp_genesis_blob_path.clone()){
         Ok(list) => {
           if list.len() > 0 {
             println!("{:?}", &list);
             fs::remove_file(&temp_genesis_blob_path).unwrap();
-            assert!(false, "list is not empty");
+            assert!(false, "user migration has errors");
           }
         },
         Err(_e) => assert!(false, "error comparison"),
     }
 
-    // // dbg!(&list);
-    // if list.expect("no list").len() > 0 {
-    //   dbg!(&list.len());
-    //   fs::remove_file(&temp_genesis_blob_path).unwrap();
-    //   assert!(false, "list is not empty");
-    // }
-    
+    // compare the validator json to the genesis blob
+    match compare::compare_json_to_genesis_blob(val_json, temp_genesis_blob_path.clone()){
+        Ok(list) => {
+          if list.len() > 0 {
+            println!("{:?}", &list);
+            fs::remove_file(&temp_genesis_blob_path).unwrap();
+            assert!(false, "val migration has errors");
+          }
+        },
+        Err(_e) => assert!(false, "error comparison"),
+    }
+
     match compare::check_val_set(genesis_vals, temp_genesis_blob_path.clone()){
         Ok(_) => {},
         Err(_) => {

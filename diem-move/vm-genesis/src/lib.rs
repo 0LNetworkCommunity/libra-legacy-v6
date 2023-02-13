@@ -4,8 +4,9 @@
 #![forbid(unsafe_code)]
 
 mod genesis_context;
-use anyhow::{bail, Error};
-use ol_types::legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery, AccountRole};
+use anyhow::Error;
+use diem_state_view::StateView;
+use ol_types::legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery};
 use std::env;
 use crate::genesis_context::GenesisStateView;
 use diem_crypto::{
@@ -20,7 +21,7 @@ use diem_types::{
     account_config::{
         self,
         events::{CreateAccountEvent},
-        DESIGNATED_DEALER_MODULE,
+        DESIGNATED_DEALER_MODULE, AccountResource, CurrencyInfoResource,
     },
     chain_id::{ChainId},
     contract_event::ContractEvent,
@@ -46,10 +47,12 @@ use move_vm_types::{gas_schedule::{GasStatus, INITIAL_GAS_SCHEDULE}};
 use once_cell::sync::Lazy;
 use rand::prelude::*;
 use transaction_builder::encode_create_designated_dealer_script_function;
-
 //////// 0L ////////
 use diem_global_constants::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
 pub use ol_types::{config::IS_PROD, genesis_proof::GenesisMiningProof};
+use move_core_types::move_resource::MoveStructType;
+use diem_types::access_path::AccessPath;
+use move_core_types::move_resource::MoveResource;
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -253,15 +256,7 @@ pub fn encode_recovery_genesis_changeset(
     // genesis cannot start without a reconfiguration event.
     reconfigure(&mut session);
 
-
-
-
-
-
     let (mut changeset1, mut events1) = session.finish().unwrap();
-    
-
-
 
     let state_view = GenesisStateView::new();
     let data_cache = StateViewCache::new(&state_view);
@@ -269,7 +264,6 @@ pub fn encode_recovery_genesis_changeset(
 
     // Todo: not sure why we are publishing this again.
     publish_stdlib(&mut session, Modules::new(stdlib_modules.iter()));
-
 
 
     let (changeset2, events2) = session.finish().unwrap();
@@ -281,27 +275,24 @@ pub fn encode_recovery_genesis_changeset(
 
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
     verify_genesis_write_set(&events);
+  
     Ok(ChangeSet::new(write_set, events))
 }
 
 /// fuction to iterate through a list of LegacyRecovery and recover the user accounts by calling a GenesisMigration.move in the VM. (as opposed to crafting writesets individually which could be fallible).
 
-fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, legacy_data: &Vec<LegacyRecovery>) -> Result<(), anyhow::Error>{
+fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, legacy_data: &Vec<LegacyRecovery>) -> Result<u64, anyhow::Error>{
     
   let filtered_data: Vec<&LegacyRecovery>= legacy_data.iter()
     .filter(|d| {
-        d.role == AccountRole::EndUser
+        d.account.is_some() &&
+        d.account != Some(AccountAddress::ZERO)
     })
     .collect();
 
+    let mut total_balance_restored = 0u64;
     for user in filtered_data {      
 
-        if user.account.is_none() {
-            bail!("Account address is missing");
-        }
-        if user.account.unwrap() == account_config::diem_root_address() {
-            continue;
-        }
         let args = vec![
             // both the VM and the user signatures need to be mocked.
             MoveValue::Signer(account_config::diem_root_address()),
@@ -319,6 +310,8 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
             // MoveValue::vector_u8(user.sent_events.to_vec()),
             // MoveValue::vector_u8(user.received_events.to_vec()),
         ];
+
+        total_balance_restored = total_balance_restored + user.balance.as_ref().expect("no balance").coin();
         
         exec_function(
           session,
@@ -328,7 +321,7 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
           serialize_values(&args)
         )
     }
-    Ok(())
+    Ok(total_balance_restored)
 }
 
 
@@ -681,7 +674,7 @@ fn recovery_owners_operators(
     val_set: &[AccountAddress],
 ) {
     let diem_root_address = account_config::diem_root_address();
-
+    // session.get_type_layout(TypeTag::Struct(a))
     // Create accounts for each validator owner. The inputs for creating an account are the auth
     // key prefix and account address. Internally move then computes the auth key as auth key
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
@@ -705,19 +698,6 @@ fn recovery_owners_operators(
             &create_owner_script,
         );
 
-        println!("======== recover miner state");
-        // TODO: Where's this function recover_miner_state. Lost from v4 to v5?
-        // exec_function(
-        //     session,
-        //     "TowerState",
-        //     "recover_miner_state", 
-        //     vec![],
-        //     serialize_values(&vec![
-        //         MoveValue::Signer(diem_root_address),
-        //         MoveValue::Signer(i.val_account),
-        //     ]),
-        // );
-
         exec_function(
             session,
             "ValidatorUniverse",
@@ -738,22 +718,6 @@ fn recovery_owners_operators(
                 MoveValue::Signer(i.val_account)
             ]),
         );
-
-        // let all_vals: Vec<AccountAddress> = operator_recovers.iter()
-        //     .map(|a|{ a.validator_to_represent }).collect();
-        // let mut vals = all_vals.clone();
-        // vals.retain(|el|{ el != &i.val_account});
-        // exec_function(
-        //     session,
-        //     "Vouch",
-        //     "vm_migrate",
-        //     vec![],
-        //     serialize_values(&vec![
-        //         MoveValue::Signer(diem_root_address),
-        //         MoveValue::Address(i.val_account),
-        //         MoveValue::vector_address(vals),
-        //     ]),
-        // );
     }
 
     println!("1 ======== Create OP Accounts");
