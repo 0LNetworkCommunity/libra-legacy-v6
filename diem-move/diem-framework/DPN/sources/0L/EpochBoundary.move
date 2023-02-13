@@ -63,7 +63,7 @@ module EpochBoundary {
         //     Subsidy::calculate_subsidy(vm, compliant_nodes_count);
         print(&800400);
 
-        let reward = ProofOfFee::get_consensus_reward();
+        let (reward, _, _) = ProofOfFee::get_consensus_reward();
         process_fullnodes(vm, reward);
         
         print(&800500);
@@ -245,7 +245,7 @@ module EpochBoundary {
         print(&800900106);
 
         // trigger the thermostat if the reward needs to be adjusted
-        ProofOfFee::reward_thermostat(vm);
+        ProofOfFee::reward_thermostat(vm, &proposed_set);
         print(&800900107);
         // Reconfig should be the last event.
         // Reconfigure the network
