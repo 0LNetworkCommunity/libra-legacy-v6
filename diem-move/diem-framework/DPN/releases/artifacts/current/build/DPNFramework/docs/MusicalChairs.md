@@ -9,6 +9,7 @@
 -  [Function `initialize`](#0x1_MusicalChairs_initialize)
 -  [Function `stop_the_music`](#0x1_MusicalChairs_stop_the_music)
 -  [Function `eval_compliance`](#0x1_MusicalChairs_eval_compliance)
+-  [Function `get_current_seats`](#0x1_MusicalChairs_get_current_seats)
 
 
 <pre><code><b>use</b> <a href="Cases.md#0x1_Cases">0x1::Cases</a>;
@@ -195,6 +196,30 @@ Called by root in genesis to initialize the GAS coin
     };
 
     (compliant_nodes, non_compliant_nodes, ratio)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MusicalChairs_get_current_seats"></a>
+
+## Function `get_current_seats`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MusicalChairs.md#0x1_MusicalChairs_get_current_seats">get_current_seats</a>(): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MusicalChairs.md#0x1_MusicalChairs_get_current_seats">get_current_seats</a>(): u64 <b>acquires</b> <a href="MusicalChairs.md#0x1_MusicalChairs_Chairs">Chairs</a> {
+    <b>borrow_global</b>&lt;<a href="MusicalChairs.md#0x1_MusicalChairs_Chairs">Chairs</a>&gt;(@VMReserved).current_seats
 }
 </code></pre>
 
