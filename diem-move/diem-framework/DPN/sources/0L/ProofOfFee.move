@@ -269,13 +269,16 @@ address DiemFramework {
 
       let cr = borrow_global_mut<ConsensusReward>(@VMReserved);
 
+      print(&8006010551);
       let len = Vector::length<u64>(&cr.avg_bid_history);
       let i = 0;
 
       let epochs_above = 0;
       let epochs_below = 0;
-      while (i < 10 || i < len) { // max ten days, but may have less in history, filling set should truncate the history at 10 epochs.
+      while (i < 10 && i < len) { // max ten days, but may have less in history, filling set should truncate the history at 10 epochs.
+      print(&8006010552);
         let avg_bid = *Vector::borrow<u64>(&cr.avg_bid_history, i);
+        print(&8006010553);
         if (avg_bid > bid_upper_bound) {
           epochs_above = epochs_above + 1;
         } else if (avg_bid < bid_lower_bound) {
@@ -285,14 +288,19 @@ address DiemFramework {
         i = i + 1;
       };
 
+      print(&8006010554);
       if (cr.value > 0) {
+        print(&8006010555);
+
         // TODO: this is an initial implementation, we need to
         // decide if we want more granularity in the reward adjustment
         // Note: making this readable for now, but we can optimize later
         if (epochs_above > short_window) {
+          print(&8006010556);
           // check for zeros.
           // TODO: put a better safety check here
           if ((cr.value / 10) > cr.value){
+            print(&8006010557);
             return
           };
           // If the Validators are bidding near 100% that means
@@ -301,13 +309,18 @@ address DiemFramework {
           // implicit bond is very high on validators. E.g.
           // at 1% median bid, the implicit bond is 100x the reward.
           // We need to DECREASE the reward
+            print(&8006010558);
 
           if (epochs_above > short_window) {
             // decrease the reward by 10%
             cr.value = cr.value - (cr.value / 10);
+            print(&8006010559);
+
             return // return early since we can't increase and decrease simultaneously
           } else if (epochs_above > long_window) {
             // decrease the reward by 5%
+            print(&80060105510);
+
             cr.value = cr.value - (cr.value / 20);
             return // return early since we can't increase and decrease simultaneously
           };
@@ -320,10 +333,16 @@ address DiemFramework {
           // At a 25% bid (potential loss), the profit is thus 75% of the value, which means the implicit bond is 25/75, or 1/3 of the bond, the risk favors the validator. This means among other things, that an attacker can pay for the cost of the attack with the profits. See paper, for more details.
 
           // we need to INCREASE the reward, so that the bond is more meaningful.
+          print(&80060105511);
+
           if (epochs_below > short_window) {
+            print(&80060105512);
+
             // decrease the reward by 5%
             cr.value = cr.value + (cr.value / 20);
           } else if (epochs_above > long_window) {
+            print(&80060105513);
+
             // decrease the reward by 10%
             cr.value = cr.value + (cr.value / 10);
           };
