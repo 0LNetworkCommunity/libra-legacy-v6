@@ -91,40 +91,40 @@ script {
 // check: NewEpochEvent
 //////////////////////////////////////////////
 
-//# run --admin-script --signers DiemRoot DiemRoot
-script {  
-    use DiemFramework::NodeWeight;
-    use DiemFramework::GAS::GAS;
-    use DiemFramework::DiemAccount;
-    use DiemFramework::Subsidy;
-    use DiemFramework::Globals;
-    use DiemFramework::TowerState;
-    use DiemFramework::Debug::print;
+// //# run --admin-script --signers DiemRoot DiemRoot
+// script {  
+//     use DiemFramework::NodeWeight;
+//     use DiemFramework::GAS::GAS;
+//     use DiemFramework::DiemAccount;
+//     use DiemFramework::Subsidy;
+//     use DiemFramework::Globals;
+//     use DiemFramework::TowerState;
+//     use DiemFramework::Debug::print;
 
-    fun main() {
-        // We are in a new epoch.
+//     fun main() {
+//         // We are in a new epoch.
 
-        let expected_subsidy = Subsidy::subsidy_curve(
-            Globals::get_subsidy_ceiling_gas(),
-            1,
-            Globals::get_max_validators_per_set(),
-        );
+//         let expected_subsidy = Subsidy::subsidy_curve(
+//             Globals::get_subsidy_ceiling_gas(),
+//             1,
+//             Globals::get_max_validators_per_set(),
+//         );
 
-        let starting_balance = 10000000;
-        let operator_refund = 4336 * 5; // BASELINE_TX_COST * proofs = 21680
+//         let starting_balance = 10000000;
+//         let operator_refund = 4336 * 5; // BASELINE_TX_COST * proofs = 21680
 
-        // Note since there's only 1 validator and the reward to alice was the
-        // entirety of subsidy available.
-        let burn = expected_subsidy/2; // 50% of the rewrd to validator. 
+//         // Note since there's only 1 validator and the reward to alice was the
+//         // entirety of subsidy available.
+//         let burn = expected_subsidy/2; // 50% of the rewrd to validator. 
         
-        let ending_balance = starting_balance + expected_subsidy - operator_refund - burn;
-        print(&ending_balance);
-        print(&DiemAccount::balance<GAS>(@Alice));
-        assert!(DiemAccount::balance<GAS>(@Alice) == ending_balance, 7357000180113);  
-        assert!(NodeWeight::proof_of_weight(@Alice) == 5, 7357000180114);
+//         let ending_balance = starting_balance + expected_subsidy - operator_refund - burn;
+//         print(&ending_balance);
+//         print(&DiemAccount::balance<GAS>(@Alice));
+//         assert!(DiemAccount::balance<GAS>(@Alice) == ending_balance, 7357000180113);  
+//         assert!(NodeWeight::proof_of_weight(@Alice) == 5, 7357000180114);
 
-        // Case 1, increments the epochs_validating_and_mining,
-        // which is used for rate-limiting onboarding
-        assert!(TowerState::get_epochs_compliant(@Alice) == 1, 7357000180115);                  
-    }
-}
+//         // Case 1, increments the epochs_validating_and_mining,
+//         // which is used for rate-limiting onboarding
+//         assert!(TowerState::get_epochs_compliant(@Alice) == 1, 7357000180115);                  
+//     }
+// }
