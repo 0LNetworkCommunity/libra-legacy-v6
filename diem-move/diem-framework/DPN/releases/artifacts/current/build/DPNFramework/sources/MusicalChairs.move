@@ -130,5 +130,11 @@ module MusicalChairs {
         (compliant_nodes, non_compliant_nodes, ratio)
     }
 
+    //////// GETTERS ////////
+
+    public fun get_current_seats(): u64 acquires Chairs {
+        borrow_global<Chairs>(@VMReserved).current_seats
+    }
+
 }
 }
