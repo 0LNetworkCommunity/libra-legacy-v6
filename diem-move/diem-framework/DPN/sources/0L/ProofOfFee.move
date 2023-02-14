@@ -21,11 +21,14 @@ address DiemFramework {
     use DiemFramework::Debug::print;
     use DiemFramework::Vouch;
     use Std::FixedPoint32;
+    use DiemFramework::Testnet;
 
     const ENOT_AN_ACTIVE_VALIDATOR: u64 = 190001;
     const EBID_ABOVE_MAX_PCT: u64 = 190002;
 
     const GENESIS_BASELINE_REWARD: u64 = 1000000;
+
+    
     // A struct on the validators account which indicates their
     // latest bid (and epoch)
     struct ProofOfFeeAuction has key {
@@ -78,29 +81,14 @@ address DiemFramework {
 
 
 
-    // Get the top N validators for the next round.
+    //////// CONSENSUS CRITICAL ////////
+    // Get the validator universe sorted by bid
+    // By default this will return a FILTERED list of validators
+    // which excludes validators which cannot pass the audit.
+    // Leaving the unfiltered option for testing purposes, and any future use.
     // TODO: there's a known issue when many validators have the exact same
     // bid, the preferred node  will be the one LAST included in the validator universe.
-    public fun top_n_accounts(account: &signer, n: u64): vector<address> acquires ProofOfFeeAuction {
-        assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_role(140101));
-
-        let eligible_validators = get_sorted_vals();
-        let len = Vector::length<address>(&eligible_validators);
-        if(len <= n) return eligible_validators;
-
-        let diff = len - n; 
-        while(diff > 0){
-          Vector::pop_back(&mut eligible_validators);
-          diff = diff - 1;
-        };
-
-        eligible_validators
-    }
-    
-    // get the validator universe sorted by bid
-    // Function code: 01 Prefix: 140101
-    // Permissions: Public, VM Only
-    public fun get_sorted_vals(): vector<address> acquires ProofOfFeeAuction {
+    public fun get_sorted_vals(unfiltered: bool): vector<address> acquires ProofOfFeeAuction, ConsensusReward {
       let eligible_validators = ValidatorUniverse::get_eligible_validators();
       let length = Vector::length<address>(&eligible_validators);
       print(&length);
@@ -115,7 +103,7 @@ address DiemFramework {
         let (bid, expire) = current_bid(cur_address);
         print(&bid);
         print(&expire);
-        if (DiemConfig::get_current_epoch() > expire) { 
+        if (!unfiltered && !audit_qualification(&cur_address)) { 
           k = k + 1;
           continue
         };
@@ -183,11 +171,19 @@ address DiemFramework {
     // The Validator must qualify on a number of metrics: have funds in their Unlocked account to cover bid, have miniumum viable vouches, and not have been jailed in the previous round.
 
 
-    
-    public fun fill_seats_and_get_price(vm: &signer, set_size: u64, proven_nodes: &vector<address>): (vector<address>, u64) acquires ProofOfFeeAuction, ConsensusReward {
+    // This function assumes we have already filtered out ineligible validators.
+    // but we will check again here.
+    public fun fill_seats_and_get_price(
+      vm: &signer,
+      set_size: u64,
+      sorted_vals_by_bid: &vector<address>,
+      proven_nodes: &vector<address>
+    ): (vector<address>, u64) acquires ProofOfFeeAuction, ConsensusReward {
       if (Signer::address_of(vm) != @VMReserved) return (Vector::empty<address>(), 0);
+      
+      print(sorted_vals_by_bid);
 
-      let (baseline_reward, _, _) = get_consensus_reward();
+      // let (baseline_reward, _, _) = get_consensus_reward();
 
       let seats_to_fill = Vector::empty<address>();
       
@@ -208,20 +204,20 @@ address DiemFramework {
       // 2a. seat the vals with jail reputation < 2
       // 2b. seat the remainder of the unproven vals with any jail reputation.
 
-      let sorted_vals_by_bid = get_sorted_vals();
-      print(&sorted_vals_by_bid);
       let num_unproven_added = 0;
       let i = 0u64;
       while (
         (i < set_size) && 
-        (i < Vector::length(&sorted_vals_by_bid))
+        (i < Vector::length(sorted_vals_by_bid))
       ) {
         // print(&i);
-        let val = Vector::borrow(&sorted_vals_by_bid, i);
+        let val = Vector::borrow(sorted_vals_by_bid, i);
 
-        // audit all the potential issues with seating the validator
-        // TODO: deprecate Audit.move
-        if (!audit_qualification(val, baseline_reward)) continue;
+        // // belt and suspenders, we get_sorted_vals(true) should filter ineligible validators
+        // if (!audit_qualification(val, baseline_reward)) { 
+        //   i = i + 1;
+        //   continue
+        // };
 
 
         // check if a proven node
@@ -234,6 +230,7 @@ address DiemFramework {
           // print(&02);
           // for unproven nodes, push it to list if we haven't hit limit
           if (num_unproven_added < max_unproven ) {
+            // TODO: check jail reputation
             // print(&03);
             Vector::push_back(&mut seats_to_fill, *val);
           };
@@ -271,12 +268,13 @@ address DiemFramework {
     }
 
     // consolidate all the checks for a validator to be seated
-    public fun audit_qualification(val: &address, baseline_reward: u64): bool acquires ProofOfFeeAuction {
+    public fun audit_qualification(val: &address): bool acquires ProofOfFeeAuction, ConsensusReward {
 
         let (bid, expire) = current_bid(*val);
         print(val);
         print(&bid);
         print(&expire);
+
 
         // Skip if the bid expired. belt and suspenders, this should have been checked in the sorting above.
         // TODO: make this it's own function so it can be publicly callable, it's useful generally, and for debugging.
@@ -301,9 +299,9 @@ address DiemFramework {
         print(&80060102042);
         let unlocked_coins = DiemAccount::unlocked_amount(*val);
         print(&unlocked_coins);
-        
+
+        let (baseline_reward, _, _) = get_consensus_reward();
         let coin_required = FixedPoint32::multiply_u64(baseline_reward, FixedPoint32::create_from_rational(bid, 1000));
-        // let coin_required = bid * baseline_reward;
 
         print(&coin_required);
         if (unlocked_coins < coin_required) return false;
@@ -481,6 +479,24 @@ address DiemFramework {
       return (0, 0)
     }
 
+    // Get the top N validators by bid, this is FILTERED by default
+    public fun top_n_accounts(account: &signer, n: u64, unfiltered: bool): vector<address> acquires ProofOfFeeAuction, ConsensusReward {
+        assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_role(140101));
+
+        let eligible_validators = get_sorted_vals(unfiltered);
+        let len = Vector::length<address>(&eligible_validators);
+        if(len <= n) return eligible_validators;
+
+        let diff = len - n; 
+        while(diff > 0){
+          Vector::pop_back(&mut eligible_validators);
+          diff = diff - 1;
+        };
+
+        eligible_validators
+    }
+    
+
     ////////// SETTERS //////////
     // validator can set a bid. See transaction script below.
     // the validator can set an "expiry epoch:  for the bid.
@@ -494,8 +510,9 @@ address DiemFramework {
       if (!exists<ProofOfFeeAuction>(acc)) {
         init(account_sig);
       };
-
-      assert!(bid <= 11000, Errors::ol_tx(EBID_ABOVE_MAX_PCT));
+      
+      // bid must be below 110%
+      assert!(bid <= 1100, Errors::ol_tx(EBID_ABOVE_MAX_PCT));
 
       let pof = borrow_global_mut<ProofOfFeeAuction>(acc);
       pof.epoch_expiration = expiry_epoch;
@@ -513,6 +530,24 @@ address DiemFramework {
     public(script) fun update_pof_bid(sender: signer, bid: u64, epoch_expiry: u64) acquires ProofOfFeeAuction {
       // update the bid, initializes if not already.
       set_bid(&sender, bid, epoch_expiry);
+    }
+
+    //////// TEST HELPERS ////////
+
+    public fun test_set_val_bids(vm: &signer, vals: &vector<address>, bids: &vector<u64>, expiry: &vector<u64>) acquires ProofOfFeeAuction {
+      Testnet::assert_testnet(vm);
+
+      let len = Vector::length(vals);
+      let i = 0;
+      while (i < len) {
+        let bid = Vector::borrow(bids, i);
+        let exp = Vector::borrow(expiry, i);
+        let addr = Vector::borrow(vals, i);
+        let pof = borrow_global_mut<ProofOfFeeAuction>(*addr);
+        pof.epoch_expiration = *exp;
+        pof.bid = *bid;
+        i = i + 1;
+      };
     }
   }
 }

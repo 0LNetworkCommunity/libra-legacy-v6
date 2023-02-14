@@ -182,7 +182,9 @@ module EpochBoundary {
             //// V6 ////
             // CONSENSUS CRITICAL
             // pick the validators based on proof of fee.
-            let (auction_winners, price) = ProofOfFee::fill_seats_and_get_price(vm, MOCK_VAL_SIZE, outgoing_compliant_set);
+            // false because we want the default behavior of the function: filtered by audit
+            let sorted_bids = ProofOfFee::get_sorted_vals(false);
+            let (auction_winners, price) = ProofOfFee::fill_seats_and_get_price(vm, MOCK_VAL_SIZE, &sorted_bids, outgoing_compliant_set);
             // TODO: Don't use copy above, do a borrow.
             print(&800700);
 
