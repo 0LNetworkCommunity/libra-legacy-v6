@@ -78,8 +78,8 @@ address DiemFramework {
       let is_family = false;
       let common_ancestor = @0x0;
       // print(&100300);
-      print(&exists<Ancestry>(left));
-      print(&exists<Ancestry>(right));
+      // print(&exists<Ancestry>(left));
+      // print(&exists<Ancestry>(right));
 
       // if (exists<Ancestry>(left) && exists<Ancestry>(right)) {
         // if tree is empty it will still work.

@@ -36,7 +36,8 @@ module DiemFramework::Genesis {
     use DiemFramework::TowerState;
     use DiemFramework::Wallet;
     use DiemFramework::Migrations;  
-    // use DiemFramework::Testnet; 
+    // use DiemFramework::Testnet;
+    use DiemFramework::ProofOfFee;
 
     /// Initializes the Diem framework.
     fun initialize(
@@ -165,7 +166,7 @@ module DiemFramework::Genesis {
         DiemTimestamp::set_time_has_started(dr_account);
         Epoch::initialize(dr_account); /////// 0L /////////
 
-        
+        ProofOfFee::init_genesis_baseline_reward(dr_account);
         // if this is tesnet, fund the root account so the smoketests can run. They use PaymentScripts functions to test many things.
         // TODO(0L): make this only tun in testsnet. Though we need to make smoketest always initialize in test mode.
         // if (Testnet::is_testnet()) {

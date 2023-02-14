@@ -20,6 +20,7 @@ address DiemFramework {
     use DiemFramework::DiemAccount;
     use DiemFramework::Debug::print;
     use DiemFramework::Vouch;
+    use Std::FixedPoint32;
 
     const ENOT_AN_ACTIVE_VALIDATOR: u64 = 190001;
     const EBID_ABOVE_MAX_PCT: u64 = 190002;
@@ -36,8 +37,8 @@ address DiemFramework {
     struct ConsensusReward has key {
       value: u64,
       clearing_price: u64,
-      average_winning_bid: u64,
-      avg_bid_history: vector<u64>,
+      median_win_bid: u64,
+      median_history: vector<u64>,
     }
     public fun init_genesis_baseline_reward(vm: &signer) {
       if (Signer::address_of(vm) != @VMReserved) return;
@@ -48,8 +49,8 @@ address DiemFramework {
           ConsensusReward {
             value: GENESIS_BASELINE_REWARD,
             clearing_price: 0,
-            average_winning_bid: 0,
-            avg_bid_history: Vector::empty<u64>(),
+            median_win_bid: 0,
+            median_history: Vector::empty<u64>(),
           }
         );
       }
@@ -102,72 +103,114 @@ address DiemFramework {
     public fun get_sorted_vals(): vector<address> acquires ProofOfFeeAuction {
       let eligible_validators = ValidatorUniverse::get_eligible_validators();
       let length = Vector::length<address>(&eligible_validators);
+      print(&length);
       // Vector to store each address's node_weight
       let weights = Vector::empty<u64>();
+      let filtered_vals = Vector::empty<address>();
       let k = 0;
       while (k < length) {
+        // TODO: Ensure that this address is an active validator
 
         let cur_address = *Vector::borrow<address>(&eligible_validators, k);
-        // Ensure that this address is an active validator
-        let (bid, _) = current_bid(cur_address);
+        let (bid, expire) = current_bid(cur_address);
+        print(&bid);
+        print(&expire);
+        if (DiemConfig::get_current_epoch() > expire) { 
+          k = k + 1;
+          continue
+        };
         Vector::push_back<u64>(&mut weights, bid);
+        Vector::push_back<address>(&mut filtered_vals, cur_address);
         k = k + 1;
       };
 
+      print(&weights);
+
       // Sorting the accounts vector based on value (weights).
       // Bubble sort algorithm
+      let len_filtered = Vector::length<address>(&filtered_vals);
+      print(&len_filtered);
+      print(&Vector::length(&weights));
+      if (len_filtered < 2) return filtered_vals;
       let i = 0;
-      while (i < length){
+      while (i < len_filtered){
         let j = 0;
-        while(j < length-i-1){
+        while(j < len_filtered-i-1){
+          print(&8888801);
 
           let value_j = *(Vector::borrow<u64>(&weights, j));
+          print(&8888802);
           let value_jp1 = *(Vector::borrow<u64>(&weights, j+1));
           if(value_j > value_jp1){
+            print(&8888803);
             Vector::swap<u64>(&mut weights, j, j+1);
-            Vector::swap<address>(&mut eligible_validators, j, j+1);
+            print(&8888804);
+            Vector::swap<address>(&mut filtered_vals, j, j+1);
           };
           j = j + 1;
+          print(&8888805);
         };
         i = i + 1;
+        print(&8888806);
       };
 
+      print(&filtered_vals);
       // Reverse to have sorted order - high to low.
-      Vector::reverse<address>(&mut eligible_validators);
+      Vector::reverse<address>(&mut filtered_vals);
 
-      return eligible_validators
+      return filtered_vals
     }
 
-    // here we place the bidders into their seats
-    // the order of the bids will determine placement.
-    // one important aspect of picking the next validator set:
+    // Here we place the bidders into their seats.
+    // The order of the bids will determine placement.
+    // One important aspect of picking the next validator set:
     // it should have 2/3rds of known good ("proven") validators
     // from the previous epoch. Otherwise the unproven nodes, who
-    // may not be ready for consensus may be offline and cause a halt.
-    // So the selection algorithm needs to stop filling seats with unproven
+    // may not be ready for consensus, might be offline and cause a halt.
+    // Validators can be inattentive and have bids that qualify, but their nodes
+    // are not ready.
+    // So the selection algorithm needs to stop filling seats with "unproven"
     // validators if the max unproven nodes limit is hit (1/3).
 
-    // The Validator must have these funds in their Unlocked account.
-
-    // TODO: the paper does not specify what happens with the Jail reputation
+    // The paper does not specify what happens with the "Jail reputation"
     // of a validator. E.g. if a validator has a bid with no expiry
     // but has a bad jail reputation does this penalize in the ordering?
+    // This is a potential issue again with inattentive validators who
+    // have have a high bid, but again they fail repeatedly to finalize an epoch
+    // successfully. Their bids should not penalize validators who don't have
+    // a streak of jailed epochs. So of the 1/3 unproven nodes, we'll first seat the validators with Jail.consecutive_failure_to_rejoin < 2, and after that the remainder. 
+
+    // The Validator must qualify on a number of metrics: have funds in their Unlocked account to cover bid, have miniumum viable vouches, and not have been jailed in the previous round.
+
+
     
     public fun fill_seats_and_get_price(vm: &signer, set_size: u64, proven_nodes: &vector<address>): (vector<address>, u64) acquires ProofOfFeeAuction, ConsensusReward {
       if (Signer::address_of(vm) != @VMReserved) return (Vector::empty<address>(), 0);
 
-      let baseline_reward = get_consensus_reward();
+      let (baseline_reward, _, _) = get_consensus_reward();
 
       let seats_to_fill = Vector::empty<address>();
-      // print(&set_size);
+      
+      // check the max size of the validator set.
+      // there may be too few "proven" validators to fill the set with 2/3rds proven nodes of the stated set_size.
+      let proven_len = Vector::length(proven_nodes);
+      let (set_size, max_unproven) = if ( proven_len < set_size) {
+        let one_third_of_max = proven_len/2;
+        ((proven_len + one_third_of_max, one_third_of_max))
+      } else {
+        (set_size, set_size/3)
+      };
       print(&8006010201);
-      let max_unproven = set_size / 3;
 
-      let num_unproven_added = 0;
+      // Now we can seat the validators based on the algo above:
+      // 1. seat the proven nodes of previous epoch
+      // 2. seat validators who did not participate in the previous epoch:
+      // 2a. seat the vals with jail reputation < 2
+      // 2b. seat the remainder of the unproven vals with any jail reputation.
 
-      print(&8006010202);
       let sorted_vals_by_bid = get_sorted_vals();
-
+      print(&sorted_vals_by_bid);
+      let num_unproven_added = 0;
       let i = 0u64;
       while (
         (i < set_size) && 
@@ -175,42 +218,11 @@ address DiemFramework {
       ) {
         // print(&i);
         let val = Vector::borrow(&sorted_vals_by_bid, i);
-        let (bid, expire) = current_bid(*val);
-        // fail fast if the validator is jailed.
-        // NOTE: epoch reconfigure needs to reset the jail
-        // before calling the proof of fee.
 
-        // NOTE: I know the multiple i = i+1 is ugly, but debugging
-        // is much harder if we have all the checks in one 'if' statement.
-        print(&8006010203);
-        if (Jail::is_jailed(*val)) { 
-          i = i + 1; 
-          continue
-        };
-        print(&8006010204);
-        if (!Vouch::unrelated_buddies_above_thresh(*val)) { 
-          i = i + 1; 
-          continue
-        };
+        // audit all the potential issues with seating the validator
+        // TODO: deprecate Audit.move
+        if (!audit_qualification(val, baseline_reward)) continue;
 
-        print(&80060102041);
-        // skip the user if they don't have sufficient UNLOCKED funds
-        // or if the bid expired.
-
-        // belt and suspenders, expiry
-        if (DiemConfig::get_current_epoch() > expire) {
-          i = i + 1; 
-          continue
-        };
-
-        let coin_required = bid * baseline_reward;
-        if (
-          DiemAccount::unlocked_amount(*val) < coin_required
-        ) { 
-          i = i + 1; 
-          continue
-        };
-        
 
         // check if a proven node
         if (Vector::contains(proven_nodes, val)) {
@@ -235,23 +247,74 @@ address DiemFramework {
       print(&8006010208);
       print(&seats_to_fill);
 
+      
+
+      // get the median and set history
       set_history(vm, &seats_to_fill);
 
-      if (Vector::is_empty(&seats_to_fill)) {
-        return (seats_to_fill, 0)
-      };
+      // if (Vector::is_empty(&seats_to_fill)) {
+      //   return (seats_to_fill, 0)
+      // };
 
       // Find the clearing price which all validators will pay
       let lowest_bidder = Vector::borrow(&seats_to_fill, Vector::length(&seats_to_fill) - 1);
 
-      let (lowest_bid, _) = current_bid(*lowest_bidder);
-      return (seats_to_fill, lowest_bid)
+      let (lowest_bid_pct, _) = current_bid(*lowest_bidder);
+      print(&99999999999999);
+      print(&lowest_bid_pct);
+
+      // update the clearing price
+      let cr = borrow_global_mut<ConsensusReward>(@VMReserved);
+      cr.clearing_price = lowest_bid_pct;
+
+      return (seats_to_fill, lowest_bid_pct)
     }
 
+    // consolidate all the checks for a validator to be seated
+    public fun audit_qualification(val: &address, baseline_reward: u64): bool acquires ProofOfFeeAuction {
+
+        let (bid, expire) = current_bid(*val);
+        print(val);
+        print(&bid);
+        print(&expire);
+
+        // Skip if the bid expired. belt and suspenders, this should have been checked in the sorting above.
+        // TODO: make this it's own function so it can be publicly callable, it's useful generally, and for debugging.
+        print(&DiemConfig::get_current_epoch());
+        if (DiemConfig::get_current_epoch() > expire) return false;
+
+
+        print(&8006010203);
+        // we can't seat validators that were just jailed
+        // NOTE: epoch reconfigure needs to reset the jail
+        // before calling the proof of fee.
+        if (Jail::is_jailed(*val)) return false;
+        print(&8006010204);
+        // we can't seat validators who don't have minimum viable vouches
+        if (!Vouch::unrelated_buddies_above_thresh(*val)) return false;
+
+        print(&80060102041);
+
+
+        // skip the user if they don't have sufficient UNLOCKED funds
+        // or if the bid expired.
+        print(&80060102042);
+        let unlocked_coins = DiemAccount::unlocked_amount(*val);
+        print(&unlocked_coins);
+        
+        let coin_required = FixedPoint32::multiply_u64(baseline_reward, FixedPoint32::create_from_rational(bid, 1000));
+        // let coin_required = bid * baseline_reward;
+
+        print(&coin_required);
+        if (unlocked_coins < coin_required) return false;
+        
+        print(&80060102043);
+        true
+    }
     // Adjust the reward at the end of the epoch
     // as described in the paper, the epoch reward needs to be adjustable
     // given that the implicit bond needs to be sufficient, eg 5-10x the reward.
-    public fun reward_thermostat(vm: &signer) acquires ConsensusReward {
+    public fun reward_thermostat(vm: &signer, _vals: &vector<address>) acquires ConsensusReward {
       if (Signer::address_of(vm) != @VMReserved) {
         return
       };
@@ -269,13 +332,16 @@ address DiemFramework {
 
       let cr = borrow_global_mut<ConsensusReward>(@VMReserved);
 
-      let len = Vector::length<u64>(&cr.avg_bid_history);
+      print(&8006010551);
+      let len = Vector::length<u64>(&cr.median_history);
       let i = 0;
 
       let epochs_above = 0;
       let epochs_below = 0;
-      while (i < 10 || i < len) { // max ten days, but may have less in history, filling set should truncate the history at 10 epochs.
-        let avg_bid = *Vector::borrow<u64>(&cr.avg_bid_history, i);
+      while (i < 10 && i < len) { // max ten days, but may have less in history, filling set should truncate the history at 10 epochs.
+      print(&8006010552);
+        let avg_bid = *Vector::borrow<u64>(&cr.median_history, i);
+        print(&8006010553);
         if (avg_bid > bid_upper_bound) {
           epochs_above = epochs_above + 1;
         } else if (avg_bid < bid_lower_bound) {
@@ -285,14 +351,19 @@ address DiemFramework {
         i = i + 1;
       };
 
+      print(&8006010554);
       if (cr.value > 0) {
+        print(&8006010555);
+
         // TODO: this is an initial implementation, we need to
         // decide if we want more granularity in the reward adjustment
         // Note: making this readable for now, but we can optimize later
         if (epochs_above > short_window) {
+          print(&8006010556);
           // check for zeros.
           // TODO: put a better safety check here
           if ((cr.value / 10) > cr.value){
+            print(&8006010557);
             return
           };
           // If the Validators are bidding near 100% that means
@@ -301,13 +372,18 @@ address DiemFramework {
           // implicit bond is very high on validators. E.g.
           // at 1% median bid, the implicit bond is 100x the reward.
           // We need to DECREASE the reward
+            print(&8006010558);
 
           if (epochs_above > short_window) {
             // decrease the reward by 10%
             cr.value = cr.value - (cr.value / 10);
+            print(&8006010559);
+
             return // return early since we can't increase and decrease simultaneously
           } else if (epochs_above > long_window) {
             // decrease the reward by 5%
+            print(&80060105510);
+
             cr.value = cr.value - (cr.value / 20);
             return // return early since we can't increase and decrease simultaneously
           };
@@ -320,10 +396,16 @@ address DiemFramework {
           // At a 25% bid (potential loss), the profit is thus 75% of the value, which means the implicit bond is 25/75, or 1/3 of the bond, the risk favors the validator. This means among other things, that an attacker can pay for the cost of the attack with the profits. See paper, for more details.
 
           // we need to INCREASE the reward, so that the bond is more meaningful.
+          print(&80060105511);
+
           if (epochs_below > short_window) {
+            print(&80060105512);
+
             // decrease the reward by 5%
             cr.value = cr.value + (cr.value / 20);
           } else if (epochs_above > long_window) {
+            print(&80060105513);
+
             // decrease the reward by 10%
             cr.value = cr.value + (cr.value / 10);
           };
@@ -338,14 +420,18 @@ address DiemFramework {
         return
       };
 
+      print(&99901);
       let median_bid = get_median(seats_to_fill);
       // push to history
       let cr = borrow_global_mut<ConsensusReward>(@VMReserved);
-      if (Vector::length(&cr.avg_bid_history) < 10) {
-        Vector::push_back(&mut cr.avg_bid_history, median_bid);
+      cr.median_win_bid = median_bid;
+      if (Vector::length(&cr.median_history) < 10) {
+        print(&99902);
+        Vector::push_back(&mut cr.median_history, median_bid);
       } else {
-        Vector::remove(&mut cr.avg_bid_history, 0);
-        Vector::push_back(&mut cr.avg_bid_history, median_bid);
+        print(&99903);
+        Vector::remove(&mut cr.median_history, 0);
+        Vector::push_back(&mut cr.median_history, median_bid);
       };
     }
 
@@ -370,9 +456,9 @@ address DiemFramework {
 
 
     // get the baseline reward from ConsensusReward 
-    public fun get_consensus_reward(): u64 acquires ConsensusReward {
+    public fun get_consensus_reward(): (u64, u64, u64) acquires ConsensusReward {
       let b = borrow_global<ConsensusReward>(@VMReserved );
-      return b.value
+      return (b.value, b.clearing_price, b.median_win_bid)
     }
 
     // CONSENSUS CRITICAL 
@@ -399,8 +485,8 @@ address DiemFramework {
     // validator can set a bid. See transaction script below.
     // the validator can set an "expiry epoch:  for the bid.
     // Zero means never expires.
-    // Bids are denomiated in percentages, with two decimal places..
-    // i.e. 1234 = 12.34%
+    // Bids are denomiated in percentages, with ONE decimal place..
+    // i.e. 0123 = 12.3%
     // Provisionally 110% is the maximum bid. Which could be reviewed.
     public fun set_bid(account_sig: &signer, bid: u64, expiry_epoch: u64) acquires ProofOfFeeAuction {
 
