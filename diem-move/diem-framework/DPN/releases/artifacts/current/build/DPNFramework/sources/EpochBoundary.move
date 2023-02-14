@@ -182,6 +182,7 @@ module EpochBoundary {
             //// V6 ////
             // CONSENSUS CRITICAL
             // pick the validators based on proof of fee.
+            // false because we want the default behavior of the function: filtered by audit
             let sorted_bids = ProofOfFee::get_sorted_vals(false);
             let (auction_winners, price) = ProofOfFee::fill_seats_and_get_price(vm, MOCK_VAL_SIZE, &sorted_bids, outgoing_compliant_set);
             // TODO: Don't use copy above, do a borrow.
@@ -246,7 +247,7 @@ module EpochBoundary {
         print(&800900106);
 
         // trigger the thermostat if the reward needs to be adjusted
-        ProofOfFee::reward_thermostat(vm, &proposed_set);
+        ProofOfFee::reward_thermostat(vm);
         print(&800900107);
         // Reconfig should be the last event.
         // Reconfigure the network

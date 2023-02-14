@@ -312,7 +312,7 @@ address DiemFramework {
     // Adjust the reward at the end of the epoch
     // as described in the paper, the epoch reward needs to be adjustable
     // given that the implicit bond needs to be sufficient, eg 5-10x the reward.
-    public fun reward_thermostat(vm: &signer, _vals: &vector<address>) acquires ConsensusReward {
+    public fun reward_thermostat(vm: &signer) acquires ConsensusReward {
       if (Signer::address_of(vm) != @VMReserved) {
         return
       };
@@ -548,6 +548,23 @@ address DiemFramework {
         pof.bid = *bid;
         i = i + 1;
       };
+    }
+
+    public fun test_mock_reward(
+      vm: &signer,
+      value: u64,
+      clearing_price: u64,
+      median_win_bid: u64,
+      median_history: vector<u64>,
+    ) acquires ConsensusReward {
+      Testnet::assert_testnet(vm);
+
+      let cr = borrow_global_mut<ConsensusReward>(@VMReserved );
+      cr.value = value;
+      cr.clearing_price = clearing_price;
+      cr.median_win_bid = median_win_bid;
+      cr.median_history = median_history;
+
     }
   }
 }
