@@ -11,6 +11,7 @@ module DiemFramework::DiemAccount {
     friend DiemFramework::MakeWhole;
     friend DiemFramework::MigrateJail;
     friend DiemFramework::Genesis;
+    friend DiemFramework::TestFixtures;
 
     use DiemFramework::AccountFreezing;
     use DiemFramework::CoreAddresses;
