@@ -13,6 +13,7 @@
 -  [Function `top_n_accounts`](#0x1_ProofOfFee_top_n_accounts)
 -  [Function `get_sorted_vals`](#0x1_ProofOfFee_get_sorted_vals)
 -  [Function `fill_seats_and_get_price`](#0x1_ProofOfFee_fill_seats_and_get_price)
+-  [Function `audit_qualification`](#0x1_ProofOfFee_audit_qualification)
 -  [Function `reward_thermostat`](#0x1_ProofOfFee_reward_thermostat)
 -  [Function `set_history`](#0x1_ProofOfFee_set_history)
 -  [Function `get_median`](#0x1_ProofOfFee_get_median)
@@ -27,6 +28,7 @@
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
@@ -98,13 +100,13 @@
 
 </dd>
 <dt>
-<code>average_winning_bid: u64</code>
+<code>median_win_bid: u64</code>
 </dt>
 <dd>
 
 </dd>
 <dt>
-<code>avg_bid_history: vector&lt;u64&gt;</code>
+<code>median_history: vector&lt;u64&gt;</code>
 </dt>
 <dd>
 
@@ -170,8 +172,8 @@
       <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
         value: <a href="ProofOfFee.md#0x1_ProofOfFee_GENESIS_BASELINE_REWARD">GENESIS_BASELINE_REWARD</a>,
         clearing_price: 0,
-        average_winning_bid: 0,
-        avg_bid_history: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;(),
+        median_win_bid: 0,
+        median_history: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;(),
       }
     );
   }
@@ -273,40 +275,62 @@
 <pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_get_sorted_vals">get_sorted_vals</a>(): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a> {
   <b>let</b> eligible_validators = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>();
   <b>let</b> length = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&eligible_validators);
+  print(&length);
   // <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">Vector</a> <b>to</b> store each <b>address</b>'s node_weight
   <b>let</b> weights = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;();
+  <b>let</b> filtered_vals = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
   <b>let</b> k = 0;
   <b>while</b> (k &lt; length) {
+    // TODO: Ensure that this <b>address</b> is an active validator
 
     <b>let</b> cur_address = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<b>address</b>&gt;(&eligible_validators, k);
-    // Ensure that this <b>address</b> is an active validator
-    <b>let</b> (bid, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_current_bid">current_bid</a>(cur_address);
+    <b>let</b> (bid, expire) = <a href="ProofOfFee.md#0x1_ProofOfFee_current_bid">current_bid</a>(cur_address);
+    print(&bid);
+    print(&expire);
+    <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() &gt; expire) {
+      k = k + 1;
+      <b>continue</b>
+    };
     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;u64&gt;(&<b>mut</b> weights, bid);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> filtered_vals, cur_address);
     k = k + 1;
   };
 
+  print(&weights);
+
   // Sorting the accounts vector based on value (weights).
   // Bubble sort algorithm
+  <b>let</b> len_filtered = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&filtered_vals);
+  print(&len_filtered);
+  print(&<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&weights));
+  <b>if</b> (len_filtered &lt; 2) <b>return</b> filtered_vals;
   <b>let</b> i = 0;
-  <b>while</b> (i &lt; length){
+  <b>while</b> (i &lt; len_filtered){
     <b>let</b> j = 0;
-    <b>while</b>(j &lt; length-i-1){
+    <b>while</b>(j &lt; len_filtered-i-1){
+      print(&8888801);
 
       <b>let</b> value_j = *(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&weights, j));
+      print(&8888802);
       <b>let</b> value_jp1 = *(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&weights, j+1));
       <b>if</b>(value_j &gt; value_jp1){
+        print(&8888803);
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_swap">Vector::swap</a>&lt;u64&gt;(&<b>mut</b> weights, j, j+1);
-        <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_swap">Vector::swap</a>&lt;<b>address</b>&gt;(&<b>mut</b> eligible_validators, j, j+1);
+        print(&8888804);
+        <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_swap">Vector::swap</a>&lt;<b>address</b>&gt;(&<b>mut</b> filtered_vals, j, j+1);
       };
       j = j + 1;
+      print(&8888805);
     };
     i = i + 1;
+    print(&8888806);
   };
 
+  print(&filtered_vals);
   // Reverse <b>to</b> have sorted order - high <b>to</b> low.
-  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_reverse">Vector::reverse</a>&lt;<b>address</b>&gt;(&<b>mut</b> eligible_validators);
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_reverse">Vector::reverse</a>&lt;<b>address</b>&gt;(&<b>mut</b> filtered_vals);
 
-  <b>return</b> eligible_validators
+  <b>return</b> filtered_vals
 }
 </code></pre>
 
@@ -332,18 +356,30 @@
 <pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">fill_seats_and_get_price</a>(vm: &signer, set_size: u64, proven_nodes: &vector&lt;<b>address</b>&gt;): (vector&lt;<b>address</b>&gt;, u64) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>, <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @VMReserved) <b>return</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;(), 0);
 
-  <b>let</b> baseline_reward = <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">get_consensus_reward</a>();
+  <b>let</b> (baseline_reward, _, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">get_consensus_reward</a>();
 
   <b>let</b> seats_to_fill = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
-  // print(&set_size);
+
+  // check the max size of the validator set.
+  // there may be too few "proven" validators <b>to</b> fill the set <b>with</b> 2/3rds proven nodes of the stated set_size.
+  <b>let</b> proven_len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(proven_nodes);
+  <b>let</b> (set_size, max_unproven) = <b>if</b> ( proven_len &lt; set_size) {
+    <b>let</b> one_third_of_max = proven_len/2;
+    ((proven_len + one_third_of_max, one_third_of_max))
+  } <b>else</b> {
+    (set_size, set_size/3)
+  };
   print(&8006010201);
-  <b>let</b> max_unproven = set_size / 3;
 
-  <b>let</b> num_unproven_added = 0;
+  // Now we can seat the validators based on the algo above:
+  // 1. seat the proven nodes of previous epoch
+  // 2. seat validators who did not participate in the previous epoch:
+  // 2a. seat the vals <b>with</b> jail reputation &lt; 2
+  // 2b. seat the remainder of the unproven vals <b>with</b> any jail reputation.
 
-  print(&8006010202);
   <b>let</b> sorted_vals_by_bid = <a href="ProofOfFee.md#0x1_ProofOfFee_get_sorted_vals">get_sorted_vals</a>();
-
+  print(&sorted_vals_by_bid);
+  <b>let</b> num_unproven_added = 0;
   <b>let</b> i = 0u64;
   <b>while</b> (
     (i &lt; set_size) &&
@@ -351,41 +387,10 @@
   ) {
     // print(&i);
     <b>let</b> val = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&sorted_vals_by_bid, i);
-    <b>let</b> (bid, expire) = <a href="ProofOfFee.md#0x1_ProofOfFee_current_bid">current_bid</a>(*val);
-    // fail fast <b>if</b> the validator is jailed.
-    // NOTE: epoch reconfigure needs <b>to</b> reset the jail
-    // before calling the proof of fee.
 
-    // NOTE: I know the multiple i = i+1 is ugly, but debugging
-    // is much harder <b>if</b> we have all the checks in one '<b>if</b>' statement.
-    print(&8006010203);
-    <b>if</b> (<a href="Jail.md#0x1_Jail_is_jailed">Jail::is_jailed</a>(*val)) {
-      i = i + 1;
-      <b>continue</b>
-    };
-    print(&8006010204);
-    <b>if</b> (!<a href="Vouch.md#0x1_Vouch_unrelated_buddies_above_thresh">Vouch::unrelated_buddies_above_thresh</a>(*val)) {
-      i = i + 1;
-      <b>continue</b>
-    };
-
-    print(&80060102041);
-    // skip the user <b>if</b> they don't have sufficient UNLOCKED funds
-    // or <b>if</b> the bid expired.
-
-    // belt and suspenders, expiry
-    <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() &gt; expire) {
-      i = i + 1;
-      <b>continue</b>
-    };
-
-    <b>let</b> coin_required = bid * baseline_reward;
-    <b>if</b> (
-      <a href="DiemAccount.md#0x1_DiemAccount_unlocked_amount">DiemAccount::unlocked_amount</a>(*val) &lt; coin_required
-    ) {
-      i = i + 1;
-      <b>continue</b>
-    };
+    // audit all the potential issues <b>with</b> seating the validator
+    // TODO: deprecate <a href="Audit.md#0x1_Audit">Audit</a>.<b>move</b>
+    <b>if</b> (!<a href="ProofOfFee.md#0x1_ProofOfFee_audit_qualification">audit_qualification</a>(val, baseline_reward)) <b>continue</b>;
 
 
     // check <b>if</b> a proven node
@@ -411,17 +416,88 @@
   print(&8006010208);
   print(&seats_to_fill);
 
+
+
+  // get the median and set history
   <a href="ProofOfFee.md#0x1_ProofOfFee_set_history">set_history</a>(vm, &seats_to_fill);
 
-  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>(&seats_to_fill)) {
-    <b>return</b> (seats_to_fill, 0)
-  };
+  // <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>(&seats_to_fill)) {
+  //   <b>return</b> (seats_to_fill, 0)
+  // };
 
   // Find the clearing price which all validators will pay
   <b>let</b> lowest_bidder = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&seats_to_fill, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&seats_to_fill) - 1);
 
-  <b>let</b> (lowest_bid, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_current_bid">current_bid</a>(*lowest_bidder);
-  <b>return</b> (seats_to_fill, lowest_bid)
+  <b>let</b> (lowest_bid_pct, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_current_bid">current_bid</a>(*lowest_bidder);
+  print(&99999999999999);
+  print(&lowest_bid_pct);
+
+  // <b>update</b> the clearing price
+  <b>let</b> cr = <b>borrow_global_mut</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a>&gt;(@VMReserved);
+  cr.clearing_price = lowest_bid_pct;
+
+  <b>return</b> (seats_to_fill, lowest_bid_pct)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ProofOfFee_audit_qualification"></a>
+
+## Function `audit_qualification`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_audit_qualification">audit_qualification</a>(val: &<b>address</b>, baseline_reward: u64): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_audit_qualification">audit_qualification</a>(val: &<b>address</b>, baseline_reward: u64): bool <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a> {
+
+    <b>let</b> (bid, expire) = <a href="ProofOfFee.md#0x1_ProofOfFee_current_bid">current_bid</a>(*val);
+    print(val);
+    print(&bid);
+    print(&expire);
+
+    // Skip <b>if</b> the bid expired. belt and suspenders, this should have been checked in the sorting above.
+    // TODO: make this it's own function so it can be publicly callable, it's useful generally, and for debugging.
+    print(&<a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
+    <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() &gt; expire) <b>return</b> <b>false</b>;
+
+
+    print(&8006010203);
+    // we can't seat validators that were just jailed
+    // NOTE: epoch reconfigure needs <b>to</b> reset the jail
+    // before calling the proof of fee.
+    <b>if</b> (<a href="Jail.md#0x1_Jail_is_jailed">Jail::is_jailed</a>(*val)) <b>return</b> <b>false</b>;
+    print(&8006010204);
+    // we can't seat validators who don't have minimum viable vouches
+    <b>if</b> (!<a href="Vouch.md#0x1_Vouch_unrelated_buddies_above_thresh">Vouch::unrelated_buddies_above_thresh</a>(*val)) <b>return</b> <b>false</b>;
+
+    print(&80060102041);
+
+
+    // skip the user <b>if</b> they don't have sufficient UNLOCKED funds
+    // or <b>if</b> the bid expired.
+    print(&80060102042);
+    <b>let</b> unlocked_coins = <a href="DiemAccount.md#0x1_DiemAccount_unlocked_amount">DiemAccount::unlocked_amount</a>(*val);
+    print(&unlocked_coins);
+
+    <b>let</b> coin_required = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(baseline_reward, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(bid, 1000));
+    // <b>let</b> coin_required = bid * baseline_reward;
+
+    print(&coin_required);
+    <b>if</b> (unlocked_coins &lt; coin_required) <b>return</b> <b>false</b>;
+
+    print(&80060102043);
+    <b>true</b>
 }
 </code></pre>
 
@@ -435,7 +511,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">reward_thermostat</a>(vm: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">reward_thermostat</a>(vm: &signer, _vals: &vector&lt;<b>address</b>&gt;)
 </code></pre>
 
 
@@ -444,7 +520,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">reward_thermostat</a>(vm: &signer) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">reward_thermostat</a>(vm: &signer, _vals: &vector&lt;<b>address</b>&gt;) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @VMReserved) {
     <b>return</b>
   };
@@ -462,13 +538,16 @@
 
   <b>let</b> cr = <b>borrow_global_mut</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a>&gt;(@VMReserved);
 
-  <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;u64&gt;(&cr.avg_bid_history);
+  print(&8006010551);
+  <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;u64&gt;(&cr.median_history);
   <b>let</b> i = 0;
 
   <b>let</b> epochs_above = 0;
   <b>let</b> epochs_below = 0;
-  <b>while</b> (i &lt; 10 || i &lt; len) { // max ten days, but may have less in history, filling set should truncate the history at 10 epochs.
-    <b>let</b> avg_bid = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&cr.avg_bid_history, i);
+  <b>while</b> (i &lt; 10 && i &lt; len) { // max ten days, but may have less in history, filling set should truncate the history at 10 epochs.
+  print(&8006010552);
+    <b>let</b> avg_bid = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&cr.median_history, i);
+    print(&8006010553);
     <b>if</b> (avg_bid &gt; bid_upper_bound) {
       epochs_above = epochs_above + 1;
     } <b>else</b> <b>if</b> (avg_bid &lt; bid_lower_bound) {
@@ -478,14 +557,19 @@
     i = i + 1;
   };
 
+  print(&8006010554);
   <b>if</b> (cr.value &gt; 0) {
+    print(&8006010555);
+
     // TODO: this is an initial implementation, we need <b>to</b>
     // decide <b>if</b> we want more granularity in the reward adjustment
     // Note: making this readable for now, but we can optimize later
     <b>if</b> (epochs_above &gt; short_window) {
+      print(&8006010556);
       // check for zeros.
       // TODO: put a better safety check here
       <b>if</b> ((cr.value / 10) &gt; cr.value){
+        print(&8006010557);
         <b>return</b>
       };
       // If the Validators are bidding near 100% that means
@@ -494,13 +578,18 @@
       // implicit bond is very high on validators. E.g.
       // at 1% median bid, the implicit bond is 100x the reward.
       // We need <b>to</b> DECREASE the reward
+        print(&8006010558);
 
       <b>if</b> (epochs_above &gt; short_window) {
         // decrease the reward by 10%
         cr.value = cr.value - (cr.value / 10);
+        print(&8006010559);
+
         <b>return</b> // <b>return</b> early since we can't increase and decrease simultaneously
       } <b>else</b> <b>if</b> (epochs_above &gt; long_window) {
         // decrease the reward by 5%
+        print(&80060105510);
+
         cr.value = cr.value - (cr.value / 20);
         <b>return</b> // <b>return</b> early since we can't increase and decrease simultaneously
       };
@@ -513,10 +602,16 @@
       // At a 25% bid (potential loss), the profit is thus 75% of the value, which means the implicit bond is 25/75, or 1/3 of the bond, the risk favors the validator. This means among other things, that an attacker can pay for the cost of the attack <b>with</b> the profits. See paper, for more details.
 
       // we need <b>to</b> INCREASE the reward, so that the bond is more meaningful.
+      print(&80060105511);
+
       <b>if</b> (epochs_below &gt; short_window) {
+        print(&80060105512);
+
         // decrease the reward by 5%
         cr.value = cr.value + (cr.value / 20);
       } <b>else</b> <b>if</b> (epochs_above &gt; long_window) {
+        print(&80060105513);
+
         // decrease the reward by 10%
         cr.value = cr.value + (cr.value / 10);
       };
@@ -550,14 +645,18 @@ find the median bid to push to history
     <b>return</b>
   };
 
+  print(&99901);
   <b>let</b> median_bid = <a href="ProofOfFee.md#0x1_ProofOfFee_get_median">get_median</a>(seats_to_fill);
   // push <b>to</b> history
   <b>let</b> cr = <b>borrow_global_mut</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a>&gt;(@VMReserved);
-  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&cr.avg_bid_history) &lt; 10) {
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> cr.avg_bid_history, median_bid);
+  cr.median_win_bid = median_bid;
+  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&cr.median_history) &lt; 10) {
+    print(&99902);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> cr.median_history, median_bid);
   } <b>else</b> {
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> cr.avg_bid_history, 0);
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> cr.avg_bid_history, median_bid);
+    print(&99903);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> cr.median_history, 0);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> cr.median_history, median_bid);
   };
 }
 </code></pre>
@@ -608,7 +707,7 @@ find the median bid to push to history
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">get_consensus_reward</a>(): u64
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">get_consensus_reward</a>(): (u64, u64, u64)
 </code></pre>
 
 
@@ -617,9 +716,9 @@ find the median bid to push to history
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">get_consensus_reward</a>(): u64 <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">get_consensus_reward</a>(): (u64, u64, u64) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
   <b>let</b> b = <b>borrow_global</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a>&gt;(@VMReserved );
-  <b>return</b> b.value
+  <b>return</b> (b.value, b.clearing_price, b.median_win_bid)
 }
 </code></pre>
 

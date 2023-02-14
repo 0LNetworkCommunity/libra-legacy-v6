@@ -86,7 +86,7 @@
     //     <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
     print(&800400);
 
-    <b>let</b> reward = <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">ProofOfFee::get_consensus_reward</a>();
+    <b>let</b> (reward, _, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">ProofOfFee::get_consensus_reward</a>();
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, reward);
 
     print(&800500);
@@ -367,7 +367,7 @@
     print(&800900106);
 
     // trigger the thermostat <b>if</b> the reward needs <b>to</b> be adjusted
-    <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">ProofOfFee::reward_thermostat</a>(vm);
+    <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">ProofOfFee::reward_thermostat</a>(vm, &proposed_set);
     print(&800900107);
     // Reconfig should be the last event.
     // Reconfigure the network

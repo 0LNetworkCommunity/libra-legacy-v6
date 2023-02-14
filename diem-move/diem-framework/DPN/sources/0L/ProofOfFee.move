@@ -161,20 +161,28 @@ address DiemFramework {
       return filtered_vals
     }
 
-    // here we place the bidders into their seats
-    // the order of the bids will determine placement.
-    // one important aspect of picking the next validator set:
+    // Here we place the bidders into their seats.
+    // The order of the bids will determine placement.
+    // One important aspect of picking the next validator set:
     // it should have 2/3rds of known good ("proven") validators
     // from the previous epoch. Otherwise the unproven nodes, who
-    // may not be ready for consensus may be offline and cause a halt.
-    // So the selection algorithm needs to stop filling seats with unproven
+    // may not be ready for consensus, might be offline and cause a halt.
+    // Validators can be inattentive and have bids that qualify, but their nodes
+    // are not ready.
+    // So the selection algorithm needs to stop filling seats with "unproven"
     // validators if the max unproven nodes limit is hit (1/3).
 
-    // The Validator must have these funds in their Unlocked account.
-
-    // TODO: the paper does not specify what happens with the Jail reputation
+    // The paper does not specify what happens with the "Jail reputation"
     // of a validator. E.g. if a validator has a bid with no expiry
     // but has a bad jail reputation does this penalize in the ordering?
+    // This is a potential issue again with inattentive validators who
+    // have have a high bid, but again they fail repeatedly to finalize an epoch
+    // successfully. Their bids should not penalize validators who don't have
+    // a streak of jailed epochs. So of the 1/3 unproven nodes, we'll first seat the validators with Jail.consecutive_failure_to_rejoin < 2, and after that the remainder. 
+
+    // The Validator must qualify on a number of metrics: have funds in their Unlocked account to cover bid, have miniumum viable vouches, and not have been jailed in the previous round.
+
+
     
     public fun fill_seats_and_get_price(vm: &signer, set_size: u64, proven_nodes: &vector<address>): (vector<address>, u64) acquires ProofOfFeeAuction, ConsensusReward {
       if (Signer::address_of(vm) != @VMReserved) return (Vector::empty<address>(), 0);
@@ -182,16 +190,27 @@ address DiemFramework {
       let (baseline_reward, _, _) = get_consensus_reward();
 
       let seats_to_fill = Vector::empty<address>();
-      // print(&set_size);
+      
+      // check the max size of the validator set.
+      // there may be too few "proven" validators to fill the set with 2/3rds proven nodes of the stated set_size.
+      let proven_len = Vector::length(proven_nodes);
+      let (set_size, max_unproven) = if ( proven_len < set_size) {
+        let one_third_of_max = proven_len/2;
+        ((proven_len + one_third_of_max, one_third_of_max))
+      } else {
+        (set_size, set_size/3)
+      };
       print(&8006010201);
-      let max_unproven = set_size / 3;
 
-      let num_unproven_added = 0;
+      // Now we can seat the validators based on the algo above:
+      // 1. seat the proven nodes of previous epoch
+      // 2. seat validators who did not participate in the previous epoch:
+      // 2a. seat the vals with jail reputation < 2
+      // 2b. seat the remainder of the unproven vals with any jail reputation.
 
-      print(&8006010202);
       let sorted_vals_by_bid = get_sorted_vals();
       print(&sorted_vals_by_bid);
-
+      let num_unproven_added = 0;
       let i = 0u64;
       while (
         (i < set_size) && 
@@ -199,53 +218,11 @@ address DiemFramework {
       ) {
         // print(&i);
         let val = Vector::borrow(&sorted_vals_by_bid, i);
-        let (bid, expire) = current_bid(*val);
-        print(val);
-        print(&bid);
-        print(&expire);
-        // fail fast if the validator is jailed.
-        // NOTE: epoch reconfigure needs to reset the jail
-        // before calling the proof of fee.
 
-        // NOTE: I know the multiple i = i+1 is ugly, but debugging
-        // is much harder if we have all the checks in one 'if' statement.
-        print(&8006010203);
-        if (Jail::is_jailed(*val)) { 
-          i = i + 1; 
-          continue
-        };
-        print(&8006010204);
-        if (!Vouch::unrelated_buddies_above_thresh(*val)) { 
-          i = i + 1; 
-          continue
-        };
+        // audit all the potential issues with seating the validator
+        // TODO: deprecate Audit.move
+        if (!audit_qualification(val, baseline_reward)) continue;
 
-        print(&80060102041);
-        // skip the user if they don't have sufficient UNLOCKED funds
-        // or if the bid expired.
-
-        // belt and suspenders, expiry
-        print(&DiemConfig::get_current_epoch());
-        if (DiemConfig::get_current_epoch() > expire) {
-          i = i + 1; 
-          continue
-        };
-
-        print(&80060102042);
-        let unlocked_coins = DiemAccount::unlocked_amount(*val);
-        print(&unlocked_coins);
-        let coin_required = FixedPoint32::multiply_u64(baseline_reward, FixedPoint32::create_from_rational(bid, 1000));
-        // let coin_required = bid * baseline_reward;
-
-        print(&coin_required);
-        if (
-          unlocked_coins < coin_required
-        ) { 
-          i = i + 1; 
-          continue
-        };
-        
-        print(&80060102043);
 
         // check if a proven node
         if (Vector::contains(proven_nodes, val)) {
@@ -293,6 +270,47 @@ address DiemFramework {
       return (seats_to_fill, lowest_bid_pct)
     }
 
+    // consolidate all the checks for a validator to be seated
+    public fun audit_qualification(val: &address, baseline_reward: u64): bool acquires ProofOfFeeAuction {
+
+        let (bid, expire) = current_bid(*val);
+        print(val);
+        print(&bid);
+        print(&expire);
+
+        // Skip if the bid expired. belt and suspenders, this should have been checked in the sorting above.
+        // TODO: make this it's own function so it can be publicly callable, it's useful generally, and for debugging.
+        print(&DiemConfig::get_current_epoch());
+        if (DiemConfig::get_current_epoch() > expire) return false;
+
+
+        print(&8006010203);
+        // we can't seat validators that were just jailed
+        // NOTE: epoch reconfigure needs to reset the jail
+        // before calling the proof of fee.
+        if (Jail::is_jailed(*val)) return false;
+        print(&8006010204);
+        // we can't seat validators who don't have minimum viable vouches
+        if (!Vouch::unrelated_buddies_above_thresh(*val)) return false;
+
+        print(&80060102041);
+
+
+        // skip the user if they don't have sufficient UNLOCKED funds
+        // or if the bid expired.
+        print(&80060102042);
+        let unlocked_coins = DiemAccount::unlocked_amount(*val);
+        print(&unlocked_coins);
+        
+        let coin_required = FixedPoint32::multiply_u64(baseline_reward, FixedPoint32::create_from_rational(bid, 1000));
+        // let coin_required = bid * baseline_reward;
+
+        print(&coin_required);
+        if (unlocked_coins < coin_required) return false;
+        
+        print(&80060102043);
+        true
+    }
     // Adjust the reward at the end of the epoch
     // as described in the paper, the epoch reward needs to be adjustable
     // given that the implicit bond needs to be sufficient, eg 5-10x the reward.

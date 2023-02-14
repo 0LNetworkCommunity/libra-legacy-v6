@@ -180,40 +180,40 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Ancestry.md#0x1_Ancestry_is_family">is_family</a>(left: <b>address</b>, right: <b>address</b>): (bool, <b>address</b>) <b>acquires</b> <a href="Ancestry.md#0x1_Ancestry">Ancestry</a> {
   <b>let</b> is_family = <b>false</b>;
   <b>let</b> common_ancestor = @0x0;
-  print(&100300);
-  print(&<b>exists</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(left));
-  print(&<b>exists</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(right));
+  // print(&100300);
+  // print(&<b>exists</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(left));
+  // print(&<b>exists</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(right));
 
   // <b>if</b> (<b>exists</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(left) && <b>exists</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(right)) {
     // <b>if</b> tree is empty it will still work.
-    print(&100310);
+    // print(&100310);
     <b>let</b> left_tree = <a href="Ancestry.md#0x1_Ancestry_get_tree">get_tree</a>(left);
-    print(&100311);
+    // print(&100311);
     <b>let</b> right_tree = <a href="Ancestry.md#0x1_Ancestry_get_tree">get_tree</a>(right);
 
-    print(&100320);
+    // print(&100320);
 
     // check for direct relationship.
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&left_tree, &right)) <b>return</b> (<b>true</b>, right);
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&right_tree, &left)) <b>return</b> (<b>true</b>, left);
 
-    print(&100330);
+    // print(&100330);
     <b>let</b> i = 0;
     // check every <b>address</b> on the list <b>if</b> there are overlaps.
     <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&left_tree)) {
-      print(&100341);
+      // print(&100341);
       <b>let</b> family_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&left_tree, i);
       <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&right_tree, family_addr)) {
         is_family = <b>true</b>;
         common_ancestor = *family_addr;
-        print(&100342);
+        // print(&100342);
         <b>break</b>
       };
       i = i + 1;
     };
-    print(&100350);
+    // print(&100350);
   // };
-  print(&100360);
+  // print(&100360);
   (is_family, common_ancestor)
 }
 </code></pre>
