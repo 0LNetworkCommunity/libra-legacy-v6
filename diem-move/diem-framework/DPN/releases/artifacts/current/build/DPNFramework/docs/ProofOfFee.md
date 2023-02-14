@@ -23,6 +23,7 @@
 -  [Function `init_bidding`](#0x1_ProofOfFee_init_bidding)
 -  [Function `update_pof_bid`](#0x1_ProofOfFee_update_pof_bid)
 -  [Function `test_set_val_bids`](#0x1_ProofOfFee_test_set_val_bids)
+-  [Function `test_mock_reward`](#0x1_ProofOfFee_test_mock_reward)
 
 
 <pre><code><b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
@@ -486,7 +487,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">reward_thermostat</a>(vm: &signer, _vals: &vector&lt;<b>address</b>&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">reward_thermostat</a>(vm: &signer)
 </code></pre>
 
 
@@ -495,7 +496,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">reward_thermostat</a>(vm: &signer, _vals: &vector&lt;<b>address</b>&gt;) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">reward_thermostat</a>(vm: &signer) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @VMReserved) {
     <b>return</b>
   };
@@ -886,6 +887,43 @@ find the median bid to push to history
     pof.bid = *bid;
     i = i + 1;
   };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ProofOfFee_test_mock_reward"></a>
+
+## Function `test_mock_reward`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_test_mock_reward">test_mock_reward</a>(vm: &signer, value: u64, clearing_price: u64, median_win_bid: u64, median_history: vector&lt;u64&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_test_mock_reward">test_mock_reward</a>(
+  vm: &signer,
+  value: u64,
+  clearing_price: u64,
+  median_win_bid: u64,
+  median_history: vector&lt;u64&gt;,
+) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
+  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
+
+  <b>let</b> cr = <b>borrow_global_mut</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a>&gt;(@VMReserved );
+  cr.value = value;
+  cr.clearing_price = clearing_price;
+  cr.median_win_bid = median_win_bid;
+  cr.median_history = median_history;
+
 }
 </code></pre>
 

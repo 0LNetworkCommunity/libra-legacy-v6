@@ -247,7 +247,7 @@ module EpochBoundary {
         print(&800900106);
 
         // trigger the thermostat if the reward needs to be adjusted
-        ProofOfFee::reward_thermostat(vm, &proposed_set);
+        ProofOfFee::reward_thermostat(vm);
         print(&800900107);
         // Reconfig should be the last event.
         // Reconfigure the network

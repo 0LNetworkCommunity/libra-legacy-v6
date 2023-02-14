@@ -21,7 +21,7 @@ script {
     
     let (_val_universe, _their_bids, _their_expiry) = TestFixtures::pof_default(&vm);
     // Ok now Eve changes her mind. Will force the bid to expire.
-    ProofOfFee::set_bid(&eve_sig, 0, 1);
+    ProofOfFee::set_bid(&eve_sig, 0, 0);
 
     let sorted = ProofOfFee::get_sorted_vals(false);
     let len = Vector::length(&sorted);
@@ -43,8 +43,6 @@ script {
     print(&clear_price);
     assert!(clear_price == 1, 1002);
     print(&median_bid);
-    assert!(median_bid == 3, 1003);
-
-
+    assert!(median_bid == 2, 1003);
   }
 }

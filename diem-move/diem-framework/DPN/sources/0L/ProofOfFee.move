@@ -312,7 +312,7 @@ address DiemFramework {
     // Adjust the reward at the end of the epoch
     // as described in the paper, the epoch reward needs to be adjustable
     // given that the implicit bond needs to be sufficient, eg 5-10x the reward.
-    public fun reward_thermostat(vm: &signer, _vals: &vector<address>) acquires ConsensusReward {
+    public fun reward_thermostat(vm: &signer) acquires ConsensusReward {
       if (Signer::address_of(vm) != @VMReserved) {
         return
       };
@@ -336,7 +336,7 @@ address DiemFramework {
 
       let epochs_above = 0;
       let epochs_below = 0;
-      while (i < 10 && i < len) { // max ten days, but may have less in history, filling set should truncate the history at 10 epochs.
+      while (i < 16 && i < len) { // max ten days, but may have less in history, filling set should truncate the history at 15 epochs.
       print(&8006010552);
         let avg_bid = *Vector::borrow<u64>(&cr.median_history, i);
         print(&8006010553);
@@ -370,19 +370,21 @@ address DiemFramework {
           // implicit bond is very high on validators. E.g.
           // at 1% median bid, the implicit bond is 100x the reward.
           // We need to DECREASE the reward
-            print(&8006010558);
-
-          if (epochs_above > short_window) {
+          print(&8006010558);
+          print(&epochs_above);
+          if (epochs_above > long_window) {
             // decrease the reward by 10%
-            cr.value = cr.value - (cr.value / 10);
             print(&8006010559);
+            
 
+            cr.value = cr.value - (cr.value / 10);
             return // return early since we can't increase and decrease simultaneously
-          } else if (epochs_above > long_window) {
+          } else if (epochs_above > short_window) {
             // decrease the reward by 5%
             print(&80060105510);
-
             cr.value = cr.value - (cr.value / 20);
+            
+
             return // return early since we can't increase and decrease simultaneously
           };
             
@@ -396,16 +398,16 @@ address DiemFramework {
           // we need to INCREASE the reward, so that the bond is more meaningful.
           print(&80060105511);
 
-          if (epochs_below > short_window) {
-            print(&80060105512);
-
-            // decrease the reward by 5%
-            cr.value = cr.value + (cr.value / 20);
-          } else if (epochs_above > long_window) {
+          if (epochs_above > long_window) {
             print(&80060105513);
 
             // decrease the reward by 10%
             cr.value = cr.value + (cr.value / 10);
+          } else if (epochs_below > short_window) {
+            print(&80060105512);
+
+            // decrease the reward by 5%
+            cr.value = cr.value + (cr.value / 20);
           };
         };
       };
@@ -548,6 +550,23 @@ address DiemFramework {
         pof.bid = *bid;
         i = i + 1;
       };
+    }
+
+    public fun test_mock_reward(
+      vm: &signer,
+      value: u64,
+      clearing_price: u64,
+      median_win_bid: u64,
+      median_history: vector<u64>,
+    ) acquires ConsensusReward {
+      Testnet::assert_testnet(vm);
+
+      let cr = borrow_global_mut<ConsensusReward>(@VMReserved );
+      cr.value = value;
+      cr.clearing_price = clearing_price;
+      cr.median_win_bid = median_win_bid;
+      cr.median_history = median_history;
+
     }
   }
 }
