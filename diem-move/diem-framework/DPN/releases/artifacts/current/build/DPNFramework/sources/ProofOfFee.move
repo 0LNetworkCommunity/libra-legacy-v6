@@ -336,7 +336,7 @@ address DiemFramework {
 
       let epochs_above = 0;
       let epochs_below = 0;
-      while (i < 10 && i < len) { // max ten days, but may have less in history, filling set should truncate the history at 10 epochs.
+      while (i < 16 && i < len) { // max ten days, but may have less in history, filling set should truncate the history at 15 epochs.
       print(&8006010552);
         let avg_bid = *Vector::borrow<u64>(&cr.median_history, i);
         print(&8006010553);
@@ -352,39 +352,46 @@ address DiemFramework {
       print(&8006010554);
       if (cr.value > 0) {
         print(&8006010555);
+        print(&epochs_above);
+        print(&epochs_below);
+
 
         // TODO: this is an initial implementation, we need to
         // decide if we want more granularity in the reward adjustment
         // Note: making this readable for now, but we can optimize later
-        if (epochs_above > short_window) {
+        if (epochs_above > epochs_below) {
+
+          // if (epochs_above > short_window) {
           print(&8006010556);
           // check for zeros.
           // TODO: put a better safety check here
-          if ((cr.value / 10) > cr.value){
-            print(&8006010557);
-            return
-          };
+
           // If the Validators are bidding near 100% that means
           // the reward is very generous, i.e. their opportunity
           // cost is met at small percentages. This means the
           // implicit bond is very high on validators. E.g.
           // at 1% median bid, the implicit bond is 100x the reward.
           // We need to DECREASE the reward
-            print(&8006010558);
+          print(&8006010558);
 
-          if (epochs_above > short_window) {
+          if (epochs_above > long_window) {
+
             // decrease the reward by 10%
-            cr.value = cr.value - (cr.value / 10);
             print(&8006010559);
+            
 
+            cr.value = cr.value - (cr.value / 10);
             return // return early since we can't increase and decrease simultaneously
-          } else if (epochs_above > long_window) {
+          } else if (epochs_above > short_window) {
             // decrease the reward by 5%
             print(&80060105510);
-
             cr.value = cr.value - (cr.value / 20);
+            
+
             return // return early since we can't increase and decrease simultaneously
-          };
+          }
+        };
+        
             
           // if validators are bidding low percentages
           // it means the nominal reward is not high enough.
@@ -396,18 +403,18 @@ address DiemFramework {
           // we need to INCREASE the reward, so that the bond is more meaningful.
           print(&80060105511);
 
-          if (epochs_below > short_window) {
-            print(&80060105512);
-
-            // decrease the reward by 5%
-            cr.value = cr.value + (cr.value / 20);
-          } else if (epochs_above > long_window) {
+          if (epochs_below > long_window) {
             print(&80060105513);
 
-            // decrease the reward by 10%
+            // increase the reward by 10%
             cr.value = cr.value + (cr.value / 10);
+          } else if (epochs_below > short_window) {
+            print(&80060105512);
+
+            // increase the reward by 5%
+            cr.value = cr.value + (cr.value / 20);
           };
-        };
+        // };
       };
     }
 

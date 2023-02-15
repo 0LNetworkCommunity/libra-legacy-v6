@@ -520,7 +520,7 @@
 
   <b>let</b> epochs_above = 0;
   <b>let</b> epochs_below = 0;
-  <b>while</b> (i &lt; 10 && i &lt; len) { // max ten days, but may have less in history, filling set should truncate the history at 10 epochs.
+  <b>while</b> (i &lt; 16 && i &lt; len) { // max ten days, but may have less in history, filling set should truncate the history at 15 epochs.
   print(&8006010552);
     <b>let</b> avg_bid = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&cr.median_history, i);
     print(&8006010553);
@@ -536,39 +536,46 @@
   print(&8006010554);
   <b>if</b> (cr.value &gt; 0) {
     print(&8006010555);
+    print(&epochs_above);
+    print(&epochs_below);
+
 
     // TODO: this is an initial implementation, we need <b>to</b>
     // decide <b>if</b> we want more granularity in the reward adjustment
     // Note: making this readable for now, but we can optimize later
-    <b>if</b> (epochs_above &gt; short_window) {
+    <b>if</b> (epochs_above &gt; epochs_below) {
+
+      // <b>if</b> (epochs_above &gt; short_window) {
       print(&8006010556);
       // check for zeros.
       // TODO: put a better safety check here
-      <b>if</b> ((cr.value / 10) &gt; cr.value){
-        print(&8006010557);
-        <b>return</b>
-      };
+
       // If the Validators are bidding near 100% that means
       // the reward is very generous, i.e. their opportunity
       // cost is met at small percentages. This means the
       // implicit bond is very high on validators. E.g.
       // at 1% median bid, the implicit bond is 100x the reward.
       // We need <b>to</b> DECREASE the reward
-        print(&8006010558);
+      print(&8006010558);
 
-      <b>if</b> (epochs_above &gt; short_window) {
+      <b>if</b> (epochs_above &gt; long_window) {
+
         // decrease the reward by 10%
-        cr.value = cr.value - (cr.value / 10);
         print(&8006010559);
 
+
+        cr.value = cr.value - (cr.value / 10);
         <b>return</b> // <b>return</b> early since we can't increase and decrease simultaneously
-      } <b>else</b> <b>if</b> (epochs_above &gt; long_window) {
+      } <b>else</b> <b>if</b> (epochs_above &gt; short_window) {
         // decrease the reward by 5%
         print(&80060105510);
-
         cr.value = cr.value - (cr.value / 20);
+
+
         <b>return</b> // <b>return</b> early since we can't increase and decrease simultaneously
-      };
+      }
+    };
+
 
       // <b>if</b> validators are bidding low percentages
       // it means the nominal reward is not high enough.
@@ -580,18 +587,18 @@
       // we need <b>to</b> INCREASE the reward, so that the bond is more meaningful.
       print(&80060105511);
 
-      <b>if</b> (epochs_below &gt; short_window) {
-        print(&80060105512);
-
-        // decrease the reward by 5%
-        cr.value = cr.value + (cr.value / 20);
-      } <b>else</b> <b>if</b> (epochs_above &gt; long_window) {
+      <b>if</b> (epochs_below &gt; long_window) {
         print(&80060105513);
 
-        // decrease the reward by 10%
+        // increase the reward by 10%
         cr.value = cr.value + (cr.value / 10);
+      } <b>else</b> <b>if</b> (epochs_below &gt; short_window) {
+        print(&80060105512);
+
+        // increase the reward by 5%
+        cr.value = cr.value + (cr.value / 20);
       };
-    };
+    // };
   };
 }
 </code></pre>
