@@ -19,6 +19,8 @@ address DiemFramework{
         // const VALIDATOR_NOT_COMPLIANT: u64 = 3;
         const VALIDATOR_DOUBLY_NOT_COMPLIANT: u64 = 4;
 
+        const INVALID_DATA: u64 = 0;
+
         // Determine the consensus case for the validator.
         // This happens at an epoch prologue, and labels the validator based on 
         // performance in the outgoing epoch.
@@ -32,7 +34,7 @@ address DiemFramework{
 
             // this is a failure mode. Only usually seen in rescue missions,
             // where epoch counters are reconfigured by writeset offline.
-            if (height_end < height_start) return VALIDATOR_DOUBLY_NOT_COMPLIANT;
+            if (height_end < height_start) return INVALID_DATA;
 
             Roles::assert_diem_root(vm);
             // did the validator sign blocks above threshold?

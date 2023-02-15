@@ -1,5 +1,7 @@
 //# init --validators Alice Bob Carol Dave Eve Frank
 
+// V6 note: this test is covered in reconfiguration/ jail_case_4
+
 // This tests consensus Case 3.
 // DAVE is a validator.
 // DID NOT validate successfully.
