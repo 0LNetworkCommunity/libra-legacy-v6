@@ -272,18 +272,22 @@ address DiemFramework {
 
       
 
-      // get the median and set history
+      // Set history
       set_history(vm, &seats_to_fill);
 
-      // if (Vector::is_empty(&seats_to_fill)) {
-      //   return (seats_to_fill, 0)
-      // };
+      // we failed to seat anyone.
+      // let EpochBoundary deal with this.
+      if (Vector::is_empty(&seats_to_fill)) {
+        print(&8006010209);
+
+        return (seats_to_fill, 0)
+      };
 
       // Find the clearing price which all validators will pay
       let lowest_bidder = Vector::borrow(&seats_to_fill, Vector::length(&seats_to_fill) - 1);
 
       let (lowest_bid_pct, _) = current_bid(*lowest_bidder);
-      print(&99999999999999);
+      
       print(&lowest_bid_pct);
 
       // update the clearing price
