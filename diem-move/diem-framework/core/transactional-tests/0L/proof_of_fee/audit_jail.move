@@ -16,9 +16,6 @@ script {
     // let's remove testnet settings. Globals thresholds
     // are not the same as prod.
     Testnet::remove_testnet(&vm);
-
-    // is not jailed.
-    assert!(!Jail::is_jailed(@Alice), 1003);
     
     // has minimum viable vouches
     // bob and carol at genesis are automatically vouching for each other.
@@ -41,8 +38,31 @@ script {
     print(&bid_cost);
     assert!(coin > bid_cost, 1005);
 
-    // should pass audit.
-    assert!(ProofOfFee::audit_qualification(&@Alice), 1006);
+
+    // EVERYTHING ABOVE HERE IS PASSING.
+    // is now jailed.
+    Jail::jail(&vm, @Alice);
+    assert!(Jail::is_jailed(@Alice), 1006);
+    // won't pass audit
+    assert!(!ProofOfFee::audit_qualification(&@Alice), 1007);
+    
+
     
   }
+}
+
+//# run --admin-script --signers DiemRoot Bob
+script {
+    use DiemFramework::ProofOfFee;
+    use DiemFramework::Jail;
+    fun main(_vm: signer, bob_sig: signer) {
+      
+      // Bob needs to unjail
+      Jail::vouch_unjail(&bob_sig, @Alice);
+
+      // should pass audit.
+      assert!(ProofOfFee::audit_qualification(&@Alice), 1008);
+
+
+    }
 }
