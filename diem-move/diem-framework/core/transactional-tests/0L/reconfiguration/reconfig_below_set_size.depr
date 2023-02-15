@@ -1,5 +1,7 @@
 //# init --validators Alice Bob Carol Dave Eve Frank
 
+// Note duplicate test with minimum_validators
+
 // Testing if validator set remains the same if the size of eligible 
 // validators falls below 4
 

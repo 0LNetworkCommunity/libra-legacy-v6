@@ -71,6 +71,9 @@ module EpochBoundary {
         process_validators(vm, reward, &outgoing_compliant_set);
         print(&800600);
 
+        // process the non performing nodes: jail
+        process_jail(vm, &outgoing_compliant_set);
+
 
         let proposed_set = propose_new_set(vm, &outgoing_compliant_set);
 
@@ -78,7 +81,6 @@ module EpochBoundary {
         // Update all slow wallet limits
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock()); // todo
         print(&801000);
-
 
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
         print(&801100);
@@ -147,12 +149,15 @@ module EpochBoundary {
     fun process_jail(vm: &signer, outgoing_compliant_set: &vector<address>) {
         let all_previous_vals = DiemSystem::get_val_set_addr();
         let i = 0;
+        print(&9090909090909090);
         while (i < Vector::length<address>(&all_previous_vals)) {
             let addr = *Vector::borrow(&all_previous_vals, i);
             // let case = Cases::get_case(vm, addr, height_start, height_now);
-            
+            print(&addr);
+            print(&901);
             // TODO: Cases will be deprecated with removal of Proof of Height
             if (
+              
               // if they are compliant, remove the consecutive fail, otherwise jail
               // V6 Note: audit functions are now all contained in
               // ProofOfFee.move and exludes at auction time.
@@ -161,15 +166,17 @@ module EpochBoundary {
 
               Vector::contains(outgoing_compliant_set, &addr)
             ) {
+              print(&902);
                 // len_proven_nodes = len_proven_nodes + 1;
                 // also reset the jail counter for any successful unjails
                 Jail::remove_consecutive_fail(vm, addr);
             } else {
-              
+              print(&903);
               Jail::jail(vm, addr);
             };
             i = i+ 1;
         };
+        print(&904);
     }
 
     fun propose_new_set(vm: &signer, outgoing_compliant_set: &vector<address>): vector<address> 
