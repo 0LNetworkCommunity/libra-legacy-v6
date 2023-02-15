@@ -603,14 +603,13 @@ module TowerState {
     public fun toy_rng(seed: u64, iters: u64): u64 acquires TowerList, TowerProofHistory {
       // Get the list of all miners L
       // Pick a tower miner  (M) from the seed position 1/(N) of the list of miners.
-      print(&77777777);
 
       let l = get_miner_list();
-      print(&l);
+      // print(&l);
       // the length will keep incrementing through the epoch. The last miner can know what the starting position will be. There could be a race to be the last validator to augment the set and bias the initial shuffle.
       let len = Vector::length(&l);
       if (len == 0) return 0;
-      print(&5555);
+      // print(&5555);
 
       // start n with the seed index
       let n = seed;
