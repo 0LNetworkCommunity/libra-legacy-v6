@@ -7,12 +7,19 @@
 
 -  [Function `mock_case_1`](#0x1_Mock_mock_case_1)
 -  [Function `mock_case_2`](#0x1_Mock_mock_case_2)
+-  [Function `mock_case_4`](#0x1_Mock_mock_case_4)
+-  [Function `all_good_validators`](#0x1_Mock_all_good_validators)
+-  [Function `pof_default`](#0x1_Mock_pof_default)
 
 
 <pre><code><b>use</b> <a href="Cases.md#0x1_Cases">0x1::Cases</a>;
 <b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
+<b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<b>use</b> <a href="ProofOfFee.md#0x1_ProofOfFee">0x1::ProofOfFee</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
+<b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
+<b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
@@ -105,6 +112,129 @@
   // TODO: careful that the range of heights is within the test
   <b>assert</b>!(<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, start_height, end_height) == 2, 777706);
 
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Mock_mock_case_4"></a>
+
+## Function `mock_case_4`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Mock.md#0x1_Mock_mock_case_4">mock_case_4</a>(vm: &signer, addr: <b>address</b>, start_height: u64, end_height: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Mock.md#0x1_Mock_mock_case_4">mock_case_4</a>(vm: &signer, addr: <b>address</b>, start_height: u64, end_height: u64){
+
+  <b>let</b> voters = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>&lt;<b>address</b>&gt;(addr);
+
+  // Overwrite the statistics <b>to</b> mock that all have been validating.
+  <b>let</b> i = 1;
+  <b>let</b> above_thresh = 1; // just be above 5% signatures
+  <a href="Stats.md#0x1_Stats_test_helper_remove_votes">Stats::test_helper_remove_votes</a>(vm, addr);
+  <b>while</b> (i &lt; above_thresh) {
+      // <a href="Mock.md#0x1_Mock">Mock</a> the validator doing work for 15 blocks, and stats being updated.
+
+      <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(vm, &voters);
+      i = i + 1;
+  };
+  print(&<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, start_height, end_height) );
+  // TODO: careful that the range of heights is within the test
+  <b>assert</b>!(<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, start_height, end_height) == 4, 777706);
+
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Mock_all_good_validators"></a>
+
+## Function `all_good_validators`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Mock.md#0x1_Mock_all_good_validators">all_good_validators</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Mock.md#0x1_Mock_all_good_validators">all_good_validators</a>(vm: &signer) {
+
+  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
+  <b>let</b> vals = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>();
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&vals)) {
+
+    <b>let</b> a = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&vals, i);
+    <a href="Mock.md#0x1_Mock_mock_case_1">mock_case_1</a>(vm, *a, 0, 15);
+    i = i + 1;
+  };
+
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Mock_pof_default"></a>
+
+## Function `pof_default`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Mock.md#0x1_Mock_pof_default">pof_default</a>(vm: &signer): (vector&lt;<b>address</b>&gt;, vector&lt;u64&gt;, vector&lt;u64&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Mock.md#0x1_Mock_pof_default">pof_default</a>(vm: &signer): (vector&lt;<b>address</b>&gt;, vector&lt;u64&gt;, vector&lt;u64&gt;){
+
+  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
+  <b>let</b> vals = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>();
+
+  <b>let</b> bids = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;();
+  <b>let</b> expiry = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;();
+  <b>let</b> i = 0;
+  <b>let</b> prev = 0;
+  <b>let</b> fib = 1;
+  <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&vals)) {
+
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> expiry, 1000);
+    <b>let</b> b = prev + fib;
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> bids, b);
+
+    <b>let</b> a = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&vals, i);
+    <b>let</b> sig = <a href="DiemAccount.md#0x1_DiemAccount_scary_create_signer_for_migrations">DiemAccount::scary_create_signer_for_migrations</a>(vm, *a);
+    // initialize and set.
+    <a href="ProofOfFee.md#0x1_ProofOfFee_set_bid">ProofOfFee::set_bid</a>(&sig, b, 1000);
+    prev = fib;
+    fib = b;
+    i = i + 1;
+  };
+  <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, 100000); // unlock some coins for the validators
+
+  (vals, bids, expiry)
 }
 </code></pre>
 

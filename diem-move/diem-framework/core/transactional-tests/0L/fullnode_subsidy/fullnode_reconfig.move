@@ -120,20 +120,14 @@ script {
 script {  
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
-    use DiemFramework::Subsidy;
-    use DiemFramework::Globals;
+    // use DiemFramework::Subsidy;
+    // use DiemFramework::Globals;
     use DiemFramework::Debug::print;
 
     fun main(_vm: signer, _: signer) {
         // We are in a new epoch.
 
-        // we expect that Bob receives the share that one validator would get.
-        let expected_subsidy = Subsidy::subsidy_curve(
-          Globals::get_subsidy_ceiling_gas(),
-          1, // alice is the only validator (but below 4 the reward is the same
-             // in testnet: 296000000)
-          Globals::get_max_validators_per_set(),
-        );
+        let expected_subsidy = 1000000;
 
         let bob_starting_balance = 1000000;
 

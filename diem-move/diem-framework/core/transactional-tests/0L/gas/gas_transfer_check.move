@@ -8,10 +8,10 @@ script {
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
     use DiemFramework::Testnet;
-    fun main(_dr: signer, account: signer) {
+    fun main(dr: signer, account: signer) {
         // transfers are enabled in testnet, need to disable testnet to
         // check that they are disabled otherwise
-        Testnet::remove_testnet(&account);
+        Testnet::remove_testnet(&dr);
         let with_cap = DiemAccount::extract_withdraw_capability(&account);
         DiemAccount::pay_from<GAS>(&with_cap, @Bob, 10, x"", x"");
         assert!(DiemAccount::balance<GAS>(@Alice) == 9999990, 0);

@@ -2871,8 +2871,6 @@ pub enum ScriptFunctionCall {
         public_key: Bytes,
     },
 
-    SelfUnjail {},
-
     SetBurnPref {
         to_community: bool,
     },
@@ -3923,7 +3921,6 @@ impl ScriptFunctionCall {
             RotateSharedEd25519PublicKey { public_key } => {
                 encode_rotate_shared_ed25519_public_key_script_function(public_key)
             }
-            SelfUnjail {} => encode_self_unjail_script_function(),
             SetBurnPref { to_community } => encode_set_burn_pref_script_function(to_community),
             SetGasConstants {
                 sliding_nonce,
@@ -6124,18 +6121,6 @@ pub fn encode_rotate_shared_ed25519_public_key_script_function(
         ident_str!("rotate_shared_ed25519_public_key").to_owned(),
         vec![],
         vec![bcs::to_bytes(&public_key).unwrap()],
-    ))
-}
-
-pub fn encode_self_unjail_script_function() -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ValidatorScripts").to_owned(),
-        ),
-        ident_str!("self_unjail").to_owned(),
-        vec![],
-        vec![],
     ))
 }
 
@@ -9208,14 +9193,6 @@ fn decode_rotate_shared_ed25519_public_key_script_function(
     }
 }
 
-fn decode_self_unjail_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::SelfUnjail {})
-    } else {
-        None
-    }
-}
-
 fn decode_set_burn_pref_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -10075,10 +10052,6 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "AccountAdministrationScriptsrotate_shared_ed25519_public_key".to_string(),
             Box::new(decode_rotate_shared_ed25519_public_key_script_function),
-        );
-        map.insert(
-            "ValidatorScriptsself_unjail".to_string(),
-            Box::new(decode_self_unjail_script_function),
         );
         map.insert(
             "BurnScriptset_burn_pref".to_string(),

@@ -14,8 +14,7 @@
 -  [Function `reset_counters`](#0x1_EpochBoundary_reset_counters)
 
 
-<pre><code><b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
-<b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
+<pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
@@ -236,7 +235,11 @@
         // TODO: <a href="Cases.md#0x1_Cases">Cases</a> will be deprecated <b>with</b> removal of Proof of Height
         <b>if</b> (
           // <b>if</b> they are compliant, remove the consecutive fail, otherwise jail
-          <a href="Audit.md#0x1_Audit_val_audit_passing">Audit::val_audit_passing</a>(addr) &&
+          // V6 Note: audit functions are now all contained in
+          // <a href="ProofOfFee.md#0x1_ProofOfFee">ProofOfFee</a>.<b>move</b> and exludes at auction time.
+
+          // Audit::val_audit_passing(addr) &&
+
           <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(outgoing_compliant_set, &addr)
         ) {
             // len_proven_nodes = len_proven_nodes + 1;
