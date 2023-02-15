@@ -586,11 +586,16 @@ address DiemFramework {
         let bid = Vector::borrow(bids, i);
         let exp = Vector::borrow(expiry, i);
         let addr = Vector::borrow(vals, i);
-        let pof = borrow_global_mut<ProofOfFeeAuction>(*addr);
-        pof.epoch_expiration = *exp;
-        pof.bid = *bid;
+        test_set_one_bid(vm, addr, *bid, *exp);
         i = i + 1;
       };
+    }
+
+    public fun test_set_one_bid(vm: &signer, val: &address, bid:  u64, exp: u64) acquires ProofOfFeeAuction {
+      Testnet::assert_testnet(vm);
+      let pof = borrow_global_mut<ProofOfFeeAuction>(*val);
+      pof.epoch_expiration = exp;
+      pof.bid = bid;
     }
 
     public fun test_mock_reward(

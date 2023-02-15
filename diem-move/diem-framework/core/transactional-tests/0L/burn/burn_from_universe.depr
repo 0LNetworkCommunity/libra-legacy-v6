@@ -1,33 +1,14 @@
 //# init --validators Alice Bob
-
-// Alice is CASE 4 validator, and falls out of validator set
+// V6 I don't know what this is testing
 
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
-    use DiemFramework::Cases;
-    use DiemFramework::Debug::print;
-    use DiemFramework::TowerState;
-    use Std::Vector;
-    use DiemFramework::Stats;
 
-    fun main(sender: signer, _: signer) {
-        let sender = &sender;
-        let voters = Vector::singleton<address>(@Alice);
-        let i = 1;
-        while (i < 16) {
-            // Mock the validator doing work for 15 blocks, and stats being updated.
-            Stats::process_set_votes(sender, &voters);
-            i = i + 1;
-        };
+    use DiemFramework::Mock;
 
-        TowerState::test_helper_mock_mining_vm(sender, @Alice, 5 );
-        // did not send any votes. 
-        print(&111);
-        print(&Cases::get_case(sender, @Alice, 0 , 15));
-        print(&Cases::get_case(sender, @Bob, 0 , 15));
-
-        // assert!(Cases::get_case(&sender, @Alice, 1 , 15) == 4, 7357300103011000);
-        // assert!(Cases::get_case(&sender, @Bob, 0 , 15) == 4, 7357300103011000);
+    fun main(vm: signer, _: signer) {
+        Mock::pof_default(&vm);
+        Mock::mock_case_4(&vm, @Alice, 0, 15);
     }
 }
 

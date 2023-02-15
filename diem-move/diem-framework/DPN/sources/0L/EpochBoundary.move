@@ -149,13 +149,9 @@ module EpochBoundary {
     fun process_jail(vm: &signer, outgoing_compliant_set: &vector<address>) {
         let all_previous_vals = DiemSystem::get_val_set_addr();
         let i = 0;
-        print(&9090909090909090);
         while (i < Vector::length<address>(&all_previous_vals)) {
             let addr = *Vector::borrow(&all_previous_vals, i);
-            // let case = Cases::get_case(vm, addr, height_start, height_now);
-            print(&addr);
-            print(&901);
-            // TODO: Cases will be deprecated with removal of Proof of Height
+
             if (
               
               // if they are compliant, remove the consecutive fail, otherwise jail
