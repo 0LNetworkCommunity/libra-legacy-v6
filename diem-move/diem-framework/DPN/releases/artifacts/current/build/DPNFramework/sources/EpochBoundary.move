@@ -20,7 +20,7 @@ module EpochBoundary {
     use DiemFramework::AutoPay;
     use DiemFramework::Epoch;
     use DiemFramework::DiemConfig;
-    use DiemFramework::Audit;
+    // use DiemFramework::Audit;
     use DiemFramework::DiemAccount;
     // use DiemFramework::Burn;
     use DiemFramework::FullnodeSubsidy;
@@ -154,7 +154,11 @@ module EpochBoundary {
             // TODO: Cases will be deprecated with removal of Proof of Height
             if (
               // if they are compliant, remove the consecutive fail, otherwise jail
-              Audit::val_audit_passing(addr) &&
+              // V6 Note: audit functions are now all contained in
+              // ProofOfFee.move and exludes at auction time.
+
+              // Audit::val_audit_passing(addr) &&
+
               Vector::contains(outgoing_compliant_set, &addr)
             ) {
                 // len_proven_nodes = len_proven_nodes + 1;

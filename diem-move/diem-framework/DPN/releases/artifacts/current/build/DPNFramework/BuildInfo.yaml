@@ -32,9 +32,6 @@ compiled_package_info:
       name: Ancestry
     : DiemFramework
     ? address: "00000000000000000000000000000001"
-      name: Audit
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
       name: Authenticator
     : DiemFramework
     ? address: "00000000000000000000000000000001"

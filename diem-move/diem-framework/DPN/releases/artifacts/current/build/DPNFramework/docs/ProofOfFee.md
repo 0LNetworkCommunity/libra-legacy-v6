@@ -34,6 +34,7 @@
 <b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
+<b>use</b> <a href="ValidatorConfig.md#0x1_ValidatorConfig">0x1::ValidatorConfig</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 <b>use</b> <a href="Vouch.md#0x1_Vouch">0x1::Vouch</a>;
@@ -337,12 +338,34 @@
   // check the max size of the validator set.
   // there may be too few "proven" validators <b>to</b> fill the set <b>with</b> 2/3rds proven nodes of the stated set_size.
   <b>let</b> proven_len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(proven_nodes);
-  <b>let</b> (set_size, max_unproven) = <b>if</b> ( proven_len &lt; set_size) {
-    <b>let</b> one_third_of_max = proven_len/2;
-    ((proven_len + one_third_of_max, one_third_of_max))
+
+  // check <b>if</b> the proven len plus unproven quota will
+  // be greater than the set size. Which is the expected.
+  // Otherwise the set will need <b>to</b> be smaller than the
+  // declared size, because we will have <b>to</b> fill <b>with</b> more unproven nodes.
+  <b>let</b> one_third_of_max = proven_len/2;
+  <b>let</b> safe_set_size = proven_len + one_third_of_max;
+  print(&77777777);
+  print(&proven_len);
+  print(&one_third_of_max);
+  print(&safe_set_size);
+
+  <b>let</b> (set_size, max_unproven) = <b>if</b> (safe_set_size &lt; set_size) {
+    (safe_set_size, safe_set_size/3)
+    // <b>if</b> (safe_set_size &lt; 5) { // safety. mostly for test scenarios given rounding issues
+    //   (safe_set_size, 1)
+    // } <b>else</b> {
+
+    // }
+
   } <b>else</b> {
+    // happy case, unproven bidders are a smaller minority
     (set_size, set_size/3)
   };
+  print(&set_size);
+  print(&max_unproven);
+
+
   print(&8006010201);
 
   // Now we can seat the validators based on the algo above:
@@ -354,7 +377,7 @@
   <b>let</b> num_unproven_added = 0;
   <b>let</b> i = 0u64;
   <b>while</b> (
-    (i &lt; set_size) &&
+    (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&seats_to_fill) &lt; set_size) &&
     (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(sorted_vals_by_bid))
   ) {
     // print(&i);
@@ -374,17 +397,20 @@
       <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> seats_to_fill, *val);
     } <b>else</b> {
       print(&8006010206);
+      print(&max_unproven);
+      print(&num_unproven_added);
       // print(&02);
       // for unproven nodes, push it <b>to</b> list <b>if</b> we haven't hit limit
       <b>if</b> (num_unproven_added &lt; max_unproven ) {
         // TODO: check jail reputation
         // print(&03);
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> seats_to_fill, *val);
+        // print(&04);
+        print(&8006010207);
+        num_unproven_added = num_unproven_added + 1;
       };
-      // print(&04);
-      print(&8006010207);
-      num_unproven_added = num_unproven_added + 1;
     };
+    // don't advance <b>if</b> we havent filled
     i = i + 1;
   };
   // print(&05);
@@ -393,18 +419,22 @@
 
 
 
-  // get the median and set history
+  // Set history
   <a href="ProofOfFee.md#0x1_ProofOfFee_set_history">set_history</a>(vm, &seats_to_fill);
 
-  // <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>(&seats_to_fill)) {
-  //   <b>return</b> (seats_to_fill, 0)
-  // };
+  // we failed <b>to</b> seat anyone.
+  // <b>let</b> <a href="EpochBoundary.md#0x1_EpochBoundary">EpochBoundary</a> deal <b>with</b> this.
+  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>(&seats_to_fill)) {
+    print(&8006010209);
+
+    <b>return</b> (seats_to_fill, 0)
+  };
 
   // Find the clearing price which all validators will pay
   <b>let</b> lowest_bidder = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&seats_to_fill, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&seats_to_fill) - 1);
 
   <b>let</b> (lowest_bid_pct, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_current_bid">current_bid</a>(*lowest_bidder);
-  print(&99999999999999);
+
   print(&lowest_bid_pct);
 
   // <b>update</b> the clearing price
@@ -436,17 +466,14 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_audit_qualification">audit_qualification</a>(val: &<b>address</b>): bool <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>, <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
 
-    <b>let</b> (bid, expire) = <a href="ProofOfFee.md#0x1_ProofOfFee_current_bid">current_bid</a>(*val);
-    print(val);
-    print(&bid);
-    print(&expire);
+    // Safety check: node <b>has</b> valid configs
+    <b>if</b> (!<a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(*val)) <b>return</b> <b>false</b>;
+    // <b>has</b> operator account set <b>to</b> another <b>address</b>
+    <b>let</b> oper = <a href="ValidatorConfig.md#0x1_ValidatorConfig_get_operator">ValidatorConfig::get_operator</a>(*val);
+    <b>if</b> (oper == *val) <b>return</b> <b>false</b>;
 
-
-    // Skip <b>if</b> the bid expired. belt and suspenders, this should have been checked in the sorting above.
-    // TODO: make this it's own function so it can be publicly callable, it's useful generally, and for debugging.
-    print(&<a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
-    <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() &gt; expire) <b>return</b> <b>false</b>;
-
+    // is a slow wallet
+    <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(*val)) <b>return</b> <b>false</b>;
 
     print(&8006010203);
     // we can't seat validators that were just jailed
@@ -459,6 +486,15 @@
 
     print(&80060102041);
 
+    <b>let</b> (bid, expire) = <a href="ProofOfFee.md#0x1_ProofOfFee_current_bid">current_bid</a>(*val);
+    print(val);
+    print(&bid);
+    print(&expire);
+
+    // Skip <b>if</b> the bid expired. belt and suspenders, this should have been checked in the sorting above.
+    // TODO: make this it's own function so it can be publicly callable, it's useful generally, and for debugging.
+    print(&<a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
+    <b>if</b> (<a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() &gt; expire) <b>return</b> <b>false</b>;
 
     // skip the user <b>if</b> they don't have sufficient UNLOCKED funds
     // or <b>if</b> the bid expired.

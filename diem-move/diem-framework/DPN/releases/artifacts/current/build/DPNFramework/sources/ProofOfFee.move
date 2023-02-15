@@ -22,6 +22,7 @@ address DiemFramework {
     use DiemFramework::Vouch;
     use Std::FixedPoint32;
     use DiemFramework::Testnet;
+    use DiemFramework::ValidatorConfig;
 
     const ENOT_AN_ACTIVE_VALIDATOR: u64 = 190001;
     const EBID_ABOVE_MAX_PCT: u64 = 190002;
@@ -190,12 +191,34 @@ address DiemFramework {
       // check the max size of the validator set.
       // there may be too few "proven" validators to fill the set with 2/3rds proven nodes of the stated set_size.
       let proven_len = Vector::length(proven_nodes);
-      let (set_size, max_unproven) = if ( proven_len < set_size) {
-        let one_third_of_max = proven_len/2;
-        ((proven_len + one_third_of_max, one_third_of_max))
+
+      // check if the proven len plus unproven quota will
+      // be greater than the set size. Which is the expected.
+      // Otherwise the set will need to be smaller than the
+      // declared size, because we will have to fill with more unproven nodes.
+      let one_third_of_max = proven_len/2;
+      let safe_set_size = proven_len + one_third_of_max;
+      print(&77777777);
+      print(&proven_len);
+      print(&one_third_of_max);
+      print(&safe_set_size);
+
+      let (set_size, max_unproven) = if (safe_set_size < set_size) {
+        (safe_set_size, safe_set_size/3)
+        // if (safe_set_size < 5) { // safety. mostly for test scenarios given rounding issues
+        //   (safe_set_size, 1)
+        // } else {
+          
+        // }
+        
       } else {
+        // happy case, unproven bidders are a smaller minority
         (set_size, set_size/3)
       };
+      print(&set_size);
+      print(&max_unproven);
+
+
       print(&8006010201);
 
       // Now we can seat the validators based on the algo above:
@@ -207,7 +230,7 @@ address DiemFramework {
       let num_unproven_added = 0;
       let i = 0u64;
       while (
-        (i < set_size) && 
+        (Vector::length(&seats_to_fill) < set_size) &&
         (i < Vector::length(sorted_vals_by_bid))
       ) {
         // print(&i);
@@ -227,17 +250,20 @@ address DiemFramework {
           Vector::push_back(&mut seats_to_fill, *val);
         } else {
           print(&8006010206);
+          print(&max_unproven);
+          print(&num_unproven_added);
           // print(&02);
           // for unproven nodes, push it to list if we haven't hit limit
           if (num_unproven_added < max_unproven ) {
             // TODO: check jail reputation
             // print(&03);
             Vector::push_back(&mut seats_to_fill, *val);
+            // print(&04);
+            print(&8006010207);
+            num_unproven_added = num_unproven_added + 1;
           };
-          // print(&04);
-          print(&8006010207);
-          num_unproven_added = num_unproven_added + 1;
         };
+        // don't advance if we havent filled
         i = i + 1;
       };
       // print(&05);
@@ -246,18 +272,22 @@ address DiemFramework {
 
       
 
-      // get the median and set history
+      // Set history
       set_history(vm, &seats_to_fill);
 
-      // if (Vector::is_empty(&seats_to_fill)) {
-      //   return (seats_to_fill, 0)
-      // };
+      // we failed to seat anyone.
+      // let EpochBoundary deal with this.
+      if (Vector::is_empty(&seats_to_fill)) {
+        print(&8006010209);
+
+        return (seats_to_fill, 0)
+      };
 
       // Find the clearing price which all validators will pay
       let lowest_bidder = Vector::borrow(&seats_to_fill, Vector::length(&seats_to_fill) - 1);
 
       let (lowest_bid_pct, _) = current_bid(*lowest_bidder);
-      print(&99999999999999);
+      
       print(&lowest_bid_pct);
 
       // update the clearing price
@@ -269,18 +299,15 @@ address DiemFramework {
 
     // consolidate all the checks for a validator to be seated
     public fun audit_qualification(val: &address): bool acquires ProofOfFeeAuction, ConsensusReward {
+        
+        // Safety check: node has valid configs
+        if (!ValidatorConfig::is_valid(*val)) return false;
+        // has operator account set to another address
+        let oper = ValidatorConfig::get_operator(*val);
+        if (oper == *val) return false;
 
-        let (bid, expire) = current_bid(*val);
-        print(val);
-        print(&bid);
-        print(&expire);
-
-
-        // Skip if the bid expired. belt and suspenders, this should have been checked in the sorting above.
-        // TODO: make this it's own function so it can be publicly callable, it's useful generally, and for debugging.
-        print(&DiemConfig::get_current_epoch());
-        if (DiemConfig::get_current_epoch() > expire) return false;
-
+        // is a slow wallet
+        if (!DiemAccount::is_slow(*val)) return false;
 
         print(&8006010203);
         // we can't seat validators that were just jailed
@@ -293,6 +320,15 @@ address DiemFramework {
 
         print(&80060102041);
 
+        let (bid, expire) = current_bid(*val);
+        print(val);
+        print(&bid);
+        print(&expire);
+
+        // Skip if the bid expired. belt and suspenders, this should have been checked in the sorting above.
+        // TODO: make this it's own function so it can be publicly callable, it's useful generally, and for debugging.
+        print(&DiemConfig::get_current_epoch());
+        if (DiemConfig::get_current_epoch() > expire) return false;
 
         // skip the user if they don't have sufficient UNLOCKED funds
         // or if the bid expired.
