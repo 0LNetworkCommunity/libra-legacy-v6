@@ -22,6 +22,7 @@ address DiemFramework {
     use DiemFramework::Vouch;
     use Std::FixedPoint32;
     use DiemFramework::Testnet;
+    use DiemFramework::ValidatorConfig;
 
     const ENOT_AN_ACTIVE_VALIDATOR: u64 = 190001;
     const EBID_ABOVE_MAX_PCT: u64 = 190002;
@@ -269,18 +270,15 @@ address DiemFramework {
 
     // consolidate all the checks for a validator to be seated
     public fun audit_qualification(val: &address): bool acquires ProofOfFeeAuction, ConsensusReward {
+        
+        // Safety check: node has valid configs
+        if (!ValidatorConfig::is_valid(*val)) return false;
+        // has operator account set to another address
+        let oper = ValidatorConfig::get_operator(*val);
+        if (oper == *val) return false;
 
-        let (bid, expire) = current_bid(*val);
-        print(val);
-        print(&bid);
-        print(&expire);
-
-
-        // Skip if the bid expired. belt and suspenders, this should have been checked in the sorting above.
-        // TODO: make this it's own function so it can be publicly callable, it's useful generally, and for debugging.
-        print(&DiemConfig::get_current_epoch());
-        if (DiemConfig::get_current_epoch() > expire) return false;
-
+        // is a slow wallet
+        if (!DiemAccount::is_slow(*val)) return false;
 
         print(&8006010203);
         // we can't seat validators that were just jailed
@@ -293,6 +291,15 @@ address DiemFramework {
 
         print(&80060102041);
 
+        let (bid, expire) = current_bid(*val);
+        print(val);
+        print(&bid);
+        print(&expire);
+
+        // Skip if the bid expired. belt and suspenders, this should have been checked in the sorting above.
+        // TODO: make this it's own function so it can be publicly callable, it's useful generally, and for debugging.
+        print(&DiemConfig::get_current_epoch());
+        if (DiemConfig::get_current_epoch() > expire) return false;
 
         // skip the user if they don't have sufficient UNLOCKED funds
         // or if the bid expired.
