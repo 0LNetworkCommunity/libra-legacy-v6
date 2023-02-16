@@ -1,8 +1,10 @@
 mod support;
 
 use ol_genesis_tools::{
-    fork_genesis::make_recovery_genesis_from_vec_legacy_recovery, recover::read_from_recovery_file, compare,
+    fork_genesis::make_recovery_genesis_from_vec_legacy_recovery,
+    compare,
 };
+use ol_types::legacy_recovery::read_from_recovery_file;
 use std::fs;
 use support::path_utils::json_path;
 
@@ -62,7 +64,7 @@ async fn test_parse_json_for_validators_and_save_blob() {
     let list = compare::compare_json_to_genesis_blob(recovery_json_path, output_path.clone());
 
     dbg!(&list);
-    assert!(list.expect("no list").len() == 0, "list is not empty");
+    assert!(list.expect("no list").is_empty(), "list is not empty");
     
     compare::check_val_set(genesis_vals, output_path.clone()).unwrap();
 

@@ -14,7 +14,7 @@ pub fn snapshot_path() -> PathBuf {
         .parent()
         .unwrap()
         .join("ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff")
-        .to_owned()
+        
 }
 
 /// path to file fixture with JSON export of the data used in rescue genesis
@@ -27,7 +27,7 @@ pub fn json_path() -> PathBuf {
         .parent()
         .unwrap()
         .join("ol/fixtures/rescue/sample_export_recovery.json")
-        .to_owned()
+        
 }
 
 /// path to file fixture with the rescue genesis blob
@@ -40,5 +40,5 @@ pub fn blob_path() -> PathBuf {
         .parent()
         .unwrap()
         .join("ol/fixtures/rescue/sample_rescue_genesis.blob")
-        .to_owned()
+        
 }

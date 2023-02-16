@@ -2,13 +2,12 @@ mod support;
 
 use diem_types::account_address::AccountAddress;
 use ol_genesis_tools::fork_genesis::make_recovery_genesis_from_vec_legacy_recovery;
-use ol_genesis_tools::recover::read_from_recovery_file;
 use ol_genesis_tools::{
-    process_snapshot::db_backup_into_recovery_struct, recover::save_recovery_file,
+    process_snapshot::db_backup_into_recovery_struct,
 };
 use std::{fs, path::PathBuf};
 use support::path_utils::snapshot_path;
-
+use ol_types::legacy_recovery::{save_recovery_file, read_from_recovery_file};
 use diem_json_rpc::views::AccountView;
 use std::io::BufRead;
 use std::io::BufReader;
@@ -114,7 +113,7 @@ fn start_test_node(blob_path: PathBuf) {
 }
 
 async fn post_node_json(a: AccountAddress) -> anyhow::Result<AccountView> {
-    let url = format!("http://0.0.0.0:8080/v1");
+    let url = "http://0.0.0.0:8080/v1".to_string();
 
     let query = serde_json::json!( {
       "jsonrpc":"2.0",

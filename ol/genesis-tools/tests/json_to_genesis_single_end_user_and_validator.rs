@@ -46,7 +46,7 @@ fn test_end_user_migrate() {
     // compare the user json to the genesis blob
     match compare::compare_json_to_genesis_blob(user_json, temp_genesis_blob_path.clone()){
         Ok(list) => {
-          if list.len() > 0 {
+          if !list.is_empty() {
             println!("{:?}", &list);
             fs::remove_file(&temp_genesis_blob_path).unwrap();
             assert!(false, "user migration has errors");
@@ -58,7 +58,7 @@ fn test_end_user_migrate() {
     // compare the validator json to the genesis blob
     match compare::compare_json_to_genesis_blob(val_json, temp_genesis_blob_path.clone()){
         Ok(list) => {
-          if list.len() > 0 {
+          if !list.is_empty() {
             println!("{:?}", &list);
             fs::remove_file(&temp_genesis_blob_path).unwrap();
             assert!(false, "val migration has errors");

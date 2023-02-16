@@ -3,24 +3,12 @@
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
-
 use crate::process_snapshot::{db_backup_into_recovery_struct};
-use crate::recover::{
-    recover_validator_configs,
-};
+
 use anyhow::{Error};
-
 use diem_types::account_address::AccountAddress;
-
-
 use diem_types::transaction::{Transaction, WriteSetPayload};
-
-
-
-
-
-use ol_types::legacy_recovery::LegacyRecovery;
-
+use ol_types::legacy_recovery::{LegacyRecovery, recover_validator_configs};
 use vm_genesis::encode_recovery_genesis_changeset;
 
 /// Make a recovery genesis blob from archive
@@ -44,7 +32,7 @@ pub async fn make_recovery_genesis_from_db_backup(
 
 /// Make a recovery genesis blob
 pub fn make_recovery_genesis_from_vec_legacy_recovery(
-    recovery: &Vec<LegacyRecovery>,
+    recovery: &[LegacyRecovery],
     genesis_vals: Vec<AccountAddress>,
     genesis_blob_path: PathBuf,
     append_user_accounts: bool,

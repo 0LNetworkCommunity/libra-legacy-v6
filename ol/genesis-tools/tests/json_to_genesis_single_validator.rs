@@ -36,7 +36,7 @@ fn test_parse_json_for_one_validator_and_save_blob() {
 
         match compare::compare_json_to_genesis_blob(json, temp_genesis_blob_path.clone()){
         Ok(list) => {
-          if list.len() > 0 {
+          if !list.is_empty() {
             println!("{:?}", &list);
             fs::remove_file(&temp_genesis_blob_path).unwrap();
             assert!(false, "list is not empty");

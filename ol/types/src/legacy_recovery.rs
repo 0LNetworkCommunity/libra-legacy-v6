@@ -228,7 +228,7 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
 
 /// Make recovery file in format needed
 pub fn recover_validator_configs(
-    recover: &Vec<LegacyRecovery>,
+    recover: &[LegacyRecovery],
 ) -> Result<RecoverConsensusAccounts, Error> {
     use AccountRole::*;
     let mut set = RecoverConsensusAccounts::default();
@@ -301,7 +301,7 @@ pub fn recover_validator_configs(
 }
 
 /// Save genesis recovery file
-pub fn save_recovery_file(data: &Vec<LegacyRecovery>, path: &PathBuf) -> Result<(), Error> {
+pub fn save_recovery_file(data: &[LegacyRecovery], path: &PathBuf) -> Result<(), Error> {
     let j = serde_json::to_string(data)?;
     let mut file = fs::File::create(path).expect("Could not genesis_recovery create file");
     file.write_all(j.as_bytes())

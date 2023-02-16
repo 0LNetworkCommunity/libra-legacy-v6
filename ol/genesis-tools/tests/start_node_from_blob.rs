@@ -61,7 +61,7 @@ fn start_test_node() {
 }
 
 fn post_node_json(a: AccountAddress) -> anyhow::Result<AccountView> {
-    let url = format!("http://0.0.0.0:8080/v1");
+    let url = "http://0.0.0.0:8080/v1".to_string();
 
     let query = serde_json::json!( {
       "jsonrpc":"2.0",
@@ -94,7 +94,7 @@ fn get_test_configs() -> Result<(NodeConfig, PathBuf), anyhow::Error> {
 
     let (mut cfg, _) = test_config(true);
     let save_path = gen_blob
-        .clone()
+        
         .parent()
         .unwrap()
         .join("testing.validator.node.yaml");
@@ -129,7 +129,7 @@ fn node_configs() {
 
 fn clean_up() {
     let save_path = path_utils::blob_path()
-        .clone()
+        
         .parent()
         .unwrap()
         .join("testing.validator.node.yaml");

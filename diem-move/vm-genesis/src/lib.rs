@@ -5,7 +5,6 @@
 
 mod genesis_context;
 use anyhow::Error;
-use diem_state_view::StateView;
 use ol_types::legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery};
 use std::env;
 use crate::genesis_context::GenesisStateView;
@@ -21,7 +20,7 @@ use diem_types::{
     account_config::{
         self,
         events::{CreateAccountEvent},
-        DESIGNATED_DEALER_MODULE, AccountResource, CurrencyInfoResource,
+        DESIGNATED_DEALER_MODULE,
     },
     chain_id::{ChainId},
     contract_event::ContractEvent,
@@ -50,9 +49,6 @@ use transaction_builder::encode_create_designated_dealer_script_function;
 //////// 0L ////////
 use diem_global_constants::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
 pub use ol_types::{config::IS_PROD, genesis_proof::GenesisMiningProof};
-use move_core_types::move_resource::MoveStructType;
-use diem_types::access_path::AccessPath;
-use move_core_types::move_resource::MoveResource;
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -206,7 +202,7 @@ pub fn encode_recovery_genesis_changeset(
     val_set: &[AccountAddress],
     chain: u8,
     append_users: bool,
-    legacy_data: &Vec<LegacyRecovery>,
+    legacy_data: &[LegacyRecovery],
 ) -> Result<ChangeSet, Error> {
     let mut stdlib_modules = Vec::new();
     // create a data view for move_vm
@@ -249,7 +245,7 @@ pub fn encode_recovery_genesis_changeset(
         // Recover the user accounts
     diem_logger::info!("Starting user migration... ");
     if append_users  {
-      migrate_end_users(&mut session, &legacy_data).expect("failed to recover users");
+      migrate_end_users(&mut session, legacy_data).expect("failed to recover users");
     }
 
     // Trigger reconfiguration so that the validator set is updated.
@@ -281,7 +277,7 @@ pub fn encode_recovery_genesis_changeset(
 
 /// fuction to iterate through a list of LegacyRecovery and recover the user accounts by calling a GenesisMigration.move in the VM. (as opposed to crafting writesets individually which could be fallible).
 
-fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, legacy_data: &Vec<LegacyRecovery>) -> Result<u64, anyhow::Error>{
+fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, legacy_data: &[LegacyRecovery]) -> Result<u64, anyhow::Error>{
     
   let filtered_data: Vec<&LegacyRecovery>= legacy_data.iter()
     .filter(|d| {

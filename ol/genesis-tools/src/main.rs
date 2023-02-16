@@ -1,7 +1,7 @@
 use anyhow::Result;
 use diem_types::account_address::AccountAddress;
 use std::{path::PathBuf, process::exit};
-
+use ol_types::legacy_recovery::{save_recovery_file, read_from_recovery_file};
 use gumdrop::Options;
 use ol_genesis_tools::{
     compare,
@@ -10,8 +10,6 @@ use ol_genesis_tools::{
         make_recovery_genesis_from_db_backup, make_recovery_genesis_from_vec_legacy_recovery,
     },
     process_snapshot::db_backup_into_recovery_struct,
-    recover::read_from_recovery_file,
-    recover::save_recovery_file,
 };
 
 #[tokio::main]
@@ -80,7 +78,7 @@ async fn main() -> Result<()> {
             )
             .await
             .expect("ERROR: could not create genesis from snapshot");
-            return Ok(());
+            Ok(())
         }
         // Path 2:
         // if we have a Recovery JSON file, let's use that.
@@ -98,7 +96,7 @@ async fn main() -> Result<()> {
               opts.legacy
             )
                 .expect("ERROR: failed to create genesis from recovery file");
-            return Ok(());
+            Ok(())
         } else {
             panic!("ERROR: must provide --snapshot-path or --recovery-json-path, exiting.");
         }
@@ -107,7 +105,7 @@ async fn main() -> Result<()> {
             opts.output_path.unwrap(),
             opts.recovery_json_path.unwrap(),
         )?;
-        if err_list.len() > 0 {
+        if !err_list.is_empty() {
             println!("ERROR: found errors:");
 
             err_list.into_iter().for_each(|ce| {
@@ -132,12 +130,10 @@ async fn main() -> Result<()> {
             .await
             .expect("could not export DB into JSON recovery file");
 
-        save_recovery_file(&recovery_struct, &json_destination_path).expect(&format!(
-            "ERROR: recovery data extracted, but failed to save file {:?}",
-            &json_destination_path
-        ));
+        save_recovery_file(&recovery_struct, &json_destination_path).unwrap_or_else(|_| panic!("ERROR: recovery data extracted, but failed to save file {:?}",
+            &json_destination_path));
 
-        return Ok(());
+        Ok(())
     } else {
         println!("ERROR: no options provided, exiting.");
         exit(1);

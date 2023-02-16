@@ -4,11 +4,11 @@
 //! -- morrissey via github copilot
 
 use crate::db_utils;
-use crate::recover;
 use anyhow;
 use diem_types::account_address::AccountAddress;
 use diem_types::account_state::AccountState;
 use ol_types::legacy_recovery::LegacyRecovery;
+use ol_types::legacy_recovery::read_from_recovery_file;
 use std::convert::TryFrom;
 use std::path::PathBuf;
 
@@ -26,7 +26,7 @@ pub struct CompareError {
 }
 /// Compare the balances in a recovery file to the balances in a genesis blob.
 pub fn compare_recovery_vec_to_genesis_blob(
-    recovery: &Vec<LegacyRecovery>,
+    recovery: &[LegacyRecovery],
     genesis_path: PathBuf,
 ) -> Result<Vec<CompareError>, anyhow::Error> {
     // start an empty btree map
@@ -35,7 +35,7 @@ pub fn compare_recovery_vec_to_genesis_blob(
     // iterate over the recovery file and compare balances
     let (db_rw, _) = db_utils::read_db_and_compute_genesis(genesis_path)?;
 
-    recovery.into_iter().enumerate().for_each(|(i, v)| {
+    recovery.iter().enumerate().for_each(|(i, v)| {
         if v.account.is_none() {
             err_list.push(CompareError {
                 index: i as u64,
@@ -133,7 +133,7 @@ pub fn compare_json_to_genesis_blob(
     json_path: PathBuf,
     genesis_path: PathBuf,
 ) -> Result<Vec<CompareError>, anyhow::Error> {
-    let recovery = recover::read_from_recovery_file(&json_path);
+    let recovery = read_from_recovery_file(&json_path);
     compare_recovery_vec_to_genesis_blob(&recovery, genesis_path)
 }
 
