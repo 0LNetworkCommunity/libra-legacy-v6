@@ -13,7 +13,7 @@ module GenesisMigration {
   use DiemFramework::GAS::GAS;
   use DiemFramework::ValidatorUniverse;
   use DiemFramework::ValidatorOperatorConfig;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
 
     /// Called by root in genesis to initialize the GAS coin 
@@ -23,9 +23,6 @@ module GenesisMigration {
         auth_key: vector<u8>,
         balance: u64,
     ) {
-      print(&user_addr);
-      print(&ValidatorUniverse::is_in_universe(user_addr));
-      print(&ValidatorOperatorConfig::has_validator_operator_config(user_addr));
       // if not a validator OR operator of a validator, create a new account
       // previously at genesis validator and oper accounts were already created
       if (!are_you_a_val_or_oper(user_addr)) {
@@ -36,9 +33,14 @@ module GenesisMigration {
         );
       };
 
+      
       // mint coins again to migrate balance, and all
       // system tracking of balances
+      if (balance < 1) {
+        return
+      };
       let minted_coins = Diem::mint<GAS>(vm, balance);
+      let value_coin = Diem::value<GAS>(&minted_coins);
       DiemAccount::vm_deposit_with_metadata<GAS>(
         vm,
         user_addr,
@@ -46,6 +48,9 @@ module GenesisMigration {
         b"genesis migration",
         b""
       );
+
+      let balance = DiemAccount::balance<GAS>(user_addr);
+      assert!(balance == value_coin, 0);
     }
 
     fun are_you_a_val_or_oper(user_addr: address): bool {

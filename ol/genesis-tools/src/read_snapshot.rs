@@ -13,7 +13,7 @@ use tokio::{fs::OpenOptions, io::AsyncRead};
 
 ////// SNAPSHOT FILE IO //////
 /// read snapshot manifest file into object
-pub fn read_from_json(path: &PathBuf) -> Result<StateSnapshotBackup, Error> {
+pub fn read_from_snaphot_manifest(path: &PathBuf) -> Result<StateSnapshotBackup, Error> {
     let config = std::fs::read_to_string(path).map_err(|e| {
         format!("Error: cannot read file {:?}, error: {:?}", &path, &e);
         e

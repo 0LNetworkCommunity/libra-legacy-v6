@@ -9,8 +9,7 @@
 -  [Function `are_you_a_val_or_oper`](#0x1_GenesisMigration_are_you_a_val_or_oper)
 
 
-<pre><code><b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
-<b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
+<pre><code><b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig">0x1::ValidatorOperatorConfig</a>;
@@ -41,9 +40,6 @@ Called by root in genesis to initialize the GAS coin
     auth_key: vector&lt;u8&gt;,
     balance: u64,
 ) {
-  print(&user_addr);
-  print(&<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(user_addr));
-  print(&<a href="ValidatorOperatorConfig.md#0x1_ValidatorOperatorConfig_has_validator_operator_config">ValidatorOperatorConfig::has_validator_operator_config</a>(user_addr));
   // <b>if</b> not a validator OR operator of a validator, create a new account
   // previously at genesis validator and oper accounts were already created
   <b>if</b> (!<a href="GenesisMigration.md#0x1_GenesisMigration_are_you_a_val_or_oper">are_you_a_val_or_oper</a>(user_addr)) {
@@ -54,9 +50,14 @@ Called by root in genesis to initialize the GAS coin
     );
   };
 
+
   // mint coins again <b>to</b> migrate balance, and all
   // system tracking of balances
+  <b>if</b> (balance &lt; 1) {
+    <b>return</b>
+  };
   <b>let</b> minted_coins = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, balance);
+  <b>let</b> value_coin = <a href="Diem.md#0x1_Diem_value">Diem::value</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&minted_coins);
   <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
     vm,
     user_addr,
@@ -64,6 +65,9 @@ Called by root in genesis to initialize the GAS coin
     b"genesis migration",
     b""
   );
+
+  <b>let</b> balance = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(user_addr);
+  <b>assert</b>!(balance == value_coin, 0);
 }
 </code></pre>
 

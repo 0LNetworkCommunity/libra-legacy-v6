@@ -24,18 +24,22 @@ async fn test_parse_json_for_all_users_and_save_blob() {
 
     let recovery = read_from_recovery_file(&recovery_json_path);
 
-    let len = recovery.len();
-    dbg!(&len);
-
     make_recovery_genesis_from_vec_legacy_recovery(
       &recovery,
-      genesis_vals,
+      genesis_vals.clone(),
       output_path.clone(), 
       true
     )
         .expect("ERROR: failed to create genesis from recovery file");
 
     assert!(output_path.exists(), "file not created");
+
+    let list = compare::compare_json_to_genesis_blob(recovery_json_path, output_path.clone()).unwrap();
+
+    assert!(list.is_empty(), "list is not empty");
+    
+    compare::check_val_set(genesis_vals, output_path.clone()).unwrap();
+
     fs::remove_file(output_path).unwrap();
 }
 
@@ -59,13 +63,9 @@ async fn test_parse_json_for_validators_and_save_blob() {
         .expect("ERROR: failed to create genesis from recovery file");
 
     assert!(output_path.exists(), "file not created");
-
-
-    let list = compare::compare_json_to_genesis_blob(recovery_json_path, output_path.clone());
-
-    dbg!(&list);
-    assert!(list.expect("no list").is_empty(), "list is not empty");
     
+    // don't compare all users, just the validators
+
     compare::check_val_set(genesis_vals, output_path.clone()).unwrap();
 
     

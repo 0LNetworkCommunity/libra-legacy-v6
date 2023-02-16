@@ -278,13 +278,17 @@ pub fn encode_recovery_genesis_changeset(
 /// fuction to iterate through a list of LegacyRecovery and recover the user accounts by calling a GenesisMigration.move in the VM. (as opposed to crafting writesets individually which could be fallible).
 
 fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, legacy_data: &[LegacyRecovery]) -> Result<u64, anyhow::Error>{
-    
+
+  dbg!(&legacy_data.is_empty());
+
   let filtered_data: Vec<&LegacyRecovery>= legacy_data.iter()
     .filter(|d| {
         d.account.is_some() &&
         d.account != Some(AccountAddress::ZERO)
     })
     .collect();
+
+
 
     let mut total_balance_restored = 0u64;
     for user in filtered_data {      

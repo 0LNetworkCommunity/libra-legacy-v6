@@ -1,23 +1,29 @@
-use diem_types::account_state::AccountState
+mod support;
+
+use diem_types::account_state::AccountState;
+use diem_types::ol_miner_state::TowerStateResource;
+use diem_types::{account_config::BalanceResource, validator_config::ValidatorConfigResource};
+use move_core_types::move_resource::MoveResource;
+use ol_genesis_tools::{
+  read_snapshot::read_from_snaphot_manifest,
+  process_snapshot::accounts_from_snapshot_backup,
+
+};
+use ol_types::legacy_recovery::accounts_into_recovery;
+use support::path_utils::snapshot_path;
+use std::convert::TryFrom;
 
 #[test]
-#[ignore]
+
 pub fn test_accounts_into_recovery() {
-    use diem_types::ol_miner_state::TowerStateResource;
-    use diem_types::{account_config::BalanceResource, validator_config::ValidatorConfigResource};
-    use move_core_types::move_resource::MoveResource;
-    use std::path::Path;
+    let path = snapshot_path();
+    let path_man = path.join("state.manifest");
 
-    let path = env!("CARGO_MANIFEST_DIR");
-    let buf = Path::new(path)
-        .parent()
-        .unwrap()
-        .join("fixtures/state-snapshot/194/state_ver_74694920.0889/");
-    let path_man = buf.clone().join("state.manifest");
+    // let path_man = buf.clone().join("state.manifest");
     println!("Running.....");
-    let backup = crate::read_snapshot::read_from_json(&path_man).unwrap();
+    let backup = read_from_snaphot_manifest(&path_man).unwrap();
 
-    let account_blobs_futures = accounts_from_snapshot_backup(backup, &path_man);
+    let account_blobs_futures = accounts_from_snapshot_backup(backup, &path);
     let account_blobs = tokio_test::block_on(account_blobs_futures).unwrap();
     let genesis_recovery_list = accounts_into_recovery(&account_blobs).unwrap();
     println!(

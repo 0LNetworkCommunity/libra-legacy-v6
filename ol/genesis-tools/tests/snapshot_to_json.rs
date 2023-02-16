@@ -11,9 +11,8 @@ use support::path_utils::snapshot_path;
 // cargo r -p ol-genesis-tools -- --recover /opt/rec.json --snapshot-path /opt/state_ver*
 
 #[tokio::test]
-async fn test_parse_and_save() {
+async fn snapshot_to_json() {
     let backup = snapshot_path();
-    dbg!(&backup);
     assert!(backup.exists());
 
     let recovery = db_backup_into_recovery_struct(&backup, false)

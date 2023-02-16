@@ -1,16 +1,9 @@
 mod support;
 use diem_config::config::NodeConfig;
-// use diem_config::config::OnDiskStorageConfig;
 use diem_config::config::PersistableConfig;
-// use diem_config::config::SecureBackend;
 use diem_config::config::WaypointConfig;
-// use diem_genesis_tool::validator_builder::ValidatorBuilder;
 use diem_json_rpc::views::AccountView;
-// use diem_secure_storage::KVStorage;
-// use diem_secure_storage::OnDiskStorage;
-// use diem_secure_storage::Storage;
 use diem_types::account_address::AccountAddress;
-// use diem_types::waypoint::Waypoint;
 use ol_genesis_tools::db_utils::read_db_and_compute_genesis;
 use std::fs;
 use std::io::BufRead;
@@ -56,7 +49,8 @@ fn start_test_node() {
 
     let val: AccountAddress = "ADCB1D42A46292AE89E938BD982F2867".parse().unwrap();
     post_node_json(val).unwrap();
-
+    
+    cmd.kill().unwrap();
     clean_up();
 }
 
@@ -74,17 +68,10 @@ fn post_node_json(a: AccountAddress) -> anyhow::Result<AccountView> {
     let res: serde_json::Value = client.post(url).json(&query).send()?.json()?;
 
     let body = res["result"].to_owned();
-    dbg!(&body);
     let view = serde_json::from_value(body)?;
     Ok(view)
 }
 
-#[test]
-fn meta_test_node() {
-    // NOTE: start cargo r -p diem-node -- --test
-    let r = post_node_json(AccountAddress::ZERO);
-    dbg!(&r);
-}
 
 fn get_test_configs() -> Result<(NodeConfig, PathBuf), anyhow::Error> {
     let gen_blob = path_utils::blob_path();
@@ -109,23 +96,9 @@ fn get_test_configs() -> Result<(NodeConfig, PathBuf), anyhow::Error> {
     }
     cfg.save_config(save_path.clone())?;
 
-    // fix the secure backend from default
-    // if let SecureBackend::OnDiskStorage(on_disk) = cfg.execution.backend {
-    //   let on = OnDiskStorage::new(on_disk.path());
-    //   let mut storage = Storage::OnDiskStorage(on);
-
-    //   // needs waypoint
-    //   storage.set("waypoint", wp)?;
-    //   dbg!(&storage.get::<Waypoint>("waypoint")?);
-    // }
-
     Ok((cfg, save_path))
 }
 
-#[test]
-fn node_configs() {
-    get_test_configs().unwrap();
-}
 
 fn clean_up() {
     let save_path = path_utils::blob_path()

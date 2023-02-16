@@ -22,7 +22,7 @@ pub async fn db_backup_into_recovery_struct(
 ) -> Result<Vec<LegacyRecovery>, Error> {
     let manifest_json = archive_path.join("state.manifest");
 
-    let backup = read_snapshot::read_from_json(&manifest_json)
+    let backup = read_snapshot::read_from_snaphot_manifest(&manifest_json)
         .unwrap_or_else(|_| panic!("cannot find snapshot file: {:?}", &manifest_json));
 
     let account_blobs = accounts_from_snapshot_backup(backup, archive_path).await?;
@@ -38,7 +38,7 @@ pub async fn db_backup_into_recovery_struct(
 }
 
 /// Tokio async parsing of state snapshot into blob
-async fn accounts_from_snapshot_backup(
+pub async fn accounts_from_snapshot_backup(
     manifest: StateSnapshotBackup,
     archive_path: &PathBuf,
 ) -> Result<Vec<AccountStateBlob>, Error> {
