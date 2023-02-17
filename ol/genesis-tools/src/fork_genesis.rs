@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
-use crate::process_snapshot::{archive_into_recovery, merge_writeset};
+use crate::process_snapshot::{db_backup_into_recovery_struct, merge_writeset};
 use crate::recover::{
     recover_consensus_accounts, AccountRole, LegacyRecovery, RecoverConsensusAccounts,
 };
@@ -23,30 +23,29 @@ use ol_types::wallet::{CommunityWalletsResource, SlowWalletResource};
 use vm_genesis::encode_recovery_genesis_changeset;
 
 /// Make a recovery genesis blob from archive
-pub async fn make_recovery_genesis_from_archive(
+pub async fn make_recovery_genesis_from_db_backup(
     genesis_blob_path: PathBuf,
     archive_path: PathBuf,
     append: bool,
     is_legacy: bool,
 ) -> Result<(), Error> {
     // get the legacy data from archive
-    let recovery = archive_into_recovery(&archive_path, is_legacy).await?;
+    let recovery = db_backup_into_recovery_struct(&archive_path, is_legacy).await?;
 
-    make_recovery_genesis_from_recovery(recovery, genesis_blob_path, append)
+    make_recovery_genesis_from_vec_legacy_recovery(recovery, genesis_blob_path, append)
 }
 
 /// Make a recovery genesis blob
-pub fn make_recovery_genesis_from_recovery(
+pub fn make_recovery_genesis_from_vec_legacy_recovery(
     recovery: Vec<LegacyRecovery>,
     genesis_blob_path: PathBuf,
-    append: bool,
+    append_user_accounts: bool,
 ) -> Result<(), Error> {
     //TODO: have option to "swarmify" this so that the authkey and network addresses.
 
     // get consensus accounts
     let genesis_accounts = recover_consensus_accounts(&recovery)?;
     // create baseline genesis
-
     // TODO: for testing letting all validators be in genesis set.
     let validator_set: Vec<AccountAddress> = genesis_accounts
         .vals
@@ -54,14 +53,20 @@ pub fn make_recovery_genesis_from_recovery(
         .into_iter()
         .map(|a| return a.val_account)
         .collect();
-    let cs = get_baseline_genesis_change_set(genesis_accounts, &validator_set)?;
-    let gen_tx;
-    if append {
+
+    let cs_validators_only = get_baseline_genesis_change_set(genesis_accounts, &validator_set)?;
+
+    // For a real upgrade or fork, we want to include all user accounts.
+    // this is the default.
+    // Otherwise, we might need to just collect the validator accounts
+    // for debugging or other test purposes.
+    let expected_len_all_users = recovery.len() as u64;
+    let gen_tx = if append_user_accounts {
         // append further writeset to genesis
-        gen_tx = append_genesis(cs, recovery)?;
+        append_genesis(cs_validators_only, recovery, expected_len_all_users)?
     } else {
-        gen_tx = Transaction::GenesisTransaction(WriteSetPayload::Direct(cs));
-    }
+        Transaction::GenesisTransaction(WriteSetPayload::Direct(cs_validators_only))
+    };
     // save genesis
     save_genesis(gen_tx, genesis_blob_path)
 }
@@ -83,18 +88,35 @@ pub fn get_baseline_genesis_change_set(
 pub fn append_genesis(
     gen_cs: ChangeSet,
     legacy_vec: Vec<LegacyRecovery>,
+    expected_len_all_users: u64,
 ) -> Result<Transaction, Error> {
     // merge writesets
     let mut all_writesets = gen_cs.write_set().to_owned().into_mut();
     let mut total_coin_value = 0u64;
+    let mut len = 0u64;
+    // iterate through all the accounts
+    // this includes the Validator accounts.
+    // at a minimum balances will need to be recovered
+    // and the total tokens calculated, and checked for matching sums.
+    // there may also be migrations on other account state that may need to be done.
     for l in &legacy_vec {
+        assert!(l.account.is_some());
+
+        diem_logger::debug!("migrating: {} - {}", &l.account.unwrap(), &len);
+
         // get balance
         if let Some(b) = &l.balance {
             total_coin_value = total_coin_value + b.coin();
         }
         let ws = migrate_account(l)?;
         all_writesets = merge_writeset(all_writesets, ws)?;
+        len = len + 1;
     }
+
+    assert!(
+        len == expected_len_all_users,
+        "mismatched number of users in attempted recovery"
+    );
 
     // after counting balance, reset total coin value.
     let coin_ws = total_coin_value_restore(legacy_vec, total_coin_value as u128)?;

@@ -29,7 +29,7 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: Build stdlib
-        run: make stdlib
+        run: sh ol/util/build-stdlib.sh
 
       - name: Run Forge Local Tests
         run: cargo r -p forge-cli -- test local-swarm
