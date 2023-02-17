@@ -23,12 +23,15 @@
 -  [Function `maybe_find_a_pledge`](#0x1_PledgeAccounts_maybe_find_a_pledge)
 -  [Function `get_pledge_amount`](#0x1_PledgeAccounts_get_pledge_amount)
 -  [Function `get_total_pledged_to_beneficiary`](#0x1_PledgeAccounts_get_total_pledged_to_beneficiary)
+-  [Function `test_single_withdrawal`](#0x1_PledgeAccounts_test_single_withdrawal)
 
 
-<pre><code><b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
+<pre><code><b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
+<b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
@@ -429,8 +432,10 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_withdraw_from_all_pledge_accounts">withdraw_from_all_pledge_accounts</a>(sig_beneficiary: &signer, amount: u64) <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a>, <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a> {
     <b>let</b> pledgers = *&<b>borrow_global</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig_beneficiary)).pledgers;
+
     <b>let</b> address_of_beneficiary = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig_beneficiary);
     <b>let</b> i = 0;
+
     <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&pledgers)) {
         <b>let</b> pledge_account = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&pledgers, i);
 
@@ -471,15 +476,26 @@
     <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&pledge_state.list)) {
         <b>if</b> (&<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&pledge_state.list, i).address_of_beneficiary == address_of_beneficiary) {
             <b>let</b> pledge_account = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>(&<b>mut</b> pledge_state.list, i);
-            pledge_account.amount = pledge_account.amount - amount;
-            pledge_account.lifetime_withdrawn = pledge_account.lifetime_withdrawn + amount;
+            print(&pledge_account.amount);
+            <b>if</b> (
+              pledge_account.amount &gt; 0 &&
+              pledge_account.amount &gt; amount
 
-            // <b>update</b> the beneficiaries state too
-            bp.total_pledged = bp.total_pledged - amount;
-            bp.lifetime_withdrawn = bp.lifetime_withdrawn - amount;
-
-            coin = amount;
-            <b>break</b>
+              ) {
+                print(&1101);
+                pledge_account.amount = pledge_account.amount - amount;
+                print(&1102);
+                pledge_account.lifetime_withdrawn = pledge_account.lifetime_withdrawn + amount;
+                print(&1103);
+                // <b>update</b> the beneficiaries state too
+                print(&bp.total_pledged);
+                bp.total_pledged = bp.total_pledged - amount;
+                print(&1104);
+                bp.lifetime_withdrawn = bp.lifetime_withdrawn - amount;
+                print(&1104);
+                coin = amount;
+                <b>return</b> coin
+              }
         };
         i = i + 1;
     };
@@ -764,6 +780,31 @@
     <b>return</b> bp.total_pledged
   };
   0
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_PledgeAccounts_test_single_withdrawal"></a>
+
+## Function `test_single_withdrawal`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_test_single_withdrawal">test_single_withdrawal</a>(vm: &signer, bene: <b>address</b>, donor: <b>address</b>, amount: u64): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_test_single_withdrawal">test_single_withdrawal</a>(vm: &signer, bene: <b>address</b>, donor: <b>address</b>, amount: u64): u64 <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a>, <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>{
+  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
+  <a href="PledgeAccounts.md#0x1_PledgeAccounts_withdraw_from_one_pledge_account">withdraw_from_one_pledge_account</a>(&bene, &donor, amount)
 }
 </code></pre>
 
