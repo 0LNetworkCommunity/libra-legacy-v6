@@ -13,6 +13,7 @@ module DiemFramework::DiemAccount {
     friend DiemFramework::Genesis;
     friend DiemFramework::TestFixtures; // Todo: remove
     friend DiemFramework::Mock;
+    friend DiemFramework::PledgeAccounts;
 
     use DiemFramework::AccountFreezing;
     use DiemFramework::CoreAddresses;

@@ -10,6 +10,9 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
+<b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts">0x1::PledgeAccounts</a>;
 </code></pre>
 
@@ -54,7 +57,7 @@ for use on genesis, creates the infra escrow pledge policy struct
 VM can call down pledged funds.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="InfraEscrow.md#0x1_InfraEscrow_infra_pledge_withdraw">infra_pledge_withdraw</a>(vm: &signer, amount: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="InfraEscrow.md#0x1_InfraEscrow_infra_pledge_withdraw">infra_pledge_withdraw</a>(vm: &signer, amount: u64): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;&gt;
 </code></pre>
 
 
@@ -63,9 +66,9 @@ VM can call down pledged funds.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="InfraEscrow.md#0x1_InfraEscrow_infra_pledge_withdraw">infra_pledge_withdraw</a>(vm: &signer, amount: u64) {
+<pre><code><b>public</b> <b>fun</b> <a href="InfraEscrow.md#0x1_InfraEscrow_infra_pledge_withdraw">infra_pledge_withdraw</a>(vm: &signer, amount: u64): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt; {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
-    <a href="PledgeAccounts.md#0x1_PledgeAccounts_withdraw_from_all_pledge_accounts">PledgeAccounts::withdraw_from_all_pledge_accounts</a>(vm, amount);
+    <a href="PledgeAccounts.md#0x1_PledgeAccounts_withdraw_from_all_pledge_accounts">PledgeAccounts::withdraw_from_all_pledge_accounts</a>(vm, amount)
 }
 </code></pre>
 

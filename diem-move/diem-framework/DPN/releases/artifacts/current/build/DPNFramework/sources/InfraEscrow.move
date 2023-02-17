@@ -12,9 +12,11 @@
 
 address DiemFramework{
     module InfraEscrow{
-
+    use Std::Option;
     use DiemFramework::PledgeAccounts;
     use DiemFramework::CoreAddresses;
+    use DiemFramework::GAS::GAS;
+    use DiemFramework::Diem;
 
     /// for use on genesis, creates the infra escrow pledge policy struct
     public fun initialize_infra_pledge(vm: &signer) {
@@ -29,9 +31,9 @@ address DiemFramework{
     }
 
     /// VM can call down pledged funds.
-    public fun infra_pledge_withdraw(vm: &signer, amount: u64) {
+    public fun infra_pledge_withdraw(vm: &signer, amount: u64): Option::Option<Diem::Diem<GAS>> {
         CoreAddresses::assert_diem_root(vm);
-        PledgeAccounts::withdraw_from_all_pledge_accounts(vm, amount);
+        PledgeAccounts::withdraw_from_all_pledge_accounts(vm, amount)
     }
 
     // for end users to pledge to the infra escrow
