@@ -17,6 +17,7 @@
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
+<b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
@@ -82,7 +83,7 @@ Called by root in genesis to initialize the GAS coin
     };
 
     <b>move_to</b>(vm, <a href="MusicalChairs.md#0x1_MusicalChairs_Chairs">Chairs</a> {
-        current_seats: 0,
+        current_seats: <a href="Globals.md#0x1_Globals_get_val_set_at_genesis">Globals::get_val_set_at_genesis</a>(),
         history: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;(),
     });
 }

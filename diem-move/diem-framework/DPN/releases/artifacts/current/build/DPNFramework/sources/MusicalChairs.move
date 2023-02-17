@@ -5,6 +5,7 @@ module MusicalChairs {
     use DiemFramework::DiemTimestamp;
     use DiemFramework::CoreAddresses;
     use DiemFramework::Cases;
+    use DiemFramework::Globals;
     use Std::FixedPoint32;
     use Std::Vector;
 
@@ -52,7 +53,7 @@ module MusicalChairs {
         };
 
         move_to(vm, Chairs {
-            current_seats: 0,
+            current_seats: Globals::get_val_set_at_genesis(),
             history: Vector::empty<u64>(),
         });
     }
