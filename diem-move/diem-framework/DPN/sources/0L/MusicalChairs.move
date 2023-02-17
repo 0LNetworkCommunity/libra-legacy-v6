@@ -53,7 +53,7 @@ module MusicalChairs {
         };
 
         move_to(vm, Chairs {
-            current_seats: Globals::get_max_validators_per_set(),
+            current_seats: Globals::get_val_set_at_genesis(),
             history: Vector::empty<u64>(),
         });
     }

@@ -347,6 +347,7 @@
   <b>let</b> one_third_of_max = proven_len/2;
   <b>let</b> safe_set_size = proven_len + one_third_of_max;
   print(&77777777);
+  print(&set_size);
   print(&proven_len);
   print(&one_third_of_max);
   print(&safe_set_size);
