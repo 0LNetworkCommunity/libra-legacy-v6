@@ -41,11 +41,14 @@ address DiemFramework{
     module PledgeAccounts{
         use Std::Vector;
         use Std::Signer;
-        use Std::Errors;
-        use Std::Option;
+        // use Std::Errors;
+        // use Std::Option;
+        use Std::FixedPoint32;
         use DiemFramework::DiemConfig;
         use DiemFramework::Debug::print;
         use DiemFramework::Testnet;
+        use DiemFramework::Diem;
+        use DiemFramework::GAS::GAS;
 
 
         const ENO_BENEFICIARY_POLICY: u64 = 150001;
@@ -57,10 +60,11 @@ address DiemFramework{
         }
 
         // A Pledge Account is a sub-account on a user's account.
-        struct PledgeAccount has key, store, copy, drop {
+        struct PledgeAccount has key, store {
             // project_id: vector<u8>, // a string that identifies the project
             address_of_beneficiary: address, // the address of the project, also where the BeneficiaryPolicy is stored for reference.
             amount: u64,
+            pledge: Diem::Diem<GAS>,
             epoch_of_last_deposit: u64,
             lifetime_pledged: u64,
             lifetime_withdrawn: u64
@@ -74,7 +78,7 @@ address DiemFramework{
           purpose: vector<u8>, // a string that describes the purpose of the pledge
           vote_threshold_to_revoke: u64, // Percent in two digits, no decimals: the threshold of votes, weighted by pledged balance, needed to dissolve, and revoke the pledge. 
           burn_funds_on_revoke: bool, // neither the beneficiary not the pledger can get the funds back, they are burned. Changes the game theory, may be necessary to in certain cases to prevent attacks in high stakes projects.
-          total_pledged: u64, // The amount available to withdraw
+          amount_available: u64, // The amount available to withdraw
           lifetime_pledged: u64, // Of all users
           lifetime_withdrawn: u64, // Of all users
           pledgers: vector<address>,
@@ -98,7 +102,7 @@ address DiemFramework{
                     purpose: purpose,
                     vote_threshold_to_revoke: vote_threshold_to_revoke,
                     burn_funds_on_revoke: burn_funds_on_revoke,
-                    total_pledged: 0,
+                    amount_available: 0,
                     lifetime_pledged: 0,
                     lifetime_withdrawn: 0,
                     pledgers: Vector::empty(),
@@ -129,28 +133,40 @@ address DiemFramework{
             }
         }
 
-        // Create a new pledge account on a user's list of pledges
-        public fun create_pledge_account(
+
+        public fun save_pledge(
           sig: &signer,
           // project_id: vector<u8>,
           address_of_beneficiary: address,
+          pledge: Diem::Diem<GAS>
+          ) acquires MyPledges, BeneficiaryPolicy {
+            let sender_addr = Signer::address_of(sig);
+            let (found, idx) = pledge_at_idx(&sender_addr, &address_of_beneficiary);
+            if (found) {
+              add_coin_to_pledge_account(sig, idx, Diem::value(&pledge), pledge)
+            } else {
+              create_pledge_account(sig, address_of_beneficiary, pledge)
+            }
+        }
+
+        // Create a new pledge account on a user's list of pledges
+        fun create_pledge_account(
+          sig: &signer,
+          // project_id: vector<u8>,
+          address_of_beneficiary: address,
+          init_pledge: Diem::Diem<GAS>,
         ) acquires MyPledges {
             let account = Signer::address_of(sig);
             maybe_initialize_my_pledges(sig);
             let my_pledges = borrow_global_mut<MyPledges>(account);
-
-            // check a beneficiary policy exists
-            assert!(exists<BeneficiaryPolicy>(address_of_beneficiary), Errors::invalid_argument(ENO_BENEFICIARY_POLICY));
-
-            // check if there isn't already a pledge initialized.
-            // let len = Vector::length(&my_pledges.list);
-
+            let value = Diem::value(&init_pledge);
             let new_pledge_account = PledgeAccount {
                 // project_id: project_id,
                 address_of_beneficiary: address_of_beneficiary,
-                amount: 0,
+                amount: value,
+                pledge: init_pledge,
                 epoch_of_last_deposit: DiemConfig::get_current_epoch(),
-                lifetime_pledged: 0,
+                lifetime_pledged: value,
                 lifetime_withdrawn: 0
             };
             Vector::push_back(&mut my_pledges.list, new_pledge_account);
@@ -158,35 +174,27 @@ address DiemFramework{
 
         // add funds to an existing pledge account
         // Note: only funds that are Unlocked and otherwise unrestricted can be used in pledge account.
-        public fun add_funds_to_pledge_account(sender: &signer, address_of_beneficiary: address, amount: u64) acquires MyPledges, BeneficiaryPolicy {
-            let sender_addr = Signer::address_of(sender);
-            if (Option::is_none(&maybe_find_a_pledge(&sender_addr, &address_of_beneficiary))) {
-              create_pledge_account(sender, address_of_beneficiary);
-            };
+        fun add_coin_to_pledge_account(sender: &signer, idx: u64, amount: u64, coin: Diem::Diem<GAS>) acquires MyPledges, BeneficiaryPolicy {
+          let sender_addr = Signer::address_of(sender);
+          // let (found, _idx) = pledge_at_idx(&sender_addr, &address_of_beneficiary);
 
-            assert!(exists<MyPledges>(sender_addr), Errors::invalid_state(ENO_PLEDGE_INIT));
+          let my_pledges = borrow_global_mut<MyPledges>(sender_addr);
+          let pledge_account = Vector::borrow_mut(&mut my_pledges.list, idx);
 
-            let my_pledges = borrow_global_mut<MyPledges>(sender_addr);
-            let i = 0;
-            while (i < Vector::length(&my_pledges.list)) {
-                if (Vector::borrow(&my_pledges.list, i).address_of_beneficiary == address_of_beneficiary) {
-                    let pledge_account = Vector::borrow_mut(&mut my_pledges.list, i);
-                    pledge_account.amount = pledge_account.amount + amount;
-                    pledge_account.epoch_of_last_deposit = DiemConfig::get_current_epoch();
-                    pledge_account.lifetime_pledged = pledge_account.lifetime_pledged + amount;
+          pledge_account.amount = pledge_account.amount + amount;
+          pledge_account.epoch_of_last_deposit = DiemConfig::get_current_epoch();
+          pledge_account.lifetime_pledged = pledge_account.lifetime_pledged + amount;
 
-                    // must add pledger address the ProjectPledgers list on beneficiary account
-                    
-                    let b = borrow_global_mut<BeneficiaryPolicy>(address_of_beneficiary);
-                    Vector::push_back(&mut b.pledgers, sender_addr);
+          // merge the coins in the account
+          Diem::deposit(&mut pledge_account.pledge, coin);
 
-                    b.total_pledged = b.total_pledged  + amount;
-                    b.lifetime_pledged = b.lifetime_pledged + amount;
+          // must add pledger address the ProjectPledgers list on beneficiary account
 
-                    break
-                };
-                i = i + 1;
-            };
+          let b = borrow_global_mut<BeneficiaryPolicy>(pledge_account.address_of_beneficiary);
+          Vector::push_back(&mut b.pledgers, sender_addr);
+
+          b.amount_available = b.amount_available  + amount;
+          b.lifetime_pledged = b.lifetime_pledged + amount;
 
           // exits silently if nothing is found.
           // this is to prevent halting in the event that a VM route is calling the function and is unable to check the return value.
@@ -224,10 +232,11 @@ address DiemFramework{
             while (i < Vector::length(&pledge_state.list)) {
                 if (&Vector::borrow(&pledge_state.list, i).address_of_beneficiary == address_of_beneficiary) {
                     let pledge_account = Vector::borrow_mut(&mut pledge_state.list, i);
+                    print(&66);
                     print(&pledge_account.amount);
                     if (
                       pledge_account.amount > 0 &&
-                      pledge_account.amount > amount
+                      pledge_account.amount >= amount
                       
                       ) {
                         print(&1101);
@@ -236,13 +245,15 @@ address DiemFramework{
                         pledge_account.lifetime_withdrawn = pledge_account.lifetime_withdrawn + amount;
                         print(&1103);
                         // update the beneficiaries state too
-                        print(&bp.total_pledged);
-                        bp.total_pledged = bp.total_pledged - amount;
+                        print(&bp.amount_available);
+                        bp.amount_available = bp.amount_available - amount;
                         print(&1104);
-                        bp.lifetime_withdrawn = bp.lifetime_withdrawn - amount;
-                        print(&1104);
+                        print(&bp.amount_available);
+                        bp.lifetime_withdrawn = bp.lifetime_withdrawn + amount;
+                        print(&1105);
                         coin = amount;
-                        return coin
+                        print(&coin);
+                        // return coin
                       }
                 };
                 i = i + 1;
@@ -267,9 +278,16 @@ address DiemFramework{
             let bp = borrow_global_mut<BeneficiaryPolicy>(address_of_beneficiary);
 
             Vector::push_back(&mut bp.table_revoking_electors, pledger);
-            let user_pledge_balance = get_pledge_amount(&pledger, &address_of_beneficiary);
+            let user_pledge_balance = get_user_pledge_amount(&pledger, &address_of_beneficiary);
             Vector::push_back(&mut bp.table_votes_to_revoke, user_pledge_balance);
             bp.total_revoke_vote = bp.total_revoke_vote + user_pledge_balance;
+
+            // The first voter to cross the threshold  also
+            // triggers the dissolution.
+            if (tally_vote(address_of_beneficiary)) {
+              print(&444);
+              dissolve_beneficiary_project(address_of_beneficiary);
+            };
         }
 
         // The user changes their mind.
@@ -312,11 +330,13 @@ address DiemFramework{
         // does not change any state.
         fun tally_vote(address_of_beneficiary: address): bool acquires BeneficiaryPolicy {
             let bp = borrow_global<BeneficiaryPolicy>(address_of_beneficiary);
-            let total_pledged = bp.total_pledged;
+            let amount_available = bp.amount_available;
             let total_revoke_vote = bp.total_revoke_vote;
 
             // TODO: use FixedPoint here.
-            if ((total_revoke_vote / total_pledged) > bp.vote_threshold_to_revoke) {
+            let ratio = FixedPoint32::create_from_rational(total_revoke_vote, amount_available);
+            let pct = FixedPoint32::multiply_u64(100, ratio);
+            if (pct > bp.vote_threshold_to_revoke) {
                 return true
             };
             false
@@ -326,69 +346,131 @@ address DiemFramework{
         // Danger: this function must remain private!
         // private function to dissolve the beneficiary project, and return all funds to the pledgers.
         fun dissolve_beneficiary_project(address_of_beneficiary: address) acquires MyPledges, BeneficiaryPolicy {
+            print(&888888888);
             let pledgers = *&borrow_global<BeneficiaryPolicy>(address_of_beneficiary).pledgers;
 
             // let pledgers = *&bp.pledgers;
             let i = 0;
             while (i < Vector::length(&pledgers)) {
+                print(&888);
                 let pledge_account = Vector::borrow(&pledgers, i);
-                let user_pledge_balance = get_pledge_amount(pledge_account, &address_of_beneficiary);
-
-                let _coin = withdraw_from_one_pledge_account(&address_of_beneficiary, pledge_account, user_pledge_balance);
-
+                let user_pledge_balance = get_user_pledge_amount(pledge_account, &address_of_beneficiary);
+                print(&user_pledge_balance);
+                let coin = withdraw_from_one_pledge_account(&address_of_beneficiary, pledge_account, user_pledge_balance);
+                print(&coin);
                 i = i + 1;
             };
 
           let bp = borrow_global_mut<BeneficiaryPolicy>(address_of_beneficiary);
-          assert!(bp.total_pledged == 0, ENON_ZERO_BALANCE);
-
+          print(&bp.amount_available);
+          assert!(bp.amount_available == 0, ENON_ZERO_BALANCE);
+          print(&5555555);
+          print(&bp.revoked);
           bp.revoked = true;
+          print(&bp.revoked);
 
           // otherwise leave the information as-is for reference purposes
         }
 
         ////////// GETTERS //////////
 
-        public fun maybe_find_a_pledge(account: &address, address_of_beneficiary: &address): Option::Option<PledgeAccount> acquires MyPledges {
-          if (!exists<MyPledges>(*account)) {
-            return Option::none<PledgeAccount>()
-          };
+        // Danger: If the VM calls this and there is an error there will be a halt.
+        // always call pledge_at_idx() first.
+        // NOTE: cannot wrap in option witout changing the struct abilities to copy, drop.
+        // can't do that because Diem<GAS> cannot be copy, or drop.
+        // public fun maybe_find_a_pledge(account: &address, address_of_beneficiary: &address): &mut PledgeAccount acquires MyPledges {
+        //   let (found, idx) = pledge_at_idx(account, address_of_beneficiary);
+        //   assert!(found, Errors::invalid_state(ENO_PLEDGE_INIT));
 
+        //   let my_pledges = borrow_global_mut<MyPledges>(*account).list;
+        //   let p = Vector::borrow_mut(&mut my_pledges, idx);
+        //   p
+        // }
+
+        fun pledge_at_idx(account: &address, address_of_beneficiary: &address): (bool, u64) acquires MyPledges {
+          if (exists<MyPledges>(*account)) {
           let my_pledges = &borrow_global<MyPledges>(*account).list;
             let i = 0;
             while (i < Vector::length(my_pledges)) {
                 let p = Vector::borrow(my_pledges, i);
                 if (&p.address_of_beneficiary == address_of_beneficiary) {
-                    return Option::some<PledgeAccount>(*p)
+                    return (true, i)
                 };
                 i = i + 1;
             };
-            return Option::none()
+          };
+          (false, 0)
         }
+
+        // public fun maybe_find_a_pledge(account: &address, address_of_beneficiary: &address): Option::Option<PledgeAccount> acquires MyPledges {
+        //   if (!exists<MyPledges>(*account)) {
+        //     return Option::none<PledgeAccount>()
+        //   };
+
+        //   let my_pledges = &borrow_global<MyPledges>(*account).list;
+        //     let i = 0;
+        //     while (i < Vector::length(my_pledges)) {
+        //         let p = Vector::borrow(my_pledges, i);
+        //         if (&p.address_of_beneficiary == address_of_beneficiary) {
+        //             return Option::some<PledgeAccount>(*p)
+        //         };
+        //         i = i + 1;
+        //     };
+        //     return Option::none()
+        // }
         // get the pledge amount on a specific pledge account
-        public fun get_pledge_amount(account: &address, address_of_beneficiary: &address): u64 acquires MyPledges {
-            let found_pledge = maybe_find_a_pledge(account, address_of_beneficiary);
-            
-            if (Option::is_some(&found_pledge)) {
-              return Option::borrow(&found_pledge).amount
+        public fun get_user_pledge_amount(account: &address, address_of_beneficiary: &address): u64 acquires MyPledges {
+            let (found, idx) = pledge_at_idx(account, address_of_beneficiary);
+            if (found) {
+              let my_pledges = borrow_global<MyPledges>(*account);
+              let p = Vector::borrow(&my_pledges.list, idx);
+              return p.amount
             };
             return 0
         }
 
-      public fun get_total_pledged_to_beneficiary(bene: address): u64 acquires BeneficiaryPolicy {
-        if (exists<BeneficiaryPolicy>(bene)) {
-          let bp = borrow_global<BeneficiaryPolicy>(bene);
-          return bp.total_pledged
+      public fun get_available_to_beneficiary(bene: &address): u64 acquires BeneficiaryPolicy {
+        if (exists<BeneficiaryPolicy>(*bene)) {
+          let bp = borrow_global<BeneficiaryPolicy>(*bene);
+          return bp.amount_available
         };
         0
       }
 
+      public fun get_lifetime_to_beneficiary(bene: &address): (u64, u64)acquires BeneficiaryPolicy {
+        if (exists<BeneficiaryPolicy>(*bene)) {
+          let bp = borrow_global<BeneficiaryPolicy>(*bene);
+          return (bp.lifetime_pledged, bp.lifetime_withdrawn)
+        };
+        (0, 0)
+      }
+
+      public fun get_revoke_vote(bene: &address): (bool, FixedPoint32::FixedPoint32) acquires BeneficiaryPolicy {
+        let null = FixedPoint32::create_from_raw_value(0);
+        if (exists<BeneficiaryPolicy>(*bene)) {
+          let bp = borrow_global<BeneficiaryPolicy>(*bene);
+          if (bp.revoked) {
+            return (true, null)
+          } else if (
+            bp.total_revoke_vote > 0 &&
+            bp.amount_available > 0
+          ) {
+            return (
+              false,
+              FixedPoint32::create_from_rational(bp.total_revoke_vote, bp.amount_available)
+            )
+          }
+        };
+        (false, null)
+      }
+
+
 
       //////// TEST HELPERS ///////
       // Danger! withdraws from an account.
-      public fun test_single_withdrawal(vm: &signer, bene: address, donor: address, amount: u64): u64 acquires MyPledges, BeneficiaryPolicy{
+      public fun test_single_withdrawal(vm: &signer, bene: &address, donor: &address, amount: u64): u64 acquires MyPledges, BeneficiaryPolicy{
         Testnet::assert_testnet(vm);
-        withdraw_from_one_pledge_account(&bene, &donor, amount)
+        withdraw_from_one_pledge_account(bene, donor, amount)
       }
 }
 }
