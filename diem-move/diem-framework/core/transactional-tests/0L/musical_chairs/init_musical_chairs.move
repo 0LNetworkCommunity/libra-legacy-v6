@@ -4,8 +4,9 @@
 script {
     use DiemFramework::MusicalChairs;
     fun main(_dr: signer, _sender: signer) {
+        // using testnet values from Globals.move
         let a = MusicalChairs::get_current_seats();
-        assert!(a == 0, 10001);
+        assert!(a == 10, 10001);
     }
 }
 //check: EXECUTED
