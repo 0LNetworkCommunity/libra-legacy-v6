@@ -42,23 +42,25 @@ address DiemFramework{
         use Std::Vector;
         use Std::Signer;
         use Std::Errors;
+        use Std::Option;
         use DiemFramework::DiemConfig;
 
 
         const ENO_BENEFICIARY_POLICY: u64 = 150001;
         const ENON_ZERO_BALANCE: u64 = 150002;
+        const ENO_PLEDGE_INIT: u64 = 150003;
 
         struct MyPledges has key {
           list: vector<PledgeAccount>
         }
 
         // A Pledge Account is a sub-account on a user's account.
-        struct PledgeAccount has key, store {
+        struct PledgeAccount has key, store, copy, drop {
             // project_id: vector<u8>, // a string that identifies the project
             address_of_beneficiary: address, // the address of the project, also where the BeneficiaryPolicy is stored for reference.
             amount: u64,
             epoch_of_last_deposit: u64,
-            lifetime_deposited: u64,
+            lifetime_pledged: u64,
             lifetime_withdrawn: u64
         }
 
@@ -68,19 +70,17 @@ address DiemFramework{
 
         struct BeneficiaryPolicy has key, store, copy {
           purpose: vector<u8>, // a string that describes the purpose of the pledge
-          vote_threshold_to_revoke: u64, // the threshold of votes, weighted by pledged balance, needed to dissolve, and revoke the pledge.
+          vote_threshold_to_revoke: u64, // Percent in two digits, no decimals: the threshold of votes, weighted by pledged balance, needed to dissolve, and revoke the pledge. 
           burn_funds_on_revoke: bool, // neither the beneficiary not the pledger can get the funds back, they are burned. Changes the game theory, may be necessary to in certain cases to prevent attacks in high stakes projects.
-          total_pledged: u64, // TODO: the amount available to withdraw
+          total_pledged: u64, // The amount available to withdraw
+          lifetime_pledged: u64, // Of all users
+          lifetime_withdrawn: u64, // Of all users
           pledgers: vector<address>,
           // TODO: use proper table data structure. This is oldschool Libra pattern.
           table_votes_to_revoke: vector<u64>, // recalculate on each vote to revoke.
           table_revoking_electors: vector<address>, // the list of electors who have voted to revoke. They can also cancel their vote.
           total_revoke_vote: u64, // for informational purposes,
           revoked: bool, // for historical record keeping.
-
-          // TODO: lifetime pledged
-          // TODO: lifetime withdrawn
-
         }
 
         // beneficiary publishes a policy to their account.
@@ -97,6 +97,8 @@ address DiemFramework{
                     vote_threshold_to_revoke: vote_threshold_to_revoke,
                     burn_funds_on_revoke: burn_funds_on_revoke,
                     total_pledged: 0,
+                    lifetime_pledged: 0,
+                    lifetime_withdrawn: 0,
                     pledgers: Vector::empty(),
                     table_votes_to_revoke: Vector::empty(),
                     table_revoking_electors: Vector::empty(),
@@ -130,7 +132,6 @@ address DiemFramework{
           sig: &signer,
           // project_id: vector<u8>,
           address_of_beneficiary: address,
-          amount: u64
         ) acquires MyPledges {
             let account = Signer::address_of(sig);
             maybe_initialize_my_pledges(sig);
@@ -139,12 +140,15 @@ address DiemFramework{
             // check a beneficiary policy exists
             assert!(exists<BeneficiaryPolicy>(address_of_beneficiary), Errors::invalid_argument(ENO_BENEFICIARY_POLICY));
 
+            // check if there isn't already a pledge initialized.
+            // let len = Vector::length(&my_pledges.list);
+
             let new_pledge_account = PledgeAccount {
                 // project_id: project_id,
                 address_of_beneficiary: address_of_beneficiary,
-                amount: amount,
+                amount: 0,
                 epoch_of_last_deposit: DiemConfig::get_current_epoch(),
-                lifetime_deposited: amount,
+                lifetime_pledged: 0,
                 lifetime_withdrawn: 0
             };
             Vector::push_back(&mut my_pledges.list, new_pledge_account);
@@ -152,20 +156,30 @@ address DiemFramework{
 
         // add funds to an existing pledge account
         // Note: only funds that are Unlocked and otherwise unrestricted can be used in pledge account.
-        public fun add_funds_to_pledge_account(account: &signer, address_of_beneficiary: address, amount: u64) acquires MyPledges, BeneficiaryPolicy {
-            let my_pledges = borrow_global_mut<MyPledges>(Signer::address_of(account));
+        public fun add_funds_to_pledge_account(sender: &signer, address_of_beneficiary: address, amount: u64) acquires MyPledges, BeneficiaryPolicy {
+            let sender_addr = Signer::address_of(sender);
+            if (Option::is_none(&maybe_find_a_pledge(&sender_addr, &address_of_beneficiary))) {
+              create_pledge_account(sender, address_of_beneficiary);
+            };
+
+            assert!(exists<MyPledges>(sender_addr), Errors::invalid_state(ENO_PLEDGE_INIT));
+
+            let my_pledges = borrow_global_mut<MyPledges>(sender_addr);
             let i = 0;
             while (i < Vector::length(&my_pledges.list)) {
                 if (Vector::borrow(&my_pledges.list, i).address_of_beneficiary == address_of_beneficiary) {
                     let pledge_account = Vector::borrow_mut(&mut my_pledges.list, i);
                     pledge_account.amount = pledge_account.amount + amount;
                     pledge_account.epoch_of_last_deposit = DiemConfig::get_current_epoch();
-                    pledge_account.lifetime_deposited = pledge_account.lifetime_deposited + amount;
+                    pledge_account.lifetime_pledged = pledge_account.lifetime_pledged + amount;
 
                     // must add pledger address the ProjectPledgers list on beneficiary account
                     
                     let b = borrow_global_mut<BeneficiaryPolicy>(address_of_beneficiary);
-                    Vector::push_back(&mut b.pledgers, Signer::address_of(account));
+                    Vector::push_back(&mut b.pledgers, sender_addr);
+
+                    b.total_pledged = b.total_pledged  + amount;
+                    b.lifetime_pledged = b.lifetime_pledged + amount;
 
                     break
                 };
@@ -211,7 +225,7 @@ address DiemFramework{
                     
                     // update the beneficiaries state too
                     bp.total_pledged = bp.total_pledged - amount;
-                    // TODO: bp.lifetime_withdrawn = bp.lifetime_withdrawn + amount;
+                    bp.lifetime_withdrawn = bp.lifetime_withdrawn - amount;
                     
                     coin = amount;
                     break
@@ -225,6 +239,8 @@ address DiemFramework{
         }
 
         // vote to revoke a beneficiary's policy
+        // this is just a vote, it requires a tally, and consensus to
+        // revert the fund OR burn them, depending on policy
         public fun vote_to_revoke_beneficiary_policy(account: &signer, address_of_beneficiary: address) acquires MyPledges, BeneficiaryPolicy {
             
 
@@ -241,6 +257,8 @@ address DiemFramework{
             bp.total_revoke_vote = bp.total_revoke_vote + user_pledge_balance;
         }
 
+        // The user changes their mind.
+        // They are retracting/cancelling their vote.
         public fun try_cancel_vote(account: &signer, address_of_beneficiary: address) acquires BeneficiaryPolicy {
             let pledger = Signer::address_of(account);
             let bp = borrow_global_mut<BeneficiaryPolicy>(address_of_beneficiary);
@@ -259,7 +277,7 @@ address DiemFramework{
             Vector::remove(&mut bp.table_votes_to_revoke, idx);
         }
 
-        // find the index of a vote the user has already cast
+        // helper to find the index of a vote the user has already cast
         fun find_index_of_vote(table_revoking_electors: &vector<address>, pledger: &address): u64 {
             if (Vector::contains(table_revoking_electors, pledger)) {
                 return 0
@@ -275,17 +293,22 @@ address DiemFramework{
             0 // TODO: return an option type
         }
 
+        // count the votes.
+        // does not change any state.
         fun tally_vote(address_of_beneficiary: address): bool acquires BeneficiaryPolicy {
             let bp = borrow_global<BeneficiaryPolicy>(address_of_beneficiary);
             let total_pledged = bp.total_pledged;
             let total_revoke_vote = bp.total_revoke_vote;
 
+            // TODO: use FixedPoint here.
             if ((total_revoke_vote / total_pledged) > bp.vote_threshold_to_revoke) {
                 return true
             };
             false
         }
 
+
+        // Danger: this function must remain private!
         // private function to dissolve the beneficiary project, and return all funds to the pledgers.
         fun dissolve_beneficiary_project(address_of_beneficiary: address) acquires MyPledges, BeneficiaryPolicy {
             let pledgers = *&borrow_global<BeneficiaryPolicy>(address_of_beneficiary).pledgers;
@@ -306,22 +329,43 @@ address DiemFramework{
 
           bp.revoked = true;
 
-            // leave the information for historical purposes
+          // otherwise leave the information as-is for reference purposes
         }
 
         ////////// GETTERS //////////
 
-        // get the pledge amount on a specific pledge account
-        public fun get_pledge_amount(account: &address, address_of_beneficiary: &address): u64 acquires MyPledges {
-            let my_pledges = &borrow_global<MyPledges>(*account).list;
+        public fun maybe_find_a_pledge(account: &address, address_of_beneficiary: &address): Option::Option<PledgeAccount> acquires MyPledges {
+          if (!exists<MyPledges>(*account)) {
+            return Option::none<PledgeAccount>()
+          };
+
+          let my_pledges = &borrow_global<MyPledges>(*account).list;
             let i = 0;
             while (i < Vector::length(my_pledges)) {
-                if (&Vector::borrow(my_pledges, i).address_of_beneficiary == address_of_beneficiary) {
-                    return Vector::borrow(my_pledges, i).amount
+                let p = Vector::borrow(my_pledges, i);
+                if (&p.address_of_beneficiary == address_of_beneficiary) {
+                    return Option::some<PledgeAccount>(*p)
                 };
                 i = i + 1;
             };
-            0
+            return Option::none()
         }
+        // get the pledge amount on a specific pledge account
+        public fun get_pledge_amount(account: &address, address_of_beneficiary: &address): u64 acquires MyPledges {
+            let found_pledge = maybe_find_a_pledge(account, address_of_beneficiary);
+            
+            if (Option::is_some(&found_pledge)) {
+              return Option::borrow(&found_pledge).amount
+            };
+            return 0
+        }
+
+      public fun get_total_pledged_to_beneficiary(bene: address): u64 acquires BeneficiaryPolicy {
+        if (exists<BeneficiaryPolicy>(bene)) {
+          let bp = borrow_global<BeneficiaryPolicy>(bene);
+          return bp.total_pledged
+        };
+        0
+      }
 }
 }

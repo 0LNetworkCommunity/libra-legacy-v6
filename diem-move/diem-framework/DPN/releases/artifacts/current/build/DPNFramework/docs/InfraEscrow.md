@@ -91,7 +91,7 @@ for end users to pledge to the infra escrow
 
 
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="InfraEscrow.md#0x1_InfraEscrow_user_pledge_tx">user_pledge_tx</a>(user_sig: signer, amount: u64) {
-  <a href="PledgeAccounts.md#0x1_PledgeAccounts_create_pledge_account">PledgeAccounts::create_pledge_account</a>(&user_sig, @VMReserved, amount);
+  <a href="PledgeAccounts.md#0x1_PledgeAccounts_add_funds_to_pledge_account">PledgeAccounts::add_funds_to_pledge_account</a>(&user_sig, @VMReserved, amount);
 }
 </code></pre>
 
