@@ -19,7 +19,7 @@ script {
       vote_threshold_to_revoke,
       burn_funds_on_revoke,
     );
-
-    assert!(PledgeAccounts::get_total_pledged_to_beneficiary(@Alice) == 0, 735701);
+    let (t, _) = PledgeAccounts::get_lifetime_to_beneficiary(&@Alice);
+    assert!(t == 0, 735701);
   }
 }

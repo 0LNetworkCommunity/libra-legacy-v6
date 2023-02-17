@@ -44,6 +44,8 @@ address DiemFramework{
         use Std::Errors;
         use Std::Option;
         use DiemFramework::DiemConfig;
+        use DiemFramework::Debug::print;
+        use DiemFramework::Testnet;
 
 
         const ENO_BENEFICIARY_POLICY: u64 = 150001;
@@ -193,8 +195,10 @@ address DiemFramework{
         // withdraw an amount from all pledge accounts. Check first that there are remaining funds before attempting to withdraw.
         public fun withdraw_from_all_pledge_accounts(sig_beneficiary: &signer, amount: u64) acquires MyPledges, BeneficiaryPolicy {
             let pledgers = *&borrow_global<BeneficiaryPolicy>(Signer::address_of(sig_beneficiary)).pledgers;
+
             let address_of_beneficiary = Signer::address_of(sig_beneficiary);
             let i = 0;
+
             while (i < Vector::length(&pledgers)) {
                 let pledge_account = *Vector::borrow(&pledgers, i);
 
@@ -220,15 +224,26 @@ address DiemFramework{
             while (i < Vector::length(&pledge_state.list)) {
                 if (&Vector::borrow(&pledge_state.list, i).address_of_beneficiary == address_of_beneficiary) {
                     let pledge_account = Vector::borrow_mut(&mut pledge_state.list, i);
-                    pledge_account.amount = pledge_account.amount - amount;
-                    pledge_account.lifetime_withdrawn = pledge_account.lifetime_withdrawn + amount;
-                    
-                    // update the beneficiaries state too
-                    bp.total_pledged = bp.total_pledged - amount;
-                    bp.lifetime_withdrawn = bp.lifetime_withdrawn - amount;
-                    
-                    coin = amount;
-                    break
+                    print(&pledge_account.amount);
+                    if (
+                      pledge_account.amount > 0 &&
+                      pledge_account.amount > amount
+                      
+                      ) {
+                        print(&1101);
+                        pledge_account.amount = pledge_account.amount - amount;
+                        print(&1102);
+                        pledge_account.lifetime_withdrawn = pledge_account.lifetime_withdrawn + amount;
+                        print(&1103);
+                        // update the beneficiaries state too
+                        print(&bp.total_pledged);
+                        bp.total_pledged = bp.total_pledged - amount;
+                        print(&1104);
+                        bp.lifetime_withdrawn = bp.lifetime_withdrawn - amount;
+                        print(&1104);
+                        coin = amount;
+                        return coin
+                      }
                 };
                 i = i + 1;
             };
@@ -366,6 +381,14 @@ address DiemFramework{
           return bp.total_pledged
         };
         0
+      }
+
+
+      //////// TEST HELPERS ///////
+      // Danger! withdraws from an account.
+      public fun test_single_withdrawal(vm: &signer, bene: address, donor: address, amount: u64): u64 acquires MyPledges, BeneficiaryPolicy{
+        Testnet::assert_testnet(vm);
+        withdraw_from_one_pledge_account(&bene, &donor, amount)
       }
 }
 }

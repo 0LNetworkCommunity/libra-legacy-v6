@@ -1,6 +1,6 @@
 //# init --validators Alice Bob Carol
 
-// Scenario: Alice is creating a project she wants people to pledge to (beneficiary). Bob wants to pledge. Can he segregate coins into a pledge account.
+// Scenario: Alice is creating a project she wants people to pledge to (beneficiary). Bob AND Carol will pledge. Can the beneficiary withdraw from both accounts?
 
 //# run --admin-script --signers DiemRoot Alice
 script {
@@ -29,13 +29,22 @@ script {
 //# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::PledgeAccounts;
+  use Std::FixedPoint32;
+  // use DiemFramework::Debug::print;
 
-  fun main(_vm: signer, a_sig: signer) {
+  fun main(_vm: signer, b_sig: signer) {
     // TODO: update for coins.
-    PledgeAccounts::add_funds_to_pledge_account(&a_sig, @Alice, 100);
+    PledgeAccounts::add_funds_to_pledge_account(&b_sig, @Alice, 100);
     let amount = PledgeAccounts::get_user_pledge_amount(&@Bob, &@Alice);
-    
     assert!(amount == 100, 735702);
+
+    // Bob is the only pledger, so if he revokes,
+    // then the tally will be 100%
+    // and will automatically dissolve the policy
+    PledgeAccounts::vote_to_revoke_beneficiary_policy(&b_sig, @Alice);
+
+    let (revoked, ratio) = PledgeAccounts::get_revoke_vote(&@Alice);
+    assert!(revoked, 735703);
+    assert!(FixedPoint32::is_zero(ratio), 735704);
   }
 }
-

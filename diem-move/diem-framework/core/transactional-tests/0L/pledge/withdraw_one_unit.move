@@ -30,12 +30,26 @@ script {
 script {
   use DiemFramework::PledgeAccounts;
 
-  fun main(_vm: signer, a_sig: signer) {
+  fun main(_vm: signer, b_sig: signer) {
     // TODO: update for coins.
-    PledgeAccounts::add_funds_to_pledge_account(&a_sig, @Alice, 100);
+    PledgeAccounts::add_funds_to_pledge_account(&b_sig, @Alice, 100);
     let amount = PledgeAccounts::get_user_pledge_amount(&@Bob, &@Alice);
-    
     assert!(amount == 100, 735702);
   }
 }
+
+//# run --admin-script --signers DiemRoot Alice
+script {
+  use DiemFramework::PledgeAccounts;
+
+  fun main(vm: signer, _a_sig: signer) {
+    // TODO: update for coins.
+    // Withdraw 10 coins.
+    let c = PledgeAccounts::test_single_withdrawal(&vm, &@Alice, &@Bob, 10);
+    assert!(c == 10, 735703);
+    let amount = PledgeAccounts::get_user_pledge_amount(&@Bob, &@Alice);
+    assert!(amount == 90, 735703);
+  }
+}
+
 
