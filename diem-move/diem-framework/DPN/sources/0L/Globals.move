@@ -35,7 +35,7 @@ module Globals {
       epoch_slow_wallet_unlock: u64,
       min_blocks_per_epoch: u64,
       vouch_threshold: u64,
-      signing_threshold_pct: u64,      
+      signing_threshold_pct: u64,  
     }
 
     const COIN_SCALING_FACTOR: u64 = 1000000;
@@ -111,7 +111,7 @@ module Globals {
       if (Testnet::is_testnet()) {
         return GlobalConstants {
           epoch_length: 60, // seconds
-          max_validators_per_set: 100,
+          max_validators_per_set: 10,
           subsidy_ceiling_gas: 296 * COIN_SCALING_FACTOR,
           vdf_difficulty_baseline: 100,
           vdf_security_baseline: 512,
