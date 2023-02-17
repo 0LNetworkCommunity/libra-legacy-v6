@@ -34,10 +34,12 @@ address DiemFramework{
         PledgeAccounts::withdraw_from_all_pledge_accounts(vm, amount);
     }
 
-    /// for end users to pledge to the infra escrow
-    public(script) fun user_pledge_tx(user_sig: signer, amount: u64) {
-      PledgeAccounts::add_funds_to_pledge_account(&user_sig, @VMReserved, amount);
-   }
+    // for end users to pledge to the infra escrow
+
+    // TODO: withdraw
+    //   public(script) fun user_pledge_tx(user_sig: signer, amount: u64) {
+    //     PledgeAccounts::add_funds_to_pledge_account(&user_sig, @VMReserved, amount);
+  //  }
 
 }
 }

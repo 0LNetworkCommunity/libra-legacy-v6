@@ -41,12 +41,14 @@ address DiemFramework{
     module PledgeAccounts{
         use Std::Vector;
         use Std::Signer;
-        use Std::Errors;
-        use Std::Option;
+        // use Std::Errors;
+        // use Std::Option;
         use Std::FixedPoint32;
         use DiemFramework::DiemConfig;
         use DiemFramework::Debug::print;
         use DiemFramework::Testnet;
+        use DiemFramework::Diem;
+        use DiemFramework::GAS::GAS;
 
 
         const ENO_BENEFICIARY_POLICY: u64 = 150001;
@@ -58,10 +60,11 @@ address DiemFramework{
         }
 
         // A Pledge Account is a sub-account on a user's account.
-        struct PledgeAccount has key, store, copy, drop {
+        struct PledgeAccount has key, store {
             // project_id: vector<u8>, // a string that identifies the project
             address_of_beneficiary: address, // the address of the project, also where the BeneficiaryPolicy is stored for reference.
             amount: u64,
+            pledge: Diem::Diem<GAS>,
             epoch_of_last_deposit: u64,
             lifetime_pledged: u64,
             lifetime_withdrawn: u64
@@ -130,28 +133,39 @@ address DiemFramework{
             }
         }
 
-        // Create a new pledge account on a user's list of pledges
-        public fun create_pledge_account(
+
+        public fun save_pledge(
           sig: &signer,
           // project_id: vector<u8>,
           address_of_beneficiary: address,
+          pledge: Diem::Diem<GAS>
+          ) acquires MyPledges, BeneficiaryPolicy {
+            let sender_addr = Signer::address_of(sig);
+            let (found, idx) = pledge_at_idx(&sender_addr, &address_of_beneficiary);
+            if (found) {
+              add_coin_to_pledge_account(sig, idx, Diem::value(&pledge), pledge)
+            } else {
+              create_pledge_account(sig, address_of_beneficiary, pledge)
+            }
+        }
+        // Create a new pledge account on a user's list of pledges
+        fun create_pledge_account(
+          sig: &signer,
+          // project_id: vector<u8>,
+          address_of_beneficiary: address,
+          init_pledge: Diem::Diem<GAS>,
         ) acquires MyPledges {
             let account = Signer::address_of(sig);
             maybe_initialize_my_pledges(sig);
             let my_pledges = borrow_global_mut<MyPledges>(account);
-
-            // check a beneficiary policy exists
-            assert!(exists<BeneficiaryPolicy>(address_of_beneficiary), Errors::invalid_argument(ENO_BENEFICIARY_POLICY));
-
-            // check if there isn't already a pledge initialized.
-            // let len = Vector::length(&my_pledges.list);
-
+            let value = Diem::value(&init_pledge);
             let new_pledge_account = PledgeAccount {
                 // project_id: project_id,
                 address_of_beneficiary: address_of_beneficiary,
-                amount: 0,
+                amount: value,
+                pledge: init_pledge,
                 epoch_of_last_deposit: DiemConfig::get_current_epoch(),
-                lifetime_pledged: 0,
+                lifetime_pledged: value,
                 lifetime_withdrawn: 0
             };
             Vector::push_back(&mut my_pledges.list, new_pledge_account);
@@ -159,35 +173,27 @@ address DiemFramework{
 
         // add funds to an existing pledge account
         // Note: only funds that are Unlocked and otherwise unrestricted can be used in pledge account.
-        public fun add_funds_to_pledge_account(sender: &signer, address_of_beneficiary: address, amount: u64) acquires MyPledges, BeneficiaryPolicy {
-            let sender_addr = Signer::address_of(sender);
-            if (Option::is_none(&maybe_find_a_pledge(&sender_addr, &address_of_beneficiary))) {
-              create_pledge_account(sender, address_of_beneficiary);
-            };
+        fun add_coin_to_pledge_account(sender: &signer, idx: u64, amount: u64, coin: Diem::Diem<GAS>) acquires MyPledges, BeneficiaryPolicy {
+          let sender_addr = Signer::address_of(sender);
+          // let (found, _idx) = pledge_at_idx(&sender_addr, &address_of_beneficiary);
 
-            assert!(exists<MyPledges>(sender_addr), Errors::invalid_state(ENO_PLEDGE_INIT));
+          let my_pledges = borrow_global_mut<MyPledges>(sender_addr);
+          let pledge_account = Vector::borrow_mut(&mut my_pledges.list, idx);
 
-            let my_pledges = borrow_global_mut<MyPledges>(sender_addr);
-            let i = 0;
-            while (i < Vector::length(&my_pledges.list)) {
-                if (Vector::borrow(&my_pledges.list, i).address_of_beneficiary == address_of_beneficiary) {
-                    let pledge_account = Vector::borrow_mut(&mut my_pledges.list, i);
-                    pledge_account.amount = pledge_account.amount + amount;
-                    pledge_account.epoch_of_last_deposit = DiemConfig::get_current_epoch();
-                    pledge_account.lifetime_pledged = pledge_account.lifetime_pledged + amount;
+          pledge_account.amount = pledge_account.amount + amount;
+          pledge_account.epoch_of_last_deposit = DiemConfig::get_current_epoch();
+          pledge_account.lifetime_pledged = pledge_account.lifetime_pledged + amount;
 
-                    // must add pledger address the ProjectPledgers list on beneficiary account
-                    
-                    let b = borrow_global_mut<BeneficiaryPolicy>(address_of_beneficiary);
-                    Vector::push_back(&mut b.pledgers, sender_addr);
+          // merge the coins in the account
+          Diem::deposit(&mut pledge_account.pledge, coin);
 
-                    b.amount_available = b.amount_available  + amount;
-                    b.lifetime_pledged = b.lifetime_pledged + amount;
+          // must add pledger address the ProjectPledgers list on beneficiary account
 
-                    break
-                };
-                i = i + 1;
-            };
+          let b = borrow_global_mut<BeneficiaryPolicy>(pledge_account.address_of_beneficiary);
+          Vector::push_back(&mut b.pledgers, sender_addr);
+
+          b.amount_available = b.amount_available  + amount;
+          b.lifetime_pledged = b.lifetime_pledged + amount;
 
           // exits silently if nothing is found.
           // this is to prevent halting in the event that a VM route is calling the function and is unable to check the return value.
@@ -367,28 +373,57 @@ address DiemFramework{
 
         ////////// GETTERS //////////
 
-        public fun maybe_find_a_pledge(account: &address, address_of_beneficiary: &address): Option::Option<PledgeAccount> acquires MyPledges {
-          if (!exists<MyPledges>(*account)) {
-            return Option::none<PledgeAccount>()
-          };
+        // Danger: If the VM calls this and there is an error there will be a halt.
+        // always call pledge_at_idx() first.
+        // NOTE: cannot wrap in option witout changing the struct abilities to copy, drop.
+        // can't do that because Diem<GAS> cannot be copy, or drop.
+        // public fun maybe_find_a_pledge(account: &address, address_of_beneficiary: &address): &mut PledgeAccount acquires MyPledges {
+        //   let (found, idx) = pledge_at_idx(account, address_of_beneficiary);
+        //   assert!(found, Errors::invalid_state(ENO_PLEDGE_INIT));
 
+        //   let my_pledges = borrow_global_mut<MyPledges>(*account).list;
+        //   let p = Vector::borrow_mut(&mut my_pledges, idx);
+        //   p
+        // }
+
+        fun pledge_at_idx(account: &address, address_of_beneficiary: &address): (bool, u64) acquires MyPledges {
+          if (exists<MyPledges>(*account)) {
           let my_pledges = &borrow_global<MyPledges>(*account).list;
             let i = 0;
             while (i < Vector::length(my_pledges)) {
                 let p = Vector::borrow(my_pledges, i);
                 if (&p.address_of_beneficiary == address_of_beneficiary) {
-                    return Option::some<PledgeAccount>(*p)
+                    return (true, i)
                 };
                 i = i + 1;
             };
-            return Option::none()
+          };
+          (false, 0)
         }
+
+        // public fun maybe_find_a_pledge(account: &address, address_of_beneficiary: &address): Option::Option<PledgeAccount> acquires MyPledges {
+        //   if (!exists<MyPledges>(*account)) {
+        //     return Option::none<PledgeAccount>()
+        //   };
+
+        //   let my_pledges = &borrow_global<MyPledges>(*account).list;
+        //     let i = 0;
+        //     while (i < Vector::length(my_pledges)) {
+        //         let p = Vector::borrow(my_pledges, i);
+        //         if (&p.address_of_beneficiary == address_of_beneficiary) {
+        //             return Option::some<PledgeAccount>(*p)
+        //         };
+        //         i = i + 1;
+        //     };
+        //     return Option::none()
+        // }
         // get the pledge amount on a specific pledge account
         public fun get_user_pledge_amount(account: &address, address_of_beneficiary: &address): u64 acquires MyPledges {
-            let found_pledge = maybe_find_a_pledge(account, address_of_beneficiary);
-            
-            if (Option::is_some(&found_pledge)) {
-              return Option::borrow(&found_pledge).amount
+            let (found, idx) = pledge_at_idx(account, address_of_beneficiary);
+            if (found) {
+              let my_pledges = borrow_global<MyPledges>(*account);
+              let p = Vector::borrow(&my_pledges.list, idx);
+              return p.amount
             };
             return 0
         }
