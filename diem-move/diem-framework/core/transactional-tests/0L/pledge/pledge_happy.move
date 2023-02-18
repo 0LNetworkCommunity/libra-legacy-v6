@@ -29,10 +29,14 @@ script {
 //# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::PledgeAccounts;
-
-  fun main(_vm: signer, a_sig: signer) {
+  use DiemFramework::DiemAccount;
+  
+  fun main(vm: signer, b_sig: signer) {
     // TODO: update for coins.
-    PledgeAccounts::add_funds_to_pledge_account(&a_sig, @Alice, 100);
+    // mock the validators unlocked coins.
+    DiemAccount::slow_wallet_epoch_drip(&vm, 1000);
+    let coin = DiemAccount::simple_withdrawal(&b_sig, 100);
+    PledgeAccounts::save_pledge(&b_sig, @Alice, coin);
     let amount = PledgeAccounts::get_user_pledge_amount(&@Bob, &@Alice);
     
     assert!(amount == 100, 735702);

@@ -29,10 +29,14 @@ script {
 //# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::PledgeAccounts;
+  use DiemFramework::DiemAccount;
 
-  fun main(_vm: signer, b_sig: signer) {
+  fun main(vm: signer, b_sig: signer) {
     // TODO: update for coins.
-    PledgeAccounts::add_funds_to_pledge_account(&b_sig, @Alice, 100);
+    // mock the validators unlocked coins.
+    DiemAccount::slow_wallet_epoch_drip(&vm, 1000);
+    let coin = DiemAccount::simple_withdrawal(&b_sig, 100);
+    PledgeAccounts::save_pledge(&b_sig, @Alice, coin);
     let amount = PledgeAccounts::get_user_pledge_amount(&@Bob, &@Alice);
     assert!(amount == 100, 735702);
   }
@@ -41,11 +45,15 @@ script {
 //# run --admin-script --signers DiemRoot Carol
 script {
   use DiemFramework::PledgeAccounts;
+  use DiemFramework::DiemAccount;
 
-  fun main(_vm: signer, c_sig: signer) {
+  fun main(vm: signer, b_sig: signer) {
     // TODO: update for coins.
-    PledgeAccounts::add_funds_to_pledge_account(&c_sig, @Alice, 100);
-    let amount = PledgeAccounts::get_user_pledge_amount(&@Carol, &@Alice);
+    // mock the validators unlocked coins.
+    DiemAccount::slow_wallet_epoch_drip(&vm, 1000);
+    let coin = DiemAccount::simple_withdrawal(&b_sig, 100);
+    PledgeAccounts::save_pledge(&b_sig, @Alice, coin);
+    let amount = PledgeAccounts::get_user_pledge_amount(&@Bob, &@Alice);
     assert!(amount == 100, 735703);
   }
 }
@@ -53,15 +61,28 @@ script {
 //# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::PledgeAccounts;
+  use DiemFramework::DiemAccount;
   use DiemFramework::Debug::print;
+  use Std::Option;
 
-  fun main(_vm: signer, a_sig: signer) {
+  fun main(vm: signer, a_sig: signer) {
     // TODO: update for coins.
 
     let (t, _) = PledgeAccounts::get_lifetime_to_beneficiary(&@Alice);
     assert!(t == 200, 735704);
     // Withdraw 10 coins.
-    PledgeAccounts::withdraw_from_all_pledge_accounts(&a_sig, 10);
+    let opt = PledgeAccounts::withdraw_from_all_pledge_accounts(&a_sig, 10);
+
+    let coins = Option::extract(&mut opt);
+    Option::destroy_none(opt);
+    // get rid of these coins
+    DiemAccount::vm_deposit_with_metadata(
+      &vm,
+      @Alice,
+      coins,
+      b"", 
+      b"",
+    );
     // assert!(c == 10, 735703);
     let amount = PledgeAccounts::get_user_pledge_amount(&@Bob, &@Alice);
     assert!(amount == 90, 735705);

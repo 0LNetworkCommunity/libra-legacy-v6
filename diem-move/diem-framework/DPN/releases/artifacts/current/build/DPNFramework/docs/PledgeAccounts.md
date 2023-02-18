@@ -742,11 +742,6 @@
 
     <b>let</b> is_burn = *&<b>borrow_global</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(address_of_beneficiary).burn_funds_on_revoke;
 
-    // <b>let</b> pledgers = *&bp.pledgers;
-    // <b>let</b> is_burn = *&bp.burn_funds_on_revoke;
-
-    //*&<b>borrow_global</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(address_of_beneficiary).pledgers;
-
     <b>let</b> i = 0;
     <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&pledgers)) {
         print(&888);

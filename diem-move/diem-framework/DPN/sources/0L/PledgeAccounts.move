@@ -41,7 +41,7 @@ address DiemFramework{
     module PledgeAccounts{
         use Std::Vector;
         use Std::Signer;
-        // use Std::Errors;
+        use Std::Errors;
         use Std::Option;
         use Std::FixedPoint32;
         use DiemFramework::DiemConfig;
@@ -137,10 +137,10 @@ address DiemFramework{
 
         public fun save_pledge(
           sig: &signer,
-          // project_id: vector<u8>,
           address_of_beneficiary: address,
           pledge: Diem::Diem<GAS>
           ) acquires MyPledges, BeneficiaryPolicy {
+            assert!(exists<BeneficiaryPolicy>(address_of_beneficiary), Errors::invalid_state(ENO_BENEFICIARY_POLICY));
             let sender_addr = Signer::address_of(sig);
             let (found, idx) = pledge_at_idx(&sender_addr, &address_of_beneficiary);
             if (found) {
@@ -155,7 +155,7 @@ address DiemFramework{
           // project_id: vector<u8>,
           address_of_beneficiary: address,
           init_pledge: Diem::Diem<GAS>,
-        ) acquires MyPledges {
+        ) acquires MyPledges, BeneficiaryPolicy {
             let account = Signer::address_of(sig);
             maybe_initialize_my_pledges(sig);
             let my_pledges = borrow_global_mut<MyPledges>(account);
@@ -170,6 +170,12 @@ address DiemFramework{
                 lifetime_withdrawn: 0
             };
             Vector::push_back(&mut my_pledges.list, new_pledge_account);
+
+          let b = borrow_global_mut<BeneficiaryPolicy>(address_of_beneficiary);
+          Vector::push_back(&mut b.pledgers, account);
+
+          b.amount_available = b.amount_available  + value;
+          b.lifetime_pledged = b.lifetime_pledged + value;
         }
 
         // add funds to an existing pledge account
@@ -374,11 +380,6 @@ address DiemFramework{
             let pledgers = *&borrow_global<BeneficiaryPolicy>(address_of_beneficiary).pledgers;
 
             let is_burn = *&borrow_global<BeneficiaryPolicy>(address_of_beneficiary).burn_funds_on_revoke;
-
-            // let pledgers = *&bp.pledgers;
-            // let is_burn = *&bp.burn_funds_on_revoke;
-            
-            //*&borrow_global<BeneficiaryPolicy>(address_of_beneficiary).pledgers;
 
             let i = 0;
             while (i < Vector::length(&pledgers)) {
