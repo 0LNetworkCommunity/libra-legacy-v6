@@ -375,11 +375,6 @@ address DiemFramework{
 
             let is_burn = *&borrow_global<BeneficiaryPolicy>(address_of_beneficiary).burn_funds_on_revoke;
 
-            // let pledgers = *&bp.pledgers;
-            // let is_burn = *&bp.burn_funds_on_revoke;
-            
-            //*&borrow_global<BeneficiaryPolicy>(address_of_beneficiary).pledgers;
-
             let i = 0;
             while (i < Vector::length(&pledgers)) {
                 print(&888);
