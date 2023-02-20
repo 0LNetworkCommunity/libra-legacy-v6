@@ -82,7 +82,7 @@
 
     // TODO: subsidy units are fixed
     // <b>let</b> (subsidy_units, nominal_subsidy_per) =
-    //     <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
+    //     Subsidy::calculate_subsidy(vm, compliant_nodes_count);
     print(&800400);
 
     <b>let</b> (reward, _, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">ProofOfFee::get_consensus_reward</a>();
@@ -196,7 +196,7 @@
     // don't pay <b>while</b> we are in recovery mode, since that creates
     // a frontrunning opportunity
     <b>if</b> (subsidy_units &gt; 0 && !<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()) {
-        <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, outgoing_compliant_set);
+        <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, outgoing_compliant_set);
     };
 
     // after everyone is paid from the chain's Fee account

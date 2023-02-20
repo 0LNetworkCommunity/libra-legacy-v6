@@ -14,6 +14,8 @@ module DiemFramework::DiemAccount {
     friend DiemFramework::TestFixtures; // Todo: remove
     friend DiemFramework::Mock;
     friend DiemFramework::PledgeAccounts;
+    friend DiemFramework::Subsidy;
+
 
     use DiemFramework::AccountFreezing;
     use DiemFramework::CoreAddresses;
@@ -1794,6 +1796,19 @@ module DiemFramework::DiemAccount {
           // remove available unlocks.
           decrease_unlocked_tracker(payer_addr, amount);
         };
+
+        let account_balance = borrow_global_mut<Balance<GAS>>(payer_addr);
+        let balance_coin = &mut account_balance.coin;
+        Diem::withdraw(balance_coin, amount)
+  }
+
+  // The vm_pay_* functions above don't return a coin, so they can't be used in genesis for some operations, e.g. not in PledgeAccounts.
+  // can override the Slow Wallet unlock amounts.
+  // For now safety feature, needs signatures of both users, so can only be done by vm.
+  public fun vm_simple_withdrawal(vm: &signer, payer_sig: &signer, amount: u64): Diem::Diem<GAS> acquires Balance {
+        CoreAddresses::assert_diem_root(vm);
+        let payer_addr = Signer::address_of(payer_sig);
+
 
         let account_balance = borrow_global_mut<Balance<GAS>>(payer_addr);
         let balance_coin = &mut account_balance.coin;

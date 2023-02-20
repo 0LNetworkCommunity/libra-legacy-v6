@@ -22,6 +22,7 @@
 -  [Function `find_index_of_vote`](#0x1_PledgeAccounts_find_index_of_vote)
 -  [Function `tally_vote`](#0x1_PledgeAccounts_tally_vote)
 -  [Function `dissolve_beneficiary_project`](#0x1_PledgeAccounts_dissolve_beneficiary_project)
+-  [Function `user_pledge_tx`](#0x1_PledgeAccounts_user_pledge_tx)
 -  [Function `pledge_at_idx`](#0x1_PledgeAccounts_pledge_at_idx)
 -  [Function `get_user_pledge_amount`](#0x1_PledgeAccounts_get_user_pledge_amount)
 -  [Function `get_available_to_beneficiary`](#0x1_PledgeAccounts_get_available_to_beneficiary)
@@ -859,6 +860,31 @@
   print(&bp.revoked);
 
   // otherwise leave the information <b>as</b>-is for reference purposes
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_PledgeAccounts_user_pledge_tx"></a>
+
+## Function `user_pledge_tx`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_user_pledge_tx">user_pledge_tx</a>(user_sig: signer, beneficiary: <b>address</b>, amount: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_user_pledge_tx">user_pledge_tx</a>(user_sig: signer, beneficiary: <b>address</b>, amount: u64)  <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>, <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a> {
+  <b>let</b> coin = <a href="DiemAccount.md#0x1_DiemAccount_simple_withdrawal">DiemAccount::simple_withdrawal</a>(&user_sig, amount);
+  <a href="PledgeAccounts.md#0x1_PledgeAccounts_save_pledge">save_pledge</a>(&user_sig, beneficiary, coin);
 }
 </code></pre>
 
