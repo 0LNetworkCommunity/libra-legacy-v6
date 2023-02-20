@@ -41,7 +41,7 @@ address DiemFramework{
     module PledgeAccounts{
         use Std::Vector;
         use Std::Signer;
-        // use Std::Errors;
+        use Std::Errors;
         use Std::Option;
         use Std::FixedPoint32;
         use DiemFramework::DiemConfig;
@@ -137,10 +137,10 @@ address DiemFramework{
 
         public fun save_pledge(
           sig: &signer,
-          // project_id: vector<u8>,
           address_of_beneficiary: address,
           pledge: Diem::Diem<GAS>
           ) acquires MyPledges, BeneficiaryPolicy {
+            assert!(exists<BeneficiaryPolicy>(address_of_beneficiary), Errors::invalid_state(ENO_BENEFICIARY_POLICY));
             let sender_addr = Signer::address_of(sig);
             let (found, idx) = pledge_at_idx(&sender_addr, &address_of_beneficiary);
             if (found) {
@@ -155,7 +155,7 @@ address DiemFramework{
           // project_id: vector<u8>,
           address_of_beneficiary: address,
           init_pledge: Diem::Diem<GAS>,
-        ) acquires MyPledges {
+        ) acquires MyPledges, BeneficiaryPolicy {
             let account = Signer::address_of(sig);
             maybe_initialize_my_pledges(sig);
             let my_pledges = borrow_global_mut<MyPledges>(account);
@@ -170,6 +170,12 @@ address DiemFramework{
                 lifetime_withdrawn: 0
             };
             Vector::push_back(&mut my_pledges.list, new_pledge_account);
+
+          let b = borrow_global_mut<BeneficiaryPolicy>(address_of_beneficiary);
+          Vector::push_back(&mut b.pledgers, account);
+
+          b.amount_available = b.amount_available  + value;
+          b.lifetime_pledged = b.lifetime_pledged + value;
         }
 
         // add funds to an existing pledge account
@@ -204,6 +210,11 @@ address DiemFramework{
         public fun withdraw_from_all_pledge_accounts(sig_beneficiary: &signer, amount: u64): Option::Option<Diem::Diem<GAS>> acquires MyPledges, BeneficiaryPolicy {
             let pledgers = *&borrow_global<BeneficiaryPolicy>(Signer::address_of(sig_beneficiary)).pledgers;
 
+            let amount_available = *&borrow_global<BeneficiaryPolicy>(Signer::address_of(sig_beneficiary)).amount_available;
+            print(&amount_available);
+
+            let pct_withdraw = FixedPoint32::create_from_rational(amount, amount_available);
+
             let address_of_beneficiary = Signer::address_of(sig_beneficiary);
 
             let i = 0;
@@ -213,7 +224,7 @@ address DiemFramework{
                 let pledge_account = *Vector::borrow(&pledgers, i);
 
                 // DANGER: this is a private function that changes balances.
-                let c = withdraw_from_one_pledge_account(&address_of_beneficiary, &pledge_account, amount);
+                let c = withdraw_pct_from_one_pledge_account(&address_of_beneficiary, &pledge_account, &pct_withdraw);
 
                 // GROSS: dealing with options in Move.
                 // TODO: find a better way.
@@ -279,6 +290,57 @@ address DiemFramework{
                   print(&1104);
                   print(&bp.amount_available);
                   bp.lifetime_withdrawn = bp.lifetime_withdrawn + amount;
+                  print(&1105);
+
+                  return Option::some(coin)
+                };
+            };
+
+            Option::none()  
+        }
+
+        // DANGER: private function that changes balances.
+        // withdraw funds from one pledge account
+        // this is to be used for funding,
+        // but also for revoking a pledge
+        // WARN: we must know there is a coin at this account before calling it.
+        fun withdraw_pct_from_one_pledge_account(address_of_beneficiary: &address, payer: &address, pct: &FixedPoint32::FixedPoint32): Option::Option<Diem::Diem<GAS>> acquires MyPledges, BeneficiaryPolicy {
+            
+            let (found, idx) = pledge_at_idx(payer, address_of_beneficiary);
+
+            if (found) {
+              let pledge_state = borrow_global_mut<MyPledges>(*payer);
+
+              let pledge_account = Vector::borrow_mut(&mut pledge_state.list, idx);
+
+              let amount_withdraw = FixedPoint32::multiply_u64(pledge_account.amount, *pct);
+
+              print(&66);
+              print(&pledge_account.amount);
+              if (
+                pledge_account.amount > 0 &&
+                pledge_account.amount >= amount_withdraw
+                
+                ) {
+                  print(&1101);
+                  pledge_account.amount = pledge_account.amount - amount_withdraw;
+                  print(&1102);
+                  pledge_account.lifetime_withdrawn = pledge_account.lifetime_withdrawn + amount_withdraw;
+                  print(&1103);
+                  
+                  let coin = Diem::withdraw(&mut pledge_account.pledge, amount_withdraw);
+                  print(&coin);
+                  // return coin
+
+                  // update the beneficiaries state too
+
+                  let bp = borrow_global_mut<BeneficiaryPolicy>(*address_of_beneficiary);
+
+                  print(&bp.amount_available);
+                  bp.amount_available = bp.amount_available - amount_withdraw;
+                  print(&1104);
+                  print(&bp.amount_available);
+                  bp.lifetime_withdrawn = bp.lifetime_withdrawn + amount_withdraw;
                   print(&1105);
 
                   return Option::some(coin)

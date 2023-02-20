@@ -57,6 +57,7 @@ before and after every transaction.
 -  [Function `pay_by_signers`](#0x1_DiemAccount_pay_by_signers)
 -  [Function `onboarding_gas_transfer`](#0x1_DiemAccount_onboarding_gas_transfer)
 -  [Function `genesis_infra_escrow_withdrawal_no_limit`](#0x1_DiemAccount_genesis_infra_escrow_withdrawal_no_limit)
+-  [Function `vm_genesis_simple_withdrawal`](#0x1_DiemAccount_vm_genesis_simple_withdrawal)
 -  [Function `simple_withdrawal`](#0x1_DiemAccount_simple_withdrawal)
 -  [Function `genesis_fund_operator`](#0x1_DiemAccount_genesis_fund_operator)
 -  [Function `rotate_authentication_key`](#0x1_DiemAccount_rotate_authentication_key)
@@ -3499,6 +3500,35 @@ As <code>payee</code> is also signer of the transaction, no metadata signature i
 
 </details>
 
+<a name="0x1_DiemAccount_vm_genesis_simple_withdrawal"></a>
+
+## Function `vm_genesis_simple_withdrawal`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_genesis_simple_withdrawal">vm_genesis_simple_withdrawal</a>(vm: &signer, payer_sig: &signer, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_genesis_simple_withdrawal">vm_genesis_simple_withdrawal</a>(vm: &signer, payer_sig: &signer, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt; <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> {
+      <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+      <b>let</b> payer_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(payer_sig);
+
+      <b>let</b> account_balance = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(payer_addr);
+      <b>let</b> balance_coin = &<b>mut</b> account_balance.coin;
+      <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(balance_coin, amount)
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_DiemAccount_simple_withdrawal"></a>
 
 ## Function `simple_withdrawal`
@@ -3515,22 +3545,22 @@ As <code>payee</code> is also signer of the transaction, no metadata signature i
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_simple_withdrawal">simple_withdrawal</a>(payer_sig: &signer, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt; <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
-      <b>let</b> payer_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(payer_sig);
+    <b>let</b> payer_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(payer_sig);
 
-      // check amount <b>if</b> it is a slow wallet
-      <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(payer_addr)) {
-        <b>assert</b>!(
-              amount &lt; <a href="DiemAccount.md#0x1_DiemAccount_unlocked_amount">unlocked_amount</a>(payer_addr),
-              <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT">EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT</a>)
-          );
+    // check amount <b>if</b> it is a slow wallet
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(payer_addr)) {
+      <b>assert</b>!(
+            amount &lt; <a href="DiemAccount.md#0x1_DiemAccount_unlocked_amount">unlocked_amount</a>(payer_addr),
+            <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT">EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT</a>)
+        );
 
-        // remove available unlocks.
-        <a href="DiemAccount.md#0x1_DiemAccount_decrease_unlocked_tracker">decrease_unlocked_tracker</a>(payer_addr, amount);
-      };
+      // remove available unlocks.
+      <a href="DiemAccount.md#0x1_DiemAccount_decrease_unlocked_tracker">decrease_unlocked_tracker</a>(payer_addr, amount);
+    };
 
-      <b>let</b> account_balance = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(payer_addr);
-      <b>let</b> balance_coin = &<b>mut</b> account_balance.coin;
-      <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(balance_coin, amount)
+    <b>let</b> account_balance = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(payer_addr);
+    <b>let</b> balance_coin = &<b>mut</b> account_balance.coin;
+    <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(balance_coin, amount)
 }
 </code></pre>
 
