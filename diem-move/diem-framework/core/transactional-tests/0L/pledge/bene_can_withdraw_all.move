@@ -1,6 +1,7 @@
 //# init --validators Alice Bob Carol
 
-// Scenario: Alice is creating a project she wants people to pledge to (beneficiary). Bob AND Carol will pledge. Can the beneficiary withdraw from both accounts?
+// Scenario: Alice is creating a project she wants people to pledge to (beneficiary). Bob AND Carol will pledge. But they will pledge different amounts. Can the beneficiary withdraw from both accounts? Will the withdrawal
+// amount on Bob and Carol, be different, and proportionate to their pledged amounts.
 
 //# run --admin-script --signers DiemRoot Alice
 script {
@@ -34,11 +35,12 @@ script {
   fun main(vm: signer, b_sig: signer) {
     // TODO: update for coins.
     // mock the validators unlocked coins.
-    DiemAccount::slow_wallet_epoch_drip(&vm, 1000);
-    let coin = DiemAccount::simple_withdrawal(&b_sig, 100);
+    DiemAccount::slow_wallet_epoch_drip(&vm, 100000);
+
+    let coin = DiemAccount::vm_genesis_simple_withdrawal(&vm, &b_sig, 100000);
     PledgeAccounts::save_pledge(&b_sig, @Alice, coin);
     let amount = PledgeAccounts::get_user_pledge_amount(&@Bob, &@Alice);
-    assert!(amount == 100, 735702);
+    assert!(amount == 100000, 735702);
   }
 }
 
@@ -50,11 +52,11 @@ script {
   fun main(vm: signer, b_sig: signer) {
     // TODO: update for coins.
     // mock the validators unlocked coins.
-    DiemAccount::slow_wallet_epoch_drip(&vm, 1000);
-    let coin = DiemAccount::simple_withdrawal(&b_sig, 100);
+    DiemAccount::slow_wallet_epoch_drip(&vm, 500000);
+    let coin = DiemAccount::vm_genesis_simple_withdrawal(&vm, &b_sig, 500000);
     PledgeAccounts::save_pledge(&b_sig, @Alice, coin);
-    let amount = PledgeAccounts::get_user_pledge_amount(&@Bob, &@Alice);
-    assert!(amount == 100, 735703);
+    let amount = PledgeAccounts::get_user_pledge_amount(&@Carol, &@Alice);
+    assert!(amount == 500000, 735703);
   }
 }
 
@@ -62,16 +64,15 @@ script {
 script {
   use DiemFramework::PledgeAccounts;
   use DiemFramework::DiemAccount;
-  use DiemFramework::Debug::print;
   use Std::Option;
 
   fun main(vm: signer, a_sig: signer) {
     // TODO: update for coins.
 
     let (t, _) = PledgeAccounts::get_lifetime_to_beneficiary(&@Alice);
-    assert!(t == 200, 735704);
+    assert!(t == 600000, 735704);
     // Withdraw 10 coins.
-    let opt = PledgeAccounts::withdraw_from_all_pledge_accounts(&a_sig, 10);
+    let opt = PledgeAccounts::withdraw_from_all_pledge_accounts(&a_sig, 1000);
 
     let coins = Option::extract(&mut opt);
     Option::destroy_none(opt);
@@ -83,20 +84,25 @@ script {
       b"", 
       b"",
     );
-    // assert!(c == 10, 735703);
+    
+    // accounts were drawn on proportionately.
     let amount = PledgeAccounts::get_user_pledge_amount(&@Bob, &@Alice);
-    assert!(amount == 90, 735705);
+    assert!(amount == 99834, 735705);
 
     let amount = PledgeAccounts::get_user_pledge_amount(&@Carol, &@Alice);
-    print(&amount);
-    assert!(amount == 90, 735706);
+    assert!(amount == 499167, 735706);
 
     // available is reduced
     let avail = PledgeAccounts::get_available_to_beneficiary(&@Alice);
-    assert!(avail == 180, 735707);
-    // total should not change
-    let (t, _) = PledgeAccounts::get_lifetime_to_beneficiary(&@Alice);
-    assert!(t == 200, 735708);
+    // Note: there are rounding issues.
+    assert!(avail == 599001, 735707);
+
+
+    // lifetime total should not change
+    let (pledged, withdrawn) = PledgeAccounts::get_lifetime_to_beneficiary(&@Alice);
+    assert!(pledged == 600000, 735708);
+    // Note rounding issues
+    assert!(withdrawn == 999, 735709);
   }
 }
 

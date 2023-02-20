@@ -1770,9 +1770,18 @@ module DiemFramework::DiemAccount {
 
 
   //////// 0L ////////
-  // a simple function, without capabilities, for users to draw from
-  // unlocked funds and use a coin within a transaction.
-  public fun simple_withdrawal(payer_sig: &signer, amount: u64): Diem::Diem<GAS> acquires Balance, SlowWallet {
+  // For genesis: the VM and user can sign, and withdraw above the
+  // slow wallet limit.
+  public fun vm_genesis_simple_withdrawal(vm: &signer, payer_sig: &signer, amount: u64): Diem::Diem<GAS> acquires Balance {
+        CoreAddresses::assert_vm(vm);
+        let payer_addr = Signer::address_of(payer_sig);
+
+        let account_balance = borrow_global_mut<Balance<GAS>>(payer_addr);
+        let balance_coin = &mut account_balance.coin;
+        Diem::withdraw(balance_coin, amount)
+  }
+
+    public fun simple_withdrawal(payer_sig: &signer, amount: u64): Diem::Diem<GAS> acquires Balance, SlowWallet {
         let payer_addr = Signer::address_of(payer_sig);
 
         // check amount if it is a slow wallet
