@@ -531,15 +531,15 @@ address DiemFramework{
         //     return Option::none()
         // }
         // get the pledge amount on a specific pledge account
-        public fun get_user_pledge_amount(account: &address, address_of_beneficiary: &address): u64 acquires MyPledges {
-            let (found, idx) = pledge_at_idx(account, address_of_beneficiary);
-            if (found) {
-              let my_pledges = borrow_global<MyPledges>(*account);
-              let p = Vector::borrow(&my_pledges.list, idx);
-              return p.amount
-            };
-            return 0
-        }
+      public fun get_user_pledge_amount(account: &address, address_of_beneficiary: &address): u64 acquires MyPledges {
+          let (found, idx) = pledge_at_idx(account, address_of_beneficiary);
+          if (found) {
+            let my_pledges = borrow_global<MyPledges>(*account);
+            let p = Vector::borrow(&my_pledges.list, idx);
+            return p.amount
+          };
+          return 0
+      }
 
       public fun get_available_to_beneficiary(bene: &address): u64 acquires BeneficiaryPolicy {
         if (exists<BeneficiaryPolicy>(*bene)) {
@@ -555,6 +555,14 @@ address DiemFramework{
           return (bp.lifetime_pledged, bp.lifetime_withdrawn)
         };
         (0, 0)
+      }
+
+      public fun get_all_pledgers(bene: &address): vector<address> acquires BeneficiaryPolicy {
+        if (exists<BeneficiaryPolicy>(*bene)) {
+          let bp = borrow_global<BeneficiaryPolicy>(*bene);
+          return *&bp.pledgers
+        };
+        Vector::empty<address>()
       }
 
       public fun get_revoke_vote(bene: &address): (bool, FixedPoint32::FixedPoint32) acquires BeneficiaryPolicy {

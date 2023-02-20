@@ -27,6 +27,7 @@
 -  [Function `get_user_pledge_amount`](#0x1_PledgeAccounts_get_user_pledge_amount)
 -  [Function `get_available_to_beneficiary`](#0x1_PledgeAccounts_get_available_to_beneficiary)
 -  [Function `get_lifetime_to_beneficiary`](#0x1_PledgeAccounts_get_lifetime_to_beneficiary)
+-  [Function `get_all_pledgers`](#0x1_PledgeAccounts_get_all_pledgers)
 -  [Function `get_revoke_vote`](#0x1_PledgeAccounts_get_revoke_vote)
 -  [Function `test_single_withdrawal`](#0x1_PledgeAccounts_test_single_withdrawal)
 
@@ -1006,6 +1007,34 @@
     <b>return</b> (bp.lifetime_pledged, bp.lifetime_withdrawn)
   };
   (0, 0)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_PledgeAccounts_get_all_pledgers"></a>
+
+## Function `get_all_pledgers`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_get_all_pledgers">get_all_pledgers</a>(bene: &<b>address</b>): vector&lt;<b>address</b>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_get_all_pledgers">get_all_pledgers</a>(bene: &<b>address</b>): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a> {
+  <b>if</b> (<b>exists</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(*bene)) {
+    <b>let</b> bp = <b>borrow_global</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(*bene);
+    <b>return</b> *&bp.pledgers
+  };
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;()
 }
 </code></pre>
 
