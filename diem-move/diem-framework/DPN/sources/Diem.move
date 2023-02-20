@@ -17,6 +17,7 @@ module DiemFramework::Diem {
     friend DiemFramework::XDX;
     friend DiemFramework::TransactionFee;
     friend DiemFramework::PledgeAccounts;
+    friend DiemFramework::Subsidy;
 
     //////// 0L ////////
     // Info: All "tc_account"s are replaced by "dr_account"

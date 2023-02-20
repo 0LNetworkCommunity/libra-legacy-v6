@@ -59,6 +59,7 @@ before and after every transaction.
 -  [Function `genesis_infra_escrow_withdrawal_no_limit`](#0x1_DiemAccount_genesis_infra_escrow_withdrawal_no_limit)
 -  [Function `vm_genesis_simple_withdrawal`](#0x1_DiemAccount_vm_genesis_simple_withdrawal)
 -  [Function `simple_withdrawal`](#0x1_DiemAccount_simple_withdrawal)
+-  [Function `vm_simple_withdrawal`](#0x1_DiemAccount_vm_simple_withdrawal)
 -  [Function `genesis_fund_operator`](#0x1_DiemAccount_genesis_fund_operator)
 -  [Function `rotate_authentication_key`](#0x1_DiemAccount_rotate_authentication_key)
     -  [Access Control](#@Access_Control_2)
@@ -3561,6 +3562,36 @@ As <code>payee</code> is also signer of the transaction, no metadata signature i
     <b>let</b> account_balance = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(payer_addr);
     <b>let</b> balance_coin = &<b>mut</b> account_balance.coin;
     <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(balance_coin, amount)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_vm_simple_withdrawal"></a>
+
+## Function `vm_simple_withdrawal`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_simple_withdrawal">vm_simple_withdrawal</a>(vm: &signer, payer_sig: &signer, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_simple_withdrawal">vm_simple_withdrawal</a>(vm: &signer, payer_sig: &signer, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt; <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> {
+      <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+      <b>let</b> payer_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(payer_sig);
+
+
+      <b>let</b> account_balance = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(payer_addr);
+      <b>let</b> balance_coin = &<b>mut</b> account_balance.coin;
+      <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(balance_coin, amount)
 }
 </code></pre>
 

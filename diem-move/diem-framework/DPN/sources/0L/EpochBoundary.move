@@ -137,7 +137,7 @@ module EpochBoundary {
         // don't pay while we are in recovery mode, since that creates
         // a frontrunning opportunity
         if (subsidy_units > 0 && !RecoveryMode::is_recovery()) {
-            Subsidy::process_subsidy(vm, subsidy_units, outgoing_compliant_set);
+            Subsidy::process_fees(vm, outgoing_compliant_set);
         };
 
         // after everyone is paid from the chain's Fee account

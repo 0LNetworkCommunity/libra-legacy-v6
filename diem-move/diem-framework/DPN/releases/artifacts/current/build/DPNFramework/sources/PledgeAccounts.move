@@ -477,6 +477,13 @@ address DiemFramework{
           // otherwise leave the information as-is for reference purposes
         }
 
+        ////////// TX SCRIPTS ////////// 
+
+        public(script) fun user_pledge_tx(user_sig: signer, beneficiary: address, amount: u64)  acquires BeneficiaryPolicy, MyPledges {
+          let coin = DiemAccount::simple_withdrawal(&user_sig, amount);
+          save_pledge(&user_sig, beneficiary, coin);
+        }
+
         ////////// GETTERS //////////
 
         // Danger: If the VM calls this and there is an error there will be a halt.

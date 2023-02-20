@@ -199,6 +199,7 @@ module DiemFramework::TransactionFee {
     }
 
     /////// 0L /////////
+    // TODO: rename this.
     public fun get_amount_to_distribute(dr_account: &signer): u64 acquires TransactionFee {
         // Can only be invoked by DiemVM privilege.
         // Allowed association to invoke for testing purposes.

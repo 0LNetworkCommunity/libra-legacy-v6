@@ -17,6 +17,7 @@ address DiemFramework{
     use DiemFramework::CoreAddresses;
     use DiemFramework::GAS::GAS;
     use DiemFramework::Diem;
+    use DiemFramework::TransactionFee;
 
     /// for use on genesis, creates the infra escrow pledge policy struct
     public fun initialize_infra_pledge(vm: &signer) {
@@ -36,12 +37,26 @@ address DiemFramework{
         PledgeAccounts::withdraw_from_all_pledge_accounts(vm, amount)
     }
 
-    // for end users to pledge to the infra escrow
+    /// Helper for epoch boundaries.
+    /// Collects funds from pledge and places temporarily in network account (TransactionFee account)
+    public fun epoch_boundary_collection(vm: &signer, amount: u64) {
+        CoreAddresses::assert_diem_root(vm);
+        let opt = PledgeAccounts::withdraw_from_all_pledge_accounts(vm, amount);
+        let c = Option::extract(&mut opt);
+        Option::destroy_none(opt);
 
-    // TODO: withdraw
-    //   public(script) fun user_pledge_tx(user_sig: signer, amount: u64) {
-    //     PledgeAccounts::add_funds_to_pledge_account(&user_sig, @VMReserved, amount);
-  //  }
+        TransactionFee::pay_fee<GAS>(c);
+    }
+
+    // fun genesis_helper_migrate_pledge(vm: &signer, user_sig: &signer, amount: u64) {
+    //   CoreAddresses::assert_diem_root(vm);
+    //   PledgeAccounts::user_pledge_tx(&user_sig, @VMReserved, amount);
+    // }
+    // Transaction script for user to pledge to infra escrow.
+    public(script) fun user_pledge_infra(user_sig: signer, amount: u64){
+
+      PledgeAccounts::user_pledge_tx(user_sig, @VMReserved, amount);
+    }
 
 }
 }
