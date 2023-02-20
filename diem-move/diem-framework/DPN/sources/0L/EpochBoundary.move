@@ -33,6 +33,7 @@ module EpochBoundary {
     use DiemFramework::Jail;
     use DiemFramework::TransactionFee;
     use DiemFramework::MusicalChairs;
+    use DiemFramework::InfraEscrow;
 
 
     //// V6 ////
@@ -48,44 +49,62 @@ module EpochBoundary {
     public fun reconfigure(vm: &signer, height_now: u64) {
         CoreAddresses::assert_vm(vm);
         
+
+        ///////// SETTLE ACCOUNTS OF PREVIOUS EPOCH /////////
+        // Update all slow wallet limits
+        DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock()); // todo
+        print(&800100);
+
+        // Check compliance of nodes
         let height_start = Epoch::get_timer_height_start();
-        print(&800100);        
-        
+        print(&800200);
         let (outgoing_compliant_set, new_set_size) = 
             MusicalChairs::stop_the_music(vm, height_start, height_now);
         
-        print(&800200);
-
-        // NOTE: This is "nominal" because it doesn't check
-        // let compliant_nodes_count = Vector::length(&outgoing_compliant_set);
         print(&800300);
 
-        // TODO: subsidy units are fixed
-        // let (subsidy_units, nominal_subsidy_per) = 
-        //     Subsidy::calculate_subsidy(vm, compliant_nodes_count);
-        print(&800400);
+        // Get the consensus reward established at the beginning of the epoch
+        // so we know what to pay people
+        let (reward, _, _) = ProofOfFee::get_consensus_reward();   
 
-        let (reward, _, _) = ProofOfFee::get_consensus_reward();
+        // process the oracles first (previously the identiy reward)
         process_fullnodes(vm, reward);
+        print(&800400);
         
-        print(&800500);
-        
+        // pay the validators
         process_validators(vm, reward, &outgoing_compliant_set);
-        print(&800600);
-
+        print(&800500);
         // process the non performing nodes: jail
         process_jail(vm, &outgoing_compliant_set);
+        print(&800600);
+        // EVERYONE SHOULD BE PAID UP AT THIS POINT
+        // after everyone is paid from the chain's Fee account
+        // we can burn the remainder.
+        // Note we assume Oracle subsidy was paid prior to this.
 
+        // TODO: implement what happens to the matching donation algo
+        // depending on the validator's preferences.
+        TransactionFee::ol_burn_fees(vm);
+        print(&800700);
+
+
+        ///////// PREPARE NEXT EPOCH /////////
 
         let proposed_set = propose_new_set(vm, &outgoing_compliant_set, new_set_size);
 
 
-        // Update all slow wallet limits
-        DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock()); // todo
-        print(&801000);
+        print(&800800);
+
+        // Now we need to collect coins from infrastructure escrow, to temporarily fund the network fee address for the next set.
+        // Note in step 
+        InfraEscrow::epoch_boundary_collection(vm, reward * Vector::length(&proposed_set));
+
+        print(&800900);
+
+
 
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
-        print(&801100);
+        print(&8001000);
 
     }
 
@@ -140,12 +159,6 @@ module EpochBoundary {
             Subsidy::process_fees(vm, outgoing_compliant_set);
         };
 
-        // after everyone is paid from the chain's Fee account
-        // we can burn the remainder.
-
-        // TODO: implamente what happens to the matching donation algo
-        // depending on the validator's preferences.
-        TransactionFee::ol_burn_fees(vm);
     }
 
     fun process_jail(vm: &signer, outgoing_compliant_set: &vector<address>) {
