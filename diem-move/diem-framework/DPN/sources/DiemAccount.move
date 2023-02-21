@@ -1470,6 +1470,8 @@ module DiemFramework::DiemAccount {
             false // 0L todo diem-1.4.1 - new patch, needs review        
         );
         
+        Receipts::write_receipt(vm, payer, payee, amount);
+
         restore_withdraw_capability(cap);
     }
 

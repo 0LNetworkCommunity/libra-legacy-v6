@@ -122,10 +122,12 @@
   <b>let</b> nominal_cost_to_network = reward_per * len;
   print(&70002);
   <b>let</b> balance_in_network_account = <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">TransactionFee::get_amount_to_distribute</a>(vm);
+  print(&balance_in_network_account);
+
   <b>if</b> (
     // the sum of consensus rewards should not be more than the
     // fees collected
-    (nominal_cost_to_network &lt; balance_in_network_account) ||
+    (nominal_cost_to_network &gt; balance_in_network_account) ||
     // do nothing <b>if</b> fees are 0 (expected only in test mode)
     (balance_in_network_account &lt; 1)
   ) <b>return</b>;
@@ -140,7 +142,14 @@
     print(&700031);
 
     <b>let</b> coin = <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins_amount">TransactionFee::get_transaction_fees_coins_amount</a>(vm, reward_per);
+
+    // safety
+    <b>if</b> (<a href="Diem.md#0x1_Diem_value">Diem::value</a>(&coin) &lt; 1) {
+      <a href="Diem.md#0x1_Diem_destroy_zero">Diem::destroy_zero</a>(coin);
+      <b>return</b>
+    };
     print(&700032);
+
     check_sum = check_sum + <a href="Diem.md#0x1_Diem_value">Diem::value</a>(&coin);
     print(&700033);
     <b>let</b> val = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(outgoing_set, i);

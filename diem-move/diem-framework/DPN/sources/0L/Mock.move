@@ -12,6 +12,9 @@ module Mock {
   use DiemFramework::DiemAccount;
   use DiemFramework::ProofOfFee;
   use DiemFramework::DiemSystem;
+  use DiemFramework::Diem;
+  use DiemFramework::TransactionFee;
+  use DiemFramework::GAS::GAS;
 
   public fun mock_case_1(vm: &signer, addr: address, start_height: u64, end_height: u64){
       // can only apply this to a validator
@@ -135,7 +138,21 @@ module Mock {
       };
       DiemAccount::slow_wallet_epoch_drip(vm, 100000); // unlock some coins for the validators
 
+      // make all validators pay auction fee
+      // the clearing price in the fibonacci sequence is is 1
+      DiemAccount::vm_multi_pay_fee(vm, &vals, 1, &b"proof of fee");
+
       (vals, bids, expiry)
     }
+
+    // function to deposit into network fee account
+    public fun mock_network_fees(vm: &signer, amount: u64) {
+      Testnet::assert_testnet(vm);
+      let c = Diem::mint<GAS>(vm, amount);
+      let c_value = Diem::value(&c);
+      assert!(c_value == amount, 777707);
+      TransactionFee::pay_fee(c);
+    }
+
 }
 }
