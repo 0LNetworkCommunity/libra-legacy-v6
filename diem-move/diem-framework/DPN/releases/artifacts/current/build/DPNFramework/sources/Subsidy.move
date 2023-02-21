@@ -232,6 +232,7 @@ address DiemFramework {
       print(&70002);
       let balance_in_network_account = TransactionFee::get_amount_to_distribute(vm);
       print(&balance_in_network_account);
+      
       if (
         // the sum of consensus rewards should not be more than the
         // fees collected
@@ -250,7 +251,14 @@ address DiemFramework {
         print(&700031);
 
         let coin = TransactionFee::get_transaction_fees_coins_amount(vm, reward_per);
+
+        // safety
+        if (Diem::value(&coin) < 1) {
+          Diem::destroy_zero(coin);
+          return
+        };
         print(&700032);
+
         check_sum = check_sum + Diem::value(&coin);
         print(&700033);
         let val = Vector::borrow(outgoing_set, i);
