@@ -481,6 +481,7 @@ All the fees is burnt so the balance becomes 0.
     );
 
     <a href="Diem.md#0x1_Diem_withdraw_all">Diem::withdraw_all</a>(&<b>mut</b> fees.balance)
+
 }
 </code></pre>
 
@@ -494,7 +495,7 @@ All the fees is burnt so the balance becomes 0.
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins_amount">get_transaction_fees_coins_amount</a>&lt;Token: store&gt;(dr_account: &signer, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins_amount">get_transaction_fees_coins_amount</a>&lt;Token: store&gt;(dr_account: &signer, withdraw: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;
 </code></pre>
 
 
@@ -504,7 +505,7 @@ All the fees is burnt so the balance becomes 0.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins_amount">get_transaction_fees_coins_amount</a>&lt;Token: store&gt;(
-    dr_account: &signer, amount: u64
+    dr_account: &signer, withdraw: u64
 ): <a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&gt;  <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a> {
     // Can only be invoked by DiemVM privilege.
     // Allowed association <b>to</b> invoke for testing purposes.
@@ -515,7 +516,13 @@ All the fees is burnt so the balance becomes 0.
         @DiemRoot
     );
 
-    <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(&<b>mut</b> fees.balance, amount)
+    <b>let</b> amount_collected = <a href="Diem.md#0x1_Diem_value">Diem::value</a>(&fees.balance);
+    <b>if</b> ((amount_collected &gt; withdraw) && (withdraw &gt; 0)) {
+      <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(&<b>mut</b> fees.balance, withdraw)
+    } <b>else</b> {
+       <a href="Diem.md#0x1_Diem_withdraw_all">Diem::withdraw_all</a>(&<b>mut</b> fees.balance)
+    }
+
 }
 </code></pre>
 
