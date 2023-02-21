@@ -23,29 +23,55 @@ module Burn {
     ratio: vector<FixedPoint32::FixedPoint32>,
   }
 
+  // This function recalculates the index of the matching donations
+  // for all community wallets.
+
   public fun reset_ratios(vm: &signer) acquires DepositInfo {
     CoreAddresses::assert_diem_root(vm);
-    let list = Wallet::get_comm_list();
 
+    // First find the list of all community wallets
+    // fail fast if none are found
+    let list = Wallet::get_comm_list();
     let len = Vector::length(&list);
+    if (len == 0) return;
+
     let i = 0;
     let global_deposits = 0;
     let deposit_vec = Vector::empty<u64>();
 
+    // Now we loop through all the community wallets
+    // and find the comulative deposits to that wallet.
+    // we make a table from that (a new list)
+    // we also take a tally of the global amount of deposits
+    // Note that we are using a time-weighted index of deposits
+    // which favors most recent deposits. (see DiemAccount::deposit_index_curve)
+    print(&300000);
+    print(&len);
     while (i < len) {
 
       let addr = *Vector::borrow(&list, i);
       let cumu = DiemAccount::get_index_cumu_deposits(addr);
-
+      print(&cumu);
       global_deposits = global_deposits + cumu;
       Vector::push_back(&mut deposit_vec, cumu);
       i = i + 1;
     };
 
+    print(&300001);
+
+    // check if anything went wrong, and we don't have any cumulatives
+    // to calculate.
+    if (global_deposits == 0) return;
+
+    // Now we loop through the table and calculate the ratio
+    // since we now know the global total of the ajusted cumulative deposits.
+    // and here we create another columns in our table (another list).
+    // this is a list of fixedpoint ratios.
     let ratios_vec = Vector::empty<FixedPoint32::FixedPoint32>();
     let k = 0;
     while (k < len) {
       let cumu = *Vector::borrow(&deposit_vec, k);
+      print(&cumu);
 
       let ratio = FixedPoint32::create_from_rational(cumu, global_deposits);
       print(&ratio);
@@ -53,7 +79,7 @@ module Burn {
       Vector::push_back(&mut ratios_vec, ratio);
       k = k + 1;
     };
-
+    print(&300002);
     if (exists<DepositInfo>(@VMReserved)) {
       let d = borrow_global_mut<DepositInfo>(@VMReserved);
       d.addr = list;
@@ -65,7 +91,8 @@ module Burn {
         deposits: deposit_vec,
         ratio: ratios_vec,
       })
-    }
+    };
+    print(&300003);
   }
 
   fun get_address_list(): vector<address> acquires DepositInfo {

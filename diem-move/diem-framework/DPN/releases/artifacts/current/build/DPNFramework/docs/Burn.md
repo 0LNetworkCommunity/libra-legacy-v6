@@ -117,27 +117,50 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_reset_ratios">reset_ratios</a>(vm: &signer) <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
-  <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
 
+  // First find the list of all community wallets
+  // fail fast <b>if</b> none are found
+  <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&list);
+  <b>if</b> (len == 0) <b>return</b>;
+
   <b>let</b> i = 0;
   <b>let</b> global_deposits = 0;
   <b>let</b> deposit_vec = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;();
 
+  // Now we <b>loop</b> through all the community wallets
+  // and find the comulative deposits <b>to</b> that wallet.
+  // we make a table from that (a new list)
+  // we also take a tally of the <b>global</b> amount of deposits
+  // Note that we are using a time-weighted index of deposits
+  // which favors most recent deposits. (see <a href="DiemAccount.md#0x1_DiemAccount_deposit_index_curve">DiemAccount::deposit_index_curve</a>)
+  print(&300000);
+  print(&len);
   <b>while</b> (i &lt; len) {
 
     <b>let</b> addr = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&list, i);
     <b>let</b> cumu = <a href="DiemAccount.md#0x1_DiemAccount_get_index_cumu_deposits">DiemAccount::get_index_cumu_deposits</a>(addr);
-
+    print(&cumu);
     global_deposits = global_deposits + cumu;
     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> deposit_vec, cumu);
     i = i + 1;
   };
 
+  print(&300001);
+
+  // check <b>if</b> anything went wrong, and we don't have any cumulatives
+  // <b>to</b> calculate.
+  <b>if</b> (global_deposits == 0) <b>return</b>;
+
+  // Now we <b>loop</b> through the table and calculate the ratio
+  // since we now know the <b>global</b> total of the ajusted cumulative deposits.
+  // and here we create another columns in our table (another list).
+  // this is a list of fixedpoint ratios.
   <b>let</b> ratios_vec = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;();
   <b>let</b> k = 0;
   <b>while</b> (k &lt; len) {
     <b>let</b> cumu = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&deposit_vec, k);
+    print(&cumu);
 
     <b>let</b> ratio = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(cumu, global_deposits);
     print(&ratio);
@@ -145,7 +168,7 @@
     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> ratios_vec, ratio);
     k = k + 1;
   };
-
+  print(&300002);
   <b>if</b> (<b>exists</b>&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(@VMReserved)) {
     <b>let</b> d = <b>borrow_global_mut</b>&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(@VMReserved);
     d.addr = list;
@@ -157,7 +180,8 @@
       deposits: deposit_vec,
       ratio: ratios_vec,
     })
-  }
+  };
+  print(&300003);
 }
 </code></pre>
 

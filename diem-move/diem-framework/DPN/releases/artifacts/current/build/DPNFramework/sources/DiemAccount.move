@@ -1436,12 +1436,15 @@ module DiemFramework::DiemAccount {
         // don't try to send a 0 balance, will halt.
         if (amount < 1) return;
 
+        // Check there is a payer
+        if (!exists_at(payer)) return; 
+
+        print(&7070);
         // Check payee can receive funds in this currency.
         if (!exists<Balance<Token>>(payee)) return; 
         // assert!(exists<Balance<Token>>(payee), Errors::not_published(EROLE_CANT_STORE_BALANCE));
+        print(&7071);
 
-        // Check there is a payer
-        if (!exists_at(payer)) return; 
         // assert!(exists_at(payer), Errors::not_published(EACCOUNT));
 
         // Check the payer is in possession of withdraw token.
@@ -1470,6 +1473,8 @@ module DiemFramework::DiemAccount {
             false // 0L todo diem-1.4.1 - new patch, needs review        
         );
         
+        Receipts::write_receipt(vm, payer, payee, amount);
+
         restore_withdraw_capability(cap);
     }
 
@@ -2549,7 +2554,7 @@ module DiemFramework::DiemAccount {
             == Balance<Token>{ coin: Diem<Token> { value: 0 } };
     }
 
-    // #[test_only] TODO: uncomment once unit tests are fully migrated
+    #[test_only] // TODO: uncomment once unit tests are fully migrated
     public fun add_currency_for_test<Token>(account: &signer) {
         add_currency<Token>(account)
     }
@@ -3628,8 +3633,8 @@ module DiemFramework::DiemAccount {
     struct CumulativeDeposits has key {
         /// Store the cumulative deposits made to this account.
         /// not all accounts will have this enabled.
-        value: u64,
-        index: u64, 
+        value: u64, // the cumulative deposits with no adjustments.
+        index: u64, // The index is a time-weighted cumulative sum of the deposits made to this account. This favors most recent donations.
     }
 
     //////// 0L ////////
@@ -3661,10 +3666,13 @@ module DiemFramework::DiemAccount {
       };
     }
 
+    // we need to update the cumulative deposits 
+    // this is relevant for example on community wallets
     fun maybe_update_deposit(payee: address, deposit_value: u64) acquires CumulativeDeposits {
         // update cumulative deposits if the account has the struct.
         if (exists<CumulativeDeposits>(payee)) {
           let epoch = DiemConfig::get_current_epoch();
+          // adjusted for the time-weighted index.
           let index = deposit_index_curve(epoch, deposit_value);
           let cumu = borrow_global_mut<CumulativeDeposits>(payee);
           cumu.value = cumu.value + deposit_value;

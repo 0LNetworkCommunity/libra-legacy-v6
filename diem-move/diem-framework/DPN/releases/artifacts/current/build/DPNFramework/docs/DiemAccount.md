@@ -79,7 +79,6 @@ before and after every transaction.
 -  [Function `balance_for`](#0x1_DiemAccount_balance_for)
 -  [Function `balance`](#0x1_DiemAccount_balance)
 -  [Function `add_currency`](#0x1_DiemAccount_add_currency)
--  [Function `add_currency_for_test`](#0x1_DiemAccount_add_currency_for_test)
     -  [Access Control](#@Access_Control_3)
 -  [Function `accepts_currency`](#0x1_DiemAccount_accepts_currency)
 -  [Function `sequence_number_for_account`](#0x1_DiemAccount_sequence_number_for_account)
@@ -3009,12 +3008,15 @@ vm_make_payment on the other hand considers payment limits.
     // don't try <b>to</b> send a 0 balance, will halt.
     <b>if</b> (amount &lt; 1) <b>return</b>;
 
+    // Check there is a payer
+    <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payer)) <b>return</b>;
+
+    print(&7070);
     // Check payee can receive funds in this currency.
     <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee)) <b>return</b>;
     // <b>assert</b>!(<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EROLE_CANT_STORE_BALANCE">EROLE_CANT_STORE_BALANCE</a>));
+    print(&7071);
 
-    // Check there is a payer
-    <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payer)) <b>return</b>;
     // <b>assert</b>!(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payer), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT">EACCOUNT</a>));
 
     // Check the payer is in possession of withdraw token.
@@ -3042,6 +3044,8 @@ vm_make_payment on the other hand considers payment limits.
         metadata_signature,
         <b>false</b> // 0L todo diem-1.4.1 - new patch, needs review
     );
+
+    <a href="Receipts.md#0x1_Receipts_write_receipt">Receipts::write_receipt</a>(vm, payer, payee, amount);
 
     <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">restore_withdraw_capability</a>(cap);
 }
@@ -5026,36 +5030,6 @@ This publishes a <code><a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance<
 
 
 
-</details>
-
-<a name="0x1_DiemAccount_add_currency_for_test"></a>
-
-## Function `add_currency_for_test`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_add_currency_for_test">add_currency_for_test</a>&lt;Token&gt;(account: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_add_currency_for_test">add_currency_for_test</a>&lt;Token&gt;(account: &signer) {
-    <a href="DiemAccount.md#0x1_DiemAccount_add_currency">add_currency</a>&lt;Token&gt;(account)
-}
-</code></pre>
-
-
-
-</details>
-
-<details>
-<summary>Specification</summary>
-
-
 
 <pre><code><b>pragma</b> verify = <b>false</b>;
 </code></pre>
@@ -6772,6 +6746,7 @@ Create a Validator Operator account
     // <b>update</b> cumulative deposits <b>if</b> the account <b>has</b> the <b>struct</b>.
     <b>if</b> (<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(payee)) {
       <b>let</b> epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
+      // adjusted for the time-weighted index.
       <b>let</b> index = <a href="DiemAccount.md#0x1_DiemAccount_deposit_index_curve">deposit_index_curve</a>(epoch, deposit_value);
       <b>let</b> cumu = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(payee);
       cumu.value = cumu.value + deposit_value;
