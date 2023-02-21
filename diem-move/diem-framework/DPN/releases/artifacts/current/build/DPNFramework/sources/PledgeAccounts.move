@@ -213,6 +213,10 @@ address DiemFramework{
             let amount_available = *&borrow_global<BeneficiaryPolicy>(Signer::address_of(sig_beneficiary)).amount_available;
             print(&amount_available);
 
+            if (amount_available < 1) {
+              return Option::none<Diem::Diem<GAS>>()
+            };
+
             let pct_withdraw = FixedPoint32::create_from_rational(amount, amount_available);
 
             let address_of_beneficiary = Signer::address_of(sig_beneficiary);

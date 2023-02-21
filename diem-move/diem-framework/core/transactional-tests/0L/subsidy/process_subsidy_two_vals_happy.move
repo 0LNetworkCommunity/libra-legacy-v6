@@ -1,8 +1,6 @@
 //# init --validators Alice Bob Carol Dave
 
-
-// Scenario: If alice is the only validator to do work
-// then she's the only one to get paid when we process the subsidy.
+// Scenario: Both Alice and Dave are good validators. They should get paid the same amount.
 
 //# block --proposer Alice --time 1 --round 0
 
@@ -17,7 +15,8 @@ script {
     fun main(vm: signer, b_sig: signer) {
       // alice does good work
       Mock::mock_case_1(&vm, @Alice, 0, 15);
-
+      // so does Dave
+      Mock::mock_case_1(&vm, @Dave, 0, 15);
       let validator_init_balance = 10000000;
       assert!(DiemAccount::balance<GAS>(@Alice) == validator_init_balance, 735700);
 
@@ -34,7 +33,6 @@ script {
         
     }
 }
-
 
 
 //# run --admin-script --signers DiemRoot DiemRoot
@@ -57,13 +55,13 @@ script {
 
     assert!(cr == 1000000, 735702);
     
-    // Alice should get paid exactly what was advertised at the start of the auction, at start of epoch.
     assert!(DiemAccount::balance<GAS>(@Alice) > validator_init_balance, 735703);
     assert!(DiemAccount::balance<GAS>(@Alice) == validator_init_balance + cr, 735704);
 
     // bob paid into the network fees.
     assert!(DiemAccount::balance<GAS>(@Bob) < validator_init_balance, 735705);
     assert!(DiemAccount::balance<GAS>(@Carol) == validator_init_balance, 735706);
-    assert!(DiemAccount::balance<GAS>(@Dave) == validator_init_balance, 735707);
+    assert!(DiemAccount::balance<GAS>(@Dave) > validator_init_balance, 735707);
+    assert!(DiemAccount::balance<GAS>(@Dave) == validator_init_balance + cr, 735708);
   }
 }

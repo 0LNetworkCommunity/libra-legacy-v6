@@ -208,14 +208,15 @@ module EpochBoundary {
             // CONSENSUS CRITICAL
             // pick the validators based on proof of fee.
             // false because we want the default behavior of the function: filtered by audit
+            print(&60000);
             let sorted_bids = ProofOfFee::get_sorted_vals(false);
             let (auction_winners, price) = ProofOfFee::fill_seats_and_get_price(vm, new_set_size, &sorted_bids, outgoing_compliant_set);
             // TODO: Don't use copy above, do a borrow.
-            print(&800700);
+            print(&60001);
 
             // charge the validators for the proof of fee in advance of the epoch
             DiemAccount::vm_multi_pay_fee(vm, &auction_winners, price, &b"proof of fee");
-            print(&800800);
+            print(&60001);
 
             proposed_set = auction_winners
         };

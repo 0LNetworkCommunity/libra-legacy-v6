@@ -10,6 +10,7 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
@@ -103,6 +104,7 @@
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(outgoing_set);
 
   // reward per validator
+  print(&70001);
   <b>let</b> (reward_per, _, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">ProofOfFee::get_consensus_reward</a>();
 
   // // equal subsidy for all active validators
@@ -116,22 +118,31 @@
   // 2. Proof of Fee, entry fees at clearning price
   // 3. Infra Escrow drawdown.
   // <b>as</b> such there should be sufficient coins <b>to</b> pay (we should not get an overdrawn error), and we check for that above.
+
   <b>let</b> nominal_cost_to_network = reward_per * len;
+  print(&70002);
   <b>let</b> balance_in_network_account = <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">TransactionFee::get_amount_to_distribute</a>(vm);
-  <b>if</b> (nominal_cost_to_network &lt; balance_in_network_account) <b>return</b>;
+  <b>if</b> (
+    // the sum of consensus rewards should not be more than the
+    // fees collected
+    (nominal_cost_to_network &lt; balance_in_network_account) ||
+    // do nothing <b>if</b> fees are 0 (expected only in test mode)
+    (balance_in_network_account &lt; 1)
+  ) <b>return</b>;
 
+  print(&70003);
   <b>let</b> check_sum = 0;
-
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
     // V6: there is no more minting in V6. Only drawing the
     // baseline reward from Network Fees account.
 
+    print(&700031);
 
     <b>let</b> coin = <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins_amount">TransactionFee::get_transaction_fees_coins_amount</a>(vm, reward_per);
-
+    print(&700032);
     check_sum = check_sum + <a href="Diem.md#0x1_Diem_value">Diem::value</a>(&coin);
-
+    print(&700033);
     <b>let</b> val = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(outgoing_set, i);
     <a href="DiemAccount.md#0x1_DiemAccount_deposit">DiemAccount::deposit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt; (
       @VMReserved,
@@ -141,6 +152,7 @@
       b"",
       <b>false</b>,
     );
+    print(&700034);
     i = i + 1;
   };
 
