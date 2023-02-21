@@ -53,6 +53,7 @@ address DiemFramework {
     // use DiemFramework::ValidatorConfig;
     // use DiemFramework::TowerState;
     // use Std::FixedPoint32;
+    use DiemFramework::Debug::print;
 
 
     // const BASELINE_TX_COST: u64 = 4336; // microgas
@@ -212,6 +213,7 @@ address DiemFramework {
       let len = Vector::length<address>(outgoing_set);
 
       // reward per validator
+      print(&70001);
       let (reward_per, _, _) = ProofOfFee::get_consensus_reward();
 
       // // equal subsidy for all active validators
@@ -225,22 +227,24 @@ address DiemFramework {
       // 2. Proof of Fee, entry fees at clearning price
       // 3. Infra Escrow drawdown.
       // as such there should be sufficient coins to pay (we should not get an overdrawn error), and we check for that above.
+      
       let nominal_cost_to_network = reward_per * len;
+      print(&70002);
       let balance_in_network_account = TransactionFee::get_amount_to_distribute(vm);
-      if (nominal_cost_to_network < balance_in_network_account) return;
-    
-      let check_sum = 0;
-
+      if ((nominal_cost_to_network < balance_in_network_account) || (balance_in_network_account < 1)) return;
+      print(&70003);
+      let check_sum = 0;      
       let i = 0;
       while (i < len) {
         // V6: there is no more minting in V6. Only drawing the
         // baseline reward from Network Fees account.
 
+        print(&700031);
 
         let coin = TransactionFee::get_transaction_fees_coins_amount(vm, reward_per);
-
+        print(&700032);
         check_sum = check_sum + Diem::value(&coin);
-
+        print(&700033);
         let val = Vector::borrow(outgoing_set, i);
         DiemAccount::deposit<GAS> (
           @VMReserved,
@@ -250,6 +254,7 @@ address DiemFramework {
           b"",
           false,
         );
+        print(&700034);
         i = i + 1;
       };
 
