@@ -5,7 +5,7 @@
 
 0. make sure you have a `github_token.txt` with a github developer api key there.
 1. Establish who are the `personas` participating: `alice`, `bob`, `carol`, `dave`, `eve`. We have standard keys for these personas. Assign them to each node (up to 5).
-2. Edit the ol/devnet/set_layout.toml file, with the participants in genesis (their address).
+2. Edit the ol/devnet/set_layout.toml file, with the participants in genesis (their address) and submit `make testnet-layout`.
 3. On each node `NS=<persona> TEST=y make testnet-register`
 4. Wait for all nodes/personas to complete this step.
 5. Build the genesis files on each node `NS=<persona> TEST=y make testnet-genesis`
@@ -97,6 +97,11 @@ use `make check` and inspect if the env variables are correct.
 0. Check the repos
 
 If something is wrong with the genesis ceremony repository (github.com/0LNetworkCommunity/dev-genesis) then the ceremony needs to be rerun (instead of using the fixtures).
+
+1. create the "layout" of participants in genesis.
+For devnet you can simply edit the file `ol/devnet/set_layout.toml`, and comment or un-comment the validators that are expected to join.
+
+Once that is done, this file must be committed to the genesis repo: `make testnet-layout`.
 
 1. initialize all nodes with a persona, and register to the genesis testing repo.
 
