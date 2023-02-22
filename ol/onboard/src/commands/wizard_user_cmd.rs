@@ -57,7 +57,7 @@ fn wizard(path: PathBuf, block_zero: &Option<PathBuf>) -> Result<(), Error> {
     // Create block zero, if there isn't one.
     let block;
     if let Some(block_path) = block_zero {
-        block = VDFProof::parse_block_file(block_path.to_owned());
+        block = VDFProof::parse_block_file(block_path.to_owned())?;
     } else {
         block = write_genesis(&app_cfg)?;
     }

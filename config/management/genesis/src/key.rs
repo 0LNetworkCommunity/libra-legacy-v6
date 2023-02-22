@@ -81,7 +81,7 @@ pub fn set_operator_key(path: &PathBuf, namespace: &str) {
 }
 
 //////// 0L /////////
-pub fn set_owner_key(path: &PathBuf, namespace: &str, account: AccountAddress) {
+pub fn set_owner_address(path: &PathBuf, namespace: &str, account: AccountAddress) {
     let mut storage = diem_secure_storage::Storage::OnDiskStorage(
         OnDiskStorage::new(path.join("key_store.json").to_owned())
     );

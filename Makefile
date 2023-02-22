@@ -21,18 +21,18 @@ IP=$(shell toml get ${DATA_PATH}/0L.toml profile.ip)
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 
-REPO_ORG = 0LNetworkCommunity
-REPO_NAME = genesis-registration
+REPO_ORG = 0l-testnet
+REPO_NAME = dev-genesis
 
 ifndef CARGO_ARGS
 CARGO_ARGS = --release
 endif
 # testnet automation settings
-ifeq (${TEST}, y)
+ifeq (${DEVNET}, y)
 REPO_NAME = dev-genesis
 MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 CARGO_ARGS = --locked # just keeping this from doing --release mode, while in testnet mode.
-GITHUB_USER = 0LNetworkCommunity
+GITHUB_USER = 0l-testnet
 endif
 
 # Registration params
@@ -187,7 +187,7 @@ init-backend:
 layout:
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--path ./ol/devnet/set_layout_${NODE_ENV}.toml
+	--path ${DATA_PATH}/set_layout.toml
 
 root:
 		cargo run -p diem-genesis-tool ${CARGO_ARGS} -- diem-root-key \
@@ -233,7 +233,8 @@ gen-register:
 	ACC=${ACC}-oper make oper-key
 
 	@echo The OWNERS initialize local accounts and submit pubkeys to github, and mining proofs
-	make owner-key add-proofs
+	make owner-key
+#	make owner-key add-proofs
 
 	@echo OWNER *assigns* an operator.
 	OPER=${ACC}-oper make assign
@@ -304,7 +305,10 @@ verify-gen:
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
-genesis: stdlib
+genesis: stdlib files
+	sha256sum ${DATA_PATH}/genesis.blob
+
+files:
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
 	--chain-id ${CHAIN_ID} \
 	--validator-backend ${LOCAL} \
@@ -314,9 +318,6 @@ genesis: stdlib
 	--github-org ${REPO_ORG} \
   --layout-path ${DATA_PATH}/set_layout.toml \
 	--val-ip-address ${IP}
-
-
-	sha256sum ${DATA_PATH}/genesis.blob
 
 #### NODE MANAGEMENT ####
 start:
@@ -346,7 +347,7 @@ daemon:
 #### TEST SETUP ####
 
 clear:
-ifeq (${TEST}, y)
+ifeq (${DEVNET}, y)
 
 	@if test -d ${DATA_PATH}; then \
 		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
@@ -371,13 +372,13 @@ check:
 	@echo github_org: ${REPO_ORG}
 	@echo github_repo: ${REPO_NAME}
 	@echo env: ${NODE_ENV}
-	@echo devnet mode: ${TEST}
+	@echo devnet mode: ${DEVNET}
 	@echo devnet name: ${NS}
 	@echo devnet mnem: ${MNEM}
 
 
 fix:
-ifdef TEST
+ifdef DEVNET
 	@echo NAMESPACE: ${NS}
 	@echo GENESIS: ${V}
 	@if test ! -d ${DATA_PATH}; then \
@@ -415,8 +416,8 @@ endif
 #### HELPERS ####
 set-waypoint:
 	@if test -f ${DATA_PATH}/key_store.json; then \
-		jq -r '. | with_entries(select(.key|match("-oper/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \
-		jq -r '. | with_entries(select(.key|match("-oper/genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/genesis_waypoint.txt; \
+		jq -r '. | with_entries(select(.key|match("/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \
+		jq -r '. | with_entries(select(.key|match("/genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/genesis_waypoint.txt; \
 	fi
 
 	cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/client_waypoint)
@@ -461,7 +462,7 @@ debug:
 #### TESTNET #####
 # The testnet is started using the same tools as genesis to have a faithful reproduction of a network from a clean slate.
 
-# 1. The first thing necessary is initializing testnet genesis validators. All genesis nodes need to set up environment variables for their namespace/personas e.g. NS=alice. Also the TEST=y mode must be set, as well as a chain environment e.g. NODE_ENV=test. These settings must be done manually, preferably in .bashrc
+# 1. The first thing necessary is initializing testnet genesis validators. All genesis nodes need to set up environment variables for their namespace/personas e.g. NS=alice. Also the DEVNET=y mode must be set, as well as a chain environment e.g. NODE_ENV=test. These settings must be done manually, preferably in .bashrc
 
 # 2. Next those validators will register config data to a github repo 0LNetworkCommunity/dev-genesis. Note: there could be github http errors, if validators attempt to write the same resource simultaneously
 
@@ -483,7 +484,7 @@ debug:
 # Make sure that your source is built, including stdlib
 # 
 
-testnet-init: clear fix
+testnet-init: clear
 	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --chain-id 1 --genesis-ceremony
 
 # Do the genesis ceremony registration, this includes the step testnet-validator-init-wizard

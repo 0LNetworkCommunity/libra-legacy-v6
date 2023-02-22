@@ -30,10 +30,10 @@ pub fn write_manifest(
         .unwrap_or_else(|| cfg.workspace.node_home.clone());
 
     let keys = KeyScheme::new(&wallet);
-    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned());
+    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned()).ok();
 
     return ValConfigs::new(
-        Some(block),
+        block,
         keys,
         cfg.profile.ip,
         cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),

@@ -110,22 +110,22 @@ impl StorageHelper {
         let mut storage_oper = self.storage(format!("{}-oper", namespace.clone()));
 
         if is_genesis {
-            // Data needed for testnet, swarm, and genesis ceremony.
-            // let mut storage_root = self.storage("root".to_owned());
-            // let dummy_root_for_swarm = Ed25519PrivateKey::from_encoded_string(
-            //   //  "50726f7465737473207261676520616363726f737320746865206e6174696f6e"// 
-            //     &hex::encode("Protests rage accross the nation")
-            // ).unwrap();
-
-            // storage_root
-            //     .import_private_key(DIEM_ROOT_KEY, dummy_root_for_swarm.clone())
-            //     .unwrap();
-            // storage_root
-            //     .import_private_key(TREASURY_COMPLIANCE_KEY, dummy_root_for_swarm)
-            //     .unwrap();
+            // For signing genesis registration
+            // SHOULD BE REMOVED FROM NODE FOR OPERATING
             storage_owner
                 .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
                 .unwrap();
+
+            storage_oper
+            .import_private_key(
+                VALIDATOR_NETWORK_KEY,
+                keys.child_2_val_network.get_private_key(),
+            )
+            .unwrap();
+
+            storage_oper
+            .import_private_key(EXECUTION_KEY, keys.child_5_executor.get_private_key())
+            .unwrap();
         }
 
         storage_oper
