@@ -361,7 +361,7 @@ clear:
 ifeq (${TEST}, y)
 
 	@if test -d ${DATA_PATH}; then \
-		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
+		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml genesis_waypoint.txt client_waypoint; \
 	fi
 	@if test -d ${DATA_PATH}/vdf_proofs; then \
 		rm -f ${DATA_PATH}/vdf_proofs/*.json; \
@@ -425,20 +425,21 @@ endif
 
 
 #### HELPERS ####
-set-waypoint: wp-other
+extract-waypoint:
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-waypoint \
+	--genesis-path ${DATA_PATH}/genesis.blob \
+	--extract \
+	--chain-id ${CHAIN_ID} \
+	--shared-backend ${REMOTE} \
+	| awk -F 'Waypoint: '  '{print $$2}' > ${DATA_PATH}/genesis_waypoint.txt\
 
-wp-keystore:
-	@if test -f ${DATA_PATH}/key_store.json; then \
-		jq -r '. | with_entries(select(.key|match("/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \
-		jq -r '. | with_entries(select(.key|match("/genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/genesis_waypoint.txt; \
-	fi
-
-wp-other:
-	sleep 2
+set-waypoint:	
+	make extract-waypoint
+	sleep 1
 	cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/genesis_waypoint.txt)
 
 	@echo client_waypoint:
-	@cat ${DATA_PATH}/client_waypoint
+	@cat ${DATA_PATH}/genesis_waypoint.txt
 
 client: set-waypoint
 # ifeq (${TEST}, y)
