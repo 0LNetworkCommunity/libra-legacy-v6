@@ -361,7 +361,7 @@ clear:
 ifeq (${TEST}, y)
 
 	@if test -d ${DATA_PATH}; then \
-		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml genesis_waypoint.txt client_waypoint; \
+		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml genesis_waypoint.txt; \
 	fi
 	@if test -d ${DATA_PATH}/vdf_proofs; then \
 		rm -f ${DATA_PATH}/vdf_proofs/*.json; \
@@ -438,17 +438,11 @@ set-waypoint:
 	sleep 1
 	cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/genesis_waypoint.txt)
 
-	@echo client_waypoint:
+	@echo waypoint:
 	@cat ${DATA_PATH}/genesis_waypoint.txt
 
 client: set-waypoint
-# ifeq (${TEST}, y)
-# 	 echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
-# else
-	cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
-# endif
-
-
+	cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/genesis_waypoint.txt) --chain-id ${CHAIN_ID}
 
 keygen:
 	cd ${DATA_PATH} && onboard keygen
