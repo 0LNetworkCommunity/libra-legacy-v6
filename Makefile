@@ -420,7 +420,7 @@ set-waypoint:
 		jq -r '. | with_entries(select(.key|match("/genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/genesis_waypoint.txt; \
 	fi
 
-	cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/client_waypoint)
+	cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/genesis_waypoint.txt)
 
 	@echo client_waypoint:
 	@cat ${DATA_PATH}/client_waypoint
