@@ -28,7 +28,7 @@ ifndef CARGO_ARGS
 CARGO_ARGS = --release
 endif
 # testnet automation settings
-ifeq (${DEVNET}, y)
+ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
 MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 CARGO_ARGS = --locked # just keeping this from doing --release mode, while in testnet mode.
@@ -184,10 +184,21 @@ shuffle-test:
 init-backend: 
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
+# this layout will be saved to the genesis repo. needs only to be done once
 layout:
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
 	--path ${DATA_PATH}/set_layout.toml
+
+# Note the only difference from testnet is that we have a fixture file for 
+# the personas that are participating.
+# in Devnet this only needs to be done when the test personas are changed.
+testnet-layout:
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- set-layout \
+	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
+	--path ${SOURCE}/ol/devnet/set_layout.toml
+
+
 
 root:
 		cargo run -p diem-genesis-tool ${CARGO_ARGS} -- diem-root-key \
@@ -347,7 +358,7 @@ daemon:
 #### TEST SETUP ####
 
 clear:
-ifeq (${DEVNET}, y)
+ifeq (${TEST}, y)
 
 	@if test -d ${DATA_PATH}; then \
 		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
@@ -372,13 +383,13 @@ check:
 	@echo github_org: ${REPO_ORG}
 	@echo github_repo: ${REPO_NAME}
 	@echo env: ${NODE_ENV}
-	@echo devnet mode: ${DEVNET}
-	@echo devnet name: ${NS}
-	@echo devnet mnem: ${MNEM}
+	@echo TEST mode: ${TEST}
+	@echo TEST name: ${NS}
+	@echo TEST mnem: ${MNEM}
 
 
 fix:
-ifdef DEVNET
+ifdef TEST
 	@echo NAMESPACE: ${NS}
 	@echo GENESIS: ${V}
 	@if test ! -d ${DATA_PATH}; then \
@@ -409,7 +420,7 @@ ifdef DEVNET
 # place a mock account.json in root, used as template for onboarding
 	cp ./ol/fixtures/account/${NS}.account.json ${DATA_PATH}/account.json
 # replace the set_layout
-	cp ./ol/devnet/set_layout_test.toml ${DATA_PATH}/set_layout.toml
+	cp ./ol/TEST/set_layout_test.toml ${DATA_PATH}/set_layout.toml
 endif
 
 
@@ -462,7 +473,7 @@ debug:
 #### TESTNET #####
 # The testnet is started using the same tools as genesis to have a faithful reproduction of a network from a clean slate.
 
-# 1. The first thing necessary is initializing testnet genesis validators. All genesis nodes need to set up environment variables for their namespace/personas e.g. NS=alice. Also the DEVNET=y mode must be set, as well as a chain environment e.g. NODE_ENV=test. These settings must be done manually, preferably in .bashrc
+# 1. The first thing necessary is initializing testnet genesis validators. All genesis nodes need to set up environment variables for their namespace/personas e.g. NS=alice. Also the TEST=y mode must be set, as well as a chain environment e.g. NODE_ENV=test. These settings must be done manually, preferably in .bashrc
 
 # 2. Next those validators will register config data to a github repo 0LNetworkCommunity/dev-genesis. Note: there could be github http errors, if validators attempt to write the same resource simultaneously
 
@@ -519,6 +530,8 @@ testnet: clear fix testnet-init testnet-genesis start
 testnet-onboard: clear fix
 	MNEM='${MNEM}' cargo run -p onboard -- val --github-org ${REPO_ORG} --repo dev-genesis --chain-id 1
 # start a node with fullnode.node.yaml configs
+
+testnet-fullnode:	
 	cargo r -p diem-node -- -f ~/.0L/fullnode.node.yaml
 
 
@@ -561,12 +574,12 @@ epoch:
 	echo ${EPOCH_HEIGHT}
 
 fork-backup:
-		rm -rf ${SOURCE}/ol/devnet/snapshot/*
-		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}/ol/devnet/snapshot/
+		rm -rf ${SOURCE}/ol/TEST/snapshot/*
+		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}/ol/TEST/snapshot/
 
 # Make genesis file
 fork-genesis:
-		cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}/ol/devnet/snapshot/state_ver*
+		cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}/ol/TEST/snapshot/state_ver*
 
 # Use onboard to create all node files
 fork-config:
