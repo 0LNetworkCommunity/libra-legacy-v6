@@ -52,7 +52,8 @@ impl Verify {
             .config
             .load()?
             .override_validator_backend(&self.backend.validator_backend)?;
-        let validator_storage = config.validator_backend();
+        //////// 0L ////////
+        let validator_storage = config.operator_backend()?;
 
         verify_genesis(validator_storage, self.genesis_path.as_deref())
     }

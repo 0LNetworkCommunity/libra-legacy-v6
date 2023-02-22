@@ -501,6 +501,8 @@ testnet-genesis: genesis set-waypoint
 	--publish-genesis ${DATA_PATH}/genesis_waypoint.txt \
 	--shared-backend ${GENESIS_REMOTE}
 
+	make verify-gen
+
 
 #### 2. TESTNET START ####
 

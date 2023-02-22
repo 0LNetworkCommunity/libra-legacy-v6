@@ -21,13 +21,13 @@ use diem_types::{
     transaction::Transaction,
     waypoint::Waypoint,
 };
+use ol_keys::scheme::KeyScheme;
+use ol_types::{fixtures, genesis_proof::GenesisMiningProof};
 use std::{
     fs::File,
     path::{Path, PathBuf},
-  };
+};
 use structopt::StructOpt;
-use ol_keys::scheme::KeyScheme;
-use ol_types::{ fixtures, genesis_proof::GenesisMiningProof};
 
 pub struct StorageHelper {
     temppath: diem_temppath::TempPath,
@@ -96,16 +96,16 @@ impl StorageHelper {
         encryptor.initialize().unwrap();
 
         // TODO: Use EncNetworkAddress instead of TEST_SHARED
-        encryptor.add_key(
-            diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY_VERSION,
-            diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
-        ).unwrap();
+        encryptor
+            .add_key(
+                diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY_VERSION,
+                diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
+            )
+            .unwrap();
     }
 
     ///////// 0L  /////////
-    pub fn initialize_with_mnemonic(
-        &self, namespace: String, keys: KeyScheme, is_genesis: bool
-    ) {
+    pub fn initialize_with_mnemonic(&self, namespace: String, keys: KeyScheme, is_genesis: bool) {
         let mut storage_owner = self.storage(namespace.clone());
         let mut storage_oper = self.storage(format!("{}-oper", namespace.clone()));
 
@@ -115,17 +115,9 @@ impl StorageHelper {
             storage_owner
                 .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
                 .unwrap();
-
-            storage_oper
-            .import_private_key(
-                VALIDATOR_NETWORK_KEY,
-                keys.child_2_val_network.get_private_key(),
-            )
-            .unwrap();
-
-            storage_oper
-            .import_private_key(EXECUTION_KEY, keys.child_5_executor.get_private_key())
-            .unwrap();
+             storage_oper
+                .import_private_key(OWNER_KEY, keys.child_0_owner.get_private_key())
+                .unwrap();
         }
 
         storage_oper
@@ -152,14 +144,14 @@ impl StorageHelper {
         storage_oper
             .set(SAFETY_DATA, SafetyData::new(0, 0, 0, 0, None))
             .unwrap();
-        
+
         let mut encryptor = diem_network_address_encryption::Encryptor::new(storage_oper);
         encryptor.initialize().unwrap();
 
         // TODO: Use EncNetworkAddress instead of TEST_SHARED
         encryptor
             .add_key(
-                diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY_VERSION,                
+                diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY_VERSION,
                 diem_types::network_address::encrypted::TEST_SHARED_VAL_NETADDR_KEY,
             )
             .unwrap();
@@ -174,7 +166,7 @@ impl StorageHelper {
         self.temppath.path().to_str().unwrap()
     }
 
-    //////// 0L ////////    
+    //////// 0L ////////
     // pub fn initialize_by_idx(&self, namespace: String, idx: usize) {
     //     let partial_seed = bcs::to_bytes(&idx).unwrap();
     //     let mut seed = [0u8; 32];
@@ -191,45 +183,33 @@ impl StorageHelper {
         let mut seed = [0u8; 32];
         let data_to_copy = 32 - std::cmp::min(32, partial_seed.len());
         seed[data_to_copy..].copy_from_slice(partial_seed.as_slice());
-        // idx 0 is reserved by swarm for a "diemroot" account in tests. 
+        // idx 0 is reserved by swarm for a "diemroot" account in tests.
         //   It is not for a validator, just for doing genesis.
-        // idx 1  is for the first node OWNER, set a fixed mnemonic to derive 
+        // idx 1  is for the first node OWNER, set a fixed mnemonic to derive
         // keys for this one so we can simulate miner workflow.
         // user personas
         match idx {
-        1 => {
-            let user = fixtures::get_persona_mnem("alice");
-            dbg!("swarm 3", &user);
-                        
-            self.initialize_with_mnemonic_swarm(
-                namespace,
-                fixtures::get_persona_mnem("alice"),
-            );
+            1 => {
+                let user = fixtures::get_persona_mnem("alice");
+                dbg!("swarm 3", &user);
+
+                self.initialize_with_mnemonic_swarm(namespace, fixtures::get_persona_mnem("alice"));
+            }
+            2 => {
+                self.initialize_with_mnemonic_swarm(namespace, fixtures::get_persona_mnem("bob"));
+            }
+            3 => {
+                self.initialize_with_mnemonic_swarm(namespace, fixtures::get_persona_mnem("carol"));
+            }
+            4 => {
+                self.initialize_with_mnemonic_swarm(namespace, fixtures::get_persona_mnem("dave"));
+            }
+            _ => {
+                // do random namespaces
+                self.initialize(namespace, seed);
+            }
         }
-        2 => {
-            self.initialize_with_mnemonic_swarm(
-                namespace,
-                fixtures::get_persona_mnem("bob"),
-            );
-        }
-        3 => {
-            self.initialize_with_mnemonic_swarm(
-                namespace,
-                fixtures::get_persona_mnem("carol"),
-            );
-        }
-        4 => {
-            self.initialize_with_mnemonic_swarm(
-                namespace,
-                fixtures::get_persona_mnem("dave"),
-            );
-        }
-        _ => {
-            // do random namespaces
-            self.initialize(namespace, seed);
-        }
-        }
-    }    
+    }
 
     pub fn initialize(&self, namespace: String, seed: [u8; 32]) {
         let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed(seed);
@@ -283,17 +263,17 @@ impl StorageHelper {
         let mut storage = self.storage(namespace);
         let default_proof = GenesisMiningProof::default();
         storage
-        .set(
-            diem_global_constants::PROOF_OF_WORK_PREIMAGE,
-            default_proof.preimage,
-        )
-        .unwrap();
+            .set(
+                diem_global_constants::PROOF_OF_WORK_PREIMAGE,
+                default_proof.preimage,
+            )
+            .unwrap();
         storage
-        .set(
-            diem_global_constants::PROOF_OF_WORK_PROOF,
-            default_proof.proof,
-        )
-        .unwrap();
+            .set(
+                diem_global_constants::PROOF_OF_WORK_PROOF,
+                default_proof.proof,
+            )
+            .unwrap();
     }
 
     pub fn create_waypoint(&self, chain_id: ChainId) -> Result<Waypoint, Error> {
@@ -323,7 +303,7 @@ impl StorageHelper {
         layout_path: &PathBuf,
     ) -> Result<Waypoint, Error> {
         let args = format!(
-        "
+            "
             diem-genesis-tool
             create-waypoint
             --chain-id {chain_id}
@@ -331,17 +311,17 @@ impl StorageHelper {
             --genesis-path {genesis_path}
             --layout-path {layout_path}
         ",
-        chain_id = chain_id,
-        remote = remote,
-        genesis_path = genesis_path.to_str().unwrap(),
-        layout_path = layout_path.to_str().unwrap(),
+            chain_id = chain_id,
+            remote = remote,
+            genesis_path = genesis_path.to_str().unwrap(),
+            layout_path = layout_path.to_str().unwrap(),
         );
 
         let command = Command::from_iter(args.split_whitespace());
         command.create_waypoint()
-    }    
+    }
 
-        ///////// 0L  /////////
+    ///////// 0L  /////////
     pub fn build_genesis_from_github(
         &self,
         chain_id: ChainId,
@@ -349,21 +329,21 @@ impl StorageHelper {
         genesis_path: &PathBuf,
     ) -> Result<Waypoint, Error> {
         let args = format!(
-        "
+            "
             diem-genesis-tool
             create-waypoint
             --chain-id {chain_id}
             --shared-backend {remote}
             --genesis-path {genesis_path}
         ",
-        chain_id = chain_id,
-        remote = remote,
-        genesis_path = genesis_path.to_str().unwrap(),
+            chain_id = chain_id,
+            remote = remote,
+            genesis_path = genesis_path.to_str().unwrap(),
         );
 
         let command = Command::from_iter(args.split_whitespace());
         command.create_waypoint()
-    }    
+    }
 
     pub fn insert_waypoint(&self, validator_ns: &str, waypoint: Waypoint) -> Result<(), Error> {
         let args = format!(
@@ -429,7 +409,7 @@ impl StorageHelper {
         let command = Command::from_iter(args.split_whitespace());
         command.genesis()
     }
-        
+
     pub fn diem_root_key(
         &self,
         validator_ns: &str,
