@@ -36,7 +36,8 @@ impl Runnable for ValSetCmd {
         let script = if let Some(addr) = *&self.vouchee {
             transaction_builder::encode_voucher_unjail_script_function(addr)
         } else {
-            transaction_builder::encode_self_unjail_script_function()
+           println!("You must pass the --vouchee address that you are unjailing");
+            exit(1);
         };
 
         match maybe_submit(

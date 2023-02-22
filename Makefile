@@ -94,10 +94,7 @@ bins: stdlib
 
 stdlib:
 # cargo run ${CARGO_ARGS} -p diem-framework
-	cargo run ${CARGO_ARGS} -p diem-framework -- --create-upgrade-payload
-	shasum -a 256 ./DPN/releases/artifacts/current/staged/stdlib.mv | true
-	mkdir diem-move/diem-framework/DPN/releases/artifacts/current/ | rm -rf diem-move/diem-framework/DPN/releases/artifacts/current/*
-	cp -r ./DPN/releases/artifacts/current/* diem-move/diem-framework/DPN/releases/artifacts/current/
+	. ./ol/util/build-stdlib.sh
 
 install: mv-bin bin-path
 	mkdir ${USER_BIN_PATH} | true
@@ -249,7 +246,9 @@ gen-register:
 # make gen-make-pull
 
 init-test:
-	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
+	cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
+	cargo run -p ol -- init --app
+
 
 init:
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- init --path=${DATA_PATH} --namespace=${ACC}
@@ -481,9 +480,10 @@ debug:
 
 
 #### 1. TESTNET SETUP ####
+# Make sure that your source is built, including stdlib
+# 
 
 testnet-init: clear fix
-#  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
 	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --chain-id 1 --genesis-ceremony
 
 # Do the genesis ceremony registration, this includes the step testnet-validator-init-wizard
