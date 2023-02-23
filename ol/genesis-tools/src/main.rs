@@ -1,8 +1,9 @@
 use anyhow::Result;
-use diem_types::account_address::AccountAddress;
+use vm_genesis::{TestValidator, Validator};
 use std::{path::PathBuf, process::exit};
 use ol_types::legacy_recovery::{save_recovery_file, read_from_recovery_file};
 use gumdrop::Options;
+use diem_genesis_tool::genesis::Genesis;
 use ol_genesis_tools::{
     compare,
     // swarm_genesis::make_swarm_genesis
@@ -12,12 +13,13 @@ use ol_genesis_tools::{
     process_snapshot::db_backup_into_recovery_struct,
 };
 
+
 #[tokio::main]
 async fn main() -> Result<()> {
     #[derive(Debug, Options)]
     struct Args {
-        // #[options(help = "path to snapshot dir to read", short="v")]
-        // genesis_vals: Vec<AccountAddress>,
+        #[options(help = "remote github repo for genesis coordination", short="b")]
+        genesis_backend: Option<String>,
 
         #[options(help = "path to snapshot dir to read")]
         snapshot_path: Option<PathBuf>,
@@ -69,12 +71,29 @@ async fn main() -> Result<()> {
             // be migrated, this is risky and not ideal
             // you probably want a step where the data gets cleaned
             // and serialized to json for analysis.
+
+            let genesis_vals: Vec<Validator> = if let Some(s) = opts.genesis_backend {
+              
+              // NOTE: this is a real PITA.
+              // There are two structs called SecureBackend, and we need to do some gymnastics. Plus they wrote their own parser for the cli args. Sigh.
+              let b =  diem_management::secure_backend::storage(&s).unwrap();
+
+
+              Genesis::just_the_vals(b).expect("could not get the validator set")
+            } else {
+              // TODO: this is duplicated in tests
+              TestValidator::new_test_set(Some(4)).into_iter()
+              .map(|v| {v.data}).collect()
+              // create testnet genesis
+
+            };
+
             make_recovery_genesis_from_db_backup(
                 output_path.clone(),
                 snapshot_path,
                 !opts.debug,
                 opts.legacy,
-                &vec![]
+                &genesis_vals
                 // opts.genesis_vals
             )
             .await

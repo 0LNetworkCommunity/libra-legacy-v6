@@ -29,7 +29,7 @@ pub struct CreateWaypoint {
     #[structopt(long)]
     layout_path: Option<std::path::PathBuf>,
     #[structopt(long)]
-    extract: bool,   
+    extract: bool,
 }
 
 impl CreateWaypoint {
