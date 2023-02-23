@@ -96,6 +96,12 @@ impl WriteSetMut {
       // TODO: add structural validation
       self.write_set
     }
+    /// Extend a writeset with another writeset
+    pub fn extend(mut self, right: Vec<(AccessPath, WriteOp)>) -> Self{
+      // TODO: add structural validation
+      self.write_set.extend(right);
+      self
+    }
 }
 
 impl ::std::iter::FromIterator<(AccessPath, WriteOp)> for WriteSetMut {

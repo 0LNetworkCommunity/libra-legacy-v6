@@ -155,6 +155,9 @@ compiled_package_info:
       name: Genesis
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: GenesisMigration
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Globals
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -313,7 +316,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 6FE88762F2E1A750B12C4166250C66AAE205A92570EF975EEBA86738CABDE2A2
+  source_digest: D38221DF89B01EE8625F117F721CF161438C44A5D125072BCD2CB904C10AFCB5
   build_flags:
     dev_mode: false
     test_mode: false

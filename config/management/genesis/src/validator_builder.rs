@@ -213,8 +213,7 @@ impl ValidatorBuilder {
 
         // Generate chain root keys
         let root_keys = RootKeys::generate(&mut rng);
-        let pk = Ed25519PublicKey::from(&root_keys.root_key);
-        dbg!(&pk);
+
         // Generate and initialize Validator configs
         let mut validators = (0..self.num_validators.get())
             .map(|i| {

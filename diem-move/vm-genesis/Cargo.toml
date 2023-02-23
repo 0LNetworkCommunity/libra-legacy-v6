@@ -36,6 +36,7 @@ diem-global-constants = { path = "../../config/global-constants" }
 hex = "0.4"
 serde = { version = "1.0.116", features = ["rc"], default-features = false }
 ol-types = {path = "../../ol/types"}
+diem-logger = { path = "../../crates/diem-logger" }
 
 [dev-dependencies]
 proptest = "1.0.0"

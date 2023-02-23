@@ -546,6 +546,20 @@ module DiemFramework::DiemAccount {
         }
     }
 
+    public fun vm_create_account_migration(
+        vm: &signer,
+        new_account: address,
+        new_account_authkey_prefix: vector<u8>,
+        // value: u64,
+    ) acquires AccountOperationsCapability  {
+        CoreAddresses::assert_diem_root(vm);
+        // TODO: fix the timestamp issue
+        // DiemTimestamp::assert_genesis();
+        let new_signer = create_signer(new_account);
+        Roles::new_user_role_with_proof(&new_signer);
+        make_account(&new_signer, new_account_authkey_prefix);
+        add_currencies_for_account<GAS>(&new_signer, false);
+    }
     /////// 0L ////////
     // WARNING THIS IS A PUBLIC SCRIPT ONLY INTENDED FOR TESTING.
     // Function code: 01

@@ -11,6 +11,7 @@ use rand::{rngs::StdRng, SeedableRng};
 pub fn test_config() -> (NodeConfig, Ed25519PrivateKey) {
     let path = TempPath::new();
     path.create_as_dir().unwrap();
+
     let (root_keys, _genesis, _genesis_waypoint, validators) = ValidatorBuilder::new(
         path.path(),
         diem_framework_releases::current_module_blobs().to_vec(),
@@ -30,6 +31,7 @@ pub fn test_config() -> (NodeConfig, Ed25519PrivateKey) {
         .identity_from_storage()
         .backend;
     let storage: Storage = std::convert::TryFrom::try_from(backend).unwrap();
+
     let mut test = diem_config::config::TestConfig::new_with_temp_dir(Some(path));
     test.execution_key(
         storage

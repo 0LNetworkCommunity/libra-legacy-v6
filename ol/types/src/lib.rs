@@ -24,3 +24,4 @@ pub mod pay_instruction;
 pub mod rpc_playlist;
 pub mod validator_config;
 pub mod wallet;
+pub mod legacy_recovery;

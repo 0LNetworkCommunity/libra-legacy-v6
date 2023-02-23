@@ -1,5 +1,5 @@
 [package]
-name = "ol-smoke-test"
+name = "ol-smoke-tests"
 version = "0.1.0"
 authors = [""]
 edition = "2018"
@@ -32,27 +32,30 @@ diem-types = { path = "../../types" }
 forge = { path = "../../testsuite/forge" }
 diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 
+rand = "0.8.3"
+once_cell = "1.7.2"
+diem-secure-storage = { path = "../../secure/storage", features = ["testing"] }
+diem-global-constants = { path = "../../config/global-constants" }
+diem-genesis-tool = {path = "../../config/management/genesis", features = ["testing"] }
+diem-logger = { path = "../../crates/diem-logger" }
+diem-management = { path = "../../config/management", features = ["testing"] }
+diem-writeset-generator = { path = "../../diem-move/writeset-transaction-generator" }
+
 [dev-dependencies]
 base64 = "0.13.0"
 hex = "0.4.3"
 once_cell = "1.7.2"
-rand = "0.8.3"
 regex = "1.4.3"
 serde_yaml = "0.8.17"
 futures = "0.3.12"
 backup-cli = { path = "../../storage/backup/backup-cli" }
 debug-interface = { path = "../../crates/debug-interface" }
 generate-key = { path = "../../config/generate-key" }
-diem-genesis-tool = {path = "../../config/management/genesis", features = ["testing"] }
-diem-global-constants = { path = "../../config/global-constants" }
 diem-infallible = { path = "../../crates/diem-infallible" }
 diem-json-rpc = { path = "../../json-rpc" }
 diem-json-rpc-types = { path = "../../json-rpc/types" }
 diem-key-manager = { path = "../../secure/key-manager" }
-diem-logger = { path = "../../crates/diem-logger" }
-diem-management = { path = "../../config/management", features = ["testing"] }
 diem-operational-tool = {path = "../../config/management/operational", features = ["testing"] }
-diem-secure-storage = { path = "../../secure/storage", features = ["testing"] }
 diem-time-service = { path = "../../crates/diem-time-service", features = ["testing"] }
 diem-vault-client = { path = "../../secure/storage/vault", features = ["fuzzing"] }
 diem-validator-interface = { path = "../../diem-move/diem-validator-interface" }

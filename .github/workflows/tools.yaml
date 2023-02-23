@@ -37,3 +37,6 @@ jobs:
       - name: cli tests
         run: cd ol/cli && NODE_ENV=test cargo test
         continue-on-error: true
+      - name: genesis tests
+        run: cd ol/genesis-tools && NODE_ENV=test cargo test
+        continue-on-error: true

@@ -14,7 +14,7 @@ mod move_modules;
 pub mod validator_builder;
 mod validator_config;
 mod validator_operator;
-mod verify;
+pub mod verify; //////// 0L ///////// make public
 
 //////// 0L ////////
 pub mod init;
@@ -23,7 +23,7 @@ mod ol_mining;
 pub mod ol_seeds;
 pub mod ol_create_repo;
 
-#[cfg(any(test, feature = "testing"))]
+// #[cfg(any(test, feature = "testing"))]
 pub mod config_builder;
 //////// 0L /////////
 // This was previously only for tests 0L uses for init key_store.json
