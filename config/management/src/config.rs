@@ -140,6 +140,26 @@ impl Config {
             storage: std::convert::From::from(&self.validator_backend),
         }
     }
+
+    //////// 0L ////////
+    pub fn operator_backend(&self) -> Result<StorageWrapper, Error> {
+
+      let mut on_disk = match &self.validator_backend {
+        config::SecureBackend::OnDiskStorage(a) => {
+          a.clone()
+        },
+        _ => return Err(Error::BackendParsingError("no val storage here".to_string())),
+    };
+
+     on_disk.namespace = Some(format!("{}-oper", &on_disk.namespace.unwrap()));
+    
+    let s = StorageWrapper {
+          storage_name: "validator",
+          storage: std::convert::From::from(&config::SecureBackend::OnDiskStorage(on_disk)),
+      };
+      Ok(s)
+    }
+
 }
 
 #[derive(Clone, Debug, Default, StructOpt)]
@@ -162,7 +182,7 @@ impl ConfigPath {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use diem_config::config::{SecureBackend, Token, VaultConfig};
+    use diem_config::config::{Token, VaultConfig};
     use diem_types::chain_id::NamedChain;
 
     #[test]

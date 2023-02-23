@@ -104,7 +104,7 @@ pub struct OnDiskStorageConfig {
     /// would be in N/S.
     pub namespace: Option<String>,
     #[serde(skip)]
-    data_dir: PathBuf,
+    pub data_dir: PathBuf,
 }
 
 /// Tokens can either be directly within this config or stored somewhere on disk.
