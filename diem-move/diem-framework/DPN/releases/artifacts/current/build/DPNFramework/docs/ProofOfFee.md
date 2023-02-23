@@ -20,9 +20,12 @@
 -  [Function `current_bid`](#0x1_ProofOfFee_current_bid)
 -  [Function `top_n_accounts`](#0x1_ProofOfFee_top_n_accounts)
 -  [Function `set_bid`](#0x1_ProofOfFee_set_bid)
+-  [Function `retract_bid`](#0x1_ProofOfFee_retract_bid)
 -  [Function `init_bidding`](#0x1_ProofOfFee_init_bidding)
--  [Function `update_pof_bid`](#0x1_ProofOfFee_update_pof_bid)
+-  [Function `pof_update_bid`](#0x1_ProofOfFee_pof_update_bid)
+-  [Function `pof_retract_bid`](#0x1_ProofOfFee_pof_retract_bid)
 -  [Function `test_set_val_bids`](#0x1_ProofOfFee_test_set_val_bids)
+-  [Function `test_set_one_bid`](#0x1_ProofOfFee_test_set_one_bid)
 -  [Function `test_mock_reward`](#0x1_ProofOfFee_test_mock_reward)
 
 
@@ -66,6 +69,12 @@
 </dd>
 <dt>
 <code>epoch_expiration: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>last_epoch_retracted: u64</code>
 </dt>
 <dd>
 
@@ -130,6 +139,15 @@
 
 
 <pre><code><b>const</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ENOT_AN_ACTIVE_VALIDATOR">ENOT_AN_ACTIVE_VALIDATOR</a>: u64 = 190001;
+</code></pre>
+
+
+
+<a name="0x1_ProofOfFee_EABOVE_RETRACT_LIMIT"></a>
+
+
+
+<pre><code><b>const</b> <a href="ProofOfFee.md#0x1_ProofOfFee_EABOVE_RETRACT_LIMIT">EABOVE_RETRACT_LIMIT</a>: u64 = 190003;
 </code></pre>
 
 
@@ -214,7 +232,8 @@
     account_sig,
       <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a> {
         bid: 0,
-        epoch_expiration: 0
+        epoch_expiration: 0,
+        last_epoch_retracted: 0,
       }
     );
   }
@@ -852,6 +871,52 @@ find the median bid to push to history
 
 </details>
 
+<a name="0x1_ProofOfFee_retract_bid"></a>
+
+## Function `retract_bid`
+
+Note that the validator will not be bidding on any future
+epochs if they retract their bid. The must set a new bid.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_retract_bid">retract_bid</a>(account_sig: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_retract_bid">retract_bid</a>(account_sig: &signer) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a> {
+
+  <b>let</b> acc = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account_sig);
+  <b>if</b> (!<b>exists</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>&gt;(acc)) {
+    <a href="ProofOfFee.md#0x1_ProofOfFee_init">init</a>(account_sig);
+  };
+
+
+  <b>let</b> pof = <b>borrow_global_mut</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>&gt;(acc);
+  <b>let</b> this_epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
+
+  //////// LEAVE COMMENTED. Code for a potential upgrade. ////////
+  // See above discussion for retracting of bids.
+  //
+  // already retracted this epoch
+  // <b>assert</b>!(this_epoch &gt; pof.last_epoch_retracted, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_ol_tx">Errors::ol_tx</a>(<a href="ProofOfFee.md#0x1_ProofOfFee_EABOVE_RETRACT_LIMIT">EABOVE_RETRACT_LIMIT</a>));
+  //////// LEAVE COMMENTED. Code for a potential upgrade. ////////
+
+
+  pof.epoch_expiration = 0;
+  pof.bid = 0;
+  pof.last_epoch_retracted = this_epoch;
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_ProofOfFee_init_bidding"></a>
 
 ## Function `init_bidding`
@@ -876,13 +941,13 @@ find the median bid to push to history
 
 </details>
 
-<a name="0x1_ProofOfFee_update_pof_bid"></a>
+<a name="0x1_ProofOfFee_pof_update_bid"></a>
 
-## Function `update_pof_bid`
+## Function `pof_update_bid`
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_update_pof_bid">update_pof_bid</a>(sender: signer, bid: u64, epoch_expiry: u64)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_pof_update_bid">pof_update_bid</a>(sender: signer, bid: u64, epoch_expiry: u64)
 </code></pre>
 
 
@@ -891,9 +956,34 @@ find the median bid to push to history
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_update_pof_bid">update_pof_bid</a>(sender: signer, bid: u64, epoch_expiry: u64) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a> {
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_pof_update_bid">pof_update_bid</a>(sender: signer, bid: u64, epoch_expiry: u64) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a> {
   // <b>update</b> the bid, initializes <b>if</b> not already.
   <a href="ProofOfFee.md#0x1_ProofOfFee_set_bid">set_bid</a>(&sender, bid, epoch_expiry);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ProofOfFee_pof_retract_bid"></a>
+
+## Function `pof_retract_bid`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_pof_retract_bid">pof_retract_bid</a>(sender: signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_pof_retract_bid">pof_retract_bid</a>(sender: signer) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a> {
+  // retract a bid
+  <a href="ProofOfFee.md#0x1_ProofOfFee_retract_bid">retract_bid</a>(&sender);
 }
 </code></pre>
 
@@ -925,11 +1015,36 @@ find the median bid to push to history
     <b>let</b> bid = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(bids, i);
     <b>let</b> exp = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(expiry, i);
     <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(vals, i);
-    <b>let</b> pof = <b>borrow_global_mut</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>&gt;(*addr);
-    pof.epoch_expiration = *exp;
-    pof.bid = *bid;
+    <a href="ProofOfFee.md#0x1_ProofOfFee_test_set_one_bid">test_set_one_bid</a>(vm, addr, *bid, *exp);
     i = i + 1;
   };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ProofOfFee_test_set_one_bid"></a>
+
+## Function `test_set_one_bid`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_test_set_one_bid">test_set_one_bid</a>(vm: &signer, val: &<b>address</b>, bid: u64, exp: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_test_set_one_bid">test_set_one_bid</a>(vm: &signer, val: &<b>address</b>, bid:  u64, exp: u64) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a> {
+  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
+  <b>let</b> pof = <b>borrow_global_mut</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>&gt;(*val);
+  pof.epoch_expiration = exp;
+  pof.bid = bid;
 }
 </code></pre>
 

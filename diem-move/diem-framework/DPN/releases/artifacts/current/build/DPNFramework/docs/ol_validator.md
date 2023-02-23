@@ -6,7 +6,6 @@
 
 
 -  [Constants](#@Constants_0)
--  [Function `self_unjail`](#0x1_ValidatorScripts_self_unjail)
 -  [Function `voucher_unjail`](#0x1_ValidatorScripts_voucher_unjail)
 -  [Function `val_add_self`](#0x1_ValidatorScripts_val_add_self)
 -  [Function `ol_reconfig_bulk_update_setup`](#0x1_ValidatorScripts_ol_reconfig_bulk_update_setup)
@@ -63,48 +62,6 @@
 </code></pre>
 
 
-
-<a name="0x1_ValidatorScripts_self_unjail"></a>
-
-## Function `self_unjail`
-
-
-
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_self_unjail">self_unjail</a>(validator: signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_validator.md#0x1_ValidatorScripts_self_unjail">self_unjail</a>(validator: signer) {
-    <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&validator);
-    // <b>if</b> is above threshold <b>continue</b>, or raise error.
-    <b>assert</b>!(
-        <a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr),
-        <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="ol_validator.md#0x1_ValidatorScripts_NOT_ABOVE_THRESH_JOIN">NOT_ABOVE_THRESH_JOIN</a>)
-    );
-    // <b>if</b> is not in universe, add back
-    <b>if</b> (!<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_is_in_universe">ValidatorUniverse::is_in_universe</a>(addr)) {
-        <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_add_self">ValidatorUniverse::add_self</a>(&validator);
-    };
-    // Initialize jailbit <b>if</b> not present
-    <b>if</b> (!<a href="ValidatorUniverse.md#0x1_ValidatorUniverse_exists_jailedbit">ValidatorUniverse::exists_jailedbit</a>(addr)) {
-        <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_initialize">ValidatorUniverse::initialize</a>(&validator);
-    };
-
-    // <b>if</b> is jailed, try <b>to</b> unjail
-    <b>if</b> (<a href="Jail.md#0x1_Jail_is_jailed">Jail::is_jailed</a>(addr)) {
-        <a href="Jail.md#0x1_Jail_self_unjail">Jail::self_unjail</a>(&validator);
-    };
-}
-</code></pre>
-
-
-
-</details>
 
 <a name="0x1_ValidatorScripts_voucher_unjail"></a>
 

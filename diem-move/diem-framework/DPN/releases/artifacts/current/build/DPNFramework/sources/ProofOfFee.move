@@ -7,6 +7,7 @@
 // TODO: the bubble sort functions were lifted directly from NodeWeight, needs checking.
 ///////////////////////////////////////////////////////////////////////////
 
+
 //// V6 ////
 address DiemFramework {
   module ProofOfFee {
@@ -26,6 +27,8 @@ address DiemFramework {
 
     const ENOT_AN_ACTIVE_VALIDATOR: u64 = 190001;
     const EBID_ABOVE_MAX_PCT: u64 = 190002;
+    const EABOVE_RETRACT_LIMIT: u64 = 190003; // Potential update
+
 
     const GENESIS_BASELINE_REWARD: u64 = 1000000;
 
@@ -35,6 +38,7 @@ address DiemFramework {
     struct ProofOfFeeAuction has key {
       bid: u64,
       epoch_expiration: u64,
+      last_epoch_retracted: u64,
       // TODO: show past 5 bids
     }
 
@@ -71,7 +75,8 @@ address DiemFramework {
         account_sig, 
           ProofOfFeeAuction {
             bid: 0,
-            epoch_expiration: 0 
+            epoch_expiration: 0,
+            last_epoch_retracted: 0,
           }
         );
       }
@@ -168,6 +173,22 @@ address DiemFramework {
     // have have a high bid, but again they fail repeatedly to finalize an epoch
     // successfully. Their bids should not penalize validators who don't have
     // a streak of jailed epochs. So of the 1/3 unproven nodes, we'll first seat the validators with Jail.consecutive_failure_to_rejoin < 2, and after that the remainder. 
+
+    // There's some code implemented which is not enabled in the current form.
+    // Unsealed auctions are tricky. The Proof Of Fee
+    // paper states that since the bids are not private, we need some
+    // constraint to minimize shill bids, "bid shading" or other strategies
+    // which allow validators to drift from their private valuation. 
+    // As such per epoch the validator is only allowed to revise their bids /
+    // down once. To do this in practice they need to retract a bid (sit out
+    // the auction), and then place a new bid.
+    // A validator can always leave the auction, but if they rejoin a second time in the epoch, then they've committed a bid until the next epoch.
+    // So retracting should be done with care.  The ergonomics are not great. 
+    // The preference would be not to have this constraint if on the margins
+    // the ergonomics brings more bidders than attackers.
+    // After more experience in the wild, the network may decide to 
+    // limit bid retracting.
+
 
     // The Validator must qualify on a number of metrics: have funds in their Unlocked account to cover bid, have miniumum viable vouches, and not have been jailed in the previous round.
 
@@ -563,6 +584,32 @@ address DiemFramework {
     }
 
 
+    /// Note that the validator will not be bidding on any future
+    /// epochs if they retract their bid. The must set a new bid.
+    public fun retract_bid(account_sig: &signer) acquires ProofOfFeeAuction {
+
+      let acc = Signer::address_of(account_sig);
+      if (!exists<ProofOfFeeAuction>(acc)) {
+        init(account_sig);
+      };
+
+
+      let pof = borrow_global_mut<ProofOfFeeAuction>(acc);
+      let this_epoch = DiemConfig::get_current_epoch();
+
+      //////// LEAVE COMMENTED. Code for a potential upgrade. ////////
+      // See above discussion for retracting of bids.
+      // 
+      // already retracted this epoch
+      // assert!(this_epoch > pof.last_epoch_retracted, Errors::ol_tx(EABOVE_RETRACT_LIMIT));
+      //////// LEAVE COMMENTED. Code for a potential upgrade. ////////
+
+
+      pof.epoch_expiration = 0;
+      pof.bid = 0;
+      pof.last_epoch_retracted = this_epoch;
+    }
+
     ////////// TRANSACTION APIS //////////
     // manually init the struct, fallback in case of migration fail
     public(script) fun init_bidding(sender: signer) {
@@ -570,9 +617,15 @@ address DiemFramework {
     }
 
     // update the bid for the sender
-    public(script) fun update_pof_bid(sender: signer, bid: u64, epoch_expiry: u64) acquires ProofOfFeeAuction {
+    public(script) fun pof_update_bid(sender: signer, bid: u64, epoch_expiry: u64) acquires ProofOfFeeAuction {
       // update the bid, initializes if not already.
       set_bid(&sender, bid, epoch_expiry);
+    }
+
+    // retract bid
+    public(script) fun pof_retract_bid(sender: signer) acquires ProofOfFeeAuction {
+      // retract a bid
+      retract_bid(&sender);
     }
 
     //////// TEST HELPERS ////////
@@ -586,11 +639,16 @@ address DiemFramework {
         let bid = Vector::borrow(bids, i);
         let exp = Vector::borrow(expiry, i);
         let addr = Vector::borrow(vals, i);
-        let pof = borrow_global_mut<ProofOfFeeAuction>(*addr);
-        pof.epoch_expiration = *exp;
-        pof.bid = *bid;
+        test_set_one_bid(vm, addr, *bid, *exp);
         i = i + 1;
       };
+    }
+
+    public fun test_set_one_bid(vm: &signer, val: &address, bid:  u64, exp: u64) acquires ProofOfFeeAuction {
+      Testnet::assert_testnet(vm);
+      let pof = borrow_global_mut<ProofOfFeeAuction>(*val);
+      pof.epoch_expiration = exp;
+      pof.bid = bid;
     }
 
     public fun test_mock_reward(
