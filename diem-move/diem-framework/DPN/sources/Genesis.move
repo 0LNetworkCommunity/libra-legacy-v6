@@ -233,9 +233,13 @@ module DiemFramework::Genesis {
             let owner_address = Signer::address_of(owner);
             let owner_name = *Vector::borrow(&owner_names, i);
             // create each validator account and rotate its auth key to the correct value
-            DiemAccount::create_validator_account(
+            //////// 0L ////////
+            if (!DiemAccount::exists_at(owner_address)) {
+              // this may be a forking upgrade, so we may not needto create the account
+              DiemAccount::create_validator_account(
                 &dr_account, owner_address, copy dummy_auth_key_prefix, owner_name
-            );
+              );    
+            };
 
             let owner_auth_key = *Vector::borrow(&owner_auth_keys, i);
             let rotation_cap = DiemAccount::extract_key_rotation_capability(owner);

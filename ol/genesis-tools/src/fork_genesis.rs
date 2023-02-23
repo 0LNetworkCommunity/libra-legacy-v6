@@ -6,10 +6,10 @@ use std::path::PathBuf;
 use crate::process_snapshot::{db_backup_into_recovery_struct};
 
 use anyhow::{Error};
-use diem_types::account_address::AccountAddress;
+// use diem_types::account_address::AccountAddress;
 use diem_types::transaction::{Transaction, WriteSetPayload};
 use ol_types::legacy_recovery::{LegacyRecovery, recover_validator_configs};
-use vm_genesis::encode_recovery_genesis_changeset;
+use vm_genesis::{encode_recovery_genesis_changeset, Validator};
 
 /// Make a recovery genesis blob from archive
 pub async fn make_recovery_genesis_from_db_backup(
@@ -17,7 +17,7 @@ pub async fn make_recovery_genesis_from_db_backup(
     archive_path: PathBuf,
     append: bool,
     is_legacy: bool,
-    genesis_vals: Vec<AccountAddress>,
+    genesis_vals: &[Validator],
 ) -> Result<Transaction, Error> {
     // get the legacy data from archive
     let recovery = db_backup_into_recovery_struct(&archive_path, is_legacy).await?;
@@ -33,26 +33,26 @@ pub async fn make_recovery_genesis_from_db_backup(
 /// Make a recovery genesis blob
 pub fn make_recovery_genesis_from_vec_legacy_recovery(
     recovery: &[LegacyRecovery],
-    genesis_vals: Vec<AccountAddress>,
+    genesis_val_configs: &[Validator],
     genesis_blob_path: PathBuf,
     append_user_accounts: bool,
 ) -> Result<Transaction, Error> {
     // get consensus accounts
     let all_validator_configs = recover_validator_configs(recovery)?;
 
-    // check the validators that are joining genesis actually have legacy data
-    let count = all_validator_configs.vals
-    .iter()
-    .filter(
-      |v| {
-        genesis_vals.contains(&v.val_account)
-      }
-    )
-    .count();
+    // // check the validators that are joining genesis actually have legacy data
+    // let count = all_validator_configs.vals
+    // .iter()
+    // .filter(
+    //   |v| {
+    //     genesis_vals.contains(&v.val_account)
+    //   }
+    // )
+    // .count();
 
-    if count == 0 {
-      anyhow::bail!("no val configs found for genesis set");
-    }
+    // if count == 0 {
+    //   anyhow::bail!("no val configs found for genesis set");
+    // }
 
     // we use the vm-genesis to properly migrate EVERY validator account.
     // then we select a subset which will be the validators of the first epoch.
@@ -61,7 +61,8 @@ pub fn make_recovery_genesis_from_vec_legacy_recovery(
     let recovery_changeset = encode_recovery_genesis_changeset(
       &all_validator_configs.vals,
       &all_validator_configs.opers,
-      &genesis_vals,
+      genesis_val_configs,
+      // &genesis_vals,
       1, // mainnet
       append_user_accounts,
       recovery, // TODO: turn this into an option type

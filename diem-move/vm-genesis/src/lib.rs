@@ -199,7 +199,8 @@ pub fn encode_genesis_change_set(
 pub fn encode_recovery_genesis_changeset(
     val_assignments: &[ValStateRecover],
     operator_recovers: &[OperRecover],
-    val_set: &[AccountAddress],
+    // _val_set: &[AccountAddress],
+    genesis_val_configs: &[Validator],
     chain: u8,
     append_users: bool,
     legacy_data: &[LegacyRecovery],
@@ -237,9 +238,7 @@ pub fn encode_recovery_genesis_changeset(
     }
 
     // generate the genesis WriteSet
-    recovery_owners_operators(
-        &mut session, val_assignments, operator_recovers, val_set
-    );
+    recovery_owners_operators(&mut session, val_assignments, operator_recovers);
     diem_logger::info!("OK recovered validator accounts =============== ");
 
         // Recover the user accounts
@@ -247,6 +246,13 @@ pub fn encode_recovery_genesis_changeset(
     if append_users  {
       migrate_end_users(&mut session, legacy_data).expect("failed to recover users");
     }
+
+    // At genesis, we don't assume the same validators are in the genesis
+    // plus, the validators may have changed their keys, or network addresses.
+    // so we just assume that we should create the account as usual, 
+    // and if the account already exists, then just update the configs.
+    create_and_initialize_owners_operators(&mut session, genesis_val_configs);
+
 
     // Trigger reconfiguration so that the validator set is updated.
     // genesis cannot start without a reconfiguration event.
@@ -583,7 +589,7 @@ fn create_and_initialize_owners_operators(
             ]),
         );
 
-                exec_function(
+    exec_function(
             session,
             "Vouch",
             "init",
@@ -671,7 +677,7 @@ fn recovery_owners_operators(
     session: &mut Session<StateViewCache<GenesisStateView>>,
     val_assignments: &[ValStateRecover],
     operator_recovers: &[OperRecover],
-    val_set: &[AccountAddress],
+    // val_set: &[AccountAddress],
 ) {
     let diem_root_address = account_config::diem_root_address();
     // session.get_type_layout(TypeTag::Struct(a))
@@ -772,23 +778,23 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("4 ======== Add owner to validator set");
-    // Add each validator to the validator set
-    for i in val_set {
-        // let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
-        // let owner_address = staged_owner_auth_key.derived_address();
-        // // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
-        exec_function(
-            session,
-            "DiemSystem",
-            "add_validator",
-            vec![],
-            serialize_values(&vec![
-                MoveValue::Signer(diem_root_address),
-                MoveValue::Address(*i),
-            ]),
-        );
-    }
+    // println!("4 ======== Add owner to validator set");
+    // // Add each validator to the validator set
+    // for i in val_set {
+    //     // let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
+    //     // let owner_address = staged_owner_auth_key.derived_address();
+    //     // // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
+    //     exec_function(
+    //         session,
+    //         "DiemSystem",
+    //         "add_validator",
+    //         vec![],
+    //         serialize_values(&vec![
+    //             MoveValue::Signer(diem_root_address),
+    //             MoveValue::Address(*i),
+    //         ]),
+    //     );
+    // }
 }
 
 /// Publish the standard library.

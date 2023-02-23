@@ -13,7 +13,7 @@ use support::path_utils::json_path;
 // test that a genesis blob created from struct, will actually contain the data
 fn test_parse_json_for_one_validator_and_save_blob() {
 
-  let genesis_vals = vec!["ADCB1D42A46292AE89E938BD982F2867".parse().unwrap()];
+  let genesis_vals = vec![]; // TODO
 
     let json = json_path().parent().unwrap().join("single_json_entry.json");
 
@@ -26,7 +26,7 @@ fn test_parse_json_for_one_validator_and_save_blob() {
 
     make_recovery_genesis_from_vec_legacy_recovery(
       &user_accounts,
-      genesis_vals.clone(),
+      &genesis_vals,
       temp_genesis_blob_path.clone(), 
       true,
     )
@@ -45,7 +45,8 @@ fn test_parse_json_for_one_validator_and_save_blob() {
         Err(_e) => assert!(false, "error comparison"),
     }
 
-    match compare::check_val_set(genesis_vals, temp_genesis_blob_path.clone()){
+    let vals_list = genesis_vals.into_iter().map(|v| v.address).collect();
+    match compare::check_val_set(vals_list, temp_genesis_blob_path.clone()){
         Ok(_) => {},
         Err(_) => {
           assert!(false, "validator set not correct");

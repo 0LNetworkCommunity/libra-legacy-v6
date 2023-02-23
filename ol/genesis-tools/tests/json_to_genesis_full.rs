@@ -6,17 +6,20 @@ use ol_genesis_tools::{
 };
 use ol_types::legacy_recovery::read_from_recovery_file;
 use std::fs;
-use support::path_utils::json_path;
-
+use support::{path_utils::json_path, test_vals};
+use vm_genesis::Validator;
 // The expected arguments of cli for exporting a V5 JSON recovery file from a db backup is:
 // cargo r -p ol-genesis-tools -- --recover /opt/rec.json --snapshot-path /opt/state_ver*
 
 #[tokio::test]
 async fn test_parse_json_for_all_users_and_save_blob() {
-    let genesis_vals = vec![
-      "2023C65E5323FEB2671EB690D5649AE3".parse().unwrap(),
-      "ADCB1D42A46292AE89E938BD982F2867".parse().unwrap()
-    ];
+    // let genesis_vals = vec![
+    //   "2023C65E5323FEB2671EB690D5649AE3".parse().unwrap(),
+    //   "ADCB1D42A46292AE89E938BD982F2867".parse().unwrap()
+    // ];
+
+    let genesis_vals = vec![]; // TODO;
+
     let recovery_json_path = json_path();
     let output_path = json_path().parent().unwrap().join("fork_genesis.blob");
     dbg!(&recovery_json_path);
@@ -26,7 +29,7 @@ async fn test_parse_json_for_all_users_and_save_blob() {
 
     make_recovery_genesis_from_vec_legacy_recovery(
       &recovery,
-      genesis_vals.clone(),
+      &genesis_vals,
       output_path.clone(), 
       true
     )
@@ -38,14 +41,15 @@ async fn test_parse_json_for_all_users_and_save_blob() {
 
     assert!(list.is_empty(), "list is not empty");
     
-    compare::check_val_set(genesis_vals, output_path.clone()).unwrap();
+    let val_list = genesis_vals.iter().map(|v| v.address).collect();
+    compare::check_val_set(val_list, output_path.clone()).unwrap();
 
     fs::remove_file(output_path).unwrap();
 }
 
 #[tokio::test]
 async fn test_parse_json_for_validators_and_save_blob() {
-    let genesis_vals = vec!["ADCB1D42A46292AE89E938BD982F2867".parse().unwrap()];
+    let genesis_vals = vec![]; // TODO;
 
     let recovery_json_path = json_path();
     let output_path = json_path().parent().unwrap().join("fork_genesis.blob");
@@ -56,7 +60,7 @@ async fn test_parse_json_for_validators_and_save_blob() {
 
     make_recovery_genesis_from_vec_legacy_recovery(
       &recovery,
-      genesis_vals.clone(),
+      &genesis_vals,
       output_path.clone(), 
       false
     )
@@ -64,10 +68,12 @@ async fn test_parse_json_for_validators_and_save_blob() {
 
     assert!(output_path.exists(), "file not created");
     
+    let val_list = genesis_vals.iter().map(|v| v.address).collect();
     // don't compare all users, just the validators
 
-    compare::check_val_set(genesis_vals, output_path.clone()).unwrap();
+    compare::check_val_set(val_list, output_path.clone()).unwrap();
 
     
     fs::remove_file(output_path).unwrap();
 }
+

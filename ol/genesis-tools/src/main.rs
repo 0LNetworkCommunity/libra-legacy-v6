@@ -16,8 +16,8 @@ use ol_genesis_tools::{
 async fn main() -> Result<()> {
     #[derive(Debug, Options)]
     struct Args {
-        #[options(help = "path to snapshot dir to read", short="v")]
-        genesis_vals: Vec<AccountAddress>,
+        // #[options(help = "path to snapshot dir to read", short="v")]
+        // genesis_vals: Vec<AccountAddress>,
 
         #[options(help = "path to snapshot dir to read")]
         snapshot_path: Option<PathBuf>,
@@ -74,7 +74,8 @@ async fn main() -> Result<()> {
                 snapshot_path,
                 !opts.debug,
                 opts.legacy,
-                opts.genesis_vals
+                &vec![]
+                // opts.genesis_vals
             )
             .await
             .expect("ERROR: could not create genesis from snapshot");
@@ -91,7 +92,7 @@ async fn main() -> Result<()> {
             let recovery = read_from_recovery_file(&recovery_json_path);
             make_recovery_genesis_from_vec_legacy_recovery(
               &recovery,
-              vec![],
+              &vec![],
               output_path, 
               opts.legacy
             )

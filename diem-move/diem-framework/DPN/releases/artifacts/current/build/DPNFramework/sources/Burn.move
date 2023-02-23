@@ -7,10 +7,10 @@ module Burn {
   use DiemFramework::CoreAddresses;
   use DiemFramework::GAS::GAS;
   use Std::Signer;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
   use DiemFramework::Diem;
   use DiemFramework::TransactionFee;
-  use DiemFramework::DiemSystem;
+  // use DiemFramework::DiemSystem;
   use DiemFramework::Receipts;
 
   struct BurnPreference has key {
@@ -45,20 +45,15 @@ module Burn {
     // we also take a tally of the global amount of deposits
     // Note that we are using a time-weighted index of deposits
     // which favors most recent deposits. (see DiemAccount::deposit_index_curve)
-    print(&300000);
-    print(&len);
+
     while (i < len) {
 
       let addr = *Vector::borrow(&list, i);
       let cumu = DiemAccount::get_index_cumu_deposits(addr);
-      print(&cumu);
       global_deposits = global_deposits + cumu;
       Vector::push_back(&mut deposit_vec, cumu);
       i = i + 1;
     };
-
-    print(&300001);
-
     // check if anything went wrong, and we don't have any cumulatives
     // to calculate.
     if (global_deposits == 0) return;
@@ -71,15 +66,10 @@ module Burn {
     let k = 0;
     while (k < len) {
       let cumu = *Vector::borrow(&deposit_vec, k);
-      print(&cumu);
-
       let ratio = FixedPoint32::create_from_rational(cumu, global_deposits);
-      print(&ratio);
-
       Vector::push_back(&mut ratios_vec, ratio);
       k = k + 1;
     };
-    print(&300002);
     if (exists<DepositInfo>(@VMReserved)) {
       let d = borrow_global_mut<DepositInfo>(@VMReserved);
       d.addr = list;
@@ -92,7 +82,6 @@ module Burn {
         ratio: ratios_vec,
       })
     };
-    print(&300003);
   }
 
   fun get_address_list(): vector<address> acquires DepositInfo {
@@ -108,69 +97,150 @@ module Burn {
       return 0;
 
     let d = borrow_global<DepositInfo>(@VMReserved);
-    let contains = Vector::contains(&d.addr, &payee);
-    print(&contains);
+
     let (is_found, i) = Vector::index_of(&d.addr, &payee);
     if (is_found) {
-      print(&is_found);
+
       let len = Vector::length(&d.ratio);
-      print(&i);
-      print(&len);
+
       if (i + 1 > len) return 0;
       let ratio = *Vector::borrow(&d.ratio, i);
       if (FixedPoint32::is_zero(copy ratio)) return 0;
-      print(&ratio);
       return FixedPoint32::multiply_u64(value, ratio)
     };
 
     0
   }
 
-  public fun burn_network_fees(
+  public fun process_network_burn(
     vm: &signer,
-    clearing: u64 // what was the clearing price of the auction for purposes of calculating recycling.
-  ) acquires DepositInfo, BurnPreference {
-    // let amount_remaining = TransactionFee::get_amount_to_distribute(vm);
-    let coins = TransactionFee::get_transaction_fees_coins<GAS>(vm);
+    all_vals: vector<address>,
+    auction_entry_fee: u64,    
+  ) acquires BurnPreference, DepositInfo {
+    let fee_amount_remaining = TransactionFee::get_amount_to_distribute(vm);
+    if (fee_amount_remaining == 0) return;
 
-    let (burners, amount_to_comm) = get_community_recycling(clearing);
-    let len_burners = Vector::length(&burners);
-    if (amount_to_comm < len_burners) {
-      Diem::vm_burn_this_coin(vm, coins);
-      return
+    let network_fee_coin = TransactionFee::get_transaction_fees_coins<GAS>(vm);
+
+    let (recyclers, amount_to_comm) = calc_community_recycling(all_vals, auction_entry_fee);
+    burn_or_recycle(vm, network_fee_coin, recyclers, amount_to_comm);
+  }
+
+
+  // TODO: this should only be public for testing.
+  public fun burn_or_recycle(
+    vm: &signer,
+    network_fees: Diem::Diem<GAS>,
+    burners: vector<address>,
+    amount_to_comm: u64,
+  ) acquires DepositInfo {
+    // print(&4040);
+
+    // print(&amount_to_comm);
+    if ((amount_to_comm > 0) && (amount_to_comm > Vector::length(&burners))){
+      // print(&404001);
+
+      if (Diem::value(&network_fees) > amount_to_comm) {
+              let split_to_community = Diem::withdraw(&mut network_fees, amount_to_comm);
+        // print(&404002);
+      maybe_recycle_burn(vm, burners, split_to_community);
+      }
+
     };
 
+    // print(&4041);
 
-    let (comm_addr_list, _, comm_split_list) = get_ratios();
-
-    let len = Vector::length(&comm_addr_list);
-
-    let i = 0;
+ 
+    // Everything else is burnt
+    if (Diem::value(&network_fees) > 0) {
+      Diem::vm_burn_this_coin(vm, network_fees);
+    } else {
+      Diem::destroy_zero(network_fees);
+    };
+    //  print(&4043); 
+  }
   
 
-    while (i < len) {
+
+  // We want the validators who are paying the entry fee to be
+  // the counterparty to the donation in the burn recycling (donating to community wallet index);
+  // For that we need to slice and dice: get the proportion each wallet gets
+  // per the index. And then each validator pays an equal split of that amount.
+  // WARN: lots of looping here
+  public fun maybe_recycle_burn(
+    vm: &signer,
+    burners: vector<address>,
+    coin_to_community: Diem::Diem<GAS>,
+  ) acquires DepositInfo {
+    // print(&6060);
+    CoreAddresses::assert_vm(vm);
+    let amount_to_comm = Diem::value(&coin_to_community);
+    let len_burners = Vector::length(&burners);
+
+    // get the proportion each communitt wallet should receive.
+    let (comm_addr_list, _, comm_split_list) = get_ratios();
+
+    // let len = Vector::length(&comm_addr_list);
+    // print(&6061);
+
+    let i = 0;
+    // First lets loop through each community wallet.
+    // then for each wallet, we loop through each "recycler" validator
+    // so that we can send the donation on their behalf, for tracking
+    // and governance purposes.
+    while (i < Vector::length(&comm_addr_list)) {
+      // print(&606101);
+
       let comm_wall = Vector::borrow(&comm_addr_list, i);
       let wall_split = Vector::borrow(&comm_split_list, i);
 
-      let coin_val = FixedPoint32::multiply_u64(amount_to_comm, *wall_split);
-      let split = Diem::withdraw(&mut coins, coin_val);
-
-      send_coin_to_comm_wallet(vm, *comm_wall, split);
+      // let pct = FixedPoint32::multiply_u64(100, *wall_split);
+      // print(&pct);
+      // print(&606102);
+      let amount_to_wallet = FixedPoint32::multiply_u64(amount_to_comm, *wall_split);
+      // print(&606103);
+      let split_coin_to_wallet  = Diem::withdraw(&mut coin_to_community, amount_to_wallet);
+      // print(&606104);
 
       // write the correct receipt amount to each validator who opted to send to community wallet. The communit wallets give some governance rights to donors.
+      
       let k = 0;
+      let per_val_split = amount_to_wallet / Vector::length(&burners);
+      // every recycler sends the same amount.
       while (k < len_burners) {
+
+        // print(&60610401);
         let burner = Vector::borrow(&burners, k);
-        let this_split = coin_val/len_burners;
-        Receipts::write_receipt(vm, *burner, *comm_wall, this_split);
+        //  print(&60610402);
+        let split_wallet_split_val = Diem::withdraw(&mut split_coin_to_wallet, per_val_split);
+        //  print(&60610403);
+        
+
+        send_coin_to_comm_wallet(vm, *comm_wall, split_wallet_split_val);
+        // print(&60610404);
+        Receipts::write_receipt(vm, *burner, *comm_wall, per_val_split);
+        // print(&60610405);
         k = k + 1;
       };
       
+      // if there's anything left over per wallet. Likely from rounding. We burn it.
+      if (Diem::value(&split_coin_to_wallet) > 0) {
+        Diem::vm_burn_this_coin(vm, split_coin_to_wallet);
+      } else {
+        Diem::destroy_zero(split_coin_to_wallet);
+      };
+      i = i + 1;
     };
 
-    // anything that is remaining should be burnt
-    Diem::vm_burn_this_coin(vm, coins);
-    
+    // anything left over from the coins passed in, needs to be returned
+    // to be handled by the caller.
+
+    if (Diem::value(&coin_to_community) > 0) {
+      Diem::vm_burn_this_coin(vm, coin_to_community);
+    } else {
+      Diem::destroy_zero(coin_to_community);
+    };
+
   }
 
   fun send_coin_to_comm_wallet(
@@ -192,127 +262,44 @@ module Burn {
 
     // based on the nominal consensus_reward, and the auction entry fee (clearing_price) we calculate where an eventual burn would go: pure burn, or recycle.
     // returns the list of addresses burning, and the proportion of fees to burn.
-    fun get_community_recycling(clearing: u64): (vector<address>, u64) acquires BurnPreference {
+    // TODO: make public only for tests
+    public fun calc_community_recycling(all_vals: vector<address>, clearing: u64): (vector<address>, u64) acquires BurnPreference {
       let burners = Vector::empty<address>();
       // let total_payments = 0;
       let total_payments_of_comm_senders = 0;
-
-      // reward and clearing price per validator
-      // let (_, clearing, _) = ProofOfFee::get_consensus_reward();
+      // print(&5050);
 
       // find burn preferences of ALL previous validator set
       // the potential amount burned is only the entry fee (the auction clearing price)
-      let all_vals = DiemSystem::get_val_set_addr();
-
+      // let all_vals = DiemSystem::get_val_set_addr();
+      // print(&5051);
       let len = Vector::length(&all_vals);
       let i = 0;
       while (i < len) {
         let a = Vector::borrow(&all_vals, i);
 
-
+        // print(&5052);
         // total_payments = total_payments + clearing;
 
         let is_to_community = get_user_pref(a);
-
+        // print(&5053);
         if (is_to_community) {
           Vector::push_back(&mut burners, *a);
           total_payments_of_comm_senders = total_payments_of_comm_senders + clearing;
         };
-
+        // print(&5054);
         i = i + 1;
       };
 
-      // // find burn preferences of ALL Infra Escrow pledgers.
-      // let all_pledged = PledgeAccounts::get_all_pledgers(&@VMReserved);
-
-      // // The pledgers paid from Infra Escrow, the nominal consensus reward.
-      // // add those up and find proportions.
-      
-      // let len = Vector::length(&all_pledged);
-      // let i = 0;
-      // while (i < len) {
-      //   let a = Vector::borrow(&all_pledged, i);
-
-      //   total_payments = total_payments + reward;
-
-      //   let is_to_community = Burn::get_user_pref(a);
-
-      //   if (is_to_community) {
-      //     Vector::push_back(&mut burners, a);
-      //     total_payments_of_comm_senders = total_payments_of_comm_senders + reward;
-      //   };
-
-      //   i = i + 1;
-      // };
-
-
-      // let ratio = FixedPoint32::create_from_rational(total_payments_of_comm_senders, total_payments)
-
+      // print(&5055);
       // return the list of burners, for tracking, and the weighted average.
       (burners, total_payments_of_comm_senders)
 
     }
 
-  // public fun epoch_start_burn(
-  //   vm: &signer, payer: address, value: u64
-  // ) acquires DepositInfo, BurnPreference {
-  //   CoreAddresses::assert_vm(vm);
+  // V6: Logic for burning updated
 
-  //   if (exists<BurnPreference>(payer)) {
-  //     if (borrow_global<BurnPreference>(payer).send_community) {
-  //       return send(vm, payer, value)
-  //     } else {
-  //       return burn(vm, payer, value)
-  //     }
-  //   } else {
-  //     burn(vm, payer, value);
-  //   }; 
-  // }
-
-  // fun burn(vm: &signer, addr: address, value: u64) {
-  //     DiemAccount::vm_burn_from_balance<GAS>(
-  //       addr,
-  //       value,
-  //       b"burn",
-  //       vm,
-  //     );      
-  // }
-
-
-  // fun send(vm: &signer, payer: address, value: u64) acquires DepositInfo {
-  //   let list = get_address_list();
-  //   let len = Vector::length<address>(&list);
-  //   print(&list);
-    
-  //   // There could be errors in the array, and underpayment happen.
-  //   let value_sent = 0;
-
-  //   let i = 0;
-  //   while (i < len) {
-  //     let payee = *Vector::borrow<address>(&list, i);
-  //     print(&payee);
-  //     let val = get_value(payee, value);
-  //     print(&val);
-      
-  //     DiemAccount::vm_make_payment_no_limit<GAS>(
-  //         payer,
-  //         payee,
-  //         val,
-  //         b"epoch start send",
-  //         b"",
-  //         vm,
-  //     );
-  //     value_sent = value_sent + val;      
-  //     i = i + 1;
-  //   };
-
-  //   // prevent under-burn due to issues with index.
-  //   let diff = value - value_sent;
-  //   if (diff > 0) {
-  //     burn(vm, payer, diff)
-  //   };    
-  // }
-
+  // helper function for tx script for user to update burn preferences
   public fun set_send_community(sender: &signer, community: bool) acquires BurnPreference {
     let addr = Signer::address_of(sender);
     if (exists<BurnPreference>(addr)) {
@@ -334,7 +321,11 @@ module Burn {
   }
 
   public fun get_user_pref(user: &address): bool acquires BurnPreference{
-    borrow_global<BurnPreference>(*user).send_community
+    if (exists<BurnPreference>(*user)) {
+      borrow_global<BurnPreference>(*user).send_community
+    } else {
+      false
+    }
   }
 
   //////// TEST HELPERS ////////
