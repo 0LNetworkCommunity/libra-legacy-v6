@@ -41,3 +41,21 @@ script {
     assert!(expires == 1111, 1006);
   }
 }
+
+//# run --admin-script --signers DiemRoot Bob
+script {
+  use DiemFramework::ProofOfFee;
+  use DiemFramework::DiemConfig;
+
+  fun main(_vm: signer, b_sig: signer) {
+    let this_epoch = DiemConfig::get_current_epoch();
+    // should initialize if not already initialized
+    ProofOfFee::retract_bid(&b_sig);
+    let (bid, expires) = ProofOfFee::current_bid(@Bob);
+    let (is_rectracted, epoch) = ProofOfFee::is_already_retracted(@Bob);
+    assert!(is_rectracted, 1007);
+    assert!(epoch == this_epoch, 1008);
+    assert!(bid == 0, 1009);
+    assert!(expires == 0, 10010);
+  }
+}
