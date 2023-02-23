@@ -2455,6 +2455,13 @@ pub enum ScriptFunctionCall {
         metadata_signature: Bytes,
     },
 
+    PofRetractBid {},
+
+    PofUpdateBid {
+        bid: u64,
+        epoch_expiry: u64,
+    },
+
     /// # Summary
     /// Moves a specified number of coins in a given currency from the account's
     /// balance to its preburn area after which the coins may be burned. This
@@ -3334,11 +3341,6 @@ pub enum ScriptFunctionCall {
         allow_minting: bool,
     },
 
-    UpdatePofBid {
-        bid: u64,
-        epoch_expiry: u64,
-    },
-
     ValAddSelf {},
 
     VouchFor {
@@ -3862,6 +3864,10 @@ impl ScriptFunctionCall {
                 metadata,
                 metadata_signature,
             ),
+            PofRetractBid {} => encode_pof_retract_bid_script_function(),
+            PofUpdateBid { bid, epoch_expiry } => {
+                encode_pof_update_bid_script_function(bid, epoch_expiry)
+            }
             Preburn { token, amount } => encode_preburn_script_function(token, amount),
             PublishSharedEd25519PublicKey { public_key } => {
                 encode_publish_shared_ed25519_public_key_script_function(public_key)
@@ -4024,9 +4030,6 @@ impl ScriptFunctionCall {
                 currency,
                 allow_minting,
             } => encode_update_minting_ability_script_function(currency, allow_minting),
-            UpdatePofBid { bid, epoch_expiry } => {
-                encode_update_pof_bid_script_function(bid, epoch_expiry)
-            }
             ValAddSelf {} => encode_val_add_self_script_function(),
             VouchFor { val } => encode_vouch_for_script_function(val),
             VoucherUnjail { addr } => encode_voucher_unjail_script_function(addr),
@@ -5570,6 +5573,33 @@ pub fn encode_peer_to_peer_with_metadata_script_function(
     ))
 }
 
+pub fn encode_pof_retract_bid_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("ProofOfFee").to_owned(),
+        ),
+        ident_str!("pof_retract_bid").to_owned(),
+        vec![],
+        vec![],
+    ))
+}
+
+pub fn encode_pof_update_bid_script_function(bid: u64, epoch_expiry: u64) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("ProofOfFee").to_owned(),
+        ),
+        ident_str!("pof_update_bid").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&bid).unwrap(),
+            bcs::to_bytes(&epoch_expiry).unwrap(),
+        ],
+    ))
+}
+
 /// # Summary
 /// Moves a specified number of coins in a given currency from the account's
 /// balance to its preburn area after which the coins may be burned. This
@@ -6766,21 +6796,6 @@ pub fn encode_update_minting_ability_script_function(
         ident_str!("update_minting_ability").to_owned(),
         vec![currency],
         vec![bcs::to_bytes(&allow_minting).unwrap()],
-    ))
-}
-
-pub fn encode_update_pof_bid_script_function(bid: u64, epoch_expiry: u64) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("ProofOfFee").to_owned(),
-        ),
-        ident_str!("update_pof_bid").to_owned(),
-        vec![],
-        vec![
-            bcs::to_bytes(&bid).unwrap(),
-            bcs::to_bytes(&epoch_expiry).unwrap(),
-        ],
     ))
 }
 
@@ -9039,6 +9054,29 @@ fn decode_peer_to_peer_with_metadata_script_function(
     }
 }
 
+fn decode_pof_retract_bid_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::PofRetractBid {})
+    } else {
+        None
+    }
+}
+
+fn decode_pof_update_bid_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::PofUpdateBid {
+            bid: bcs::from_bytes(script.args().get(0)?).ok()?,
+            epoch_expiry: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_preburn_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::Preburn {
@@ -9382,19 +9420,6 @@ fn decode_update_minting_ability_script_function(
         Some(ScriptFunctionCall::UpdateMintingAbility {
             currency: script.ty_args().get(0)?.clone(),
             allow_minting: bcs::from_bytes(script.args().get(0)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
-fn decode_update_pof_bid_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::UpdatePofBid {
-            bid: bcs::from_bytes(script.args().get(0)?).ok()?,
-            epoch_expiry: bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
@@ -10005,6 +10030,14 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_peer_to_peer_with_metadata_script_function),
         );
         map.insert(
+            "ProofOfFeepof_retract_bid".to_string(),
+            Box::new(decode_pof_retract_bid_script_function),
+        );
+        map.insert(
+            "ProofOfFeepof_update_bid".to_string(),
+            Box::new(decode_pof_update_bid_script_function),
+        );
+        map.insert(
             "TreasuryComplianceScriptspreburn".to_string(),
             Box::new(decode_preburn_script_function),
         );
@@ -10108,10 +10141,6 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "TreasuryComplianceScriptsupdate_minting_ability".to_string(),
             Box::new(decode_update_minting_ability_script_function),
-        );
-        map.insert(
-            "ProofOfFeeupdate_pof_bid".to_string(),
-            Box::new(decode_update_pof_bid_script_function),
         );
         map.insert(
             "ValidatorScriptsval_add_self".to_string(),
