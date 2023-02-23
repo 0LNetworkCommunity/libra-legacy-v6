@@ -18,6 +18,7 @@
 -  [Function `get_median`](#0x1_ProofOfFee_get_median)
 -  [Function `get_consensus_reward`](#0x1_ProofOfFee_get_consensus_reward)
 -  [Function `current_bid`](#0x1_ProofOfFee_current_bid)
+-  [Function `is_already_retracted`](#0x1_ProofOfFee_is_already_retracted)
 -  [Function `top_n_accounts`](#0x1_ProofOfFee_top_n_accounts)
 -  [Function `set_bid`](#0x1_ProofOfFee_set_bid)
 -  [Function `retract_bid`](#0x1_ProofOfFee_retract_bid)
@@ -793,6 +794,34 @@ find the median bid to push to history
     <b>return</b> (0, pof.epoch_expiration)
   };
   <b>return</b> (0, 0)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ProofOfFee_is_already_retracted"></a>
+
+## Function `is_already_retracted`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_is_already_retracted">is_already_retracted</a>(node_addr: <b>address</b>): (bool, u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_is_already_retracted">is_already_retracted</a>(node_addr: <b>address</b>): (bool, u64) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a> {
+  <b>if</b> (<b>exists</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>&gt;(node_addr)) {
+    <b>let</b> when_retract = *&<b>borrow_global</b>&lt;<a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>&gt;(node_addr).last_epoch_retracted;
+    <b>return</b> (<a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() &gt;= when_retract,  when_retract)
+  };
+  <b>return</b> (<b>false</b>, 0)
 }
 </code></pre>
 

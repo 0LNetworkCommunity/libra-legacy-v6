@@ -543,6 +543,15 @@ address DiemFramework {
       return (0, 0)
     }
 
+    // which epoch did they last retract a bid?
+    public fun is_already_retracted(node_addr: address): (bool, u64) acquires ProofOfFeeAuction {
+      if (exists<ProofOfFeeAuction>(node_addr)) {
+        let when_retract = *&borrow_global<ProofOfFeeAuction>(node_addr).last_epoch_retracted;
+        return (DiemConfig::get_current_epoch() >= when_retract,  when_retract)
+      };
+      return (false, 0)
+    }
+
     // Get the top N validators by bid, this is FILTERED by default
     public fun top_n_accounts(account: &signer, n: u64, unfiltered: bool): vector<address> acquires ProofOfFeeAuction, ConsensusReward {
         assert!(Signer::address_of(account) == @DiemRoot, Errors::requires_role(140101));
