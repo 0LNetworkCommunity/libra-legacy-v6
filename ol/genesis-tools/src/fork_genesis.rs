@@ -8,7 +8,8 @@ use crate::process_snapshot::{db_backup_into_recovery_struct};
 use anyhow::{Error};
 // use diem_types::account_address::AccountAddress;
 use diem_types::transaction::{Transaction, WriteSetPayload};
-use ol_types::legacy_recovery::{LegacyRecovery, recover_validator_configs};
+use indicatif::ProgressBar;
+use ol_types::{legacy_recovery::{LegacyRecovery, recover_validator_configs}, OLProgress};
 use vm_genesis::{encode_recovery_genesis_changeset, Validator};
 
 /// Make a recovery genesis blob from archive
@@ -38,7 +39,12 @@ pub fn make_recovery_genesis_from_vec_legacy_recovery(
     append_user_accounts: bool,
 ) -> Result<Transaction, Error> {
     // get consensus accounts
+    let pb = ProgressBar::new(recovery.len() as u64)
+    .with_style(OLProgress::spinner())
+    .with_prefix("Migrating validator configs");
+
     let all_validator_configs = recover_validator_configs(recovery)?;
+    pb.finish_and_clear();
 
     // // check the validators that are joining genesis actually have legacy data
     // let count = all_validator_configs.vals

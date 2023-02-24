@@ -5,7 +5,7 @@
 
 mod genesis_context;
 use anyhow::Error;
-use ol_types::legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery};
+use ol_types::{legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery}, OLProgress};
 use std::env;
 use crate::genesis_context::GenesisStateView;
 use diem_crypto::{
@@ -49,7 +49,7 @@ use transaction_builder::encode_create_designated_dealer_script_function;
 //////// 0L ////////
 use diem_global_constants::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
 pub use ol_types::{config::IS_PROD, genesis_proof::GenesisMiningProof};
-
+use indicatif::ProgressIterator;
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
 
@@ -61,6 +61,7 @@ pub static GENESIS_KEYPAIR: Lazy<(Ed25519PrivateKey, Ed25519PublicKey)> = Lazy::
     let public_key = private_key.public_key();
     (private_key, public_key)
 });
+
 
 pub fn encode_genesis_transaction(
     diem_root_key: Option<&Ed25519PublicKey>, //////// 0L ////////
@@ -287,8 +288,9 @@ pub fn encode_recovery_genesis_changeset(
 
 fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, legacy_data: &[LegacyRecovery]) -> Result<u64, anyhow::Error>{
 
-  let filtered_data: Vec<&LegacyRecovery>= legacy_data.iter()
-    .filter(|d| {
+  let filtered_data: Vec<&LegacyRecovery>= legacy_data
+  .iter()
+  .filter(|d| {
         d.account.is_some() &&
         d.account != Some(AccountAddress::ZERO)
     })
@@ -297,7 +299,9 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
 
 
     let mut total_balance_restored = 0u64;
-    for user in filtered_data {      
+    for user in filtered_data.iter()
+    .progress_with_style(OLProgress::bar())
+    .with_message("migrating users") {      
 
         let args = vec![
             // both the VM and the user signatures need to be mocked.
@@ -496,7 +500,7 @@ fn create_and_initialize_owners_operators(
 ) {
     let diem_root_address = account_config::diem_root_address();
 
-    println!("0 ======== Create Validator Owner and Operator Accounts"); //////// 0L ////////
+    // println!("0 ======== Create Validator Owner and Operator Accounts"); //////// 0L ////////
 
     let mut owners = vec![];
     let mut owner_names = vec![];
@@ -508,8 +512,10 @@ fn create_and_initialize_owners_operators(
     let mut validator_network_addresses = vec![];
     let mut full_node_network_addresses = vec![];
 
-    for v in validators {
-        println!("Address: {:?}", &v.address);
+    let mut print_list = vec![];
+    for v in validators.iter()
+    .progress_with_style(OLProgress::bar()) {
+        print_list.push(v.address.to_string());
         owners.push(MoveValue::Signer(v.address));
         owner_names.push(MoveValue::vector_u8(v.name.clone()));
         owner_auth_keys.push(MoveValue::vector_u8(v.auth_key.to_vec()));
@@ -617,24 +623,27 @@ fn create_and_initialize_owners_operators(
             MoveValue::Vector(full_node_network_addresses),
         ]),
     );
+    
+    println!("VALIDATOR SET");
+    print_list.into_iter().for_each(|v| println!("{}", v));
 
-    for v in validators {
-        let all_vals: Vec<AccountAddress> = validators.iter()
-            .map(|v|{ v.address }).collect();
-        let mut vals = all_vals.clone();
-        vals.retain(|el|{ el != &v.address});
-        exec_function(
-            session,
-            "Vouch",
-            "vm_migrate",
-            vec![],
-            serialize_values(&vec![
-                MoveValue::Signer(diem_root_address),
-                MoveValue::Address(v.address),
-                MoveValue::vector_address(vals),
-            ]),
-        );
-    }
+    // for v in validators {
+    //     let all_vals: Vec<AccountAddress> = validators.iter()
+    //         .map(|v|{ v.address }).collect();
+    //     let mut vals = all_vals.clone();
+    //     vals.retain(|el|{ el != &v.address});
+    //     exec_function(
+    //         session,
+    //         "Vouch",
+    //         "vm_migrate",
+    //         vec![],
+    //         serialize_values(&vec![
+    //             MoveValue::Signer(diem_root_address),
+    //             MoveValue::Address(v.address),
+    //             MoveValue::vector_address(vals),
+    //         ]),
+    //     );
+    // }
 }
 
 // //////// 0L ///////
@@ -685,9 +694,9 @@ fn recovery_owners_operators(
     // key prefix and account address. Internally move then computes the auth key as auth key
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
-    println!("0 ======== Create Owner Accounts");
-    for i in val_assignments {
-        println!("account: {:?}", i.val_account);
+    // println!("0 ======== Create Owner Accounts");
+    for i in val_assignments.iter().progress_with_style(OLProgress::bar()).with_message("Create Owner Accounts") {
+        // println!("account: {:?}", i.val_account);
         // TODO: why does this need to be derived from human name?
         // let owner_address = staged_owner_auth_key.derived_address();
         let create_owner_script =
@@ -726,9 +735,9 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("1 ======== Create OP Accounts");
+    // println!("1 ======== Create OP Accounts");
     // Create accounts for each validator operator
-    for i in operator_recovers {
+    for i in operator_recovers.iter().progress_with_style(OLProgress::bar()).with_message("Create Operator Accounts") {
         let create_operator_script =
             transaction_builder::encode_create_validator_operator_account_script_function(
                 0,
@@ -744,9 +753,9 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("2 ======== Link owner to OP");
+    // println!("2 ======== Link owner to OP");
     // Set the validator operator for each validator owner
-    for val in val_assignments {
+    for val in val_assignments.iter().progress_with_style(OLProgress::bar()).with_message("Linking owners to operators") {
         let create_operator_script =
             transaction_builder::encode_set_validator_operator_script_function(
                 val.operator_delegated_account.to_vec(), 
@@ -760,9 +769,9 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("3 ======== OP sends network info to Owner config");
+    // println!("3 ======== OP sends network info to Owner config");
     // Set the validator operator configs for each owner
-    for i in operator_recovers {
+    for i in operator_recovers.iter().progress_with_style(OLProgress::bar()).with_message("Set owner network configs") {
         let create_operator_script =
             transaction_builder::encode_register_validator_config_script_function(
                 i.validator_to_represent,

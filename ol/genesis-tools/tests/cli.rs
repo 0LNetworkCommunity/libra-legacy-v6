@@ -1,8 +1,50 @@
 use diem_genesis_tool::genesis::Genesis;
 use diem_secure_storage::{Storage, GitHubStorage};
-
+use std::{thread, time};
+use indicatif::{ProgressBar, ProgressIterator, ProgressStyle};
+use core::time::Duration;
 
 #[test]
+fn progress() {
+
+  // let bar = ProgressBar::new(1000);
+  // for _ in 0..1000 {
+  //   let ten_millis = time::Duration::from_millis(10);
+
+  //     thread::sleep(ten_millis);
+  //     bar.inc(1);
+  //     // ...
+  // }
+  // bar.finish();
+  let a = (0..1000);
+  // for _ in a.progress() {
+  //       // ...
+  //       thread::sleep(Duration::from_millis(5));
+  // }
+
+  let pb = ProgressBar::new(1000);
+  pb.set_style(
+      ProgressStyle::with_template(
+          "{spinner} [{elapsed_precise}] [{bar:100.green}] ({pos}/{len}, ETA {eta})",
+      )
+      .unwrap(),
+  );
+
+  a.progress_with(pb).for_each(|_|{
+    let ten_millis = time::Duration::from_millis(10);
+    thread::sleep(ten_millis);
+  });
+
+  // let v = [0..1000];
+  // v.iter()
+  // .progress()
+  // .for_each(|_|{
+  //   let ten_millis = time::Duration::from_millis(10);
+  //   thread::sleep(ten_millis);
+  // });
+  // .progress();
+
+}
 
 #[test]
 #[ignore]
