@@ -7,13 +7,13 @@ use ol_genesis_tools::{
 };
 use ol_types::legacy_recovery::LegacyRecovery;
 use std::fs;
-use support::path_utils::json_path;
+use support::{path_utils::json_path, test_vals};
 
 #[test]
 // test that a genesis blob created from struct, will actually contain the data
 fn test_parse_json_for_one_validator_and_save_blob() {
 
-  let genesis_vals = vec![]; // TODO
+  let genesis_vals = test_vals::get_test_valset(4);
 
     let json = json_path().parent().unwrap().join("single_json_entry.json");
 

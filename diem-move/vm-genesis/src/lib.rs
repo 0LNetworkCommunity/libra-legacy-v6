@@ -192,20 +192,18 @@ pub fn encode_genesis_change_set(
     ChangeSet::new(write_set, events)
 }
 
-// 0L todo diem-1.4.1: This fn is double checked.
-//                     But, still needs third check/review from another person.
-// Reason, the diem `fn encode_genesis_change_set` which we copy and modify to
-// create this fn, changed significantly.
+/// Pipeline for creating genesis from recovery snapshot
 //////// 0L ////////
 pub fn encode_recovery_genesis_changeset(
     val_assignments: &[ValStateRecover],
     operator_recovers: &[OperRecover],
-    // _val_set: &[AccountAddress],
     genesis_val_configs: &[Validator],
     chain: u8,
     append_users: bool,
     legacy_data: &[LegacyRecovery],
 ) -> Result<ChangeSet, Error> {
+    println!("Starting Genesis With Data Migration");
+
     let mut stdlib_modules = Vec::new();
     // create a data view for move_vm
     let mut state_view = GenesisStateView::new();
@@ -230,12 +228,13 @@ pub fn encode_recovery_genesis_changeset(
     );
     //////// 0L ////////
     
-    diem_logger::info!("OK create_and_initialize_root_accounts =============== ");
+    OLProgress::complete("0x0 Account Created");
+
     // println!("OK create_and_initialize_main_accounts =============== ");
     let genesis_env = get_env();
-    diem_logger::info!("Initializing with env: {}", genesis_env);
     if genesis_env != "prod" {
         initialize_testnet(&mut session);
+        OLProgress::complete(&format!("Flagging Testnet mode: [{}]", &genesis_env));
     }
 
     // At genesis, we don't assume the same validators are in the genesis
@@ -244,22 +243,23 @@ pub fn encode_recovery_genesis_changeset(
     // and if the account already exists, then just update the configs.
     create_and_initialize_owners_operators(&mut session, genesis_val_configs);
 
+      OLProgress::complete(&format!("Initialized Genesis Validators [{}]",  genesis_val_configs.len()));
+
     // generate the genesis WriteSet
+    // TODO: this may be deprecated
     recovery_owners_operators(&mut session, val_assignments, operator_recovers);
-    diem_logger::info!("OK recovered validator accounts =============== ");
 
-        // Recover the user accounts
-    diem_logger::info!("Starting user migration... ");
+    // Recover the user accounts
     if append_users  {
-      migrate_end_users(&mut session, legacy_data).expect("failed to recover users");
+      migrate_end_users(&mut session, legacy_data)?;
+      OLProgress::complete(&format!("Migrated User Data [{}]", legacy_data.len()));
+      
     }
-
-
-
 
     // Trigger reconfiguration so that the validator set is updated.
     // genesis cannot start without a reconfiguration event.
     reconfigure(&mut session);
+    OLProgress::complete("Reconfigured");
 
     let (mut changeset1, mut events1) = session.finish().unwrap();
 
@@ -267,9 +267,13 @@ pub fn encode_recovery_genesis_changeset(
     let data_cache = StateViewCache::new(&state_view);
     let mut session = move_vm.new_session(&data_cache);
 
+
+    
+
     // Todo: not sure why we are publishing this again.
     publish_stdlib(&mut session, Modules::new(stdlib_modules.iter()));
 
+    OLProgress::complete("Published Stdlib");
 
     let (changeset2, events2) = session.finish().unwrap();
 
@@ -279,8 +283,10 @@ pub fn encode_recovery_genesis_changeset(
     let (write_set, events) = convert_changeset_and_events(changeset1, events1).unwrap();
 
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
+
     verify_genesis_write_set(&events);
-  
+    OLProgress::complete("Genesis transaction verified");
+
     Ok(ChangeSet::new(write_set, events))
 }
 
@@ -301,7 +307,7 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
     let mut total_balance_restored = 0u64;
     for user in filtered_data.iter()
     .progress_with_style(OLProgress::bar())
-    .with_message("migrating users") {      
+    .with_message("Migrating user data") {      
 
         let args = vec![
             // both the VM and the user signatures need to be mocked.
@@ -624,7 +630,7 @@ fn create_and_initialize_owners_operators(
         ]),
     );
     
-    println!("VALIDATOR SET");
+    println!("VALIDATOR SET\n");
     print_list.into_iter().for_each(|v| println!("{}", v));
 
     // for v in validators {

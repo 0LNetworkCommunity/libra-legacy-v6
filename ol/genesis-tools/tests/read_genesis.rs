@@ -7,7 +7,7 @@ use ol_genesis_tools::db_utils::read_db_and_compute_genesis;
 use diem_types::account_address::AccountAddress;
 use diem_types::{account_state::AccountState, on_chain_config::ValidatorSet};
 use std::convert::TryFrom;
-use support::path_utils::{blob_path, json_path};
+use support::{path_utils::{json_path, blob_path}, test_vals};
 
 #[test]
 // A meta test, to see if db reading works as expected.

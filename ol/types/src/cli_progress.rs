@@ -1,6 +1,6 @@
 //! standardize cli progress bars in 0L tools
 use indicatif::ProgressStyle;
-
+use console::{self, style};
 /// standard cli progress bars etc. for 0L tools
 pub struct OLProgress;
 
@@ -51,9 +51,27 @@ impl OLProgress {
         ])
   }
 
+  /// formatted "complete" message
+  pub fn complete(msg: &str) {
+    let prepad = format!("{}  ", msg);
+    let out = console::pad_str_with(&prepad, 64, console::Alignment::Left, Some("]"), "\u{00B7}".chars().next().unwrap())
+    .to_string();
+
+    println!("{} {}", out, style("\u{2713}").green());
+    // format!("{}{}", out, style("\u{2713}").green()).to_string()
+
+  }
+
 
 }
 
+
+#[test]
+fn test_complete() {
+  OLProgress::complete("test");
+  OLProgress::complete("a");
+  OLProgress::complete("aasdfasdfjhasdfkjadskfasdkjhf");
+}
 
 #[test]
 
@@ -77,3 +95,4 @@ fn progress() {
   });
 
 }
+
