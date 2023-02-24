@@ -718,6 +718,7 @@ impl From<&KeptVMStatus> for VMStatusView {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct TransactionView {
+    pub timestamp_usecs: u64,
     pub version: u64,
     pub transaction: TransactionDataView,
     pub hash: HashValue,
@@ -729,6 +730,7 @@ pub struct TransactionView {
 
 impl TransactionView {
     pub fn try_from_tx_and_events(
+        timestamp_usecs: u64,
         version: u64,
         tx: Transaction,
         tx_info: TransactionInfo,
@@ -740,6 +742,7 @@ impl TransactionView {
             .collect::<Result<Vec<_>>>()?;
 
         Ok(TransactionView {
+            timestamp_usecs,
             version,
             hash: tx.hash(),
             bytes: BytesView::new(bcs::to_bytes(&tx)?),
@@ -804,7 +807,7 @@ impl TryFrom<TransactionListWithProof> for TransactionListView {
         let tx_list = iter
             .map(|(((offset, tx), tx_info), tx_events)| {
                 let version = start_version + offset as u64;
-                TransactionView::try_from_tx_and_events(version, tx, tx_info, tx_events)
+                TransactionView::try_from_tx_and_events(0, version, tx, tx_info, tx_events)
             })
             .collect::<Result<Vec<_>>>()?;
 
