@@ -32,9 +32,6 @@ compiled_package_info:
       name: Ancestry
     : DiemFramework
     ? address: "00000000000000000000000000000001"
-      name: Audit
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
       name: Authenticator
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -203,6 +200,9 @@ compiled_package_info:
       name: PersistenceDemo
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: ProofOfFee
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Receipts
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -316,7 +316,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: D38221DF89B01EE8625F117F721CF161438C44A5D125072BCD2CB904C10AFCB5
+  source_digest: 51040330F757378BD6E3ABA93A5A4B56F5863AA63100508E82329A0618C08780
   build_flags:
     dev_mode: false
     test_mode: false

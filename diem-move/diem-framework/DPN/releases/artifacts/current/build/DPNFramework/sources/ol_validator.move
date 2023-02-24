@@ -28,27 +28,29 @@ module ValidatorScripts {
     //     assert!(DiemSystem::is_validator(Vector::pop_back(&mut new_validators)), 3);
     // }
 
-    public(script) fun self_unjail(validator: signer) {
-        let addr = Signer::address_of(&validator);
-        // if is above threshold continue, or raise error.
-        assert!(
-            TowerState::node_above_thresh(addr), 
-            Errors::invalid_state(NOT_ABOVE_THRESH_JOIN)
-        );
-        // if is not in universe, add back
-        if (!ValidatorUniverse::is_in_universe(addr)) {
-            ValidatorUniverse::add_self(&validator);
-        };
-        // Initialize jailbit if not present
-        if (!ValidatorUniverse::exists_jailedbit(addr)) {
-            ValidatorUniverse::initialize(&validator);
-        };
+    // V6: See note in Jail on deprecating self_unjail.
+    
+    // public(script) fun self_unjail(validator: signer) {
+    //     let addr = Signer::address_of(&validator);
+    //     // if is above threshold continue, or raise error.
+    //     assert!(
+    //         TowerState::node_above_thresh(addr), 
+    //         Errors::invalid_state(NOT_ABOVE_THRESH_JOIN)
+    //     );
+    //     // if is not in universe, add back
+    //     if (!ValidatorUniverse::is_in_universe(addr)) {
+    //         ValidatorUniverse::add_self(&validator);
+    //     };
+    //     // Initialize jailbit if not present
+    //     if (!ValidatorUniverse::exists_jailedbit(addr)) {
+    //         ValidatorUniverse::initialize(&validator);
+    //     };
 
-        // if is jailed, try to unjail
-        if (Jail::is_jailed(addr)) {
-            Jail::self_unjail(&validator);
-        };
-    }
+    //     // if is jailed, try to unjail
+    //     if (Jail::is_jailed(addr)) {
+    //         Jail::self_unjail(&validator);
+    //     };
+    // }
 
     public(script) fun voucher_unjail(voucher: signer, addr: address) {
         // if is above threshold continue, or raise error.

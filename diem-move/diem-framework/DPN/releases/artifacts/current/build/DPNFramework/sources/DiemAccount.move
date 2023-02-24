@@ -11,6 +11,8 @@ module DiemFramework::DiemAccount {
     friend DiemFramework::MakeWhole;
     friend DiemFramework::MigrateJail;
     friend DiemFramework::Genesis;
+    friend DiemFramework::TestFixtures; // Todo: remove
+    friend DiemFramework::Mock;
 
     use DiemFramework::AccountFreezing;
     use DiemFramework::CoreAddresses;
@@ -685,6 +687,8 @@ module DiemFramework::DiemAccount {
         Ancestry::init(sender, &new_signer);
         Vouch::init(&new_signer);
         Vouch::vouch_for(sender, new_account_address);
+        // ProofOfFee::init(&new_signer); // proof of fee causes circular depency if called on account creation.
+        // creation script should call proof of fee after.
         set_slow(&new_signer);
 
         new_account_address
@@ -1466,7 +1470,48 @@ module DiemFramework::DiemAccount {
 
         restore_withdraw_capability(cap);
     }
-    
+
+    /// VM authorized to withdraw a coin if it is to pay a network fee
+    /// e.g. transaction fees, validator PoF auction, etc. 
+    /// the amount can be above the transaction limit that
+    /// may exist on an account.
+    public fun vm_pay_user_fee(
+        vm: &signer,
+        payer : address,
+        amount: u64,
+        metadata: vector<u8>,        
+    ) acquires DiemAccount, Balance, AccountOperationsCapability { //////// 0L ////////
+        if (Signer::address_of(vm) != @DiemRoot) return;
+        // don't try to send a 0 balance, will halt.
+        if (amount < 1) return;
+        // Check there is a payer
+        if (!exists_at(payer)) return; 
+        // Check payer's balance is initialized (sanity).
+        if (!exists<Balance<GAS>>(payer)) return; 
+
+        // Check the payer is in possession of withdraw token.
+        if (delegated_withdraw_capability(payer)) return; 
+
+        // VM should not force an account below 1GAS, since the account may not recover.
+        if (balance<GAS>(payer) < BOOTSTRAP_COIN_VALUE) return;
+
+        // prevent halting on low balance.
+        // charge the remaining balance if the amount is greater than balance.
+        // User does not accumulate a debt.
+        if (balance<GAS>(payer) < amount) { 
+          amount = balance<GAS>(payer);
+        };
+
+        // VM can extract the withdraw token.
+        let account = borrow_global_mut<DiemAccount>(payer);
+        let cap = Option::extract(&mut account.withdraw_capability);
+        
+        let coin = withdraw_from<GAS>(&cap, payer, amount, copy metadata);
+        TransactionFee::pay_fee(coin);
+
+        restore_withdraw_capability(cap);
+    }
+
     //////// 0L ////////
     /// VM can burn from an account's balance for administrative purposes (e.g. at epoch boundaries)
     public fun vm_burn_from_balance<Token: store>(
@@ -3128,16 +3173,16 @@ module DiemFramework::DiemAccount {
         Roles::new_validator_role(dr_account, &new_account);
         ValidatorConfig::publish(&new_account, dr_account, human_name);
         make_account(&new_account, auth_key_prefix);
-        /////// 0L /////////
-        add_currencies_for_account<GAS>(&new_account, false);
 
+        add_currencies_for_account<GAS>(&new_account, false);
         let new_account = create_signer(new_account_address);
         set_slow(&new_account);
 
-        /////// 0L /////////
+        // NOTE: issues with testnet
         Jail::init(&new_account);
-        // ValidatorUniverse::add_self(&new_account);
-        // Vouch::init(&new_account);
+        // TODO: why does this fail?
+        // assert!(ValidatorConfig::is_valid(new_account_address), 07171717171);
+
     }
     spec create_validator_account {
         pragma disable_invariants_in_body;
@@ -3516,6 +3561,22 @@ module DiemFramework::DiemAccount {
         /// not all accounts will have this enabled.
         value: u64,
         index: u64, 
+    }
+
+    //////// 0L ////////
+    // Blockchain Fee helpers
+    // used for example in making all upcoming validators pay PoF fee in advance.
+    public fun vm_multi_pay_fee(vm: &signer, vals: &vector<address>, fee: u64, metadata: &vector<u8>) acquires DiemAccount, AccountOperationsCapability, Balance {
+      if (Signer::address_of(vm) != @VMReserved) {
+        return
+      };
+
+      let i = 0u64;
+      while (i < Vector::length(vals)) {
+        let val = Vector::borrow(vals, i);
+        vm_pay_user_fee(vm, *val, fee, *metadata);
+        i = i + 1;
+      };
     }
 
     //////// 0L ////////

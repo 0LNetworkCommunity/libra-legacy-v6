@@ -10,6 +10,9 @@ module Testnet {
     use Std::Errors;
     use Std::Signer;
 
+    const ENOT_TESTNET: u64 = 666; // out satan!
+    const EWHY_U_NO_ROOT: u64 = 667;
+
     struct IsTestnet has key { }
 
     public fun initialize(account: &signer) {
@@ -24,11 +27,21 @@ module Testnet {
         exists<IsTestnet>(@DiemRoot)
     }
 
+    public fun assert_testnet(vm: &signer): bool {
+      assert!(
+          Signer::address_of(vm) == @DiemRoot,
+          Errors::requires_role(EWHY_U_NO_ROOT)
+      );
+      assert!(is_testnet(), Errors::invalid_state(ENOT_TESTNET));
+      true
+    }
+
+
     // only used for testing purposes
     public fun remove_testnet(account: &signer) acquires IsTestnet {
         assert!(
             Signer::address_of(account) == @DiemRoot,
-            Errors::requires_role(200202)
+            Errors::requires_role(EWHY_U_NO_ROOT)
         );
         IsTestnet{} = move_from<IsTestnet>(@DiemRoot);
     }
@@ -43,12 +56,13 @@ module StagingNet {
     use Std::Errors;
     use Std::Signer;
 
+    const EWHY_U_NO_ROOT: u64 = 667;
     struct IsStagingNet has key { }
 
     public fun initialize(account: &signer) {
         assert!(
             Signer::address_of(account) == @DiemRoot,
-            Errors::requires_role(190301)
+            Errors::requires_role(EWHY_U_NO_ROOT)
         );
         move_to(account, IsStagingNet{})
     }

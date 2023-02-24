@@ -78,7 +78,7 @@ module DiemFramework::TransactionFee {
     public fun pay_fee<CoinType>(coin: Diem<CoinType>) acquires TransactionFee {
         DiemTimestamp::assert_operating();
         assert!(is_coin_initialized<CoinType>(), Errors::not_published(ETRANSACTION_FEE));
-        let fees = borrow_global_mut<TransactionFee<CoinType>>(@TreasuryCompliance);
+        let fees = borrow_global_mut<TransactionFee<CoinType>>(@TreasuryCompliance); // TODO: this is just the VM root actually
         Diem::deposit(&mut fees.balance, coin)
     }
 
@@ -143,6 +143,25 @@ module DiemFramework::TransactionFee {
         /// All the fees is burnt so the balance becomes 0.
         ensures spec_transaction_fee<CoinType>().balance.value == 0;
     }
+
+    //////// 0L ////////
+    // modified the above function to burn fees
+    // this is used to clear the Fee account of the VM after each epoch
+    // in the event that there are more funds that necessary
+    // to pay validators their agreed rate.
+
+    public fun ol_burn_fees(
+        vm: &signer,
+    ) acquires TransactionFee {
+        if (Signer::address_of(vm) != @VMReserved) {
+            return
+        };
+        // extract fees
+        let fees = borrow_global_mut<TransactionFee<GAS>>(@TreasuryCompliance); // TODO: this is same as VM address
+        let coin = Diem::withdraw_all(&mut fees.balance);
+        Diem::vm_burn_this_coin(vm, coin);
+    }
+
     /// STUB: To be filled in at a later date once the makeup of the XDX has been determined.
     ///
     /// # Specification of the case where burn type is XDX.
