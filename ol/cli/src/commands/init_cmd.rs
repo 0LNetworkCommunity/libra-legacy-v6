@@ -464,6 +464,18 @@ fn update_waypoint(
         new_waypoint,
     );
 
+    key::set_waypoint(
+        &app_cfg.workspace.node_home,
+        &app_cfg.format_oper_namespace(),
+        new_waypoint,
+    );
+
+    key::set_genesis_waypoint(
+        &app_cfg.workspace.node_home,
+        &app_cfg.format_oper_namespace(),
+        new_waypoint,
+    );
+
     Ok(new_waypoint)
 }
 
