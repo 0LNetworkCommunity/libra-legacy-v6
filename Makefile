@@ -330,6 +330,17 @@ files:
   --layout-path ${DATA_PATH}/set_layout.toml \
 	--val-ip-address ${IP}
 
+fork-files:
+	cargo run -p ol-genesis-tools ${CARGO_ARGS} -- \
+	--fork \
+	--debug \
+	--genesis-repo-owner ${REPO_ORG} \
+	--genesis-repo-name ${REPO_NAME} \
+	--genesis-gh-token ${GITHUB_TOKEN} \
+	--snapshot-path ${SOURCE}/ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff \
+	--output-path ${DATA_PATH}/genesis.blob \
+
+
 #### NODE MANAGEMENT ####
 start:
 # run in foreground. Only for testing, use a daemon for net.

@@ -135,7 +135,10 @@ impl<S: KVStorage> GenesisBuilder<S> {
         for owner in &layout.owners {
             let name = owner.as_bytes().to_vec();
             
-            let address: AccountAddress = owner.parse().expect("name should be address");
+            let address: AccountAddress = owner.parse().unwrap_or_else(|_| {
+              // this isa testnet layout with: "0_owner"
+              diem_config::utils::default_validator_owner_auth_key_from_name(&name).derived_address()
+            });
             // diem_config::utils::default_validator_owner_auth_key_from_name(&name)
             //     .derived_address();
 

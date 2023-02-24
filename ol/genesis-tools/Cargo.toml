@@ -46,6 +46,8 @@ diem-vm = { path = "../../diem-move/diem-vm", version = "0.1.0" }
 diem-framework-releases = { path = "../../diem-move/diem-framework/DPN/releases" }
 
 ol-smoke-tests = { path = "../smoke-tests/"}
+diem-management = { path = "../../config/management" }
+indicatif = "0.17.3"
 
 [dev-dependencies]
 tokio-test = "*"

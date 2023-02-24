@@ -44,6 +44,8 @@ pub mod write_set;
 pub use account_address::AccountAddress as PeerId;
 
 //////// 0L ////////
+pub use account_address::AccountAddress; // Prevent the PeerID from being the default.
+
 pub mod ol_upgrade_payload; 
 pub mod ol_validators_stats;
 pub mod ol_miner_state;
