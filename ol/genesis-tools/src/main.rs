@@ -1,4 +1,5 @@
 use anyhow::Result;
+use diem_secure_storage::{GitHubStorage, Storage};
 use vm_genesis::{TestValidator, Validator};
 use std::{path::PathBuf, process::exit};
 use ol_types::legacy_recovery::{save_recovery_file, read_from_recovery_file};
@@ -18,8 +19,14 @@ use ol_genesis_tools::{
 async fn main() -> Result<()> {
     #[derive(Debug, Options)]
     struct Args {
-        #[options(help = "remote github repo for genesis coordination", short="b")]
-        genesis_backend: Option<String>,
+        #[options(help = "org of remote github repo for genesis coordination")]
+        genesis_repo_owner: Option<String>,
+
+        #[options(help = "name of remote github repo for genesis coordination")]
+        genesis_repo_name: Option<String>,
+
+        #[options(help = "github token as string for github")]
+        genesis_gh_token: Option<String>,
 
         #[options(help = "path to snapshot dir to read")]
         snapshot_path: Option<PathBuf>,
@@ -72,12 +79,23 @@ async fn main() -> Result<()> {
             // you probably want a step where the data gets cleaned
             // and serialized to json for analysis.
 
-            let genesis_vals: Vec<Validator> = if let Some(s) = opts.genesis_backend {
+            let genesis_vals: Vec<Validator> = if 
+            opts.genesis_repo_owner.is_some() &&
+            opts.genesis_repo_name.is_some() {
               
               // NOTE: this is a real PITA.
               // There are two structs called SecureBackend, and we need to do some gymnastics. Plus they wrote their own parser for the cli args. Sigh.
-              let b =  diem_management::secure_backend::storage(&s).unwrap();
+              // let b =  diem_management::secure_backend::storage(&s).unwrap();
 
+              
+
+              let gh_config = GitHubStorage::new(
+                opts.genesis_repo_owner.unwrap(),
+                opts.genesis_repo_name.unwrap(),
+                "master".to_string(),
+                opts.genesis_gh_token.unwrap_or("{}".to_string()),
+              );
+              let b = Storage::GitHubStorage(gh_config);
 
               Genesis::just_the_vals(b).expect("could not get the validator set")
             } else {

@@ -72,12 +72,12 @@ impl Genesis {
     }
 
     //////// 0L ////////
-    pub fn just_the_vals(shared_backend: SecureBackend) -> Result<Vec<Validator>, Error>{
-
-        let storage = Storage::from(&shared_backend);
+    pub fn just_the_vals(shared_backend: Storage) -> Result<Vec<Validator>, Error>{
         
-      GenesisBuilder::new(storage)
-        .validators()
+      let g = GenesisBuilder::new(shared_backend);
+      dbg!(&g.layout());
+      
+      g.validators()
         .map_err(|e| Error::UnexpectedError(e.to_string()))
     }
 }
