@@ -237,6 +237,12 @@ pub fn encode_recovery_genesis_changeset(
         initialize_testnet(&mut session);
     }
 
+    // At genesis, we don't assume the same validators are in the genesis
+    // plus, the validators may have changed their keys, or network addresses.
+    // so we just assume that we should create the account as usual, 
+    // and if the account already exists, then just update the configs.
+    create_and_initialize_owners_operators(&mut session, genesis_val_configs);
+
     // generate the genesis WriteSet
     recovery_owners_operators(&mut session, val_assignments, operator_recovers);
     diem_logger::info!("OK recovered validator accounts =============== ");
@@ -247,11 +253,7 @@ pub fn encode_recovery_genesis_changeset(
       migrate_end_users(&mut session, legacy_data).expect("failed to recover users");
     }
 
-    // At genesis, we don't assume the same validators are in the genesis
-    // plus, the validators may have changed their keys, or network addresses.
-    // so we just assume that we should create the account as usual, 
-    // and if the account already exists, then just update the configs.
-    create_and_initialize_owners_operators(&mut session, genesis_val_configs);
+
 
 
     // Trigger reconfiguration so that the validator set is updated.
@@ -284,8 +286,6 @@ pub fn encode_recovery_genesis_changeset(
 /// fuction to iterate through a list of LegacyRecovery and recover the user accounts by calling a GenesisMigration.move in the VM. (as opposed to crafting writesets individually which could be fallible).
 
 fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, legacy_data: &[LegacyRecovery]) -> Result<u64, anyhow::Error>{
-
-  dbg!(&legacy_data.is_empty());
 
   let filtered_data: Vec<&LegacyRecovery>= legacy_data.iter()
     .filter(|d| {
