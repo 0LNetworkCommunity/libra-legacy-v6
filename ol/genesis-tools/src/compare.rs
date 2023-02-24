@@ -46,7 +46,7 @@ pub fn compare_recovery_vec_to_genesis_blob(
 
     recovery.iter()
     .progress_with_style(OLProgress::bar())
-    .with_prefix("Comaparing snapshot to new genesis")
+    .with_message("Comaparing snapshot to new genesis")
     .enumerate()
     .for_each(|(i, v)| {
         if v.account.is_none() {

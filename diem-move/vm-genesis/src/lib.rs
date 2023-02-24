@@ -242,18 +242,19 @@ pub fn encode_recovery_genesis_changeset(
     // so we just assume that we should create the account as usual, 
     // and if the account already exists, then just update the configs.
     create_and_initialize_owners_operators(&mut session, genesis_val_configs);
-
-      OLProgress::complete(&format!("Initialized Genesis Validators [{}]",  genesis_val_configs.len()));
+    distribute_genesis_subsidy(&mut session);
+    OLProgress::complete(&format!("Initialized Genesis Validators [{}]",  genesis_val_configs.len()));
 
     // generate the genesis WriteSet
     // TODO: this may be deprecated
     recovery_owners_operators(&mut session, val_assignments, operator_recovers);
+    OLProgress::complete(&format!("Migrate legacy validator configs [{}]",  val_assignments.len()));
 
-    // Recover the user accounts
+    // Recover the user balances and data
+    // NOTE: this includes the balances of legacy validators.
     if append_users  {
       migrate_end_users(&mut session, legacy_data)?;
       OLProgress::complete(&format!("Migrated User Data [{}]", legacy_data.len()));
-      
     }
 
     // Trigger reconfiguration so that the validator set is updated.
@@ -266,10 +267,7 @@ pub fn encode_recovery_genesis_changeset(
     let state_view = GenesisStateView::new();
     let data_cache = StateViewCache::new(&state_view);
     let mut session = move_vm.new_session(&data_cache);
-
-
     
-
     // Todo: not sure why we are publishing this again.
     publish_stdlib(&mut session, Modules::new(stdlib_modules.iter()));
 
@@ -630,7 +628,7 @@ fn create_and_initialize_owners_operators(
         ]),
     );
     
-    println!("VALIDATOR SET\n");
+    println!("\nVALIDATOR SET");
     print_list.into_iter().for_each(|v| println!("{}", v));
 
     // for v in validators {

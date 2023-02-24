@@ -7,23 +7,17 @@ use ol_genesis_tools::db_utils::read_db_and_compute_genesis;
 use diem_types::account_address::AccountAddress;
 use diem_types::{account_state::AccountState, on_chain_config::ValidatorSet};
 use std::convert::TryFrom;
-use support::{path_utils::{json_path, blob_path}, test_vals};
+use support::path_utils::{json_path, blob_path};
+
 
 #[test]
-// A meta test, to see if db reading works as expected.
-fn test_extract_waypoint() {
-    let p = blob_path();
-
-    let (_db, wp) = read_db_and_compute_genesis(p).expect("parse genesis.blob");
-    dbg!(&wp.to_string());
-    assert!(wp.to_string().starts_with("0:c63c2"));
-}
-
-#[test]
-// read db.
+// start a db from a genesis file created by this tool
+//  and read some properties
 fn test_read_db() {
     let p = blob_path();
-    let (db, _wp) = read_db_and_compute_genesis(p).expect("parse genesis.blob");
+    let (db, wp) = read_db_and_compute_genesis(p).expect("parse genesis.blob");
+
+    assert!(wp.to_string().starts_with("0:0df4c"));
 
     let state = db
         .reader
@@ -35,7 +29,9 @@ fn test_read_db() {
 
     let validator_set: ValidatorSet = account_state.get_validator_set().unwrap().unwrap();
 
-    assert_eq!(135, validator_set.payload().len());
+    // in our tests we are only initializing the validator set
+    // with 4 test validators
+    assert_eq!(4, validator_set.payload().len());
 
     let acc = validator_set.payload().first().unwrap().account_address();
 

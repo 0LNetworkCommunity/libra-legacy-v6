@@ -3,7 +3,6 @@
 //! you can go your own way
 
 use std::path::PathBuf;
-
 /// path to file fixture with a db backup
 pub fn snapshot_path() -> PathBuf {
     use std::path::Path;
@@ -39,6 +38,5 @@ pub fn blob_path() -> PathBuf {
         .unwrap()
         .parent()
         .unwrap()
-        .join("ol/fixtures/rescue/sample_rescue_genesis.blob")
-        
+        .join("ol/fixtures/rescue/sample_rescue_genesis.blob")        
 }

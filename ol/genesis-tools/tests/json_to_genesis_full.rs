@@ -38,7 +38,7 @@ async fn test_parse_json_for_all_users_and_save_blob() {
     let val_list = genesis_vals.iter().map(|v| v.address).collect();
     compare::check_val_set(val_list, output_path.clone()).unwrap();
 
-    fs::remove_file(output_path).unwrap();
+    // fs::remove_file(output_path).unwrap();
 }
 
 #[tokio::test]
