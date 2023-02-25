@@ -46,6 +46,8 @@ base64 = "0.13.0"
 hex = "0.4.3"
 once_cell = "1.7.2"
 regex = "1.4.3"
+serde = { version = "1.0.124", features = ["derive"] }
+serde_json = "1.0.64"
 serde_yaml = "0.8.17"
 futures = "0.3.12"
 backup-cli = { path = "../../storage/backup/backup-cli" }
@@ -59,6 +61,8 @@ diem-operational-tool = {path = "../../config/management/operational", features 
 diem-time-service = { path = "../../crates/diem-time-service", features = ["testing"] }
 diem-vault-client = { path = "../../secure/storage/vault", features = ["fuzzing"] }
 diem-validator-interface = { path = "../../diem-move/diem-validator-interface" }
+diem-wallet = { path = "../../crates/diem-wallet", version = "0.1.0" }
 diem-writeset-generator = { path = "../../diem-move/writeset-transaction-generator" }
 diem-transaction-builder = { path = "../../sdk/transaction-builder" }
 smoke-test = { path = "../../testsuite/smoke-test", features = ["ol-smoke-test"] }
+ol-types = { path = "../../ol/types"}

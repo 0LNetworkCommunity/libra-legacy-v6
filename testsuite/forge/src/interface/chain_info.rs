@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{Coffer, NFTPublicInfo, PublicInfo, Result};
+use anyhow::bail;
 use diem_rest_client::Client as RestClient;
 use diem_sdk::{
     client::BlockingClient,
@@ -218,5 +219,65 @@ impl<'t> ChainInfo<'t> {
 
     pub fn into_nft_public_info(self) -> NFTPublicInfo<'t> {
         NFTPublicInfo::new(self.chain_id, self.rest_api_url.clone(), self.root_account)
+    }
+
+    /// Commit miner proof
+    pub async fn ol_commit_proof(
+        &mut self,
+        mut account: LocalAccount,
+        block: ol_types::block::VDFProof
+    ) -> Result<()> {
+        let factory = self.transaction_factory();
+        let client = self.rest_client();
+
+        let txn = account
+            .sign_with_transaction_builder(
+                factory.payload(
+                    transaction_builder::stdlib::encode_minerstate_commit_script_function(
+                        block.preimage.clone(),
+                        block.proof.clone(),
+                        block.difficulty(),
+                        block.security(),
+                    )
+                )
+            );
+        client.submit_and_wait(&txn).await?;
+        Ok(())
+    }
+
+    pub async fn create_validator(
+        &mut self,
+        mut validator: LocalAccount,
+        new_validator: ol_types::account::ValConfigs,
+    ) -> Result<()> {
+        let factory = self.transaction_factory();
+        let client = self.rest_client();
+
+        let block = match new_validator.block_zero {
+            Some(b) => b,
+            None => bail!("no block zero found in account.json"),
+        };
+        let txn = validator
+            .sign_with_transaction_builder(
+                factory.payload(
+                    transaction_builder::stdlib::encode_create_acc_val_script_function(
+                        block.preimage.clone(),
+                        block.proof.clone(),
+                        block.difficulty(),
+                        block.security(),
+                        new_validator.ow_human_name.to_string().as_bytes().to_vec(),
+                        new_validator.op_address.parse().unwrap(),
+                        new_validator.op_auth_key_prefix,
+                        new_validator.op_consensus_pubkey,
+                        new_validator.op_validator_network_addresses,
+                        new_validator.op_fullnode_network_addresses,
+                        new_validator.op_human_name.as_bytes().to_vec(),
+                    )
+                )
+            );
+
+        client.submit_and_wait(&txn).await?;
+
+        Ok(())
     }
 }
