@@ -528,7 +528,12 @@ testnet-register:  testnet-init gen-register
 # Do a dev genesis on each node after EVERY NODE COMPLETED registration.
 
 # Makes the gensis file on each genesis validator, AND SAVES TO GITHUB so that other validators can be onboarded after genesis.
-testnet-genesis: genesis set-waypoint
+testnet-genesis: genesis set-waypoint testnet-publish
+
+
+	make verify-gen
+
+testnet-publish:
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
 	--publish-genesis ${DATA_PATH}/genesis.blob \
 	--shared-backend ${GENESIS_REMOTE}
@@ -536,9 +541,6 @@ testnet-genesis: genesis set-waypoint
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
 	--publish-genesis ${DATA_PATH}/genesis_waypoint.txt \
 	--shared-backend ${GENESIS_REMOTE}
-
-	make verify-gen
-
 
 #### 2. TESTNET START ####
 
@@ -590,7 +592,7 @@ sw-tx:
 
 ##### FORK TESTS #####
 
-fork: stdlib fork-genesis fork-config fork-start
+# fork: stdlib fork-genesis fork-config fork-start
 
 EPOCH_HEIGHT = $(shell cargo r -p ol -- query --epoch | cut -d ":" -f 2)
 
@@ -598,22 +600,22 @@ epoch:
 	cargo r -p ol -- query --epoch
 	echo ${EPOCH_HEIGHT}
 
-fork-backup:
-		rm -rf ${SOURCE}/ol/TEST/snapshot/*
-		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}/ol/TEST/snapshot/
+# fork-backup:
+# 		rm -rf ${SOURCE}/ol/TEST/snapshot/*
+# 		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}/ol/TEST/snapshot/
 
 # # Make genesis file
 # fork-genesis:
 # 		cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}/ol/TEST/snapshot/state_ver*
 
 # Use onboard to create all node files
-fork-config:
-	cargo run -p onboard -- fork -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
+# fork-config:
+# 	cargo run -p onboard -- fork -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
 
-# start node from files
-fork-start:
-	rm -rf ~/.0L/db
-	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
+# # start node from files
+# fork-start:
+# 	rm -rf ~/.0L/db
+# 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
 
 ##### UTIL #####
 TAG=$(shell git tag -l "previous")
@@ -644,7 +646,9 @@ v6-register: gen-register
 # or can be manually by pull request, changing set_layout.toml
 v6-validators: layout
 
-v6-genesis: fork-genesis node-files
+v6-genesis: fork-genesis node-files set-waypoint
+	# DESTROYING DB
+	rm -rf ~/.0L/db
 
 v6-verify: verify-gen
 
