@@ -458,10 +458,8 @@ extract-waypoint:
 	--shared-backend ${REMOTE} \
 	| awk -F 'Waypoint: '  '{print $$2}' > ${DATA_PATH}/genesis_waypoint.txt\
 
-set-waypoint:	
-	make extract-waypoint
-	sleep 1
-	cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/genesis_waypoint.txt)
+set-waypoint:
+	make extract-waypoint && cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/genesis_waypoint.txt)
 
 	@echo waypoint:
 	@cat ${DATA_PATH}/genesis_waypoint.txt
