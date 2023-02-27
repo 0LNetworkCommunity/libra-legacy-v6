@@ -1,10 +1,6 @@
 processed 4 tasks
 
-<<<<<<< HEAD
-task 1 'block'. lines 11-11:
-=======
 task 1 'block'. lines 7-7:
->>>>>>> v6-0d-infra-escrow
 Events:
 {
     key:     0c0000000000000000000000000000000000000000000000

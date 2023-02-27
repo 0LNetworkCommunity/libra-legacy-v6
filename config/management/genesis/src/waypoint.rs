@@ -28,10 +28,16 @@ pub struct CreateWaypoint {
     genesis_path: Option<std::path::PathBuf>,
     #[structopt(long)]
     layout_path: Option<std::path::PathBuf>,
+    #[structopt(long)]
+    extract: bool,
 }
 
 impl CreateWaypoint {
     pub fn execute(self) -> Result<Waypoint, Error> {
+        if self.extract && self.genesis_path.is_some() {
+          return extract_waypoint_from_file(&self.genesis_path.unwrap())
+        }
+
         let genesis_helper = crate::genesis::Genesis {
             config: self.config,
             chain_id: self.chain_id,

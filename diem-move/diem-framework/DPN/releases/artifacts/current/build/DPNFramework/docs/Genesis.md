@@ -321,9 +321,13 @@ Finally, each validator must specify the network address
         <b>let</b> owner_address = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(owner);
         <b>let</b> owner_name = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&owner_names, i);
         // create each validator account and rotate its auth key <b>to</b> the correct value
-        <a href="DiemAccount.md#0x1_DiemAccount_create_validator_account">DiemAccount::create_validator_account</a>(
+        //////// 0L ////////
+        <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">DiemAccount::exists_at</a>(owner_address)) {
+          // this may be a forking upgrade, so we may not needto create the account
+          <a href="DiemAccount.md#0x1_DiemAccount_create_validator_account">DiemAccount::create_validator_account</a>(
             &dr_account, owner_address, <b>copy</b> dummy_auth_key_prefix, owner_name
-        );
+          );
+        };
 
         <b>let</b> owner_auth_key = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&owner_auth_keys, i);
         <b>let</b> rotation_cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_key_rotation_capability">DiemAccount::extract_key_rotation_capability</a>(owner);

@@ -3,24 +3,12 @@
 // This test is to check if two epochs succesfully happen with all 
 // validators being CASE 1.
 
-<<<<<<< HEAD
-//# run --admin-script --signers DiemRoot DiemRoot
-=======
 //# run --admin-script --signers DiemRoot Bob
->>>>>>> v6-0d-infra-escrow
 script {
     use DiemFramework::Mock;
     use DiemFramework::DiemSystem;
 
     fun main(vm: signer, _: signer) {
-<<<<<<< HEAD
-
-        assert!(DiemSystem::validator_set_size() == 6, 7357008013007);
-        // all validators compliant
-        Mock::all_good_validators(&vm);
-        // all validators bid
-        Mock::pof_default(&vm);
-=======
 
         assert!(DiemSystem::validator_set_size() == 6, 7357008013007);
         // all validators compliant
@@ -31,7 +19,6 @@ script {
 
         // need to also mock network fees being paid.
         Mock::mock_network_fees(&vm, 4000000);
->>>>>>> v6-0d-infra-escrow
     }
 }
 // check: EXECUTED

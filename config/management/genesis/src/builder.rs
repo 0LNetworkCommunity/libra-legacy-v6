@@ -11,6 +11,7 @@ use diem_management::constants::{self, VALIDATOR_CONFIG, VALIDATOR_OPERATOR};
 use diem_secure_storage::{KVStorage, Namespaced};
 use diem_types::{
     chain_id::ChainId,
+    account_address::AccountAddress,
     on_chain_config::{OnChainConsensusConfig, VMPublishingOption},
     transaction::{
         authenticator::AuthenticationKey, ScriptFunction, Transaction, TransactionPayload,
@@ -47,7 +48,6 @@ impl<S: KVStorage> GenesisBuilder<S> {
             .with_namespace(constants::COMMON_NS)
             .get::<String>(constants::LAYOUT)?
             .value;
-        dbg!(&raw_layout);
         Layout::parse(&raw_layout).map_err(Into::into)
     }
 
@@ -134,8 +134,14 @@ impl<S: KVStorage> GenesisBuilder<S> {
         let mut validators = Vec::new();
         for owner in &layout.owners {
             let name = owner.as_bytes().to_vec();
-            let address = diem_config::utils::default_validator_owner_auth_key_from_name(&name)
-                .derived_address();
+            
+            let address: AccountAddress = owner.parse().unwrap_or_else(|_| {
+              // this isa testnet layout with: "0_owner"
+              diem_config::utils::default_validator_owner_auth_key_from_name(&name).derived_address()
+            });
+            // diem_config::utils::default_validator_owner_auth_key_from_name(&name)
+            //     .derived_address();
+
             let auth_key = self
                 .owner_key(owner)
                 .map_or(AuthenticationKey::zero(), |k| {

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::builder::GenesisBuilder;
-use diem_management::{config::ConfigPath, error::Error, secure_backend::SharedBackend};
+use diem_config::config::SecureBackend;
+use diem_management::{config::ConfigPath, error::Error,secure_backend::SharedBackend};
 use diem_secure_storage::Storage;
 use diem_types::{
     chain_id::ChainId,
@@ -11,6 +12,7 @@ use diem_types::{
 };
 use std::{fs::File, io::Write, path::PathBuf};
 use structopt::StructOpt;
+use vm_genesis::Validator;
 
 /// Note, it is implicitly expected that the storage supports
 /// a namespace but one has not been set.
@@ -67,5 +69,15 @@ impl Genesis {
         }
 
         Ok(genesis)
+    }
+
+    //////// 0L ////////
+    pub fn just_the_vals(shared_backend: Storage) -> Result<Vec<Validator>, Error>{
+        
+      let g = GenesisBuilder::new(shared_backend);
+      dbg!(&g.layout());
+      
+      g.validators()
+        .map_err(|e| Error::UnexpectedError(e.to_string()))
     }
 }

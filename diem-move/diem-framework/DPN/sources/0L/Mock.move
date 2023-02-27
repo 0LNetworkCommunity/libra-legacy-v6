@@ -110,6 +110,15 @@ module Mock {
 
     }
 
+    // function to deposit into network fee account
+    public fun mock_network_fees(vm: &signer, amount: u64) {
+      Testnet::assert_testnet(vm);
+      let c = Diem::mint<GAS>(vm, amount);
+      let c_value = Diem::value(&c);
+      assert!(c_value == amount, 777707);
+      TransactionFee::pay_fee(c);
+    }
+
     //////// PROOF OF FEE ////////
     public fun pof_default(vm: &signer): (vector<address>, vector<u64>, vector<u64>){
 
@@ -142,15 +151,6 @@ module Mock {
       DiemAccount::vm_multi_pay_fee(vm, &vals, 1, &b"proof of fee");
 
       (vals, bids, expiry)
-    }
-
-    // function to deposit into network fee account
-    public fun mock_network_fees(vm: &signer, amount: u64) {
-      Testnet::assert_testnet(vm);
-      let c = Diem::mint<GAS>(vm, amount);
-      let c_value = Diem::value(&c);
-      assert!(c_value == amount, 777707);
-      TransactionFee::pay_fee(c);
     }
 
 }

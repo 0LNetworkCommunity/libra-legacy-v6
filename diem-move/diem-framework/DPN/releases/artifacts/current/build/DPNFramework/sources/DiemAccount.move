@@ -3613,7 +3613,6 @@ module DiemFramework::DiemAccount {
         index: u64, // The index is a time-weighted cumulative sum of the deposits made to this account. This favors most recent donations.
     }
 
-
     //////// 0L ////////
     // Blockchain Fee helpers
     // used for example in making all upcoming validators pay PoF fee in advance.

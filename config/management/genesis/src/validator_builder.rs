@@ -430,10 +430,6 @@ impl ValidatorBuilder {
         /////// 0L /////////
         // Set Root and Treasury public keys
         genesis_builder.set_root_key(Ed25519PublicKey::from(&root_keys.root_key))?;
-        dbg!(&genesis_builder.root_key());
-        // genesis_builder.set_treasury_compliance_key(Ed25519PublicKey::from(
-        //     &root_keys.treasury_compliance_key,
-        // ))?;
 
         // Set Validator specific information
         for validator in validators {

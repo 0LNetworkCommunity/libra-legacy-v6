@@ -8,8 +8,8 @@
 -  [Function `mock_case_1`](#0x1_Mock_mock_case_1)
 -  [Function `mock_case_4`](#0x1_Mock_mock_case_4)
 -  [Function `all_good_validators`](#0x1_Mock_all_good_validators)
--  [Function `pof_default`](#0x1_Mock_pof_default)
 -  [Function `mock_network_fees`](#0x1_Mock_mock_network_fees)
+-  [Function `pof_default`](#0x1_Mock_pof_default)
 
 
 <pre><code><b>use</b> <a href="Cases.md#0x1_Cases">0x1::Cases</a>;
@@ -149,6 +149,34 @@
 
 </details>
 
+<a name="0x1_Mock_mock_network_fees"></a>
+
+## Function `mock_network_fees`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Mock.md#0x1_Mock_mock_network_fees">mock_network_fees</a>(vm: &signer, amount: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Mock.md#0x1_Mock_mock_network_fees">mock_network_fees</a>(vm: &signer, amount: u64) {
+  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
+  <b>let</b> c = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, amount);
+  <b>let</b> c_value = <a href="Diem.md#0x1_Diem_value">Diem::value</a>(&c);
+  <b>assert</b>!(c_value == amount, 777707);
+  <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">TransactionFee::pay_fee</a>(c);
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_Mock_pof_default"></a>
 
 ## Function `pof_default`
@@ -195,34 +223,6 @@
   <a href="DiemAccount.md#0x1_DiemAccount_vm_multi_pay_fee">DiemAccount::vm_multi_pay_fee</a>(vm, &vals, 1, &b"proof of fee");
 
   (vals, bids, expiry)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_Mock_mock_network_fees"></a>
-
-## Function `mock_network_fees`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Mock.md#0x1_Mock_mock_network_fees">mock_network_fees</a>(vm: &signer, amount: u64)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Mock.md#0x1_Mock_mock_network_fees">mock_network_fees</a>(vm: &signer, amount: u64) {
-  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
-  <b>let</b> c = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, amount);
-  <b>let</b> c_value = <a href="Diem.md#0x1_Diem_value">Diem::value</a>(&c);
-  <b>assert</b>!(c_value == amount, 777707);
-  <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">TransactionFee::pay_fee</a>(c);
 }
 </code></pre>
 

@@ -11,6 +11,8 @@ use ol_types::legacy_recovery::LegacyRecovery;
 use ol_types::legacy_recovery::read_from_recovery_file;
 use std::convert::TryFrom;
 use std::path::PathBuf;
+use ol_types::OLProgress;
+use indicatif::{ProgressIterator, ProgressBar};
 
 #[derive(Debug)]
 /// struct for holding the results of a comparison
@@ -32,10 +34,21 @@ pub fn compare_recovery_vec_to_genesis_blob(
     // start an empty btree map
     let mut err_list: Vec<CompareError> = vec![];
 
+    let pb = ProgressBar::new(1000)
+    .with_style(OLProgress::spinner())
+    .with_message("Test database from genesis.blob");
+    pb.enable_steady_tick(core::time::Duration::from_millis(500));
     // iterate over the recovery file and compare balances
     let (db_rw, _) = db_utils::read_db_and_compute_genesis(genesis_path)?;
+    pb.finish_and_clear();
 
-    recovery.iter().enumerate().for_each(|(i, v)| {
+
+
+    recovery.iter()
+    .progress_with_style(OLProgress::bar())
+    .with_message("Comaparing snapshot to new genesis")
+    .enumerate()
+    .for_each(|(i, v)| {
         if v.account.is_none() {
             err_list.push(CompareError {
                 index: i as u64,

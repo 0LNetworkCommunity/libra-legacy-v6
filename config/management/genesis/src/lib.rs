@@ -6,7 +6,7 @@
 pub mod builder;
 pub mod command;
 pub mod fullnode_builder;
-mod genesis;
+pub mod genesis; //////// 0L ////////
 pub mod key;  //////// 0L /////////
 pub mod waypoint;  //////// 0L /////////
 pub mod layout;

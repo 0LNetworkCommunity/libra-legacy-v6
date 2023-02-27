@@ -412,7 +412,9 @@ pub fn initialize_val_key_store(
 
     init::key_store_init(home_dir, &namespace, keys, is_genesis);
     key::set_operator_key(home_dir, &oper_namespace);
-    key::set_owner_key(home_dir, &oper_namespace, app_cfg.profile.account);
+    // sets the address 
+    key::set_owner_address(home_dir, &namespace, app_cfg.profile.account);
+    key::set_owner_address(home_dir, &oper_namespace, app_cfg.profile.account);
     key::set_genesis_waypoint(home_dir, &oper_namespace, way.clone());
     key::set_waypoint(home_dir, &oper_namespace, way);
 
@@ -452,13 +454,25 @@ fn update_waypoint(
     // Set the key_store.json file's waypoint
     key::set_waypoint(
         &app_cfg.workspace.node_home,
-        &app_cfg.profile.account.to_string(),
+        &app_cfg.format_owner_namespace(),
         new_waypoint,
     );
 
     key::set_genesis_waypoint(
         &app_cfg.workspace.node_home,
-        &app_cfg.profile.account.to_string(),
+        &app_cfg.format_owner_namespace(),
+        new_waypoint,
+    );
+
+    key::set_waypoint(
+        &app_cfg.workspace.node_home,
+        &app_cfg.format_oper_namespace(),
+        new_waypoint,
+    );
+
+    key::set_genesis_waypoint(
+        &app_cfg.workspace.node_home,
+        &app_cfg.format_oper_namespace(),
         new_waypoint,
     );
 
