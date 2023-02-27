@@ -8,7 +8,6 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1.0.33"
-futures = "0.3"
 tokio = { version = "1.3.0", features = ["full"] }
 bcs = "0.1.2"
 diem-crypto = { path = "../../crates/diem-crypto" }
@@ -16,11 +15,8 @@ diem-types = { path = "../../types" }
 backup-cli = { path = "../../storage/backup/backup-cli", version = "0.1.0" }
 serde = { version = "1.0.116", features = ["derive"] }
 serde_json = "1.0.58"
-backup-service = { path = "../../storage/backup/backup-service", version = "0.1.0" }
-storage-interface = { path = "../../storage/storage-interface", version = "0.1.0" }
 move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
 vm-genesis={path="../../diem-move/vm-genesis", version="0.1.0"}
-diem-wallet = { path = "../../crates/diem-wallet", version = "0.1.0"}
 gumdrop = "0.8.0"
 ol = { path = "../cli/"}
 ol-keys = { path = "../keys/", version = "0.1.0" }
