@@ -147,11 +147,13 @@ pub fn accounts_into_recovery(
           malformed += 1;
         }
     }
-    OLProgress::complete(&format!("Total accounts read: [{}], empty: [{}]", &account_state_blobs.len(), malformed));
-    OLProgress::complete(&format!("Total accounts recovered: [{}]", &to_recover.len()));
+    OLProgress::complete(
+      &format!("Accounts read: [{}], recovered: [{}], empty: [{}]",
+      &account_state_blobs.len(),
+      &to_recover.len(),
+      malformed
+    ));
     
-    
-
     Ok(to_recover)
 }
 
