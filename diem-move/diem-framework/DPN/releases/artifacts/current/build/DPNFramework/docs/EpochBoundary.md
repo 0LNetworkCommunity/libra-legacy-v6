@@ -23,6 +23,7 @@
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
+<b>use</b> <a href="InfraEscrow.md#0x1_InfraEscrow">0x1::InfraEscrow</a>;
 <b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
 <b>use</b> <a href="MusicalChairs.md#0x1_MusicalChairs">0x1::MusicalChairs</a>;
 <b>use</b> <a href="ProofOfFee.md#0x1_ProofOfFee">0x1::ProofOfFee</a>;
@@ -68,44 +69,62 @@
 <pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
-    <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>();
+
+    ///////// SETTLE ACCOUNTS OF PREVIOUS EPOCH /////////
+    // Update all slow wallet limits
+    <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>()); // todo
     print(&800100);
 
+    // Check compliance of nodes
+    <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>();
+    print(&800200);
     <b>let</b> (outgoing_compliant_set, new_set_size) =
         <a href="MusicalChairs.md#0x1_MusicalChairs_stop_the_music">MusicalChairs::stop_the_music</a>(vm, height_start, height_now);
 
-    print(&800200);
-
-    // NOTE: This is "nominal" because it doesn't check
-    // <b>let</b> compliant_nodes_count = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&outgoing_compliant_set);
     print(&800300);
 
-    // TODO: subsidy units are fixed
-    // <b>let</b> (subsidy_units, nominal_subsidy_per) =
-    //     <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
+    // Get the consensus reward established at the beginning of the epoch
+    // so we know what <b>to</b> pay people
+    <b>let</b> (reward, _, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">ProofOfFee::get_consensus_reward</a>();
+
+    // process the oracles first (previously the identiy reward)
+    <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, reward);
     print(&800400);
 
-    <b>let</b> (reward, _, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">ProofOfFee::get_consensus_reward</a>();
-    <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, reward);
-
-    print(&800500);
-
+    // pay the validators
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, reward, &outgoing_compliant_set);
-    print(&800600);
-
+    print(&800500);
     // process the non performing nodes: jail
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_jail">process_jail</a>(vm, &outgoing_compliant_set);
+    print(&800600);
+    // EVERYONE SHOULD BE PAID UP AT THIS POINT
+    // after everyone is paid from the chain's Fee account
+    // we can burn the remainder.
+    // Note we <b>assume</b> <a href="Oracle.md#0x1_Oracle">Oracle</a> subsidy was paid prior <b>to</b> this.
 
+    // TODO: implement what happens <b>to</b> the matching donation algo
+    // depending on the validator's preferences.
+    <a href="TransactionFee.md#0x1_TransactionFee_ol_burn_fees">TransactionFee::ol_burn_fees</a>(vm);
+    print(&800700);
+
+
+    ///////// PREPARE NEXT EPOCH /////////
 
     <b>let</b> proposed_set = <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, &outgoing_compliant_set, new_set_size);
 
 
-    // Update all slow wallet limits
-    <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>()); // todo
-    print(&801000);
+    print(&800800);
+
+    // Now we need <b>to</b> collect coins from infrastructure escrow, <b>to</b> temporarily fund the network fee <b>address</b> for the next set.
+    // Note in step
+    <a href="InfraEscrow.md#0x1_InfraEscrow_epoch_boundary_collection">InfraEscrow::epoch_boundary_collection</a>(vm, reward * <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proposed_set));
+
+    print(&800900);
+
+
 
     <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, outgoing_compliant_set, height_now);
-    print(&801100);
+    print(&8001000);
 
 }
 </code></pre>
@@ -196,15 +215,9 @@
     // don't pay <b>while</b> we are in recovery mode, since that creates
     // a frontrunning opportunity
     <b>if</b> (subsidy_units &gt; 0 && !<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()) {
-        <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, outgoing_compliant_set);
+        <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, outgoing_compliant_set);
     };
 
-    // after everyone is paid from the chain's Fee account
-    // we can burn the remainder.
-
-    // TODO: implamente what happens <b>to</b> the matching donation algo
-    // depending on the validator's preferences.
-    <a href="TransactionFee.md#0x1_TransactionFee_ol_burn_fees">TransactionFee::ol_burn_fees</a>(vm);
 }
 </code></pre>
 
@@ -291,14 +304,15 @@
         // CONSENSUS CRITICAL
         // pick the validators based on proof of fee.
         // <b>false</b> because we want the default behavior of the function: filtered by audit
+        print(&60000);
         <b>let</b> sorted_bids = <a href="ProofOfFee.md#0x1_ProofOfFee_get_sorted_vals">ProofOfFee::get_sorted_vals</a>(<b>false</b>);
         <b>let</b> (auction_winners, price) = <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">ProofOfFee::fill_seats_and_get_price</a>(vm, new_set_size, &sorted_bids, outgoing_compliant_set);
         // TODO: Don't <b>use</b> <b>copy</b> above, do a borrow.
-        print(&800700);
+        print(&60001);
 
         // charge the validators for the proof of fee in advance of the epoch
         <a href="DiemAccount.md#0x1_DiemAccount_vm_multi_pay_fee">DiemAccount::vm_multi_pay_fee</a>(vm, &auction_winners, price, &b"proof of fee");
-        print(&800800);
+        print(&60001);
 
         proposed_set = auction_winners
     };

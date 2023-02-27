@@ -61,9 +61,9 @@ script {
       &vm
     );
 
-    let (_, las_val, cumu) = Receipts::read_receipt(@Alice, @Carol);
-    print(&las_val);
-    assert!(las_val== 5000000, 7357003);
+    let (_, last_val, cumu) = Receipts::read_receipt(@Alice, @Carol);
+    print(&last_val);
+    assert!(last_val== 5000000, 7357003);
     assert!(cumu== 5000000, 7357004);
   }
 }

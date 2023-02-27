@@ -9,15 +9,18 @@
 -  [Function `mock_case_4`](#0x1_Mock_mock_case_4)
 -  [Function `all_good_validators`](#0x1_Mock_all_good_validators)
 -  [Function `pof_default`](#0x1_Mock_pof_default)
+-  [Function `mock_network_fees`](#0x1_Mock_mock_network_fees)
 
 
 <pre><code><b>use</b> <a href="Cases.md#0x1_Cases">0x1::Cases</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
+<b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
+<b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="ProofOfFee.md#0x1_ProofOfFee">0x1::ProofOfFee</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
+<b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
@@ -61,8 +64,8 @@
         i = i + 1;
     };
 
-    print(&addr);
-    print(&<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, start_height, end_height));
+    // print(&addr);
+    // print(&<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, start_height, end_height));
     // TODO: careful that the range of heights is within the test
     <b>assert</b>!(<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, start_height, end_height) == 1, 777703);
   }
@@ -101,10 +104,9 @@
       <a href="Stats.md#0x1_Stats_process_set_votes">Stats::process_set_votes</a>(vm, &voters);
       i = i + 1;
   };
-  print(&<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, start_height, end_height) );
+  // print(&<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, start_height, end_height) );
   // TODO: careful that the range of heights is within the test
   <b>assert</b>!(<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, start_height, end_height) == 4, 777706);
-
 }
 </code></pre>
 
@@ -188,7 +190,39 @@
   };
   <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, 100000); // unlock some coins for the validators
 
+  // make all validators pay auction fee
+  // the clearing price in the fibonacci sequence is is 1
+  <a href="DiemAccount.md#0x1_DiemAccount_vm_multi_pay_fee">DiemAccount::vm_multi_pay_fee</a>(vm, &vals, 1, &b"proof of fee");
+
   (vals, bids, expiry)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Mock_mock_network_fees"></a>
+
+## Function `mock_network_fees`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Mock.md#0x1_Mock_mock_network_fees">mock_network_fees</a>(vm: &signer, amount: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Mock.md#0x1_Mock_mock_network_fees">mock_network_fees</a>(vm: &signer, amount: u64) {
+  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
+  <b>let</b> c = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, amount);
+  <b>let</b> c_value = <a href="Diem.md#0x1_Diem_value">Diem::value</a>(&c);
+  <b>assert</b>!(c_value == amount, 777707);
+  <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">TransactionFee::pay_fee</a>(c);
 }
 </code></pre>
 
