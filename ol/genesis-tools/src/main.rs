@@ -138,6 +138,15 @@ async fn main() -> Result<()> {
         } else {
             panic!("ERROR: must provide --snapshot-path or --recovery-json-path, exiting.");
         }
+    
+      // be happy
+      let pb = ProgressBar::with_template(OLProgress::fun());
+      for _ in 0..20 {
+          pb.inc(1);
+          thread::sleep(Duration::from_millis(100));
+      }
+      pb.finish_and_clear();
+
     } else if opts.output_path.is_some() && opts.recovery_json_path.is_some() && opts.check {
         let err_list = compare::compare_json_to_genesis_blob(
             opts.output_path.unwrap(),

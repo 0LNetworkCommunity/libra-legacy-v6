@@ -8,9 +8,10 @@ impl OLProgress {
   /// detailed bar
   pub fn bar() -> ProgressStyle {
     ProgressStyle::with_template(
-        "{msg} {spinner} [{elapsed_precise}] [{bar:50.green/blue}] ({pos}/{len}, ETA {eta})",
+        "{msg} {spinner:.blue} [{elapsed_precise}] [{bar:50.blue}] ({pos}/{len}, ETA {eta})",
     )
     .unwrap()
+    .tick_strings(&ol_ticks())
   }
   /// who knows how long this will take
     pub fn spinner() -> ProgressStyle {
@@ -18,25 +19,12 @@ impl OLProgress {
         .unwrap()
         // For more spinners check out the cli-spinners project:
         // https://github.com/sindresorhus/cli-spinners/blob/master/spinners.json
-        .tick_strings(&[
-          "     ",
-          ".    ",
-          "..   ",
-          "...  ",
-          ".... ",
-          ".....",
-          "......",
-          " .....",
-          "  ....",
-          "   ...",
-          "    ..",
-          "     .",  
-        ])
+        .tick_strings(&ol_ticks())
   }
 
   /// For special occasions. Don't overuse it :)
   pub fn fun() -> ProgressStyle {
-        ProgressStyle::with_template("Carpe Diem: {msg} {spinner:.blue}")
+        ProgressStyle::with_template("Carpe Diem: {msg} {spinner}")
         .unwrap()
         // For more spinners check out the cli-spinners project:
         // https://github.com/sindresorhus/cli-spinners/blob/master/spinners.json
@@ -44,12 +32,14 @@ impl OLProgress {
           "🤜\u{3000}\u{3000}  \u{3000}\u{3000}🤛 ",
           "\u{3000}🤜\u{3000}  \u{3000}🤛\u{3000} ",
           "\u{3000}\u{3000} 🤜🤛 \u{3000}\u{3000} ",
-          "\u{3000}\u{3000}🤜✨🤛\u{3000}\u{3000} ",
+          "\u{3000}\u{3000}🤜✨🤛\u{3000}\u{3000}  ",
           "\u{3000}\u{3000}✨✊🌞✨\u{3000}\u{3000} ",
           "\u{3000}✨\u{3000}✊🌞\u{3000}✨\u{3000} ",
           "✨\u{3000}\u{3000}✊🌞\u{3000}\u{3000}✨ ",        
         ])
   }
+
+
 
   /// formatted "complete" message
   pub fn complete(msg: &str) {
@@ -65,6 +55,23 @@ impl OLProgress {
 
 }
 
+
+fn ol_ticks() -> Vec<&'static str> {
+  vec![
+    "      ",
+    "·     ",
+    "··    ",
+    "···   ",
+    "····  ",
+    "····· ",
+    "······",
+    " ·····",
+    "  ····",
+    "   ···",
+    "    ··",
+    "     ·",  
+  ]
+}
 
 #[test]
 fn test_complete() {
