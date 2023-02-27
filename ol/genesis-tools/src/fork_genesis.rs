@@ -17,11 +17,11 @@ pub async fn make_recovery_genesis_from_db_backup(
     genesis_blob_path: PathBuf,
     archive_path: PathBuf,
     append: bool,
-    is_legacy: bool,
+    _is_legacy: bool,
     genesis_vals: &[Validator],
 ) -> Result<Transaction, Error> {
     // get the legacy data from archive
-    let recovery = db_backup_into_recovery_struct(&archive_path, is_legacy).await?;
+    let recovery = db_backup_into_recovery_struct(&archive_path).await?;
 
     make_recovery_genesis_from_vec_legacy_recovery(
       &recovery, 

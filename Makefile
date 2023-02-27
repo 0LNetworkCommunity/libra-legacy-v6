@@ -334,7 +334,6 @@ files:
 fork-genesis:
 	cargo run -p ol-genesis-tools ${CARGO_ARGS} -- \
 	--fork \
-	--debug \
 	--genesis-repo-owner ${REPO_ORG} \
 	--genesis-repo-name ${REPO_NAME} \
 	--genesis-gh-token ${GITHUB_TOKEN} \
@@ -634,10 +633,6 @@ clean-tags:
 v6-keys:
 	cargo r -p onboard -- keygen
 
-# Before initializing the files, make sure the ~/.0L data path is clean. WARNING this is destructive.
-# v6-destroy:
-# 	rm -rf ~/.0L
-
 v6-init: stdlib init
 
 v6-github: gen-fork-repo
@@ -650,5 +645,5 @@ v6-validators: layout
 
 v6-genesis: fork-genesis node-files
 
-
+v6-verify: verify-gen
 

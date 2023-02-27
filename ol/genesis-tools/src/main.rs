@@ -169,7 +169,7 @@ async fn main() -> Result<()> {
         if !snapshot_path.exists() {
             panic!("ERROR: --snapshot-path file does not exist");
         }
-        let recovery_struct = db_backup_into_recovery_struct(&snapshot_path, false)
+        let recovery_struct = db_backup_into_recovery_struct(&snapshot_path)
             .await
             .expect("could not export DB into JSON recovery file");
 
@@ -185,15 +185,9 @@ async fn main() -> Result<()> {
 
 
 fn carpe_diem() {
-        // be happy
-      // let pb = ProgressBar::new()::with_template(OLProgress::fun());
-      // for _ in 0..20 {
-      //     pb.inc(1);
-      //     thread::sleep(Duration::from_millis(100));
-      // }
-      // pb.finish_and_clear();
-
-    (0..20).progress_with_style(OLProgress::fun()).with_message("message").for_each(|_|{
-    thread::sleep(Duration::from_millis(100));
-  });
+    // be happy
+    (0..20).progress_with_style(OLProgress::fun())
+    .for_each(|_|{
+      thread::sleep(Duration::from_millis(300));
+    });
 }
