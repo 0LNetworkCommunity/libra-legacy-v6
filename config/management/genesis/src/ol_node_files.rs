@@ -72,7 +72,7 @@ impl Files {
             self.github_org,
             self.repo,
             &self.namespace,
-            &None,
+            &self.genesis_path,
             &self.fullnode_only,
             self.seed_peers_path,
             &self.layout_path,

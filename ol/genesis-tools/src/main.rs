@@ -1,8 +1,8 @@
 use anyhow::Result;
 use diem_secure_storage::{GitHubStorage, Storage};
 use vm_genesis::{TestValidator, Validator};
-use std::{path::PathBuf, process::exit};
-use ol_types::legacy_recovery::{save_recovery_file, read_from_recovery_file};
+use std::{path::PathBuf, process::exit, time::Duration, thread};
+use ol_types::{legacy_recovery::{save_recovery_file, read_from_recovery_file}, OLProgress};
 use gumdrop::Options;
 use diem_genesis_tool::genesis::Genesis;
 use ol_genesis_tools::{
@@ -13,6 +13,7 @@ use ol_genesis_tools::{
     },
     process_snapshot::db_backup_into_recovery_struct,
 };
+use indicatif::ProgressIterator;
 
 
 #[tokio::main]
@@ -116,6 +117,7 @@ async fn main() -> Result<()> {
             )
             .await
             .expect("ERROR: could not create genesis from snapshot");
+            carpe_diem();
             Ok(())
         }
         // Path 2:
@@ -134,18 +136,12 @@ async fn main() -> Result<()> {
               opts.legacy
             )
                 .expect("ERROR: failed to create genesis from recovery file");
+            carpe_diem();
             Ok(())
         } else {
             panic!("ERROR: must provide --snapshot-path or --recovery-json-path, exiting.");
         }
     
-      // be happy
-      let pb = ProgressBar::with_template(OLProgress::fun());
-      for _ in 0..20 {
-          pb.inc(1);
-          thread::sleep(Duration::from_millis(100));
-      }
-      pb.finish_and_clear();
 
     } else if opts.output_path.is_some() && opts.recovery_json_path.is_some() && opts.check {
         let err_list = compare::compare_json_to_genesis_blob(
@@ -185,4 +181,19 @@ async fn main() -> Result<()> {
         println!("ERROR: no options provided, exiting.");
         exit(1);
     }
+}
+
+
+fn carpe_diem() {
+        // be happy
+      // let pb = ProgressBar::new()::with_template(OLProgress::fun());
+      // for _ in 0..20 {
+      //     pb.inc(1);
+      //     thread::sleep(Duration::from_millis(100));
+      // }
+      // pb.finish_and_clear();
+
+    (0..20).progress_with_style(OLProgress::fun()).with_message("message").for_each(|_|{
+    thread::sleep(Duration::from_millis(100));
+  });
 }

@@ -254,17 +254,18 @@ gen-register:
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
-# TODO: implement the forking workflow for dev genesis?
-# @echo Making pull request to genesis coordination repo
-# make gen-make-pull
+# In the same flow, assuming successful, a pull request is made.
+	make gen-make-pull
 
-init-test:
-	cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
-	cargo run -p ol -- init --app
+# Deprecated with new testnet flow
+# init-test:
+# 	cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
+# 	cargo run -p ol -- init --app
 
 
 init:
-	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- init --path=${DATA_PATH} --namespace=${ACC}
+# cargo run -p diem-genesis-tool ${CARGO_ARGS} -- init --path=${DATA_PATH} --namespace=${ACC}
+	cargo run -p onboard -- val --skip-mining --chain-id 1 --genesis-ceremony
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
@@ -317,8 +318,8 @@ verify-gen:
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
-genesis: stdlib files
-	sha256sum ${DATA_PATH}/genesis.blob
+# genesis: stdlib files
+# 	sha256sum ${DATA_PATH}/genesis.blob
 
 files:
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
@@ -331,7 +332,7 @@ files:
   --layout-path ${DATA_PATH}/set_layout.toml \
 	--val-ip-address ${IP}
 
-fork-files:
+fork-genesis:
 	cargo run -p ol-genesis-tools ${CARGO_ARGS} -- \
 	--fork \
 	--debug \
@@ -340,6 +341,19 @@ fork-files:
 	--genesis-gh-token ${GITHUB_TOKEN} \
 	--snapshot-path ${SOURCE}/ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff \
 	--output-path ${DATA_PATH}/genesis.blob \
+
+node-files:
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
+	--chain-id ${CHAIN_ID} \
+	--validator-backend ${LOCAL} \
+	--data-path ${DATA_PATH} \
+	--namespace ${ACC}-oper \
+	--genesis-path ${DATA_PATH}/genesis.blob \
+	--val-ip-address ${IP} \
+
+# --repo ${REPO_NAME} \
+# --github-org ${REPO_ORG} \
+# --layout-path ${DATA_PATH}/set_layout.toml \
 
 
 #### NODE MANAGEMENT ####
@@ -400,40 +414,41 @@ check:
 	@echo TEST mnem: ${MNEM}
 
 
-fix:
-ifdef TEST
-	@echo NAMESPACE: ${NS}
-	@echo GENESIS: ${V}
-	@if test ! -d ${DATA_PATH}; then \
-		echo Creating Directories; \
-		mkdir ${DATA_PATH}; \
-		mkdir -p ${DATA_PATH}/vdf_proofs/; \
-	fi
+# DEPRECATED WITH NEW TESTNET FLOW
+# fix:
+# ifdef TEST
+# 	@echo NAMESPACE: ${NS}
+# 	@echo GENESIS: ${V}
+# 	@if test ! -d ${DATA_PATH}; then \
+# 		echo Creating Directories; \
+# 		mkdir ${DATA_PATH}; \
+# 		mkdir -p ${DATA_PATH}/vdf_proofs/; \
+# 	fi
 
-	@if test ! -d ${DATA_PATH}/vdf_proofs; then \
-		echo Creating Directories; \
-		mkdir -p ${DATA_PATH}/vdf_proofs/; \
-	fi
+# 	@if test ! -d ${DATA_PATH}/vdf_proofs; then \
+# 		echo Creating Directories; \
+# 		mkdir -p ${DATA_PATH}/vdf_proofs/; \
+# 	fi
 
-	@if test -f ${DATA_PATH}/vdf_proofs/proof_0.json; then \
-		rm ${DATA_PATH}/vdf_proofs/proof_0.json; \
-	fi 
+# 	@if test -f ${DATA_PATH}/vdf_proofs/proof_0.json; then \
+# 		rm ${DATA_PATH}/vdf_proofs/proof_0.json; \
+# 	fi 
 
-	@if test -f ${DATA_PATH}/0L.toml; then \
-		rm ${DATA_PATH}/0L.toml; \
-	fi 
+# 	@if test -f ${DATA_PATH}/0L.toml; then \
+# 		rm ${DATA_PATH}/0L.toml; \
+# 	fi 
 
-# skip miner configuration with fixtures
-	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/0L.toml
-# skip mining proof zero with fixtures
-	cp ./ol/fixtures/vdf_proofs/${NODE_ENV}/${NS}/proof_0.json ${DATA_PATH}/vdf_proofs/proof_0.json
-# place a mock autopay.json in root
-	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/autopay_batch.json
-# place a mock account.json in root, used as template for onboarding
-	cp ./ol/fixtures/account/${NS}.account.json ${DATA_PATH}/account.json
-# replace the set_layout
-	cp ./ol/TEST/set_layout_test.toml ${DATA_PATH}/set_layout.toml
-endif
+# # skip miner configuration with fixtures
+# 	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/0L.toml
+# # skip mining proof zero with fixtures
+# 	cp ./ol/fixtures/vdf_proofs/${NODE_ENV}/${NS}/proof_0.json ${DATA_PATH}/vdf_proofs/proof_0.json
+# # place a mock autopay.json in root
+# 	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/autopay_batch.json
+# # place a mock account.json in root, used as template for onboarding
+# 	cp ./ol/fixtures/account/${NS}.account.json ${DATA_PATH}/account.json
+# # replace the set_layout
+# 	cp ./ol/TEST/set_layout_test.toml ${DATA_PATH}/set_layout.toml
+# endif
 
 
 #### HELPERS ####
@@ -588,9 +603,9 @@ fork-backup:
 		rm -rf ${SOURCE}/ol/TEST/snapshot/*
 		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}/ol/TEST/snapshot/
 
-# Make genesis file
-fork-genesis:
-		cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}/ol/TEST/snapshot/state_ver*
+# # Make genesis file
+# fork-genesis:
+# 		cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}/ol/TEST/snapshot/state_ver*
 
 # Use onboard to create all node files
 fork-config:
@@ -606,3 +621,35 @@ TAG=$(shell git tag -l "previous")
 clean-tags:
 	git push origin --delete ${TAG}
 	git tag -d ${TAG}
+
+
+################ V6 Genesis Rehearsal ################
+# ENVIRONMENT
+# 1. You must have a github personal access token at ~/.0L/github_token.txt
+# 2. export the environment variable `GITHUB_USER=<your github username`
+
+
+# All nodes must initialize their configs.
+# You can optionally use the key generator to use a new account in this genesis.
+
+v6-keys:
+	cargo r -p onboard -- keygen
+
+# Before initializing the files, make sure the ~/.0L data path is clean. WARNING this is destructive.
+# v6-destroy:
+# 	rm -rf ~/.0L
+
+v6-init: stdlib init
+
+v6-github: gen-fork-repo
+
+v6-register: gen-register
+
+# One person should write to the coordination repo with the list of validators.
+# or can be manually by pull request, changing set_layout.toml
+v6-validators: layout
+
+v6-genesis: fork-genesis node-files
+
+
+
