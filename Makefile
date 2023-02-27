@@ -636,19 +636,29 @@ clean-tags:
 v6-keys:
 	cargo r -p onboard -- keygen
 
+# Initialize basic files. Take advantage to build the stdlib, in case.
 v6-init: stdlib init
 
+# Each validator will have their own github REPO for the purposes of
+# Registering for genesis. THis repo is a fork of the coordinating repo.
+# Once registered (in next step), a pull request will be sent back to the original repo with 
+# the node's registration information.
 v6-github: gen-fork-repo
 
+# Each validator registers for genesis ON THEIR OWN GITHUB FORK.
 v6-register: gen-register
 
 # One person should write to the coordination repo with the list of validators.
 # or can be manually by pull request, changing set_layout.toml
 v6-validators: layout
 
-v6-genesis: fork-genesis node-files set-waypoint
+v6-genesis: fork-genesis 
+
+# Create the files necessary to start node. Includes new waypoint from genesis
+v6-files: set-waypoint node-files 
 	# DESTROYING DB
 	rm -rf ~/.0L/db
 
+# Verify the local configuration and the genesis.
 v6-verify: verify-gen
 
