@@ -1,6 +1,6 @@
 //! recovery
 
-use anyhow::{bail, Error};
+use anyhow::Error;
 use diem_types::{
     account_address::AccountAddress,
     account_config::{BalanceResource, CurrencyInfoResource},
@@ -15,11 +15,11 @@ use diem_types::{
 use move_core_types::{identifier::Identifier, move_resource::MoveResource};
 use crate::{
     autopay::AutoPayResource, fullnode_counter::FullnodeCounterResource,
-    wallet::CommunityWalletsResource,
+    wallet::CommunityWalletsResource, OLProgress,
 };
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
-// use vm_genesis::{OperRecover, ValStateRecover};
+use indicatif::ProgressIterator;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 /// Account role
@@ -128,19 +128,29 @@ pub fn accounts_into_recovery(
     account_state_blobs: &Vec<AccountStateBlob>,
 ) -> Result<Vec<LegacyRecovery>, Error> {
     let mut to_recover = vec![];
-    for blob in account_state_blobs {
+    let mut malformed = 0;
+    for blob in account_state_blobs
+    .iter()
+    .progress_with_style(OLProgress::bar())
+    .with_message("Extracting legacy state from snapshot") {
         let account_state = AccountState::try_from(blob)?;
         // dbg!(&account_state);
-        match parse_recovery(&account_state) {
-            Ok(gr) => to_recover.push(gr),
-            Err(e) => println!(
-                "WARN: could not recover account, continuing. Message: {:?}",
-                e
-            ),
+        if account_state.get_account_resource()?.is_some() {
+          match parse_recovery(&account_state) {
+              Ok(gr) => to_recover.push(gr),
+              Err(e) => println!(
+                  "WARN: could not recover account, continuing. Message: {:?}",
+                  e
+              ),
+          }
+        } else {
+          malformed += 1;
         }
     }
-    println!("Total accounts read: {}", &account_state_blobs.len());
-    println!("Total accounts recovered: {}", &to_recover.len());
+    OLProgress::complete(&format!("Total accounts read: [{}], empty: [{}]", &account_state_blobs.len(), malformed));
+    OLProgress::complete(&format!("Total accounts recovered: [{}]", &to_recover.len()));
+    
+    
 
     Ok(to_recover)
 }
@@ -216,14 +226,20 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                 }
             }
         }
-        println!("processed account: {:?}", address);
+        // println!("processed account: {:?}", address);
         return Ok(l);
-    } else {
-        bail!(
-            "ERROR: No address for AccountState: {:?}",
-            state.get_account_address()
-        );
-    }
+    } 
+
+    // TODO: What is the state if there is no account?
+    // There's a single entry with:
+    //     &state = { 
+    //  DiemAccountResource { None } 
+    //  DiemTimestamp { None } 
+    //  ValidatorConfig { None } 
+    //  ValidatorSet { None } 
+    //  }
+
+    Ok(l)
 }
 
 /// Make recovery file in format needed
@@ -234,6 +250,7 @@ pub fn recover_validator_configs(
     let mut set = RecoverConsensusAccounts::default();
 
     for i in recover {
+        if i.account.is_none() { continue };
         let account: AccountAddress = i.account.unwrap();
         // get deduplicated validators info
         match i.role {
