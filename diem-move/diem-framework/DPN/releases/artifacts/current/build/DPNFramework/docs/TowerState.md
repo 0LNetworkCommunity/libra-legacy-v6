@@ -1351,10 +1351,7 @@ Reset the tower counter at the end of epoch.
 <pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_toy_rng">toy_rng</a>(seed: u64, iters: u64): u64 <b>acquires</b> <a href="TowerState.md#0x1_TowerState_TowerList">TowerList</a>, <a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a> {
   // Get the list of all miners L
   // Pick a tower miner  (M) from the seed position 1/(N) of the list of miners.
-  print(&77777777);
-
   <b>let</b> l = <a href="TowerState.md#0x1_TowerState_get_miner_list">get_miner_list</a>();
-  print(&l);
   // the length will keep incrementing through the epoch. The last miner can know what the starting position will be. There could be a race <b>to</b> be the last validator <b>to</b> augment the set and bias the initial shuffle.
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&l);
   <b>if</b> (len == 0) <b>return</b> 0;

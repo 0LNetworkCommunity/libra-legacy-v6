@@ -21,10 +21,10 @@
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
-<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
+<b>use</b> <a href="MusicalChairs.md#0x1_MusicalChairs">0x1::MusicalChairs</a>;
 <b>use</b> <a href="ProofOfFee.md#0x1_ProofOfFee">0x1::ProofOfFee</a>;
 <b>use</b> <a href="RecoveryMode.md#0x1_RecoveryMode">0x1::RecoveryMode</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
@@ -71,8 +71,8 @@
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>();
     print(&800100);
 
-    <b>let</b> (outgoing_compliant_set, _) =
-        <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a>(vm, height_start, height_now);
+    <b>let</b> (outgoing_compliant_set, new_set_size) =
+        <a href="MusicalChairs.md#0x1_MusicalChairs_stop_the_music">MusicalChairs::stop_the_music</a>(vm, height_start, height_now);
 
     print(&800200);
 
@@ -97,7 +97,7 @@
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_jail">process_jail</a>(vm, &outgoing_compliant_set);
 
 
-    <b>let</b> proposed_set = <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, &outgoing_compliant_set);
+    <b>let</b> proposed_set = <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, &outgoing_compliant_set, new_set_size);
 
 
     // Update all slow wallet limits
@@ -267,7 +267,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;): vector&lt;<b>address</b>&gt;
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;, new_set_size: u64): vector&lt;<b>address</b>&gt;
 </code></pre>
 
 
@@ -276,7 +276,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;): vector&lt;<b>address</b>&gt;
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;, new_set_size: u64): vector&lt;<b>address</b>&gt;
 {
     <b>let</b> proposed_set = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
 
@@ -292,7 +292,7 @@
         // pick the validators based on proof of fee.
         // <b>false</b> because we want the default behavior of the function: filtered by audit
         <b>let</b> sorted_bids = <a href="ProofOfFee.md#0x1_ProofOfFee_get_sorted_vals">ProofOfFee::get_sorted_vals</a>(<b>false</b>);
-        <b>let</b> (auction_winners, price) = <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">ProofOfFee::fill_seats_and_get_price</a>(vm, <a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_VAL_SIZE">MOCK_VAL_SIZE</a>, &sorted_bids, outgoing_compliant_set);
+        <b>let</b> (auction_winners, price) = <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">ProofOfFee::fill_seats_and_get_price</a>(vm, new_set_size, &sorted_bids, outgoing_compliant_set);
         // TODO: Don't <b>use</b> <b>copy</b> above, do a borrow.
         print(&800700);
 

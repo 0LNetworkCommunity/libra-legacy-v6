@@ -60,6 +60,7 @@ script {
         let c = Vouch::buddies_in_set(@Alice);
         print(&c);
         let len = Vector::length(&c);
+        print(&len);
         assert!(len == 1, 735702);
 
         // Important: Alice should not be dropped in the new 
