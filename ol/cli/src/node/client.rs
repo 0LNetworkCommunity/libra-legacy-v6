@@ -79,7 +79,8 @@ pub fn find_a_remote_jsonrpc(config: &AppCfg) -> Result<DiemClient, Error> {
 
 /// the default client will be the first option in the list.
 pub fn default_local_rpc() -> Result<DiemClient, Error> {
-    make_client("127.0.0.1".parse().ok())
+    // TODO: these tools are using the JSON rpc, different than the REST api
+    make_client("127.0.0.1:8080/v1".parse().ok())
 }
 
 /// connect a swarm client
