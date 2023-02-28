@@ -8,10 +8,12 @@ use diem_types::{
     account_address::AccountAddress,
     account_state::AccountState,
     event::{EventHandle, EventKey},
-    transaction::Version, // 0L todo
+    transaction::Version,
+    // transaction::Version // 0L todo
 };
 use ol_types::{
     autopay::{AutoPayResource, AutoPayView},
+    null_data_store::NullDataStore,
     validator_config::{ValidatorConfigResource, ValidatorConfigView},
 };
 // use diem_resource_viewer::{AnnotatedAccountStateBlob}; // 0L todo
@@ -176,7 +178,7 @@ impl Node {
         }
     }
 
-    // 0L todo diem 1.4.1: How to get the "annotator"?
+    // // 0L todo diem 1.4.1: How to get the "annotator"?
     /// Return a full Move-annotated account resource struct
     pub fn get_annotate_account_blob(
         &mut self,

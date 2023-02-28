@@ -289,7 +289,7 @@ checksum = "16e62a023e7c117e27523144c5d2459f4397fcc3cab0085af8e2224f643a0193"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
- "syn 2.0.13",
+ "syn 2.0.14",
 ]
 
 [[package]]
@@ -300,7 +300,7 @@ checksum = "b9ccdd8f2a161be9bd5c023df56f1b2a0bd1d83872ae53b71a84a12c9bf6e842"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
- "syn 2.0.13",
+ "syn 2.0.14",
 ]
 
 [[package]]
@@ -1067,7 +1067,7 @@ dependencies = [
 [[package]]
 name = "classgroup"
 version = "0.1.0"
-source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#2fafc923b893752fd3ee7d142767bafec38ce8dc"
+source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#5abb9d58a65e19ceb2d0d9a14474a2453b79f46b"
 dependencies = [
  "libc",
  "num-traits 0.2.15",
@@ -1616,7 +1616,7 @@ dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
  "scratch",
- "syn 2.0.13",
+ "syn 2.0.14",
 ]
 
 [[package]]
@@ -1633,7 +1633,7 @@ checksum = "2345488264226bf682893e25de0769f3360aac9957980ec49361b083ddaa5bc5"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
- "syn 2.0.13",
+ "syn 2.0.14",
 ]
 
 [[package]]
@@ -2324,7 +2324,7 @@ dependencies = [
 [[package]]
 name = "diem-infallible"
 version = "0.1.0"
-source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#2fafc923b893752fd3ee7d142767bafec38ce8dc"
+source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#5abb9d58a65e19ceb2d0d9a14474a2453b79f46b"
 dependencies = [
  "diem-workspace-hack 0.1.0 (git+https://github.com/Dat-H-Tran/libra.git?branch=v6)",
 ]
@@ -2488,7 +2488,7 @@ dependencies = [
 [[package]]
 name = "diem-log-derive"
 version = "0.1.0"
-source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#2fafc923b893752fd3ee7d142767bafec38ce8dc"
+source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#5abb9d58a65e19ceb2d0d9a14474a2453b79f46b"
 dependencies = [
  "diem-workspace-hack 0.1.0 (git+https://github.com/Dat-H-Tran/libra.git?branch=v6)",
  "proc-macro2 1.0.56",
@@ -2518,7 +2518,7 @@ dependencies = [
 [[package]]
 name = "diem-logger"
 version = "0.1.0"
-source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#2fafc923b893752fd3ee7d142767bafec38ce8dc"
+source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#5abb9d58a65e19ceb2d0d9a14474a2453b79f46b"
 dependencies = [
  "backtrace",
  "chrono",
@@ -2627,7 +2627,7 @@ dependencies = [
 [[package]]
 name = "diem-metrics"
 version = "0.1.0"
-source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#2fafc923b893752fd3ee7d142767bafec38ce8dc"
+source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#5abb9d58a65e19ceb2d0d9a14474a2453b79f46b"
 dependencies = [
  "anyhow",
  "diem-logger 0.1.0 (git+https://github.com/Dat-H-Tran/libra.git?branch=v6)",
@@ -2652,7 +2652,7 @@ dependencies = [
 [[package]]
 name = "diem-metrics-core"
 version = "0.1.0"
-source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#2fafc923b893752fd3ee7d142767bafec38ce8dc"
+source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#5abb9d58a65e19ceb2d0d9a14474a2453b79f46b"
 dependencies = [
  "diem-workspace-hack 0.1.0 (git+https://github.com/Dat-H-Tran/libra.git?branch=v6)",
  "prometheus",
@@ -3194,7 +3194,7 @@ dependencies = [
  "standback 0.2.17",
  "standback 0.4.4",
  "subtle 2.4.1",
- "syn 2.0.13",
+ "syn 2.0.14",
  "tiny-keccak 2.0.2",
  "tokio 1.22.0",
  "tokio-util 0.7.7",
@@ -3208,7 +3208,7 @@ dependencies = [
 [[package]]
 name = "diem-workspace-hack"
 version = "0.1.0"
-source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#2fafc923b893752fd3ee7d142767bafec38ce8dc"
+source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#5abb9d58a65e19ceb2d0d9a14474a2453b79f46b"
 dependencies = [
  "Inflector",
  "anyhow",
@@ -3249,7 +3249,7 @@ dependencies = [
  "standback 0.2.17",
  "standback 0.4.4",
  "subtle 2.4.1",
- "syn 2.0.13",
+ "syn 2.0.14",
  "tiny-keccak 2.0.2",
  "tokio 1.22.0",
  "tokio-util 0.7.7",
@@ -3866,7 +3866,7 @@ dependencies = [
  "diemdb",
  "executor",
  "executor-types",
- "indicatif",
+ "indicatif 0.15.0",
  "itertools",
  "jemallocator",
  "rand 0.8.4",
@@ -5090,8 +5090,20 @@ checksum = "7baab56125e25686df467fe470785512329883aab42696d661247aca2a2896e4"
 dependencies = [
  "console 0.15.5",
  "lazy_static 1.4.0",
- "number_prefix",
+ "number_prefix 0.3.0",
  "regex",
+]
+
+[[package]]
+name = "indicatif"
+version = "0.17.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cef509aa9bc73864d6756f0d34d35504af3cf0844373afe9b8669a5b8005a729"
+dependencies = [
+ "console 0.15.5",
+ "number_prefix 0.4.0",
+ "portable-atomic",
+ "unicode-width",
 ]
 
 [[package]]
@@ -6838,6 +6850,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17b02fc0ff9a9e4b35b3342880f48e896ebf69f2967921fe8646bf5b7125956a"
 
 [[package]]
+name = "number_prefix"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "830b246a0e5f20af87141b25c173cd1b609bd7779a4617d6ec582abaf90870f3"
+
+[[package]]
 name = "numtoa"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7059,15 +7077,20 @@ dependencies = [
  "anyhow",
  "bcs",
  "byteorder",
+ "console 0.15.5",
  "dialoguer",
  "diem-config",
  "diem-crypto",
  "diem-global-constants",
+ "diem-state-view",
  "diem-types",
+ "diem-vm",
  "dirs",
  "glob",
  "hex 0.4.3",
+ "indicatif 0.17.3",
  "machine-ip",
+ "move-binary-format",
  "move-core-types",
  "num-format",
  "ol-keys",
@@ -7173,7 +7196,7 @@ checksum = "a948666b637a0f465e8564c73e89d4dde00d72d4d473cc972f390fc3dcee7d9c"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
- "syn 2.0.13",
+ "syn 2.0.14",
 ]
 
 [[package]]
@@ -7417,7 +7440,7 @@ dependencies = [
  "pest_meta",
  "proc-macro2 1.0.56",
  "quote 1.0.26",
- "syn 2.0.13",
+ "syn 2.0.14",
 ]
 
 [[package]]
@@ -7614,6 +7637,12 @@ name = "port_scanner"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "325a6d2ac5dee293c3b2612d4993b98aec1dff096b0a2dae70ed7d95784a05da"
+
+[[package]]
+name = "portable-atomic"
+version = "0.3.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26f6a7b87c2e435a3241addceeeff740ff8b7e76b74c13bf9acb17fa454ea00b"
 
 [[package]]
 name = "ppv-lite86"
@@ -8079,7 +8108,7 @@ checksum = "8d2275aab483050ab2a7364c1a46604865ee7d6906684e08db0f090acf74f9e7"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
- "syn 2.0.13",
+ "syn 2.0.14",
 ]
 
 [[package]]
@@ -8890,7 +8919,7 @@ checksum = "291a097c63d8497e00160b166a967a4a79c64f3facdd01cbd7502231688d77df"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
- "syn 2.0.13",
+ "syn 2.0.14",
 ]
 
 [[package]]
@@ -8913,7 +8942,7 @@ checksum = "bcec881020c684085e55a25f7fd888954d56609ef363479dc5a1305eb0d40cab"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
- "syn 2.0.13",
+ "syn 2.0.14",
 ]
 
 [[package]]
@@ -9850,9 +9879,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.13"
+version = "2.0.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c9da457c5285ac1f936ebd076af6dac17a61cfe7826f2076b4d015cf47bc8ec"
+checksum = "fcf316d5356ed6847742d036f8a39c3b8435cac10bd528a4bd461928a6ab34d5"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
@@ -10035,7 +10064,7 @@ checksum = "f9456a42c5b0d803c8cd86e73dd7cc9edd429499f37a3550d286d5e86720569f"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
- "syn 2.0.13",
+ "syn 2.0.14",
 ]
 
 [[package]]
@@ -10938,7 +10967,7 @@ dependencies = [
 [[package]]
 name = "vdf"
 version = "0.1.0"
-source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#2fafc923b893752fd3ee7d142767bafec38ce8dc"
+source = "git+https://github.com/Dat-H-Tran/libra.git?branch=v6#5abb9d58a65e19ceb2d0d9a14474a2453b79f46b"
 dependencies = [
  "bit-vec 0.5.1",
  "classgroup 0.1.0 (git+https://github.com/Dat-H-Tran/libra.git?branch=v6)",
@@ -11634,7 +11663,7 @@ checksum = "ce36e65b0d2999d2aafac989fb249189a141aee1f53c612c1f37d72631959f69"
 dependencies = [
  "proc-macro2 1.0.56",
  "quote 1.0.26",
- "syn 2.0.13",
+ "syn 2.0.14",
 ]
 
 [[package]]

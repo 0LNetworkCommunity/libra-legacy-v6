@@ -395,11 +395,11 @@ ifdef TEST
 
 	@if test -f ${DATA_PATH}/vdf_proofs/proof_0.json; then \
 		rm ${DATA_PATH}/vdf_proofs/proof_0.json; \
-	fi 
+	fi
 
 	@if test -f ${DATA_PATH}/0L.toml; then \
 		rm ${DATA_PATH}/0L.toml; \
-	fi 
+	fi
 
 # skip miner configuration with fixtures
 	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/0L.toml
@@ -415,6 +415,14 @@ endif
 
 
 #### HELPERS ####
+extract-waypoint:
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-waypoint \
+	--genesis-path ${DATA_PATH}/genesis.blob \
+	--extract \
+	--chain-id ${CHAIN_ID} \
+	--shared-backend ${REMOTE} \
+	| awk -F 'Waypoint: '  '{print $$2}' > ${DATA_PATH}/genesis_waypoint.txt
+
 set-waypoint:
 	@if test -f ${DATA_PATH}/key_store.json; then \
 		jq -r '. | with_entries(select(.key|match("-oper/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \

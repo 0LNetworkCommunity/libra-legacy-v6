@@ -97,7 +97,7 @@ pub fn encode_genesis_change_set(
     chain_id: ChainId,
     enable_parallel_execution: bool,
 ) -> ChangeSet {
-    dbg!(&chain_id); //////// 0L ////////
+    println!("Using Chain ID: {}",  &chain_id); //////// 0L ////////
 
     let mut stdlib_modules = Vec::new();
     // create a data view for move_vm
