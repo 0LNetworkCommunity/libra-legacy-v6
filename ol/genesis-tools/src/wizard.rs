@@ -1,50 +1,67 @@
-//!  workflow for genesis
+//!  A simple workflow tool to organize all genesis
+//! instead of using many CLI tools.
 
 
 use dialoguer::{Confirm, Input};
-use std::path::Path;
+use indicatif::ProgressIterator;
+use std::{path::Path, thread, time::Duration};
 use dirs;
 use onboard::commands::wizard_val_cmd::ValWizardCmd;
+use ol_types::OLProgress;
 
 #[test]
 fn test_wizard() {
   start_wizard();
 }
 
-/// wizard for running genesis
-pub fn start_wizard() {
+/// start wizard for end-to-end genesis
+pub fn start_wizard() -> anyhow::Result<()>{
 
   Confirm::new()
     .with_prompt("Let's do this?")
     .interact()
     .unwrap();
 
+  // check if .0L folder is clean
   let h = dirs::home_dir().expect("no home dir found");
   let has_data_path = Path::exists(&h.join(".0L/"));
 
+  // initialize app configs
   if !has_data_path {
     println!("let's initialize this host");
     
-    let wiz_cmd = ValWizardCmd::default();
+    initialize_host()?;
+  } else {
+  // check if the user wants to overwrite configs
+    match Confirm::new()
+      .with_prompt("Want to freshen configs at .0L now?")
+      .interact() {
+        Ok(true) => initialize_host()?,
+        _ => {},
+    }
   }
+
+
+
+  for i in (0..10).progress_with_style(OLProgress::bar()) {
+    thread::sleep(Duration::from_millis(100));
+  }
+
+  for i in (0..10).progress_with_style(OLProgress::fun())
+    .with_message("Initializing 0L") {
+    thread::sleep(Duration::from_millis(100));
+  }
+
 
   
 
   // Enter the path of your 0L folder
-  // fs::
-  // let input: String = Input::new()
-  //   .with_prompt("Enter the full path to use (e.g. /home/name)")
-  //   .interact_text()
-  //   .unwrap();
-  // check if we have a github token
 
 
   // Dialog: git username
   // stretch: check the token is useful on that account.
 
-  // check if .0L folder is clean
 
-  // initialize app configs
 
   // Fork the repo, if it doesn't exist
 
@@ -60,9 +77,17 @@ pub fn start_wizard() {
 
   // verify genesis
 
+  Ok(())
 }
 
 
+
+fn initialize_host() -> anyhow::Result<()> {
+  let wiz_cmd = ValWizardCmd::default();
+  // wiz_cmd.run();
+  Ok(())
+  // wiz_cmd.run();
+}
 
 // # ENVIRONMENT
 // # 1. You must have a github personal access token at ~/.0L/github_token.txt
