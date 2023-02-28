@@ -50,6 +50,8 @@ indicatif = "0.17.3"
 dialoguer = "0.8.0"
 dirs = "4.0.0"
 onboard = { path = "../onboard" }
+diem-github-client = { path = "../../secure/storage/github" }
+
 
 [dev-dependencies]
 tokio-test = "*"

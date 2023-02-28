@@ -64,8 +64,11 @@ async fn main() -> Result<()> {
 
     let opts = Args::parse_args_default_or_exit();
 
-    if opts.wizard {
-      wizard::start_wizard();
+    if opts.wizard && opts.genesis_repo_owner.is_some() && opts.genesis_repo_name.is_some() {
+      let mut w = wizard::GenesisWizard::default();
+      w.repo_name = opts.genesis_repo_name.as_ref().unwrap().clone();
+      w.repo_owner = opts.genesis_repo_owner.as_ref().unwrap().clone();
+      w.start_wizard()?
     }
 
     if opts.fork {

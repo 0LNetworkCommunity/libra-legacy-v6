@@ -16,7 +16,7 @@ use tower::{delay, proof::write_genesis};
 pub struct UserWizardCmd {
     #[options(help = "path to write account manifest")]
     output_dir: Option<PathBuf>,
-    #[options(help = "File to check")]
+    #[options(help = "account.json file to check")]
     check_file: Option<PathBuf>,
     #[options(help = "use an existing proof_0.json file and skip mining")]
     block_zero: Option<PathBuf>,

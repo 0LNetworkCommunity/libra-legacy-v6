@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::config::Error;
+use diem_global_constants::NODE_HOME;
 use diem_secure_storage::{
     GitHubStorage, InMemoryStorage, Namespaced, OnDiskStorage, Storage, VaultStorage,
 };
@@ -22,6 +23,16 @@ pub enum SecureBackend {
 }
 
 impl SecureBackend {
+    //////// 0L ////////
+    pub fn new_github(repo_owner: String, repo_name: String, data_path: PathBuf, namespace: String) -> Self {
+      SecureBackend::GitHub(GitHubConfig {
+          repository_owner: repo_owner,
+          repository: repo_name,
+          branch: Some("master".to_string()),
+          token: Token::FromDisk(data_path.join("github.token")),
+          namespace: Some(namespace),
+      })
+    }
     pub fn namespace(&self) -> Option<&str> {
         match self {
             SecureBackend::GitHub(GitHubConfig { namespace, .. })

@@ -3,7 +3,6 @@
 #![allow(clippy::never_loop)]
 
 use crate::commands::genesis_files_cmd::fetch_genesis_files_from_repo;
-// use super::genesis_files_cmd;
 use diem_genesis_tool::ol_node_files;
 use diem_types::chain_id::NamedChain;
 use diem_types::{transaction::SignedTransaction, waypoint::Waypoint};
@@ -117,7 +116,7 @@ impl Wizard {
 
         let base_waypoint = app_config.chain_info.base_waypoint.clone();
 
-        OLProgress::complete("App configs written [0L.toml]");
+        // OLProgress::complete("App configs written [0L.toml]");
 
         // if let Some(url) = &self.template_url {
         //     let mut url = url.to_owned();
@@ -143,7 +142,7 @@ impl Wizard {
             exit(1);
         });
 
-        OLProgress::complete("Key file written [key_store.json]");
+        // OLProgress::complete("Key file written [key_store.json]");
 
         // Retrieve the genesis block and build a number of node configuration files. Note: In genesis all node files are created through multiple steps in config/management/genesis, this should be skipped
         if !self.genesis_ceremony {
@@ -184,7 +183,7 @@ impl Wizard {
 
         if !self.genesis_ceremony {
             println!(
-                "\nStart a web server with basic info using `ol start`. \n Then ask another validator to onboard you by referencing this server `txs create-validator -u http://{}`",
+                "\nStart a web server with basic info using `ol start`. \nThen ask another validator to onboard you by referencing this server `txs create-validator -u http://{}`",
                 &app_config.profile.ip
             );
         }
@@ -207,7 +206,7 @@ impl Wizard {
           )
           .unwrap_or_else(|e| {
               println!(
-                  "could not copy genesis.blob file, exiting. Message: {:?}",
+                  "could not copy test fixture genesis.blob file, exiting. Message: {:?}",
                   &e
               );
               exit(1);
@@ -220,7 +219,7 @@ impl Wizard {
           )
           .expect("could not write genesis_waypoint.txt");
 
-          OLProgress::complete("Using test genesis.blob");
+          println!("WARN: using test genesis.blob");
 
           Some(home_path.join("genesis.blob"))
       } else if self.prebuilt_genesis.is_some() {
@@ -235,7 +234,6 @@ impl Wizard {
               &self.repo,
           ) {
               Ok(path) => {
-                OLProgress::complete("Downloaded genesis files");
                   Some(path)
               }
               Err(_) => {
@@ -270,8 +268,6 @@ impl Wizard {
               exit(1);
           }
       };
-
-      OLProgress::complete("Node files written");
   }
 
 }
@@ -397,9 +393,7 @@ pub fn write_account_json(
     )
     .create_manifest(json_path)
     {
-        Ok(_) => {
-            OLProgress::complete("Account files written [account.js]");
-        }
+        Ok(_) => {}
         Err(e) => {
             println!(
                 "ERROR: could not write account manifest, message: {:?}",

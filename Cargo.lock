@@ -6697,6 +6697,7 @@ dependencies = [
  "diem-crypto",
  "diem-framework-releases",
  "diem-genesis-tool",
+ "diem-github-client",
  "diem-json-rpc",
  "diem-logger 0.1.0",
  "diem-management",
