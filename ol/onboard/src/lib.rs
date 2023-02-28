@@ -24,3 +24,4 @@ pub mod manifest;
 pub mod prelude;
 // pub mod home;
 pub mod read_genesis;
+pub mod wizard;
