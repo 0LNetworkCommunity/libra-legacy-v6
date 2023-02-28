@@ -1,3 +1,5 @@
+mod wizard;
+
 use anyhow::Result;
 use diem_secure_storage::{GitHubStorage, Storage};
 use vm_genesis::{TestValidator, Validator};
@@ -15,11 +17,13 @@ use ol_genesis_tools::{
 };
 use indicatif::ProgressIterator;
 
-
 #[tokio::main]
 async fn main() -> Result<()> {
     #[derive(Debug, Options)]
     struct Args {
+        #[options(help = "use wizard")]
+        wizard: bool,
+
         #[options(help = "org of remote github repo for genesis coordination")]
         genesis_repo_owner: Option<String>,
 
@@ -56,7 +60,14 @@ async fn main() -> Result<()> {
         check: bool,
     }
 
+
+
     let opts = Args::parse_args_default_or_exit();
+
+    if opts.wizard {
+      wizard::start_wizard();
+    }
+
     if opts.fork {
         // create a genesis.blob
         // there are two paths here
