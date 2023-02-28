@@ -4,15 +4,12 @@
 
 use crate::commands::genesis_files_cmd::fetch_genesis_files_from_repo;
 // use super::genesis_files_cmd;
-use crate::prelude::app_config;
-use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use diem_genesis_tool::ol_node_files;
 use diem_types::chain_id::NamedChain;
 use diem_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use diem_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
 use ol_keys::{scheme::KeyScheme, wallet};
-use ol_types::block::VDFProof;
 use ol_types::config::{bootstrap_waypoint_from_upstream, IS_TEST};
 use ol_types::{fixtures, OLProgress};
 use ol_types::{account::ValConfigs, config::TxType, pay_instruction::PayInstruction};
@@ -25,43 +22,45 @@ use txs::tx_params::TxParams;
 
 /// `validator wizard` subcommand
 #[derive(Clone, Debug, Default)]
+// TODO: should end users also use this struct?
 pub struct Wizard {
-    // where to output the account.json, genesis, 0L, etc files, defaults to node home
-    output_path: Option<PathBuf>,
-    // explicitly set home path instead of answer in wizard, for CI usually
-    home_path: Option<PathBuf>,
-    // id of the chain
-    chain_id: Option<NamedChain>,
-    // github org of genesis repo
-    github_org: Option<String>,
-    // repo with with genesis transactions
-    repo: Option<String>,
-    // use a genesis file instead of building
-    prebuilt_genesis: Option<PathBuf>,
-    // fetching genesis blob from github
-    fetch_git_genesis: bool,
-    // skip mining a block zero
-    skip_mining: bool,
-    // template account.json to configure from
-    template_url: Option<Url>,
-    // autopay file if instructions are to be sent
-    autopay_file: Option<PathBuf>,
-    // An upstream peer to use in 0L.toml
-    upstream_peer: Option<Url>,
-    // If validator is building from source
-    source_path: Option<PathBuf>,
-    // Explicitly set the waypoint
-    waypoint: Option<Waypoint>,
-    // Explicitly set the epoch
-    epoch: Option<u64>,
-    // For testing in ci, use genesis.blob fixtures
-    ci: bool,
-    // Used only on genesis ceremony
-    genesis_ceremony: bool,
+    /// where to output the account.json, genesis, 0L, etc files, defaults to node home
+    pub output_path: Option<PathBuf>,
+    /// explicitly set home path instead of answer in wizard, for CI usually
+    pub home_path: Option<PathBuf>,
+    /// id of the chain
+    pub chain_id: Option<NamedChain>,
+    /// github org of genesis repo
+    pub github_org: Option<String>,
+    /// repo with with genesis transactions
+    pub repo: Option<String>,
+    /// use a genesis file instead of building
+    pub prebuilt_genesis: Option<PathBuf>,
+    /// fetching genesis blob from github
+    pub fetch_git_genesis: bool,
+    /// skip mining a block zero
+    pub skip_mining: bool,
+    /// template account.json to configure from
+    pub template_url: Option<Url>,
+    /// autopay file if instructions are to be sent
+    pub autopay_file: Option<PathBuf>,
+    /// An upstream peer to use in 0L.toml
+    pub upstream_peer: Option<Url>,
+    /// If validator is building from source
+    pub source_path: Option<PathBuf>,
+    /// Explicitly set the waypoint
+    pub waypoint: Option<Waypoint>,
+    /// Explicitly set the epoch
+    pub epoch: Option<u64>,
+    /// For testing in ci, use genesis.blob fixtures
+    pub ci: bool,
+    /// Used only on genesis ceremony
+    pub genesis_ceremony: bool,
 }
 
 impl Wizard {
-    fn run(&self) {
+    /// starts the onboarding wizard from parameters above.
+    pub fn run(&self) -> anyhow::Result<()>{
         // Note. `onboard` command DOES NOT READ CONFIGS FROM 0L.toml
 
         println!(
@@ -116,7 +115,6 @@ impl Wizard {
             exit(1);
         });
 
-        let home_path = &app_config.workspace.node_home;
         let base_waypoint = app_config.chain_info.base_waypoint.clone();
 
         OLProgress::complete("App configs written [0L.toml]");
@@ -180,9 +178,6 @@ impl Wizard {
             None,
             None,
         );
-
-        OLProgress::complete("Account files written [account.json]");
-
         
         OLProgress::complete("Success, your validator is ready to go!");
 
@@ -193,6 +188,7 @@ impl Wizard {
                 &app_config.profile.ip
             );
         }
+        Ok(())
     }
 
   fn get_genesis_and_make_node_files(
@@ -239,10 +235,7 @@ impl Wizard {
               &self.repo,
           ) {
               Ok(path) => {
-                  status_ok!(
-                      "\nDownloaded genesis files",
-                      "\n...........................\n"
-                  );
+                OLProgress::complete("Downloaded genesis files");
                   Some(path)
               }
               Err(_) => {
@@ -389,13 +382,13 @@ pub fn write_account_json(
     autopay_batch: Option<Vec<PayInstruction>>,
     autopay_signed: Option<Vec<SignedTransaction>>,
 ){
-    let cfg = wizard_config.unwrap_or(app_config().clone());
+    let cfg = wizard_config.unwrap_or(AppCfg::default());
     let json_path = json_path.clone().unwrap_or(cfg.workspace.node_home.clone());
     let keys = KeyScheme::new(&wallet);
-    let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned()).ok();
+    // let block = VDFProof::parse_block_file(cfg.get_block_dir().join("proof_0.json").to_owned()).ok();
 
     match ValConfigs::new(
-        block,
+        None,
         keys,
         cfg.profile.ip,
         cfg.profile.vfn_ip.unwrap_or("0.0.0.0".parse().unwrap()),
@@ -405,10 +398,7 @@ pub fn write_account_json(
     .create_manifest(json_path)
     {
         Ok(_) => {
-            status_ok!(
-                "\nAccount manifest written",
-                "\n...........................\n"
-            );
+            OLProgress::complete("Account files written [account.js]");
         }
         Err(e) => {
             println!(

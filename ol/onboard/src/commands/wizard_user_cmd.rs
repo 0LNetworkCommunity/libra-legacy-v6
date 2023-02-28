@@ -54,6 +54,7 @@ fn wizard(path: PathBuf, block_zero: &Option<PathBuf>) -> Result<(), Error> {
     app_cfg.profile.auth_key = authkey;
     app_cfg.profile.account = account;
 
+    // From V6 this is for oracle providers
     // Create block zero, if there isn't one.
     let block;
     if let Some(block_path) = block_zero {

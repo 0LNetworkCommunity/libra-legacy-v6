@@ -6,9 +6,7 @@ use dialoguer::{Confirm, Input};
 use indicatif::ProgressIterator;
 use std::{path::Path, thread, time::Duration};
 use dirs;
-use onboard::commands::wizard_val_cmd::ValWizardCmd;
 use ol_types::OLProgress;
-// use onboard::prelude::Runnable;
 
 #[test]
 fn test_wizard() {
@@ -84,9 +82,8 @@ pub fn start_wizard() -> anyhow::Result<()>{
 
 
 fn initialize_host() -> anyhow::Result<()> {
-  // let wiz_cmd = ValWizardCmd::default();
-  // wiz_cmd.run();
-  Ok(())
+  let w = onboard::wizard::Wizard::default();
+  w.run()
 }
 
 // # ENVIRONMENT
