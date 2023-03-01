@@ -1,9 +1,9 @@
 //! genesis preimage formatting.
 
 use byteorder::{LittleEndian, WriteBytesExt};
-use diem_global_constants::{genesis_delay_difficulty, GENESIS_VDF_SECURITY_PARAM};
 use hex::decode;
 use ol::config::AppCfg;
+use ol_types::block::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
 
 /// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
 pub fn genesis_preimage(cfg: &AppCfg) -> Vec<u8> {

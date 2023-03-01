@@ -1,9 +1,24 @@
 //! Proof block datastructure
 
+use diem_types::chain_id::{MODE_0L, NamedChain};
 use hex;
 use serde::{Deserialize, Serialize};
 
 use std::{fs, io::BufReader, path::PathBuf};
+
+/// The VDF security parameter. Does not change in any test mode.
+pub const GENESIS_VDF_SECURITY_PARAM: u64 = 512;
+
+/// Get the tower mining difficulty based on chain.
+pub fn genesis_delay_difficulty() -> u64 {
+    match MODE_0L.clone() {
+        NamedChain::MAINNET=> 120_000_000,
+        NamedChain::STAGE => 120_000_000,
+        NamedChain::TESTNET => 100,
+        NamedChain::CI => 100,
+    }
+}
+
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VDFProof {

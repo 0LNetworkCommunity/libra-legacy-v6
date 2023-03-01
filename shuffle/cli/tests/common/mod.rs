@@ -122,7 +122,7 @@ impl ShuffleTestHelper {
     ) -> Result<()> {
         let url = Url::from_str(dev_api_url)?;
         let client = DevApiClient::new(reqwest::Client::new(), url)?;
-        deploy::deploy(&client, account, &self.project_path(), diem_types::chain_id::NamedChain::TESTING).await
+        deploy::deploy(&client, account, &self.project_path(), diem_types::chain_id::NamedChain::TESTNET).await
     }
 
     pub fn codegen_project(&self, account: &LocalAccount) -> Result<()> {

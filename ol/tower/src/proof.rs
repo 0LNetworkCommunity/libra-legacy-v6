@@ -3,11 +3,10 @@
 use crate::next_proof::{self, NextProof};
 use crate::{backlog, delay::*, preimage::genesis_preimage};
 use anyhow::{bail, Error};
-use diem_global_constants::{genesis_delay_difficulty, GENESIS_VDF_SECURITY_PARAM};
 use diem_types::chain_id::NamedChain;
 use glob::glob;
 use ol::node::client;
-use ol_types::block::VDFProof;
+use ol_types::block::{VDFProof, GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
 use ol_types::config::AppCfg;
 use std::{fs, io::Write, path::PathBuf, time::Instant};
 use txs::tx_params::TxParams;
@@ -17,7 +16,7 @@ pub const FILENAME: &str = "proof";
 
 // writes a JSON file with the first vdf proof
 fn mine_genesis(config: &AppCfg, difficulty: u64, security: u64) -> VDFProof {
-    println!("Mining Genesis Proof");
+    println!("Mining Genesis Proof"); // TODO: use logger
     let preimage = genesis_preimage(&config);
     let now = Instant::now();
 
@@ -425,7 +424,7 @@ pub fn test_make_configs_fixture() -> AppCfg {
     let mut cfg = AppCfg::default();
     cfg.workspace.node_home = PathBuf::from(".");
     cfg.workspace.block_dir = "test_blocks_temp_1".to_owned();
-    cfg.chain_info.chain_id = NamedChain::DEVNET;
+    cfg.chain_info.chain_id = NamedChain::STAGE;
     cfg.profile.auth_key = "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
         .parse()
         .unwrap();

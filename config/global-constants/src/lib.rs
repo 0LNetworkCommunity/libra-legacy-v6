@@ -8,8 +8,6 @@
 //! (and better allow these constants to be updated in a single location), we define them here.
 #![forbid(unsafe_code)]
 
-use std::env; //////// 0L ////////
-
 /// Definitions of global cryptographic keys (e.g., as held in secure storage)
 pub const CONSENSUS_KEY: &str = "consensus";
 pub const EXECUTION_KEY: &str = "execution";
@@ -30,31 +28,17 @@ pub const GENESIS_WAYPOINT: &str = "genesis-waypoint";
 pub const MOVE_MODULES: &str = "move-modules";
 
 //////// 0L ////////
+// Default filepaths for 0L configs
 pub const NODE_HOME: &str = ".0L/";
+pub const CONFIG_FILE: &str = "0L.toml";
+pub const SOURCE_DIR: &str = "libra/";
+
+// Default ports for 0L nodes
+pub const DEFAULT_VAL_PORT: u64 = 6180;
+pub const DEFAULT_VFN_PORT: u64 = 6179;
+pub const DEFAULT_PUB_PORT: u64 = 6178;
+// other
 pub const PROOF_OF_WORK_PREIMAGE: &str = "pow_preimage";
 pub const PROOF_OF_WORK_PROOF: &str = "pow_proof";
 pub const ACCOUNT_PROFILE: &str = "account_profile";
 pub const SALT_0L: &str = "0L";
-pub const SOURCE_DIR: &str = "libra/";
-pub const GENESIS_VDF_SECURITY_PARAM: u64 = 512;
-
-/// Filename for 0L configs
-pub const CONFIG_FILE: &str = "0L.toml";
-pub const DEFAULT_VAL_PORT: u64 = 6180;
-pub const DEFAULT_VFN_PORT: u64 = 6179;
-pub const DEFAULT_PUB_PORT: u64 = 6178;
-
-//////// 0L ////////
-// TODO: make this lazy static.
-/// Switch settings between production and testing
-pub fn genesis_delay_difficulty() -> u64 {
-    let node_env = match env::var("NODE_ENV") {
-        Ok(val) => val,
-        _ => "prod".to_string() // default to "prod" if not set
-    };
-    // test settings need to be set explicitly
-    if node_env == "test" {
-        return 100 // difficulty for test suites and on local for debugging purposes.
-    }
-    return 120_000_000
-}

@@ -5,7 +5,7 @@
 
 mod genesis_context;
 use anyhow::Error;
-use ol_types::legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery};
+use ol_types::{legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery}, block::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty}};
 use std::env;
 use crate::genesis_context::GenesisStateView;
 use diem_crypto::{
@@ -22,7 +22,7 @@ use diem_types::{
         events::{CreateAccountEvent},
         DESIGNATED_DEALER_MODULE,
     },
-    chain_id::{ChainId},
+    chain_id::{ChainId, MODE_0L, NamedChain},
     contract_event::ContractEvent,
     on_chain_config::{
         ConsensusConfigV1, OnChainConsensusConfig, ReadWriteSetAnalysis, VMPublishingOption,
@@ -47,8 +47,8 @@ use once_cell::sync::Lazy;
 use rand::prelude::*;
 use transaction_builder::encode_create_designated_dealer_script_function;
 //////// 0L ////////
-use diem_global_constants::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
-pub use ol_types::{config::IS_PROD, genesis_proof::GenesisMiningProof};
+pub use ol_types::genesis_proof::GenesisMiningProof;
+
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -117,7 +117,7 @@ pub fn encode_genesis_change_set(
     let mut session = move_vm.new_session(&data_cache);
 
     //////// 0L ////////
-    if !*IS_PROD {
+    if !MODE_0L.is_prod(){
         initialize_testnet(&mut session);
     }
 
@@ -230,9 +230,9 @@ pub fn encode_recovery_genesis_changeset(
     
     diem_logger::info!("OK create_and_initialize_root_accounts =============== ");
     // println!("OK create_and_initialize_main_accounts =============== ");
-    let genesis_env = get_env();
-    diem_logger::info!("Initializing with env: {}", genesis_env);
-    if genesis_env != "prod" {
+    
+    diem_logger::info!("Initializing with env: {:?}", MODE_0L.clone());
+    if MODE_0L.clone() != NamedChain::MAINNET {
         initialize_testnet(&mut session);
     }
 
@@ -529,7 +529,7 @@ fn create_and_initialize_owners_operators(
                 MoveValue::vector_u8(preimage),
                 MoveValue::vector_u8(proof),
                 MoveValue::U64(genesis_delay_difficulty()), // TODO: make this part of genesis registration
-                MoveValue::U64(GENESIS_VDF_SECURITY_PARAM.into()),                
+                MoveValue::U64(GENESIS_VDF_SECURITY_PARAM.into()),              
             ]),
         );
 
@@ -1079,12 +1079,12 @@ fn fund_operators(
 }
 
 //////// 0L ////////
-fn get_env() -> String {
-    match env::var("NODE_ENV") {
-        Ok(val) => val,
-        _ => "test".to_string(), // default to "test" if not set
-    }
-}
+// fn get_env() -> String {
+//     match env::var("NODE_ENV") {
+//         Ok(val) => val,
+//         _ => "test".to_string(), // default to "test" if not set
+//     }
+// }
 
 //////// 0L ////////
 fn initialize_testnet(
@@ -1092,7 +1092,10 @@ fn initialize_testnet(
 ) {
     let diem_root_address = account_config::diem_root_address();
     let mut module_name = "Testnet";
-    if get_env() == "stage" {
+
+    // Note that NamedChain::CI should also use "Tesnet" flag
+    if MODE_0L.clone() == NamedChain::STAGE {
+
         module_name = "StagingNet";
     };
     exec_function(

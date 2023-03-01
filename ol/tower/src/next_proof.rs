@@ -6,10 +6,9 @@ use crate::{preimage, proof};
 use anyhow::{bail, Error};
 use diem_client::BlockingClient as DiemClient;
 use diem_crypto::HashValue;
-use diem_global_constants::genesis_delay_difficulty;
 use diem_types::ol_vdf_difficulty::VDFDifficulty;
 use ol::{config::AppCfg, node::node::Node};
-use ol_types::config::IS_PROD;
+use ol_types::block::genesis_delay_difficulty;
 use serde::{Deserialize, Serialize};
 
 /// container for the next proof parameters to be fed to VDF prover.
@@ -28,10 +27,7 @@ impl NextProof {
     /// create a genesis proof
     pub fn genesis_proof(config: &AppCfg) -> Self {
         let mut diff = VDFDifficulty::default();
-
-        if !*IS_PROD {
-            diff.difficulty = genesis_delay_difficulty()
-        }
+        diff.difficulty = genesis_delay_difficulty();
 
         NextProof {
             diff,
