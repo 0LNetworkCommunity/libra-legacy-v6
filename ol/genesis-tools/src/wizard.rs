@@ -17,7 +17,9 @@ use dirs;
 use ol_types::OLProgress;
 use diem_github_client;
 use std::path::PathBuf;
-use diem_types::network_address::NetworkAddress;
+use std::str::FromStr;
+use diem_types::chain_id::ChainId;
+use diem_types::network_address::{NetworkAddress, Protocol};
 
 
 #[test]
@@ -92,6 +94,7 @@ pub fn start_wizard(&mut self) -> anyhow::Result<()>{
 
 
   // Download the snapshot from the epoch archive. Ask user which epoch to use.
+      // ol/cli/src/mgmt/restore.rs
 
   // run genesis
 
@@ -241,18 +244,18 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
 
   //TODO(nima) send the validator config. similar to above
 
-// Have: shared_backend, validator_backend, owner_name, chain_id, validator_address, fullnode_address
-
      let val_config = ValidatorConfig::new(
          app_cfg.format_owner_namespace().clone(),
-         val_config,
-         NetworkAddress::from(app_cfg.profile.ip.clone()),
-         NetworkAddress::from(app_cfg.profile.vfn_ip.clone()),
+         NetworkAddress::from_str(&*format!("{}{}", Protocol::Ip4(app_cfg.profile.ip), Protocol::Tcp(6180))).unwrap(),
+         NetworkAddress::from_str(&*format!("{}{}", Protocol::Ip4(app_cfg.profile.vfn_ip.unwrap()), Protocol::Tcp(6179))).unwrap(),
          &sh,
-         False);
-
-        val_config.execute()?;
-        pb.inc(1);
+         &val,
+         false,
+         ChainId::new(app_cfg.chain_info.chain_id.id()),
+     );
+     println!("val_config: {:?}", val_config);
+     val_config.execute()?;
+     pb.inc(1);
 
 
 // # OPER does this

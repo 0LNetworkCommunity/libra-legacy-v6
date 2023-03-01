@@ -7,7 +7,7 @@ use diem_global_constants::{GENESIS_WAYPOINT, OPERATOR_ACCOUNT, OWNER_ACCOUNT, W
 use diem_management::{
     config::ConfigPath,
     error::Error,
-    secure_backend::{MGMTSecureBackend, SharedBackend},
+    secure_backend::{MGMTSecureBackend, SharedBackend, ValidatorBackend},
 };
 use std::{convert::TryFrom, path::PathBuf, str::FromStr};
 use diem_secure_storage::{
@@ -16,12 +16,12 @@ use diem_secure_storage::{
 use diem_types::{waypoint::Waypoint, account_address::AccountAddress};
 use structopt::StructOpt;
 
-diem_management::secure_backend!(
-    ValidatorBackend,
-    validator_backend,
-    "validator configuration",
-    "path-to-key"
-);
+// diem_management::secure_backend!(
+//     ValidatorBackend,
+//     validator_backend,
+//     "validator configuration",
+//     "path-to-key"
+// );
 
 #[derive(Debug, StructOpt)]
 pub struct Key {
