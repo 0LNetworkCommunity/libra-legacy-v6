@@ -20,6 +20,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use diem_types::chain_id::ChainId;
 use diem_types::network_address::{NetworkAddress, Protocol};
+use ol::mgmt::restore::restore_snapshot;
 
 
 #[test]
@@ -92,9 +93,12 @@ pub fn start_wizard(&mut self) -> anyhow::Result<()>{
   // register the configs on the new forked repo, and make the pull request
   self.register_configs(&app_config)?;
 
+      self.make_pull_request()?;
+
 
   // Download the snapshot from the epoch archive. Ask user which epoch to use.
       // ol/cli/src/mgmt/restore.rs
+    // self.restore_snapshot()?;
 
   // run genesis
 
@@ -253,7 +257,6 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
          false,
          ChainId::new(app_cfg.chain_info.chain_id.id()),
      );
-     println!("val_config: {:?}", val_config);
      val_config.execute()?;
      pb.inc(1);
 
@@ -273,6 +276,38 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
 
   Ok(())
  }
+
+    fn restore_snapshot(&self, epoch: u8) -> anyhow::Result<()> {
+        let pb = ProgressBar::new(1)
+        .with_style(OLProgress::bar());
+        // restore_snapshot(epoch, &self.data_path)?;
+        pb.inc(1);
+        pb.finish_and_clear();
+        Ok(())
+    }
+
+    fn make_pull_request(&self) -> anyhow::Result<()> {
+        let gh_token_path = self.data_path.join("github_token.txt");
+        let api_token = std::fs::read_to_string(&gh_token_path)?;
+
+        let pb = ProgressBar::new(1)
+        .with_style(OLProgress::bar());
+        let gh_client = diem_github_client::Client::new(
+            self.repo_owner.clone(),
+            self.repo_name.clone(),
+            "master".to_string(),
+            api_token.clone(),
+        );
+        // repository_owner, genesis_repo_name, username
+
+       match gh_client.make_genesis_pull_request(&*self.repo_owner, &*self.repo_name, &*self.github_username) {
+           Ok(_) => println!("created pull request to genesis repo"),
+           Err(e) => Err(anyhow::anyhow!("failed to create pull request to genesis repo: {:?}", e))
+       }?;
+        pb.inc(1);
+        pb.finish_and_clear();
+        Ok(())
+    }
 
 }
 
