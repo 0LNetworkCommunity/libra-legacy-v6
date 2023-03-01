@@ -1,24 +1,24 @@
 //!  A simple workflow tool to organize all genesis
 //! instead of using many CLI tools.
 
-use std::convert::TryInto;
-use std::str::FromStr;
+
+
 use anyhow::bail;
 use dialoguer::{Confirm, Input};
-use diem_config::config::SecureBackend;
+
 use diem_genesis_tool::{
   validator_operator::ValidatorOperator,
   key::{OperatorKey, Key, OwnerKey}
 };
-use futures::future::Shared;
-use indicatif::ProgressIterator;
+
+use indicatif::{ProgressIterator, ProgressBar};
 use ol::config::AppCfg;
 use std::{path::Path, thread, time::Duration};
 use dirs;
 use ol_types::OLProgress;
 use diem_github_client;
 use std::path::PathBuf;
-use diem_management::{secure_backend, secure_backend::{SharedBackend, ValidatorBackend, MGMTSecureBackend}};
+
 
 #[test]
 fn test_wizard() {
@@ -39,6 +39,7 @@ impl Default for GenesisWizard {
   /// testnet values for genesis wizard
   fn default() -> Self {
     let data_path = dirs::home_dir().expect("no home dir found").join(".0L/");
+    dbg!(&data_path);
     Self {
       namespace: "alice".to_string(),
       repo_owner: "0l-testnet".to_string(),
@@ -51,7 +52,7 @@ impl Default for GenesisWizard {
 }
 impl GenesisWizard {
   /// start wizard for end-to-end genesis
-pub fn start_wizard(&self) -> anyhow::Result<()>{
+pub fn start_wizard(&mut self) -> anyhow::Result<()>{
 
   Confirm::new()
     .with_prompt("Let's do this?")
@@ -84,13 +85,10 @@ pub fn start_wizard(&self) -> anyhow::Result<()>{
 
   let app_config = ol_types::config::parse_toml(self.data_path.join("0L.toml"))?;
 
+
   // register the configs on the new forked repo, and make the pull request
   self.register_configs(&app_config)?;
 
-
-  for _ in (0..10).progress_with_style(OLProgress::bar()) {
-    thread::sleep(Duration::from_millis(100));
-  }
 
   for _ in (0..10).progress_with_style(OLProgress::fun())
     .with_message("Initializing 0L") {
@@ -116,7 +114,7 @@ pub fn start_wizard(&self) -> anyhow::Result<()>{
   Ok(())
 }
 
-fn git_setup(&self) -> anyhow::Result<()> {
+fn git_setup(&mut self) -> anyhow::Result<()> {
     let gh_token_path = self.data_path.join("github_token.txt");
   if !Path::exists(&gh_token_path) {
       println!("no github token found");
@@ -139,10 +137,11 @@ fn git_setup(&self) -> anyhow::Result<()> {
     api_token.clone(),
   );
 
-  let github_username = gh_client.get_authenticated_user()?;
+  // Use the github token to find out who is the user behind it.
+  self.github_username =  gh_client.get_authenticated_user()?;
 
   if !Confirm::new()
-    .with_prompt(format!("Is this your github user? {} ", &github_username))
+    .with_prompt(format!("Is this your github user? {} ", &self.github_username))
     .interact()? {
       println!("Please update your github token");
       return Ok(());
@@ -167,45 +166,20 @@ fn git_setup(&self) -> anyhow::Result<()> {
   } else {
     println!("found a genesis repo on your account, we'll use that for registration");
   }
+  // Remeber to clear out the /owner key from the key_store.json for safety.
   Ok(())
 
 }
 
-// fn shared_backend(&self, namespace: &str) -> anyhow::Result<SharedBackend> {
-
-//   // BLACK MAGIC with MACROS. 
-//   // I curse your first born.
-
-//   let storage_cfg = format!(
-//     "backend=github;repository_owner=${GITHUB_USER};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=${ACC}",
-//     ACC=namespace,
-//     GITHUB_USER=self.github_username,
-//     REPO_NAME=self.repo_name,
-//     DATA_PATH=self.data_path.to_str().unwrap(),
-//   );
-
-//   Ok(SharedBackend::from_str(storage_cfg.as_str())?)
-
-// }
-
-// fn local_val_backend(&self, namespace: &str) -> anyhow::Result<ValidatorBackend> {
-
-//   // BLACK MAGIC with MACROS. 
-//   // I curse your first born.
-
-//   let storage_cfg = format!(
-//     "backend=disk;path=${DATA_PATH}/key_store.json;namespace=${ACC}",
-//     ACC=namespace,
-//     DATA_PATH=self.data_path.to_str().unwrap(),
-//   );
-
-//   Ok(ValidatorBackend::from_str(storage_cfg.as_str())?)
-
-// }
-
  fn register_configs(&self, app_cfg: &AppCfg) -> anyhow::Result<()>{
+    let pb = ProgressBar::new(4)
+    .with_style(OLProgress::bar());
+    
+
+
+  // These are abstractions for github and the local key storage.
   let val = Key::validator_backend(
-     app_cfg.format_owner_namespace().clone(), 
+     app_cfg.format_oper_namespace().clone(), 
      self.data_path.clone()
   )?;
 
@@ -215,28 +189,31 @@ fn git_setup(&self) -> anyhow::Result<()> {
      self.repo_name.clone(), 
      self.data_path.clone()
   )?;
-
-  let default_key_struct = Key::new(val, sh);
   
   let op = OperatorKey {
-    key: default_key_struct
+    key: Key::new(&val, &sh)
   };
 
   op.execute()?;
 
+  pb.inc(1);
+
   let own = OwnerKey {
-    key: default_key_struct
+    key: Key::new(&val, &sh)
   };
 
   own.execute()?;
+  pb.inc(1);
 
   let set_oper = ValidatorOperator::new(
     app_cfg.format_owner_namespace().clone(),
-    sh
+    &sh
   );
 
   set_oper.execute()?;
+  pb.inc(1);
 
+  pb.finish_and_clear();
 
   //TODO(nima) send the validator config. similar to above
   
@@ -280,7 +257,8 @@ fn git_setup(&self) -> anyhow::Result<()> {
 
 
 fn initialize_host() -> anyhow::Result<()> {
-  let w = onboard::wizard::Wizard::default();
+  let mut w = onboard::wizard::Wizard::default();
+  w.genesis_ceremony = true;
   w.run()
 }
 

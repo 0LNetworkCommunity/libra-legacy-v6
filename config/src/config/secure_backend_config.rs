@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::config::Error;
-use diem_global_constants::NODE_HOME;
 use diem_secure_storage::{
     GitHubStorage, InMemoryStorage, Namespaced, OnDiskStorage, Storage, VaultStorage,
 };

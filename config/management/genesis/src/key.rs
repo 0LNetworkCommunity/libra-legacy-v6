@@ -36,17 +36,18 @@ pub struct Key {
 }
 
 impl Key {
-    pub fn new(validator_backend: ValidatorBackend, shared_backend: SharedBackend) -> Self {
+    pub fn new(validator_backend: &ValidatorBackend, shared_backend: &SharedBackend) -> Self {
         Self {
             config: ConfigPath { config: None },
-            shared_backend,
-            validator_backend,
+            shared_backend: shared_backend.to_owned(),
+            validator_backend: validator_backend.to_owned(),
             path_to_key: None,
         }
     }
   pub fn shared_backend(namespace: String, github_org: String, repo_name: String, data_path: PathBuf) -> anyhow::Result<SharedBackend> {
 
-  // BLACK MAGIC with MACROS. 
+  // BLACK MAGIC with MACROS 
+  // ... AND STRING FORMATTING 
   // I curse your first born.
 
   let storage_cfg = format!(
@@ -63,14 +64,11 @@ impl Key {
 
   pub fn validator_backend(namespace: String, data_path: PathBuf) -> anyhow::Result<ValidatorBackend> {
 
-  // BLACK MAGIC with MACROS. 
-  // I curse your first born.
-
-  let storage_cfg = format!(
-    "backend=disk;path=${data_path}/key_store.json;namespace=${namespace}",
-      namespace = namespace,
-      data_path = data_path.to_str().unwrap(),
-    );
+    let storage_cfg = format!(
+      "backend=disk;path={data_path}key_store.json;namespace={namespace}",
+        namespace = namespace,
+        data_path = data_path.to_str().unwrap(),
+      );
 
     Ok(ValidatorBackend::from_str(storage_cfg.as_str())?)
 
@@ -191,7 +189,7 @@ impl OperatorKey {
 #[derive(Debug, StructOpt)]
 pub struct OwnerKey {
     #[structopt(flatten)]
-    key: Key,
+    pub key: Key, //////// 0L ////////
 }
 
 impl OwnerKey {

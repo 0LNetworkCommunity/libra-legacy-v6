@@ -116,15 +116,6 @@ impl Wizard {
 
         let base_waypoint = app_config.chain_info.base_waypoint.clone();
 
-        // OLProgress::complete("App configs written [0L.toml]");
-
-        // if let Some(url) = &self.template_url {
-        //     let mut url = url.to_owned();
-        //     url.set_port(Some(3030)).unwrap(); //web port
-        //     save_template(&url.join("account.json").unwrap(), home_path);
-        //     // get autopay
-        //     status_ok!("\nAccount Template saved", "\n...........................\n");
-        // }
 
         // Initialize Validator Keys
         // this also sets a genesis waypoint if one was provide, e.g. from an upstream peer.

@@ -17,17 +17,17 @@ use ol_genesis_tools::{
 };
 use indicatif::ProgressIterator;
 
-#[tokio::main]
-async fn main() -> Result<()> {
+// #[tokio::main]
+fn main() -> Result<()> {
     #[derive(Debug, Options)]
     struct Args {
         #[options(help = "use wizard")]
         wizard: bool,
 
-        #[options(help = "org of remote github repo for genesis coordination")]
+        #[options(short="o", help = "org of remote github repo for genesis coordination")]
         genesis_repo_owner: Option<String>,
 
-        #[options(help = "name of remote github repo for genesis coordination")]
+        #[options(short="n", help = "name of remote github repo for genesis coordination")]
         genesis_repo_name: Option<String>,
 
         #[options(help = "github token as string for github")]
@@ -64,12 +64,17 @@ async fn main() -> Result<()> {
 
     let opts = Args::parse_args_default_or_exit();
 
-    if opts.wizard && opts.genesis_repo_owner.is_some() && opts.genesis_repo_name.is_some() {
+    if opts.wizard && 
+      opts.genesis_repo_owner.is_some() && 
+      opts.genesis_repo_name.is_some() 
+    {
       let mut w = wizard::GenesisWizard::default();
       w.repo_name = opts.genesis_repo_name.as_ref().unwrap().clone();
       w.repo_owner = opts.genesis_repo_owner.as_ref().unwrap().clone();
       w.start_wizard()?
     }
+
+    let rt = tokio::runtime::Runtime::new().unwrap();
 
     if opts.fork {
         // create a genesis.blob
@@ -120,8 +125,9 @@ async fn main() -> Result<()> {
               // create testnet genesis
 
             };
-
-            make_recovery_genesis_from_db_backup(
+            
+            rt.block_on({
+              make_recovery_genesis_from_db_backup(
                 output_path.clone(),
                 snapshot_path,
                 !opts.debug,
@@ -129,8 +135,17 @@ async fn main() -> Result<()> {
                 &genesis_vals
                 // opts.genesis_vals
             )
-            .await
-            .expect("ERROR: could not create genesis from snapshot");
+          })?;
+            // make_recovery_genesis_from_db_backup(
+            //     output_path.clone(),
+            //     snapshot_path,
+            //     !opts.debug,
+            //     opts.legacy,
+            //     &genesis_vals
+            //     // opts.genesis_vals
+            // )
+            // // .await
+            // .expect("ERROR: could not create genesis from snapshot");
             carpe_diem();
             Ok(())
         }
@@ -183,9 +198,10 @@ async fn main() -> Result<()> {
         if !snapshot_path.exists() {
             panic!("ERROR: --snapshot-path file does not exist");
         }
-        let recovery_struct = db_backup_into_recovery_struct(&snapshot_path)
-            .await
-            .expect("could not export DB into JSON recovery file");
+
+        let recovery_struct = rt.block_on({
+          db_backup_into_recovery_struct(&snapshot_path)
+        })?;
 
         save_recovery_file(&recovery_struct, &json_destination_path).unwrap_or_else(|_| panic!("ERROR: recovery data extracted, but failed to save file {:?}",
             &json_destination_path));
