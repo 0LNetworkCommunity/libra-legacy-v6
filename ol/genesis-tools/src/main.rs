@@ -71,7 +71,8 @@ fn main() -> Result<()> {
       let mut w = wizard::GenesisWizard::default();
       w.repo_name = opts.genesis_repo_name.as_ref().unwrap().clone();
       w.repo_owner = opts.genesis_repo_owner.as_ref().unwrap().clone();
-      w.start_wizard()?
+      w.start_wizard()?;
+      return Ok(()); // exit
     }
 
     let rt = tokio::runtime::Runtime::new().unwrap();

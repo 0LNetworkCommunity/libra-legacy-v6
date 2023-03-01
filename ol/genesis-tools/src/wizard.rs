@@ -1,8 +1,6 @@
 //!  A simple workflow tool to organize all genesis
 //! instead of using many CLI tools.
 
-
-
 use anyhow::bail;
 use dialoguer::{Confirm, Input};
 
@@ -39,7 +37,7 @@ impl Default for GenesisWizard {
   /// testnet values for genesis wizard
   fn default() -> Self {
     let data_path = dirs::home_dir().expect("no home dir found").join(".0L/");
-    dbg!(&data_path);
+
     Self {
       namespace: "alice".to_string(),
       repo_owner: "0l-testnet".to_string(),
@@ -81,25 +79,17 @@ pub fn start_wizard(&mut self) -> anyhow::Result<()>{
 
   // check if the user has the github auth token, and that
   // there is a forked repo on their account.
+  // Fork the repo, if it doesn't exist
   self.git_setup()?;
 
   let app_config = ol_types::config::parse_toml(self.data_path.join("0L.toml"))?;
 
-
+  // Run registration
   // register the configs on the new forked repo, and make the pull request
   self.register_configs(&app_config)?;
 
 
-  for _ in (0..10).progress_with_style(OLProgress::fun())
-    .with_message("Initializing 0L") {
-    thread::sleep(Duration::from_millis(100));
-  }
-
-
-
-  // Fork the repo, if it doesn't exist
-
-  // Run registration
+  // Download the snapshot from the epoch archive. Ask user which epoch to use.
 
   // run genesis
 
@@ -107,9 +97,18 @@ pub fn start_wizard(&mut self) -> anyhow::Result<()>{
 
   // empty the DB
 
-  // reset the safety rules
+
 
   // verify genesis
+
+  // reset the safety rules
+
+  // remove "owner" key from key_store.json
+
+  for _ in (0..10).progress_with_style(OLProgress::fun())
+    .with_message("Initializing 0L") {
+    thread::sleep(Duration::from_millis(100));
+  }
 
   Ok(())
 }
@@ -185,7 +184,7 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
 
   let sh = Key::shared_backend(
      app_cfg.format_owner_namespace().clone(), 
-     self.repo_owner.clone(), 
+     self.github_username.clone(), // NOTE: we need to write to the github user. 
      self.repo_name.clone(), 
      self.data_path.clone()
   )?;
@@ -196,6 +195,14 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
 
   op.execute()?;
 
+//   # OPER does this
+// # Submits operator key to github, and creates local OPERATOR_ACCOUNT
+// oper-key:
+// 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- operator-key \
+// 	--validator-backend ${LOCAL} \
+// 	--shared-backend ${REMOTE}
+
+
   pb.inc(1);
 
   let own = OwnerKey {
@@ -205,6 +212,14 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
   own.execute()?;
   pb.inc(1);
 
+// # OWNER does this
+// # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
+// owner-key:
+// 	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  owner-key \
+// 	--validator-backend ${LOCAL} \
+// 	--shared-backend ${REMOTE}
+
+
   let set_oper = ValidatorOperator::new(
     app_cfg.format_owner_namespace().clone(),
     &sh
@@ -213,30 +228,19 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
   set_oper.execute()?;
   pb.inc(1);
 
-  pb.finish_and_clear();
-
-  //TODO(nima) send the validator config. similar to above
-  
-//   # OPER does this
-// # Submits operator key to github, and creates local OPERATOR_ACCOUNT
-// oper-key:
-// 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- operator-key \
-// 	--validator-backend ${LOCAL} \
-// 	--shared-backend ${REMOTE}
-
-// # OWNER does this
-// # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
-// owner-key:
-// 	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  owner-key \
-// 	--validator-backend ${LOCAL} \
-// 	--shared-backend ${REMOTE}
-
 // # OWNER does this
 // # Links to an operator on github, creates the OWNER_ACCOUNT locally
 // assign: 
 // 	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  set-operator \
 // 	--operator-name ${OPER} \
 // 	--shared-backend ${REMOTE}
+
+
+
+  //TODO(nima) send the validator config. similar to above
+  
+
+
 
 // # OPER does this
 // # Submits signed validator registration transaction to github.
@@ -248,6 +252,8 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
 // 	--fullnode-address "/ip4/${IP}/tcp/6179" \
 // 	--validator-backend ${LOCAL} \
 // 	--shared-backend ${REMOTE}
+
+  pb.finish_and_clear();
 
   Ok(())
  }
