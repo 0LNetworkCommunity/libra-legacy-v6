@@ -6,7 +6,8 @@ use dialoguer::{Confirm, Input};
 
 use diem_genesis_tool::{
   validator_operator::ValidatorOperator,
-  key::{OperatorKey, Key, OwnerKey}
+  key::{OperatorKey, Key, OwnerKey},
+  validator_config::ValidatorConfig,
 };
 
 use indicatif::{ProgressIterator, ProgressBar};
@@ -16,6 +17,7 @@ use dirs;
 use ol_types::OLProgress;
 use diem_github_client;
 use std::path::PathBuf;
+use diem_types::network_address::NetworkAddress;
 
 
 #[test]
@@ -238,8 +240,19 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
 
 
   //TODO(nima) send the validator config. similar to above
-  
 
+// Have: shared_backend, validator_backend, owner_name, chain_id, validator_address, fullnode_address
+
+     let val_config = ValidatorConfig::new(
+         app_cfg.format_owner_namespace().clone(),
+         val_config,
+         NetworkAddress::from(app_cfg.profile.ip.clone()),
+         NetworkAddress::from(app_cfg.profile.vfn_ip.clone()),
+         &sh,
+         False);
+
+        val_config.execute()?;
+        pb.inc(1);
 
 
 // # OPER does this

@@ -26,6 +26,24 @@ pub struct ValidatorConfig {
 }
 
 impl ValidatorConfig {
+    pub fn new(
+        owner_name: String,
+        validator_config: diem_management::validator_config::ValidatorConfig,
+        validator_address: NetworkAddress,
+        fullnode_address: NetworkAddress,
+        shared_backend: &SharedBackend,
+        disable_address_validation: bool,
+    ) -> Self {
+        Self {
+            owner_name,
+            validator_config,
+            validator_address,
+            fullnode_address,
+            shared_backend: shared_backend.to_owned(),
+            disable_address_validation,
+        }
+    }
+
     pub fn execute(self) -> Result<Transaction, Error> {
         let config = self
             .validator_config
