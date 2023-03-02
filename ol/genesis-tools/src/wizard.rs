@@ -102,43 +102,42 @@ impl GenesisWizard {
             self.make_pull_request()?
         }
 
-        Confirm::new()
+        let ready = Confirm::new()
             .with_prompt("WAIT for everyone to do genesis. Is everyone ready?")
             .interact()
             .unwrap();
 
-        // Download the snapshot from the epoch archive. Ask user which epoch to use.
-        // ol/cli/src/mgmt/restore.rs
-        // TODO: PANICS, check comments in function.
-        // self.restore_snapshot(self.epoch)?;
+        if ready {
+            // run genesis
+            let snapshot_path = ol_types::fixtures::get_test_snapshot();
+            // ${SOURCE}/ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff
+            run::default_run(
+                self.data_path.clone(),
+                snapshot_path,
+                self.repo_owner.clone(),
+                self.repo_name.clone(),
+                self.github_token.clone(),
+                false,
+            )?;
 
-        // run genesis
-        let snapshot_path = ol_types::fixtures::get_test_snapshot();
-        // ${SOURCE}/ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff
-        run::default_run(
-            self.data_path.clone(),
-            snapshot_path,
-            self.repo_owner.clone(),
-            self.repo_name.clone(),
-            self.github_token.clone(),
-            false,
-        )?;
+            // create the files
 
-        // create the files
+            // empty the DB
 
-        // empty the DB
+            // verify genesis
 
-        // verify genesis
+            // reset the safety rules
 
-        // reset the safety rules
+            // remove "owner" key from key_store.json
 
-        // remove "owner" key from key_store.json
-
-        for _ in (0..10)
-            .progress_with_style(OLProgress::fun())
-            .with_message("Initializing 0L")
-        {
-            thread::sleep(Duration::from_millis(100));
+            for _ in (0..10)
+                .progress_with_style(OLProgress::fun())
+                .with_message("Initializing 0L")
+            {
+                thread::sleep(Duration::from_millis(100));
+            }
+        } else {
+          println!("Please wait for everyone to finish genesis and come back");
         }
 
         Ok(())
@@ -202,7 +201,7 @@ impl GenesisWizard {
                 _ => bail!("no forked repo on your account, we need it to continue"),
             }
         } else {
-            println!("found a genesis repo on your account, we'll use that for registration");
+            println!("Found a genesis repo on your account, we'll use that for registration.\n");
         }
         // Remeber to clear out the /owner key from the key_store.json for safety.
         Ok(())
@@ -231,11 +230,7 @@ impl GenesisWizard {
             self.data_path.clone(),
         )?;
 
-        let op = OperatorKey {
-            key: Key::new(&val, &oper_shared),
-        };
 
-        op.execute()?;
 
         //   # OPER does this
         // # Submits operator key to github, and creates local OPERATOR_ACCOUNT
@@ -245,13 +240,22 @@ impl GenesisWizard {
         // 	--shared-backend ${REMOTE}
 
         pb.inc(1);
+        pb.set_message("registering the OWNER account.");
 
         let own = OwnerKey {
             key: Key::new(&val, &owner_shared),
         };
 
         own.execute()?;
-        pb.inc(1);
+
+
+        pb.set_message("registering the OPERATOR account.");
+        let op = OperatorKey {
+            key: Key::new(&val, &oper_shared),
+        };
+
+        op.execute()?;
+
 
         // # OWNER does this
         // # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
@@ -260,11 +264,13 @@ impl GenesisWizard {
         // 	--validator-backend ${LOCAL} \
         // 	--shared-backend ${REMOTE}
 
+        pb.inc(1);
+        pb.set_message("registering the OPERATOR account.");
         let set_oper =
             ValidatorOperator::new(app_cfg.format_owner_namespace().clone(), &owner_shared);
 
         set_oper.execute()?;
-        pb.inc(1);
+
 
         // # OWNER does this
         // # Links to an operator on github, creates the OWNER_ACCOUNT locally
@@ -273,8 +279,8 @@ impl GenesisWizard {
         // 	--operator-name ${OPER} \
         // 	--shared-backend ${REMOTE}
 
-        //TODO(nima) send the validator config. similar to above
-
+        pb.inc(1);
+        pb.set_message("registering the validator configs.");
         let val_config = ValidatorConfig::new(
             app_cfg.format_owner_namespace().clone(),
             NetworkAddress::from_str(&*format!(
@@ -309,7 +315,8 @@ impl GenesisWizard {
         // 	--shared-backend ${REMOTE}
 
         pb.finish_and_clear();
-
+        OLProgress::complete("Registered configs on github");
+        
         Ok(())
     }
 
