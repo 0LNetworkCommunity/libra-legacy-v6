@@ -6,7 +6,8 @@ use dialoguer::{Confirm, Input};
 
 use diem_genesis_tool::{
   validator_operator::ValidatorOperator,
-  key::{OperatorKey, Key, OwnerKey}
+  key::{OperatorKey, Key, OwnerKey},
+  validator_config::ValidatorConfig,
 };
 
 use indicatif::{ProgressIterator, ProgressBar};
@@ -16,6 +17,13 @@ use dirs;
 use ol_types::OLProgress;
 use diem_github_client;
 use std::path::PathBuf;
+use std::str::FromStr;
+use diem_types::chain_id::ChainId;
+use diem_types::network_address::{NetworkAddress, Protocol};
+use ol::mgmt::restore::Backup;
+use ol::application::APPLICATION;
+use crate::fork_genesis::make_recovery_genesis_from_db_backup;
+
 
 
 #[test]
@@ -31,6 +39,7 @@ pub struct GenesisWizard {
   github_username: String,
   github_token: String,
   data_path: PathBuf,
+    pub epoch: u64
 }
 
 impl Default for GenesisWizard {
@@ -44,7 +53,8 @@ impl Default for GenesisWizard {
       repo_name: "dev-genesis".to_string(),
       github_username: "".to_string(),
       github_token: "".to_string(),
-      data_path
+      data_path,
+        epoch: 0 // What should this default value be?
     }
   }
 }
@@ -88,10 +98,16 @@ pub fn start_wizard(&mut self) -> anyhow::Result<()>{
   // register the configs on the new forked repo, and make the pull request
   self.register_configs(&app_config)?;
 
+      self.make_pull_request()?;
+
 
   // Download the snapshot from the epoch archive. Ask user which epoch to use.
+      // ol/cli/src/mgmt/restore.rs
+      // TODO: PANICS, check comments in function.
+    // self.restore_snapshot(self.epoch)?;
 
   // run genesis
+      self.fork_genesis()?;
 
   // create the files
 
@@ -238,8 +254,18 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
 
 
   //TODO(nima) send the validator config. similar to above
-  
 
+     let val_config = ValidatorConfig::new(
+         app_cfg.format_owner_namespace().clone(),
+         NetworkAddress::from_str(&*format!("{}{}", Protocol::Ip4(app_cfg.profile.ip), Protocol::Tcp(6180))).unwrap(),
+         NetworkAddress::from_str(&*format!("{}{}", Protocol::Ip4(app_cfg.profile.vfn_ip.unwrap()), Protocol::Tcp(6179))).unwrap(),
+         &sh,
+         &val,
+         false,
+         ChainId::new(app_cfg.chain_info.chain_id.id()),
+     );
+     val_config.execute()?;
+     pb.inc(1);
 
 
 // # OPER does this
@@ -257,6 +283,53 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
 
   Ok(())
  }
+
+    fn restore_snapshot(&self, epoch: u64) -> anyhow::Result<()> {
+        let pb = ProgressBar::new(1)
+        .with_style(OLProgress::bar());
+
+        // We need to initialize the abscissa application state for this to work.. Else it panics
+        // TODO: fix panic of Backup::new().
+
+        println!("Downloading snapshot for epoch {}", epoch);
+        // All we are doing is download the snapshot from github.
+        let mut backup = Backup::new(Option::from(epoch));
+        println!("Created backup object");
+        backup.fetch_backup(false)?;
+        println!("Downloaded snapshot for epoch {}", epoch);
+
+        pb.inc(1);
+        pb.finish_and_clear();
+        Ok(())
+    }
+
+    fn make_pull_request(&self) -> anyhow::Result<()> {
+        let gh_token_path = self.data_path.join("github_token.txt");
+        let api_token = std::fs::read_to_string(&gh_token_path)?;
+
+        let pb = ProgressBar::new(1)
+        .with_style(OLProgress::bar());
+        let gh_client = diem_github_client::Client::new(
+            self.repo_owner.clone(),
+            self.repo_name.clone(),
+            "master".to_string(),
+            api_token.clone(),
+        );
+        // repository_owner, genesis_repo_name, username
+        // This will also fail if there already is a pull request!
+       match gh_client.make_genesis_pull_request(&*self.repo_owner, &*self.repo_name, &*self.github_username) {
+           Ok(_) => println!("created pull request to genesis repo"),
+           Err(e) => println!("failed to create pull request to genesis repo: {:?}", e),
+       };
+        pb.inc(1);
+        pb.finish_and_clear();
+        Ok(())
+    }
+
+    fn fork_genesis(&self) -> anyhow::Result<()> {
+        // TODO
+        Ok(())
+    }
 
 }
 
