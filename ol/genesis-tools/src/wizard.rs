@@ -64,13 +64,15 @@ impl Default for GenesisWizard {
   }
 }
 impl GenesisWizard {
-  /// start wizard for end-to-end genesis
-pub fn start_wizard(&mut self) -> anyhow::Result<()>{
+    /// start wizard for end-to-end genesis
+    pub fn start_wizard(&mut self) -> anyhow::Result<()> {
+        // check the git token is as expected, and set it.
+        self.git_token_check()?;
 
-  Confirm::new()
-    .with_prompt("Let's do this?")
-    .interact()
-    .unwrap();
+        let to_genesis = Confirm::new()
+            .with_prompt("Skip registration, straight to genesis?")
+            .interact()
+            .unwrap();
 
   // check if .0L folder is clean
 
@@ -135,55 +137,64 @@ pub fn start_wizard(&mut self) -> anyhow::Result<()>{
 
   // remove "owner" key from key_store.json
 
-  for _ in (0..10).progress_with_style(OLProgress::fun())
-    .with_message("Initializing 0L") {
-    thread::sleep(Duration::from_millis(100));
-  }
+            for _ in (0..10)
+                .progress_with_style(OLProgress::fun())
+                .with_message("Initializing 0L")
+            {
+                thread::sleep(Duration::from_millis(100));
+            }
+        } else {
+          println!("Please wait for everyone to finish genesis and come back");
+        }
 
   Ok(())
 }
 
-fn git_setup(&mut self) -> anyhow::Result<()> {
-    let gh_token_path = self.data_path.join("github_token.txt");
-  if !Path::exists(&gh_token_path) {
-      println!("no github token found");
-      match Input::<String>::new()
-        .with_prompt("No github token found, enter one now, or save to github_token.txt:")
-        .interact_text() {
-          Ok(s) => {
-            std::fs::write(&gh_token_path, s)?;
-          },
-          _ => println!("somehow couldn't read what you typed "),
-    } 
-  }
+    fn git_setup(&mut self) -> anyhow::Result<()> {
+        let gh_token_path = self.data_path.join("github_token.txt");
+        if !Path::exists(&gh_token_path) {
+            println!("no github token found");
+            match Input::<String>::new()
+                .with_prompt("No github token found, enter one now, or save to github_token.txt:")
+                .interact_text()
+            {
+                Ok(s) => {
+                    std::fs::write(&gh_token_path, s)?;
+                }
+                _ => println!("somehow couldn't read what you typed "),
+            }
+        }
 
-  let api_token = std::fs::read_to_string(&gh_token_path)?;
+        self.github_token = std::fs::read_to_string(&gh_token_path)?;
 
-  let gh_client = diem_github_client::Client::new(
-    self.repo_owner.clone(),
-    self.repo_name.clone(),
-    "master".to_string(),
-    api_token.clone(),
-  );
+        let gh_client = diem_github_client::Client::new(
+            self.repo_owner.clone(),
+            self.repo_name.clone(),
+            "master".to_string(),
+            self.github_token.clone(),
+        );
 
-  // Use the github token to find out who is the user behind it.
-  self.github_username =  gh_client.get_authenticated_user()?;
+        // Use the github token to find out who is the user behind it.
+        self.github_username = gh_client.get_authenticated_user()?;
 
-  if !Confirm::new()
-    .with_prompt(format!("Is this your github user? {} ", &self.github_username))
-    .interact()? {
-      println!("Please update your github token");
-      return Ok(());
-    }
-  
+        if !Confirm::new()
+            .with_prompt(format!(
+                "Is this your github user? {} ",
+                &self.github_username
+            ))
+            .interact()?
+        {
+            println!("Please update your github token");
+            return Ok(());
+        }
 
-  // check if a gitbhub repo was already created.
-  let user_gh_client = diem_github_client::Client::new(
-    self.github_username.clone(),
-    self.repo_name.clone(),
-    "master".to_string(),
-    api_token,
-  );
+        // check if a gitbhub repo was already created.
+        let user_gh_client = diem_github_client::Client::new(
+            self.github_username.clone(),
+            self.repo_name.clone(),
+            "master".to_string(),
+            self.github_token.clone(),
+        );
 
   if user_gh_client.get_branches().is_err() {
     match Confirm::new()
@@ -212,18 +223,21 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
      self.data_path.clone()
   )?;
 
-  let sh = Key::shared_backend(
-     app_cfg.format_owner_namespace().clone(), 
-     self.github_username.clone(), // NOTE: we need to write to the github user. 
-     self.repo_name.clone(), 
-     self.data_path.clone()
-  )?;
-  
-  let op = OperatorKey {
-    key: Key::new(&val, &sh)
-  };
+        let owner_shared = Key::shared_backend(
+            app_cfg.format_owner_namespace().clone(),
+            self.github_username.clone(), // NOTE: we need to write to the github user.
+            self.repo_name.clone(),
+            self.data_path.clone(),
+        )?;
 
-  op.execute()?;
+        let oper_shared = Key::shared_backend(
+            app_cfg.format_oper_namespace().clone(),
+            self.github_username.clone(), // NOTE: we need to write to the github user.
+            self.repo_name.clone(),
+            self.data_path.clone(),
+        )?;
+
+
 
 //   # OPER does this
 // # Submits operator key to github, and creates local OPERATOR_ACCOUNT
@@ -239,8 +253,16 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
     key: Key::new(&val, &sh)
   };
 
-  own.execute()?;
-  pb.inc(1);
+        own.execute()?;
+
+
+        pb.set_message("registering the OPERATOR account.");
+        let op = OperatorKey {
+            key: Key::new(&val, &oper_shared),
+        };
+
+        op.execute()?;
+
 
 // # OWNER does this
 // # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
@@ -255,8 +277,8 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
     &sh
   );
 
-  set_oper.execute()?;
-  pb.inc(1);
+        set_oper.execute()?;
+
 
 // # OWNER does this
 // # Links to an operator on github, creates the OWNER_ACCOUNT locally
@@ -293,10 +315,11 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
 // 	--validator-backend ${LOCAL} \
 // 	--shared-backend ${REMOTE}
 
-  pb.finish_and_clear();
-
-  Ok(())
- }
+        pb.finish_and_clear();
+        OLProgress::complete("Registered configs on github");
+        
+        Ok(())
+    }
 
     // fn restore_snapshot(&self, epoch: u64) -> anyhow::Result<()> {
     //     let pb = ProgressBar::new(1)
