@@ -20,7 +20,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use diem_types::chain_id::ChainId;
 use diem_types::network_address::{NetworkAddress, Protocol};
-use ol::mgmt::restore::Backup;
+// use ol::mgmt::restore::Backup;
 
 
 use crate::run;
@@ -32,15 +32,19 @@ fn test_wizard() {
   let mut wizard = GenesisWizard::default();
   wizard.start_wizard().unwrap();
 }
-
+/// Wizard for genesis
 pub struct GenesisWizard {
+  ///
   pub namespace: String,
+  ///
   pub repo_owner: String,
+  ///
   pub repo_name: String,
   github_username: String,
   github_token: String,
   data_path: PathBuf,
-    pub epoch: u64
+  ///
+  pub epoch: u64
 }
 
 impl Default for GenesisWizard {
@@ -117,7 +121,7 @@ pub fn start_wizard(&mut self) -> anyhow::Result<()>{
     self.repo_name.clone(), 
     self.github_token.clone(), 
     false
-  );
+  )?;
 
   // create the files
 
@@ -294,24 +298,24 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
   Ok(())
  }
 
-    fn restore_snapshot(&self, epoch: u64) -> anyhow::Result<()> {
-        let pb = ProgressBar::new(1)
-        .with_style(OLProgress::bar());
+    // fn restore_snapshot(&self, epoch: u64) -> anyhow::Result<()> {
+    //     let pb = ProgressBar::new(1)
+    //     .with_style(OLProgress::bar());
 
-        // We need to initialize the abscissa application state for this to work.. Else it panics
-        // TODO: fix panic of Backup::new().
+    //     // We need to initialize the abscissa application state for this to work.. Else it panics
+    //     // TODO: fix panic of Backup::new().
 
-        println!("Downloading snapshot for epoch {}", epoch);
-        // All we are doing is download the snapshot from github.
-        let backup = Backup::new(Option::from(epoch));
-        println!("Created backup object");
-        backup.fetch_backup(false)?;
-        println!("Downloaded snapshot for epoch {}", epoch);
+    //     println!("Downloading snapshot for epoch {}", epoch);
+    //     // All we are doing is download the snapshot from github.
+    //     let backup = Backup::new(Option::from(epoch));
+    //     println!("Created backup object");
+    //     backup.fetch_backup(false)?;
+    //     println!("Downloaded snapshot for epoch {}", epoch);
 
-        pb.inc(1);
-        pb.finish_and_clear();
-        Ok(())
-    }
+    //     pb.inc(1);
+    //     pb.finish_and_clear();
+    //     Ok(())
+    // }
 
     fn make_pull_request(&self) -> anyhow::Result<()> {
         let gh_token_path = self.data_path.join("github_token.txt");

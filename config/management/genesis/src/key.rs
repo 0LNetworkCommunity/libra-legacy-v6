@@ -7,9 +7,9 @@ use diem_global_constants::{GENESIS_WAYPOINT, OPERATOR_ACCOUNT, OWNER_ACCOUNT, W
 use diem_management::{
     config::ConfigPath,
     error::Error,
-    secure_backend::{MGMTSecureBackend, SharedBackend, ValidatorBackend},
+    secure_backend::{SharedBackend, ValidatorBackend},
 };
-use std::{convert::TryFrom, path::PathBuf, str::FromStr};
+use std::{ path::PathBuf, str::FromStr};
 use diem_secure_storage::{
     CryptoStorage, OnDiskStorage, KVStorage
 };

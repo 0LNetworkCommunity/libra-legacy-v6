@@ -1,3 +1,4 @@
+//! run forking genesis
 use anyhow::Result;
 use diem_secure_storage::{GitHubStorage, Storage};
 use vm_genesis::{TestValidator};
@@ -12,7 +13,7 @@ use crate::{
 };
 use indicatif::ProgressIterator;
 
-
+/// default genesis
 pub fn default_run(
   output_path: PathBuf,
   snapshot_path: PathBuf,
