@@ -100,6 +100,8 @@ pub fn maybe_submit(
     save_path: Option<PathBuf>,
 ) -> Result<TransactionView, TxError> {
     let mut client = DiemClient::new(tx_params.url.clone());
+    // dbg!(&client.url());
+
     let (mut account_data, txn) = stage(script, tx_params, &mut client)?;
     if let Some(path) = save_path {
         // TODO: This will not work with batch operations like autopay_batch, last one will overwrite the file.
@@ -107,7 +109,10 @@ pub fn maybe_submit(
     }
 
     match submit_tx(client, txn.clone(), &mut account_data) {
-        Ok(res) => eval_tx_status(res),
+        Ok(res) => { 
+          dbg!(&res);
+          eval_tx_status(res)
+        },
         Err(e) => Err(TxError {
             err: Some(e),
             tx_view: None,
@@ -426,13 +431,16 @@ pub fn wait_for_tx(
 
     let mut iter = 0;
     loop {
-        thread::sleep(time::Duration::from_millis(3_000));
+        thread::sleep(time::Duration::from_millis(1_000));
         // prevent all the logging the client does while
         // it loops through the query.
         stdout().flush().unwrap();
 
         match client.get_account_transaction(signer_address, sequence_number, false) {
-            Ok(response) => return response.into_inner(),
+            Ok(response) => {
+              if response.inner().is_none() { continue }; // the state may not have propagated
+              return response.into_inner()
+            },
             Err(e) => {
                 println!("Response with error: {:?}", e);
             }
