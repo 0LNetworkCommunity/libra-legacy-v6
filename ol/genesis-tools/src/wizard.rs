@@ -63,6 +63,9 @@ impl Default for GenesisWizard {
 impl GenesisWizard {
     /// start wizard for end-to-end genesis
     pub fn start_wizard(&mut self) -> anyhow::Result<()> {
+        // check the git token is as expected, and set it.
+        self.git_token_check()?;
+
         let to_genesis = Confirm::new()
             .with_prompt("Skip registration, straight to genesis?")
             .interact()
@@ -137,13 +140,13 @@ impl GenesisWizard {
                 thread::sleep(Duration::from_millis(100));
             }
         } else {
-          println!("Please wait for everyone to finish genesis and come back");
+            println!("Please wait for everyone to finish genesis and come back");
         }
 
         Ok(())
     }
 
-    fn git_setup(&mut self) -> anyhow::Result<()> {
+    fn git_token_check(&mut self) -> anyhow::Result<()> {
         let gh_token_path = self.data_path.join("github_token.txt");
         if !Path::exists(&gh_token_path) {
             println!("no github token found");
@@ -159,16 +162,16 @@ impl GenesisWizard {
         }
 
         self.github_token = std::fs::read_to_string(&gh_token_path)?;
+        OLProgress::complete(&format!("github token found, [{}]", &self.github_token));
 
-        let gh_client = diem_github_client::Client::new(
-            self.repo_owner.clone(),
+        let temp_gh_client = diem_github_client::Client::new(
+            self.repo_owner.clone(), // doesn't matter
             self.repo_name.clone(),
             "master".to_string(),
             self.github_token.clone(),
         );
 
-        // Use the github token to find out who is the user behind it.
-        self.github_username = gh_client.get_authenticated_user()?;
+        self.github_username = temp_gh_client.get_authenticated_user()?;
 
         if !Confirm::new()
             .with_prompt(format!(
@@ -181,6 +184,19 @@ impl GenesisWizard {
             return Ok(());
         }
 
+
+        Ok(())
+    }
+
+    fn git_setup(&mut self) -> anyhow::Result<()> {
+        let gh_client = diem_github_client::Client::new(
+            self.repo_owner.clone(),
+            self.repo_name.clone(),
+            "master".to_string(),
+            self.github_token.clone(),
+        );
+
+        // Use the github token to find out who is the user behind it
         // check if a gitbhub repo was already created.
         let user_gh_client = diem_github_client::Client::new(
             self.github_username.clone(),
@@ -230,8 +246,6 @@ impl GenesisWizard {
             self.data_path.clone(),
         )?;
 
-
-
         //   # OPER does this
         // # Submits operator key to github, and creates local OPERATOR_ACCOUNT
         // oper-key:
@@ -248,14 +262,12 @@ impl GenesisWizard {
 
         own.execute()?;
 
-
         pb.set_message("registering the OPERATOR account.");
         let op = OperatorKey {
             key: Key::new(&val, &oper_shared),
         };
 
         op.execute()?;
-
 
         // # OWNER does this
         // # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
@@ -270,7 +282,6 @@ impl GenesisWizard {
             ValidatorOperator::new(app_cfg.format_owner_namespace().clone(), &owner_shared);
 
         set_oper.execute()?;
-
 
         // # OWNER does this
         // # Links to an operator on github, creates the OWNER_ACCOUNT locally
@@ -316,7 +327,7 @@ impl GenesisWizard {
 
         pb.finish_and_clear();
         OLProgress::complete("Registered configs on github");
-        
+
         Ok(())
     }
 
