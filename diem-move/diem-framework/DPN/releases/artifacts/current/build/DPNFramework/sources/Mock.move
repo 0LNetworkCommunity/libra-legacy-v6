@@ -93,60 +93,6 @@ module Mock {
       // TODO: careful that the range of heights is within the test
       assert!(Cases::get_case(vm, addr, start_height, end_height) == 4, 777706);
 
-      Testnet::assert_testnet(vm);
-      let vals = DiemSystem::get_val_set_addr();
-
-      let i = 0;
-      while (i < Vector::length(&vals)) {
-
-        let a = Vector::borrow(&vals, i);
-        mock_case_1(vm, *a, 0, 15);
-        i = i + 1;
-      };
-
-    }
-
-    // function to deposit into network fee account
-    public fun mock_network_fees(vm: &signer, amount: u64) {
-      Testnet::assert_testnet(vm);
-      let c = Diem::mint<GAS>(vm, amount);
-      let c_value = Diem::value(&c);
-      assert!(c_value == amount, 777707);
-      TransactionFee::pay_fee(c);
-    }
-
-    //////// PROOF OF FEE ////////
-    public fun pof_default(vm: &signer): (vector<address>, vector<u64>, vector<u64>){
-
-      Testnet::assert_testnet(vm);
-      let vals = ValidatorUniverse::get_eligible_validators();
-
-      let bids = Vector::empty<u64>();
-      let expiry = Vector::empty<u64>();
-      let i = 0;
-      let prev = 0;
-      let fib = 1;
-      while (i < Vector::length(&vals)) {
-
-        Vector::push_back(&mut expiry, 1000);
-        let b = prev + fib;
-        Vector::push_back(&mut bids, b);
-
-        let a = Vector::borrow(&vals, i);
-        let sig = DiemAccount::scary_create_signer_for_migrations(vm, *a);
-        // initialize and set.
-        ProofOfFee::set_bid(&sig, b, 1000);
-        prev = fib;
-        fib = b;
-        i = i + 1;
-      };
-      DiemAccount::slow_wallet_epoch_drip(vm, 100000); // unlock some coins for the validators
-
-      // make all validators pay auction fee
-      // the clearing price in the fibonacci sequence is is 1
-      DiemAccount::vm_multi_pay_fee(vm, &vals, 1, &b"proof of fee");
-
-      (vals, bids, expiry)
     }
 
     // Mockl all nodes being compliant case 1

@@ -9,12 +9,17 @@
 -  [Function `mock_case_4`](#0x1_Mock_mock_case_4)
 -  [Function `all_good_validators`](#0x1_Mock_all_good_validators)
 <<<<<<< HEAD
+<<<<<<< HEAD
 -  [Function `mock_network_fees`](#0x1_Mock_mock_network_fees)
 -  [Function `pof_default`](#0x1_Mock_pof_default)
 =======
 -  [Function `pof_default`](#0x1_Mock_pof_default)
 -  [Function `mock_network_fees`](#0x1_Mock_mock_network_fees)
 >>>>>>> v6-0d-genesis-patches
+=======
+-  [Function `pof_default`](#0x1_Mock_pof_default)
+-  [Function `mock_network_fees`](#0x1_Mock_mock_network_fees)
+>>>>>>> v6-0d-wizard-genesis
 
 
 <pre><code><b>use</b> <a href="Cases.md#0x1_Cases">0x1::Cases</a>;
@@ -113,9 +118,13 @@
   // TODO: careful that the range of heights is within the test
   <b>assert</b>!(<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, start_height, end_height) == 4, 777706);
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> v6-0d-genesis-patches
+=======
+
+>>>>>>> v6-0d-wizard-genesis
 }
 </code></pre>
 
@@ -159,6 +168,7 @@
 </details>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 <a name="0x1_Mock_mock_network_fees"></a>
 
 ## Function `mock_network_fees`
@@ -189,6 +199,8 @@
 
 =======
 >>>>>>> v6-0d-genesis-patches
+=======
+>>>>>>> v6-0d-wizard-genesis
 <a name="0x1_Mock_pof_default"></a>
 
 ## Function `pof_default`
@@ -234,9 +246,12 @@
   // the clearing price in the fibonacci sequence is is 1
   <a href="DiemAccount.md#0x1_DiemAccount_vm_multi_pay_fee">DiemAccount::vm_multi_pay_fee</a>(vm, &vals, 1, &b"proof of fee");
 <<<<<<< HEAD
+<<<<<<< HEAD
 
   (vals, bids, expiry)
 =======
+=======
+>>>>>>> v6-0d-wizard-genesis
 
   (vals, bids, expiry)
 }
@@ -267,7 +282,10 @@
   <b>let</b> c_value = <a href="Diem.md#0x1_Diem_value">Diem::value</a>(&c);
   <b>assert</b>!(c_value == amount, 777707);
   <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">TransactionFee::pay_fee</a>(c);
+<<<<<<< HEAD
 >>>>>>> v6-0d-genesis-patches
+=======
+>>>>>>> v6-0d-wizard-genesis
 }
 </code></pre>
 

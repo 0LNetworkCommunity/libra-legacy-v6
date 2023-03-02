@@ -17,7 +17,6 @@ pub async fn make_recovery_genesis_from_db_backup(
     genesis_blob_path: PathBuf,
     archive_path: PathBuf,
     append: bool,
-    _is_legacy: bool,
     genesis_vals: &[Validator],
 ) -> Result<Transaction, Error> {
     // get the legacy data from archive

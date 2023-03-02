@@ -16,7 +16,7 @@ use tower::{delay, proof::write_genesis};
 pub struct UserWizardCmd {
     #[options(help = "path to write account manifest")]
     output_dir: Option<PathBuf>,
-    #[options(help = "File to check")]
+    #[options(help = "account.json file to check")]
     check_file: Option<PathBuf>,
     #[options(help = "use an existing proof_0.json file and skip mining")]
     block_zero: Option<PathBuf>,
@@ -54,6 +54,7 @@ fn wizard(path: PathBuf, block_zero: &Option<PathBuf>) -> Result<(), Error> {
     app_cfg.profile.auth_key = authkey;
     app_cfg.profile.account = account;
 
+    // From V6 this is for oracle providers
     // Create block zero, if there isn't one.
     let block;
     if let Some(block_path) = block_zero {

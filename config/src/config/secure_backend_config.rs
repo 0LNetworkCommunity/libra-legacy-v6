@@ -22,6 +22,16 @@ pub enum SecureBackend {
 }
 
 impl SecureBackend {
+    //////// 0L ////////
+    pub fn new_github(repo_owner: String, repo_name: String, data_path: PathBuf, namespace: String) -> Self {
+      SecureBackend::GitHub(GitHubConfig {
+          repository_owner: repo_owner,
+          repository: repo_name,
+          branch: Some("master".to_string()),
+          token: Token::FromDisk(data_path.join("github.token")),
+          namespace: Some(namespace),
+      })
+    }
     pub fn namespace(&self) -> Option<&str> {
         match self {
             SecureBackend::GitHub(GitHubConfig { namespace, .. })

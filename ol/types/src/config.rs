@@ -175,10 +175,6 @@ impl AppCfg {
         if let Some(u) = upstream_peer {
             default_config.profile.upstream_nodes = vec![u.to_owned()]
         };
-        // Add link to previous tower
-        // if !*IS_TEST {
-        //     default_config.profile.tower_link = add_tower(&default_config);
-        // }
 
         if let Some(id) = network_id {
             default_config.chain_info.chain_id = id.to_owned();

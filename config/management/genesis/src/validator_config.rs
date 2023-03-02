@@ -2,12 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use diem_global_constants::{OWNER_ACCOUNT, OWNER_KEY};
-use diem_management::{constants, error::Error, secure_backend::SharedBackend};
+use diem_management::{constants, error::Error, secure_backend::{SharedBackend, ValidatorBackend}};
 use diem_types::{
     network_address::NetworkAddress, 
     transaction::{authenticator::AuthenticationKey, Transaction}
 };
 use structopt::StructOpt;
+use diem_management::config::ConfigPath;
+use diem_types::chain_id::{ChainId};
 
 #[derive(Debug, StructOpt)]
 pub struct ValidatorConfig {
@@ -26,6 +28,29 @@ pub struct ValidatorConfig {
 }
 
 impl ValidatorConfig {
+    pub fn new(
+        owner_name: String,
+        validator_address: NetworkAddress,
+        fullnode_address: NetworkAddress,
+        shared_backend: &SharedBackend,
+        validator_backend: &ValidatorBackend,
+        disable_address_validation: bool,
+        chain_id: ChainId,
+    ) -> Self {
+        Self {
+            owner_name,
+            validator_config: diem_management::validator_config::ValidatorConfig{
+                config: ConfigPath { config: None},
+                validator_backend: validator_backend.to_owned(),
+                chain_id: Some(chain_id)
+            },
+            validator_address,
+            fullnode_address,
+            shared_backend: shared_backend.to_owned(),
+            disable_address_validation
+        }
+    }
+
     pub fn execute(self) -> Result<Transaction, Error> {
         let config = self
             .validator_config

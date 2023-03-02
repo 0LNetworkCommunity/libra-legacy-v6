@@ -2016,7 +2016,7 @@ dependencies = [
  "diem-wallet",
  "diem-workspace-hack 0.1.0",
  "diemdb",
- "dirs",
+ "dirs 2.0.2",
  "executor",
  "generate-key",
  "hex 0.4.3",
@@ -2296,7 +2296,7 @@ dependencies = [
  "diem-types",
  "diem-wallet",
  "diem-workspace-hack 0.1.0",
- "dirs",
+ "dirs 2.0.2",
  "hex 0.4.3",
  "ol-keys",
  "rustyline",
@@ -3168,6 +3168,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13aea89a5c93364a98e9b37b2fa237effbb694d5cfe01c5b70941f7eb087d5e3"
 dependencies = [
  "cfg-if 0.1.10",
+ "dirs-sys",
+]
+
+[[package]]
+name = "dirs"
+version = "4.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca3aa72a6f96ea37bbc5aa912f6788242832f75369bdfdadcb0e38423f100059"
+dependencies = [
  "dirs-sys",
 ]
 
@@ -4748,7 +4757,7 @@ version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7baab56125e25686df467fe470785512329883aab42696d661247aca2a2896e4"
 dependencies = [
- "console 0.14.1",
+ "console 0.15.5",
  "lazy_static 1.4.0",
  "number_prefix 0.3.0",
  "regex",
@@ -6635,7 +6644,7 @@ dependencies = [
  "diem-types",
  "diem-wallet",
  "diemdb",
- "dirs",
+ "dirs 2.0.2",
  "fs_extra",
  "futures",
  "glob",
@@ -6683,10 +6692,12 @@ dependencies = [
  "backup-cli",
  "backup-service",
  "bcs",
+ "dialoguer",
  "diem-config",
  "diem-crypto",
  "diem-framework-releases",
  "diem-genesis-tool",
+ "diem-github-client",
  "diem-json-rpc",
  "diem-logger 0.1.0",
  "diem-management",
@@ -6696,6 +6707,7 @@ dependencies = [
  "diem-types",
  "diem-vm",
  "diem-wallet",
+ "dirs 4.0.0",
  "futures",
  "gumdrop 0.8.1",
  "indicatif 0.17.3",
@@ -6709,6 +6721,7 @@ dependencies = [
  "ol-keys",
  "ol-smoke-tests",
  "ol-types",
+ "onboard",
  "rand 0.8.4",
  "reqwest 0.11.10",
  "serde 1.0.137",
@@ -6801,7 +6814,7 @@ dependencies = [
  "diem-state-view",
  "diem-types",
  "diem-vm",
- "dirs",
+ "dirs 2.0.2",
  "glob",
  "hex 0.4.3",
  "indicatif 0.17.3",
@@ -6827,7 +6840,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "diem-global-constants",
- "dirs",
+ "dirs 2.0.2",
  "fs_extra",
  "regex",
 ]
@@ -6846,7 +6859,7 @@ dependencies = [
  "diem-global-constants",
  "diem-types",
  "diem-wallet",
- "dirs",
+ "dirs 2.0.2",
  "gumdrop 0.7.0",
  "hex 0.4.3",
  "ol",
@@ -9956,7 +9969,7 @@ dependencies = [
  "diem-types",
  "diem-wallet",
  "diemdb",
- "dirs",
+ "dirs 2.0.2",
  "executor-benchmark",
  "glob",
  "gumdrop 0.7.0",
@@ -10223,7 +10236,7 @@ dependencies = [
  "diem-types",
  "diem-wallet",
  "diemdb",
- "dirs",
+ "dirs 2.0.2",
  "executor-benchmark",
  "glob",
  "gumdrop 0.7.0",

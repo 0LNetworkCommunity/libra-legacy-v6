@@ -1,16 +1,13 @@
 //! MinerApp Subcommands
 pub mod genesis_files_cmd;
 pub mod version_cmd;
-// pub mod wizard_fn_cmd;
-pub mod fix_cmd;
 pub mod keygen_cmd;
-pub mod wizard_fork_cmd;
 pub mod wizard_user_cmd;
 pub mod wizard_val_cmd;
 
 use self::{
-    fix_cmd::FixCmd, genesis_files_cmd::GenesisFilesCmd, keygen_cmd::KeygenCmd,
-    version_cmd::VersionCmd, wizard_fork_cmd::ForkCmd, wizard_user_cmd::UserWizardCmd,
+    genesis_files_cmd::GenesisFilesCmd, keygen_cmd::KeygenCmd,
+    version_cmd::VersionCmd, wizard_user_cmd::UserWizardCmd,
     wizard_val_cmd::ValWizardCmd,
 };
 use crate::entrypoint;
@@ -40,21 +37,10 @@ pub enum WizCmd {
     #[options(help = "create all files for validator onboarding")]
     Val(ValWizardCmd),
 
-    // /// The `fullnode` subcommand
-    // #[options(help = "create all files for fullnode config")]
-    // Fullnode(FnWizardCmd),
     /// The `keygen` subcommand
     #[options(help = "create new account and mnemonic")]
     Keygen(KeygenCmd),
-
-    /// The `fix` subcommand
-    #[options(help = "migrate account.json")]
-    Fix(FixCmd),
-
-    /// The `fork` subcommand
-    #[options(help = "create configs for a fork, from genesis")]
-    Fork(ForkCmd),
-
+    
     /// The `genesis files` subcommand
     #[options(help = "fetch genesis.blob from a github repo")]
     GenesisFiles(GenesisFilesCmd),

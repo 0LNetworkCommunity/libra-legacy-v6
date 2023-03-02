@@ -326,10 +326,14 @@ compiled_package_info:
       name: XUS
     : DiemFramework
 <<<<<<< HEAD
+<<<<<<< HEAD
   source_digest: 133EBC7D1ACFA46DFC2FD0F354C752DD88D7C54B96F69B3253F6DE348C44FFF1
 =======
   source_digest: BC9107F1E2B1691D01B520A34349EF01E24FBDFA6DB82ED0121BB8285C41A63E
 >>>>>>> v6-0d-genesis-patches
+=======
+  source_digest: BC9107F1E2B1691D01B520A34349EF01E24FBDFA6DB82ED0121BB8285C41A63E
+>>>>>>> v6-0d-wizard-genesis
   build_flags:
     dev_mode: false
     test_mode: false
