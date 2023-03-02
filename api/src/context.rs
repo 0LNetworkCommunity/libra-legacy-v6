@@ -93,6 +93,11 @@ impl Context {
         self.db.get_latest_ledger_info()
     }
 
+    //////// 0L ////////
+    pub fn get_epoch_change_proof(&self, start: u64, end: u64) -> Result<Vec<LedgerInfoWithSignatures>> {
+        Ok(self.db.get_epoch_ending_ledger_infos(start, end)?.ledger_info_with_sigs)
+    }
+
     pub fn get_account_state(
         &self,
         address: AccountAddress,
