@@ -13,7 +13,6 @@ use ol_genesis_tools::{
     },
     process_snapshot::db_backup_into_recovery_struct, wizard, run::default_run,
 };
-use indicatif::ProgressIterator;
 
 
 
@@ -152,13 +151,4 @@ fn main() -> Result<()> {
         println!("ERROR: no options provided, exiting.");
         exit(1);
     }
-}
-
-
-fn carpe_diem() {
-    // be happy
-    (0..20).progress_with_style(OLProgress::fun())
-    .for_each(|_|{
-      thread::sleep(Duration::from_millis(300));
-    });
 }
