@@ -20,7 +20,10 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use diem_types::chain_id::ChainId;
 use diem_types::network_address::{NetworkAddress, Protocol};
-use ol::mgmt::restore::restore_snapshot;
+use ol::mgmt::restore::Backup;
+use ol::application::APPLICATION;
+use crate::fork_genesis::make_recovery_genesis_from_db_backup;
+
 
 
 #[test]
@@ -36,6 +39,7 @@ pub struct GenesisWizard {
   github_username: String,
   github_token: String,
   data_path: PathBuf,
+    pub epoch: u64
 }
 
 impl Default for GenesisWizard {
@@ -49,7 +53,8 @@ impl Default for GenesisWizard {
       repo_name: "dev-genesis".to_string(),
       github_username: "".to_string(),
       github_token: "".to_string(),
-      data_path
+      data_path,
+        epoch: 0 // What should this default value be?
     }
   }
 }
@@ -98,9 +103,11 @@ pub fn start_wizard(&mut self) -> anyhow::Result<()>{
 
   // Download the snapshot from the epoch archive. Ask user which epoch to use.
       // ol/cli/src/mgmt/restore.rs
-    // self.restore_snapshot()?;
+      // TODO: PANICS, check comments in function.
+    // self.restore_snapshot(self.epoch)?;
 
   // run genesis
+      self.fork_genesis()?;
 
   // create the files
 
@@ -277,10 +284,20 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
   Ok(())
  }
 
-    fn restore_snapshot(&self, epoch: u8) -> anyhow::Result<()> {
+    fn restore_snapshot(&self, epoch: u64) -> anyhow::Result<()> {
         let pb = ProgressBar::new(1)
         .with_style(OLProgress::bar());
-        // restore_snapshot(epoch, &self.data_path)?;
+
+        // We need to initialize the abscissa application state for this to work.. Else it panics
+        // TODO: fix panic of Backup::new().
+
+        println!("Downloading snapshot for epoch {}", epoch);
+        // All we are doing is download the snapshot from github.
+        let mut backup = Backup::new(Option::from(epoch));
+        println!("Created backup object");
+        backup.fetch_backup(false)?;
+        println!("Downloaded snapshot for epoch {}", epoch);
+
         pb.inc(1);
         pb.finish_and_clear();
         Ok(())
@@ -299,13 +316,18 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
             api_token.clone(),
         );
         // repository_owner, genesis_repo_name, username
-
+        // This will also fail if there already is a pull request!
        match gh_client.make_genesis_pull_request(&*self.repo_owner, &*self.repo_name, &*self.github_username) {
            Ok(_) => println!("created pull request to genesis repo"),
-           Err(e) => Err(anyhow::anyhow!("failed to create pull request to genesis repo: {:?}", e))
-       }?;
+           Err(e) => println!("failed to create pull request to genesis repo: {:?}", e),
+       };
         pb.inc(1);
         pb.finish_and_clear();
+        Ok(())
+    }
+
+    fn fork_genesis(&self) -> anyhow::Result<()> {
+        // TODO
         Ok(())
     }
 
