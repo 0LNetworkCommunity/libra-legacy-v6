@@ -100,6 +100,8 @@ pub fn maybe_submit(
     save_path: Option<PathBuf>,
 ) -> Result<TransactionView, TxError> {
     let mut client = DiemClient::new(tx_params.url.clone());
+    // dbg!(&client.url());
+
     let (mut account_data, txn) = stage(script, tx_params, &mut client)?;
     if let Some(path) = save_path {
         // TODO: This will not work with batch operations like autopay_batch, last one will overwrite the file.
