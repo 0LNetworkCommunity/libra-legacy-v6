@@ -55,8 +55,8 @@ impl ValidatorConfig {
         let storage = Storage::from(&config.validator_backend);
         let chain_id = config.chain_id;
 
-        dbg!(&validator_address); //////// 0L ////////
-        dbg!(&fullnode_address); //////// 0L ////////
+        // dbg!(&validator_address); //////// 0L ////////
+        // dbg!(&fullnode_address); //////// 0L ////////
         
         build_validator_config_transaction(
             storage,
