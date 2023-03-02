@@ -245,6 +245,7 @@ impl Client {
 
     ///////// 0L ////////
     pub fn fork_genesis_repo(&self, genesis_repo_owner: &str, genesis_repo_name: &str) -> Result<(), Error> {
+        dbg!(&genesis_repo_owner);
         let json = json!({});
 
         let api_path = format!("https://api.github.com/repos/{}/{}/forks", genesis_repo_owner, genesis_repo_name);

@@ -72,7 +72,7 @@ fn main() -> Result<()> {
       let mut w = wizard::GenesisWizard::default();
       w.repo_name = opts.genesis_repo_name.as_ref().unwrap().clone();
       w.repo_owner = opts.genesis_repo_owner.as_ref().unwrap().clone();
-        w.epoch = opts.genesis_restore_epoch.unwrap();
+      w.epoch = opts.genesis_restore_epoch.unwrap();
       w.start_wizard()?;
       return Ok(()); // exit
     }

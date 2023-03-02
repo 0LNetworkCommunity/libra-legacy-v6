@@ -5,150 +5,144 @@ use anyhow::bail;
 use dialoguer::{Confirm, Input};
 
 use diem_genesis_tool::{
-  validator_operator::ValidatorOperator,
-  key::{OperatorKey, Key, OwnerKey},
-  validator_config::ValidatorConfig,
+    key::{Key, OperatorKey, OwnerKey},
+    validator_config::ValidatorConfig,
+    validator_operator::ValidatorOperator,
 };
 
-use indicatif::{ProgressIterator, ProgressBar};
-use ol::config::AppCfg;
-use std::{path::Path, thread, time::Duration};
-use dirs;
-use ol_types::OLProgress;
 use diem_github_client;
-use std::path::PathBuf;
-use std::str::FromStr;
 use diem_types::chain_id::ChainId;
 use diem_types::network_address::{NetworkAddress, Protocol};
+use dirs;
+use indicatif::{ProgressBar, ProgressIterator};
+use ol::config::AppCfg;
+use ol_types::OLProgress;
+use std::path::PathBuf;
+use std::str::FromStr;
+use std::{path::Path, thread, time::Duration};
 // use ol::mgmt::restore::Backup;
-
 
 use crate::run;
 
-
-
 #[test]
 fn test_wizard() {
-  let mut wizard = GenesisWizard::default();
-  wizard.start_wizard().unwrap();
+    let mut wizard = GenesisWizard::default();
+    wizard.start_wizard().unwrap();
 }
 /// Wizard for genesis
 pub struct GenesisWizard {
-  ///
-  pub namespace: String,
-  ///
-  pub repo_owner: String,
-  ///
-  pub repo_name: String,
-  github_username: String,
-  github_token: String,
-  data_path: PathBuf,
-  ///
-  pub epoch: u64
+    ///
+    pub namespace: String,
+    ///
+    pub repo_owner: String,
+    ///
+    pub repo_name: String,
+    github_username: String,
+    github_token: String,
+    data_path: PathBuf,
+    ///
+    pub epoch: u64,
 }
 
 impl Default for GenesisWizard {
-  /// testnet values for genesis wizard
-  fn default() -> Self {
-    let data_path = dirs::home_dir().expect("no home dir found").join(".0L/");
+    /// testnet values for genesis wizard
+    fn default() -> Self {
+        let data_path = dirs::home_dir().expect("no home dir found").join(".0L/");
 
-    Self {
-      namespace: "alice".to_string(),
-      repo_owner: "0l-testnet".to_string(),
-      repo_name: "dev-genesis".to_string(),
-      github_username: "".to_string(),
-      github_token: "".to_string(),
-      data_path,
-        epoch: 0 // What should this default value be?
+        Self {
+            namespace: "alice".to_string(),
+            repo_owner: "0l-testnet".to_string(),
+            repo_name: "dev-genesis".to_string(),
+            github_username: "".to_string(),
+            github_token: "".to_string(),
+            data_path,
+            epoch: 0, // What should this default value be?
+        }
     }
-  }
 }
 impl GenesisWizard {
     /// start wizard for end-to-end genesis
     pub fn start_wizard(&mut self) -> anyhow::Result<()> {
-        // check the git token is as expected, and set it.
-        self.git_token_check()?;
-
         let to_genesis = Confirm::new()
             .with_prompt("Skip registration, straight to genesis?")
             .interact()
             .unwrap();
 
-  // check if .0L folder is clean
+        // check if .0L folder is clean
+        if !to_genesis {
+            let has_data_path = Path::exists(&self.data_path);
 
-  let has_data_path = Path::exists(&self.data_path);
+            // initialize app configs
+            if !has_data_path {
+                println!("Let's initialize this host");
 
-  // initialize app configs
-  if !has_data_path {
-    println!("Let's initialize this host");
-    
-    initialize_host()?;
-
-  } else {
-  // check if the user wants to overwrite configs
-    match Confirm::new()
-      .with_prompt("Want to freshen configs at .0L now?")
-      .interact() {
-        Ok(true) => initialize_host()?,
-        _ => {},
-    }
-  }
-
-  // check if the user has the github auth token, and that
-  // there is a forked repo on their account.
-  // Fork the repo, if it doesn't exist
-  self.git_setup()?;
-
-  let app_config = ol_types::config::parse_toml(self.data_path.join("0L.toml"))?;
-
-  // Run registration
-  // register the configs on the new forked repo, and make the pull request
-  self.register_configs(&app_config)?;
-
-  self.make_pull_request()?;
-
-
-  // Download the snapshot from the epoch archive. Ask user which epoch to use.
-      // ol/cli/src/mgmt/restore.rs
-      // TODO: PANICS, check comments in function.
-    // self.restore_snapshot(self.epoch)?;
-
-  // run genesis
-  let snapshot_path = ol_types::fixtures::get_test_snapshot();
-    // ${SOURCE}/ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff
-  run::default_run(
-    self.data_path.clone(),
-    snapshot_path, 
-    self.repo_owner.clone(), 
-    self.repo_name.clone(), 
-    self.github_token.clone(), 
-    false
-  )?;
-
-  // create the files
-
-  // empty the DB
-
-
-
-  // verify genesis
-
-  // reset the safety rules
-
-  // remove "owner" key from key_store.json
-
-            for _ in (0..10)
-                .progress_with_style(OLProgress::fun())
-                .with_message("Initializing 0L")
-            {
-                thread::sleep(Duration::from_millis(100));
+                initialize_host()?;
+            } else {
+                // check if the user wants to overwrite configs
+                match Confirm::new()
+                    .with_prompt("Want to freshen configs at .0L now?")
+                    .interact()
+                {
+                    Ok(true) => initialize_host()?,
+                    _ => {}
+                }
             }
-        } else {
-          println!("Please wait for everyone to finish genesis and come back");
+
+            // check if the user has the github auth token, and that
+            // there is a forked repo on their account.
+            // Fork the repo, if it doesn't exist
+            self.git_setup()?;
+
+            let app_config = ol_types::config::parse_toml(self.data_path.join("0L.toml"))?;
+
+            // Run registration
+            // register the configs on the new forked repo, and make the pull request
+            self.register_configs(&app_config)?;
+
+            self.make_pull_request()?
         }
 
-  Ok(())
-}
+        Confirm::new()
+            .with_prompt("WAIT for everyone to do genesis. Is everyone ready?")
+            .interact()
+            .unwrap();
+
+        // Download the snapshot from the epoch archive. Ask user which epoch to use.
+        // ol/cli/src/mgmt/restore.rs
+        // TODO: PANICS, check comments in function.
+        // self.restore_snapshot(self.epoch)?;
+
+        // run genesis
+        let snapshot_path = ol_types::fixtures::get_test_snapshot();
+        // ${SOURCE}/ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff
+        run::default_run(
+            self.data_path.clone(),
+            snapshot_path,
+            self.repo_owner.clone(),
+            self.repo_name.clone(),
+            self.github_token.clone(),
+            false,
+        )?;
+
+        // create the files
+
+        // empty the DB
+
+        // verify genesis
+
+        // reset the safety rules
+
+        // remove "owner" key from key_store.json
+
+        for _ in (0..10)
+            .progress_with_style(OLProgress::fun())
+            .with_message("Initializing 0L")
+        {
+            thread::sleep(Duration::from_millis(100));
+        }
+
+        Ok(())
+    }
 
     fn git_setup(&mut self) -> anyhow::Result<()> {
         let gh_token_path = self.data_path.join("github_token.txt");
@@ -165,13 +159,13 @@ impl GenesisWizard {
             }
         }
 
-        self.github_token = std::fs::read_to_string(&gh_token_path)?;
+        let api_token = std::fs::read_to_string(&gh_token_path)?;
 
         let gh_client = diem_github_client::Client::new(
             self.repo_owner.clone(),
             self.repo_name.clone(),
             "master".to_string(),
-            self.github_token.clone(),
+            api_token.clone(),
         );
 
         // Use the github token to find out who is the user behind it.
@@ -193,35 +187,35 @@ impl GenesisWizard {
             self.github_username.clone(),
             self.repo_name.clone(),
             "master".to_string(),
-            self.github_token.clone(),
+            api_token,
         );
 
-  if user_gh_client.get_branches().is_err() {
-    match Confirm::new()
-    .with_prompt(format!("Fork the genesis repo to your account? {} ", &self.github_username))
-    .interact() {
-        Ok(true) =>  gh_client.fork_genesis_repo(&self.repo_owner, &self.repo_name)?,
-        _ => bail!("no forked repo on your account, we need it to continue"),
+        if user_gh_client.get_branches().is_err() {
+            match Confirm::new()
+                .with_prompt(format!(
+                    "Fork the genesis repo to your account? {} ",
+                    &self.github_username
+                ))
+                .interact()
+            {
+                Ok(true) => gh_client.fork_genesis_repo(&self.repo_owner, &self.repo_name)?,
+                _ => bail!("no forked repo on your account, we need it to continue"),
+            }
+        } else {
+            println!("found a genesis repo on your account, we'll use that for registration");
+        }
+        // Remeber to clear out the /owner key from the key_store.json for safety.
+        Ok(())
     }
-  } else {
-    println!("found a genesis repo on your account, we'll use that for registration");
-  }
-  // Remeber to clear out the /owner key from the key_store.json for safety.
-  Ok(())
 
-}
+    fn register_configs(&self, app_cfg: &AppCfg) -> anyhow::Result<()> {
+        let pb = ProgressBar::new(4).with_style(OLProgress::bar());
 
- fn register_configs(&self, app_cfg: &AppCfg) -> anyhow::Result<()>{
-    let pb = ProgressBar::new(4)
-    .with_style(OLProgress::bar());
-    
-
-
-  // These are abstractions for github and the local key storage.
-  let val = Key::validator_backend(
-     app_cfg.format_oper_namespace().clone(), 
-     self.data_path.clone()
-  )?;
+        // These are abstractions for github and the local key storage.
+        let val = Key::validator_backend(
+            app_cfg.format_oper_namespace().clone(),
+            self.data_path.clone(),
+        )?;
 
         let owner_shared = Key::shared_backend(
             app_cfg.format_owner_namespace().clone(),
@@ -237,87 +231,84 @@ impl GenesisWizard {
             self.data_path.clone(),
         )?;
 
-
-
-//   # OPER does this
-// # Submits operator key to github, and creates local OPERATOR_ACCOUNT
-// oper-key:
-// 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- operator-key \
-// 	--validator-backend ${LOCAL} \
-// 	--shared-backend ${REMOTE}
-
-
-  pb.inc(1);
-
-  let own = OwnerKey {
-    key: Key::new(&val, &sh)
-  };
-
-        own.execute()?;
-
-
-        pb.set_message("registering the OPERATOR account.");
         let op = OperatorKey {
             key: Key::new(&val, &oper_shared),
         };
 
         op.execute()?;
 
+        //   # OPER does this
+        // # Submits operator key to github, and creates local OPERATOR_ACCOUNT
+        // oper-key:
+        // 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- operator-key \
+        // 	--validator-backend ${LOCAL} \
+        // 	--shared-backend ${REMOTE}
 
-// # OWNER does this
-// # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
-// owner-key:
-// 	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  owner-key \
-// 	--validator-backend ${LOCAL} \
-// 	--shared-backend ${REMOTE}
+        pb.inc(1);
 
+        let own = OwnerKey {
+            key: Key::new(&val, &owner_shared),
+        };
 
-  let set_oper = ValidatorOperator::new(
-    app_cfg.format_owner_namespace().clone(),
-    &sh
-  );
+        own.execute()?;
+        pb.inc(1);
+
+        // # OWNER does this
+        // # Submits operator key to github, does *NOT* create the OWNER_ACCOUNT locally
+        // owner-key:
+        // 	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  owner-key \
+        // 	--validator-backend ${LOCAL} \
+        // 	--shared-backend ${REMOTE}
+
+        let set_oper =
+            ValidatorOperator::new(app_cfg.format_owner_namespace().clone(), &owner_shared);
 
         set_oper.execute()?;
+        pb.inc(1);
 
+        // # OWNER does this
+        // # Links to an operator on github, creates the OWNER_ACCOUNT locally
+        // assign:
+        // 	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  set-operator \
+        // 	--operator-name ${OPER} \
+        // 	--shared-backend ${REMOTE}
 
-// # OWNER does this
-// # Links to an operator on github, creates the OWNER_ACCOUNT locally
-// assign: 
-// 	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  set-operator \
-// 	--operator-name ${OPER} \
-// 	--shared-backend ${REMOTE}
+        //TODO(nima) send the validator config. similar to above
 
+        let val_config = ValidatorConfig::new(
+            app_cfg.format_owner_namespace().clone(),
+            NetworkAddress::from_str(&*format!(
+                "{}{}",
+                Protocol::Ip4(app_cfg.profile.ip),
+                Protocol::Tcp(6180)
+            ))
+            .unwrap(),
+            NetworkAddress::from_str(&*format!(
+                "{}{}",
+                Protocol::Ip4(app_cfg.profile.vfn_ip.unwrap()),
+                Protocol::Tcp(6179)
+            ))
+            .unwrap(),
+            &oper_shared,
+            &val,
+            false,
+            ChainId::new(app_cfg.chain_info.chain_id.id()),
+        );
+        val_config.execute()?;
+        pb.inc(1);
 
-
-  //TODO(nima) send the validator config. similar to above
-
-     let val_config = ValidatorConfig::new(
-         app_cfg.format_owner_namespace().clone(),
-         NetworkAddress::from_str(&*format!("{}{}", Protocol::Ip4(app_cfg.profile.ip), Protocol::Tcp(6180))).unwrap(),
-         NetworkAddress::from_str(&*format!("{}{}", Protocol::Ip4(app_cfg.profile.vfn_ip.unwrap()), Protocol::Tcp(6179))).unwrap(),
-         &sh,
-         &val,
-         false,
-         ChainId::new(app_cfg.chain_info.chain_id.id()),
-     );
-     val_config.execute()?;
-     pb.inc(1);
-
-
-// # OPER does this
-// # Submits signed validator registration transaction to github.
-// reg:
-// 	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  validator-config \
-// 	--owner-name ${OWNER} \
-// 	--chain-id ${CHAIN_ID} \
-// 	--validator-address "/ip4/${IP}/tcp/6180" \
-// 	--fullnode-address "/ip4/${IP}/tcp/6179" \
-// 	--validator-backend ${LOCAL} \
-// 	--shared-backend ${REMOTE}
+        // # OPER does this
+        // # Submits signed validator registration transaction to github.
+        // reg:
+        // 	cargo run -p diem-genesis-tool ${CARGO_ARGS} --  validator-config \
+        // 	--owner-name ${OWNER} \
+        // 	--chain-id ${CHAIN_ID} \
+        // 	--validator-address "/ip4/${IP}/tcp/6180" \
+        // 	--fullnode-address "/ip4/${IP}/tcp/6179" \
+        // 	--validator-backend ${LOCAL} \
+        // 	--shared-backend ${REMOTE}
 
         pb.finish_and_clear();
-        OLProgress::complete("Registered configs on github");
-        
         Ok(())
     }
 
@@ -344,8 +335,7 @@ impl GenesisWizard {
         let gh_token_path = self.data_path.join("github_token.txt");
         let api_token = std::fs::read_to_string(&gh_token_path)?;
 
-        let pb = ProgressBar::new(1)
-        .with_style(OLProgress::bar());
+        let pb = ProgressBar::new(1).with_style(OLProgress::bar());
         let gh_client = diem_github_client::Client::new(
             self.repo_owner.clone(),
             self.repo_name.clone(),
@@ -354,32 +344,29 @@ impl GenesisWizard {
         );
         // repository_owner, genesis_repo_name, username
         // This will also fail if there already is a pull request!
-       match gh_client.make_genesis_pull_request(&*self.repo_owner, &*self.repo_name, &*self.github_username) {
-           Ok(_) => println!("created pull request to genesis repo"),
-           Err(e) => println!("failed to create pull request to genesis repo: {:?}", e),
-       };
+        match gh_client.make_genesis_pull_request(
+            &*self.repo_owner,
+            &*self.repo_name,
+            &*self.github_username,
+        ) {
+            Ok(_) => println!("created pull request to genesis repo"),
+            Err(_) => println!("failed to create pull request to genesis repo: do you already have an open PR? If so, you don't need to do anything else."),
+        };
         pb.inc(1);
         pb.finish_and_clear();
         Ok(())
     }
-    
-
 }
-
-
 
 fn initialize_host() -> anyhow::Result<()> {
-  let mut w = onboard::wizard::Wizard::default();
-  w.genesis_ceremony = true;
-  w.run()
+    let mut w = onboard::wizard::Wizard::default();
+    w.genesis_ceremony = true;
+    w.run()
 }
-
-
 
 // # ENVIRONMENT
 // # 1. You must have a github personal access token at ~/.0L/github_token.txt
 // # 2. export the environment variable `GITHUB_USER=<your github username`
-
 
 // # All nodes must initialize their configs.
 // # You can optionally use the key generator to use a new account in this genesis.
@@ -392,7 +379,7 @@ fn initialize_host() -> anyhow::Result<()> {
 
 // # Each validator will have their own github REPO for the purposes of
 // # Registering for genesis. THis repo is a fork of the coordinating repo.
-// # Once registered (in next step), a pull request will be sent back to the original repo with 
+// # Once registered (in next step), a pull request will be sent back to the original repo with
 // # the node's registration information.
 // v6-github: gen-fork-repo
 
@@ -403,10 +390,10 @@ fn initialize_host() -> anyhow::Result<()> {
 // # or can be manually by pull request, changing set_layout.toml
 // v6-validators: layout
 
-// v6-genesis: fork-genesis 
+// v6-genesis: fork-genesis
 
 // # Create the files necessary to start node. Includes new waypoint from genesis
-// v6-files: set-waypoint node-files 
+// v6-files: set-waypoint node-files
 // 	# DESTROYING DB
 // 	rm -rf ~/.0L/db
 
