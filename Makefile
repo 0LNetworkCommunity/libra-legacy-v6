@@ -1,4 +1,3 @@
-
 #### VARIABLES ####
 SHELL=/usr/bin/env bash
 DATA_PATH = ${HOME}/.0L
@@ -22,8 +21,8 @@ IP=$(shell toml get ${DATA_PATH}/0L.toml profile.ip)
 # Github settings
 GITHUB_TOKEN = $(shell cat ${DATA_PATH}/github_token.txt || echo NOT FOUND)
 
-REPO_ORG = 0l-testnet
-REPO_NAME = dev-genesis
+REPO_ORG = 0LNetworkCommunity
+REPO_NAME = genesis-registration
 
 ifndef CARGO_ARGS
 CARGO_ARGS = --release
@@ -33,7 +32,7 @@ ifeq (${TEST}, y)
 REPO_NAME = dev-genesis
 MNEM = $(shell cat ol/fixtures/mnemonic/${NS}.mnem)
 CARGO_ARGS = --locked # just keeping this from doing --release mode, while in testnet mode.
-GITHUB_USER = 0l-testnet
+GITHUB_USER = 0LNetworkCommunity
 endif
 
 # Registration params
@@ -95,7 +94,10 @@ bins: stdlib
 
 stdlib:
 # cargo run ${CARGO_ARGS} -p diem-framework
-	. ./ol/util/build-stdlib.sh
+	cargo run ${CARGO_ARGS} -p diem-framework -- --create-upgrade-payload
+	shasum -a 256 ./DPN/releases/artifacts/current/staged/stdlib.mv | true
+	mkdir diem-move/diem-framework/DPN/releases/artifacts/current/ | rm -rf diem-move/diem-framework/DPN/releases/artifacts/current/*
+	cp -r ./DPN/releases/artifacts/current/* diem-move/diem-framework/DPN/releases/artifacts/current/
 
 install: mv-bin bin-path
 	mkdir ${USER_BIN_PATH} | true
@@ -185,21 +187,10 @@ shuffle-test:
 init-backend: 
 	curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/orgs/${REPO_ORG}/repos -d '{"name":"${REPO_NAME}", "private": "true", "auto_init": "true"}'
 
-# this layout will be saved to the genesis repo. needs only to be done once
 layout:
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- set-layout \
 	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--path ${DATA_PATH}/set_layout.toml
-
-# Note the only difference from testnet is that we have a fixture file for 
-# the personas that are participating.
-# in Devnet this only needs to be done when the test personas are changed.
-testnet-layout:
-	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- set-layout \
-	--shared-backend 'backend=github;repository_owner=${REPO_ORG};repository=${REPO_NAME};token=${DATA_PATH}/github_token.txt;namespace=common' \
-	--path ${SOURCE}/ol/devnet/set_layout.toml
-
-
+	--path ./ol/devnet/set_layout_${NODE_ENV}.toml
 
 root:
 		cargo run -p diem-genesis-tool ${CARGO_ARGS} -- diem-root-key \
@@ -245,8 +236,7 @@ gen-register:
 	ACC=${ACC}-oper make oper-key
 
 	@echo The OWNERS initialize local accounts and submit pubkeys to github, and mining proofs
-	make owner-key
-#	make owner-key add-proofs
+	make owner-key add-proofs
 
 	@echo OWNER *assigns* an operator.
 	OPER=${ACC}-oper make assign
@@ -254,18 +244,15 @@ gen-register:
 	@echo OPER send signed transaction with configurations for *OWNER* account
 	ACC=${ACC}-oper OWNER=${ACC} IP=${IP} make reg
 
-# In the same flow, assuming successful, a pull request is made.
-	make gen-make-pull
+# TODO: implement the forking workflow for dev genesis?
+# @echo Making pull request to genesis coordination repo
+# make gen-make-pull
 
-# Deprecated with new testnet flow
-# init-test:
-# 	cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
-# 	cargo run -p ol -- init --app
-
+init-test:
+	echo ${MNEM} | head -c -1 | cargo run -p diem-genesis-tool --  init --path=${DATA_PATH} --namespace=${ACC}
 
 init:
-# cargo run -p diem-genesis-tool ${CARGO_ARGS} -- init --path=${DATA_PATH} --namespace=${ACC}
-	cargo run -p onboard -- val --skip-mining --chain-id 1 --genesis-ceremony
+	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- init --path=${DATA_PATH} --namespace=${ACC}
 # OWNER does this
 # Submits proofs to shared storage
 add-proofs:
@@ -318,10 +305,7 @@ verify-gen:
 	--validator-backend ${LOCAL} \
 	--genesis-path ${DATA_PATH}/genesis.blob
 
-# genesis: stdlib files
-# 	sha256sum ${DATA_PATH}/genesis.blob
-
-files:
+genesis: stdlib
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
 	--chain-id ${CHAIN_ID} \
 	--validator-backend ${LOCAL} \
@@ -332,28 +316,8 @@ files:
   --layout-path ${DATA_PATH}/set_layout.toml \
 	--val-ip-address ${IP}
 
-fork-genesis:
-	cargo run -p ol-genesis-tools ${CARGO_ARGS} -- \
-	--fork \
-	--genesis-repo-owner ${REPO_ORG} \
-	--genesis-repo-name ${REPO_NAME} \
-	--genesis-gh-token ${GITHUB_TOKEN} \
-	--snapshot-path ${SOURCE}/ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff \
-	--output-path ${DATA_PATH}/genesis.blob \
 
-node-files:
-	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
-	--chain-id ${CHAIN_ID} \
-	--validator-backend ${LOCAL} \
-	--data-path ${DATA_PATH} \
-	--namespace ${ACC}-oper \
-	--genesis-path ${DATA_PATH}/genesis.blob \
-	--val-ip-address ${IP} \
-
-# --repo ${REPO_NAME} \
-# --github-org ${REPO_ORG} \
-# --layout-path ${DATA_PATH}/set_layout.toml \
-
+	sha256sum ${DATA_PATH}/genesis.blob
 
 #### NODE MANAGEMENT ####
 start:
@@ -386,7 +350,7 @@ clear:
 ifeq (${TEST}, y)
 
 	@if test -d ${DATA_PATH}; then \
-		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml genesis_waypoint.txt; \
+		cd ${DATA_PATH} && rm -rf libradb *.yaml *.blob *.json db *.toml; \
 	fi
 	@if test -d ${DATA_PATH}/vdf_proofs; then \
 		rm -f ${DATA_PATH}/vdf_proofs/*.json; \
@@ -408,65 +372,67 @@ check:
 	@echo github_org: ${REPO_ORG}
 	@echo github_repo: ${REPO_NAME}
 	@echo env: ${NODE_ENV}
-	@echo TEST mode: ${TEST}
-	@echo TEST name: ${NS}
-	@echo TEST mnem: ${MNEM}
+	@echo devnet mode: ${TEST}
+	@echo devnet name: ${NS}
+	@echo devnet mnem: ${MNEM}
 
 
-# DEPRECATED WITH NEW TESTNET FLOW
-# fix:
-# ifdef TEST
-# 	@echo NAMESPACE: ${NS}
-# 	@echo GENESIS: ${V}
-# 	@if test ! -d ${DATA_PATH}; then \
-# 		echo Creating Directories; \
-# 		mkdir ${DATA_PATH}; \
-# 		mkdir -p ${DATA_PATH}/vdf_proofs/; \
-# 	fi
+fix:
+ifdef TEST
+	@echo NAMESPACE: ${NS}
+	@echo GENESIS: ${V}
+	@if test ! -d ${DATA_PATH}; then \
+		echo Creating Directories; \
+		mkdir ${DATA_PATH}; \
+		mkdir -p ${DATA_PATH}/vdf_proofs/; \
+	fi
 
-# 	@if test ! -d ${DATA_PATH}/vdf_proofs; then \
-# 		echo Creating Directories; \
-# 		mkdir -p ${DATA_PATH}/vdf_proofs/; \
-# 	fi
+	@if test ! -d ${DATA_PATH}/vdf_proofs; then \
+		echo Creating Directories; \
+		mkdir -p ${DATA_PATH}/vdf_proofs/; \
+	fi
 
-# 	@if test -f ${DATA_PATH}/vdf_proofs/proof_0.json; then \
-# 		rm ${DATA_PATH}/vdf_proofs/proof_0.json; \
-# 	fi 
+	@if test -f ${DATA_PATH}/vdf_proofs/proof_0.json; then \
+		rm ${DATA_PATH}/vdf_proofs/proof_0.json; \
+	fi 
 
-# 	@if test -f ${DATA_PATH}/0L.toml; then \
-# 		rm ${DATA_PATH}/0L.toml; \
-# 	fi 
+	@if test -f ${DATA_PATH}/0L.toml; then \
+		rm ${DATA_PATH}/0L.toml; \
+	fi 
 
-# # skip miner configuration with fixtures
-# 	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/0L.toml
-# # skip mining proof zero with fixtures
-# 	cp ./ol/fixtures/vdf_proofs/${NODE_ENV}/${NS}/proof_0.json ${DATA_PATH}/vdf_proofs/proof_0.json
-# # place a mock autopay.json in root
-# 	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/autopay_batch.json
-# # place a mock account.json in root, used as template for onboarding
-# 	cp ./ol/fixtures/account/${NS}.account.json ${DATA_PATH}/account.json
-# # replace the set_layout
-# 	cp ./ol/TEST/set_layout_test.toml ${DATA_PATH}/set_layout.toml
-# endif
+# skip miner configuration with fixtures
+	cp ./ol/fixtures/configs/${NS}.toml ${DATA_PATH}/0L.toml
+# skip mining proof zero with fixtures
+	cp ./ol/fixtures/vdf_proofs/${NODE_ENV}/${NS}/proof_0.json ${DATA_PATH}/vdf_proofs/proof_0.json
+# place a mock autopay.json in root
+	cp ./ol/fixtures/autopay/${NS}.autopay_batch.json ${DATA_PATH}/autopay_batch.json
+# place a mock account.json in root, used as template for onboarding
+	cp ./ol/fixtures/account/${NS}.account.json ${DATA_PATH}/account.json
+# replace the set_layout
+	cp ./ol/devnet/set_layout_test.toml ${DATA_PATH}/set_layout.toml
+endif
 
 
 #### HELPERS ####
-extract-waypoint:
-	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-waypoint \
-	--genesis-path ${DATA_PATH}/genesis.blob \
-	--extract \
-	--chain-id ${CHAIN_ID} \
-	--shared-backend ${REMOTE} \
-	| awk -F 'Waypoint: '  '{print $$2}' > ${DATA_PATH}/genesis_waypoint.txt
-
 set-waypoint:
-	make extract-waypoint && cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/genesis_waypoint.txt)
+	@if test -f ${DATA_PATH}/key_store.json; then \
+		jq -r '. | with_entries(select(.key|match("-oper/waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/client_waypoint; \
+		jq -r '. | with_entries(select(.key|match("-oper/genesis-waypoint";"i")))[].value' ${DATA_PATH}/key_store.json > ${DATA_PATH}/genesis_waypoint.txt; \
+	fi
 
-	@echo waypoint:
-	@cat ${DATA_PATH}/genesis_waypoint.txt
+	cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/client_waypoint)
+
+	@echo client_waypoint:
+	@cat ${DATA_PATH}/client_waypoint
 
 client: set-waypoint
-	cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/genesis_waypoint.txt) --chain-id ${CHAIN_ID}
+# ifeq (${TEST}, y)
+# 	 echo ${MNEM} | cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
+# else
+	cargo run -p cli -- -u http://localhost:8080 --waypoint $$(cat ${DATA_PATH}/client_waypoint) --chain-id ${CHAIN_ID}
+# endif
+
+
 
 keygen:
 	cd ${DATA_PATH} && onboard keygen
@@ -515,10 +481,9 @@ debug:
 
 
 #### 1. TESTNET SETUP ####
-# Make sure that your source is built, including stdlib
-# 
 
-testnet-init: clear
+testnet-init: clear fix
+#  REQUIRES there is a genesis.blob in the fixtures/genesis/<version> you are testing
 	MNEM='${MNEM}' cargo run -p onboard -- val --skip-mining --chain-id 1 --genesis-ceremony
 
 # Do the genesis ceremony registration, this includes the step testnet-validator-init-wizard
@@ -526,12 +491,7 @@ testnet-register:  testnet-init gen-register
 # Do a dev genesis on each node after EVERY NODE COMPLETED registration.
 
 # Makes the gensis file on each genesis validator, AND SAVES TO GITHUB so that other validators can be onboarded after genesis.
-testnet-genesis: genesis set-waypoint testnet-publish
-
-
-	make verify-gen
-
-testnet-publish:
+testnet-genesis: genesis set-waypoint
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
 	--publish-genesis ${DATA_PATH}/genesis.blob \
 	--shared-backend ${GENESIS_REMOTE}
@@ -539,6 +499,7 @@ testnet-publish:
 	cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-repo \
 	--publish-genesis ${DATA_PATH}/genesis_waypoint.txt \
 	--shared-backend ${GENESIS_REMOTE}
+
 
 #### 2. TESTNET START ####
 
@@ -555,8 +516,6 @@ testnet: clear fix testnet-init testnet-genesis start
 testnet-onboard: clear fix
 	MNEM='${MNEM}' cargo run -p onboard -- val --github-org ${REPO_ORG} --repo dev-genesis --chain-id 1
 # start a node with fullnode.node.yaml configs
-
-testnet-fullnode:	
 	cargo r -p diem-node -- -f ~/.0L/fullnode.node.yaml
 
 
@@ -590,7 +549,7 @@ sw-tx:
 
 ##### FORK TESTS #####
 
-# fork: stdlib fork-genesis fork-config fork-start
+fork: stdlib fork-genesis fork-config fork-start
 
 EPOCH_HEIGHT = $(shell cargo r -p ol -- query --epoch | cut -d ":" -f 2)
 
@@ -598,65 +557,25 @@ epoch:
 	cargo r -p ol -- query --epoch
 	echo ${EPOCH_HEIGHT}
 
-# fork-backup:
-# 		rm -rf ${SOURCE}/ol/TEST/snapshot/*
-# 		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}/ol/TEST/snapshot/
+fork-backup:
+		rm -rf ${SOURCE}/ol/devnet/snapshot/*
+		cargo run -p backup-cli --bin db-backup -- one-shot backup --backup-service-address http://localhost:6186 state-snapshot --state-version ${EPOCH_HEIGHT} local-fs --dir ${SOURCE}/ol/devnet/snapshot/
 
-# # Make genesis file
-# fork-genesis:
-# 		cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}/ol/TEST/snapshot/state_ver*
+# Make genesis file
+fork-genesis:
+		cargo run -p ol-genesis-tools -- --genesis ${DATA_PATH}/genesis_from_snapshot.blob --snapshot ${SOURCE}/ol/devnet/snapshot/state_ver*
 
 # Use onboard to create all node files
-# fork-config:
-# 	cargo run -p onboard -- fork -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
+fork-config:
+	cargo run -p onboard -- fork -u http://167.172.248.37 --prebuilt-genesis ${DATA_PATH}/genesis_from_snapshot.blob
 
-# # start node from files
-# fork-start:
-# 	rm -rf ~/.0L/db
-# 	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
+# start node from files
+fork-start:
+	rm -rf ~/.0L/db
+	cargo run -p libra-node -- --config ~/.0L/validator.node.yaml
 
 ##### UTIL #####
 TAG=$(shell git tag -l "previous")
 clean-tags:
 	git push origin --delete ${TAG}
 	git tag -d ${TAG}
-
-
-################ V6 Genesis Rehearsal ################
-# ENVIRONMENT
-# 1. You must have a github personal access token at ~/.0L/github_token.txt
-# 2. export the environment variable `GITHUB_USER=<your github username`
-
-
-# All nodes must initialize their configs.
-# You can optionally use the key generator to use a new account in this genesis.
-
-v6-keys:
-	cargo r -p onboard -- keygen
-
-# Initialize basic files. Take advantage to build the stdlib, in case.
-v6-init: stdlib init
-
-# Each validator will have their own github REPO for the purposes of
-# Registering for genesis. THis repo is a fork of the coordinating repo.
-# Once registered (in next step), a pull request will be sent back to the original repo with 
-# the node's registration information.
-v6-github: gen-fork-repo
-
-# Each validator registers for genesis ON THEIR OWN GITHUB FORK.
-v6-register: gen-register
-
-# One person should write to the coordination repo with the list of validators.
-# or can be manually by pull request, changing set_layout.toml
-v6-validators: layout
-
-v6-genesis: fork-genesis 
-
-# Create the files necessary to start node. Includes new waypoint from genesis
-v6-files: set-waypoint node-files 
-	# DESTROYING DB
-	rm -rf ~/.0L/db
-
-# Verify the local configuration and the genesis.
-v6-verify: verify-gen
-
