@@ -158,13 +158,13 @@ impl GenesisWizard {
             }
         }
 
-        let api_token = std::fs::read_to_string(&gh_token_path)?;
+        self.github_token = std::fs::read_to_string(&gh_token_path)?;
 
         let gh_client = diem_github_client::Client::new(
             self.repo_owner.clone(),
             self.repo_name.clone(),
             "master".to_string(),
-            api_token.clone(),
+            self.github_token.clone(),
         );
 
         // Use the github token to find out who is the user behind it.
@@ -186,7 +186,7 @@ impl GenesisWizard {
             self.github_username.clone(),
             self.repo_name.clone(),
             "master".to_string(),
-            api_token,
+            self.github_token.clone(),
         );
 
         if user_gh_client.get_branches().is_err() {
