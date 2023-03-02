@@ -52,6 +52,7 @@ pub fn routes(context: Context) -> impl Filter<Extract = impl Reply, Error = Inf
         .or(accounts::get_account_modules_by_ledger_version(
             context.clone(),
         ))
+        .or(accounts::get_account_struct(context.clone())) //////// 0L ////////
         .or(transactions::get_transaction(context.clone()))
         .or(transactions::get_transactions(context.clone()))
         .or(transactions::get_account_transactions(context.clone()))
