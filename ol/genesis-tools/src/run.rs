@@ -31,7 +31,10 @@ pub fn default_run(
         //     .output_path
         //     .expect("ERROR: must provide output-path for genesis.blob, exiting.");
 
-
+          
+          dbg!(&genesis_repo_owner);
+          dbg!(&genesis_repo_name);
+          dbg!(&genesis_gh_token);
               
             let genesis_vals = if !test {
               let gh_config = GitHubStorage::new(
@@ -40,6 +43,8 @@ pub fn default_run(
                 "master".to_string(),
                 genesis_gh_token,
               );
+
+              
               // NOTE: this is a real PITA.
               // There are two structs called SecureBackend, and we need to do some gymnastics. Plus they wrote their own parser for the cli args. Sigh.
               // let b =  diem_management::secure_backend::storage(&s).unwrap();
