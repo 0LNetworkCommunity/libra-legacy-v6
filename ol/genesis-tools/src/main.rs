@@ -1,5 +1,3 @@
-mod wizard;
-
 use anyhow::Result;
 use diem_secure_storage::{GitHubStorage, Storage};
 use vm_genesis::{TestValidator, Validator};
@@ -13,7 +11,7 @@ use ol_genesis_tools::{
     fork_genesis::{
         make_recovery_genesis_from_db_backup, make_recovery_genesis_from_vec_legacy_recovery,
     },
-    process_snapshot::db_backup_into_recovery_struct,
+    process_snapshot::db_backup_into_recovery_struct, wizard, run::default_run,
 };
 use indicatif::ProgressIterator;
 
@@ -64,7 +62,6 @@ fn main() -> Result<()> {
     }
 
 
-
     let opts = Args::parse_args_default_or_exit();
 
     if opts.wizard && 
@@ -79,80 +76,19 @@ fn main() -> Result<()> {
       return Ok(()); // exit
     }
 
-    let rt = tokio::runtime::Runtime::new().unwrap();
 
     if opts.fork {
-        // create a genesis.blob
-        // there are two paths here
-        // 1) do a new genesis straight from a db backup. Useful
-        // for testing, debugging, and ci.
-        // 2) use a JSON file with specific schma, which contains structured data for accounts.
-        let output_path = opts
-            .output_path
-            .expect("ERROR: must provide output-path for genesis.blob, exiting.");
+        if opts.snapshot_path.is_some() {
+          default_run(
+            opts.output_path.unwrap(),
+            opts.snapshot_path.unwrap(),
+            opts.genesis_repo_owner.unwrap(),
+            opts.genesis_repo_name.unwrap(),
+            opts.genesis_gh_token.unwrap(),
+            opts.debug,
+          );
 
-        if let Some(snapshot_path) = opts.snapshot_path {
-            if !snapshot_path.exists() {
-                panic!("ERROR: snapshot directory does not exist");
-            }
-            // Path 1 here.
-            // here we are trying to do a rescue operation or
-            // fork DIRECTLY from a DB backup.
-            // This skips the step of creating an intermediary JSON file.
-            // for more complex upgrades where names change, and state needs to
-            // be migrated, this is risky and not ideal
-            // you probably want a step where the data gets cleaned
-            // and serialized to json for analysis.
-
-            let genesis_vals: Vec<Validator> = if 
-            opts.genesis_repo_owner.is_some() &&
-            opts.genesis_repo_name.is_some() {
-              
-              // NOTE: this is a real PITA.
-              // There are two structs called SecureBackend, and we need to do some gymnastics. Plus they wrote their own parser for the cli args. Sigh.
-              // let b =  diem_management::secure_backend::storage(&s).unwrap();
-
-              
-
-              let gh_config = GitHubStorage::new(
-                opts.genesis_repo_owner.unwrap(),
-                opts.genesis_repo_name.unwrap(),
-                "master".to_string(),
-                opts.genesis_gh_token.unwrap_or("{}".to_string()),
-              );
-              let b = Storage::GitHubStorage(gh_config);
-
-              Genesis::just_the_vals(b).expect("could not get the validator set")
-            } else {
-              // TODO: this is duplicated in tests
-              TestValidator::new_test_set(Some(4)).into_iter()
-              .map(|v| {v.data}).collect()
-              // create testnet genesis
-
-            };
-            
-            rt.block_on({
-              make_recovery_genesis_from_db_backup(
-                output_path.clone(),
-                snapshot_path,
-                !opts.debug,
-                opts.legacy,
-                &genesis_vals
-                // opts.genesis_vals
-            )
-          })?;
-            // make_recovery_genesis_from_db_backup(
-            //     output_path.clone(),
-            //     snapshot_path,
-            //     !opts.debug,
-            //     opts.legacy,
-            //     &genesis_vals
-            //     // opts.genesis_vals
-            // )
-            // // .await
-            // .expect("ERROR: could not create genesis from snapshot");
-            carpe_diem();
-            Ok(())
+          Ok(())
         }
         // Path 2:
         // if we have a Recovery JSON file, let's use that.
@@ -166,17 +102,14 @@ fn main() -> Result<()> {
             make_recovery_genesis_from_vec_legacy_recovery(
               &recovery,
               &vec![],
-              output_path, 
-              opts.legacy
+              opts.output_path.unwrap(), 
+              opts.debug
             )
                 .expect("ERROR: failed to create genesis from recovery file");
-            carpe_diem();
             Ok(())
         } else {
             panic!("ERROR: must provide --snapshot-path or --recovery-json-path, exiting.");
-        }
-    
-
+        } 
     } else if opts.output_path.is_some() && opts.recovery_json_path.is_some() && opts.check {
         let err_list = compare::compare_json_to_genesis_blob(
             opts.output_path.unwrap(),
@@ -204,6 +137,7 @@ fn main() -> Result<()> {
             panic!("ERROR: --snapshot-path file does not exist");
         }
 
+        let rt = tokio::runtime::Runtime::new().unwrap();
         let recovery_struct = rt.block_on({
           db_backup_into_recovery_struct(&snapshot_path)
         })?;
@@ -216,13 +150,4 @@ fn main() -> Result<()> {
         println!("ERROR: no options provided, exiting.");
         exit(1);
     }
-}
-
-
-fn carpe_diem() {
-    // be happy
-    (0..20).progress_with_style(OLProgress::fun())
-    .for_each(|_|{
-      thread::sleep(Duration::from_millis(300));
-    });
 }

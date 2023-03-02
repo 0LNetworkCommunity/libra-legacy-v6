@@ -22,7 +22,8 @@ use diem_types::chain_id::ChainId;
 use diem_types::network_address::{NetworkAddress, Protocol};
 use ol::mgmt::restore::Backup;
 use ol::application::APPLICATION;
-use crate::fork_genesis::make_recovery_genesis_from_db_backup;
+
+use crate::run;
 
 
 
@@ -98,7 +99,7 @@ pub fn start_wizard(&mut self) -> anyhow::Result<()>{
   // register the configs on the new forked repo, and make the pull request
   self.register_configs(&app_config)?;
 
-      self.make_pull_request()?;
+  self.make_pull_request()?;
 
 
   // Download the snapshot from the epoch archive. Ask user which epoch to use.
@@ -107,7 +108,16 @@ pub fn start_wizard(&mut self) -> anyhow::Result<()>{
     // self.restore_snapshot(self.epoch)?;
 
   // run genesis
-      self.fork_genesis()?;
+  let snapshot_path = ol_types::fixtures::get_test_snapshot();
+    // ${SOURCE}/ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff
+  run::default_run(
+    self.data_path.clone(),
+    snapshot_path, 
+    self.repo_owner.clone(), 
+    self.repo_name.clone(), 
+    self.github_token.clone(), 
+    false
+  );
 
   // create the files
 
@@ -325,11 +335,7 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
         pb.finish_and_clear();
         Ok(())
     }
-
-    fn fork_genesis(&self) -> anyhow::Result<()> {
-        // TODO
-        Ok(())
-    }
+    
 
 }
 
