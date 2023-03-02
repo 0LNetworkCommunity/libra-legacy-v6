@@ -8,8 +8,13 @@
 -  [Function `mock_case_1`](#0x1_Mock_mock_case_1)
 -  [Function `mock_case_4`](#0x1_Mock_mock_case_4)
 -  [Function `all_good_validators`](#0x1_Mock_all_good_validators)
+<<<<<<< HEAD
 -  [Function `mock_network_fees`](#0x1_Mock_mock_network_fees)
 -  [Function `pof_default`](#0x1_Mock_pof_default)
+=======
+-  [Function `pof_default`](#0x1_Mock_pof_default)
+-  [Function `mock_network_fees`](#0x1_Mock_mock_network_fees)
+>>>>>>> v6-0d-genesis-patches
 
 
 <pre><code><b>use</b> <a href="Cases.md#0x1_Cases">0x1::Cases</a>;
@@ -107,6 +112,10 @@
   // print(&<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, start_height, end_height) );
   // TODO: careful that the range of heights is within the test
   <b>assert</b>!(<a href="Cases.md#0x1_Cases_get_case">Cases::get_case</a>(vm, addr, start_height, end_height) == 4, 777706);
+<<<<<<< HEAD
+=======
+
+>>>>>>> v6-0d-genesis-patches
 }
 </code></pre>
 
@@ -149,6 +158,7 @@
 
 </details>
 
+<<<<<<< HEAD
 <a name="0x1_Mock_mock_network_fees"></a>
 
 ## Function `mock_network_fees`
@@ -177,6 +187,8 @@
 
 </details>
 
+=======
+>>>>>>> v6-0d-genesis-patches
 <a name="0x1_Mock_pof_default"></a>
 
 ## Function `pof_default`
@@ -221,8 +233,41 @@
   // make all validators pay auction fee
   // the clearing price in the fibonacci sequence is is 1
   <a href="DiemAccount.md#0x1_DiemAccount_vm_multi_pay_fee">DiemAccount::vm_multi_pay_fee</a>(vm, &vals, 1, &b"proof of fee");
+<<<<<<< HEAD
 
   (vals, bids, expiry)
+=======
+
+  (vals, bids, expiry)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Mock_mock_network_fees"></a>
+
+## Function `mock_network_fees`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Mock.md#0x1_Mock_mock_network_fees">mock_network_fees</a>(vm: &signer, amount: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Mock.md#0x1_Mock_mock_network_fees">mock_network_fees</a>(vm: &signer, amount: u64) {
+  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
+  <b>let</b> c = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, amount);
+  <b>let</b> c_value = <a href="Diem.md#0x1_Diem_value">Diem::value</a>(&c);
+  <b>assert</b>!(c_value == amount, 777707);
+  <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">TransactionFee::pay_fee</a>(c);
+>>>>>>> v6-0d-genesis-patches
 }
 </code></pre>
 
