@@ -1,17 +1,14 @@
 use anyhow::Result;
 use diem_secure_storage::{GitHubStorage, Storage};
-use vm_genesis::{TestValidator, Validator};
-use std::{path::PathBuf, process::exit, time::Duration, thread};
-use ol_types::{legacy_recovery::{save_recovery_file, read_from_recovery_file}, OLProgress};
-use gumdrop::Options;
+use vm_genesis::{TestValidator};
+use std::{path::PathBuf, time::Duration, thread};
+use ol_types::{OLProgress};
+
 use diem_genesis_tool::genesis::Genesis;
 use crate::{
-    compare,
-    // swarm_genesis::make_swarm_genesis
     fork_genesis::{
-        make_recovery_genesis_from_db_backup, make_recovery_genesis_from_vec_legacy_recovery,
+        make_recovery_genesis_from_db_backup,
     },
-    process_snapshot::db_backup_into_recovery_struct,
 };
 use indicatif::ProgressIterator;
 

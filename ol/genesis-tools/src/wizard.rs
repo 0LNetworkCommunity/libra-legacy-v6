@@ -21,7 +21,7 @@ use std::str::FromStr;
 use diem_types::chain_id::ChainId;
 use diem_types::network_address::{NetworkAddress, Protocol};
 use ol::mgmt::restore::Backup;
-use ol::application::APPLICATION;
+
 
 use crate::run;
 
@@ -29,7 +29,7 @@ use crate::run;
 
 #[test]
 fn test_wizard() {
-  let wizard = GenesisWizard::default();
+  let mut wizard = GenesisWizard::default();
   wizard.start_wizard().unwrap();
 }
 
@@ -303,7 +303,7 @@ fn git_setup(&mut self) -> anyhow::Result<()> {
 
         println!("Downloading snapshot for epoch {}", epoch);
         // All we are doing is download the snapshot from github.
-        let mut backup = Backup::new(Option::from(epoch));
+        let backup = Backup::new(Option::from(epoch));
         println!("Created backup object");
         backup.fetch_backup(false)?;
         println!("Downloaded snapshot for epoch {}", epoch);
