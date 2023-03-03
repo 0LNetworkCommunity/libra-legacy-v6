@@ -36,7 +36,6 @@ diem-workspace-hack = { version = "0.1", path = "../crates/diem-workspace-hack" 
 
 # //////// 0L ////////
 sha2 = "0.9.1"
-ol-types = { path = "../ol/types" }
 
 [dev-dependencies]
 regex = "1.4.3"

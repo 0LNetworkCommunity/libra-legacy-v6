@@ -371,7 +371,7 @@ fn test_mine_genesis() {
     assert_eq!(latest_block.height, 0, "test");
 
     // Test the expected proof is writtent to file correctly.
-    let correct_proof = "003bd51aaf75164d499dca73c79a57718fb5736b436d5195be1284550960f28e50002c4f00539cc53d8c0be2be7822bc32b1dc1edbde523b28ac7c8f4c6803bb5417";
+    let correct_proof = "0068b32edb7244719b08c21fb786e7c25912a453c0ce895bc674a932a5509fda6d00020af97c69235a0387afe5e6cba13bdb4b6fd5a0e251dea265989c71b5b4db11";
     assert_eq!(hex::encode(&latest_block.proof), correct_proof, "test");
 
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
@@ -424,7 +424,7 @@ pub fn test_make_configs_fixture() -> AppCfg {
     let mut cfg = AppCfg::default();
     cfg.workspace.node_home = PathBuf::from(".");
     cfg.workspace.block_dir = "test_blocks_temp_1".to_owned();
-    cfg.chain_info.chain_id = NamedChain::STAGE;
+    cfg.chain_info.chain_id = NamedChain::TESTNET;
     cfg.profile.auth_key = "3e4629ba1e63114b59a161e89ad4a083b3a31b5fd59e39757c493e96398e4df2"
         .parse()
         .unwrap();

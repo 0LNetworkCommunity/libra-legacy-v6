@@ -14,7 +14,6 @@ use move_core_types::{
 };
 use serde::{Deserialize, Serialize};
 
-use ol_types::block::GENESIS_VDF_ITERATIONS;
 /// difficulty of the VDF proof, for use as on-chain representation and in `tower`
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VDFDifficulty {
