@@ -27,15 +27,6 @@ pub fn default_run(
         // 1) do a new genesis straight from a db backup. Useful
         // for testing, debugging, and ci.
         // 2) use a JSON file with specific schma, which contains structured data for accounts.
-        // let output_path = opts
-        //     .output_path
-        //     .expect("ERROR: must provide output-path for genesis.blob, exiting.");
-
-          
-          dbg!(&genesis_repo_owner);
-          dbg!(&genesis_repo_name);
-          dbg!(&genesis_gh_token);
-              
             let genesis_vals = if !test {
               let gh_config = GitHubStorage::new(
                 genesis_repo_owner,

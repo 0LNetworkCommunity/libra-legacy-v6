@@ -5,9 +5,10 @@ use anyhow::bail;
 use dialoguer::{Confirm, Input};
 
 use diem_genesis_tool::{
-    key::{Key, OperatorKey, OwnerKey},
+    key::{Key, OperatorKey, OwnerKey, reset_safety_data},
+    storage_helper::StorageHelper,
     validator_config::ValidatorConfig,
-    validator_operator::ValidatorOperator,
+    validator_operator::ValidatorOperator, verify::Verify,
 };
 
 use diem_github_client;
@@ -16,11 +17,15 @@ use diem_types::network_address::{NetworkAddress, Protocol};
 use dirs;
 use indicatif::{ProgressBar, ProgressIterator};
 use ol::config::AppCfg;
+use ol::mgmt::restore::Backup;
 use ol_types::OLProgress;
-use std::path::PathBuf;
 use std::str::FromStr;
+use std::{fs, path::PathBuf};
 use std::{path::Path, thread, time::Duration};
-// use ol::mgmt::restore::Backup;
+use diem_global_constants::{
+ OPERATOR_KEY, OWNER_KEY,
+};
+use diem_secure_storage::KVStorage;
 
 use crate::run;
 
@@ -41,7 +46,7 @@ pub struct GenesisWizard {
     github_token: String,
     data_path: PathBuf,
     ///
-    pub epoch: u64,
+    pub epoch: Option<u64>,
 }
 
 impl Default for GenesisWizard {
@@ -56,7 +61,7 @@ impl Default for GenesisWizard {
             github_username: "".to_string(),
             github_token: "".to_string(),
             data_path,
-            epoch: 0, // What should this default value be?
+            epoch: None, // What should this default value be?
         }
     }
 }
@@ -82,12 +87,11 @@ impl GenesisWizard {
                 initialize_host()?;
             } else {
                 // check if the user wants to overwrite configs
-                match Confirm::new()
+                if Confirm::new()
                     .with_prompt("Want to freshen configs at .0L now?")
-                    .interact()
+                    .interact()?
                 {
-                    Ok(true) => initialize_host()?,
-                    _ => {}
+                   initialize_host()?;
                 }
             }
 
@@ -111,9 +115,21 @@ impl GenesisWizard {
             .unwrap();
 
         if ready {
+            // assumes this environment is set up properly
+            let app_config = ol_types::config::parse_toml(self.data_path.join("0L.toml"))?;
             // run genesis
-            let snapshot_path = ol_types::fixtures::get_test_snapshot();
-            // ${SOURCE}/ol/fixtures/rescue/state_backup/state_ver_76353076.a0ff
+
+            let snapshot_path = if Confirm::new()
+                .with_prompt("Do we need to download a new legacy snapshot?")
+                .interact()? {
+                  self.download_snapshot(&app_config)?
+                } else {
+                  // TODO(Nima): Instead of using a test, let's ask the user for the patht to a snapshot
+                  
+                  ol_types::fixtures::get_test_snapshot()
+                };
+
+            // do the whole genesis workflow and create the files
             run::default_run(
                 self.data_path.clone(),
                 snapshot_path,
@@ -123,15 +139,21 @@ impl GenesisWizard {
                 false,
             )?;
 
-            // create the files
-
-            // empty the DB
-
-            // verify genesis
 
             // reset the safety rules
+            reset_safety_data(&self.data_path.join("key_store.json"), &app_config.format_oper_namespace());
+
+            // check db
+            self.maybe_backup_db();
 
             // remove "owner" key from key_store.json
+            self.maybe_remove_money_keys(&app_config);
+
+
+            // verify genesis
+            self.check_keys_and_genesis(&app_config)?;
+
+
 
             for _ in (0..10)
                 .progress_with_style(OLProgress::fun())
@@ -162,7 +184,7 @@ impl GenesisWizard {
         }
 
         self.github_token = std::fs::read_to_string(&gh_token_path)?;
-        OLProgress::complete(&format!("github token found, [{}]", &self.github_token));
+        OLProgress::complete("github token found");
 
         let temp_gh_client = diem_github_client::Client::new(
             self.repo_owner.clone(), // doesn't matter
@@ -183,7 +205,6 @@ impl GenesisWizard {
             println!("Please update your github token");
             return Ok(());
         }
-
 
         Ok(())
     }
@@ -221,6 +242,25 @@ impl GenesisWizard {
         }
         // Remeber to clear out the /owner key from the key_store.json for safety.
         Ok(())
+    }
+
+    fn maybe_remove_money_keys(&self, app_cfg: &AppCfg) {
+        if Confirm::new()
+            .with_prompt("Remove the money keys from the key store?")
+            .interact().unwrap()
+        {
+            let storage_helper =
+                StorageHelper::get_with_path(self.data_path.join("key_store.json"));
+
+            let mut owner_storage = storage_helper.storage(app_cfg.format_oper_namespace().clone());
+            owner_storage.set(OWNER_KEY, "").unwrap();
+            owner_storage.set(OPERATOR_KEY, "").unwrap();
+
+            let mut oper_storage = storage_helper.storage(app_cfg.format_oper_namespace().clone());
+
+            oper_storage.set(OWNER_KEY, "").unwrap();
+            oper_storage.set(OPERATOR_KEY, "").unwrap();
+        }
     }
 
     fn register_configs(&self, app_cfg: &AppCfg) -> anyhow::Result<()> {
@@ -331,24 +371,52 @@ impl GenesisWizard {
         Ok(())
     }
 
-    // fn restore_snapshot(&self, epoch: u64) -> anyhow::Result<()> {
-    //     let pb = ProgressBar::new(1)
-    //     .with_style(OLProgress::bar());
+    fn check_keys_and_genesis(&self, app_cfg: &AppCfg) -> anyhow::Result<String> {
+        let val = Key::validator_backend(
+            app_cfg.format_oper_namespace().clone(),
+            self.data_path.clone(),
+        )?;
 
-    //     // We need to initialize the abscissa application state for this to work.. Else it panics
-    //     // TODO: fix panic of Backup::new().
+      let v = Verify::new(&val,self.data_path.join("genesis.blob"));
 
-    //     println!("Downloading snapshot for epoch {}", epoch);
-    //     // All we are doing is download the snapshot from github.
-    //     let backup = Backup::new(Option::from(epoch));
-    //     println!("Created backup object");
-    //     backup.fetch_backup(false)?;
-    //     println!("Downloaded snapshot for epoch {}", epoch);
+      Ok(v.execute()?)
+    }
 
-    //     pb.inc(1);
-    //     pb.finish_and_clear();
-    //     Ok(())
-    // }
+    fn download_snapshot(&mut self, app_cfg: &AppCfg) -> anyhow::Result<PathBuf> {
+        if let Some(e) = self.epoch {
+            if !Confirm::new()
+                .with_prompt(&format!("So are we migrating data from epoch {}?", e))
+                .interact()
+                .unwrap()
+            {
+                bail!("Please specify the epoch you want to migrate from.")
+            }
+        } else {
+            self.epoch = Input::new()
+                .with_prompt("What epoch are we migrating from? ")
+                .interact_text()
+                .ok();
+            // .map(|epoch| epoch.parse().unwrap()).ok();
+        }
+
+        let pb = ProgressBar::new(1000).with_style(OLProgress::spinner());
+
+        pb.enable_steady_tick(Duration::from_millis(100));
+
+        
+        //TODO(Nima): Check if we already have the snapshot downloaded.
+
+        // All we are doing is download the snapshot from github.
+        let backup = Backup::new(self.epoch, app_cfg);
+        backup.fetch_backup(false)?;
+
+        let snapshot_manifest_file = backup.manifest_path()?;
+
+        let snapshot_dir = snapshot_manifest_file.parent().unwrap().to_path_buf();
+
+        pb.finish_and_clear();
+        Ok(snapshot_dir)
+    }
 
     fn make_pull_request(&self) -> anyhow::Result<()> {
         let gh_token_path = self.data_path.join("github_token.txt");
@@ -375,46 +443,30 @@ impl GenesisWizard {
         pb.finish_and_clear();
         Ok(())
     }
+
+    fn maybe_backup_db(&self) {
+    // ask to empty the DB
+    if self.data_path.join("db").exists() {
+        println!("We found a /db directory. Can't do genesis with a non-empty db.");
+        if Confirm::new()
+            .with_prompt("Let's move the old /db to /db_bak_<date>?")
+            .interact().unwrap()
+        {
+            let date_str = chrono::Utc::now().format("%Y-%m-%d-%H-%M").to_string();
+            fs::rename(
+                self.data_path.join("db"),
+                self.data_path.join(format!("db_bak_{}", date_str)),
+            ).expect("failed to move db to db_bak");
+        }
+    }
 }
 
-fn initialize_host() -> anyhow::Result<()> {
-    let mut w = onboard::wizard::Wizard::default();
+}
+
+fn initialize_host() -> anyhow::Result<AppCfg> {
+    let mut w = onboard::wizard::OnboardWizard::default();
     w.genesis_ceremony = true;
+
     w.run()
 }
 
-// # ENVIRONMENT
-// # 1. You must have a github personal access token at ~/.0L/github_token.txt
-// # 2. export the environment variable `GITHUB_USER=<your github username`
-
-// # All nodes must initialize their configs.
-// # You can optionally use the key generator to use a new account in this genesis.
-
-// v6-keys:
-// 	cargo r -p onboard -- keygen
-
-// # Initialize basic files. Take advantage to build the stdlib, in case.
-// v6-init: stdlib init
-
-// # Each validator will have their own github REPO for the purposes of
-// # Registering for genesis. THis repo is a fork of the coordinating repo.
-// # Once registered (in next step), a pull request will be sent back to the original repo with
-// # the node's registration information.
-// v6-github: gen-fork-repo
-
-// # Each validator registers for genesis ON THEIR OWN GITHUB FORK.
-// v6-register: gen-register
-
-// # One person should write to the coordination repo with the list of validators.
-// # or can be manually by pull request, changing set_layout.toml
-// v6-validators: layout
-
-// v6-genesis: fork-genesis
-
-// # Create the files necessary to start node. Includes new waypoint from genesis
-// v6-files: set-waypoint node-files
-// 	# DESTROYING DB
-// 	rm -rf ~/.0L/db
-
-// # Verify the local configuration and the genesis.
-// v6-verify: verify-gen

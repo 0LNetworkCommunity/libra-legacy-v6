@@ -22,7 +22,7 @@ use txs::tx_params::TxParams;
 /// `validator wizard` subcommand
 #[derive(Clone, Debug, Default)]
 // TODO: should end users also use this struct?
-pub struct Wizard {
+pub struct OnboardWizard {
     /// where to output the account.json, genesis, 0L, etc files, defaults to node home
     pub output_path: Option<PathBuf>,
     /// explicitly set home path instead of answer in wizard, for CI usually
@@ -57,9 +57,9 @@ pub struct Wizard {
     pub genesis_ceremony: bool,
 }
 
-impl Wizard {
+impl OnboardWizard {
     /// starts the onboarding wizard from parameters above.
-    pub fn run(&self) -> anyhow::Result<()>{
+    pub fn run(&self) -> anyhow::Result<AppCfg>{
         // Note. `onboard` command DOES NOT READ CONFIGS FROM 0L.toml
 
         println!(
@@ -178,7 +178,7 @@ impl Wizard {
                 &app_config.profile.ip
             );
         }
-        Ok(())
+        Ok(app_config)
     }
 
   fn get_genesis_and_make_node_files(

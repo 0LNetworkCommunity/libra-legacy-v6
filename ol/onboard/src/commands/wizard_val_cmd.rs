@@ -68,7 +68,7 @@ impl Runnable for ValWizardCmd {
 
       // let w = wizard::Wizard::default();
       
-      let w = wizard::Wizard {
+      let w = wizard::OnboardWizard {
         output_path: self.output_path.clone(),
         home_path: self.home_path.clone(),
         chain_id: self.chain_id.clone(),
