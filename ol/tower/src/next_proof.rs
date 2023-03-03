@@ -8,7 +8,7 @@ use diem_client::BlockingClient as DiemClient;
 use diem_crypto::HashValue;
 use diem_types::ol_vdf_difficulty::VDFDifficulty;
 use ol::{config::AppCfg, node::node::Node};
-use ol_types::block::genesis_delay_difficulty;
+use ol_types::block::GENESIS_VDF_ITERATIONS;
 use serde::{Deserialize, Serialize};
 
 /// container for the next proof parameters to be fed to VDF prover.
@@ -27,7 +27,7 @@ impl NextProof {
     /// create a genesis proof
     pub fn genesis_proof(config: &AppCfg) -> Self {
         let mut diff = VDFDifficulty::default();
-        diff.difficulty = genesis_delay_difficulty();
+        diff.difficulty = GENESIS_VDF_ITERATIONS.clone();
 
         NextProof {
             diff,

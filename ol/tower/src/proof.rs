@@ -6,7 +6,7 @@ use anyhow::{bail, Error};
 use diem_types::chain_id::NamedChain;
 use glob::glob;
 use ol::node::client;
-use ol_types::block::{VDFProof, GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
+use ol_types::block::{VDFProof, GENESIS_VDF_SECURITY_PARAM, GENESIS_VDF_ITERATIONS};
 use ol_types::config::AppCfg;
 use std::{fs, io::Write, path::PathBuf, time::Instant};
 use txs::tx_params::TxParams;
@@ -37,8 +37,8 @@ fn mine_genesis(config: &AppCfg, difficulty: u64, security: u64) -> VDFProof {
 
 /// Mines genesis and writes the file
 pub fn write_genesis(config: &AppCfg) -> Result<VDFProof, Error> {
-    let difficulty = genesis_delay_difficulty();
-    let security = GENESIS_VDF_SECURITY_PARAM;
+    let difficulty = GENESIS_VDF_ITERATIONS.clone();
+    let security = GENESIS_VDF_SECURITY_PARAM.clone();
     let block = mine_genesis(config, difficulty, security);
     //TODO: check for overwriting file...
     write_json(&block, &config.get_block_dir())?;

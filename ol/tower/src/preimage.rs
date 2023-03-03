@@ -3,7 +3,7 @@
 use byteorder::{LittleEndian, WriteBytesExt};
 use hex::decode;
 use ol::config::AppCfg;
-use ol_types::block::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
+use ol_types::block::{GENESIS_VDF_SECURITY_PARAM, GENESIS_VDF_ITERATIONS};
 
 /// Format the config file data into a fixed byte structure for easy parsing in Move/other languages
 pub fn genesis_preimage(cfg: &AppCfg) -> Vec<u8> {
@@ -36,12 +36,12 @@ pub fn genesis_preimage(cfg: &AppCfg) -> Vec<u8> {
 
     // DIFFICULTY_BYTES
     preimage
-        .write_u64::<LittleEndian>(genesis_delay_difficulty())
+        .write_u64::<LittleEndian>(GENESIS_VDF_ITERATIONS.clone())
         .unwrap();
 
     // SECURITY_BYTES
     preimage
-        .write_u64::<LittleEndian>(GENESIS_VDF_SECURITY_PARAM.into())
+        .write_u64::<LittleEndian>(GENESIS_VDF_SECURITY_PARAM.clone())
         .unwrap();
 
     // PIETRZAK

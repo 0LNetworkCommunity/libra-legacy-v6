@@ -5,7 +5,7 @@
 
 mod genesis_context;
 use anyhow::Error;
-use ol_types::{legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery}, block::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty}};
+use ol_types::{legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery}, block::{GENESIS_VDF_SECURITY_PARAM, GENESIS_VDF_ITERATIONS}};
 use std::env;
 use crate::genesis_context::GenesisStateView;
 use diem_crypto::{
@@ -528,8 +528,8 @@ fn create_and_initialize_owners_operators(
                 MoveValue::Signer(v.address),
                 MoveValue::vector_u8(preimage),
                 MoveValue::vector_u8(proof),
-                MoveValue::U64(genesis_delay_difficulty()), // TODO: make this part of genesis registration
-                MoveValue::U64(GENESIS_VDF_SECURITY_PARAM.into()),              
+                MoveValue::U64(GENESIS_VDF_ITERATIONS.clone()), // TODO: make this part of genesis registration
+                MoveValue::U64(GENESIS_VDF_SECURITY_PARAM.clone()),              
             ]),
         );
 
