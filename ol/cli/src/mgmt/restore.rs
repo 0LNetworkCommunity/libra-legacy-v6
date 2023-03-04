@@ -296,7 +296,7 @@ impl Backup {
 
     /// helper to get path to manifest file
     pub fn manifest_path(&self) -> Result<PathBuf, Error> {
-        let glob_format = &format!("{}/**/epoch_ending.manifest", &self.restore_path.to_str().expect("no restore path provided"));
+        let glob_format = &format!("{}/**/state.manifest", &self.restore_path.to_str().expect("no restore path provided"));
         let manifest_path = match glob(glob_format)
             .expect("Failed to read glob pattern")
             .next()
@@ -316,6 +316,7 @@ impl Backup {
 
     /// To check if backup archive has already been fetched
     pub fn archive_exists(&self) -> bool {
+        // check if
         self.archive_path.exists()
     }
 }

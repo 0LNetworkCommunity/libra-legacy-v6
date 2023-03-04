@@ -411,10 +411,13 @@ impl GenesisWizard {
         // All we are doing is download the snapshot from github.
         let backup = Backup::new(self.epoch, app_cfg);
 
-        if !backup.archive_exists() {
-            backup.fetch_backup(false)?;
+        if backup.manifest_path().is_err() {
+            backup.fetch_backup(true)?;
+        } else {
+            println!("Already have snapshot for epoch {}", self.epoch.unwrap());
         }
 
+        // I changed the manifest file name to state.manifest instead of epoch_ending.manifest
         let snapshot_manifest_file = backup.manifest_path()?;
 
         let snapshot_dir = snapshot_manifest_file.parent().unwrap().to_path_buf();
