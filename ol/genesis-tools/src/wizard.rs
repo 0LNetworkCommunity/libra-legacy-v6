@@ -122,12 +122,13 @@ impl GenesisWizard {
             let snapshot_path = if Confirm::new()
                 .with_prompt("Do we need to download a new legacy snapshot?")
                 .interact()? {
-                  self.download_snapshot(&app_config)?
-                } else {
-                  // TODO(Nima): Instead of using a test, let's ask the user for the patht to a snapshot
-                  Input::new().with_prompt("Enter the (absolute) path to the snapshot:").interact_text()?
-                  // ol_types::fixtures::get_test_snapshot()
-                };
+                self.download_snapshot(&app_config)?
+            } else {
+                // TODO(Nima): Instead of using a test, let's ask the user for the patht to a snapshot
+                let input = Input::new().with_prompt("Enter the (absolute) path to the snapshot:").interact_text()?;
+                PathBuf::from_str(&input)?
+                // ol_types::fixtures::get_test_snapshot()
+            };
 
             // do the whole genesis workflow and create the files
             run::default_run(
