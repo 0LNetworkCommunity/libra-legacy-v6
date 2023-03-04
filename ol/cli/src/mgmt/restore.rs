@@ -313,12 +313,6 @@ impl Backup {
             Ok(manifest_path)
         }
     }
-
-    /// To check if backup archive has already been fetched
-    pub fn archive_exists(&self) -> bool {
-        // check if
-        self.archive_path.exists()
-    }
 }
 
 fn get_highest_epoch_archive() -> Result<(u64, String), Error> {
