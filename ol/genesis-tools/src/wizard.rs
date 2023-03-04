@@ -125,8 +125,8 @@ impl GenesisWizard {
                   self.download_snapshot(&app_config)?
                 } else {
                   // TODO(Nima): Instead of using a test, let's ask the user for the patht to a snapshot
-                  
-                  ol_types::fixtures::get_test_snapshot()
+                  Input::new().with_prompt("Enter the (absolute) path to the snapshot:").interact_text()?
+                  // ol_types::fixtures::get_test_snapshot()
                 };
 
             // do the whole genesis workflow and create the files
@@ -408,7 +408,10 @@ impl GenesisWizard {
 
         // All we are doing is download the snapshot from github.
         let backup = Backup::new(self.epoch, app_cfg);
-        backup.fetch_backup(false)?;
+
+        if !backup.archive_exists() {
+            backup.fetch_backup(false)?;
+        }
 
         let snapshot_manifest_file = backup.manifest_path()?;
 

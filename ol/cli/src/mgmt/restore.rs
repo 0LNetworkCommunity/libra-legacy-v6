@@ -294,25 +294,30 @@ impl Backup {
         Ok(())
     }
 
-  /// helper to get path to manifest file
-  pub fn manifest_path(&self) -> Result<PathBuf, Error> {
-    let glob_format = &format!("{}/**/epoch_ending.manifest", &self.restore_path.to_str().expect("no restore path provided"));
-    let manifest_path = match glob(glob_format)
-        .expect("Failed to read glob pattern")
-        .next()
-    {
-        Some(Ok(p)) => p,
-        _ => bail!("no path found for {:?}", glob_format),
-    };
+    /// helper to get path to manifest file
+    pub fn manifest_path(&self) -> Result<PathBuf, Error> {
+        let glob_format = &format!("{}/**/epoch_ending.manifest", &self.restore_path.to_str().expect("no restore path provided"));
+        let manifest_path = match glob(glob_format)
+            .expect("Failed to read glob pattern")
+            .next()
+        {
+            Some(Ok(p)) => p,
+            _ => bail!("no path found for {:?}", glob_format),
+        };
 
-    if !manifest_path.exists() {
-        let msg = format!("manifest path does not exist at: {:?}", &manifest_path);
-        println!("{}", &msg);
-        bail!(msg);
-    } else {
-        Ok(manifest_path)
+        if !manifest_path.exists() {
+            let msg = format!("manifest path does not exist at: {:?}", &manifest_path);
+            println!("{}", &msg);
+            bail!(msg);
+        } else {
+            Ok(manifest_path)
+        }
     }
-  }
+
+    /// To check if backup archive has already been fetched
+    pub fn archive_exists(&self) -> bool {
+        self.archive_path.exists()
+    }
 }
 
 fn get_highest_epoch_archive() -> Result<(u64, String), Error> {
