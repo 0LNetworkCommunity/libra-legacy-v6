@@ -126,7 +126,7 @@ impl GenesisWizard {
             } else {
                 // TODO(Nima): Instead of using a test, let's ask the user for the patht to a snapshot
                 let input = Input::<String>::new()
-                    .with_prompt("Enter the (absolute) path to the snapshot")
+                    .with_prompt("Enter the (absolute) path to the snapshot state.manifest file")
                     .interact_text()?;
                 PathBuf::from(input)
             };
@@ -144,7 +144,7 @@ impl GenesisWizard {
 
 
             // reset the safety rules
-            reset_safety_data(&self.data_path.join("key_store.json"), &app_config.format_oper_namespace());
+            reset_safety_data(&self.data_path, &app_config.format_oper_namespace());
 
             // check db
             self.maybe_backup_db();
@@ -253,7 +253,7 @@ impl GenesisWizard {
             .interact().unwrap()
         {
             let storage_helper =
-                StorageHelper::get_with_path(self.data_path.join("key_store.json"));
+                StorageHelper::get_with_path(self.data_path.clone());
 
             let mut owner_storage = storage_helper.storage(app_cfg.format_oper_namespace().clone());
             owner_storage.set(OWNER_KEY, "").unwrap();
@@ -321,11 +321,10 @@ impl GenesisWizard {
 
         pb.inc(1);
         pb.set_message("registering the OPERATOR account.");
+        // The oper key is saved locally as key + -oper. This little hack works..
         let set_oper =
-            ValidatorOperator::new(app_cfg.format_owner_namespace().clone(), &owner_shared);
-
+            ValidatorOperator::new(app_cfg.format_oper_namespace(), &owner_shared);
         set_oper.execute()?;
-
         // # OWNER does this
         // # Links to an operator on github, creates the OWNER_ACCOUNT locally
         // assign:
@@ -375,13 +374,13 @@ impl GenesisWizard {
     }
 
     fn check_keys_and_genesis(&self, app_cfg: &AppCfg) -> anyhow::Result<String> {
+        println!("Checking keys and genesis. Key name: {}", app_cfg.format_owner_namespace());
         let val = Key::validator_backend(
-            app_cfg.format_oper_namespace().clone(),
+            app_cfg.format_owner_namespace().clone(),
             self.data_path.clone(),
         )?;
 
       let v = Verify::new(&val,self.data_path.join("genesis.blob"));
-
       Ok(v.execute()?)
     }
 
