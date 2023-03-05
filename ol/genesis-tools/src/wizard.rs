@@ -174,15 +174,16 @@ impl GenesisWizard {
     fn git_token_check(&mut self) -> anyhow::Result<()> {
         let gh_token_path = self.data_path.join("github_token.txt");
         if !Path::exists(&gh_token_path) {
-            println!("no github token found");
             match Input::<String>::new()
-                .with_prompt("No github token found, enter one now, or save to github_token.txt:")
+                .with_prompt("No github token found, enter one now, or save to github_token.txt")
                 .interact_text()
             {
                 Ok(s) => {
+                    // save the token to the file, and create the folders if necessary
+                    std::fs::create_dir_all(&self.data_path)?;
                     std::fs::write(&gh_token_path, s)?;
                 }
-                _ => println!("somehow couldn't read what you typed "),
+                _ => println!("somehow couldn't read what you typed"),
             }
         }
 
