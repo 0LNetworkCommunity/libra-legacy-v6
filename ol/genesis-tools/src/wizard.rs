@@ -61,7 +61,7 @@ impl Default for GenesisWizard {
             github_username: "".to_string(),
             github_token: "".to_string(),
             data_path,
-            epoch: None, // What should this default value be?
+            epoch: None,
         }
     }
 }
@@ -124,7 +124,6 @@ impl GenesisWizard {
                 .interact()? {
                 self.download_snapshot(&app_config)?
             } else {
-                // TODO(Nima): Instead of using a test, let's ask the user for the patht to a snapshot
                 let input = Input::<String>::new()
                     .with_prompt("Enter the (absolute) path to the snapshot state.manifest file")
                     .interact_text()?;
@@ -142,7 +141,6 @@ impl GenesisWizard {
                 false,
             )?;
 
-
             // reset the safety rules
             reset_safety_data(&self.data_path, &app_config.format_oper_namespace());
 
@@ -152,11 +150,8 @@ impl GenesisWizard {
             // remove "owner" key from key_store.json
             self.maybe_remove_money_keys(&app_config);
 
-
             // verify genesis
             self.check_keys_and_genesis(&app_config)?;
-
-
 
             for _ in (0..10)
                 .progress_with_style(OLProgress::fun())
@@ -179,7 +174,7 @@ impl GenesisWizard {
                 .interact_text()
             {
                 Ok(s) => {
-                    // save the token to the file, and create the folders if necessary
+                    // creates the folders if necessary (this check is called before host init)
                     std::fs::create_dir_all(&self.data_path)?;
                     std::fs::write(&gh_token_path, s)?;
                 }
@@ -375,7 +370,6 @@ impl GenesisWizard {
     }
 
     fn check_keys_and_genesis(&self, app_cfg: &AppCfg) -> anyhow::Result<String> {
-        println!("Checking keys and genesis. Key name: {}", app_cfg.format_owner_namespace());
         let val = Key::validator_backend(
             app_cfg.format_owner_namespace().clone(),
             self.data_path.clone(),
@@ -405,9 +399,6 @@ impl GenesisWizard {
         let pb = ProgressBar::new(1000).with_style(OLProgress::spinner());
 
         pb.enable_steady_tick(Duration::from_millis(100));
-
-        
-        //TODO(Nima): Check if we already have the snapshot downloaded.
 
         // All we are doing is download the snapshot from github.
         let backup = Backup::new(self.epoch, app_cfg);

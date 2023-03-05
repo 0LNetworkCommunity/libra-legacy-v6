@@ -84,7 +84,6 @@ pub fn make_recovery_genesis_from_vec_legacy_recovery(
 /// save the genesis blob
 pub fn save_genesis(gen_tx: &Transaction, output_path: PathBuf) -> Result<(), Error> {
     let file_path = output_path.join("genesis").with_extension("blob");
-    println!("Saving genesis to: {:?}", &file_path);
     let mut file = File::create(file_path)?;
     let bytes = bcs::to_bytes(&gen_tx)?;
     file.write_all(&bytes)?;
