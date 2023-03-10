@@ -61,7 +61,7 @@ impl Default for GenesisWizard {
             github_username: "".to_string(),
             github_token: "".to_string(),
             data_path,
-            epoch: None, // What should this default value be?
+            epoch: None,
         }
     }
 }
@@ -122,12 +122,14 @@ impl GenesisWizard {
             let snapshot_path = if Confirm::new()
                 .with_prompt("Do we need to download a new legacy snapshot?")
                 .interact()? {
-                  self.download_snapshot(&app_config)?
-                } else {
-                  // TODO(Nima): Instead of using a test, let's ask the user for the patht to a snapshot
-                  
-                  ol_types::fixtures::get_test_snapshot()
-                };
+                self.download_snapshot(&app_config)?
+            } else {
+                let input = Input::<String>::new()
+                    .with_prompt("Enter the (absolute) path to the snapshot state.manifest file")
+                    .interact_text()?;
+                PathBuf::from(input)
+            };
+            println!("snapshot path: {:?}", snapshot_path);
 
             // do the whole genesis workflow and create the files
             run::default_run(
@@ -139,9 +141,8 @@ impl GenesisWizard {
                 false,
             )?;
 
-
             // reset the safety rules
-            reset_safety_data(&self.data_path.join("key_store.json"), &app_config.format_oper_namespace());
+            reset_safety_data(&self.data_path, &app_config.format_oper_namespace());
 
             // check db
             self.maybe_backup_db();
@@ -149,11 +150,8 @@ impl GenesisWizard {
             // remove "owner" key from key_store.json
             self.maybe_remove_money_keys(&app_config);
 
-
             // verify genesis
             self.check_keys_and_genesis(&app_config)?;
-
-
 
             for _ in (0..10)
                 .progress_with_style(OLProgress::fun())
@@ -171,15 +169,16 @@ impl GenesisWizard {
     fn git_token_check(&mut self) -> anyhow::Result<()> {
         let gh_token_path = self.data_path.join("github_token.txt");
         if !Path::exists(&gh_token_path) {
-            println!("no github token found");
             match Input::<String>::new()
-                .with_prompt("No github token found, enter one now, or save to github_token.txt:")
+                .with_prompt("No github token found, enter one now, or save to github_token.txt")
                 .interact_text()
             {
                 Ok(s) => {
+                    // creates the folders if necessary (this check is called before host init)
+                    std::fs::create_dir_all(&self.data_path)?;
                     std::fs::write(&gh_token_path, s)?;
                 }
-                _ => println!("somehow couldn't read what you typed "),
+                _ => println!("somehow couldn't read what you typed"),
             }
         }
 
@@ -250,7 +249,7 @@ impl GenesisWizard {
             .interact().unwrap()
         {
             let storage_helper =
-                StorageHelper::get_with_path(self.data_path.join("key_store.json"));
+                StorageHelper::get_with_path(self.data_path.clone());
 
             let mut owner_storage = storage_helper.storage(app_cfg.format_oper_namespace().clone());
             owner_storage.set(OWNER_KEY, "").unwrap();
@@ -318,11 +317,10 @@ impl GenesisWizard {
 
         pb.inc(1);
         pb.set_message("registering the OPERATOR account.");
+        // The oper key is saved locally as key + -oper. This little hack works..
         let set_oper =
-            ValidatorOperator::new(app_cfg.format_owner_namespace().clone(), &owner_shared);
-
+            ValidatorOperator::new(app_cfg.format_oper_namespace(), &owner_shared);
         set_oper.execute()?;
-
         // # OWNER does this
         // # Links to an operator on github, creates the OWNER_ACCOUNT locally
         // assign:
@@ -373,12 +371,11 @@ impl GenesisWizard {
 
     fn check_keys_and_genesis(&self, app_cfg: &AppCfg) -> anyhow::Result<String> {
         let val = Key::validator_backend(
-            app_cfg.format_oper_namespace().clone(),
+            app_cfg.format_owner_namespace().clone(),
             self.data_path.clone(),
         )?;
 
       let v = Verify::new(&val,self.data_path.join("genesis.blob"));
-
       Ok(v.execute()?)
     }
 
@@ -403,13 +400,16 @@ impl GenesisWizard {
 
         pb.enable_steady_tick(Duration::from_millis(100));
 
-        
-        //TODO(Nima): Check if we already have the snapshot downloaded.
-
         // All we are doing is download the snapshot from github.
         let backup = Backup::new(self.epoch, app_cfg);
-        backup.fetch_backup(false)?;
 
+        if backup.manifest_path().is_err() {
+            backup.fetch_backup(true)?;
+        } else {
+            println!("Already have snapshot for epoch {}", self.epoch.unwrap());
+        }
+
+        // I changed the manifest file name to state.manifest instead of epoch_ending.manifest
         let snapshot_manifest_file = backup.manifest_path()?;
 
         let snapshot_dir = snapshot_manifest_file.parent().unwrap().to_path_buf();
