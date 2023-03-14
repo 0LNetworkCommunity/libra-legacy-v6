@@ -122,6 +122,9 @@ compiled_package_info:
       name: DualAttestation
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: DummyTestVote
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Epoch
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -319,7 +322,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 72CD88096CB03C9578D98E6053C9EE5D01A0DBBC790ACB9D47EDA653258E9B49
+  source_digest: 114B16F14B7C8707E052781481A46CC1B81AF2F6CFA6D6F89BF3F844C497AF00
   build_flags:
     dev_mode: false
     test_mode: false

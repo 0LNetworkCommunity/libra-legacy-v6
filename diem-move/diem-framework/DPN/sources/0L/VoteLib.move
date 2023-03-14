@@ -35,7 +35,7 @@ address DiemFramework {
     use Std::FixedPoint32;
     use Std::Vector;
     use Std::Signer;
-    use Std::GUID::{Self, GUID};
+    use Std::GUID::{Self, GUID, ID};
 
     // Any user account can create an election.
     // usually a smart contract will be the one to create the election 
@@ -45,7 +45,7 @@ address DiemFramework {
 
     struct Ballot has key, store { // Note, this is a hot potato. Any methods chaning it must return the struct to caller.
       guid: GUID,
-      name: vector<u8>,
+      name: vector<u8>, // TODO: change to ascii string
       cfg_min_deadline: u64, // deadline is at the END of this epoch (cfg_min_deadline + 1 stops taking votes)
       cfg_max_deadline: u64, // if 0 then no max. Election can run until threshold is met.
       cfg_min_turnout: u64,
@@ -92,19 +92,17 @@ address DiemFramework {
     // Only the contract, which is the keeper of the Ballot, can allow a user to temporarily hold the Ballot struct to update the vote. The user cannot arbiltrarily update the vote, with an arbitrary number of votes.
     // This is a hot potato, it cannot be dropped.
 
-    public fun vote(ballot: Ballot, user: &signer, approve_reject: bool, weight: u64): Ballot acquires IVoted {
+    public fun vote(ballot: &mut Ballot, user: &signer, approve_reject: bool, weight: u64) acquires IVoted {
 
       // check if this person voted already.
       // If the vote is the same directionally (approve, reject), exit early.
       // otherwise, need to subtract the old vote and add the new vote.
       let user_addr = Signer::address_of(user);
-      let (idx, is_found) = find_prior_vote_idx(user_addr, &ballot.guid);
+      let (idx, is_found) = find_prior_vote_idx(user_addr, &GUID::id(&ballot.guid));
 
       if (is_found) {
         let vote = get_vote_receipt(user_addr, idx);
-        if (vote.approve_reject == approve_reject) {
-          return ballot
-        } else {
+        if (vote.approve_reject != approve_reject) {
           // subtract the old vote
           if (approve_reject) {
             // if the new vote is approval, remove old votes from rejected
@@ -124,19 +122,19 @@ address DiemFramework {
       };
 
       // this will handle the case of updating the receipt in case this is a second vote.
-      make_receipt(user, &ballot.guid, approve_reject, weight);
+      make_receipt(user, &GUID::id(&ballot.guid), approve_reject, weight);
 
       // always tally on each vote
 
-      ballot
+      // ballot
     }
 
-    fun make_receipt(user_sig: &signer, guid: &GUID, approve_reject: bool, weight: u64) acquires IVoted {
+    fun make_receipt(user_sig: &signer, vote_id: &ID, approve_reject: bool, weight: u64) acquires IVoted {
 
       let user_addr = Signer::address_of(user_sig);
 
       let receipt = VoteReceipt {
-        guid: GUID::id(guid),
+        guid: *vote_id,
         approve_reject: approve_reject,
         weight: weight,
       };
@@ -148,7 +146,7 @@ address DiemFramework {
         move_to<IVoted>(user_sig, ivoted);
       };
 
-      let (idx, is_found) = find_prior_vote_idx(user_addr, guid);
+      let (idx, is_found) = find_prior_vote_idx(user_addr, vote_id);
 
       let ivoted = borrow_global_mut<IVoted>(user_addr);
       if (is_found) {
@@ -157,7 +155,7 @@ address DiemFramework {
       Vector::push_back(&mut ivoted.elections, receipt);
     }
 
-    fun find_prior_vote_idx(user_addr: address, guid: &GUID): (u64, bool) acquires IVoted {
+    fun find_prior_vote_idx(user_addr: address, vote_id: &ID): (u64, bool) acquires IVoted {
       if (!exists<IVoted>(user_addr)) {
         return (0, false)
       };
@@ -167,7 +165,7 @@ address DiemFramework {
       let i = 0;
       while (i < len) {
         let receipt = Vector::borrow(&ivoted.elections, i);
-        if (*&receipt.guid == GUID::id(guid)) {
+        if (&receipt.guid == vote_id) {
           return (i, true)
         };
         i = i + 1;
@@ -181,5 +179,69 @@ address DiemFramework {
       let r = Vector::borrow(&ivoted.elections, idx);
       return *r
     }
+
+    //////// GETTERS ////////
+    /// get the ballot id
+    public fun get_ballot_id(ballot: &Ballot): ID {
+      return GUID::id(&ballot.guid)
+    }
+
+    /// gets the receipt data
+    // should return an OPTION.
+    public fun get_receipt_data(user_addr: address, vote_id: &ID): (bool, u64) acquires IVoted {
+      let (idx, found) = find_prior_vote_idx(user_addr, vote_id);
+      if (found) {
+          let v = get_vote_receipt(user_addr, idx);
+          return (v.approve_reject, v.weight)
+        };
+      return (false, 0)
+    } 
+
+    //////// TEST ////////
+    public fun test() {
+      // no op
+    }
   }
+
+  //// TODO: Fix publishing on test harness. 
+  //// see tests vote_from_modules.move
+  //// There's an issue with the test harness, where it cannot publish the module
+  //// task 2 'run'. lines 31-51:
+  //// Error: error[E03002]: unbound module
+  //// /var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/.tmp3EAMzm:3:9
+  //// 
+  ////      use 0x1::GUID;
+  ////          ^^^^^^^^^ Invalid 'use'. Unbound module: '0x1::GUID'
+
+  module DummyTestVote {
+
+    use DiemFramework::ParticipationVote::{Self, Ballot};
+    use Std::GUID;
+    use DiemFramework::Testnet;
+
+    struct Vote has key {
+      ballot: Ballot,
+    }
+
+    // initialize this data on the address of the election contract
+    public fun init(sig: &signer): GUID::ID {
+      assert!(Testnet::is_testnet(), 0);
+      let ballot = ParticipationVote::new(sig, b"please vote");
+      let id = ParticipationVote::get_ballot_id(&ballot);
+      move_to(sig, Vote { ballot });
+      id
+    }
+
+    public fun vote(sig: &signer, election_addr: address, weight: u64, approve_reject: bool) acquires Vote {
+      assert!(Testnet::is_testnet(), 0);
+      let vote = borrow_global_mut<Vote>(election_addr);
+      ParticipationVote::vote(&mut vote.ballot, sig, approve_reject, weight);
+    }
+
+    public fun get_id(election_addr: address): GUID::ID acquires Vote {
+      assert!(Testnet::is_testnet(), 0);
+      let vote = borrow_global_mut<Vote>(election_addr);
+      ParticipationVote::get_ballot_id(&vote.ballot)
+  }
+}
 }
