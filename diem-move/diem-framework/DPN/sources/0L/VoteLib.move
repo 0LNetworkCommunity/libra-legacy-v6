@@ -203,8 +203,8 @@ address DiemFramework {
     }
   }
 
-  //// TODO: Fix publishing on test harness. 
-  //// see tests vote_from_modules.move
+  //// TODO: Fix publishing on test harness.
+  //// see test _meta_import_vote.move
   //// There's an issue with the test harness, where it cannot publish the module
   //// task 2 'run'. lines 31-51:
   //// Error: error[E03002]: unbound module

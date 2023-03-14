@@ -27,13 +27,3 @@ script {
         M::do_it(&sender);
     }
 }
-
-
-//# run --admin-script --signers DiemRoot Alice --show-events
-script {
-    use Alice::M;
-
-    fun main(_dr: signer, sender: signer) {
-        M::do_it(&sender);
-    }
-}
