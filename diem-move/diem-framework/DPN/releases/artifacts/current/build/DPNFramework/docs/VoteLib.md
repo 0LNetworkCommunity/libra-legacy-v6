@@ -8,6 +8,7 @@
 -  [Resource `Vote`](#0x1_DummyTestVote_Vote)
 -  [Function `init`](#0x1_DummyTestVote_init)
 -  [Function `vote`](#0x1_DummyTestVote_vote)
+-  [Function `get_id`](#0x1_DummyTestVote_get_id)
 
 
 <pre><code><b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID">0x1::GUID</a>;
@@ -50,7 +51,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_DummyTestVote_init">init</a>(sig: &signer): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_DummyTestVote_init">init</a>(sig: &signer, deadline: u64, name: vector&lt;u8&gt;, max_extensions: u64): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>
 </code></pre>
 
 
@@ -59,9 +60,16 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_DummyTestVote_init">init</a>(sig: &signer): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_DummyTestVote_init">init</a>(
+  sig: &signer,
+  deadline: u64,
+  name: vector&lt;u8&gt;,
+  max_extensions: u64,
+
+): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a> {
   <b>assert</b>!(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 0);
-  <b>let</b> ballot = <a href="VoteLib.md#0x1_ParticipationVote_new">ParticipationVote::new</a>(sig, b"please vote");
+  <b>let</b> ballot = <a href="VoteLib.md#0x1_ParticipationVote_new">ParticipationVote::new</a>(sig, name, deadline, max_extensions);
+
   <b>let</b> id = <a href="VoteLib.md#0x1_ParticipationVote_get_ballot_id">ParticipationVote::get_ballot_id</a>(&ballot);
   <b>move_to</b>(sig, <a href="VoteLib.md#0x1_DummyTestVote_Vote">Vote</a> { ballot });
   id
@@ -91,6 +99,32 @@
   <b>assert</b>!(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 0);
   <b>let</b> vote = <b>borrow_global_mut</b>&lt;<a href="VoteLib.md#0x1_DummyTestVote_Vote">Vote</a>&gt;(election_addr);
   <a href="VoteLib.md#0x1_ParticipationVote_vote">ParticipationVote::vote</a>(&<b>mut</b> vote.ballot, sig, approve_reject, weight);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DummyTestVote_get_id"></a>
+
+## Function `get_id`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_DummyTestVote_get_id">get_id</a>(election_addr: <b>address</b>): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_DummyTestVote_get_id">get_id</a>(election_addr: <b>address</b>): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a> <b>acquires</b> <a href="VoteLib.md#0x1_DummyTestVote_Vote">Vote</a> {
+  <b>assert</b>!(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 0);
+  <b>let</b> vote = <b>borrow_global_mut</b>&lt;<a href="VoteLib.md#0x1_DummyTestVote_Vote">Vote</a>&gt;(election_addr);
+  <a href="VoteLib.md#0x1_ParticipationVote_get_ballot_id">ParticipationVote::get_ballot_id</a>(&vote.ballot)
 }
 </code></pre>
 
