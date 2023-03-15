@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////
 // 0L Module
 // VoteLib
-// Intatiate different types of user interactive voting
+// Intatiate different types of user-interactive voting
 ///////////////////////////////////////////////////////////////////////////
 
 // TODO: Move this to a separate address. Potentially has separate governance.
@@ -38,18 +38,19 @@ address DiemFramework {
     use Std::Vector;
     use Std::Signer;
     use Std::GUID::{Self, GUID, ID};
-    use DiemFramework::DiemConfig;
     use Std::Errors;
-    use DiemFramework::Debug::print;
-
+    use DiemFramework::DiemConfig;
 
     /// The ballot has already been completed.
     const ECOMPLETED: u64 = 300010; 
     /// The number of votes cast cannot be greater than the max number of votes available from enrollment.
     const EVOTES_GREATER_THAN_ENROLLMENT: u64 = 300011;
-
     /// The threshold curve parameters are wrong. The curve is not decreasing.
     const EVOTE_CALC_PARAMS: u64 = 300012;
+    /// Voters cannot vote twice, but they can retract a vote
+    const EALREADY_VOTED: u64 = 300013;
+    /// The voter has not voted yet. Cannot retract a vote.
+    const ENOT_VOTED: u64 = 300014;
 
     // TODO: These may be variable on a per project basis. And these
     // should just be defaults.
@@ -83,6 +84,7 @@ address DiemFramework {
       last_epoch_voted: u64, // the last epoch which received a vote
       last_epoch_approve: u64, // what was the approval percentage at the last epoch. For purposes of calculating extensions.
       last_epoch_reject: u64, // what was the rejection percentage at the last epoch. For purposes of calculating extensions.
+      provisional_pass_epoch: u64, // once a threshold is met, mark that epoch, a further vote on the next epoch will seal the election, to give time for the minority to vote.
       tally_approve: u64,  // use two decimal places 1234 = 12.34%
       tally_turnout: u64, // use two decimal places 1234 = 12.34%
       tally_pass: bool, // if it passed, for archival purposes
@@ -119,6 +121,7 @@ address DiemFramework {
           last_epoch_voted: 0,
           last_epoch_approve: 0,
           last_epoch_reject: 0,
+          provisional_pass_epoch: 0,
           tally_approve: 0,
           tally_turnout: 0,
           tally_pass: false,
@@ -136,23 +139,10 @@ address DiemFramework {
       // If the vote is the same directionally (approve, reject), exit early.
       // otherwise, need to subtract the old vote and add the new vote.
       let user_addr = Signer::address_of(user);
-      let (idx, is_found) = find_prior_vote_idx(user_addr, &GUID::id(&ballot.guid));
+      let (_, is_found) = find_prior_vote_idx(user_addr, &GUID::id(&ballot.guid));
 
-      print(&10001);
-      if (is_found) {
-        let vote = get_vote_receipt(user_addr, idx);
-        if (vote.approve_reject != approve_reject) {
-          // subtract the old vote
-          if (approve_reject) {
-            // if the new vote is approval, remove old votes from rejected
-            ballot.votes_reject = ballot.votes_reject - vote.weight;
-          } else {
-            // the new vote is a rejection, 
-            ballot.votes_approve = ballot.votes_approve - vote.weight;
-          };
-        }
-      };
-print(&10002);
+      assert!(!is_found, Errors::invalid_state(EALREADY_VOTED));
+
       // if we are in a new epoch than the previous last voter, then store that epoch data.
       let epoch_now = DiemConfig::get_current_epoch();
       if (epoch_now > ballot.last_epoch_voted) {
@@ -160,7 +150,6 @@ print(&10002);
         ballot.last_epoch_reject = ballot.votes_reject;
       };
 
-print(&10003);
       // in every case, add the new vote
       ballot.last_epoch_voted = epoch_now;
       if (approve_reject) {
@@ -168,29 +157,26 @@ print(&10003);
       } else {
         ballot.votes_reject = ballot.votes_reject + weight;
       };
-print(&10004);
+
       // if this is a divergent vote, we give it the opportunity to extend the vote, to get more participation.
       maybe_extend(ballot);
-print(&10005);
+
       // always tally on each vote
       // make sure all extensions happened in previous step.
       maybe_tally(ballot);
-print(&10006);
+
       // this will handle the case of updating the receipt in case this is a second vote.
       make_receipt(user, &GUID::id(&ballot.guid), approve_reject, weight);
-print(&10007);
+
     }
 
     fun is_complete(ballot: &mut Ballot): bool {
       let epoch = DiemConfig::get_current_epoch();
-      print(&2001);
       // if completed, exit early
       if (ballot.completed) { return true }; // this should be checked above anyways.
-      print(&2002);
 
       // this may be a vote that never expires, until a decision is reached
       if (ballot.cfg_deadline == 0 ) { return false };
-      print(&2003);
 
       // if original and extended deadline have passed, stop tally
       // while we are here, update to "completed".
@@ -198,12 +184,28 @@ print(&10007);
         epoch > ballot.cfg_deadline &&
         epoch > ballot.epoch_extended
       ) { 
-        print(&2004);
         ballot.completed = true;
         return true
       };
-      print(&2005);
       ballot.completed
+    }
+
+    public fun retract(ballot: &mut Ballot, user: &signer) acquires IVoted {
+      let user_addr = Signer::address_of(user);
+
+      let (idx, is_found) = find_prior_vote_idx(user_addr, &GUID::id(&ballot.guid));
+      assert!(is_found, Errors::invalid_state(ENOT_VOTED));
+
+      let (approve_reject, weight) = get_receipt_data(user_addr, &GUID::id(&ballot.guid));
+
+      if (approve_reject) {
+        ballot.votes_approve = ballot.votes_approve - weight;
+      } else {
+        ballot.votes_reject = ballot.votes_reject - weight;
+      };
+
+      let ivoted = borrow_global_mut<IVoted>(user_addr);
+      Vector::remove(&mut ivoted.elections, idx);
     }
 
     // we may need to extend the ballot if on the last day (TBD a wider window) the vote had a big shift in favor of the minority vote.
@@ -211,17 +213,15 @@ print(&10007);
 
       let epoch = DiemConfig::get_current_epoch();
 
+      // TODO: The exension window below of 1 day is not sufficient to make
+      // much difference in practice (the threshold is most likely reached at that point).
       // Are we on the last day of voting (extension window)?
       // if not, return early.
       if (ballot.cfg_deadline == epoch) { return };
-print(&3001);
-
       // did we already extend today?
       if (ballot.epoch_extended > epoch) { return };
-print(&3002);
       // do nothing is the votes are even (or more likely, uninitialized at 0);
       if (ballot.votes_approve == ballot.votes_reject) { return };
-print(&3003);
       // Who was ahead in the previous epoch?
       let (prev_lead, prev_trail, prev_lead_updated, prev_trail_updated) = if (ballot.last_epoch_approve > ballot.last_epoch_reject) {
         // if the "approve" vote WAS leading.
@@ -231,46 +231,31 @@ print(&3003);
         (ballot.last_epoch_reject, ballot.last_epoch_approve, ballot.votes_reject, ballot.votes_approve)
       };
       
-      if (prev_lead == 0 && prev_trail == 0) { return }; // no votes yet (uninitialized
+      if (prev_lead == 0 && prev_trail == 0) { return }; // no votes yet 
       if (prev_lead_updated == 0 && prev_trail_updated == 0) { return };
-
-print(&3004);
       // approvals are winning
 
       let prior_margin = ((prev_lead - prev_trail) * PCT_SCALE) / (prev_lead + prev_trail);
 
-print(&3005);
 
       // the current margin may have flipped, so we need to check the direction of the vote.
       // if so then give an automatic extensions
       if (prev_lead_updated < prev_trail_updated) {
         ballot.epoch_extended = ballot.epoch_extended + 1;
-print(&30051);
-
         return
       } else {
-print(&30052);
         let current_margin = (prev_lead_updated - prev_trail_updated) * PCT_SCALE / (prev_lead_updated + prev_trail_updated);
 
         if (current_margin - prior_margin > MINORITY_EXT_MARGIN) {
-print(&30053);
           ballot.epoch_extended = ballot.epoch_extended + 1;
           return
         }
       }
     }
 
+    /// stop tallying if the expiration is passed or the threshold has been met.
     fun maybe_tally(ballot: &mut Ballot) {
-      
-      // stop tallying if the expiration is passed or the threshold has been met.
-print(&4001);
-      // we shouldn't be here anyway, but just in case.
-      // if (is_complete(ballot)) { return };
-      
-
       let total_votes = ballot.votes_approve + ballot.votes_reject;
-print(&ballot.max_votes);
-print(&total_votes);
 
       assert!(ballot.max_votes >= total_votes, Errors::invalid_state(EVOTES_GREATER_THAN_ENROLLMENT));
 
@@ -278,19 +263,26 @@ print(&total_votes);
       let m = FixedPoint32::create_from_rational(total_votes, ballot.max_votes);
 
       ballot.tally_turnout = FixedPoint32::multiply_u64(PCT_SCALE, m); // scale up
-print(&4002);
       // calculate the dynamic threshold needed.
       let t = get_threshold_from_turnout(total_votes, ballot.max_votes);
       // check the threshold that needs to be met met turnout
       ballot.tally_approve = FixedPoint32::multiply_u64(PCT_SCALE, FixedPoint32::create_from_rational(ballot.votes_approve, total_votes));
-print(&4003);
       // the first vote which crosses the threshold causes the poll to end.
       if (ballot.tally_approve > t) {
-        ballot.completed = true;
+
         // before marking it pass, make sure the minimum quorum was met
         // by default 12.50%
         if (ballot.tally_turnout > ballot.cfg_min_turnout) {
-          ballot.tally_pass = true;
+          let epoch = DiemConfig::get_current_epoch();
+
+          if (ballot.provisional_pass_epoch == 0) {
+            // automatically passing once the threshold is reached disadvantages inactive participants. We propose it takes one vote plus one day once reaching threshold.
+            ballot.provisional_pass_epoch = epoch;
+          } else if (epoch > ballot.provisional_pass_epoch) {
+            // multiple days may have passed since the provisional pass.
+            ballot.completed = true;
+            ballot.tally_pass = true;
+          }
         }
       }
     }
@@ -299,13 +291,10 @@ print(&4003);
     // can't multiply FixedPoint32 types directly.
     public fun get_threshold_from_turnout(voters: u64, max_votes: u64): u64 {
       // let's just do a line
-      // y = mx + b
-print(&5001);
+
       let turnout = FixedPoint32::create_from_rational(voters, max_votes);
       let turnout_scaled_x = FixedPoint32::multiply_u64(PCT_SCALE, turnout); // scale to two decimal points.
-print(&5002);
-      // TODO: this is not the case with the constsants chosen, but it may be dynamic at some point.
-      // need to deal with negative slope which is the default case.
+      // only implemeting the negative slope case. Unsure why the other is needed.
 
       assert!(THRESH_AT_LOW_TURNOUT_Y1 > THRESH_AT_HIGH_TURNOUT_Y2, Errors::invalid_state(EVOTE_CALC_PARAMS));
 
@@ -318,25 +307,15 @@ print(&5002);
       };
 
 
-
       let abs_m = FixedPoint32::create_from_rational(
         (THRESH_AT_LOW_TURNOUT_Y1 - THRESH_AT_HIGH_TURNOUT_Y2), (HIGH_TURNOUT_X2 - LOW_TURNOUT_X1)
       );
 
-      let t =  FixedPoint32::multiply_u64(1000000000, *&abs_m);
-      print(&t);
-
       let abs_mx = FixedPoint32::multiply_u64(LOW_TURNOUT_X1, *&abs_m);
-      print(&abs_mx);
       let b = THRESH_AT_LOW_TURNOUT_Y1 + abs_mx;
-      print(&b);
-
       let y =  b - FixedPoint32::multiply_u64(turnout_scaled_x, *&abs_m);
 
-      print(&y);
-
       return y
-
     }
 
     fun make_receipt(user_sig: &signer, vote_id: &ID, approve_reject: bool, weight: u64) acquires IVoted {
@@ -358,6 +337,7 @@ print(&5002);
 
       let (idx, is_found) = find_prior_vote_idx(user_addr, vote_id);
 
+      // for safety remove the old vote if it exists.
       let ivoted = borrow_global_mut<IVoted>(user_addr);
       if (is_found) {
         Vector::remove(&mut ivoted.elections, idx);
@@ -395,6 +375,24 @@ print(&5002);
     public fun get_ballot_id(ballot: &Ballot): ID {
       return GUID::id(&ballot.guid)
     }
+
+    /// get current tally
+    public fun get_tally(ballot: &Ballot): u64 {
+      let total = ballot.votes_approve + ballot.votes_reject;
+      if (ballot.votes_approve + ballot.votes_reject > ballot.max_votes) {
+        return 0
+      };
+      if (ballot.max_votes == 0) {
+        return 0
+      };
+      return FixedPoint32::multiply_u64(PCT_SCALE, FixedPoint32::create_from_rational(total, ballot.max_votes))
+    }
+
+    /// is it complete and what's the result
+    public fun complete_result(ballot: &Ballot): (bool, bool) {
+      (ballot.completed, ballot.tally_pass)
+    }
+
 
     /// gets the receipt data
     // should return an OPTION.
@@ -452,10 +450,22 @@ print(&5002);
       ParticipationVote::vote(&mut vote.ballot, sig, approve_reject, weight);
     }
 
+    public fun retract(sig: &signer, election_addr: address) acquires Vote {
+      assert!(Testnet::is_testnet(), 0);
+      let vote = borrow_global_mut<Vote>(election_addr);
+      ParticipationVote::retract(&mut vote.ballot, sig);
+    }
+
     public fun get_id(election_addr: address): GUID::ID acquires Vote {
       assert!(Testnet::is_testnet(), 0);
       let vote = borrow_global_mut<Vote>(election_addr);
       ParticipationVote::get_ballot_id(&vote.ballot)
     }
+
+    public fun get_result(election_addr: address): (bool, bool) acquires Vote {
+      let vote = borrow_global_mut<Vote>(election_addr);
+      ParticipationVote::complete_result(&vote.ballot)
+    }
+
   }
 }

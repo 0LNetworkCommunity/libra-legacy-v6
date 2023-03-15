@@ -26,6 +26,11 @@ script {
       let (r, w) = ParticipationVote::get_receipt_data(@Bob, &id);
       assert!(r == true, 0); // voted in favor
       assert!(w == 22, 1);
+
+      DummyTestVote::retract(&b_sig, @Alice);
+      let (r, _) = ParticipationVote::get_receipt_data(@Bob, &id);
+      assert!(r == false, 0); // voted in favor
+      // assert!(w == 22, 1);
     }
 }
 // check: EXECUTED
