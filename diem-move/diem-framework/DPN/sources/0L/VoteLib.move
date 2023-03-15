@@ -40,6 +40,7 @@ address DiemFramework {
     use Std::GUID::{Self, GUID, ID};
     use DiemFramework::DiemConfig;
     use Std::Errors;
+    use DiemFramework::Debug::print;
 
     const ECOMPLETED: u64 = 300010;
 
@@ -120,7 +121,8 @@ address DiemFramework {
     // This is a hot potato, it cannot be dropped.
 
     public fun vote(ballot: &mut Ballot, user: &signer, approve_reject: bool, weight: u64) acquires IVoted {
-      assert!(check_expired(ballot), Errors::invalid_state(ECOMPLETED));
+      // voting should not be complete
+      assert!(!is_complete(ballot), Errors::invalid_state(ECOMPLETED));
 
       // check if this person voted already.
       // If the vote is the same directionally (approve, reject), exit early.
@@ -128,6 +130,7 @@ address DiemFramework {
       let user_addr = Signer::address_of(user);
       let (idx, is_found) = find_prior_vote_idx(user_addr, &GUID::id(&ballot.guid));
 
+      print(&10001);
       if (is_found) {
         let vote = get_vote_receipt(user_addr, idx);
         if (vote.approve_reject != approve_reject) {
@@ -141,7 +144,7 @@ address DiemFramework {
           };
         }
       };
-
+print(&10002);
       // if we are in a new epoch than the previous last voter, then store that epoch data.
       let epoch_now = DiemConfig::get_current_epoch();
       if (epoch_now > ballot.last_epoch_voted) {
@@ -149,7 +152,7 @@ address DiemFramework {
         ballot.last_epoch_reject = ballot.votes_reject;
       };
 
-
+print(&10003);
       // in every case, add the new vote
       ballot.last_epoch_voted = epoch_now;
       if (approve_reject) {
@@ -157,37 +160,42 @@ address DiemFramework {
       } else {
         ballot.votes_reject = ballot.votes_reject + weight;
       };
-
+print(&10004);
       // if this is a divergent vote, we give it the opportunity to extend the vote, to get more participation.
       maybe_extend(ballot);
-
+print(&10005);
       // always tally on each vote
       // make sure all extensions happened in previous step.
       maybe_tally(ballot);
-
+print(&10006);
       // this will handle the case of updating the receipt in case this is a second vote.
       make_receipt(user, &GUID::id(&ballot.guid), approve_reject, weight);
+print(&10007);
     }
 
-    fun check_expired(ballot: &mut Ballot): bool {
+    fun is_complete(ballot: &mut Ballot): bool {
       let epoch = DiemConfig::get_current_epoch();
-
-      // if completed, stop tally
+      print(&2001);
+      // if completed, exit early
       if (ballot.completed) { return true }; // this should be checked above anyways.
+      print(&2002);
 
       // this may be a vote that never expires, until a decision is reached
       if (ballot.cfg_max_extensions == 0 ) { return false };
+      print(&2003);
 
       // if original and extended deadline have passed, stop tally
+      // while we are here, update to "completed".
       if (
         epoch > ballot.cfg_deadline &&
         epoch > ballot.epoch_extended
       ) { 
+        print(&2004);
         ballot.completed = true;
         return true
       };
-
-      false
+      print(&2005);
+      ballot.completed
     }
 
     // we may need to extend the ballot if on the last day (TBD a wider window) the vote had a big shift in favor of the minority vote.
@@ -198,13 +206,14 @@ address DiemFramework {
       // Are we on the last day of voting (extension window)?
       // if not, return early.
       if (ballot.cfg_deadline == epoch) { return };
+print(&3001);
 
       // did we already extend today?
       if (ballot.epoch_extended > epoch) { return };
-
+print(&3002);
       // do nothing is the votes are even (or more likely, uninitialized at 0);
       if (ballot.votes_approve == ballot.votes_reject) { return };
-
+print(&3003);
       // Who was ahead in the previous epoch?
       let (prev_lead, prev_trail, prev_lead_updated, prev_trail_updated) = if (ballot.last_epoch_approve > ballot.last_epoch_reject) {
         // if the "approve" vote WAS leading.
@@ -213,20 +222,30 @@ address DiemFramework {
       } else {
         (ballot.last_epoch_reject, ballot.last_epoch_approve, ballot.votes_reject, ballot.votes_approve)
       };
+      
+      if (prev_lead == 0 && prev_trail == 0) { return }; // no votes yet (uninitialized
+      if (prev_lead_updated == 0 && prev_trail_updated == 0) { return };
 
+print(&3004);
       // approvals are winning
 
-      let prior_margin = ((prev_lead - prev_trail) * PCT_SCALE)/ (prev_lead + prev_trail);
+      let prior_margin = ((prev_lead - prev_trail) * PCT_SCALE) / (prev_lead + prev_trail);
+
+print(&3005);
 
       // the current margin may have flipped, so we need to check the direction of the vote.
       // if so then give an automatic extensions
       if (prev_lead_updated < prev_trail_updated) {
         ballot.epoch_extended = ballot.epoch_extended + 1;
+print(&30051);
+
         return
       } else {
+print(&30052);
         let current_margin = (prev_lead_updated - prev_trail_updated) * PCT_SCALE / (prev_lead_updated + prev_trail_updated);
 
         if (current_margin - prior_margin > MINORITY_EXT_MARGIN) {
+print(&30053);
           ballot.epoch_extended = ballot.epoch_extended + 1;
           return
         }
@@ -235,7 +254,9 @@ address DiemFramework {
 
     fun maybe_tally(ballot: &mut Ballot) {
       // stop tallying if the expiration is passed or the threshold has been met.
-      if (check_expired(ballot)) { return };
+print(&4001);
+      // we shouldn't be here anyway, but just in case.
+      if (is_complete(ballot)) { return };
       
 
       let total_votes = ballot.votes_approve + ballot.votes_reject;
@@ -243,12 +264,12 @@ address DiemFramework {
       let m = FixedPoint32::create_from_rational(total_votes, ballot.max_votes);
 
       ballot.tally_turnout = FixedPoint32::multiply_u64(PCT_SCALE, m); // scale up
-
+print(&4002);
       // calculate the dynamic threshold needed.
       let t = get_threshold_from_turnout(total_votes, ballot.max_votes);
       // check the threshold that needs to be met met turnout
       ballot.tally_approve = FixedPoint32::multiply_u64(PCT_SCALE, FixedPoint32::create_from_rational(ballot.votes_approve, total_votes));
-
+print(&4003);
       // the first vote which crosses the threshold causes the poll to end.
       if (ballot.tally_approve > t) {
         ballot.completed = true;
