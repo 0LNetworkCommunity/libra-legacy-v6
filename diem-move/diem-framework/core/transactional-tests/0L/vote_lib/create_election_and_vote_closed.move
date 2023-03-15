@@ -1,4 +1,4 @@
-//# init --validators Alice Bob
+//# init --validators Alice Bob Carol
 
 // Alice is going to start an election, and create the struct on her account.
 
@@ -45,19 +45,19 @@ script {
 //////////////////////////////////////////////
 
 
-// NEXT DAY BOB SENDS A NEW VOTE
+// NEXT DAY CAROL SENDS A NEW VOTE
 // this time it completes and passes.
 
-//# run --admin-script --signers DiemRoot Bob
+//# run --admin-script --signers DiemRoot Carol
 script {
     use DiemFramework::DummyTestVote;
     use DiemFramework::ParticipationVote;
     // use DiemFramework::Debug::print;
 
-    fun main(_root: signer, b_sig: signer) {   
-      DummyTestVote::vote(&b_sig, @Alice, 2, true);
+    fun main(_root: signer, c_sig: signer) {   
+      DummyTestVote::vote(&c_sig, @Alice, 2, true);
       let id = DummyTestVote::get_id(@Alice);
-      let (r, w) = ParticipationVote::get_receipt_data(@Bob, &id);
+      let (r, w) = ParticipationVote::get_receipt_data(@Carol, &id);
       assert!(r == true, 0); // voted in favor
       assert!(w == 2, 1);
 
