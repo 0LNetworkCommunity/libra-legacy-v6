@@ -42,15 +42,22 @@ address DiemFramework {
     use Std::Errors;
     use DiemFramework::Debug::print;
 
-    const ECOMPLETED: u64 = 300010;
+
+    /// The ballot has already been completed.
+    const ECOMPLETED: u64 = 300010; 
+    /// The number of votes cast cannot be greater than the max number of votes available from enrollment.
+    const EVOTES_GREATER_THAN_ENROLLMENT: u64 = 300011;
+
+    /// The threshold curve parameters are wrong. The curve is not decreasing.
+    const EVOTE_CALC_PARAMS: u64 = 300012;
 
     // TODO: These may be variable on a per project basis. And these
     // should just be defaults.
     const PCT_SCALE: u64 = 10000;
-    const LOW_TURNOUT: u64 = 1250;// 12.5% turnout
-    const HIGH_TURNOUT: u64 = 8750;// 87.5% turnout
-    const LOW_THRESH: u64 = 10000;// 100% pass at low turnout
-    const HIGH_THRESH: u64 = 5100;// 51% pass at high turnout
+    const LOW_TURNOUT_X1: u64 = 1250;// 12.5% turnout
+    const HIGH_TURNOUT_X2: u64 = 8750;// 87.5% turnout
+    const THRESH_AT_LOW_TURNOUT_Y1: u64 = 10000;// 100% pass at low turnout
+    const THRESH_AT_HIGH_TURNOUT_Y2: u64 = 5100;// 51% pass at high turnout
     const MINORITY_EXT_MARGIN: u64 = 500; // The change in vote gap between majority and minority must have changed in the last day by this amount to for the minority to get an extension.
 
     // Any user account can create an election.
@@ -93,6 +100,7 @@ address DiemFramework {
     public fun new(
       sig: &signer,
       name: vector<u8>,
+      max_vote_enrollment: u64,
       deadline: u64,
       max_extensions: u64,
     ): Ballot {
@@ -104,7 +112,7 @@ address DiemFramework {
           cfg_min_turnout: 1250,
           cfg_minority_extension: true,
           completed: false,
-          max_votes: 0,
+          max_votes: max_vote_enrollment,
           votes_approve: 0,
           votes_reject: 0,
           epoch_extended: 0,
@@ -181,7 +189,7 @@ print(&10007);
       print(&2002);
 
       // this may be a vote that never expires, until a decision is reached
-      if (ballot.cfg_max_extensions == 0 ) { return false };
+      if (ballot.cfg_deadline == 0 ) { return false };
       print(&2003);
 
       // if original and extended deadline have passed, stop tally
@@ -253,13 +261,19 @@ print(&30053);
     }
 
     fun maybe_tally(ballot: &mut Ballot) {
+      
       // stop tallying if the expiration is passed or the threshold has been met.
 print(&4001);
       // we shouldn't be here anyway, but just in case.
-      if (is_complete(ballot)) { return };
+      // if (is_complete(ballot)) { return };
       
 
       let total_votes = ballot.votes_approve + ballot.votes_reject;
+print(&ballot.max_votes);
+print(&total_votes);
+
+      assert!(ballot.max_votes >= total_votes, Errors::invalid_state(EVOTES_GREATER_THAN_ENROLLMENT));
+
       // figure out the turnout
       let m = FixedPoint32::create_from_rational(total_votes, ballot.max_votes);
 
@@ -283,18 +297,46 @@ print(&4003);
 
     // TODO: this should probably use Decimal.move
     // can't multiply FixedPoint32 types directly.
-    fun get_threshold_from_turnout(voters: u64, max_votes: u64): u64 {
+    public fun get_threshold_from_turnout(voters: u64, max_votes: u64): u64 {
       // let's just do a line
       // y = mx + b
+print(&5001);
       let turnout = FixedPoint32::create_from_rational(voters, max_votes);
-      let x = FixedPoint32::multiply_u64(PCT_SCALE, turnout); // scale to two decimal points.
+      let turnout_scaled_x = FixedPoint32::multiply_u64(PCT_SCALE, turnout); // scale to two decimal points.
+print(&5002);
+      // TODO: this is not the case with the constsants chosen, but it may be dynamic at some point.
+      // need to deal with negative slope which is the default case.
 
-      let m = FixedPoint32::create_from_rational((HIGH_THRESH - LOW_THRESH), (HIGH_TURNOUT - LOW_TURNOUT));
-      let b = LOW_THRESH - FixedPoint32::multiply_u64(LOW_TURNOUT, *&m);
-      
-      let y = FixedPoint32::multiply_u64(x, m) + b;
+      assert!(THRESH_AT_LOW_TURNOUT_Y1 > THRESH_AT_HIGH_TURNOUT_Y2, Errors::invalid_state(EVOTE_CALC_PARAMS));
 
-      y
+      // the minimum passing threshold is the low turnout threshold.
+      // same for the maximum turnout threshold.
+      if (turnout_scaled_x < LOW_TURNOUT_X1) {
+        return THRESH_AT_LOW_TURNOUT_Y1
+      } else if (turnout_scaled_x > HIGH_TURNOUT_X2) {
+        return THRESH_AT_HIGH_TURNOUT_Y2
+      };
+
+
+
+      let abs_m = FixedPoint32::create_from_rational(
+        (THRESH_AT_LOW_TURNOUT_Y1 - THRESH_AT_HIGH_TURNOUT_Y2), (HIGH_TURNOUT_X2 - LOW_TURNOUT_X1)
+      );
+
+      let t =  FixedPoint32::multiply_u64(1000000000, *&abs_m);
+      print(&t);
+
+      let abs_mx = FixedPoint32::multiply_u64(LOW_TURNOUT_X1, *&abs_m);
+      print(&abs_mx);
+      let b = THRESH_AT_LOW_TURNOUT_Y1 + abs_mx;
+      print(&b);
+
+      let y =  b - FixedPoint32::multiply_u64(turnout_scaled_x, *&abs_m);
+
+      print(&y);
+
+      return y
+
     }
 
     fun make_receipt(user_sig: &signer, vote_id: &ID, approve_reject: bool, weight: u64) acquires IVoted {
@@ -390,13 +432,14 @@ print(&4003);
     // initialize this data on the address of the election contract
     public fun init(
       sig: &signer,
-      deadline: u64,
       name: vector<u8>,
+      deadline: u64,
+      max_vote_enrollment: u64,
       max_extensions: u64,
       
     ): GUID::ID {
       assert!(Testnet::is_testnet(), 0);
-      let ballot = ParticipationVote::new(sig, name, deadline, max_extensions);
+      let ballot = ParticipationVote::new(sig, name, deadline, max_vote_enrollment, max_extensions);
 
       let id = ParticipationVote::get_ballot_id(&ballot);
       move_to(sig, Vote { ballot });
