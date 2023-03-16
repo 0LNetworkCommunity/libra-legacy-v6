@@ -212,6 +212,9 @@ module DiemFramework::DiemAccount {
     const EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET: u64 = 120126;
     const ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE: u64 = 120127;
     const EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT: u64 = 120128;
+    // Todo: this is duplicated in CoreFramework::Account.
+    const BRICK_AUTH: vector<u8> = b"brick_all_your_base_are_belong_to_us";
+
 
     /// Prologue errors. These are separated out from the other errors in this
     /// module since they are mapped separately to major VM statuses, and are
@@ -3677,6 +3680,19 @@ module DiemFramework::DiemAccount {
       }
     }
 
+    //////// 0L //////// 
+    // Bricking accounts. 
+    //////// 0L ////////
+    /// Convenience function to brick the account.
+    public fun brick_this(sig: &signer, are_you_sure: bool) acquires DiemAccount {
+      // This guy will have a bad day if he didn't mean to do this.
+      if (are_you_sure) {
+        let cap = extract_key_rotation_capability(sig);
+        rotate_authentication_key(&cap, BRICK_AUTH);
+        restore_key_rotation_capability(cap);
+      }
+    }
+
     /////// TEST HELPERS //////
 
     /////// 0L /////////
@@ -3686,6 +3702,7 @@ module DiemFramework::DiemAccount {
         assert!(is_testnet(), 120102011021);
         create_signer(addr)
     }
+
 
     /////// 0L /////////
     /// should only by called by testnet, once a slow wallet, always a slow wallet.
