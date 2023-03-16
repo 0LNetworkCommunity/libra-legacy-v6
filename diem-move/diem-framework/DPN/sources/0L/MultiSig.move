@@ -39,11 +39,14 @@ module MultiSig {
   use Std::Vector;
   use Std::Signer;
   use Std::Errors;
+  use Std::FixedPoint32;
   use DiemFramework::DiemAccount;
   use DiemFramework::DiemConfig;
   use DiemFramework::Debug::print;
   use DiemFramework::GAS::GAS;
   use DiemFramework::VectorHelper;
+  use DiemFramework::CoreAddresses;
+
 
   /// The owner of this account can't be an authority, since it will subsequently be bricked. The signer of this account is no longer useful. The account is now controlled by the MultiSig logic. 
   const ESIGNER_CANT_BE_AUTHORITY: u64 = 440001;
@@ -57,6 +60,15 @@ module MultiSig {
   /// Not enough signers configured
   const ENO_SIGNERS: u64 = 440004;
 
+  /// Genesis starting fee for multisig service
+  const STARTING_FEE: u64 = 00000027; // 1% per year, 0.0027% per epoch
+  const PERCENT_SCALE: u64 = 1000000; // for 4 decimal precision percentages
+
+  struct RootMultiSigRegistry has key {
+    list: vector<address>,
+    fee: u64, // percentage balance fee denomiated in 4 decimal precision 123456 = 12.3456%
+  }
+  
   /// A MultiSig account is an account which requires multiple votes from Authorities to send a transaction.
   struct MultiSig has key {
     withdraw_capability: DiemAccount::WithdrawCapability,
@@ -116,7 +128,13 @@ module MultiSig {
   }
 
 
-
+  public fun root_init(vm: &signer) {
+    CoreAddresses::assert_vm(vm);
+    move_to(vm, RootMultiSigRegistry {
+      list: Vector::empty(),
+      fee: STARTING_FEE,
+    });
+  }
 
   /// An initial "sponsor" who is the signer of the initialization account calls this function.
   // This function creates the data structures, but also IMPORTANTLY it rotates the AuthKey of the account to a system-wide unusuable key (b"brick_all_your_base_are_belong_to_us").
@@ -124,7 +142,7 @@ module MultiSig {
     sig: &signer,
     m_seed_authorities: vector<address>,
     n_required_sigs: u64
-  ) {
+  ) acquires RootMultiSigRegistry  {
     assert!(n_required_sigs > 0, Errors::invalid_argument(ENO_SIGNERS));
     // make sure the signer's address is not in the list of authorities. 
     // This account's signer will now be useless.
@@ -148,7 +166,19 @@ module MultiSig {
     print(&10003);
     DiemAccount::brick_this(sig, b"yes I know what I'm doing");
     print(&10004);
+
+    // add the sender to the root registry for billing.
+    upsert_root_registry(sender_addr);
   }
+
+  fun upsert_root_registry(addr: address) acquires RootMultiSigRegistry {
+    let reg = borrow_global_mut<RootMultiSigRegistry>(@VMReserved);
+    if (!Vector::contains(&reg.list, &addr)) {
+      Vector::push_back(&mut reg.list, addr);
+    };
+  }
+
+
 
   fun init_gov(sig: &signer, cfg_n_sigs: u64) {
     // TODO: make this configurable
@@ -441,6 +471,34 @@ module MultiSig {
 
   // change threshold
   // TODO
+
+
+  public fun root_security_fee_billing(vm: &signer) acquires RootMultiSigRegistry {
+    CoreAddresses::assert_vm(vm);
+    let reg = borrow_global<RootMultiSigRegistry>(@VMReserved);
+    let i = 0;
+    while (i < Vector::length(&reg.list)) {
+      let multi_sig_addr = Vector::borrow(&reg.list, i);
+
+      let pct = FixedPoint32::create_from_rational(reg.fee, PERCENT_SCALE);
+      let fee = FixedPoint32::multiply_u64(DiemAccount::balance<GAS>(*multi_sig_addr), pct);
+      // TODO: This is a placeholder, fee should go to Transaction Fee account.
+      // but that code is on a different branch
+
+      DiemAccount::vm_burn_from_balance<GAS>(*multi_sig_addr, fee, b"multisig service", vm);
+      i = i + 1;
+    };
+
+  }
+
+
+
+  //////// GETTERS ////////
+
+  public fun get_authorities(multisig_address: address): vector<address> acquires MultiSig {
+    let m = borrow_global<MultiSig>(multisig_address);
+    *&m.signers
+  }
 
 }
 }

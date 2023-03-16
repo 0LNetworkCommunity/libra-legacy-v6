@@ -32,6 +32,7 @@ module EpochBoundary {
     use DiemFramework::Cases;
     use DiemFramework::Jail;
     use DiemFramework::Vouch;
+    use DiemFramework::MultiSig;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -67,6 +68,9 @@ module EpochBoundary {
           proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
           print(&800900);
         };
+
+        billing(vm);
+
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
         print(&801000);
     }
@@ -325,6 +329,10 @@ module EpochBoundary {
           i = i + 1;
         };
         print(&800800107);
+    }
+
+    fun billing(vm: &signer) {
+      MultiSig::root_security_fee_billing(vm);
     }
 }
 }
