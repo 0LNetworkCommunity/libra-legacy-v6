@@ -35,7 +35,7 @@ module CoreFramework::Account {
     const MAX_U64: u128 = 18446744073709551615;
 
     /////// 0L ////////
-    const BRICK_AUTH: vector<u8> = b"brick_all_your_base_are_belong_to_us";
+    const BRICK_AUTH: vector<u8> = b"brick_brick_brick_brick_brick!!!";
 
     /// Account already existed
     const EACCOUNT: u64 = 0;

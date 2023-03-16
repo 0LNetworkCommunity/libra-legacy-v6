@@ -41,9 +41,16 @@ module MultiSig {
   use Std::Signer;
   use Std::Errors;
   use DiemFramework::DiemAccount;
+  use DiemFramework::DiemConfig;
 
   /// The owner of this account can't be an authority, since it will subsequently be bricked. The signer of this account is no longer useful. The account is now controlled by the MultiSig logic. 
   const ESIGNER_CANT_BE_AUTHORITY: u64 = 440001;
+
+  /// Signer not authorized to approve a transaction.
+  const ENOT_AUTHORIZED: u64 = 440002;
+
+  /// There are no pending transactions to search
+  const EPENDING_EMPTY: u64 = 440003;
 
 
   /// A MultiSig account is an account which requires multiple votes from Authorities to send a transaction.
@@ -54,20 +61,22 @@ module MultiSig {
     pending: vector<ProposedTransaction>,
     approved: vector<ProposedTransaction>,
     rejected:  vector<ProposedTransaction>,
+    counter: u64, // equals the most recent transaction id
   }
 
 
   /// This is the data structure which tracks the authorities and the votes for a given transaction.
 
   struct ProposedTransaction has key, store {
+    id: u64,
     // The transaction to be executed
     destination: address,
+    // amount
+    amount: u64,
     // The votes received
     votes: vector<address>,
     // The expiration time for the transaction
     expiration_epoch: u64,
-    // approved
-    approved: bool,
   }
 
   struct GovSigner {
@@ -100,7 +109,6 @@ module MultiSig {
     m_seed_authorities: vector<address>,
     n_required_sigs: u64
   ) {
-
     // make sure the signer's address is not in the list of authorities. 
     // This account's signer will now be useless.
 
@@ -114,11 +122,88 @@ module MultiSig {
       pending: Vector::empty(),
       approved: Vector::empty(),
       rejected: Vector::empty(),
+      counter: 0,
     });
 
-    DiemAccount::brick_this(sig, true);
+    DiemAccount::brick_this(sig, b"yes I know what I'm doing");
+  }
 
 
+  // Propose a transaction 
+  // Transactions should be easy, and have one obvious way to do it. There should be no other method for voting for a tx.
+  // this function will catch a duplicate, and vote in its favor.
+  // This causes a user interface issue, users need to know that you cannot have two open proposals for the same transaction.
+  // It's optional to state how many epochs from today the transaction should expire. If the transaction is not approved by then, it will be rejected.
+  // The default will be 14 days.
+  // Only the first proposer can set the expiration time. It will be ignored when a duplicate is caught.
+  public fun propose_tx(sig: &signer, multisig_address: address, recipient: address, amount: u64, opt_epochs_expire: u64) acquires MultiSig {
+    // check if the sender is an authority
+    assert!(is_authority(multisig_address, Signer::address_of(sig)), Errors::invalid_argument(ENOT_AUTHORIZED));
+
+    // check if there is a pending transaction for this recipient and amount
+    let (found, idx) = find_pending_idx_by_param(multisig_address, recipient, amount);
+    // if not found, create a new one
+    let m = borrow_global_mut<MultiSig>(multisig_address);
+
+    if (found) {
+      // if found, vote for it
+      let prop = Vector::borrow_mut(&mut m.pending, idx);
+      vote_for_tx(sig, prop);
+    } else {
+      
+      m.counter = m.counter + 1;
+      let id = m.counter;
+
+      let expires = if (opt_epochs_expire > 0) {
+        DiemConfig::get_current_epoch() + opt_epochs_expire
+      } else {
+        DiemConfig::get_current_epoch() + 14
+      };
+
+      let p = ProposedTransaction {
+        id,
+        destination: recipient,
+        amount: amount,
+        votes: Vector::empty(),
+        expiration_epoch: expires,
+      };
+      
+      vote_for_tx(sig, &mut p);
+
+      Vector::push_back(&mut m.pending, p);
+    }
+
+  }
+
+  // this is a private internal function. There should only be one obvious way to vote for a transaction.
+  fun vote_for_tx(sig: &signer, prop: &mut ProposedTransaction) {
+    if (Vector::contains(&prop.votes, &Signer::address_of(sig))) {
+      return
+    };
+    Vector::push_back(&mut prop.votes, Signer::address_of(sig));
+  }
+
+  public fun is_authority(multisig_addr: address, addr: address): bool acquires MultiSig {
+    let m = borrow_global<MultiSig>(multisig_addr);
+    Vector::contains(&m.signers, &addr)
+  }
+
+  public fun find_pending_idx_by_param(multisig_addr: address, recipient: address, amount: u64): (bool, u64) acquires MultiSig {
+    let m = borrow_global<MultiSig>(multisig_addr);
+    if (Vector::is_empty(&m.pending)) {
+      return (false, 0)
+    };
+
+    let i = 0;
+    while (i < Vector::length(&m.pending)) {
+      let p = Vector::borrow(&m.pending, i);
+      if (p.destination == recipient && p.amount == amount) {
+        return (true, i)
+      };
+      i = i + 1;
+    };
+
+    (false, 0)
   }
 
 }

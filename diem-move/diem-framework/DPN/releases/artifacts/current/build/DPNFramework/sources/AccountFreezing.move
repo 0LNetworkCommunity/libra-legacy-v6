@@ -34,6 +34,8 @@ module DiemFramework::AccountFreezing {
         unfrozen_address: address,
     }
 
+
+
     /// A property expected of the `FreezeEventsHolder` resource didn't hold
     const EFREEZE_EVENTS_HOLDER: u64 = 1;
     /// The `FreezingBit` resource is in an invalid state
@@ -76,6 +78,7 @@ module DiemFramework::AccountFreezing {
         aborts_if exists<FreezingBit>(addr) with Errors::ALREADY_PUBLISHED;
         ensures spec_account_is_not_frozen(addr);
     }
+
 
     /// Freeze the account at `addr`.
     public fun freeze_account(

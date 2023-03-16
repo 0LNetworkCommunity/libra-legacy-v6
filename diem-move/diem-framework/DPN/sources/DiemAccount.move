@@ -213,7 +213,8 @@ module DiemFramework::DiemAccount {
     const ESLOW_WALLET_TRANSFERS_DISABLED_SYSTEMWIDE: u64 = 120127;
     const EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT: u64 = 120128;
     // Todo: this is duplicated in CoreFramework::Account.
-    const BRICK_AUTH: vector<u8> = b"brick_all_your_base_are_belong_to_us";
+    // can't access CoreFramework in Move.
+    const BRICK_AUTH: vector<u8> = b"brick_brick_brick_brick_brick!!!";
 
 
     /// Prologue errors. These are separated out from the other errors in this
@@ -3684,13 +3685,20 @@ module DiemFramework::DiemAccount {
     // Bricking accounts. 
     //////// 0L ////////
     /// Convenience function to brick the account.
-    public fun brick_this(sig: &signer, are_you_sure: bool) acquires DiemAccount {
+    // Bricking is more permanent than freezing. A frozen account would still have keys and could be unfrozen. Bricking offers more guarantees.
+    /// it is also checked in the prologue.
+    public fun brick_this(sig: &signer, are_you_sure: vector<u8>) acquires DiemAccount {
       // This guy will have a bad day if he didn't mean to do this.
-      if (are_you_sure) {
+      if (are_you_sure == b"yes I know what I'm doing") {
         let cap = extract_key_rotation_capability(sig);
         rotate_authentication_key(&cap, BRICK_AUTH);
         restore_key_rotation_capability(cap);
       }
+    }
+
+    public fun is_a_brick(addr: address):bool acquires DiemAccount {
+      let a = borrow_global<DiemAccount>(addr);
+      *&a.authentication_key == BRICK_AUTH
     }
 
     /////// TEST HELPERS //////
