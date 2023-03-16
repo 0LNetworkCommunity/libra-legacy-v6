@@ -42,6 +42,7 @@ module MultiSig {
   use Std::Errors;
   use DiemFramework::DiemAccount;
   use DiemFramework::DiemConfig;
+  use DiemFramework::Debug::print;
 
   /// The owner of this account can't be an authority, since it will subsequently be bricked. The signer of this account is no longer useful. The account is now controlled by the MultiSig logic. 
   const ESIGNER_CANT_BE_AUTHORITY: u64 = 440001;
@@ -111,10 +112,10 @@ module MultiSig {
   ) {
     // make sure the signer's address is not in the list of authorities. 
     // This account's signer will now be useless.
-
+    print(&10001);
     let sender_addr = Signer::address_of(sig);
     assert!(!Vector::contains(&m_seed_authorities, &sender_addr), Errors::invalid_argument(ESIGNER_CANT_BE_AUTHORITY));
-
+    print(&10002);
     move_to(sig, MultiSig {
       signers: copy m_seed_authorities,
       n: n_required_sigs,
@@ -125,7 +126,9 @@ module MultiSig {
       counter: 0,
     });
 
+    print(&10003);
     DiemAccount::brick_this(sig, b"yes I know what I'm doing");
+    print(&10004);
   }
 
 
