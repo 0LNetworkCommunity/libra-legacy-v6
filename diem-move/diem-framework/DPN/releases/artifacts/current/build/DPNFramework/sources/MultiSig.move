@@ -441,8 +441,15 @@ module MultiSig {
     };
 
     tally(&mut prop);
+
     // print(&p);
-    Vector::push_back(&mut ms.gov_pending, prop);
+    if (prop.approved) {
+      maybe_update_authorities<PropType>(ms, prop.add_remove, *&prop.addresses);
+      Vector::push_back(&mut ms.gov_approved, prop);
+    } else {
+      Vector::push_back(&mut ms.gov_pending, prop);
+    }
+    
   }
 
 

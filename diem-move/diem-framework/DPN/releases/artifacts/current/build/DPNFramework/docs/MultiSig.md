@@ -613,8 +613,15 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
   };
 
   <a href="MultiSig.md#0x1_MultiSig_tally">tally</a>(&<b>mut</b> prop);
+
   // print(&p);
-  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> ms.gov_pending, prop);
+  <b>if</b> (prop.approved) {
+    <a href="MultiSig.md#0x1_MultiSig_maybe_update_authorities">maybe_update_authorities</a>&lt;PropType&gt;(ms, prop.add_remove, *&prop.addresses);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> ms.gov_approved, prop);
+  } <b>else</b> {
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> ms.gov_pending, prop);
+  }
+
 }
 </code></pre>
 
