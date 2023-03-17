@@ -64,7 +64,6 @@ module MultiSig {
   /// Genesis starting fee for multisig service
   const STARTING_FEE: u64 = 00000027; // 1% per year, 0.0027% per epoch
   const PERCENT_SCALE: u64 = 1000000; // for 4 decimal precision percentages
-  const DEFAULT_EPOCHS_EXPIRE: u64 = 14; // default setting for a proposal to expire
 
   struct RootMultiSigRegistry has key {
     list: vector<address>,
@@ -152,43 +151,40 @@ module MultiSig {
     });
   }
 
-  /// An initial "sponsor" who is the signer of the initialization account calls this function.
-  // This function creates the data structures, but also IMPORTANTLY it rotates the AuthKey of the account to a system-wide unusuable key (b"brick_all_your_base_are_belong_to_us").
-  public fun init_and_brick<PropType: key + store>(
-    sig: &signer,
-    m_seed_authorities: vector<address>,
-    n_required_sigs: u64,
-    withdraw_capability: Option<DiemAccount::WithdrawCapability>,
+  // /// An initial "sponsor" who is the signer of the initialization account calls this function.
+  // // This function creates the data structures, but also IMPORTANTLY it rotates the AuthKey of the account to a system-wide unusuable key (b"brick_all_your_base_are_belong_to_us").
+  // public fun init_and_brick<PropType: store>(
+  //   sig: &signer,
+  //   m_seed_authorities: vector<address>,
+  //   n_required_sigs: u64
   // ) acquires RootMultiSigRegistry  {
-   ) {
-    assert!(n_required_sigs > 0, Errors::invalid_argument(ENO_SIGNERS));
-    // make sure the signer's address is not in the list of authorities. 
-    // This account's signer will now be useless.
-    print(&10001);
-    let sender_addr = Signer::address_of(sig);
-    assert!(!Vector::contains(&m_seed_authorities, &sender_addr), Errors::invalid_argument(ESIGNER_CANT_BE_AUTHORITY));
-    print(&10002);
-    move_to(sig, MultiSig<PropType> {
-      cfg_expire_epochs: DEFAULT_EPOCHS_EXPIRE,
-      withdraw_capability,
-      signers: copy m_seed_authorities,
-      n: n_required_sigs,
-      // m: Vector::length(&m_seed_authorities),
-      pending: Vector::empty(),
-      approved: Vector::empty(),
-      rejected: Vector::empty(),
-      counter: 0,
-    });
+  //   assert!(n_required_sigs > 0, Errors::invalid_argument(ENO_SIGNERS));
+  //   // make sure the signer's address is not in the list of authorities. 
+  //   // This account's signer will now be useless.
+  //   print(&10001);
+  //   let sender_addr = Signer::address_of(sig);
+  //   assert!(!Vector::contains(&m_seed_authorities, &sender_addr), Errors::invalid_argument(ESIGNER_CANT_BE_AUTHORITY));
+  //   print(&10002);
+  //   move_to(sig, MultiSig<PropType> {
+  //     withdraw_capability: DiemAccount::extract_withdraw_capability(sig),
+  //     signers: copy m_seed_authorities,
+  //     n: n_required_sigs,
+  //     // m: Vector::length(&m_seed_authorities),
+  //     pending: Vector::empty(),
+  //     approved: Vector::empty(),
+  //     rejected: Vector::empty(),
+  //     counter: 0,
+  //   });
 
-    // init_gov(sig, n_required_sigs, copy m_seed_authorities);
+  //   init_gov(sig, n_required_sigs, copy m_seed_authorities);
 
-    // print(&10003);
-    // DiemAccount::brick_this(sig, b"yes I know what I'm doing");
-    // print(&10004);
+  //   print(&10003);
+  //   DiemAccount::brick_this(sig, b"yes I know what I'm doing");
+  //   print(&10004);
 
-    // // add the sender to the root registry for billing.
-    // upsert_root_registry(sender_addr);
-  }
+  //   // add the sender to the root registry for billing.
+  //   upsert_root_registry(sender_addr);
+  // }
 
   // fun upsert_root_registry(addr: address) acquires RootMultiSigRegistry {
   //   let reg = borrow_global_mut<RootMultiSigRegistry>(@VMReserved);
@@ -201,9 +197,10 @@ module MultiSig {
   // this is a multi-sig of type PropGovSigners. All multisigs have this structure as a default (in addition to the type of multisig initiated PropPayment, PropGeneric).
   public fun init_gov(sig: &signer,  m_seed_authorities: vector<address>, cfg_n_sigs: u64) {
     // TODO: make this configurable
+    let cfg_expire_epochs = 14;
 
     move_to(sig, MultiSig<PropGovSigners> {
-      cfg_expire_epochs: DEFAULT_EPOCHS_EXPIRE,
+      cfg_expire_epochs,
       withdraw_capability: Option::none(),
       signers: m_seed_authorities,
       n: cfg_n_sigs,
@@ -544,10 +541,10 @@ module MultiSig {
 
   // //////// GETTERS ////////
 
-  public fun get_authorities<Prop: key + store >(multisig_address: address): vector<address> acquires MultiSig {
-    let m = borrow_global<MultiSig<Prop>>(multisig_address);
-    *&m.signers
-  }
+  // public fun get_authorities<Prop>(multisig_address: address): vector<address> acquires MultiSig {
+  //   let m = borrow_global<MultiSig<Prop>>(multisig_address);
+  //   *&m.signers
+  // }
 
 }
 }

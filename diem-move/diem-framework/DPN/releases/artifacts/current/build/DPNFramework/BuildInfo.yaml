@@ -182,6 +182,9 @@ compiled_package_info:
       name: Mock
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: MultiSig
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: NetworkIdentity
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -322,7 +325,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 7AF748048BAD22A1ED6F1081A8B50B09C7177286DB959F97E627D79FDC71BC5D
+  source_digest: B5DB1A57804A499E7AF84D354493A345D079A411C17B1E1CB925A7AD2ACCB0C4
   build_flags:
     dev_mode: false
     test_mode: false

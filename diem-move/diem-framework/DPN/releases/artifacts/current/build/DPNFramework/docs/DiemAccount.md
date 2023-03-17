@@ -113,6 +113,8 @@ before and after every transaction.
 -  [Function `is_slow`](#0x1_DiemAccount_is_slow)
 -  [Function `unlocked_amount`](#0x1_DiemAccount_unlocked_amount)
 -  [Function `get_slow_list`](#0x1_DiemAccount_get_slow_list)
+-  [Function `brick_this`](#0x1_DiemAccount_brick_this)
+-  [Function `is_a_brick`](#0x1_DiemAccount_is_a_brick)
 -  [Function `test_helper_create_signer`](#0x1_DiemAccount_test_helper_create_signer)
 -  [Function `test_remove_slow`](#0x1_DiemAccount_test_remove_slow)
 -  [Module Specification](#@Module_Specification_4)
@@ -786,6 +788,15 @@ Separate struct to track cumulative deposits
 
 
 <pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>: u64 = 1000000;
+</code></pre>
+
+
+
+<a name="0x1_DiemAccount_BRICK_AUTH"></a>
+
+
+
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_BRICK_AUTH">BRICK_AUTH</a>: vector&lt;u8&gt; = [98, 114, 105, 99, 107, 95, 98, 114, 105, 99, 107, 95, 98, 114, 105, 99, 107, 95, 98, 114, 105, 99, 107, 95, 98, 114, 105, 99, 107, 33, 33, 33];
 </code></pre>
 
 
@@ -6915,6 +6926,62 @@ inflation by x% per day from the start of network.
   } <b>else</b> {
     <b>return</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;()
   }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_brick_this"></a>
+
+## Function `brick_this`
+
+Convenience function to brick the account.
+it is also checked in the prologue.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_brick_this">brick_this</a>(sig: &signer, are_you_sure: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_brick_this">brick_this</a>(sig: &signer, are_you_sure: vector&lt;u8&gt;) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> {
+  // This guy will have a bad day <b>if</b> he didn't mean <b>to</b> do this.
+  <b>if</b> (are_you_sure == b"yes I know what I'm doing") {
+    <b>let</b> cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_key_rotation_capability">extract_key_rotation_capability</a>(sig);
+    <a href="DiemAccount.md#0x1_DiemAccount_rotate_authentication_key">rotate_authentication_key</a>(&cap, <a href="DiemAccount.md#0x1_DiemAccount_BRICK_AUTH">BRICK_AUTH</a>);
+    <a href="DiemAccount.md#0x1_DiemAccount_restore_key_rotation_capability">restore_key_rotation_capability</a>(cap);
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_is_a_brick"></a>
+
+## Function `is_a_brick`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_is_a_brick">is_a_brick</a>(addr: <b>address</b>): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_is_a_brick">is_a_brick</a>(addr: <b>address</b>):bool <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> {
+  <b>let</b> a = <b>borrow_global</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(addr);
+  *&a.authentication_key == <a href="DiemAccount.md#0x1_DiemAccount_BRICK_AUTH">BRICK_AUTH</a>
 }
 </code></pre>
 

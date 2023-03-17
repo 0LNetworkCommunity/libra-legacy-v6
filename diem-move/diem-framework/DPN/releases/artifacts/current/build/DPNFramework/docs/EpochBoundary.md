@@ -11,6 +11,7 @@
 -  [Function `propose_new_set`](#0x1_EpochBoundary_propose_new_set)
 -  [Function `reset_counters`](#0x1_EpochBoundary_reset_counters)
 -  [Function `proof_of_burn`](#0x1_EpochBoundary_proof_of_burn)
+-  [Function `billing`](#0x1_EpochBoundary_billing)
 
 
 <pre><code><b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
@@ -88,6 +89,9 @@
       <a href="EpochBoundary.md#0x1_EpochBoundary_proof_of_burn">proof_of_burn</a>(vm,nominal_subsidy_per, &proposed_set);
       print(&800900);
     };
+
+    <a href="EpochBoundary.md#0x1_EpochBoundary_billing">billing</a>(vm);
+
     <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, outgoing_compliant_set, height_now);
     print(&801000);
 }
@@ -443,6 +447,30 @@
       i = i + 1;
     };
     print(&800800107);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_billing"></a>
+
+## Function `billing`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_billing">billing</a>(_vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_billing">billing</a>(_vm: &signer) {
+  // MultiSig::root_security_fee_billing(vm);
 }
 </code></pre>
 
