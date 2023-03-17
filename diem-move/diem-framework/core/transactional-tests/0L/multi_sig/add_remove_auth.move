@@ -27,8 +27,8 @@ script {
     // payment type of multisigs need withdraw capability
     let cap = DiemAccount::extract_withdraw_capability(&d_sig);
 
-    MultiSig::init_and_brick<PropPayment>(&d_sig, copy addr, 2, Option::some(cap));
-    MultiSig::init_gov(&d_sig, addr, 2);
+    MultiSig::init_type<PropPayment>(&d_sig, addr, 2, Option::some(cap));
+    MultiSig::finalize_and_brick(&d_sig);
   }
 }
 
@@ -41,6 +41,20 @@ script {
 
   fun main(_dr: signer, a_sig: signer) {
     MultiSig::propose_add_authorities<PropPayment>(&a_sig, @DaveMultiSig, Vector::singleton(@Carol));
+
+    let a = MultiSig::get_authorities<PropPayment>(@DaveMultiSig);
+    assert!(Vector::length(&a) == 2, 7357002);
+  }
+}
+
+
+//# run --admin-script --signers DiemRoot Bob
+script {
+  use DiemFramework::MultiSig::{Self, PropPayment};
+  use Std::Vector;
+
+  fun main(_dr: signer, b_sig: signer) {
+    MultiSig::propose_add_authorities<PropPayment>(&b_sig, @DaveMultiSig, Vector::singleton(@Carol));
 
     let a = MultiSig::get_authorities<PropPayment>(@DaveMultiSig);
     assert!(Vector::length(&a) == 2, 7357002);

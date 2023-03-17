@@ -45,7 +45,7 @@ module MultiSig {
   use DiemFramework::DiemConfig;
   use DiemFramework::Debug::print;
   // use DiemFramework::GAS::GAS;
-  // use DiemFramework::VectorHelper;
+  use DiemFramework::VectorHelper;
   use DiemFramework::CoreAddresses;
 
 
@@ -60,10 +60,14 @@ module MultiSig {
 
   /// Not enough signers configured
   const ENO_SIGNERS: u64 = 440004;
+  /// The multisig setup  is not finalized, the sponsor needs to brick their authkey. The account setup sponsor needs to be verifiably locked out before operations can begin. 
+  const ENOT_FINALIZED_NOT_BRICK: u64 = 440005; 
 
   /// Genesis starting fee for multisig service
   const STARTING_FEE: u64 = 00000027; // 1% per year, 0.0027% per epoch
   const PERCENT_SCALE: u64 = 1000000; // for 4 decimal precision percentages
+  const DEFAULT_EPOCHS_EXPIRE: u64 = 14; // default setting for a proposal to expire
+
 
   struct RootMultiSigRegistry has key {
     list: vector<address>,
@@ -122,7 +126,8 @@ module MultiSig {
   // }
 
   struct PropGovSigners has key, store, drop {
-    new_addrs: vector<address>,
+    add_remove: bool, // true = add, false = remove
+    addresses: vector<address>,
     votes: vector<address>,
     approved: bool,
     expiration_epoch: u64,
@@ -151,40 +156,53 @@ module MultiSig {
     });
   }
 
-  // /// An initial "sponsor" who is the signer of the initialization account calls this function.
-  // // This function creates the data structures, but also IMPORTANTLY it rotates the AuthKey of the account to a system-wide unusuable key (b"brick_all_your_base_are_belong_to_us").
-  // public fun init_and_brick<PropType: store>(
-  //   sig: &signer,
-  //   m_seed_authorities: vector<address>,
-  //   n_required_sigs: u64
+  /// An initial "sponsor" who is the signer of the initialization account calls this function.
+  // This function creates the data structures, but also IMPORTANTLY it rotates the AuthKey of the account to a system-wide unusuable key (b"brick_all_your_base_are_belong_to_us").
+  public fun init_type<PropType: key + store>(
+    sig: &signer,
+    m_seed_authorities: vector<address>,
+    n_required_sigs: u64,
+    withdraw_capability: Option<DiemAccount::WithdrawCapability>,
   // ) acquires RootMultiSigRegistry  {
-  //   assert!(n_required_sigs > 0, Errors::invalid_argument(ENO_SIGNERS));
-  //   // make sure the signer's address is not in the list of authorities. 
-  //   // This account's signer will now be useless.
-  //   print(&10001);
-  //   let sender_addr = Signer::address_of(sig);
-  //   assert!(!Vector::contains(&m_seed_authorities, &sender_addr), Errors::invalid_argument(ESIGNER_CANT_BE_AUTHORITY));
-  //   print(&10002);
-  //   move_to(sig, MultiSig<PropType> {
-  //     withdraw_capability: DiemAccount::extract_withdraw_capability(sig),
-  //     signers: copy m_seed_authorities,
-  //     n: n_required_sigs,
-  //     // m: Vector::length(&m_seed_authorities),
-  //     pending: Vector::empty(),
-  //     approved: Vector::empty(),
-  //     rejected: Vector::empty(),
-  //     counter: 0,
-  //   });
+   ) {
+    assert!(n_required_sigs > 0, Errors::invalid_argument(ENO_SIGNERS));
+    // make sure the signer's address is not in the list of authorities. 
+    // This account's signer will now be useless.
+    print(&10001);
+    let sender_addr = Signer::address_of(sig);
+    assert!(!Vector::contains(&m_seed_authorities, &sender_addr), Errors::invalid_argument(ESIGNER_CANT_BE_AUTHORITY));
+    print(&10002);
+    move_to(sig, MultiSig<PropType> {
+      cfg_expire_epochs: DEFAULT_EPOCHS_EXPIRE,
+      withdraw_capability,
+      signers: copy m_seed_authorities,
+      n: n_required_sigs,
+      // m: Vector::length(&m_seed_authorities),
+      pending: Vector::empty(),
+      approved: Vector::empty(),
+      rejected: Vector::empty(),
+      counter: 0,
+    });
 
-  //   init_gov(sig, n_required_sigs, copy m_seed_authorities);
+    maybe_init_gov(sig, copy m_seed_authorities, n_required_sigs);
 
-  //   print(&10003);
-  //   DiemAccount::brick_this(sig, b"yes I know what I'm doing");
-  //   print(&10004);
+    // print(&10003);
+    // DiemAccount::brick_this(sig, b"yes I know what I'm doing");
+    // print(&10004);
 
-  //   // add the sender to the root registry for billing.
-  //   upsert_root_registry(sender_addr);
-  // }
+    // // add the sender to the root registry for billing.
+    // upsert_root_registry(sender_addr);
+  }
+  
+  /// Once the "sponsor" which is setting up the multisig has created all the multisig types (payment, generic, gov), they need to brick this account so that the signer for this address is rendered useless, and it is a true multisig.
+  public fun finalize_and_brick(sig: &signer) {
+    DiemAccount::brick_this(sig, b"yes I know what I'm doing");
+    assert!(is_finalized(Signer::address_of(sig)), Errors::invalid_state(ENOT_FINALIZED_NOT_BRICK));
+  }
+
+  public fun is_finalized(addr: address): bool {
+    DiemAccount::is_a_brick(addr)
+  }
 
   // fun upsert_root_registry(addr: address) acquires RootMultiSigRegistry {
   //   let reg = borrow_global_mut<RootMultiSigRegistry>(@VMReserved);
@@ -195,29 +213,20 @@ module MultiSig {
 
 
   // this is a multi-sig of type PropGovSigners. All multisigs have this structure as a default (in addition to the type of multisig initiated PropPayment, PropGeneric).
-  public fun init_gov(sig: &signer,  m_seed_authorities: vector<address>, cfg_n_sigs: u64) {
-    // TODO: make this configurable
-    let cfg_expire_epochs = 14;
-
-    move_to(sig, MultiSig<PropGovSigners> {
-      cfg_expire_epochs,
-      withdraw_capability: Option::none(),
-      signers: m_seed_authorities,
-      n: cfg_n_sigs,
-      // m: Vector::length(&m_seed_authorities),
-      pending: Vector::empty(),
-      approved: Vector::empty(),
-      rejected: Vector::empty(),
-      counter: 0,
-    });
-    // move_to(sig, MultiSig<PropGovSigners> {
-    //   cfg_n_sigs,
-    //   cfg_expire_epochs,
-    //   add: Vector::empty(),
-    //   remove: Vector::empty(),
-    //   threshold: Vector::empty(),
-    //   reset_gov_votes: Vector::empty(),
-    // });
+  public fun maybe_init_gov(sig: &signer, m_seed_authorities: vector<address>, cfg_n_sigs: u64) {
+    if (!exists<MultiSig<PropGovSigners>>(Signer::address_of(sig))) {
+      move_to(sig, MultiSig<PropGovSigners> {
+        cfg_expire_epochs: DEFAULT_EPOCHS_EXPIRE,
+        withdraw_capability: Option::none(),
+        signers: m_seed_authorities,
+        n: cfg_n_sigs,
+        // m: Vector::length(&m_seed_authorities),
+        pending: Vector::empty(),
+        approved: Vector::empty(),
+        rejected: Vector::empty(),
+        counter: 0,
+      });
+    }
   }
 
   // fun maybe_reset_gov(gov: &mut MultiSig<PropGovSigners>) {
@@ -393,71 +402,88 @@ module MultiSig {
   // propose new signer
   // TODO: MultiSig<PropGovSigners> proposals have a problem with deadlines.
   // if a deadline goes too far into the future, there's no way to replace the proposal.
-  public fun propose_add_authorities<PropType: store + key>(sig: &signer, multisig_address: address, new_addresses: vector<address>)  acquires MultiSig{
+  // returns if it's approved and if to add or remove addresses (approved, addresses, add_remove)
+  public fun propose_authorities<PropType: store + key>(sig: &signer, multisig_address: address, new_addresses: vector<address>, add_remove: bool): (bool, vector<address>, bool)  acquires MultiSig{
+    // cannot start manipulating contract until it is finalized
+    assert!(is_finalized(multisig_address), Errors::invalid_argument(ENOT_FINALIZED_NOT_BRICK));
 
     assert!(exists<MultiSig<PropGovSigners>>(multisig_address), Errors::invalid_argument(ENOT_AUTHORIZED));
-    assert!(exists<MultiSig<PropGovSigners>>(multisig_address), Errors::invalid_argument(ENOT_AUTHORIZED));
+
+    assert!(exists<MultiSig<PropType>>(multisig_address), Errors::invalid_argument(ENOT_AUTHORIZED));
+
+    // check sender is authorized
     let sender_addr = Signer::address_of(sig);
-    // check if the sender is an authority
-
-    // if (exists<MultiSig<PropType>>(sender_addr)) {
-    //   let a = borrow_global<MultiSig<PropType>>(multisig_address);
-    //   print(a);
-
-    // }
-    // let a = borrow_global<MultiSig<Prop>>(multisig_address);
     assert!(is_authority<PropType>(multisig_address, sender_addr), Errors::invalid_argument(ENOT_AUTHORIZED));
 
-    let g = borrow_global_mut<MultiSig<PropGovSigners>>(multisig_address);
+    let gov_prop = borrow_global_mut<MultiSig<PropGovSigners>>(multisig_address);
 
-    // // reset everything beforehand.
-    // // maybe_reset_gov(g);
-    if (Vector::is_empty(&g.pending)) {
+    // find and update existing proposal, or create a new one and add to "pending"
+    let len = Vector::length(&gov_prop.pending);
+
+    if (len > 0) {
+      let i = 0;
+      while (i < len) {
+        // let prop = Vector::borrow_mut(&mut gov_prop.pending, i);
+        let prop = Vector::borrow(&gov_prop.pending, i);
+        if (
+          VectorHelper::compare(&prop.addresses, &new_addresses) &&
+          prop.approved == false
+        ) {
+          // lots of borrow issues here. Need to figure out how to do this without removing the struct and putting back.
+          let prop = Vector::remove(&mut gov_prop.pending, i);
+          Vector::push_back(&mut prop.votes, sender_addr);
+
+          if (Vector::length(&prop.votes) >= gov_prop.n) {
+            
+            // can't do any operators to MultiSig<PropType> because the compiler thinks it's the same type as being borrowed above (MultiSig<PropGovSigners>). Need to finish the approval in a separate function.
+            
+            // store in approved list
+            let prop = Vector::remove(&mut gov_prop.pending, i);
+            prop.approved = true;
+            let update_type = *&prop.add_remove;
+            let addresses = *&prop.addresses;
+            Vector::push_back(&mut gov_prop.approved, prop);
+
+            return (true, addresses, update_type)
+          } else {
+            // put it back. TODO: hack
+            Vector::push_back(&mut gov_prop.pending, prop);
+          }
+        };
+        i = i + 1;
+      };
+    } else {
       let p = PropGovSigners {
-          new_addrs: new_addresses,
+          add_remove,
+          addresses: new_addresses,
           votes: Vector::singleton(sender_addr),
           approved: false,
-          expiration_epoch: DiemConfig::get_current_epoch() + g.cfg_expire_epochs,
+          expiration_epoch: DiemConfig::get_current_epoch() + *&gov_prop.cfg_expire_epochs,
         };
         print(&p);
-      };
-      
-
-    
-    
-    // let len = Vector::length(&g.new_addrs);
-    // if (len > 0) {
-    //   // check if there is already a proposal
-    //   let i = 0;
-    //   while (i < Vector::length(&g.new_addrs)) {
-    //     let p = Vector::borrow_mut(&mut g.new_addrs, i);
-    //     if (
-    //       VectorHelper::compare(&p.new_addrs, &new_addresses) &&
-    //       p.approved == false
-    //     ) {
-    //       Vector::push_back(&mut p.votes, sender_addr);
-
-    //       if (Vector::length(&p.votes) >= g.cfg_n_sigs) {
-    //         p.approved = true;
-    //         // finally append the new signers
-    //         let ms = borrow_global_mut<MultiSig<Prop>>(multisig_address);
-    //         Vector::append(&mut ms.signers, *&p.new_addrs);
-    //       };
-
-    //     };
-    //     i = i + 1;
-    //   };
-    // } 
-    // else {
-    //   let prop = PropGovSigners {
-    //       new_addrs: new_addresses,
-    //       votes: Vector::singleton(sender_addr),
-    //       approved: false,
-    //       expiration_epoch: DiemConfig::get_current_epoch() + g.cfg_expire_epochs,
-    //     };
-    //     g.add = Vector::singleton(prop);
-    //   };
+        Vector::push_back(&mut gov_prop.pending, p);
+    };
+    // returns if we are to add or remove the addresses
+    (false, Vector::empty(), false)
   }
+
+// fun maybe_update_authorities<PropType: store + key>(ms: &mut MultiSig<PropType>, add_remove: bool, addresses: vector<address>) acquires MultiSig {
+      
+//       if (add_remove) {
+//         Vector::append(&mut ms.signers, addresses);
+//       } else {
+//         // remove the signers
+//         let i = 0;
+//         while (i < Vector::length(&addresses)) {
+//           let addr = Vector::borrow(&addresses, i);
+//           let (found, idx) = Vector::index_of(&ms.signers, addr);
+//           if (found) {
+//             Vector::swap_remove(&mut ms.signers, idx);
+//           };
+//           i = i + 1;
+//         };
+//       };
+//   }
 
   //   // remove a signer
   //   // TODO lots of code duplication here. Refactor.
@@ -541,10 +567,10 @@ module MultiSig {
 
   // //////// GETTERS ////////
 
-  // public fun get_authorities<Prop>(multisig_address: address): vector<address> acquires MultiSig {
-  //   let m = borrow_global<MultiSig<Prop>>(multisig_address);
-  //   *&m.signers
-  // }
+  public fun get_authorities<Prop: key + store >(multisig_address: address): vector<address> acquires MultiSig {
+    let m = borrow_global<MultiSig<Prop>>(multisig_address);
+    *&m.signers
+  }
 
 }
 }
