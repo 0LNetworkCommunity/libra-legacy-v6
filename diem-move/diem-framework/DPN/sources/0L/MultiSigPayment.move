@@ -98,9 +98,9 @@ module MultiSigPayment {
   // Only the first proposer can set the expiration time. It will be ignored when a duplicate is caught.
 
 
-  public fun propose_payment(sig: &signer, destination: address, amount: u64, note: vector<u8>) {
-    let p = new_payment(destination, amount, note);
-    MultiSig::propose<PaymentType>(sig, destination, p);
+  public fun propose_payment(sig: &signer, multisig_addr: address, recipient: address, amount: u64, note: vector<u8>) {
+    let p = new_payment(recipient, amount, note);
+    MultiSig::propose<PaymentType>(sig, multisig_addr, p);
   }
 
 
