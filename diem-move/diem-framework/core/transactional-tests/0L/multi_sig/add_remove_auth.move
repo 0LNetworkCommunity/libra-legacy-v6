@@ -14,7 +14,9 @@ script {
   use Std::Option;
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
-  use DiemFramework::MultiSig::{Self, PropPayment};
+  use DiemFramework::MultiSig;
+  use DiemFramework::MultiSigPayment::PaymentType;
+
   use Std::Vector;
   fun main(_dr: signer, d_sig: signer) {
     let bal = DiemAccount::balance<GAS>(@DaveMultiSig);
@@ -27,7 +29,7 @@ script {
     // payment type of multisigs need withdraw capability
     let cap = DiemAccount::extract_withdraw_capability(&d_sig);
 
-    MultiSig::init_type<PropPayment>(&d_sig, addr, 2, Option::some(cap));
+    MultiSig::init_type<PaymentType>(&d_sig, addr, 2, Option::some(cap));
     MultiSig::finalize_and_brick(&d_sig);
   }
 }
@@ -36,13 +38,14 @@ script {
 
 //# run --admin-script --signers DiemRoot Alice
 script {
-  use DiemFramework::MultiSig::{Self, PropPayment};
+  use DiemFramework::MultiSig;
+  use DiemFramework::MultiSigPayment::PaymentType;
   use Std::Vector;
 
   fun main(_dr: signer, a_sig: signer) {
-    MultiSig::propose_governance<PropPayment>(&a_sig, @DaveMultiSig, Vector::singleton(@Carol), true);
+    MultiSig::propose_governance<PaymentType>(&a_sig, @DaveMultiSig, Vector::singleton(@Carol), true);
 
-    let a = MultiSig::get_authorities<PropPayment>(@DaveMultiSig);
+    let a = MultiSig::get_authorities<PaymentType>(@DaveMultiSig);
     assert!(Vector::length(&a) == 2, 7357002);
   }
 }
@@ -50,13 +53,14 @@ script {
 
 //# run --admin-script --signers DiemRoot Bob
 script {
-  use DiemFramework::MultiSig::{Self, PropPayment};
+  use DiemFramework::MultiSig;
+  use DiemFramework::MultiSigPayment::PaymentType;
   use Std::Vector;
 
   fun main(_dr: signer, b_sig: signer) {
-    MultiSig::propose_governance<PropPayment>(&b_sig, @DaveMultiSig, Vector::singleton(@Carol), true);
+    MultiSig::propose_governance<PaymentType>(&b_sig, @DaveMultiSig, Vector::singleton(@Carol), true);
 
-    let a = MultiSig::get_authorities<PropPayment>(@DaveMultiSig);
+    let a = MultiSig::get_authorities<PaymentType>(@DaveMultiSig);
     assert!(Vector::length(&a) == 3, 7357002);
   }
 }
@@ -67,13 +71,14 @@ script {
 
 //# run --admin-script --signers DiemRoot Bob
 script {
-  use DiemFramework::MultiSig::{Self, PropPayment};
+  use DiemFramework::MultiSig;
+  use DiemFramework::MultiSigPayment::PaymentType;
   use Std::Vector;
   fun main(_dr: signer, b_sig: signer) {
-    MultiSig::propose_governance<PropPayment>(&b_sig, @DaveMultiSig, Vector::singleton(@Alice), false);
+    MultiSig::propose_governance<PaymentType>(&b_sig, @DaveMultiSig, Vector::singleton(@Alice), false);
     
     // no change yet
-    let a = MultiSig::get_authorities<PropPayment>(@DaveMultiSig);
+    let a = MultiSig::get_authorities<PaymentType>(@DaveMultiSig);
     assert!(Vector::length(&a) == 3, 7357003);
 
   }
@@ -83,13 +88,14 @@ script {
 
 //# run --admin-script --signers DiemRoot Carol
 script {
-  use DiemFramework::MultiSig::{Self, PropPayment};
+  use DiemFramework::MultiSig;
+  use DiemFramework::MultiSigPayment::PaymentType;
   use Std::Vector;
   fun main(_dr: signer, b_sig: signer) {
-    MultiSig::propose_governance<PropPayment>(&b_sig, @DaveMultiSig, Vector::singleton(@Alice), false);
+    MultiSig::propose_governance<PaymentType>(&b_sig, @DaveMultiSig, Vector::singleton(@Alice), false);
     
     // no change yet
-    let a = MultiSig::get_authorities<PropPayment>(@DaveMultiSig);
+    let a = MultiSig::get_authorities<PaymentType>(@DaveMultiSig);
     assert!(Vector::length(&a) == 2, 7357003);
 
   }

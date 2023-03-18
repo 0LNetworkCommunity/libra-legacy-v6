@@ -42,7 +42,7 @@ module MultiSig {
   use Std::Signer;
   use Std::Errors;
   // use Std::FixedPoint32;
-  use DiemFramework::DiemAccount;
+  use DiemFramework::DiemAccount::{Self, WithdrawCapability};
   use DiemFramework::DiemConfig;
   use DiemFramework::Debug::print;
   // use DiemFramework::GAS::GAS;
@@ -74,8 +74,12 @@ module MultiSig {
     list: vector<address>,
     fee: u64, // percentage balance fee denomiated in 4 decimal precision 123456 = 12.3456%
   }
+
+  struct Withdraw has key { 
+    capability: Option<WithdrawCapability>,
+  }
   
-  /// A MultiSig account is an account which requires multiple votes from Authorities to send a transaction.
+  /// A MultiSig account is an account which requires multiple votes from Authorities to  send a transaction.
   /// A multisig can be used to get agreement on different types of transactions, such as:
   // A payment transaction
   // A multisig MultiSig<PropGovSigners> transaction
@@ -83,10 +87,8 @@ module MultiSig {
   // This contract only has handlers for the first two types of transactions.
 
   struct MultiSig<HandlerType> has key {
-    cfg_handler_name: vector<u8>,
     cfg_expire_epochs: u64,
     cfg_default_n_sigs: u64,
-    withdraw_capability: Option<DiemAccount::WithdrawCapability>,
     signers: vector<address>,
     pending: vector<Proposal<HandlerType>>,
     approved: vector<Proposal<HandlerType>>,
@@ -171,9 +173,7 @@ module MultiSig {
     sig: &signer,
     m_seed_authorities: vector<address>,
     cfg_default_n_sigs: u64,
-    withdraw_capability: Option<DiemAccount::WithdrawCapability>,
-    handler_name: vector<u8>,
-  // ) acquires RootMultiSigRegistry  {
+    withdraw_capability: Option<WithdrawCapability>,
    ) {
     assert!(cfg_default_n_sigs > 0, Errors::invalid_argument(ENO_SIGNERS));
     // make sure the signer's address is not in the list of authorities. 
@@ -184,10 +184,9 @@ module MultiSig {
     print(&10002);
 
     move_to(sig, MultiSig<HandlerType> {
-      cfg_handler_name: handler_name,
       cfg_expire_epochs: DEFAULT_EPOCHS_EXPIRE,
       cfg_default_n_sigs,
-      withdraw_capability,
+      // withdraw_capability,
       signers: copy m_seed_authorities,
       // m: Vector::length(&m_seed_authorities),
       pending: Vector::empty(),
@@ -199,10 +198,21 @@ module MultiSig {
       gov_rejected: Vector::empty(),
     });
 
+      move_to(sig, Withdraw {
+        capability: withdraw_capability
+      });
+
     // // add the sender to the root registry for billing.
     // upsert_root_registry(sender_addr);
   }
   
+  public fun restore_withdraw_cap(multisig_addr: address, w: WithdrawCapability) acquires Withdraw {
+    assert!(exists<Withdraw>(multisig_addr), Errors::invalid_argument(ENOT_AUTHORIZED));
+
+    let withdraw = borrow_global_mut<Withdraw>(multisig_addr);
+    Option::fill(&mut withdraw.capability, w);
+  }
+
   /// Once the "sponsor" which is setting up the multisig has created all the multisig types (payment, generic, gov), they need to brick this account so that the signer for this address is rendered useless, and it is a true multisig.
   public fun finalize_and_brick(sig: &signer) {
     DiemAccount::brick_this(sig, b"yes I know what I'm doing");
@@ -232,7 +242,8 @@ module MultiSig {
 
 
 
-  public fun propose<HandlerType: key + store + drop>(sig: &signer, multisig_address: address, proposal_data: HandlerType) acquires MultiSig {
+  public fun propose<HandlerType: key + store + drop>(sig: &signer, multisig_address: address, proposal_data: HandlerType):(bool, Option<WithdrawCapability>) acquires MultiSig, Withdraw {
+    print(&20001);
     assert_authorized<HandlerType>(sig, multisig_address);
 
     let ms = borrow_global_mut<MultiSig<HandlerType>>(multisig_address);
@@ -241,33 +252,58 @@ module MultiSig {
     // check if we have this proposal already
     let (found, _) = find_index_of_proposal(ms, &proposal_data);
 
-    if (found) {
+    let approved = if (found) {
+      print(&20002);
+
       let prop = get_proposal(ms, &proposal_data);
-      vote(prop, Signer::address_of(sig), n);
+      vote(prop, Signer::address_of(sig), n)
     } else {
+      print(&20003);
       Vector::push_back(&mut ms.pending, Proposal<HandlerType> {
         id: ms.counter,
         proposal_data,
-        votes: Vector::empty(),
+        votes: Vector::singleton(Signer::address_of(sig)),
         approved: false,
         expiration_epoch: DiemConfig::get_current_epoch() + ms.cfg_expire_epochs,
       });
       ms.counter = ms.counter + 1;
-    }
+      false
+    };
 
+    print(&20004);
+    let w = borrow_global_mut<Withdraw>(multisig_address);
+
+    if (approved && Option::is_some(&w.capability)) {
+      print(&20005);
+        let cap = Option::extract(&mut w.capability);
+        print(&20006);
+
+        return (approved, Option::some(cap))
+    };
+    (approved, Option::none())
   }
+
 
   // votes on a proposal, returns true if it passed
   fun vote<HandlerType: key + store + drop>(prop: &mut Proposal<HandlerType>, sender_addr: address, n: u64): bool {
+    print(&30001);
     if (!Vector::contains(&prop.votes, &sender_addr)) {
       Vector::push_back(&mut prop.votes, sender_addr);
+      print(&30002);
+
     };
     tally(prop, n)
   }
 
   fun tally<HandlerType: key + store + drop>(prop: &mut Proposal<HandlerType>, n: u64): bool {
+    print(&40001);
+
+    print(&prop.votes);
+
     if (Vector::length(&prop.votes) >= n) {
       prop.approved = true;
+      print(&40002);
+
       return true
     };
 

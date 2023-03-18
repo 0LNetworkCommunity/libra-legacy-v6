@@ -38,14 +38,14 @@
 address DiemFramework {
 module MultiSigPayment {
   // use Std::Vector;
-  // use Std::Option;
+  use Std::Option;
   // use Std::Signer;
   // use Std::Errors;
   // use Std::FixedPoint32;
-  // use DiemFramework::DiemAccount;
+  use DiemFramework::DiemAccount::{Self, WithdrawCapability};
   // use DiemFramework::DiemConfig;
-  // use DiemFramework::Debug::print;
-  // use DiemFramework::GAS::GAS;
+  use DiemFramework::Debug::print;
+  use DiemFramework::GAS::GAS;
   // use DiemFramework::VectorHelper;
   use DiemFramework::MultiSig;
 
@@ -80,6 +80,13 @@ module MultiSigPayment {
     note: vector<u8>,
   }
 
+
+  public fun init_payment_multisig(sponsor: &signer, init_signers: vector<address>, cfg_n_signers: u64) {
+
+    let cap = DiemAccount::extract_withdraw_capability(sponsor);
+    MultiSig::init_type<PaymentType>(sponsor, init_signers, cfg_n_signers, Option::some(cap));
+  }
+
   public fun new_payment(destination: address, amount: u64, note: vector<u8>): PaymentType {
     PaymentType {
       destination,
@@ -99,8 +106,22 @@ module MultiSigPayment {
 
 
   public fun propose_payment(sig: &signer, multisig_addr: address, recipient: address, amount: u64, note: vector<u8>) {
+    let p = new_payment(recipient, amount, *&note);
+
+    let (approved, cap) = MultiSig::propose<PaymentType>(sig, multisig_addr, p);
+
     let p = new_payment(recipient, amount, note);
-    MultiSig::propose<PaymentType>(sig, multisig_addr, p);
+
+    if (Option::is_some(&cap)) {
+      let c = Option::extract(&mut cap);
+      Option::destroy_none(cap);
+      if (approved) {
+        release_payment(&p, &c);
+      };
+      MultiSig::restore_withdraw_cap(multisig_addr, c)
+    } else {
+      Option::destroy_none(cap);
+    }
   }
 
 
@@ -108,19 +129,18 @@ module MultiSigPayment {
   // Sending payment. Ordinarily an account can only transfer funds if the signer of that account is sending the transaction.
   // In Libra we have "withdrawal capability" tokens, which allow the holder of that token to authorize transactions. At the initilization of the multisig, the "withdrawal capability" was passed into the MultiSig datastructure.
   // Withdrawal capabilities are "hot potato" data. Meaning, they cannot ever be dropped and need to be moved to a final resting place, or returned to the struct that was housing it. That is what happens at the end of release_payment, it is only borrowed, and never leaves the data structure.
-  // fun release_payment(ms: &mut MultiSig::MultiSig<PaymentType>, prop_id: u64) {
-  //   let p = Vector::borrow(&mut ms.pending, prop_id);
-  //   if (Option::is_some(&ms.withdraw_capability)) {
-  //     DiemAccount::pay_from<GAS>(
-  //       Option::borrow(&mut ms.withdraw_capability),
-  //       p.prop_type.destination,
-  //       p.prop_type.amount,
-  //       *&p.prop_type.note,
-  //       b""
-  //     );
-  //   }
 
-  // }
+  fun release_payment(p: &PaymentType, cap: &WithdrawCapability) {
+    print(&90001);
+    DiemAccount::pay_from<GAS>(
+      cap,
+      p.destination,
+      p.amount,
+      *&p.note,
+      b""
+    );
+    // MultiSig::restore_withdraw_cap(multisig_addr, cap)
+  }
 
 
 

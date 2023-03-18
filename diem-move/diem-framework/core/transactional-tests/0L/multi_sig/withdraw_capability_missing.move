@@ -24,7 +24,10 @@ script {
     Vector::push_back(&mut addr, @Bob);
     Vector::push_back(&mut addr, @Carol);
 
-    MultiSig::init_type<MultiSigPayment::PaymentType>(&d_sig, addr, 2, Option::none());
+    // NOTE: there is no withdraw capability being sent.
+    // so transactions will fail.
+    let withdraw = Option::none();
+    MultiSig::init_type<MultiSigPayment::PaymentType>(&d_sig, addr, 2, withdraw, b"payment");
     MultiSig::finalize_and_brick(&d_sig);
   }
 }
@@ -57,3 +60,28 @@ script {
   }
 }
 
+
+//# run --admin-script --signers DiemRoot Carol
+script {
+  // use DiemFramework::MultiSig;
+  use DiemFramework::MultiSigPayment;
+  use DiemFramework::DiemAccount;
+  use DiemFramework::GAS::GAS;
+
+  fun main(_dr: signer, c_sig: signer) {
+
+    // let p = MultiSigPayment::new_payment(@Alice, 10, b"send it");
+
+    MultiSigPayment::propose_payment(&c_sig, @DaveMultiSig, @Alice, 10, b"send it");
+    
+    // MultiSig::process_payment_type(@DaveMultiSig);
+
+    // no change yet
+    // let a = MultiSig::get_authorities<PropPayment>(@DaveMultiSig);
+    // assert!(Vector::length(&a) == 2, 7357003);
+    let bal = DiemAccount::balance<GAS>(@DaveMultiSig);
+    // tHERE's no Withdraw Capability added so no changed.
+    assert!(bal == 1000000, 7357002);
+
+  }
+}
