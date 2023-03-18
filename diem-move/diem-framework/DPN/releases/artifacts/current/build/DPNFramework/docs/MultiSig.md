@@ -10,14 +10,16 @@
 -  [Resource `PaymentType`](#0x1_MultiSig_PaymentType)
 -  [Resource `Proposal`](#0x1_MultiSig_Proposal)
 -  [Resource `PropGovSigners`](#0x1_MultiSig_PropGovSigners)
--  [Resource `PropGeneric`](#0x1_MultiSig_PropGeneric)
 -  [Constants](#@Constants_0)
+-  [Function `new_payment`](#0x1_MultiSig_new_payment)
 -  [Function `root_init`](#0x1_MultiSig_root_init)
+-  [Function `assert_authorized`](#0x1_MultiSig_assert_authorized)
 -  [Function `init_type`](#0x1_MultiSig_init_type)
 -  [Function `finalize_and_brick`](#0x1_MultiSig_finalize_and_brick)
 -  [Function `is_finalized`](#0x1_MultiSig_is_finalized)
--  [Function `assert_authorized`](#0x1_MultiSig_assert_authorized)
 -  [Function `propose`](#0x1_MultiSig_propose)
+-  [Function `process_payment_type`](#0x1_MultiSig_process_payment_type)
+-  [Function `release_payment`](#0x1_MultiSig_release_payment)
 -  [Function `is_authority`](#0x1_MultiSig_is_authority)
 -  [Function `propose_governance`](#0x1_MultiSig_propose_governance)
 -  [Function `vote`](#0x1_MultiSig_vote)
@@ -33,6 +35,7 @@
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
+<b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
@@ -316,51 +319,6 @@ A multisig can be used to get agreement on different types of transactions, such
 
 </details>
 
-<a name="0x1_MultiSig_PropGeneric"></a>
-
-## Resource `PropGeneric`
-
-
-
-<pre><code><b>struct</b> <a href="MultiSig.md#0x1_MultiSig_PropGeneric">PropGeneric</a> <b>has</b> drop, store, key
-</code></pre>
-
-
-
-<details>
-<summary>Fields</summary>
-
-
-<dl>
-<dt>
-<code>n: u64</code>
-</dt>
-<dd>
-
-</dd>
-<dt>
-<code>prop_type: vector&lt;u8&gt;</code>
-</dt>
-<dd>
-
-</dd>
-<dt>
-<code>approved: bool</code>
-</dt>
-<dd>
-
-</dd>
-<dt>
-<code>expiration_epoch: u64</code>
-</dt>
-<dd>
-
-</dd>
-</dl>
-
-
-</details>
-
 <a name="@Constants_0"></a>
 
 ## Constants
@@ -444,6 +402,34 @@ Genesis starting fee for multisig service
 
 
 
+<a name="0x1_MultiSig_new_payment"></a>
+
+## Function `new_payment`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_new_payment">new_payment</a>(destination: <b>address</b>, amount: u64, note: vector&lt;u8&gt;): <a href="MultiSig.md#0x1_MultiSig_PaymentType">MultiSig::PaymentType</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_new_payment">new_payment</a>(destination: <b>address</b>, amount: u64, note: vector&lt;u8&gt;): <a href="MultiSig.md#0x1_MultiSig_PaymentType">PaymentType</a> {
+  <a href="MultiSig.md#0x1_MultiSig_PaymentType">PaymentType</a> {
+    destination,
+    amount,
+    note,
+  }
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_MultiSig_root_init"></a>
 
 ## Function `root_init`
@@ -465,6 +451,37 @@ Genesis starting fee for multisig service
     list: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
     fee: <a href="MultiSig.md#0x1_MultiSig_STARTING_FEE">STARTING_FEE</a>,
   });
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MultiSig_assert_authorized"></a>
+
+## Function `assert_authorized`
+
+
+
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>&lt;HandlerType: store, key&gt;(sig: &signer, multisig_address: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>&lt;HandlerType: key + store&gt;(sig: &signer, multisig_address: <b>address</b>) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
+      // cannot start manipulating contract until it is finalized
+  <b>assert</b>!(<a href="MultiSig.md#0x1_MultiSig_is_finalized">is_finalized</a>(multisig_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_FINALIZED_NOT_BRICK">ENOT_FINALIZED_NOT_BRICK</a>));
+
+  <b>assert</b>!(<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&lt;HandlerType&gt;&gt;(multisig_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>));
+
+  // check sender is authorized
+  <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
+  <b>assert</b>!(<a href="MultiSig.md#0x1_MultiSig_is_authority">is_authority</a>&lt;HandlerType&gt;(multisig_address, sender_addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>));
 }
 </code></pre>
 
@@ -520,12 +537,6 @@ An initial "sponsor" who is the signer of the initialization account calls this 
     gov_rejected: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
   });
 
-  // maybe_init_gov(sig, <b>copy</b> m_seed_authorities, cfg_default_n_sigs);
-
-  // print(&10003);
-  // <a href="DiemAccount.md#0x1_DiemAccount_brick_this">DiemAccount::brick_this</a>(sig, b"yes I know what I'm doing");
-  // print(&10004);
-
   // // add the sender <b>to</b> the root registry for billing.
   // upsert_root_registry(sender_addr);
 }
@@ -578,37 +589,6 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
 
 <pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_is_finalized">is_finalized</a>(addr: <b>address</b>): bool {
   <a href="DiemAccount.md#0x1_DiemAccount_is_a_brick">DiemAccount::is_a_brick</a>(addr)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_MultiSig_assert_authorized"></a>
-
-## Function `assert_authorized`
-
-
-
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>&lt;HandlerType: store, key&gt;(sig: &signer, multisig_address: <b>address</b>)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>&lt;HandlerType: key + store&gt;(sig: &signer, multisig_address: <b>address</b>) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
-      // cannot start manipulating contract until it is finalized
-  <b>assert</b>!(<a href="MultiSig.md#0x1_MultiSig_is_finalized">is_finalized</a>(multisig_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_FINALIZED_NOT_BRICK">ENOT_FINALIZED_NOT_BRICK</a>));
-
-  <b>assert</b>!(<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&lt;HandlerType&gt;&gt;(multisig_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>));
-
-  // check sender is authorized
-  <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
-  <b>assert</b>!(<a href="MultiSig.md#0x1_MultiSig_is_authority">is_authority</a>&lt;HandlerType&gt;(multisig_address, sender_addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>));
 }
 </code></pre>
 
@@ -670,6 +650,71 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
   // } <b>else</b> {
   //   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> ms.gov_pending, prop);
   // }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MultiSig_process_payment_type"></a>
+
+## Function `process_payment_type`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_process_payment_type">process_payment_type</a>(multisig_address: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_process_payment_type">process_payment_type</a>(multisig_address: <b>address</b>) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>{
+  <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PaymentType">PaymentType</a>&gt;&gt;(multisig_address);
+
+  <b>let</b> p = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&ms.pending, 0);
+
+  print(&p.prop_type.destination);
+
+  <a href="MultiSig.md#0x1_MultiSig_release_payment">release_payment</a>(ms, 0);
+
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MultiSig_release_payment"></a>
+
+## Function `release_payment`
+
+
+
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_release_payment">release_payment</a>(ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_MultiSig">MultiSig::MultiSig</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PaymentType">MultiSig::PaymentType</a>&gt;, prop_id: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_release_payment">release_payment</a>(ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PaymentType">PaymentType</a>&gt;, prop_id: u64) {
+  <b>let</b> p = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&<b>mut</b> ms.pending, prop_id);
+  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&ms.withdraw_capability)) {
+    <a href="DiemAccount.md#0x1_DiemAccount_pay_from">DiemAccount::pay_from</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+      <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>(&<b>mut</b> ms.withdraw_capability),
+      p.prop_type.destination,
+      p.prop_type.amount,
+      *&p.prop_type.note,
+      b""
+    );
+  }
+
 }
 </code></pre>
 

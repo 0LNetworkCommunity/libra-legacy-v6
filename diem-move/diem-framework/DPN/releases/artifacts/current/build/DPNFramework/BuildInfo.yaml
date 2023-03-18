@@ -185,6 +185,9 @@ compiled_package_info:
       name: MultiSig
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: MultiSigPayment
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: NetworkIdentity
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -325,7 +328,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 84DFBE41894F3982248CD600822ADCE8E3C97005E5B461A17BF873CD2FB3F10B
+  source_digest: 93BDD056047C754CB68FE06C05F837DA6AD352BBD5DE6FE23BC6437D0209F1B8
   build_flags:
     dev_mode: false
     test_mode: false

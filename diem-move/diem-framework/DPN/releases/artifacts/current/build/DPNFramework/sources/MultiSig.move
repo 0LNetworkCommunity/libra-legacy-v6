@@ -6,6 +6,7 @@
 
 
 // The main design goals of this multisig implementation are:
+// 0 . Should allow arbitrary actions to be coded by a third party contract, and governed by the multisig. Payments one case, but other actions are possible.
 // 1. should leverage the usual transaction flow and tools which users are familiar with to add funds to the account. The funds remain viewable by the usual tools for viewing account balances.
 // 2. The authority over the address should not require collecting signatures offline: transactions should be submitted directly to the contract.
 // 3. Funds are disbursed as usual: to a destination addresses, and not into any intermediate structures.
@@ -44,7 +45,7 @@ module MultiSig {
   use DiemFramework::DiemAccount;
   use DiemFramework::DiemConfig;
   use DiemFramework::Debug::print;
-  // use DiemFramework::GAS::GAS;
+  use DiemFramework::GAS::GAS;
   use DiemFramework::VectorHelper;
   use DiemFramework::CoreAddresses;
 
@@ -96,6 +97,9 @@ module MultiSig {
     gov_rejected:  vector<PropGovSigners>,
   }
 
+  // this is one of the types that MultiSig will handle.
+  // though this can be coded by a third party, this is the most common 
+  // use case, that requires the most secrutiy (and should be provided by root)
   struct PaymentType has key, store {
     // The transaction to be executed
     destination: address,
@@ -105,6 +109,18 @@ module MultiSig {
     note: vector<u8>,
   }
 
+  public fun new_payment(destination: address, amount: u64, note: vector<u8>): PaymentType {
+    PaymentType {
+      destination,
+      amount,
+      note,
+    }
+  }
+
+  // all proposals share some common fields
+  // and each proposal can add type-specific parameters
+  // The handler for such specific parameters needs to included in code by an external contract.
+  // MultiSig, will only say if it passed or not.
   struct Proposal<HandlerType> has key, store {
     id: u64,
     // The transaction to be executed
@@ -117,21 +133,6 @@ module MultiSig {
     expiration_epoch: u64,
   }
 
-  // /// Any MultiSig<PropGovSigners> changes are held in a separate structure.
-  // struct MultiSig<PropGovSigners> has key {
-  //   // n-of-m for changes to MultiSig<PropGovSigners>. Defaults to same as the multisig.
-  //   cfg_n_sigs: u64,
-  //   // expiration
-  //   cfg_expire_epochs: u64,
-  //   // propose new signer
-  //   add: vector<PropGovSigners>,
-  //   // remove signer
-  //   remove: vector<PropGovSigners>,
-  //   // change threshold
-  //   threshold: vector<PropGovThreshold>,
-  //   // check if the MultiSig<PropGovSigners> votes need to be reset
-  //   reset_gov_votes: vector<address>,
-  // }
 
   struct PropGovSigners has key, store, drop {
     add_remove: bool, // true = add, false = remove
@@ -142,27 +143,26 @@ module MultiSig {
     cfg_n_sigs: u64,
   }
 
-  // struct PropGovThreshold has key, store, drop {
-  //   n: u64,
-  //   votes: vector<address>,
-  //   approved: bool,
-  //   expiration_epoch: u64,
-  // }
 
-  struct PropGeneric has key, store, drop {
-    n: u64,
-    prop_type: vector<u8>, // The id of the type of proposal, so that the remote contract can handle it.
-    approved: bool,
-    expiration_epoch: u64,
-  }
-
-
+  // For PaymentType use cases Root will charge for the service.
+  // Similar features can of course be coded by a third party.
   public fun root_init(vm: &signer) {
     CoreAddresses::assert_vm(vm);
     move_to(vm, RootMultiSigRegistry {
       list: Vector::empty(),
       fee: STARTING_FEE,
     });
+  }
+
+  fun assert_authorized<HandlerType: key + store>(sig: &signer, multisig_address: address) acquires MultiSig {
+        // cannot start manipulating contract until it is finalized
+    assert!(is_finalized(multisig_address), Errors::invalid_argument(ENOT_FINALIZED_NOT_BRICK));
+
+    assert!(exists<MultiSig<HandlerType>>(multisig_address), Errors::invalid_argument(ENOT_AUTHORIZED));
+
+    // check sender is authorized
+    let sender_addr = Signer::address_of(sig);
+    assert!(is_authority<HandlerType>(multisig_address, sender_addr), Errors::invalid_argument(ENOT_AUTHORIZED));
   }
 
   /// An initial "sponsor" who is the signer of the initialization account calls this function.
@@ -199,12 +199,6 @@ module MultiSig {
       gov_rejected: Vector::empty(),
     });
 
-    // maybe_init_gov(sig, copy m_seed_authorities, cfg_default_n_sigs);
-
-    // print(&10003);
-    // DiemAccount::brick_this(sig, b"yes I know what I'm doing");
-    // print(&10004);
-
     // // add the sender to the root registry for billing.
     // upsert_root_registry(sender_addr);
   }
@@ -227,7 +221,6 @@ module MultiSig {
   // }
 
 
-
   // Propose a transaction 
   // Transactions should be easy, and have one obvious way to do it. There should be no other method for voting for a tx.
   // this function will catch a duplicate, and vote in its favor.
@@ -237,16 +230,7 @@ module MultiSig {
   // Only the first proposer can set the expiration time. It will be ignored when a duplicate is caught.
 
 
-  fun assert_authorized<HandlerType: key + store>(sig: &signer, multisig_address: address) acquires MultiSig {
-        // cannot start manipulating contract until it is finalized
-    assert!(is_finalized(multisig_address), Errors::invalid_argument(ENOT_FINALIZED_NOT_BRICK));
 
-    assert!(exists<MultiSig<HandlerType>>(multisig_address), Errors::invalid_argument(ENOT_AUTHORIZED));
-
-    // check sender is authorized
-    let sender_addr = Signer::address_of(sig);
-    assert!(is_authority<HandlerType>(multisig_address, sender_addr), Errors::invalid_argument(ENOT_AUTHORIZED));
-  }
 
   public fun propose<HandlerType: key + store>(sig: &signer, multisig_address: address, prop_type: HandlerType) acquires MultiSig {
     assert_authorized<HandlerType>(sig, multisig_address);
@@ -289,102 +273,34 @@ module MultiSig {
     // }
   }
 
+  public fun process_payment_type(multisig_address: address) acquires MultiSig{
+    let ms = borrow_global_mut<MultiSig<PaymentType>>(multisig_address);
+    
+    let p = Vector::borrow(&ms.pending, 0);
+    
+    print(&p.prop_type.destination);
+
+    release_payment(ms, 0);
+
+  }
 
 
-  // public fun propose_tx(sig: &signer, multisig_address: address, recipient: address, amount: u64, opt_epochs_expire: u64, note: vector<u8>) acquires MultiSig {
-  //   print(&20001);
+  // Sending payment. Ordinarily an account can only transfer funds if the signer of that account is sending the transaction.
+  // In Libra we have "withdrawal capability" tokens, which allow the holder of that token to authorize transactions. At the initilization of the multisig, the "withdrawal capability" was passed into the MultiSig datastructure.
+  // Withdrawal capabilities are "hot potato" data. Meaning, they cannot ever be dropped and need to be moved to a final resting place, or returned to the struct that was housing it. That is what happens at the end of release_payment, it is only borrowed, and never leaves the data structure.
+  fun release_payment(ms: &mut MultiSig<PaymentType>, prop_id: u64) {
+    let p = Vector::borrow(&mut ms.pending, prop_id);
+    if (Option::is_some(&ms.withdraw_capability)) {
+      DiemAccount::pay_from<GAS>(
+        Option::borrow(&mut ms.withdraw_capability),
+        p.prop_type.destination,
+        p.prop_type.amount,
+        *&p.prop_type.note,
+        b""
+      );
+    }
 
-  //   // check if the sender is an authority
-  //   assert!(is_authority<PropPayment>(multisig_address, Signer::address_of(sig)), Errors::invalid_argument(ENOT_AUTHORIZED));
-
-  //   // check if there is a pending transaction for this recipient and amount
-  //   let (found, idx) = find_pending_idx_by_param(multisig_address, recipient, amount);
-  //   // if not found, create a new one
-  //   let ms = borrow_global_mut<MultiSig<PropPayment>>(multisig_address);
-
-  //   let idx = if (found) {
-  //     // If expired reject it
-  //     if (maybe_expire(ms, idx)) {
-  //       return
-  //     };
-  //     // if found, vote for it
-  //     let prop = Vector::borrow_mut(&mut ms.pending, idx);
-  //     vote_for_tx(sig, prop);
-  //     // return the index of the proposal
-  //     idx
-  //   } else {
-      
-  //     // increment this at the end, so the first id is 0.
-  //     let id = ms.counter;
-
-  //     let expires = if (opt_epochs_expire > 0) {
-  //       DiemConfig::get_current_epoch() + opt_epochs_expire
-  //     } else {
-  //       DiemConfig::get_current_epoch() + 14
-  //     };
-
-  //     let prop = PropPayment {
-  //       id,
-  //       destination: recipient,
-  //       amount: amount,
-  //       note,
-  //       votes: Vector::empty(),
-  //       expiration_epoch: expires,
-  //     };
-
-  //     vote_for_tx(sig, &mut prop);
-      
-  //     Vector::push_back(&mut ms.pending, prop);
-  //     // the len of proposals, and the next id.
-  //     ms.counter = ms.counter + 1;
-  //     // return the index of the proposal
-  //     id
-  //   };
-
-  //   maybe_approve(ms, idx);
-
-  //   // TODO: Also do a lazy cleaning of expired governence proposals.
-  //   let g = borrow_global_mut<MultiSig<PropGovSigners>>(multisig_address);
-  //   // maybe_reset_gov(g);
-  // }
-
-  // // this is a private internal function. There should only be one obvious way to vote for a transaction.
-  // fun vote_for_tx(sig: &signer, prop: &mut PropPayment) {
-  //   print(&30001);
-
-  //   if (Vector::contains(&prop.votes, &Signer::address_of(sig))) {
-  //     return
-  //   };
-  //   Vector::push_back(&mut prop.votes, Signer::address_of(sig));
-  // }
-
-  // fun maybe_approve(ms: &mut MultiSig<PropPayment>, prop_id: u64) {
-  //   print(&40001);
-  //   let prop = Vector::borrow_mut(&mut ms.pending, prop_id);
-  //   if (Vector::length<address>(&prop.votes) >= ms.n) {
-  //     print(&40002);
-  //     // approve it and send payment
-  //     // release payment needs the withdrawal capability token.
-  //     release_payment(ms, prop_id);
-
-  //     let p = Vector::swap_remove(&mut ms.pending, prop_id);
-  //     Vector::push_back(&mut ms.approved, p);
-  //   }
-  // }
-
-  // // Sending payment. Ordinarily an account can only transfer funds if the signer of that account is sending the transaction.
-  // // In Libra we have "withdrawal capability" tokens, which allow the holder of that token to authorize transactions. At the initilization of the multisig, the "withdrawal capability" was passed into the MultiSig datastructure.
-  // // Withdrawal capabilities are "hot potato" data. Meaning, they cannot ever be dropped and need to be moved to a final resting place, or returned to the struct that was housing it. That is what happens at the end of release_payment, it is only borrowed, and never leaves the data structure.
-  // fun release_payment(ms: &mut MultiSig<PropPayment>, prop_id: u64) {
-  //   let p = Vector::borrow(&mut ms.pending, prop_id);
-  //   DiemAccount::pay_from<GAS>(
-  //     &ms.withdraw_capability,
-  //     p.destination,
-  //     p.amount,
-  //     *&p.note,
-  //     b""
-  //   );
-  // }
+  }
 
   // fun maybe_expire(ms: &mut MultiSig<PropPayment>, prop_id: u64): bool {
   //   let expires = *&Vector::borrow(&mut ms.pending, prop_id).expiration_epoch;
