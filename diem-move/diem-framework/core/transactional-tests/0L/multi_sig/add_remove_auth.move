@@ -40,7 +40,7 @@ script {
   use Std::Vector;
 
   fun main(_dr: signer, a_sig: signer) {
-    MultiSig::propose_add_authorities<PropPayment>(&a_sig, @DaveMultiSig, Vector::singleton(@Carol));
+    MultiSig::propose_governance<PropPayment>(&a_sig, @DaveMultiSig, Vector::singleton(@Carol), true);
 
     let a = MultiSig::get_authorities<PropPayment>(@DaveMultiSig);
     assert!(Vector::length(&a) == 2, 7357002);
@@ -54,57 +54,43 @@ script {
   use Std::Vector;
 
   fun main(_dr: signer, b_sig: signer) {
-    MultiSig::propose_add_authorities<PropPayment>(&b_sig, @DaveMultiSig, Vector::singleton(@Carol));
+    MultiSig::propose_governance<PropPayment>(&b_sig, @DaveMultiSig, Vector::singleton(@Carol), true);
 
     let a = MultiSig::get_authorities<PropPayment>(@DaveMultiSig);
-    assert!(Vector::length(&a) == 2, 7357002);
+    assert!(Vector::length(&a) == 3, 7357002);
   }
 }
 
 
-// //# run --admin-script --signers DiemRoot Bob
-// script {
-//   use DiemFramework::MultiSig;
-//   use Std::Vector;
-//   fun main(_dr: signer, b_sig: signer) {
-//     MultiSig::propose_add_authorities(&b_sig, @DaveMultiSig, Vector::singleton(@Carol));
+// NOW CAROL AND BOB CONSPIRE TO REMOVE ALICE
+
+
+//# run --admin-script --signers DiemRoot Bob
+script {
+  use DiemFramework::MultiSig::{Self, PropPayment};
+  use Std::Vector;
+  fun main(_dr: signer, b_sig: signer) {
+    MultiSig::propose_governance<PropPayment>(&b_sig, @DaveMultiSig, Vector::singleton(@Alice), false);
     
-//     // now there were sufficient votes to add Carol
-//     let a = MultiSig::get_authorities(@DaveMultiSig);
-//     assert!(Vector::length(&a) == 3, 7357003);
+    // no change yet
+    let a = MultiSig::get_authorities<PropPayment>(@DaveMultiSig);
+    assert!(Vector::length(&a) == 3, 7357003);
 
-//   }
-// }
-
-// // NOW CAROL AND BOB CONSPIRE TO REMOVE ALICE
+  }
+}
 
 
-// //# run --admin-script --signers DiemRoot Bob
-// script {
-//   use DiemFramework::MultiSig;
-//   use Std::Vector;
-//   fun main(_dr: signer, b_sig: signer) {
-//     MultiSig::propose_remove_authorities(&b_sig, @DaveMultiSig, Vector::singleton(@Alice));
+
+//# run --admin-script --signers DiemRoot Carol
+script {
+  use DiemFramework::MultiSig::{Self, PropPayment};
+  use Std::Vector;
+  fun main(_dr: signer, b_sig: signer) {
+    MultiSig::propose_governance<PropPayment>(&b_sig, @DaveMultiSig, Vector::singleton(@Alice), false);
     
-//     // no change yet
-//     let a = MultiSig::get_authorities(@DaveMultiSig);
-//     assert!(Vector::length(&a) == 3, 7357003);
+    // no change yet
+    let a = MultiSig::get_authorities<PropPayment>(@DaveMultiSig);
+    assert!(Vector::length(&a) == 2, 7357003);
 
-//   }
-// }
-
-
-
-// //# run --admin-script --signers DiemRoot Carol
-// script {
-//   use DiemFramework::MultiSig;
-//   use Std::Vector;
-//   fun main(_dr: signer, c_sig: signer) {
-//     MultiSig::propose_remove_authorities(&c_sig, @DaveMultiSig, Vector::singleton(@Alice));
-    
-//     // no change yet
-//     let a = MultiSig::get_authorities(@DaveMultiSig);
-//     assert!(Vector::length(&a) == 2, 7357003);
-
-//   }
-// }
+  }
+}
