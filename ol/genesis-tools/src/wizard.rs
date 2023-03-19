@@ -9,10 +9,12 @@ use diem_genesis_tool::{
     storage_helper::StorageHelper,
     validator_config::ValidatorConfig,
     validator_operator::ValidatorOperator, verify::Verify,
+    waypoint,
+    ol_node_files
 };
 
 use diem_github_client;
-use diem_types::chain_id::ChainId;
+use diem_types::chain_id::{ChainId, NamedChain};
 use diem_types::network_address::{NetworkAddress, Protocol};
 use dirs;
 use indicatif::{ProgressBar, ProgressIterator};
@@ -26,7 +28,7 @@ use diem_global_constants::{
  OPERATOR_KEY, OWNER_KEY,
 };
 use diem_secure_storage::KVStorage;
-
+use ol::commands::init_cmd;
 use crate::run;
 
 #[test]
@@ -140,6 +142,50 @@ impl GenesisWizard {
                 self.github_token.clone(),
                 false,
             )?;
+
+            // create the files necessary to run the node
+            let waypoint = waypoint::extract_waypoint_from_file(
+                &self.data_path.join("genesis.blob")
+            )?;
+            println!("waypoint: {:?}", waypoint);
+            fs::write(self.data_path.join("genesis_waypoint.txt"), waypoint.to_string())?;
+
+
+            init_cmd::update_waypoint(&mut app_config.clone(), Option::from(waypoint), None)?;
+
+            // make extract-waypoint && cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/genesis_waypoint.txt)
+            //
+            // 1. cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-waypoint \
+            // 	--genesis-path ${DATA_PATH}/genesis.blob \
+            // 	--extract \
+            // 	--chain-id ${CHAIN_ID} \
+            // 	--shared-backend ${REMOTE} \
+            // 	| awk -F 'Waypoint: '  '{print $$2}' > ${DATA_PATH}/genesis_waypoint.txt\
+
+            // 2. cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/genesis_waypoint.txt)
+
+            ol_node_files::onboard_helper_all_files(
+                self.data_path.clone(),
+                NamedChain::MAINNET,
+                Some(self.repo_owner.clone()),
+                Some(self.repo_name.clone()),
+                &app_config.format_oper_namespace(),
+                &Some(self.data_path.join("genesis.blob")),
+                &false,
+                None,
+                &None,
+                Some(app_config.profile.ip))?;
+
+            // node-files:
+            //     cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
+            // --chain-id ${CHAIN_ID} \
+            // --validator-backend ${LOCAL} \
+            // --data-path ${DATA_PATH} \
+            // --namespace ${ACC}-oper \
+            // --genesis-path ${DATA_PATH}/genesis.blob \
+            // --val-ip-address ${IP} \
+
+            // rm -rf ~/.0L/db
 
             // reset the safety rules
             reset_safety_data(&self.data_path, &app_config.format_oper_namespace());
