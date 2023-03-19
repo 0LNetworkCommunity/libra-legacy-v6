@@ -143,6 +143,25 @@ module MultiSigPayment {
   }
 
 
+  // public fun root_security_fee_billing(vm: &signer) acquires RootMultiSigRegistry {
+  //   CoreAddresses::assert_vm(vm);
+  //   let reg = borrow_global<RootMultiSigRegistry>(@VMReserved);
+  //   let i = 0;
+  //   while (i < Vector::length(&reg.list)) {
+  //     let multi_sig_addr = Vector::borrow(&reg.list, i);
+
+  //     let pct = FixedPoint32::create_from_rational(reg.fee, PERCENT_SCALE);
+  //     let fee = FixedPoint32::multiply_u64(DiemAccount::balance<GAS>(*multi_sig_addr), pct);
+  //     // TODO: This is a placeholder, fee should go to Transaction Fee account.
+  //     // but that code is on a different branch
+
+  //     DiemAccount::vm_burn_from_balance<GAS>(*multi_sig_addr, fee, b"multisig service", vm);
+  //     i = i + 1;
+  //   };
+
+  // }
+
+
 
 }
 }

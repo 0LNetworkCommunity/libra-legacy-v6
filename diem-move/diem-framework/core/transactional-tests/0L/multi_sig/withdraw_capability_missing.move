@@ -27,7 +27,7 @@ script {
     // NOTE: there is no withdraw capability being sent.
     // so transactions will fail.
     let withdraw = Option::none();
-    MultiSig::init_type<MultiSigPayment::PaymentType>(&d_sig, addr, 2, withdraw, b"payment");
+    MultiSig::init_type<MultiSigPayment::PaymentType>(&d_sig, addr, 2, withdraw);
     MultiSig::finalize_and_brick(&d_sig);
   }
 }
