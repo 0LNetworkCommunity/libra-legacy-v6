@@ -64,16 +64,9 @@ module MultiSig {
   /// The multisig setup  is not finalized, the sponsor needs to brick their authkey. The account setup sponsor needs to be verifiably locked out before operations can begin. 
   const ENOT_FINALIZED_NOT_BRICK: u64 = 440005; 
 
-  /// Genesis starting fee for multisig service
-  const STARTING_FEE: u64 = 00000027; // 1% per year, 0.0027% per epoch
-  const PERCENT_SCALE: u64 = 1000000; // for 4 decimal precision percentages
   const DEFAULT_EPOCHS_EXPIRE: u64 = 14; // default setting for a proposal to expire
 
 
-  struct RootMultiSigRegistry has key {
-    list: vector<address>,
-    fee: u64, // percentage balance fee denomiated in 4 decimal precision 123456 = 12.3456%
-  }
 
   /// DANGER
   /// The withdraw capability can be used to withdraw funds from the account.
@@ -230,13 +223,6 @@ module MultiSig {
   public fun is_finalized(addr: address): bool {
     DiemAccount::is_a_brick(addr)
   }
-
-  // fun upsert_root_registry(addr: address) acquires RootMultiSigRegistry {
-  //   let reg = borrow_global_mut<RootMultiSigRegistry>(@VMReserved);
-  //   if (!Vector::contains(&reg.list, &addr)) {
-  //     Vector::push_back(&mut reg.list, addr);
-  //   };
-  // }
 
 
   // Propose a transaction 

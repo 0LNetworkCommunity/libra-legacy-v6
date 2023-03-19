@@ -56,6 +56,7 @@ module MultiSigPayment {
 
 
 
+
   struct RootMultiSigRegistry has key {
     list: vector<address>,
     fee: u64, // percentage balance fee denomiated in 4 decimal precision 123456 = 12.3456%
@@ -141,6 +142,19 @@ module MultiSigPayment {
     );
     // MultiSig::restore_withdraw_cap(multisig_addr, cap)
   }
+
+  // struct RootMultiSigRegistry has key {
+  //   list: vector<address>,
+  //   fee: u64, // percentage balance fee denomiated in 4 decimal precision 123456 = 12.3456%
+  // }
+
+
+  // fun upsert_root_registry(addr: address) acquires RootMultiSigRegistry {
+  //   let reg = borrow_global_mut<RootMultiSigRegistry>(@VMReserved);
+  //   if (!Vector::contains(&reg.list, &addr)) {
+  //     Vector::push_back(&mut reg.list, addr);
+  //   };
+  // }
 
 
   // public fun root_security_fee_billing(vm: &signer) acquires RootMultiSigRegistry {
