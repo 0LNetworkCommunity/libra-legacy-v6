@@ -14,7 +14,6 @@ script {
   use DiemFramework::GAS::GAS;
   use DiemFramework::MultiSig;
   use DiemFramework::MultiSigPayment;
-  use Std::Option;
   use Std::Vector;
   fun main(_dr: signer, d_sig: signer) {
     let bal = DiemAccount::balance<GAS>(@DaveMultiSig);
@@ -24,10 +23,13 @@ script {
     Vector::push_back(&mut addr, @Bob);
     Vector::push_back(&mut addr, @Carol);
 
+
+    MultiSig::init_gov(&d_sig, 2, &addr);
+
     // NOTE: there is no withdraw capability being sent.
     // so transactions will fail.
-    let withdraw = Option::none();
-    MultiSig::init_type<MultiSigPayment::PaymentType>(&d_sig, addr, 2, withdraw);
+    let withdraw = false;
+    MultiSig::init_type<MultiSigPayment::PaymentType>(&d_sig, withdraw);
     MultiSig::finalize_and_brick(&d_sig);
   }
 }
@@ -40,22 +42,14 @@ script {
   use DiemFramework::MultiSigPayment;
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
-  use DiemFramework::Debug::print;
 
   fun main(_dr: signer, b_sig: signer) {
 
-    // let p = MultiSigPayment::new_payment(@Alice, 10, b"send it");
-
     MultiSigPayment::propose_payment(&b_sig, @DaveMultiSig, @Alice, 10, b"send it");
     
-    // MultiSig::process_payment_type(@DaveMultiSig);
-
-    // no change yet
-    // let a = MultiSig::get_authorities<PropPayment>(@DaveMultiSig);
-    // assert!(Vector::length(&a) == 2, 7357003);
+    // no change
     let bal = DiemAccount::balance<GAS>(@DaveMultiSig);
-    print(&bal);
-    // assert!(bal < 1000000, 7357002);
+    assert!(bal == 1000000, 7357002);
 
   }
 }
@@ -70,17 +64,10 @@ script {
 
   fun main(_dr: signer, c_sig: signer) {
 
-    // let p = MultiSigPayment::new_payment(@Alice, 10, b"send it");
-
     MultiSigPayment::propose_payment(&c_sig, @DaveMultiSig, @Alice, 10, b"send it");
-    
-    // MultiSig::process_payment_type(@DaveMultiSig);
 
-    // no change yet
-    // let a = MultiSig::get_authorities<PropPayment>(@DaveMultiSig);
-    // assert!(Vector::length(&a) == 2, 7357003);
     let bal = DiemAccount::balance<GAS>(@DaveMultiSig);
-    // tHERE's no Withdraw Capability added so no changed.
+    // THERE's no Withdraw Capability added so no changed.
     assert!(bal == 1000000, 7357002);
 
   }

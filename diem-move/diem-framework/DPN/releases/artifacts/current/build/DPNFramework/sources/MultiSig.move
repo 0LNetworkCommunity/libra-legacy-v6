@@ -89,6 +89,7 @@ module MultiSig {
   }
 
   struct Action<HandlerType> has key, store {
+    can_withdraw: bool,
     pending: vector<Proposal<HandlerType>>,
     approved: vector<Proposal<HandlerType>>,
     rejected:  vector<Proposal<HandlerType>>,
@@ -111,14 +112,6 @@ module MultiSig {
   }
 
 
-  struct PropGovSigners has key, store, copy, drop {
-    add_remove: bool, // true = add, false = remove
-    addresses: vector<address>,
-    votes: vector<address>,
-    approved: bool,
-    expiration_epoch: u64,
-    cfg_n_sigs: u64,
-  }
 
   fun assert_authorized(sig: &signer, multisig_address: address) acquires MultiSig {
         // cannot start manipulating contract until it is finalized
@@ -154,6 +147,7 @@ module MultiSig {
 
     if (!exists<Action<HandlerType>>(sender_addr)) {
       move_to(sig, Action<HandlerType> {
+        can_withdraw,
         pending: Vector::empty(),
         approved: Vector::empty(),
         rejected: Vector::empty(),
@@ -174,6 +168,7 @@ module MultiSig {
 
     if (!exists<Action<PropGovSigners>>(Signer::address_of(sig))) {
       move_to(sig, Action<PropGovSigners> {
+        can_withdraw: false,
         pending: Vector::empty(),
         approved: Vector::empty(),
         rejected: Vector::empty(),
@@ -257,7 +252,10 @@ module MultiSig {
     print(&20004);
     // let w = borrow_global_mut<Withdraw>(multisig_address);
 
-    if (approved && Option::is_some(&ms.withdraw_capability)) {
+    if (approved &&
+      Option::is_some(&ms.withdraw_capability) &&
+      action.can_withdraw
+    ) {
       print(&20005);
         let cap = Option::extract(&mut ms.withdraw_capability);
         print(&20006);
@@ -333,8 +331,23 @@ module MultiSig {
   // Governance of the multisig happens through an instance of Action<PropGovSigners>. This action has no special privileges, and is just a normal proposal type.
   // The entry point and handler for governance exists on this contract for simplicity. However, there's no reason it couldn't be called from an external contract.
 
-  public fun propose_governance(sig: &signer, multisig_address: address, prop: PropGovSigners)acquires MultiSig, Action {
+
+  /// Tis is a ProposalData type for governance. This Proposal adds or removes a list of addresses as authorities. The handlers are located in this contract.
+  struct PropGovSigners has key, store, copy, drop {
+    add_remove: bool, // true = add, false = remove
+    addresses: vector<address>,
+    n_of_m: Option<u64>, // Optionally change the n of m threshold. To only change the n_of_m threshold, an empty list of addresses is required.
+  }
+
+
+  public fun propose_governance(sig: &signer, multisig_address: address, addresses: vector<address>, add_remove: bool, n_of_m: Option<u64>)acquires MultiSig, Action {
     assert_authorized(sig, multisig_address); // Duplicated with propose(), belt and suspenders
+    let prop = PropGovSigners {
+      addresses,
+      add_remove,
+      n_of_m,
+    };
+
     let (passed, withdraw_opt) = propose<PropGovSigners>(sig, multisig_address, copy prop);
 
 
@@ -342,16 +355,23 @@ module MultiSig {
       print(&80001);
       let ms = borrow_global_mut<MultiSig>(multisig_address);
        maybe_update_authorities(ms, prop.add_remove, *&prop.addresses);
+       maybe_update_threshold(ms, &prop.n_of_m);
     };
 
     maybe_restore_withdraw_cap(multisig_address, withdraw_opt);
   }
 
 fun maybe_update_authorities(ms: &mut MultiSig, add_remove: bool, addresses: vector<address>) {
-      
+
+      if (Vector::is_empty(&addresses)) {
+        // The address field may be empty if the multisif is only changing the threshold
+        return
+      };
+
       if (add_remove) {
         Vector::append(&mut ms.signers, addresses);
       } else {
+
         // remove the signers
         let i = 0;
         while (i < Vector::length(&addresses)) {
@@ -365,6 +385,11 @@ fun maybe_update_authorities(ms: &mut MultiSig, add_remove: bool, addresses: vec
       };
   }
 
+  fun maybe_update_threshold(ms: &mut MultiSig, n_of_m_opt: &Option<u64>) {
+    if (Option::is_some(n_of_m_opt)) {
+      ms.cfg_default_n_sigs = *Option::borrow(n_of_m_opt);
+    };
+  }
 
   //////// GETTERS ////////
 

@@ -46,6 +46,7 @@ module MultiSig {
   use DiemFramework::Debug::print;
 
 
+  const EGOV_NOT_INITIALIZED: u64 = 440000;
   /// The owner of this account can't be an authority, since it will subsequently be bricked. The signer of this account is no longer useful. The account is now controlled by the MultiSig logic. 
   const ESIGNER_CANT_BE_AUTHORITY: u64 = 440001;
 
@@ -61,6 +62,8 @@ module MultiSig {
   const ENOT_FINALIZED_NOT_BRICK: u64 = 440005; 
 
   const DEFAULT_EPOCHS_EXPIRE: u64 = 14; // default setting for a proposal to expire
+
+  const EACTION_ALREADY_EXISTS: u64 = 440006;
 
   
   /// A MultiSig account is an account which requires multiple votes from Authorities to  send a transaction.
@@ -88,20 +91,21 @@ module MultiSig {
     counter: u64, // TODO: Use GUID? the monotonically increasing id of proposal. Also equal to length of proposals. And the ID of the NEXT proposal to be submitted.
   }
 
-  struct Action<HandlerType> has key, store {
-    pending: vector<Proposal<HandlerType>>,
-    approved: vector<Proposal<HandlerType>>,
-    rejected:  vector<Proposal<HandlerType>>,
+  struct Action<ProposalData> has key, store {
+    can_withdraw: bool,
+    pending: vector<Proposal<ProposalData>>,
+    approved: vector<Proposal<ProposalData>>,
+    rejected:  vector<Proposal<ProposalData>>,
   }
 
   // all proposals share some common fields
   // and each proposal can add type-specific parameters
   // The handler for such specific parameters needs to included in code by an external contract.
   // MultiSig, will only say if it passed or not.
-  struct Proposal<HandlerType> has key, store, copy, drop {
+  struct Proposal<ProposalData> has key, store, copy, drop {
     id: u64,
     // The transaction to be executed
-    proposal_data: HandlerType,
+    proposal_data: ProposalData,
     // The votes received
     votes: vector<address>,
     // approved
@@ -111,14 +115,6 @@ module MultiSig {
   }
 
 
-  struct PropGovSigners has key, store, copy, drop {
-    add_remove: bool, // true = add, false = remove
-    addresses: vector<address>,
-    votes: vector<address>,
-    approved: bool,
-    expiration_epoch: u64,
-    cfg_n_sigs: u64,
-  }
 
   fun assert_authorized(sig: &signer, multisig_address: address) acquires MultiSig {
         // cannot start manipulating contract until it is finalized
@@ -131,38 +127,19 @@ module MultiSig {
     assert!(is_authority(multisig_address, sender_addr), Errors::invalid_argument(ENOT_AUTHORIZED));
   }
 
-  /// An initial "sponsor" who is the signer of the initialization account calls this function.
-  // This function creates the data structures, but also IMPORTANTLY it rotates the AuthKey of the account to a system-wide unusuable key (b"brick_all_your_base_are_belong_to_us").
-  public fun init_type<HandlerType: key + store >(
-    sig: &signer,
-    m_seed_authorities: vector<address>,
-    cfg_default_n_sigs: u64,
-    can_withdraw: bool,
-   ) acquires MultiSig {
+
+  // Initialize the governance structs for this account.
+  // MultiSig contains the constraints for each Action that are checked on each vote (n_sigs, expiration, signers, etc)
+  // Also, an initial Action of type PropGovSigners is created, which is used to govern the signers and threshold for this account.
+  public fun init_gov(sig: &signer, cfg_default_n_sigs: u64, m_seed_authorities: &vector<address>) {
     assert!(cfg_default_n_sigs > 0, Errors::invalid_argument(ENO_SIGNERS));
-    // make sure the signer's address is not in the list of authorities. 
-    // This account's signer will now be useless.
-    print(&10001);
-    let sender_addr = Signer::address_of(sig);
-    assert!(!Vector::contains(&m_seed_authorities, &sender_addr), Errors::invalid_argument(ESIGNER_CANT_BE_AUTHORITY));
+
+    let multisig_address = Signer::address_of(sig);
+    // User footgun. The Signer of this account is bricked, and as such the signer can no longer be an authority.
+    assert!(!Vector::contains(m_seed_authorities, &multisig_address), Errors::invalid_argument(ESIGNER_CANT_BE_AUTHORITY));
     print(&10002);
 
-    maybe_init_gov(sig, cfg_default_n_sigs, &m_seed_authorities);
-    if (can_withdraw) {
-      maybe_extract_withdraw_cap(sig);
-    };
-
-    if (!exists<Action<HandlerType>>(sender_addr)) {
-      move_to(sig, Action<HandlerType> {
-        pending: Vector::empty(),
-        approved: Vector::empty(),
-        rejected: Vector::empty(),
-      });
-    }
-  }
-
-  fun maybe_init_gov(sig: &signer, cfg_default_n_sigs: u64, m_seed_authorities: &vector<address>) {
-    if (!exists<MultiSig>(Signer::address_of(sig))) {
+    if (!exists<MultiSig>(multisig_address)) {
         move_to(sig, MultiSig {
         cfg_expire_epochs: DEFAULT_EPOCHS_EXPIRE,
         cfg_default_n_sigs,
@@ -172,14 +149,57 @@ module MultiSig {
       });
     };
 
-    if (!exists<Action<PropGovSigners>>(Signer::address_of(sig))) {
+    if (!exists<Action<PropGovSigners>>(multisig_address)) {
       move_to(sig, Action<PropGovSigners> {
+        can_withdraw: false,
         pending: Vector::empty(),
         approved: Vector::empty(),
         rejected: Vector::empty(),
       });
     }
   }
+
+  fun is_init(multisig_address: address): bool {
+    exists<MultiSig>(multisig_address) &&
+    exists<Action<PropGovSigners>>(multisig_address)
+  }
+
+
+  /// An initial "sponsor" who is the signer of the initialization account calls this function.
+  // This function creates the data structures, but also IMPORTANTLY it rotates the AuthKey of the account to a system-wide unusuable key (b"brick_all_your_base_are_belong_to_us").
+  public fun init_type<ProposalData: key + store >(
+    sig: &signer,
+    can_withdraw: bool,
+   ) acquires MultiSig {
+    let multisig_address = Signer::address_of(sig);
+    // TODO: there is no way of creating a new Action by multisig. The "signer" would need to be spoofed, which DiemAccount does only in specific and scary situations (e.g. vm_create_account_migration)
+
+  
+    
+    assert!(is_init(multisig_address), Errors::invalid_argument(EGOV_NOT_INITIALIZED));
+
+    assert!(!exists<Action<ProposalData>>(multisig_address), Errors::invalid_argument(EACTION_ALREADY_EXISTS));
+    // make sure the signer's address is not in the list of authorities. 
+    // This account's signer will now be useless.
+    print(&10001);
+    
+
+
+    // maybe the withdraw cap was never extracted in previous set up.
+    // but we won't extract it if none of the Actions require it.
+    if (can_withdraw) {
+      maybe_extract_withdraw_cap(sig);
+    };
+
+    move_to(sig, Action<ProposalData> {
+        can_withdraw,
+        pending: Vector::empty(),
+        approved: Vector::empty(),
+        rejected: Vector::empty(),
+      });
+  }
+
+
 
   fun maybe_extract_withdraw_cap(sig: &signer) acquires MultiSig {
     let multisig_address = Signer::address_of(sig);
@@ -225,16 +245,16 @@ module MultiSig {
   // Only the first proposer can set the expiration time. It will be ignored when a duplicate is caught.
 
 
-  public fun propose<HandlerType: key + store + copy + drop>(sig: &signer, multisig_address: address, proposal_data: HandlerType):(bool, Option<WithdrawCapability>) acquires MultiSig, Action {
+  public fun propose<ProposalData: key + store + copy + drop>(sig: &signer, multisig_address: address, proposal_data: ProposalData):(bool, Option<WithdrawCapability>) acquires MultiSig, Action {
     print(&20001);
     assert_authorized(sig, multisig_address);
 
     let ms = borrow_global_mut<MultiSig>(multisig_address);
-    let action = borrow_global_mut<Action<HandlerType>>(multisig_address);
+    let action = borrow_global_mut<Action<ProposalData>>(multisig_address);
     let n = *&ms.cfg_default_n_sigs;
 
     // check if we have this proposal already
-    let (found, _) = find_index_of_proposal<HandlerType>(action, &proposal_data);
+    let (found, _) = find_index_of_proposal<ProposalData>(action, &proposal_data);
 
     let approved = if (found) {
       print(&20002);
@@ -243,7 +263,7 @@ module MultiSig {
       vote(prop, Signer::address_of(sig), n)
     } else {
       print(&20003);
-      Vector::push_back(&mut action.pending, Proposal<HandlerType> {
+      Vector::push_back(&mut action.pending, Proposal<ProposalData> {
         id: ms.counter,
         proposal_data: proposal_data,
         votes: Vector::singleton(Signer::address_of(sig)),
@@ -257,7 +277,10 @@ module MultiSig {
     print(&20004);
     // let w = borrow_global_mut<Withdraw>(multisig_address);
 
-    if (approved && Option::is_some(&ms.withdraw_capability)) {
+    if (approved &&
+      Option::is_some(&ms.withdraw_capability) &&
+      action.can_withdraw
+    ) {
       print(&20005);
         let cap = Option::extract(&mut ms.withdraw_capability);
         print(&20006);
@@ -269,7 +292,7 @@ module MultiSig {
 
 
   // votes on a proposal, returns true if it passed
-  fun vote<HandlerType: key + store + drop>(prop: &mut Proposal<HandlerType>, sender_addr: address, n: u64): bool {
+  fun vote<ProposalData: key + store + drop>(prop: &mut Proposal<ProposalData>, sender_addr: address, n: u64): bool {
     print(&30001);
     if (!Vector::contains(&prop.votes, &sender_addr)) {
       Vector::push_back(&mut prop.votes, sender_addr);
@@ -279,7 +302,7 @@ module MultiSig {
     tally(prop, n)
   }
 
-  fun tally<HandlerType: key + store + drop>(prop: &mut Proposal<HandlerType>, n: u64): bool {
+  fun tally<ProposalData: key + store + drop>(prop: &mut Proposal<ProposalData>, n: u64): bool {
     print(&40001);
 
     print(&prop.votes);
@@ -295,7 +318,7 @@ module MultiSig {
   }
 
 
-  fun find_index_of_proposal<HandlerType: store + key>(a: &mut Action<HandlerType>, proposal_data: &HandlerType): (bool, u64) {
+  fun find_index_of_proposal<ProposalData: store + key>(a: &mut Action<ProposalData>, proposal_data: &ProposalData): (bool, u64) {
 
     // find and update existing proposal, or create a new one and add to "pending"
     let len = Vector::length(&a.pending);
@@ -318,8 +341,8 @@ module MultiSig {
   }
 
   // TODO: Expand params
-  fun get_proposal<HandlerType: store + key>(a: &mut Action<HandlerType>, handler: &HandlerType): &mut Proposal<HandlerType> {
-    let (found, idx) = find_index_of_proposal<HandlerType>(a, handler);
+  fun get_proposal<ProposalData: store + key>(a: &mut Action<ProposalData>, handler: &ProposalData): &mut Proposal<ProposalData> {
+    let (found, idx) = find_index_of_proposal<ProposalData>(a, handler);
     assert!(found, Errors::invalid_argument(EPENDING_EMPTY));
     Vector::borrow_mut(&mut a.pending, idx)
   }
@@ -333,8 +356,23 @@ module MultiSig {
   // Governance of the multisig happens through an instance of Action<PropGovSigners>. This action has no special privileges, and is just a normal proposal type.
   // The entry point and handler for governance exists on this contract for simplicity. However, there's no reason it couldn't be called from an external contract.
 
-  public fun propose_governance(sig: &signer, multisig_address: address, prop: PropGovSigners)acquires MultiSig, Action {
+
+  /// Tis is a ProposalData type for governance. This Proposal adds or removes a list of addresses as authorities. The handlers are located in this contract.
+  struct PropGovSigners has key, store, copy, drop {
+    add_remove: bool, // true = add, false = remove
+    addresses: vector<address>,
+    n_of_m: Option<u64>, // Optionally change the n of m threshold. To only change the n_of_m threshold, an empty list of addresses is required.
+  }
+
+
+  public fun propose_governance(sig: &signer, multisig_address: address, addresses: vector<address>, add_remove: bool, n_of_m: Option<u64>)acquires MultiSig, Action {
     assert_authorized(sig, multisig_address); // Duplicated with propose(), belt and suspenders
+    let prop = PropGovSigners {
+      addresses,
+      add_remove,
+      n_of_m,
+    };
+
     let (passed, withdraw_opt) = propose<PropGovSigners>(sig, multisig_address, copy prop);
 
 
@@ -342,16 +380,23 @@ module MultiSig {
       print(&80001);
       let ms = borrow_global_mut<MultiSig>(multisig_address);
        maybe_update_authorities(ms, prop.add_remove, *&prop.addresses);
+       maybe_update_threshold(ms, &prop.n_of_m);
     };
 
     maybe_restore_withdraw_cap(multisig_address, withdraw_opt);
   }
 
 fun maybe_update_authorities(ms: &mut MultiSig, add_remove: bool, addresses: vector<address>) {
-      
+
+      if (Vector::is_empty(&addresses)) {
+        // The address field may be empty if the multisif is only changing the threshold
+        return
+      };
+
       if (add_remove) {
         Vector::append(&mut ms.signers, addresses);
       } else {
+
         // remove the signers
         let i = 0;
         while (i < Vector::length(&addresses)) {
@@ -365,6 +410,11 @@ fun maybe_update_authorities(ms: &mut MultiSig, add_remove: bool, addresses: vec
       };
   }
 
+  fun maybe_update_threshold(ms: &mut MultiSig, n_of_m_opt: &Option<u64>) {
+    if (Option::is_some(n_of_m_opt)) {
+      ms.cfg_default_n_sigs = *Option::borrow(n_of_m_opt);
+    };
+  }
 
   //////// GETTERS ////////
 
@@ -372,6 +422,12 @@ fun maybe_update_authorities(ms: &mut MultiSig, add_remove: bool, addresses: vec
     let m = borrow_global<MultiSig>(multisig_address);
     *&m.signers
   }
+
+  public fun get_n_sigs(multisig_address: address): u64 acquires MultiSig {
+    let m = borrow_global<MultiSig>(multisig_address);
+    *&m.cfg_default_n_sigs
+  }
+
 
 }
 }

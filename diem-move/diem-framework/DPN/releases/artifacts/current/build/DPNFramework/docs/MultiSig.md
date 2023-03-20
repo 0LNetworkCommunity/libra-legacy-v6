@@ -25,6 +25,7 @@
 -  [Function `is_authority`](#0x1_MultiSig_is_authority)
 -  [Function `propose_governance`](#0x1_MultiSig_propose_governance)
 -  [Function `maybe_update_authorities`](#0x1_MultiSig_maybe_update_authorities)
+-  [Function `maybe_update_threshold`](#0x1_MultiSig_maybe_update_threshold)
 -  [Function `get_authorities`](#0x1_MultiSig_get_authorities)
 
 
@@ -119,6 +120,12 @@ Note, the WithdrawCApability is moved to this shared structure, and as such the 
 
 <dl>
 <dt>
+<code>can_withdraw: bool</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
 <code>pending: vector&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;HandlerType&gt;&gt;</code>
 </dt>
 <dd>
@@ -196,6 +203,7 @@ Note, the WithdrawCApability is moved to this shared structure, and as such the 
 
 ## Resource `PropGovSigners`
 
+Tis is a ProposalData type for governance. This Proposal adds or removes a list of addresses as authorities. The handlers are located in this contract.
 
 
 <pre><code><b>struct</b> <a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a> <b>has</b> <b>copy</b>, drop, store, key
@@ -221,25 +229,7 @@ Note, the WithdrawCApability is moved to this shared structure, and as such the 
 
 </dd>
 <dt>
-<code>votes: vector&lt;<b>address</b>&gt;</code>
-</dt>
-<dd>
-
-</dd>
-<dt>
-<code>approved: bool</code>
-</dt>
-<dd>
-
-</dd>
-<dt>
-<code>expiration_epoch: u64</code>
-</dt>
-<dd>
-
-</dd>
-<dt>
-<code>cfg_n_sigs: u64</code>
+<code>n_of_m: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;u64&gt;</code>
 </dt>
 <dd>
 
@@ -381,6 +371,7 @@ An initial "sponsor" who is the signer of the initialization account calls this 
 
   <b>if</b> (!<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;HandlerType&gt;&gt;(sender_addr)) {
     <b>move_to</b>(sig, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;HandlerType&gt; {
+      can_withdraw,
       pending: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
       approved: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
       rejected: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
@@ -421,6 +412,7 @@ An initial "sponsor" who is the signer of the initialization account calls this 
 
   <b>if</b> (!<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt;&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig))) {
     <b>move_to</b>(sig, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt; {
+      can_withdraw: <b>false</b>,
       pending: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
       approved: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
       rejected: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
@@ -594,7 +586,10 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
   print(&20004);
   // <b>let</b> w = <b>borrow_global_mut</b>&lt;Withdraw&gt;(multisig_address);
 
-  <b>if</b> (approved && <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&ms.withdraw_capability)) {
+  <b>if</b> (approved &&
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&ms.withdraw_capability) &&
+    action.can_withdraw
+  ) {
     print(&20005);
       <b>let</b> cap = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>(&<b>mut</b> ms.withdraw_capability);
       print(&20006);
@@ -773,7 +768,7 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_propose_governance">propose_governance</a>(sig: &signer, multisig_address: <b>address</b>, prop: <a href="MultiSig.md#0x1_MultiSig_PropGovSigners">MultiSig::PropGovSigners</a>)
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_propose_governance">propose_governance</a>(sig: &signer, multisig_address: <b>address</b>, addresses: vector&lt;<b>address</b>&gt;, add_remove: bool, n_of_m: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;u64&gt;)
 </code></pre>
 
 
@@ -782,8 +777,14 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_propose_governance">propose_governance</a>(sig: &signer, multisig_address: <b>address</b>, prop: <a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>)<b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_propose_governance">propose_governance</a>(sig: &signer, multisig_address: <b>address</b>, addresses: vector&lt;<b>address</b>&gt;, add_remove: bool, n_of_m: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt;)<b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
   <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>(sig, multisig_address); // Duplicated <b>with</b> <a href="MultiSig.md#0x1_MultiSig_propose">propose</a>(), belt and suspenders
+  <b>let</b> prop = <a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a> {
+    addresses,
+    add_remove,
+    n_of_m,
+  };
+
   <b>let</b> (passed, withdraw_opt) = <a href="MultiSig.md#0x1_MultiSig_propose">propose</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt;(sig, multisig_address, <b>copy</b> prop);
 
 
@@ -791,6 +792,7 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
     print(&80001);
     <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address);
      <a href="MultiSig.md#0x1_MultiSig_maybe_update_authorities">maybe_update_authorities</a>(ms, prop.add_remove, *&prop.addresses);
+     <a href="MultiSig.md#0x1_MultiSig_maybe_update_threshold">maybe_update_threshold</a>(ms, &prop.n_of_m);
   };
 
   <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">maybe_restore_withdraw_cap</a>(multisig_address, withdraw_opt);
@@ -818,9 +820,15 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
 
 <pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_update_authorities">maybe_update_authorities</a>(ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>, add_remove: bool, addresses: vector&lt;<b>address</b>&gt;) {
 
+      <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>(&addresses)) {
+        // The <b>address</b> field may be empty <b>if</b> the multisif is only changing the threshold
+        <b>return</b>
+      };
+
       <b>if</b> (add_remove) {
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_append">Vector::append</a>(&<b>mut</b> ms.signers, addresses);
       } <b>else</b> {
+
         // remove the signers
         <b>let</b> i = 0;
         <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&addresses)) {
@@ -833,6 +841,32 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
         };
       };
   }
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MultiSig_maybe_update_threshold"></a>
+
+## Function `maybe_update_threshold`
+
+
+
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_update_threshold">maybe_update_threshold</a>(ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_MultiSig">MultiSig::MultiSig</a>, n_of_m_opt: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;u64&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_update_threshold">maybe_update_threshold</a>(ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>, n_of_m_opt: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt;) {
+  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(n_of_m_opt)) {
+    ms.cfg_default_n_sigs = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>(n_of_m_opt);
+  };
+}
 </code></pre>
 
 

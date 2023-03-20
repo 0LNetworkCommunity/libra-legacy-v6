@@ -24,7 +24,7 @@ script {
 
     let addr = Vector::singleton<address>(@Alice);
     Vector::push_back(&mut addr, @Bob);
-    
+
     MultiSig::init_gov(&d_sig, 2, &addr);
     MultiSig::init_type<PaymentType>(&d_sig, true);
     MultiSig::finalize_and_brick(&d_sig);
@@ -41,7 +41,7 @@ script {
 
   fun main(_dr: signer, a_sig: signer) {
 
-    MultiSig::propose_governance(&a_sig, @DaveMultiSig, Vector::singleton(@Carol), true, Option::none());
+    MultiSig::propose_governance(&a_sig, @DaveMultiSig, Vector::empty(), true, Option::some(1));
 
     let a = MultiSig::get_authorities(@DaveMultiSig);
     assert!(Vector::length(&a) == 2, 7357002);
@@ -56,45 +56,13 @@ script {
   use Std::Vector;
 
   fun main(_dr: signer, b_sig: signer) {
-    MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::singleton(@Carol), true, Option::none());
+    MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::empty(), true, Option::some(1));
 
     let a = MultiSig::get_authorities(@DaveMultiSig);
-    assert!(Vector::length(&a) == 3, 7357002);
+    assert!(Vector::length(&a) == 2, 7357002);
+
+    let b = MultiSig::get_n_sigs(@DaveMultiSig);
+    assert!(b == 1, 7357003);
   }
 }
 
-
-// NOW CAROL AND BOB CONSPIRE TO REMOVE ALICE
-
-
-//# run --admin-script --signers DiemRoot Bob
-script {
-  use DiemFramework::MultiSig;
-  use Std::Option;
-  use Std::Vector;
-  fun main(_dr: signer, b_sig: signer) {
-    MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::singleton(@Alice), false, Option::none());
-    
-    // no change yet
-    let a = MultiSig::get_authorities(@DaveMultiSig);
-    assert!(Vector::length(&a) == 3, 7357003);
-
-  }
-}
-
-
-
-//# run --admin-script --signers DiemRoot Carol
-script {
-  use DiemFramework::MultiSig;
-  use Std::Option;
-  use Std::Vector;
-  fun main(_dr: signer, b_sig: signer) {
-    MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::singleton(@Alice), false, Option::none());
-    
-    // no change yet
-    let a = MultiSig::get_authorities(@DaveMultiSig);
-    assert!(Vector::length(&a) == 2, 7357003);
-
-  }
-}

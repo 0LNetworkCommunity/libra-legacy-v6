@@ -83,7 +83,8 @@ module MultiSigPayment {
 
 
   public fun init_payment_multisig(sponsor: &signer, init_signers: vector<address>, cfg_n_signers: u64) {
-    MultiSig::init_type<PaymentType>(sponsor, init_signers, cfg_n_signers, true);
+    MultiSig::init_gov(sponsor, cfg_n_signers, &init_signers);
+    MultiSig::init_type<PaymentType>(sponsor, true);
   }
 
   public fun new_payment(destination: address, amount: u64, note: vector<u8>): PaymentType {

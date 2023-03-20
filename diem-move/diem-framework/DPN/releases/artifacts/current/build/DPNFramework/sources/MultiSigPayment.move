@@ -118,6 +118,7 @@ module MultiSigPayment {
 
       Option::fill(&mut cap, c);
     };
+    
     MultiSig::maybe_restore_withdraw_cap(multisig_addr, cap)
   }
 
