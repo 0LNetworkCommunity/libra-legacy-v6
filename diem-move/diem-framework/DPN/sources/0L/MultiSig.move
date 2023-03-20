@@ -5,34 +5,13 @@
 ///////////////////////////////////////////////////////////////////////////
 
 
-// The main design goals of this multisig implementation are:
-// 0 . Should allow arbitrary actions to be coded by a third party contract, and governed by the multisig. Payments one case, but other actions are possible.
-// 1. should leverage the usual transaction flow and tools which users are familiar with to add funds to the account. The funds remain viewable by the usual tools for viewing account balances.
-// 2. The authority over the address should not require collecting signatures offline: transactions should be submitted directly to the contract.
-// 3. Funds are disbursed as usual: to a destination addresses, and not into any intermediate structures.
-// 4. Does not pool funds into a custodian contract (like gnosis-type implementations)
-// 5. Uses the shared security of the root address, and as such charge a fee for this benefit.
+// MultiSig is a module which allows for a group of authorities to approve an a generic "Action". The Action type can be defined by an external contract, and the MultiSig module will only check if the Action has been approved by the required number of authorities.
+// similarly any handler for the Action can be executed by an external contract, and the MultiSig module will only check if the Action has been approved by the required number of authorities.
+// Each Action has a separate data structure for tabulating the votes in approval of the Action. But there is shared state between the Actions, that being MultiSig, which contains the constraints for each Action that are checked on each vote (n_sigs, expiration, signers, etc)
+// The Actions are triggered "lazily", that is: the last authorized sender of a proposal/vote, is the one to trigger the action. 
+// Theere is no offline signature aggregation. The authorities over the address should not require collecting signatures offline: proposal should be submitted directly to this contract.
 
-// Custody
-// This multisig implementation does not custody funds in a central address (the MultiSig smart contract address does not pool funds).
-
-// The multisig funds exist on a remote address, the address of the creator.
-// This implies some safety features which need to be implemented to prevent the creator from having undue influence over the multisig after it has been created.
-
-// No Segregation
-// Once the account is created, and intantiated as a multisig, the funds remain in the ordinary data structure for coins. There is no intermediary data structure which holds the coins, neither on the account address, nor in the smart contract address.
-// This means that all existing tools for sending transfers to this account will execute as usual. All tools and APIs which read balances will work as usual.
-
-// Root Security
-// A third party multisig app could not achieve the design goals above. Achieving it requires tight coupling to the DiemAccount tools, and VM authority. Third party multisig apps are possible, but either they will use a custodial model, use segrated structures on a sender account (where the signer may always have authority), or they will require the user to collect signatures offline. All of these options will require new tooling to fund, withdraw, and view coins.
-
-// Fees
-// As noted elsewhere there is value in "Root Security" and as such there would be a fee for this service. The fee is a percentage of the funds which are added to the multisig. The fee is paid to the root address, and is used to pay for the security from consensus (validator rewards). The fee is a percentage of the funds added to the multisig.
-
-
-// Authorities
-// What changes from a vanilla 0L Address that the "signer" for the account loses access to that account. And instead the funds are controlled by the Multisig logic. The implementation of this is that the account's AuthKey is rotated to a random number, and the signer for the account is removed, forcing the signer to lose control. As such the sender needs to THINK CAREFULLY about the initial set of authorities on this address.
-
+// Witht this design, the multisig can be used for different actions. A MultiSigPayment contract is an example of a Root Service which the chain provides, which leverages the MultiSig module to provide a payment service which requires n-of-m approvals.
 
 
 address DiemFramework {

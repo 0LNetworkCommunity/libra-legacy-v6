@@ -23,12 +23,19 @@
 // Once the account is created, and intantiated as a multisig, the funds remain in the ordinary data structure for coins. There is no intermediary data structure which holds the coins, neither on the account address, nor in the smart contract address.
 // This means that all existing tools for sending transfers to this account will execute as usual. All tools and APIs which read balances will work as usual.
 
+// 0L MultiSig module
+// Third party multisig apps are possible, but either they will use a custodial model, use segrated structures on a sender account (where the signer may always have authority), or they will require the user to collect signatures offline.
+// A third party multisig app could achieve the design goals above also by Leveraging the MultiSig contract. Achieving it requires tight coupling to the DiemAccount tools, and VM authority.
+
 // Root Security
-// A third party multisig app could not achieve the design goals above. Achieving it requires tight coupling to the DiemAccount tools, and VM authority. Third party multisig apps are possible, but either they will use a custodial model, use segrated structures on a sender account (where the signer may always have authority), or they will require the user to collect signatures offline. All of these options will require new tooling to fund, withdraw, and view coins.
+// This contract can simply be cloned, and a third party may offer a multisig service. Though we expect people to use the service with the highest level of guarantees, and least amount of effor to use. 
+// Using MultiSigPayment means leveraging "Root Security".
+// This service has the highest level of security in the system, a shared Root Security. The account which creates this multisig (sponsor), immediately has their authorization key "bricked" such that it cannot issue any type of transaction to the account. The authorities are the only one that can issue transactions. Since this code is published to the 0x0 address, it cannot be changed, unles by protocol upgrade, thus it has the highest level of security. 
 
 // Fees
-// As noted elsewhere there is value in "Root Security" and as such there would be a fee for this service. The fee is a percentage of the funds which are added to the multisig. The fee is paid to the root address, and is used to pay for the security from consensus (validator rewards). The fee is a percentage of the funds added to the multisig.
+// Since this contract offers Root Security, this is a benefit provided collectively, and as such there is a fee for this service. 
 
+// The fee is paid to the root address, and is used to pay for the security from consensus (validator rewards). The fee is a percentage of the funds added to the multisig.
 
 // Authorities
 // What changes from a vanilla 0L Address that the "signer" for the account loses access to that account. And instead the funds are controlled by the Multisig logic. The implementation of this is that the account's AuthKey is rotated to a random number, and the signer for the account is removed, forcing the signer to lose control. As such the sender needs to THINK CAREFULLY about the initial set of authorities on this address.
@@ -37,41 +44,21 @@
 
 address DiemFramework {
 module MultiSigPayment {
-  // use Std::Vector;
+  use Std::Vector;
   use Std::Option;
-  // use Std::Signer;
-  // use Std::Errors;
-  // use Std::FixedPoint32;
+  use Std::FixedPoint32;
   use DiemFramework::DiemAccount::{Self, WithdrawCapability};
-  // use DiemFramework::DiemConfig;
   use DiemFramework::Debug::print;
   use DiemFramework::GAS::GAS;
-  // use DiemFramework::VectorHelper;
   use DiemFramework::MultiSig;
-
+  use DiemFramework::CoreAddresses;
 
   /// Genesis starting fee for multisig service
   const STARTING_FEE: u64 = 00000027; // 1% per year, 0.0027% per epoch
   const PERCENT_SCALE: u64 = 1000000; // for 4 decimal precision percentages
 
 
-
-
-  struct RootMultiSigRegistry has key {
-    list: vector<address>,
-    fee: u64, // percentage balance fee denomiated in 4 decimal precision 123456 = 12.3456%
-  }
-  
-  /// A MultiSig account is an account which requires multiple votes from Authorities to send a transaction.
-  /// A multisig can be used to get agreement on different types of transactions, such as:
-  // A payment transaction
-  // A multisig MultiSig<PropGovSigners> transaction
-  // or a transaction type defined and handled by a third party smart contract.(this module will return if approved/rejected.
-  // This contract only has handlers for the first two types of transactions.
-
-  // this is one of the types that MultiSig will handle.
-  // though this can be coded by a third party, this is the most common 
-  // use case, that requires the most secrutiy (and should be provided by root)
+  /// This is the data structure which is stored in the Action for the multisig.
   struct PaymentType has key, store, copy, drop {
     // The transaction to be executed
     destination: address,
@@ -81,12 +68,16 @@ module MultiSigPayment {
     note: vector<u8>,
   }
 
+  /// This fucntion initiates governance for the multisig. It is called by the sponsor address, and is only callable once.
+  /// init_gov fails gracefully if the governance is already initialized.
+  /// init_type will throw errors if the type is already initialized.
 
   public fun init_payment_multisig(sponsor: &signer, init_signers: vector<address>, cfg_n_signers: u64) {
     MultiSig::init_gov(sponsor, cfg_n_signers, &init_signers);
     MultiSig::init_type<PaymentType>(sponsor, true);
   }
 
+  /// create a payment object, whcih can be send in a proposal.
   public fun new_payment(destination: address, amount: u64, note: vector<u8>): PaymentType {
     PaymentType {
       destination,
@@ -138,42 +129,51 @@ module MultiSigPayment {
       *&p.note,
       b""
     );
-    // MultiSig::restore_withdraw_cap(multisig_addr, cap)
   }
 
-  // struct RootMultiSigRegistry has key {
-  //   list: vector<address>,
-  //   fee: u64, // percentage balance fee denomiated in 4 decimal precision 123456 = 12.3456%
-  // }
 
 
-  // fun upsert_root_registry(addr: address) acquires RootMultiSigRegistry {
-  //   let reg = borrow_global_mut<RootMultiSigRegistry>(@VMReserved);
-  //   if (!Vector::contains(&reg.list, &addr)) {
-  //     Vector::push_back(&mut reg.list, addr);
-  //   };
-  // }
+  //////// ROOT SERVICE FEE BILLING ////////
+  
+  struct RootMultiSigRegistry has key {
+    list: vector<address>,
+    fee: u64, // percentage balance fee denomiated in 4 decimal precision 123456 = 12.3456%
+  }
+
+  public fun root_init(vm: &signer) {
+   CoreAddresses::assert_vm(vm);
+   if (!exists<RootMultiSigRegistry>(@VMReserved)) {
+     move_to<RootMultiSigRegistry>(vm, RootMultiSigRegistry {
+       list: Vector::empty(),
+       fee: STARTING_FEE,
+     });
+   };
+  }
+
+  fun add_to_registry(addr: address) acquires RootMultiSigRegistry {
+    let reg = borrow_global_mut<RootMultiSigRegistry>(@VMReserved);
+    if (!Vector::contains(&reg.list, &addr)) {
+      Vector::push_back(&mut reg.list, addr);
+    };
+  }
 
 
-  // public fun root_security_fee_billing(vm: &signer) acquires RootMultiSigRegistry {
-  //   CoreAddresses::assert_vm(vm);
-  //   let reg = borrow_global<RootMultiSigRegistry>(@VMReserved);
-  //   let i = 0;
-  //   while (i < Vector::length(&reg.list)) {
-  //     let multi_sig_addr = Vector::borrow(&reg.list, i);
+  public fun root_security_fee_billing(vm: &signer) acquires RootMultiSigRegistry {
+    CoreAddresses::assert_vm(vm);
+    let reg = borrow_global<RootMultiSigRegistry>(@VMReserved);
+    let i = 0;
+    while (i < Vector::length(&reg.list)) {
+      let multi_sig_addr = Vector::borrow(&reg.list, i);
 
-  //     let pct = FixedPoint32::create_from_rational(reg.fee, PERCENT_SCALE);
-  //     let fee = FixedPoint32::multiply_u64(DiemAccount::balance<GAS>(*multi_sig_addr), pct);
-  //     // TODO: This is a placeholder, fee should go to Transaction Fee account.
-  //     // but that code is on a different branch
+      let pct = FixedPoint32::create_from_rational(reg.fee, PERCENT_SCALE);
+      let fee = FixedPoint32::multiply_u64(DiemAccount::balance<GAS>(*multi_sig_addr), pct);
+      // TODO: This is a placeholder, fee should go to Transaction Fee account.
+      // but that code is on a different branch
 
-  //     DiemAccount::vm_burn_from_balance<GAS>(*multi_sig_addr, fee, b"multisig service", vm);
-  //     i = i + 1;
-  //   };
+      DiemAccount::vm_burn_from_balance<GAS>(*multi_sig_addr, fee, b"multisig service", vm);
+      i = i + 1;
+    };
 
-  // }
-
-
-
+  }
 }
 }

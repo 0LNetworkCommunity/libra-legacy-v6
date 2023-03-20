@@ -5,63 +5,35 @@
 
 
 
--  [Resource `RootMultiSigRegistry`](#0x1_MultiSigPayment_RootMultiSigRegistry)
 -  [Resource `PaymentType`](#0x1_MultiSigPayment_PaymentType)
+-  [Resource `RootMultiSigRegistry`](#0x1_MultiSigPayment_RootMultiSigRegistry)
 -  [Constants](#@Constants_0)
 -  [Function `init_payment_multisig`](#0x1_MultiSigPayment_init_payment_multisig)
 -  [Function `new_payment`](#0x1_MultiSigPayment_new_payment)
 -  [Function `propose_payment`](#0x1_MultiSigPayment_propose_payment)
 -  [Function `release_payment`](#0x1_MultiSigPayment_release_payment)
+-  [Function `root_init`](#0x1_MultiSigPayment_root_init)
+-  [Function `add_to_registry`](#0x1_MultiSigPayment_add_to_registry)
+-  [Function `root_security_fee_billing`](#0x1_MultiSigPayment_root_security_fee_billing)
 
 
-<pre><code><b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
+<pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="MultiSig.md#0x1_MultiSig">0x1::MultiSig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
 
-
-<a name="0x1_MultiSigPayment_RootMultiSigRegistry"></a>
-
-## Resource `RootMultiSigRegistry`
-
-
-
-<pre><code><b>struct</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_RootMultiSigRegistry">RootMultiSigRegistry</a> <b>has</b> key
-</code></pre>
-
-
-
-<details>
-<summary>Fields</summary>
-
-
-<dl>
-<dt>
-<code>list: vector&lt;<b>address</b>&gt;</code>
-</dt>
-<dd>
-
-</dd>
-<dt>
-<code>fee: u64</code>
-</dt>
-<dd>
-
-</dd>
-</dl>
-
-
-</details>
 
 <a name="0x1_MultiSigPayment_PaymentType"></a>
 
 ## Resource `PaymentType`
 
-A MultiSig account is an account which requires multiple votes from Authorities to send a transaction.
-A multisig can be used to get agreement on different types of transactions, such as:
+This is the data structure which is stored in the Action for the multisig.
 
 
 <pre><code><b>struct</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a> <b>has</b> <b>copy</b>, drop, store, key
@@ -88,6 +60,39 @@ A multisig can be used to get agreement on different types of transactions, such
 </dd>
 <dt>
 <code>note: vector&lt;u8&gt;</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a name="0x1_MultiSigPayment_RootMultiSigRegistry"></a>
+
+## Resource `RootMultiSigRegistry`
+
+
+
+<pre><code><b>struct</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_RootMultiSigRegistry">RootMultiSigRegistry</a> <b>has</b> key
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>list: vector&lt;<b>address</b>&gt;</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>fee: u64</code>
 </dt>
 <dd>
 
@@ -125,6 +130,9 @@ Genesis starting fee for multisig service
 
 ## Function `init_payment_multisig`
 
+This fucntion initiates governance for the multisig. It is called by the sponsor address, and is only callable once.
+init_gov fails gracefully if the governance is already initialized.
+init_type will throw errors if the type is already initialized.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_init_payment_multisig">init_payment_multisig</a>(sponsor: &signer, init_signers: vector&lt;<b>address</b>&gt;, cfg_n_signers: u64)
@@ -137,7 +145,8 @@ Genesis starting fee for multisig service
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_init_payment_multisig">init_payment_multisig</a>(sponsor: &signer, init_signers: vector&lt;<b>address</b>&gt;, cfg_n_signers: u64) {
-  <a href="MultiSig.md#0x1_MultiSig_init_type">MultiSig::init_type</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sponsor, init_signers, cfg_n_signers, <b>true</b>);
+  <a href="MultiSig.md#0x1_MultiSig_init_gov">MultiSig::init_gov</a>(sponsor, cfg_n_signers, &init_signers);
+  <a href="MultiSig.md#0x1_MultiSig_init_type">MultiSig::init_type</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sponsor, <b>true</b>);
 }
 </code></pre>
 
@@ -149,6 +158,7 @@ Genesis starting fee for multisig service
 
 ## Function `new_payment`
 
+create a payment object, whcih can be send in a proposal.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_new_payment">new_payment</a>(destination: <b>address</b>, amount: u64, note: vector&lt;u8&gt;): <a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">MultiSigPayment::PaymentType</a>
@@ -235,7 +245,101 @@ Genesis starting fee for multisig service
     *&p.note,
     b""
   );
-  // MultiSig::restore_withdraw_cap(multisig_addr, cap)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MultiSigPayment_root_init"></a>
+
+## Function `root_init`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_root_init">root_init</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_root_init">root_init</a>(vm: &signer) {
+ <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+ <b>if</b> (!<b>exists</b>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_RootMultiSigRegistry">RootMultiSigRegistry</a>&gt;(@VMReserved)) {
+   <b>move_to</b>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_RootMultiSigRegistry">RootMultiSigRegistry</a>&gt;(vm, <a href="MultiSigPayment.md#0x1_MultiSigPayment_RootMultiSigRegistry">RootMultiSigRegistry</a> {
+     list: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+     fee: <a href="MultiSigPayment.md#0x1_MultiSigPayment_STARTING_FEE">STARTING_FEE</a>,
+   });
+ };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MultiSigPayment_add_to_registry"></a>
+
+## Function `add_to_registry`
+
+
+
+<pre><code><b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_add_to_registry">add_to_registry</a>(addr: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_add_to_registry">add_to_registry</a>(addr: <b>address</b>) <b>acquires</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_RootMultiSigRegistry">RootMultiSigRegistry</a> {
+  <b>let</b> reg = <b>borrow_global_mut</b>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_RootMultiSigRegistry">RootMultiSigRegistry</a>&gt;(@VMReserved);
+  <b>if</b> (!<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&reg.list, &addr)) {
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> reg.list, addr);
+  };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MultiSigPayment_root_security_fee_billing"></a>
+
+## Function `root_security_fee_billing`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_root_security_fee_billing">root_security_fee_billing</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_root_security_fee_billing">root_security_fee_billing</a>(vm: &signer) <b>acquires</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_RootMultiSigRegistry">RootMultiSigRegistry</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>let</b> reg = <b>borrow_global</b>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_RootMultiSigRegistry">RootMultiSigRegistry</a>&gt;(@VMReserved);
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&reg.list)) {
+    <b>let</b> multi_sig_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&reg.list, i);
+
+    <b>let</b> pct = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(reg.fee, <a href="MultiSigPayment.md#0x1_MultiSigPayment_PERCENT_SCALE">PERCENT_SCALE</a>);
+    <b>let</b> fee = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*multi_sig_addr), pct);
+    // TODO: This is a placeholder, fee should go <b>to</b> Transaction Fee account.
+    // but that code is on a different branch
+
+    <a href="DiemAccount.md#0x1_DiemAccount_vm_burn_from_balance">DiemAccount::vm_burn_from_balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*multi_sig_addr, fee, b"multisig service", vm);
+    i = i + 1;
+  };
+
 }
 </code></pre>
 
