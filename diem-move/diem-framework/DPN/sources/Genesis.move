@@ -36,7 +36,7 @@ module DiemFramework::Genesis {
     use DiemFramework::TowerState;
     use DiemFramework::Wallet;
     use DiemFramework::Migrations;  
-    use DiemFramework::MultiSig;
+    // use DiemFramework::MultiSig;
     // use DiemFramework::Testnet; 
 
     /// Initializes the Diem framework.
@@ -165,7 +165,7 @@ module DiemFramework::Genesis {
         // See also discussion at function specification.
         DiemTimestamp::set_time_has_started(dr_account);
         Epoch::initialize(dr_account); /////// 0L /////////
-        MultiSig::root_init(dr_account); //////// 0L ////////
+        // MultiSig::root_init(dr_account); //////// 0L ////////
 
         
         // if this is tesnet, fund the root account so the smoketests can run. They use PaymentScripts functions to test many things.

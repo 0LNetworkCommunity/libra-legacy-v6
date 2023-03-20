@@ -56,6 +56,7 @@ module MultiSigPayment {
 
 
 
+
   struct RootMultiSigRegistry has key {
     list: vector<address>,
     fee: u64, // percentage balance fee denomiated in 4 decimal precision 123456 = 12.3456%
@@ -81,11 +82,8 @@ module MultiSigPayment {
   }
 
 
-  public fun init(sponsor: &signer, init_signers: vector<address>, cfg_n_signers: u64) {
-
-    let cap = DiemAccount::extract_withdraw_capability(sponsor);
-    MultiSig::init_type<PaymentType>(sponsor, init_signers, cfg_n_signers, Option::some(cap));
-
+  public fun init_payment_multisig(sponsor: &signer, init_signers: vector<address>, cfg_n_signers: u64) {
+    MultiSig::init_type<PaymentType>(sponsor, init_signers, cfg_n_signers, true);
   }
 
   public fun new_payment(destination: address, amount: u64, note: vector<u8>): PaymentType {
@@ -142,6 +140,38 @@ module MultiSigPayment {
     );
     // MultiSig::restore_withdraw_cap(multisig_addr, cap)
   }
+
+  // struct RootMultiSigRegistry has key {
+  //   list: vector<address>,
+  //   fee: u64, // percentage balance fee denomiated in 4 decimal precision 123456 = 12.3456%
+  // }
+
+
+  // fun upsert_root_registry(addr: address) acquires RootMultiSigRegistry {
+  //   let reg = borrow_global_mut<RootMultiSigRegistry>(@VMReserved);
+  //   if (!Vector::contains(&reg.list, &addr)) {
+  //     Vector::push_back(&mut reg.list, addr);
+  //   };
+  // }
+
+
+  // public fun root_security_fee_billing(vm: &signer) acquires RootMultiSigRegistry {
+  //   CoreAddresses::assert_vm(vm);
+  //   let reg = borrow_global<RootMultiSigRegistry>(@VMReserved);
+  //   let i = 0;
+  //   while (i < Vector::length(&reg.list)) {
+  //     let multi_sig_addr = Vector::borrow(&reg.list, i);
+
+  //     let pct = FixedPoint32::create_from_rational(reg.fee, PERCENT_SCALE);
+  //     let fee = FixedPoint32::multiply_u64(DiemAccount::balance<GAS>(*multi_sig_addr), pct);
+  //     // TODO: This is a placeholder, fee should go to Transaction Fee account.
+  //     // but that code is on a different branch
+
+  //     DiemAccount::vm_burn_from_balance<GAS>(*multi_sig_addr, fee, b"multisig service", vm);
+  //     i = i + 1;
+  //   };
+
+  // }
 
 
 

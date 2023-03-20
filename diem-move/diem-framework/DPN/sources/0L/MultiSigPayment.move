@@ -83,9 +83,7 @@ module MultiSigPayment {
 
 
   public fun init_payment_multisig(sponsor: &signer, init_signers: vector<address>, cfg_n_signers: u64) {
-
-    let cap = DiemAccount::extract_withdraw_capability(sponsor);
-    MultiSig::init_type<PaymentType>(sponsor, init_signers, cfg_n_signers, Option::some(cap));
+    MultiSig::init_type<PaymentType>(sponsor, init_signers, cfg_n_signers, true);
   }
 
   public fun new_payment(destination: address, amount: u64, note: vector<u8>): PaymentType {

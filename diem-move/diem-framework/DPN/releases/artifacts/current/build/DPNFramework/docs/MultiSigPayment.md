@@ -8,7 +8,7 @@
 -  [Resource `RootMultiSigRegistry`](#0x1_MultiSigPayment_RootMultiSigRegistry)
 -  [Resource `PaymentType`](#0x1_MultiSigPayment_PaymentType)
 -  [Constants](#@Constants_0)
--  [Function `init`](#0x1_MultiSigPayment_init)
+-  [Function `init_payment_multisig`](#0x1_MultiSigPayment_init_payment_multisig)
 -  [Function `new_payment`](#0x1_MultiSigPayment_new_payment)
 -  [Function `propose_payment`](#0x1_MultiSigPayment_propose_payment)
 -  [Function `release_payment`](#0x1_MultiSigPayment_release_payment)
@@ -121,13 +121,13 @@ Genesis starting fee for multisig service
 
 
 
-<a name="0x1_MultiSigPayment_init"></a>
+<a name="0x1_MultiSigPayment_init_payment_multisig"></a>
 
-## Function `init`
+## Function `init_payment_multisig`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_init">init</a>(sponsor: &signer, init_signers: vector&lt;<b>address</b>&gt;, cfg_n_signers: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_init_payment_multisig">init_payment_multisig</a>(sponsor: &signer, init_signers: vector&lt;<b>address</b>&gt;, cfg_n_signers: u64)
 </code></pre>
 
 
@@ -136,11 +136,8 @@ Genesis starting fee for multisig service
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_init">init</a>(sponsor: &signer, init_signers: vector&lt;<b>address</b>&gt;, cfg_n_signers: u64) {
-
-  <b>let</b> cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">DiemAccount::extract_withdraw_capability</a>(sponsor);
-  <a href="MultiSig.md#0x1_MultiSig_init_type">MultiSig::init_type</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sponsor, init_signers, cfg_n_signers, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_some">Option::some</a>(cap));
-
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_init_payment_multisig">init_payment_multisig</a>(sponsor: &signer, init_signers: vector&lt;<b>address</b>&gt;, cfg_n_signers: u64) {
+  <a href="MultiSig.md#0x1_MultiSig_init_type">MultiSig::init_type</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sponsor, init_signers, cfg_n_signers, <b>true</b>);
 }
 </code></pre>
 

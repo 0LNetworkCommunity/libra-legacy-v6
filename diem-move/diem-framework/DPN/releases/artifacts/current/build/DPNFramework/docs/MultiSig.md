@@ -5,17 +5,16 @@
 
 
 
--  [Resource `RootMultiSigRegistry`](#0x1_MultiSig_RootMultiSigRegistry)
 -  [Resource `Withdraw`](#0x1_MultiSig_Withdraw)
 -  [Resource `MultiSig`](#0x1_MultiSig_MultiSig)
--  [Resource `PaymentType`](#0x1_MultiSig_PaymentType)
+-  [Resource `Action`](#0x1_MultiSig_Action)
 -  [Resource `Proposal`](#0x1_MultiSig_Proposal)
 -  [Resource `PropGovSigners`](#0x1_MultiSig_PropGovSigners)
 -  [Constants](#@Constants_0)
--  [Function `new_payment`](#0x1_MultiSig_new_payment)
--  [Function `root_init`](#0x1_MultiSig_root_init)
 -  [Function `assert_authorized`](#0x1_MultiSig_assert_authorized)
 -  [Function `init_type`](#0x1_MultiSig_init_type)
+-  [Function `maybe_init_gov`](#0x1_MultiSig_maybe_init_gov)
+-  [Function `maybe_extract_withdraw_cap`](#0x1_MultiSig_maybe_extract_withdraw_cap)
 -  [Function `restore_withdraw_cap`](#0x1_MultiSig_restore_withdraw_cap)
 -  [Function `finalize_and_brick`](#0x1_MultiSig_finalize_and_brick)
 -  [Function `is_finalized`](#0x1_MultiSig_is_finalized)
@@ -34,8 +33,7 @@
 -  [Function `get_authorities`](#0x1_MultiSig_get_authorities)
 
 
-<pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
+<pre><code><b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
@@ -47,43 +45,18 @@
 
 
 
-<a name="0x1_MultiSig_RootMultiSigRegistry"></a>
-
-## Resource `RootMultiSigRegistry`
-
-
-
-<pre><code><b>struct</b> <a href="MultiSig.md#0x1_MultiSig_RootMultiSigRegistry">RootMultiSigRegistry</a> <b>has</b> key
-</code></pre>
-
-
-
-<details>
-<summary>Fields</summary>
-
-
-<dl>
-<dt>
-<code>list: vector&lt;<b>address</b>&gt;</code>
-</dt>
-<dd>
-
-</dd>
-<dt>
-<code>fee: u64</code>
-</dt>
-<dd>
-
-</dd>
-</dl>
-
-
-</details>
-
 <a name="0x1_MultiSig_Withdraw"></a>
 
 ## Resource `Withdraw`
 
+DANGER
+The withdraw capability can be used to withdraw funds from the account.
+Ordinarily only the signer/owner of this address can use it.
+We are bricking the signer, and as such the withdraw capability is now controlled by the MultiSig logic.
+Multiple multisigs can be instantiated on one address. All of them can access the WithdrawCapability.
+Devs: There's a danger that you may create multisigs with different governances, and as such the withdraw capability may be controlled by different authorities. You have been warned.
+Core Devs: This is a major attack vector. The WithdrawCapability should NEVER be returned to a public caller, UNLESS it is within the vote and approve flow.
+TODO: maybe only one Multisig instance can hold the capability, rather than being shared across instances.
 
 
 <pre><code><b>struct</b> <a href="MultiSig.md#0x1_MultiSig_Withdraw">Withdraw</a> <b>has</b> key
@@ -112,7 +85,13 @@
 ## Resource `MultiSig`
 
 A MultiSig account is an account which requires multiple votes from Authorities to  send a transaction.
-A multisig can be used to get agreement on different types of transactions, such as:
+A multisig can be used to get agreement on different types of Actions, such as a payment transaction where the handler code for the transaction is an a separate contract. See for example MultiSigPayment.
+MultiSig struct holds the metadata for all the instances of Actions on this account.
+Every action has the same set of authorities and governance.
+This is intentional, since privilege escalation can happen if each action has a different set of governance, but access to funds and other state.
+If the organization wishes to have Actions with different governance, then a separate Account is necessary.
+MultiSig optionally holds a WithdrawCapability, which is used to withdraw funds from the account. All actions share the same WithdrawCapability.
+Note, the WithdrawCApability is moved to this shared structure, and as such the signer of the account is bricked. The signer who was the original owner of this account ("sponsor") can no longer issue transactions to this account, and as such the WithdrawCapability would be inaccessible. So on initialization we extract the WithdrawCapability into the MultiSig governance struct.
 
 
 <pre><code><b>struct</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&lt;HandlerType&gt; <b>has</b> key
@@ -139,6 +118,12 @@ A multisig can be used to get agreement on different types of transactions, such
 </dd>
 <dt>
 <code>signers: vector&lt;<b>address</b>&gt;</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>withdraw_capability: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>&gt;</code>
 </dt>
 <dd>
 
@@ -190,13 +175,13 @@ A multisig can be used to get agreement on different types of transactions, such
 
 </details>
 
-<a name="0x1_MultiSig_PaymentType"></a>
+<a name="0x1_MultiSig_Action"></a>
 
-## Resource `PaymentType`
+## Resource `Action`
 
 
 
-<pre><code><b>struct</b> <a href="MultiSig.md#0x1_MultiSig_PaymentType">PaymentType</a> <b>has</b> store, key
+<pre><code><b>struct</b> <a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;HandlerType&gt; <b>has</b> key
 </code></pre>
 
 
@@ -207,19 +192,19 @@ A multisig can be used to get agreement on different types of transactions, such
 
 <dl>
 <dt>
-<code>destination: <b>address</b></code>
+<code>pending: vector&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;HandlerType&gt;&gt;</code>
 </dt>
 <dd>
 
 </dd>
 <dt>
-<code>amount: u64</code>
+<code>approved: vector&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;HandlerType&gt;&gt;</code>
 </dt>
 <dd>
 
 </dd>
 <dt>
-<code>note: vector&lt;u8&gt;</code>
+<code>rejected: vector&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;HandlerType&gt;&gt;</code>
 </dt>
 <dd>
 
@@ -401,81 +386,6 @@ The owner of this account can't be an authority, since it will subsequently be b
 
 
 
-<a name="0x1_MultiSig_PERCENT_SCALE"></a>
-
-
-
-<pre><code><b>const</b> <a href="MultiSig.md#0x1_MultiSig_PERCENT_SCALE">PERCENT_SCALE</a>: u64 = 1000000;
-</code></pre>
-
-
-
-<a name="0x1_MultiSig_STARTING_FEE"></a>
-
-Genesis starting fee for multisig service
-
-
-<pre><code><b>const</b> <a href="MultiSig.md#0x1_MultiSig_STARTING_FEE">STARTING_FEE</a>: u64 = 27;
-</code></pre>
-
-
-
-<a name="0x1_MultiSig_new_payment"></a>
-
-## Function `new_payment`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_new_payment">new_payment</a>(destination: <b>address</b>, amount: u64, note: vector&lt;u8&gt;): <a href="MultiSig.md#0x1_MultiSig_PaymentType">MultiSig::PaymentType</a>
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_new_payment">new_payment</a>(destination: <b>address</b>, amount: u64, note: vector&lt;u8&gt;): <a href="MultiSig.md#0x1_MultiSig_PaymentType">PaymentType</a> {
-  <a href="MultiSig.md#0x1_MultiSig_PaymentType">PaymentType</a> {
-    destination,
-    amount,
-    note,
-  }
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_MultiSig_root_init"></a>
-
-## Function `root_init`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_root_init">root_init</a>(vm: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_root_init">root_init</a>(vm: &signer) {
-  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-  <b>move_to</b>(vm, <a href="MultiSig.md#0x1_MultiSig_RootMultiSigRegistry">RootMultiSigRegistry</a> {
-    list: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-    fee: <a href="MultiSig.md#0x1_MultiSig_STARTING_FEE">STARTING_FEE</a>,
-  });
-}
-</code></pre>
-
-
-
-</details>
-
 <a name="0x1_MultiSig_assert_authorized"></a>
 
 ## Function `assert_authorized`
@@ -514,7 +424,7 @@ Genesis starting fee for multisig service
 An initial "sponsor" who is the signer of the initialization account calls this function.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_init_type">init_type</a>&lt;HandlerType: store, key&gt;(sig: &signer, m_seed_authorities: vector&lt;<b>address</b>&gt;, cfg_default_n_sigs: u64, withdraw_capability: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_init_type">init_type</a>&lt;HandlerType: store, key&gt;(sig: &signer, m_seed_authorities: vector&lt;<b>address</b>&gt;, cfg_default_n_sigs: u64, can_withdraw: bool)
 </code></pre>
 
 
@@ -527,8 +437,8 @@ An initial "sponsor" who is the signer of the initialization account calls this 
   sig: &signer,
   m_seed_authorities: vector&lt;<b>address</b>&gt;,
   cfg_default_n_sigs: u64,
-  withdraw_capability: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;WithdrawCapability&gt;,
- ) {
+  can_withdraw: bool,
+ ) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
   <b>assert</b>!(cfg_default_n_sigs &gt; 0, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENO_SIGNERS">ENO_SIGNERS</a>));
   // make sure the signer's <b>address</b> is not in the list of authorities.
   // This account's signer will now be useless.
@@ -537,27 +447,90 @@ An initial "sponsor" who is the signer of the initialization account calls this 
   <b>assert</b>!(!<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&m_seed_authorities, &sender_addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ESIGNER_CANT_BE_AUTHORITY">ESIGNER_CANT_BE_AUTHORITY</a>));
   print(&10002);
 
-  <b>move_to</b>(sig, <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&lt;HandlerType&gt; {
-    cfg_expire_epochs: <a href="MultiSig.md#0x1_MultiSig_DEFAULT_EPOCHS_EXPIRE">DEFAULT_EPOCHS_EXPIRE</a>,
-    cfg_default_n_sigs,
-    // withdraw_capability,
-    signers: <b>copy</b> m_seed_authorities,
-    // m: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&m_seed_authorities),
-    pending: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-    approved: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-    rejected: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-    counter: 0,
-    gov_pending: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-    gov_approved: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-    gov_rejected: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-  });
+  <a href="MultiSig.md#0x1_MultiSig_maybe_init_gov">maybe_init_gov</a>(sig, cfg_default_n_sigs, &m_seed_authorities);
+  <b>if</b> (can_withdraw) {
+    <a href="MultiSig.md#0x1_MultiSig_maybe_extract_withdraw_cap">maybe_extract_withdraw_cap</a>(sig);
+  };
 
-    <b>move_to</b>(sig, <a href="MultiSig.md#0x1_MultiSig_Withdraw">Withdraw</a> {
-      capability: withdraw_capability
+  <b>if</b> (!<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;HandlerType&gt;&gt;(sender_addr)) {
+    <b>move_to</b>(sig, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;HandlerType&gt; {
+      pending: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+      approved: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+      rejected: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
     });
+  }
+}
+</code></pre>
 
-  // // add the sender <b>to</b> the root registry for billing.
-  // upsert_root_registry(sender_addr);
+
+
+</details>
+
+<a name="0x1_MultiSig_maybe_init_gov"></a>
+
+## Function `maybe_init_gov`
+
+
+
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_init_gov">maybe_init_gov</a>(sig: &signer, cfg_default_n_sigs: u64, m_seed_authorities: &vector&lt;<b>address</b>&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_init_gov">maybe_init_gov</a>(sig: &signer, cfg_default_n_sigs: u64, m_seed_authorities: &vector&lt;<b>address</b>&gt;) {
+  <b>if</b> (!<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt;&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig))) {
+      <b>move_to</b>(sig, <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt; {
+      cfg_expire_epochs: <a href="MultiSig.md#0x1_MultiSig_DEFAULT_EPOCHS_EXPIRE">DEFAULT_EPOCHS_EXPIRE</a>,
+      cfg_default_n_sigs,
+      withdraw_capability: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_none">Option::none</a>(),
+      signers: *m_seed_authorities,
+      // m: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&m_seed_authorities),
+      pending: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+      approved: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+      rejected: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+      counter: 0,
+      gov_pending: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+      gov_approved: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+      gov_rejected: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+    });
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MultiSig_maybe_extract_withdraw_cap"></a>
+
+## Function `maybe_extract_withdraw_cap`
+
+
+
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_extract_withdraw_cap">maybe_extract_withdraw_cap</a>(sig: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_extract_withdraw_cap">maybe_extract_withdraw_cap</a>(sig: &signer) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
+  <b>let</b> multisig_address = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
+  <b>assert</b>!(<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt;&gt;(multisig_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>));
+
+  <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt;&gt;(multisig_address);
+  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&ms.withdraw_capability)) {
+    <b>return</b>
+  } <b>else</b> {
+    <b>let</b> cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_withdraw_capability">DiemAccount::extract_withdraw_capability</a>(sig);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_fill">Option::fill</a>(&<b>mut</b> ms.withdraw_capability, cap);
+  }
 }
 </code></pre>
 

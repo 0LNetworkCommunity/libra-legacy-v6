@@ -47,7 +47,7 @@ module MultiSig {
   use DiemFramework::Debug::print;
   // use DiemFramework::GAS::GAS;
   use DiemFramework::VectorHelper;
-  use DiemFramework::CoreAddresses;
+  // use DiemFramework::CoreAddresses;
 
 
   /// The owner of this account can't be an authority, since it will subsequently be bricked. The signer of this account is no longer useful. The account is now controlled by the MultiSig logic. 
@@ -81,44 +81,54 @@ module MultiSig {
   }
   
   /// A MultiSig account is an account which requires multiple votes from Authorities to  send a transaction.
-  /// A multisig can be used to get agreement on different types of transactions, such as:
-  // A payment transaction
-  // A multisig MultiSig<PropGovSigners> transaction
-  // or a transaction type defined and handled by a third party smart contract.(this module will return if approved/rejected.
-  // This contract only has handlers for the first two types of transactions.
+  /// A multisig can be used to get agreement on different types of Actions, such as a payment transaction where the handler code for the transaction is an a separate contract. See for example MultiSigPayment.
+  /// MultiSig struct holds the metadata for all the instances of Actions on this account.
+  /// Every action has the same set of authorities and governance.
+  /// This is intentional, since privilege escalation can happen if each action has a different set of governance, but access to funds and other state.
+  /// If the organization wishes to have Actions with different governance, then a separate Account is necessary.
+
+  /// MultiSig optionally holds a WithdrawCapability, which is used to withdraw funds from the account. All actions share the same WithdrawCapability.
+  /// Note, the WithdrawCApability is moved to this shared structure, and as such the signer of the account is bricked. The signer who was the original owner of this account ("sponsor") can no longer issue transactions to this account, and as such the WithdrawCapability would be inaccessible. So on initialization we extract the WithdrawCapability into the MultiSig governance struct.
 
   struct MultiSig<HandlerType> has key {
     cfg_expire_epochs: u64,
     cfg_default_n_sigs: u64,
     signers: vector<address>,
+    withdraw_capability: Option<WithdrawCapability>,
     pending: vector<Proposal<HandlerType>>,
     approved: vector<Proposal<HandlerType>>,
     rejected:  vector<Proposal<HandlerType>>,
-    counter: u64, // the monotonically increasing id of proposal. Also equal to length of proposals. And the ID of the NEXT proposal to be submitted.
+    counter: u64, // TODO: Use GUID? the monotonically increasing id of proposal. Also equal to length of proposals. And the ID of the NEXT proposal to be submitted.
     gov_pending: vector<PropGovSigners>,
     gov_approved: vector<PropGovSigners>,
     gov_rejected:  vector<PropGovSigners>,
   }
 
-  // this is one of the types that MultiSig will handle.
-  // though this can be coded by a third party, this is the most common 
-  // use case, that requires the most secrutiy (and should be provided by root)
-  struct PaymentType has key, store {
-    // The transaction to be executed
-    destination: address,
-    // amount
-    amount: u64,
-    // note
-    note: vector<u8>,
+  struct Action<HandlerType> has key {
+    pending: vector<Proposal<HandlerType>>,
+    approved: vector<Proposal<HandlerType>>,
+    rejected:  vector<Proposal<HandlerType>>,
   }
 
-  public fun new_payment(destination: address, amount: u64, note: vector<u8>): PaymentType {
-    PaymentType {
-      destination,
-      amount,
-      note,
-    }
-  }
+  // // this is one of the types that MultiSig will handle.
+  // // though this can be coded by a third party, this is the most common 
+  // // use case, that requires the most secrutiy (and should be provided by root)
+  // struct PaymentType has key, store {
+  //   // The transaction to be executed
+  //   destination: address,
+  //   // amount
+  //   amount: u64,
+  //   // note
+  //   note: vector<u8>,
+  // }
+
+  // public fun new_payment(destination: address, amount: u64, note: vector<u8>): PaymentType {
+  //   PaymentType {
+  //     destination,
+  //     amount,
+  //     note,
+  //   }
+  // }
 
   // all proposals share some common fields
   // and each proposal can add type-specific parameters
@@ -147,15 +157,15 @@ module MultiSig {
   }
 
 
-  // For PaymentType use cases Root will charge for the service.
-  // Similar features can of course be coded by a third party.
-  public fun root_init(vm: &signer) {
-    CoreAddresses::assert_vm(vm);
-    move_to(vm, RootMultiSigRegistry {
-      list: Vector::empty(),
-      fee: STARTING_FEE,
-    });
-  }
+  // // For PaymentType use cases Root will charge for the service.
+  // // Similar features can of course be coded by a third party.
+  // public fun root_init(vm: &signer) {
+  //   CoreAddresses::assert_vm(vm);
+  //   move_to(vm, RootMultiSigRegistry {
+  //     list: Vector::empty(),
+  //     fee: STARTING_FEE,
+  //   });
+  // }
 
   fun assert_authorized<HandlerType: key + store>(sig: &signer, multisig_address: address) acquires MultiSig {
         // cannot start manipulating contract until it is finalized
@@ -174,8 +184,8 @@ module MultiSig {
     sig: &signer,
     m_seed_authorities: vector<address>,
     cfg_default_n_sigs: u64,
-    withdraw_capability: Option<WithdrawCapability>,
-   ) {
+    can_withdraw: bool,
+   ) acquires MultiSig {
     assert!(cfg_default_n_sigs > 0, Errors::invalid_argument(ENO_SIGNERS));
     // make sure the signer's address is not in the list of authorities. 
     // This account's signer will now be useless.
@@ -184,27 +194,50 @@ module MultiSig {
     assert!(!Vector::contains(&m_seed_authorities, &sender_addr), Errors::invalid_argument(ESIGNER_CANT_BE_AUTHORITY));
     print(&10002);
 
-    move_to(sig, MultiSig<HandlerType> {
-      cfg_expire_epochs: DEFAULT_EPOCHS_EXPIRE,
-      cfg_default_n_sigs,
-      // withdraw_capability,
-      signers: copy m_seed_authorities,
-      // m: Vector::length(&m_seed_authorities),
-      pending: Vector::empty(),
-      approved: Vector::empty(),
-      rejected: Vector::empty(),
-      counter: 0,
-      gov_pending: Vector::empty(),
-      gov_approved: Vector::empty(),
-      gov_rejected: Vector::empty(),
-    });
+    maybe_init_gov(sig, cfg_default_n_sigs, &m_seed_authorities);
+    if (can_withdraw) {
+      maybe_extract_withdraw_cap(sig);
+    };
 
-      move_to(sig, Withdraw {
-        capability: withdraw_capability
+    if (!exists<Action<HandlerType>>(sender_addr)) {
+      move_to(sig, Action<HandlerType> {
+        pending: Vector::empty(),
+        approved: Vector::empty(),
+        rejected: Vector::empty(),
       });
+    }
+  }
 
-    // // add the sender to the root registry for billing.
-    // upsert_root_registry(sender_addr);
+  fun maybe_init_gov(sig: &signer, cfg_default_n_sigs: u64, m_seed_authorities: &vector<address>) {
+    if (!exists<MultiSig<PropGovSigners>>(Signer::address_of(sig))) {
+        move_to(sig, MultiSig<PropGovSigners> {
+        cfg_expire_epochs: DEFAULT_EPOCHS_EXPIRE,
+        cfg_default_n_sigs,
+        withdraw_capability: Option::none(),
+        signers: *m_seed_authorities,
+        // m: Vector::length(&m_seed_authorities),
+        pending: Vector::empty(),
+        approved: Vector::empty(),
+        rejected: Vector::empty(),
+        counter: 0,
+        gov_pending: Vector::empty(),
+        gov_approved: Vector::empty(),
+        gov_rejected: Vector::empty(),
+      });
+    }
+  }
+
+  fun maybe_extract_withdraw_cap(sig: &signer) acquires MultiSig {
+    let multisig_address = Signer::address_of(sig);
+    assert!(exists<MultiSig<PropGovSigners>>(multisig_address), Errors::invalid_argument(ENOT_AUTHORIZED));
+
+    let ms = borrow_global_mut<MultiSig<PropGovSigners>>(multisig_address);
+    if (Option::is_some(&ms.withdraw_capability)) {
+      return
+    } else {
+      let cap = DiemAccount::extract_withdraw_capability(sig);
+      Option::fill(&mut ms.withdraw_capability, cap);
+    }
   }
   
   public fun restore_withdraw_cap(multisig_addr: address, w: WithdrawCapability) acquires Withdraw {
