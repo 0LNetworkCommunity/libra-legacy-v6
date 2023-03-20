@@ -47,11 +47,13 @@ module MultiSigPayment {
   use Std::Vector;
   use Std::Option;
   use Std::FixedPoint32;
+  use Std::Signer;
   use DiemFramework::DiemAccount::{Self, WithdrawCapability};
   use DiemFramework::Debug::print;
   use DiemFramework::GAS::GAS;
   use DiemFramework::MultiSig;
   use DiemFramework::CoreAddresses;
+  use DiemFramework::TransactionFee;
 
   /// Genesis starting fee for multisig service
   const STARTING_FEE: u64 = 00000027; // 1% per year, 0.0027% per epoch
@@ -72,9 +74,10 @@ module MultiSigPayment {
   /// init_gov fails gracefully if the governance is already initialized.
   /// init_type will throw errors if the type is already initialized.
 
-  public fun init_payment_multisig(sponsor: &signer, init_signers: vector<address>, cfg_n_signers: u64) {
+  public fun init_payment_multisig(sponsor: &signer, init_signers: vector<address>, cfg_n_signers: u64) acquires RootMultiSigRegistry {
     MultiSig::init_gov(sponsor, cfg_n_signers, &init_signers);
     MultiSig::init_type<PaymentType>(sponsor, true);
+    add_to_registry(Signer::address_of(sponsor));
   }
 
   /// create a payment object, whcih can be send in a proposal.
@@ -134,7 +137,7 @@ module MultiSigPayment {
 
 
   //////// ROOT SERVICE FEE BILLING ////////
-  
+
   struct RootMultiSigRegistry has key {
     list: vector<address>,
     fee: u64, // percentage balance fee denomiated in 4 decimal precision 123456 = 12.3456%
@@ -163,14 +166,15 @@ module MultiSigPayment {
     let reg = borrow_global<RootMultiSigRegistry>(@VMReserved);
     let i = 0;
     while (i < Vector::length(&reg.list)) {
+      print(&7777777790001);
       let multi_sig_addr = Vector::borrow(&reg.list, i);
 
       let pct = FixedPoint32::create_from_rational(reg.fee, PERCENT_SCALE);
+      print(&pct);
       let fee = FixedPoint32::multiply_u64(DiemAccount::balance<GAS>(*multi_sig_addr), pct);
-      // TODO: This is a placeholder, fee should go to Transaction Fee account.
-      // but that code is on a different branch
-
-      DiemAccount::vm_burn_from_balance<GAS>(*multi_sig_addr, fee, b"multisig service", vm);
+      print(&fee);
+      let c = DiemAccount::vm_withdraw<GAS>(vm, *multi_sig_addr, fee);
+      TransactionFee::pay_fee(c);
       i = i + 1;
     };
 

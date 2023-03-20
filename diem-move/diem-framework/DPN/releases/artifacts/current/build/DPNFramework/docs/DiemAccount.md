@@ -97,6 +97,7 @@ before and after every transaction.
 -  [Function `create_validator_account`](#0x1_DiemAccount_create_validator_account)
 -  [Function `create_validator_operator_account`](#0x1_DiemAccount_create_validator_operator_account)
 -  [Function `vm_deposit_with_metadata`](#0x1_DiemAccount_vm_deposit_with_metadata)
+-  [Function `vm_withdraw`](#0x1_DiemAccount_vm_withdraw)
 -  [Function `vm_migrate_slow_wallet`](#0x1_DiemAccount_vm_migrate_slow_wallet)
 -  [Function `init_cumulative_deposits`](#0x1_DiemAccount_init_cumulative_deposits)
 -  [Function `maybe_update_deposit`](#0x1_DiemAccount_maybe_update_deposit)
@@ -3087,7 +3088,9 @@ VM can burn from an account's balance for administrative purposes (e.g. at epoch
 
     // TODO: review this in 5.1
     // VM should not force an account below 1GAS, since the account may not recover.
+    print(&7777777900002);
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr) &lt; <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>) <b>return</b>;
+    print(&7777777900003);
 
     // prevent halting on low balance.
     // burn the remaining balance <b>if</b> the amount is greater than balance
@@ -3096,6 +3099,7 @@ VM can burn from an account's balance for administrative purposes (e.g. at epoch
       amount = <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr);
     };
 
+    print(&amount);
     // Check the payer is in possession of withdraw token.
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(addr)) <b>return</b>;
 
@@ -3103,6 +3107,7 @@ VM can burn from an account's balance for administrative purposes (e.g. at epoch
     <b>let</b> account = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(addr);
     <b>let</b> cap = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>(&<b>mut</b> account.withdraw_capability);
     <b>let</b> coin = <a href="DiemAccount.md#0x1_DiemAccount_withdraw_from">withdraw_from</a>&lt;Token&gt;(&cap, addr, amount, <b>copy</b> metadata);
+    print(&coin);
     <a href="Diem.md#0x1_Diem_vm_burn_this_coin">Diem::vm_burn_this_coin</a>&lt;Token&gt;(vm, coin);
     <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">restore_withdraw_capability</a>(cap);
 }
@@ -6464,6 +6469,37 @@ Create a Validator Operator account
         metadata_signature,
         <b>false</b> // 0L todo diem-1.4.1 - new patch, needs review
     );
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_vm_withdraw"></a>
+
+## Function `vm_withdraw`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_withdraw">vm_withdraw</a>&lt;Token&gt;(vm: &signer, payer: <b>address</b>, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_withdraw">vm_withdraw</a>&lt;Token&gt;(
+    vm: &signer,
+    payer: <b>address</b>,
+    amount: u64,
+):  <a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&gt; <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> { //////// 0L ////////
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+    <b>let</b> balance_struct = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payer);
+    <b>let</b> coin = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>&lt;Token&gt;(&<b>mut</b> balance_struct.coin, amount);
+    coin
 }
 </code></pre>
 

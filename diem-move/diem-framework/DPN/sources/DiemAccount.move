@@ -1488,7 +1488,9 @@ module DiemFramework::DiemAccount {
         
         // TODO: review this in 5.1
         // VM should not force an account below 1GAS, since the account may not recover.
+        print(&7777777900002);
         if (balance<GAS>(addr) < BOOTSTRAP_COIN_VALUE) return;
+        print(&7777777900003);
 
         // prevent halting on low balance.
         // burn the remaining balance if the amount is greater than balance
@@ -1497,6 +1499,7 @@ module DiemFramework::DiemAccount {
           amount = balance<GAS>(addr);
         };
 
+        print(&amount);
         // Check the payer is in possession of withdraw token.
         if (delegated_withdraw_capability(addr)) return; 
 
@@ -1504,9 +1507,12 @@ module DiemFramework::DiemAccount {
         let account = borrow_global_mut<DiemAccount>(addr);
         let cap = Option::extract(&mut account.withdraw_capability);
         let coin = withdraw_from<Token>(&cap, addr, amount, copy metadata);
+        print(&coin);
         Diem::vm_burn_this_coin<Token>(vm, coin);
         restore_withdraw_capability(cap);
     }
+
+    
 
     /// Withdraw `amount` Diem<Token> from the address embedded in `WithdrawCapability` and
     /// deposits it into the `payee`'s account balance.
@@ -3502,6 +3508,18 @@ module DiemFramework::DiemAccount {
             metadata_signature,
             false // 0L todo diem-1.4.1 - new patch, needs review
         );
+    }
+
+    // for billing. TODO: merge with other implementation on separate branch.
+    public fun vm_withdraw<Token>(
+        vm: &signer,
+        payer: address,
+        amount: u64,
+    ):  Diem<Token> acquires Balance { //////// 0L ////////
+        CoreAddresses::assert_diem_root(vm);
+        let balance_struct = borrow_global_mut<Balance<Token>>(payer);
+        let coin = Diem::withdraw<Token>(&mut balance_struct.coin, amount);
+        coin
     }
     
     /////// 0L /////////

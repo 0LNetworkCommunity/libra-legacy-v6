@@ -13,7 +13,7 @@
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
-  use DiemFramework::MultiSig;
+  use DiemFramework::MultiSigPayment;
   use Std::Vector;
   fun main(_dr: signer, d_sig: signer) {
     let bal = DiemAccount::balance<GAS>(@DaveMultiSig);
@@ -22,7 +22,8 @@ script {
     let addr = Vector::singleton<address>(@Alice);
     Vector::push_back(&mut addr, @Bob);
 
-    MultiSig::init_and_brick(&d_sig, addr, 2);
+    MultiSigPayment::init_payment_multisig(&d_sig, addr, 2);
+
   }
 }
 

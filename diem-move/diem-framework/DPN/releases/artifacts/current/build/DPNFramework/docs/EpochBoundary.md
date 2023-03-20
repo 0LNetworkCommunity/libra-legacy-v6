@@ -11,7 +11,7 @@
 -  [Function `propose_new_set`](#0x1_EpochBoundary_propose_new_set)
 -  [Function `reset_counters`](#0x1_EpochBoundary_reset_counters)
 -  [Function `proof_of_burn`](#0x1_EpochBoundary_proof_of_burn)
--  [Function `billing`](#0x1_EpochBoundary_billing)
+-  [Function `root_service_billing`](#0x1_EpochBoundary_root_service_billing)
 
 
 <pre><code><b>use</b> <a href="Audit.md#0x1_Audit">0x1::Audit</a>;
@@ -28,6 +28,7 @@
 <b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
+<b>use</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment">0x1::MultiSigPayment</a>;
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
 <b>use</b> <a href="RecoveryMode.md#0x1_RecoveryMode">0x1::RecoveryMode</a>;
 <b>use</b> <a href="Testnet.md#0x1_StagingNet">0x1::StagingNet</a>;
@@ -90,10 +91,12 @@
       print(&800900);
     };
 
-    <a href="EpochBoundary.md#0x1_EpochBoundary_billing">billing</a>(vm);
+    <a href="EpochBoundary.md#0x1_EpochBoundary_root_service_billing">root_service_billing</a>(vm);
+    print(&801000);
 
     <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, outgoing_compliant_set, height_now);
-    print(&801000);
+    print(&801100);
+
 }
 </code></pre>
 
@@ -454,13 +457,13 @@
 
 </details>
 
-<a name="0x1_EpochBoundary_billing"></a>
+<a name="0x1_EpochBoundary_root_service_billing"></a>
 
-## Function `billing`
+## Function `root_service_billing`
 
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_billing">billing</a>(_vm: &signer)
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_root_service_billing">root_service_billing</a>(vm: &signer)
 </code></pre>
 
 
@@ -469,8 +472,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_billing">billing</a>(_vm: &signer) {
-  // MultiSig::root_security_fee_billing(vm);
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_root_service_billing">root_service_billing</a>(vm: &signer) {
+  <a href="MultiSigPayment.md#0x1_MultiSigPayment_root_security_fee_billing">MultiSigPayment::root_security_fee_billing</a>(vm);
 }
 </code></pre>
 

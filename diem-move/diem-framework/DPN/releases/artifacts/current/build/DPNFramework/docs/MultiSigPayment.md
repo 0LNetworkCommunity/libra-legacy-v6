@@ -19,11 +19,14 @@
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
+<b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="MultiSig.md#0x1_MultiSig">0x1::MultiSig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
@@ -144,9 +147,10 @@ init_type will throw errors if the type is already initialized.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_init_payment_multisig">init_payment_multisig</a>(sponsor: &signer, init_signers: vector&lt;<b>address</b>&gt;, cfg_n_signers: u64) {
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_init_payment_multisig">init_payment_multisig</a>(sponsor: &signer, init_signers: vector&lt;<b>address</b>&gt;, cfg_n_signers: u64) <b>acquires</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_RootMultiSigRegistry">RootMultiSigRegistry</a> {
   <a href="MultiSig.md#0x1_MultiSig_init_gov">MultiSig::init_gov</a>(sponsor, cfg_n_signers, &init_signers);
   <a href="MultiSig.md#0x1_MultiSig_init_type">MultiSig::init_type</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sponsor, <b>true</b>);
+  <a href="MultiSigPayment.md#0x1_MultiSigPayment_add_to_registry">add_to_registry</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sponsor));
 }
 </code></pre>
 
@@ -329,14 +333,18 @@ create a payment object, whcih can be send in a proposal.
   <b>let</b> reg = <b>borrow_global</b>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_RootMultiSigRegistry">RootMultiSigRegistry</a>&gt;(@VMReserved);
   <b>let</b> i = 0;
   <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&reg.list)) {
+    print(&7777777790001);
     <b>let</b> multi_sig_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&reg.list, i);
 
     <b>let</b> pct = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(reg.fee, <a href="MultiSigPayment.md#0x1_MultiSigPayment_PERCENT_SCALE">PERCENT_SCALE</a>);
+    print(&pct);
     <b>let</b> fee = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*multi_sig_addr), pct);
+    print(&fee);
     // TODO: This is a placeholder, fee should go <b>to</b> Transaction Fee account.
     // but that code is on a different branch
 
-    <a href="DiemAccount.md#0x1_DiemAccount_vm_burn_from_balance">DiemAccount::vm_burn_from_balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*multi_sig_addr, fee, b"multisig service", vm);
+    <b>let</b> c = <a href="DiemAccount.md#0x1_DiemAccount_vm_withdraw">DiemAccount::vm_withdraw</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, *multi_sig_addr, fee);
+    <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">TransactionFee::pay_fee</a>(c);
     i = i + 1;
   };
 
