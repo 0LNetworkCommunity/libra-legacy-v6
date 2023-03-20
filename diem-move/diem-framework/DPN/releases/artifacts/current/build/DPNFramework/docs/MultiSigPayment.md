@@ -64,7 +64,7 @@ A MultiSig account is an account which requires multiple votes from Authorities 
 A multisig can be used to get agreement on different types of transactions, such as:
 
 
-<pre><code><b>struct</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a> <b>has</b> drop, store, key
+<pre><code><b>struct</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a> <b>has</b> <b>copy</b>, drop, store, key
 </code></pre>
 
 
@@ -197,14 +197,14 @@ Genesis starting fee for multisig service
 
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&cap)) {
     <b>let</b> c = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>(&<b>mut</b> cap);
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_destroy_none">Option::destroy_none</a>(cap);
+
     <b>if</b> (approved) {
       <a href="MultiSigPayment.md#0x1_MultiSigPayment_release_payment">release_payment</a>(&p, &c);
     };
-    <a href="MultiSig.md#0x1_MultiSig_restore_withdraw_cap">MultiSig::restore_withdraw_cap</a>(multisig_addr, c)
-  } <b>else</b> {
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_destroy_none">Option::destroy_none</a>(cap);
-  }
+
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_fill">Option::fill</a>(&<b>mut</b> cap, c);
+  };
+  <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">MultiSig::maybe_restore_withdraw_cap</a>(multisig_addr, cap)
 }
 </code></pre>
 
@@ -236,7 +236,7 @@ Genesis starting fee for multisig service
     *&p.note,
     b""
   );
-  // <a href="MultiSig.md#0x1_MultiSig_restore_withdraw_cap">MultiSig::restore_withdraw_cap</a>(multisig_addr, cap)
+  // MultiSig::restore_withdraw_cap(multisig_addr, cap)
 }
 </code></pre>
 

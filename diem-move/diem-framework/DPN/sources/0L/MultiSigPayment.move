@@ -72,7 +72,7 @@ module MultiSigPayment {
   // this is one of the types that MultiSig will handle.
   // though this can be coded by a third party, this is the most common 
   // use case, that requires the most secrutiy (and should be provided by root)
-  struct PaymentType has key, store, drop {
+  struct PaymentType has key, store, copy, drop {
     // The transaction to be executed
     destination: address,
     // amount
@@ -113,14 +113,14 @@ module MultiSigPayment {
 
     if (Option::is_some(&cap)) {
       let c = Option::extract(&mut cap);
-      Option::destroy_none(cap);
+      
       if (approved) {
         release_payment(&p, &c);
       };
-      MultiSig::restore_withdraw_cap(multisig_addr, c)
-    } else {
-      Option::destroy_none(cap);
-    }
+
+      Option::fill(&mut cap, c);
+    };
+    MultiSig::maybe_restore_withdraw_cap(multisig_addr, cap)
   }
 
 
