@@ -41,7 +41,7 @@ script {
 
   fun main(_dr: signer, a_sig: signer) {
 
-    MultiSig::propose_governance(&a_sig, @DaveMultiSig, Vector::singleton(@Carol), true, Option::none());
+    MultiSig::propose_governance(&a_sig, @DaveMultiSig, Vector::singleton(@Carol), true, Option::none(), Option::none());
 
     let a = MultiSig::get_authorities(@DaveMultiSig);
     assert!(Vector::length(&a) == 2, 7357002);
@@ -56,7 +56,7 @@ script {
   use Std::Vector;
 
   fun main(_dr: signer, b_sig: signer) {
-    MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::singleton(@Carol), true, Option::none());
+    MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::singleton(@Carol), true, Option::none(), Option::none());
 
     let a = MultiSig::get_authorities(@DaveMultiSig);
     assert!(Vector::length(&a) == 3, 7357002);
@@ -73,7 +73,7 @@ script {
   use Std::Option;
   use Std::Vector;
   fun main(_dr: signer, b_sig: signer) {
-    MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::singleton(@Alice), false, Option::none());
+    MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::singleton(@Alice), false, Option::none(), Option::none());
     
     // no change yet
     let a = MultiSig::get_authorities(@DaveMultiSig);
@@ -90,7 +90,7 @@ script {
   use Std::Option;
   use Std::Vector;
   fun main(_dr: signer, b_sig: signer) {
-    MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::singleton(@Alice), false, Option::none());
+    MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::singleton(@Alice), false, Option::none(), Option::none());
     
     // no change yet
     let a = MultiSig::get_authorities(@DaveMultiSig);

@@ -4,10 +4,8 @@
 // Carol:   non-validators with  1M GAS
 // Dave:   non-validators with  1M GAS
 
-// DAVE is going to become a multisig wallet. It's going to get bricked.
-// From that point forward only Alice, Bob, are signers
-
-// We want to add Carol to the multisig wallet
+// Using Governance template, we want to check that the expiration of ballot is unchanged when the second voter proposes a different deadline.
+// Only the first voter/proposer will set the expiration epoch.
 
 //# run --admin-script --signers DiemRoot DaveMultiSig
 script {
@@ -41,7 +39,7 @@ script {
 
   fun main(_dr: signer, a_sig: signer) {
 
-    MultiSig::propose_governance(&a_sig, @DaveMultiSig, Vector::empty(), true, Option::some(1), Option::none());
+    MultiSig::propose_governance(&a_sig, @DaveMultiSig, Vector::empty(), true, Option::some(1), Option::some(10));
 
     let a = MultiSig::get_authorities(@DaveMultiSig);
     assert!(Vector::length(&a) == 2, 7357002);
@@ -56,6 +54,8 @@ script {
   use Std::Vector;
 
   fun main(_dr: signer, b_sig: signer) {
+    // the expiration should be igored
+    // NOTE: the expiration here is NONE. But the voting should be on the same ballot as the previous proposal.
     MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::empty(), true, Option::some(1), Option::none());
 
     let a = MultiSig::get_authorities(@DaveMultiSig);

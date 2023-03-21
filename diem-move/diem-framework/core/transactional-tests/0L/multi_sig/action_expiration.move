@@ -4,10 +4,10 @@
 // Carol:   non-validators with  1M GAS
 // Dave:   non-validators with  1M GAS
 
-// DAVE is going to become a multisig wallet. It's going to get bricked.
-// From that point forward only Alice, Bob, are signers
-
-// We want to add Carol to the multisig wallet
+// Using Governance template, we want a ballot to expire.
+// Alice will create the proposal to expire in 0 epochs which means on epoch 1, per the testsuite.
+// One epoch will pass
+// Bob will try to vote in epoch 2, but it will be rejected.
 
 //# run --admin-script --signers DiemRoot DaveMultiSig
 script {
@@ -41,12 +41,23 @@ script {
 
   fun main(_dr: signer, a_sig: signer) {
 
-    MultiSig::propose_governance(&a_sig, @DaveMultiSig, Vector::empty(), true, Option::some(1), Option::none());
+    MultiSig::propose_governance(&a_sig, @DaveMultiSig, Vector::empty(), true, Option::some(1), Option::some(0)); // 0 will make the expiration = current_epoch + 0 = 1
 
     let a = MultiSig::get_authorities(@DaveMultiSig);
     assert!(Vector::length(&a) == 2, 7357002);
   }
 }
+
+
+//////////////////////////////////////////////
+///// Trigger reconfiguration at 61 seconds ////
+//# block --proposer Alice --time 61000000 --round 15
+
+///// TEST RECONFIGURATION IS HAPPENING ////
+// check: NewEpochEvent
+//////////////////////////////////////////////
+
+
 
 
 //# run --admin-script --signers DiemRoot Bob
@@ -56,13 +67,16 @@ script {
   use Std::Vector;
 
   fun main(_dr: signer, b_sig: signer) {
+    // the expiration should be igored
+    // NOTE: the expiration here is NONE. But the voting should be on the same ballot as the previous proposal.
     MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::empty(), true, Option::some(1), Option::none());
 
     let a = MultiSig::get_authorities(@DaveMultiSig);
     assert!(Vector::length(&a) == 2, 7357002);
 
+    // the governance proposal will silently, we still have 2 signers required
     let b = MultiSig::get_n_sigs(@DaveMultiSig);
-    assert!(b == 1, 7357003);
+    assert!(b == 2, 7357003);
   }
 }
 

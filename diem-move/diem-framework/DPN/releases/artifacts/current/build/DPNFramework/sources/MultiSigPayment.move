@@ -45,7 +45,7 @@
 address DiemFramework {
 module MultiSigPayment {
   use Std::Vector;
-  use Std::Option;
+  use Std::Option::{Self, Option};
   use Std::FixedPoint32;
   use Std::Signer;
   use DiemFramework::DiemAccount::{Self, WithdrawCapability};
@@ -99,10 +99,10 @@ module MultiSigPayment {
   // Only the first proposer can set the expiration time. It will be ignored when a duplicate is caught.
 
 
-  public fun propose_payment(sig: &signer, multisig_addr: address, recipient: address, amount: u64, note: vector<u8>) {
+  public fun propose_payment(sig: &signer, multisig_addr: address, recipient: address, amount: u64, note: vector<u8>, duration_epochs: Option<u64>) {
     let p = new_payment(recipient, amount, *&note);
 
-    let (approved, cap) = MultiSig::propose<PaymentType>(sig, multisig_addr, copy p);
+    let (approved, cap) = MultiSig::propose<PaymentType>(sig, multisig_addr, copy p, duration_epochs);
 
     if (Option::is_some(&cap)) {
       let c = Option::extract(&mut cap);
@@ -173,9 +173,6 @@ module MultiSigPayment {
       print(&pct);
       let fee = FixedPoint32::multiply_u64(DiemAccount::balance<GAS>(*multi_sig_addr), pct);
       print(&fee);
-      // TODO: This is a placeholder, fee should go to Transaction Fee account.
-      // but that code is on a different branch
-
       let c = DiemAccount::vm_withdraw<GAS>(vm, *multi_sig_addr, fee);
       TransactionFee::pay_fee(c);
       i = i + 1;

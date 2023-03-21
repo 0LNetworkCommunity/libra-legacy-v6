@@ -33,7 +33,7 @@ script {
 
 //# run --admin-script --signers DiemRoot Bob
 script {
-  // use DiemFramework::MultiSig;
+  use Std::Option;
   use DiemFramework::MultiSigPayment;
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
@@ -43,7 +43,7 @@ script {
 
     // let p = MultiSigPayment::new_payment(@Alice, 10, b"send it");
 
-    MultiSigPayment::propose_payment(&b_sig, @DaveMultiSig, @Alice, 10, b"send it");
+    MultiSigPayment::propose_payment(&b_sig, @DaveMultiSig, @Alice, 10, b"send it", Option::none());
     
     // no change since proposal is pending
     let bal = DiemAccount::balance<GAS>(@DaveMultiSig);

@@ -38,13 +38,14 @@ script {
 
 //# run --admin-script --signers DiemRoot Bob
 script {
+  use Std::Option;
   use DiemFramework::MultiSigPayment;
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
 
   fun main(_dr: signer, b_sig: signer) {
 
-    MultiSigPayment::propose_payment(&b_sig, @DaveMultiSig, @Alice, 10, b"send it");
+    MultiSigPayment::propose_payment(&b_sig, @DaveMultiSig, @Alice, 10, b"send it", Option::none());
 
     let bal = DiemAccount::balance<GAS>(@DaveMultiSig);
     // balance should not change yet
@@ -59,10 +60,11 @@ script {
   use DiemFramework::MultiSigPayment;
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
+  use Std::Option;
 
   fun main(_dr: signer, c_sig: signer) {
 
-    MultiSigPayment::propose_payment(&c_sig, @DaveMultiSig, @Alice, 10, b"send it");
+    MultiSigPayment::propose_payment(&c_sig, @DaveMultiSig, @Alice, 10, b"send it", Option::none());
 
     let bal = DiemAccount::balance<GAS>(@DaveMultiSig);
     assert!(bal < 1000000, 7357002);

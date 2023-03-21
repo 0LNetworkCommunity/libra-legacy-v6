@@ -40,9 +40,21 @@ module MultiSig {
   /// The multisig setup  is not finalized, the sponsor needs to brick their authkey. The account setup sponsor needs to be verifiably locked out before operations can begin. 
   const ENOT_FINALIZED_NOT_BRICK: u64 = 440005; 
 
-  const DEFAULT_EPOCHS_EXPIRE: u64 = 14; // default setting for a proposal to expire
-
+  /// Already registered thie action type
   const EACTION_ALREADY_EXISTS: u64 = 440006;
+
+  /// Action not found
+  const EACTION_NOT_FOUND: u64 = 440007;
+
+  /// Proposal is expired
+  const EPROPOSAL_EXPIRED: u64 = 440008;
+
+  
+
+  /// default setting for a proposal to expire
+  const DEFAULT_EPOCHS_EXPIRE: u64 = 14; 
+
+
 
   
   /// A MultiSig account is an account which requires multiple votes from Authorities to  send a transaction.
@@ -63,7 +75,7 @@ module MultiSig {
   /// Note, the WithdrawCApability is moved to this shared structure, and as such the signer of the account is bricked. The signer who was the original owner of this account ("sponsor") can no longer issue transactions to this account, and as such the WithdrawCapability would be inaccessible. So on initialization we extract the WithdrawCapability into the MultiSig governance struct.
 
   struct MultiSig has key {
-    cfg_expire_epochs: u64,
+    cfg_duration_epochs: u64,
     cfg_default_n_sigs: u64,
     signers: vector<address>,
     withdraw_capability: Option<WithdrawCapability>,
@@ -120,7 +132,7 @@ module MultiSig {
 
     if (!exists<MultiSig>(multisig_address)) {
         move_to(sig, MultiSig {
-        cfg_expire_epochs: DEFAULT_EPOCHS_EXPIRE,
+        cfg_duration_epochs: DEFAULT_EPOCHS_EXPIRE,
         cfg_default_n_sigs,
         withdraw_capability: Option::none(),
         signers: *m_seed_authorities,
@@ -224,30 +236,54 @@ module MultiSig {
   // Only the first proposer can set the expiration time. It will be ignored when a duplicate is caught.
 
 
-  public fun propose<ProposalData: key + store + copy + drop>(sig: &signer, multisig_address: address, proposal_data: ProposalData):(bool, Option<WithdrawCapability>) acquires MultiSig, Action {
+  public fun propose<ProposalData: key + store + copy + drop>(sig: &signer, multisig_address: address, proposal_data: ProposalData, duration_epochs: Option<u64>):(bool, Option<WithdrawCapability>) acquires MultiSig, Action {
     print(&20001);
     assert_authorized(sig, multisig_address);
 
     let ms = borrow_global_mut<MultiSig>(multisig_address);
     let action = borrow_global_mut<Action<ProposalData>>(multisig_address);
+
+    // go through all proposals and clean up expired ones.
+    lazy_cleanup_expired(action);
+
     let n = *&ms.cfg_default_n_sigs;
 
+
     // check if we have this proposal already
-    let (found, _) = find_index_of_proposal<ProposalData>(action, &proposal_data);
+    let (found, idx) = find_index_of_pending<ProposalData>(action, &proposal_data);
 
     let approved = if (found) {
       print(&20002);
 
       let prop = get_proposal(action, &proposal_data);
+
+      // belt and suspenders, the lazy cleaning should have removed expired proposals.
+      // stop here if it's expired, but first move the the ms.rejected list.
+      if (check_expired(prop)) {
+        let rej = Vector::remove(&mut action.pending, idx);
+        Vector::push_back(&mut action.rejected, rej);
+        return (false, Option::none())
+      };
+
       vote(prop, Signer::address_of(sig), n)
+
     } else {
+      // TODO: the single interface for proposing and voting causes a UI issue. Theres a case that a straggler voter will inadvertently start a new proposal if the vote just closed.
+      // Though it may be that the thirdparty modules need to check for this themselves when voting.
       print(&20003);
+
+      let dur = if (Option::is_some(&duration_epochs)) {
+        Option::borrow(&duration_epochs)
+      } else {
+        &ms.cfg_duration_epochs
+      };
+
       Vector::push_back(&mut action.pending, Proposal<ProposalData> {
         id: ms.counter,
         proposal_data: proposal_data,
         votes: Vector::singleton(Signer::address_of(sig)),
         approved: false,
-        expiration_epoch: DiemConfig::get_current_epoch() + ms.cfg_expire_epochs,
+        expiration_epoch: DiemConfig::get_current_epoch() + *dur,
       });
       ms.counter = ms.counter + 1;
       false
@@ -269,10 +305,12 @@ module MultiSig {
     (approved, Option::none())
   }
 
-
   // votes on a proposal, returns true if it passed
   fun vote<ProposalData: key + store + drop>(prop: &mut Proposal<ProposalData>, sender_addr: address, n: u64): bool {
     print(&30001);
+    // should not get here if it is expired. Should have checked before.
+    assert!(!check_expired(prop), Errors::invalid_state(EPROPOSAL_EXPIRED));
+
     if (!Vector::contains(&prop.votes, &sender_addr)) {
       Vector::push_back(&mut prop.votes, sender_addr);
       print(&30002);
@@ -280,6 +318,7 @@ module MultiSig {
     };
     tally(prop, n)
   }
+
 
   fun tally<ProposalData: key + store + drop>(prop: &mut Proposal<ProposalData>, n: u64): bool {
     print(&40001);
@@ -296,8 +335,37 @@ module MultiSig {
     false
   }
 
+  fun lazy_cleanup_expired<ProposalData: store + key>(a: &mut Action<ProposalData>) {
+    let epoch = DiemConfig::get_current_epoch();
 
-  fun find_index_of_proposal<ProposalData: store + key>(a: &mut Action<ProposalData>, proposal_data: &ProposalData): (bool, u64) {
+    let len = Vector::length(&a.pending);
+    let i = 0;
+    while (i < len) {
+      let ex = *&Vector::borrow(&a.pending, i).expiration_epoch;
+      if (epoch > ex) { 
+        let rej = Vector::remove(&mut a.pending, i);
+        Vector::push_back(&mut a.rejected, rej);
+
+      };
+      i = i + 1;
+    };
+  }
+
+  public fun get_expired<ProposalData: store + key>(multisig_address: address, proposal: &ProposalData): bool acquires Action {
+    assert!(exists<Action<ProposalData>>(multisig_address), Errors::invalid_state(EACTION_NOT_FOUND));
+    let a = borrow_global_mut<Action<ProposalData>>(multisig_address);
+    let p = get_proposal(a, proposal);
+    check_expired<ProposalData>(p)
+  }
+
+
+  fun check_expired<ProposalData: key + store>(prop: &Proposal<ProposalData>): bool {
+    let epoch_now = DiemConfig::get_current_epoch();
+    epoch_now > prop.expiration_epoch
+  }
+
+
+  fun find_index_of_pending<ProposalData: store + key>(a: &mut Action<ProposalData>, proposal_data: &ProposalData): (bool, u64) {
 
     // find and update existing proposal, or create a new one and add to "pending"
     let len = Vector::length(&a.pending);
@@ -319,12 +387,47 @@ module MultiSig {
     (false, 0)
   }
 
+  // returns if an id was found, and if so, what the index was in pending, approved, rejected
+  public fun find_by_id<ProposalData: store + key>(multisig_address: address, id: u64): (Option<u64>, Option<u64>, Option<u64>) acquires Action {
+    assert!(exists<Action<ProposalData>>(multisig_address), Errors::invalid_state(EACTION_NOT_FOUND));
+    let a = borrow_global_mut<Action<ProposalData>>(multisig_address);
+
+    let len = Vector::length(&a.pending);
+    let i = 0;
+    while (i < len) {
+      let p = Vector::borrow(&a.pending, i);
+      if (p.id == id) { return (Option::some(i), Option::none(), Option::none()) };
+      i = i + 1;
+    };
+
+    let len = Vector::length(&a.approved);
+    let i = 0;
+    while (i < len) {
+      let p = Vector::borrow(&a.pending, i);
+      if (p.id == id) { return (Option::none(), Option::some(i), Option::none()) };
+      i = i + 1;
+    };
+
+    let len = Vector::length(&a.rejected);
+    let i = 0;
+    while (i < len) {
+      let p = Vector::borrow(&a.pending, i);
+      if (p.id == id) { return (Option::none(), Option::none(), Option::some(i)) };
+      i = i + 1;
+    };
+
+    // is_found, and index of pending, approved, rejected
+    (Option::none(), Option::none(), Option::none())
+  }
+
   // TODO: Expand params
   fun get_proposal<ProposalData: store + key>(a: &mut Action<ProposalData>, handler: &ProposalData): &mut Proposal<ProposalData> {
-    let (found, idx) = find_index_of_proposal<ProposalData>(a, handler);
+    let (found, idx) = find_index_of_pending<ProposalData>(a, handler);
     assert!(found, Errors::invalid_argument(EPENDING_EMPTY));
     Vector::borrow_mut(&mut a.pending, idx)
   }
+
+
 
   public fun is_authority(multisig_addr: address, addr: address): bool acquires MultiSig {
     let m = borrow_global<MultiSig>(multisig_addr);
@@ -344,7 +447,7 @@ module MultiSig {
   }
 
 
-  public fun propose_governance(sig: &signer, multisig_address: address, addresses: vector<address>, add_remove: bool, n_of_m: Option<u64>)acquires MultiSig, Action {
+  public fun propose_governance(sig: &signer, multisig_address: address, addresses: vector<address>, add_remove: bool, n_of_m: Option<u64>, duration_epochs: Option<u64> )acquires MultiSig, Action {
     assert_authorized(sig, multisig_address); // Duplicated with propose(), belt and suspenders
     let prop = PropGovSigners {
       addresses,
@@ -352,7 +455,7 @@ module MultiSig {
       n_of_m,
     };
 
-    let (passed, withdraw_opt) = propose<PropGovSigners>(sig, multisig_address, copy prop);
+    let (passed, withdraw_opt) = propose<PropGovSigners>(sig, multisig_address, copy prop, duration_epochs);
 
 
     if (passed) {
@@ -406,6 +509,7 @@ fun maybe_update_authorities(ms: &mut MultiSig, add_remove: bool, addresses: vec
     let m = borrow_global<MultiSig>(multisig_address);
     *&m.cfg_default_n_sigs
   }
+
 
 
 }

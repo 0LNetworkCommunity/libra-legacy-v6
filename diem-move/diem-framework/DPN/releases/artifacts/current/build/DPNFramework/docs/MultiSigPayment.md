@@ -193,7 +193,7 @@ create a payment object, whcih can be send in a proposal.
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_propose_payment">propose_payment</a>(sig: &signer, multisig_addr: <b>address</b>, recipient: <b>address</b>, amount: u64, note: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_propose_payment">propose_payment</a>(sig: &signer, multisig_addr: <b>address</b>, recipient: <b>address</b>, amount: u64, note: vector&lt;u8&gt;, duration_epochs: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;u64&gt;)
 </code></pre>
 
 
@@ -202,10 +202,10 @@ create a payment object, whcih can be send in a proposal.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_propose_payment">propose_payment</a>(sig: &signer, multisig_addr: <b>address</b>, recipient: <b>address</b>, amount: u64, note: vector&lt;u8&gt;) {
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_propose_payment">propose_payment</a>(sig: &signer, multisig_addr: <b>address</b>, recipient: <b>address</b>, amount: u64, note: vector&lt;u8&gt;, duration_epochs: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt;) {
   <b>let</b> p = <a href="MultiSigPayment.md#0x1_MultiSigPayment_new_payment">new_payment</a>(recipient, amount, *&note);
 
-  <b>let</b> (approved, cap) = <a href="MultiSig.md#0x1_MultiSig_propose">MultiSig::propose</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sig, multisig_addr, <b>copy</b> p);
+  <b>let</b> (approved, cap) = <a href="MultiSig.md#0x1_MultiSig_propose">MultiSig::propose</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sig, multisig_addr, <b>copy</b> p, duration_epochs);
 
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&cap)) {
     <b>let</b> c = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>(&<b>mut</b> cap);
@@ -340,9 +340,6 @@ create a payment object, whcih can be send in a proposal.
     print(&pct);
     <b>let</b> fee = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*multi_sig_addr), pct);
     print(&fee);
-    // TODO: This is a placeholder, fee should go <b>to</b> Transaction Fee account.
-    // but that code is on a different branch
-
     <b>let</b> c = <a href="DiemAccount.md#0x1_DiemAccount_vm_withdraw">DiemAccount::vm_withdraw</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, *multi_sig_addr, fee);
     <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">TransactionFee::pay_fee</a>(c);
     i = i + 1;
