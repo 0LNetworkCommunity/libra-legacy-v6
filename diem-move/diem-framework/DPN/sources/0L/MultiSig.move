@@ -155,6 +155,13 @@ module MultiSig {
     exists<Action<PropGovSigners>>(multisig_address)
   }
 
+  public fun has_action<ProposalData: key + store>(addr: address):bool {
+    exists<Action<ProposalData>>(addr)
+  }
+
+
+
+
 
   /// An initial "sponsor" who is the signer of the initialization account calls this function.
   // This function creates the data structures, but also IMPORTANTLY it rotates the AuthKey of the account to a system-wide unusuable key (b"brick_all_your_base_are_belong_to_us").
@@ -505,9 +512,9 @@ fun maybe_update_authorities(ms: &mut MultiSig, add_remove: bool, addresses: vec
     *&m.signers
   }
 
-  public fun get_n_sigs(multisig_address: address): u64 acquires MultiSig {
+  public fun get_n_of_m_cfg(multisig_address: address): (u64, u64) acquires MultiSig {
     let m = borrow_global<MultiSig>(multisig_address);
-    *&m.cfg_default_n_sigs
+    (*&m.cfg_default_n_sigs, Vector::length(&m.signers))
   }
 
 

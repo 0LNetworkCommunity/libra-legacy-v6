@@ -26,88 +26,146 @@ address DiemFramework {
 
 /// 3. The multisig account has a minimum of 5 Authorities, and a threshold of 3 signatures. If there are more authorities, a 3/5 ratio or more should be preserved.
 
+/// 4. CommunityWallets have a high threshold for sybils: all multisig authorities must be unrelated in their permission trees, per Ancestry.
+
 module CommunityWallet{
 
     use Std::Errors;
+    use Std::Signer;
+    use Std::FixedPoint32;
+    use Std::Vector;
+    use Std::Option;
     use DiemFramework::DonorDirected;
+    use DiemFramework::MultiSigPayment;
+    use DiemFramework::MultiSig;
+    use DiemFramework::Ancestry;
+    use DiemFramework::DiemAccount;
 
     const ENOT_AUTHORIZED: u64 = 023;
 
-  //   struct CommunityWalletList has key {
-  //     list: vector<address>
-  //   }
+    const ENOT_QUALIFY_COMMUNITY_WALLET: u64 = 12000;
 
-  // public fun root_init(vm: &signer) {
-  //   if (!exists<CommunityWalletList>(@0x0)) {
-  //     move_to<CommunityWalletList>(vm, CommunityWalletList {
-  //       list: Vector::empty<address>()
-  //     });
-  //   };
-  // }
+    /// This account needs to be donor directed.
+    const ENOT_DONOR_DIRECTED: u64 = 120001;
 
-  public fun is_community_wallet() {
+    /// This account needs a multisig enabled
+    const ENOT_MULTISIG: u64 = 120002;
+    /// The multisig does not have minimum 5 signers and 3 approvals in config
+    const ESIG_THRESHOLD: u64 = 120003;
+    /// The multisig threshold does not equal 3/5
+    const ESIG_THRESHOLD_RATIO: u64 = 120004;
 
-    // has DonorDirected instantiated
+    /// Signers may be sybil
+    const ESIGNERS_SYBIL: u64 = 120005;
 
-    // has MultiSigPayment instantiated
+    /// Recipient does not have a slow wallet
+    const EPAYEE_NOT_SLOW_WALLET: u64 = 120006;
 
-    // multisig has 3/5 threshold, and minimum 3 and 5.
+    // A flag on the account that it wants to be considered a community walley
+    struct CommunityWallet has key { }
 
-    // the multisig authorities are unrelated per Ancestry
+    public fun is_init(addr: address):bool {
+      exists<CommunityWallet>(addr)
+    }
+    public fun set_comm_wallet(sender: &signer) {
+      let addr = Signer::address_of(sender);
+      assert!(DonorDirected::is_donor_directed(addr), Errors::invalid_state(ENOT_DONOR_DIRECTED));
 
-  }
-
-  public fun is_frozen() {
-
-  }
-
-  public fun is_pending_liquidation() {
-
-  }
-
-
-
-
-    // getter to check if is a CommunityWallet
-    public fun is_comm(_addr: address): bool {
-      true
+      assert!(MultiSigPayment::is_payment_multisig(addr), Errors::invalid_state(ENOT_DONOR_DIRECTED));
+      
+      if (is_init(addr)) {
+        move_to(sender, CommunityWallet{});
+      }
     }
 
+    /// Dynamic check to see if CommunityWallet is qualifying.
+    /// if it is not qualifying it wont be part of the burn funds matching.
+    public fun is_comm(addr: address): bool {
+      // The CommunityWallet flag is set
+      is_init(addr) &&
+      // has DonorDirected instantiated
+      DonorDirected::is_donor_directed(addr) &&
+      // has MultiSigPayment instantiated
+      MultiSigPayment::is_payment_multisig(addr) &&
+      // multisig has minimum requirement of 3 signatures, and minimum list of 5 signers, and a minimum of 3/5 threshold. I.e. OK to have 4/5 signatures.
+      multisig_thresh(addr) &&
+      // the multisig authorities are unrelated per Ancestry
+      !multisig_common_ancestry(addr)
+    }
+
+    fun multisig_thresh(addr: address): bool{
+      let (n, m) = MultiSig::get_n_of_m_cfg(addr);
+
+      // can't have less than three signatures
+      if (n < 3) return false;
+      // can't have less than five authorities
+      if (m < 5) return false;
+
+      let r = FixedPoint32::create_from_rational(3, 5);
+      let pct_baseline = FixedPoint32::multiply_u64(100, r);
+      let r = FixedPoint32::create_from_rational(n, m);
+      let pct = FixedPoint32::multiply_u64(100, r);
+
+      pct > pct_baseline
+    }
+
+    fun multisig_common_ancestry(addr: address): bool {
+      let list = MultiSig::get_authorities(addr);
+
+      let (fam, _, _) = Ancestry::any_family_in_list(list);
+
+      fam
+    }
 
     public fun new_timed_transfer(
       sender: &signer, multisig_wallet: address, payee: address, value: u64, description: vector<u8>
     ): u64  {
-      // firstly check if payee is a slow wallet
-      // TODO: This function should check if the account is a slow wallet before sending
-      // but there's a circular dependency with DiemAccount which has the slow wallet struct.
-      // curretly we move that check to the transaction script to initialize the payment.
-      // assert!(DiemAccount::is_slow(payee), EIS_NOT_SLOW_WALLET);
 
-      // let sender_addr = Signer::address_of(sender);
-      // let list = get_comm_list();
+      // firstly check if payee is a slow wallet
+      assert!(DiemAccount::is_slow(payee), Errors::invalid_argument(EPAYEE_NOT_SLOW_WALLET));
+
       assert!(
         is_comm(multisig_wallet),
-        Errors::requires_role(ENOT_AUTHORIZED)
+        Errors::requires_role(ENOT_QUALIFY_COMMUNITY_WALLET)
       );
 
       DonorDirected::new_timed_transfer(sender, payee, value, description)
     }
 
-    //////// TESTS ////////
+    //////// MULTISIG TX HELPERS ////////
 
-        // Utility for vm to remove the CommunityWallet tag from an address
-    // public fun vm_remove_comm(vm: &signer, addr: address) acquires CommunityWalletList {
-    //   CoreAddresses::assert_diem_root(vm);
-    //   if (!exists<CommunityWalletList>(@0x0)) return;
-     
-    //   let list = get_comm_list();
-    //   let (yes, i) = Vector::index_of<address>(&list, &addr);
-    //   if (yes) {
-    //     let s = borrow_global_mut<CommunityWalletList>(@0x0);
-    //     Vector::remove(&mut s.list, i);
-    //   }
-    // }
-  
+    /// Helper to initialize the PaymentMultisig, but also while confirming that the signers are not related family
+
+    // TODO: this version of Diem, does not allow vector<address> in the script arguments. So we are hard coding this to initialize with three signers. Gross.
+
+    public(script) fun init_community_multisig(sig: signer, signer_one: address, signer_two: address, signer_three: address, cfg_n_signers: u64) {
+      let init_signers = Vector::singleton(signer_one);
+      Vector::push_back(&mut init_signers, signer_two);
+      Vector::push_back(&mut init_signers, signer_three);
+
+      let (fam, _, _) = Ancestry::any_family_in_list(*&init_signers);
+
+      assert!(!fam, Errors::invalid_argument(ESIGNERS_SYBIL));
+
+      MultiSigPayment::init_payment_multisig(&sig, init_signers, cfg_n_signers);
+    }
+
+    /// add signer to multisig, and check if they may be related in Ancestry tree
+    public(script) fun add_signer_community_multisig(sig: signer, multisig_address: address, new_signer: address, n_of_m: u64, vote_duration_epochs: u64) {
+      let current_signers = MultiSig::get_authorities(multisig_address);
+      let (fam, _, _) = Ancestry::is_family_one_in_list(new_signer, &current_signers);
+
+      assert!(!fam, Errors::invalid_argument(ESIGNERS_SYBIL));
+
+      MultiSig::propose_governance(
+        &sig,
+        multisig_address,
+        Vector::singleton(new_signer),
+        true, Option::some(n_of_m),
+        Option::some(vote_duration_epochs)
+      );
+
+    }
   
 }
 }

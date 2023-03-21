@@ -23,6 +23,7 @@
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
+<b>use</b> <a href="DonorDirected.md#0x1_DonorDirected">0x1::DonorDirected</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
@@ -375,7 +376,7 @@
     <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &outgoing_compliant);
     print(&800900102);
     // process community wallets
-    <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">DiemAccount::process_community_wallets</a>(vm, <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
+    <a href="DonorDirected.md#0x1_DonorDirected_process_community_wallets">DonorDirected::process_community_wallets</a>(vm, <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
     print(&800900103);
     // reset counters
     <a href="AutoPay.md#0x1_AutoPay_reconfig_reset_tick">AutoPay::reconfig_reset_tick</a>(vm);
@@ -415,7 +416,7 @@
 ) {
     print(&800800100);
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-    <a href="DiemAccount.md#0x1_DiemAccount_migrate_cumu_deposits">DiemAccount::migrate_cumu_deposits</a>(vm); // may need <b>to</b> populate data on a migration.
+    // DiemAccount::migrate_cumu_deposits(vm); // may need <b>to</b> populate data on a migration.
     print(&800800101);
     <a href="Burn.md#0x1_Burn_reset_ratios">Burn::reset_ratios</a>(vm);
     print(&800800102);

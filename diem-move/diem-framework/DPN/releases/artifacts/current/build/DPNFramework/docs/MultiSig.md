@@ -13,6 +13,7 @@
 -  [Function `assert_authorized`](#0x1_MultiSig_assert_authorized)
 -  [Function `init_gov`](#0x1_MultiSig_init_gov)
 -  [Function `is_init`](#0x1_MultiSig_is_init)
+-  [Function `has_action`](#0x1_MultiSig_has_action)
 -  [Function `init_type`](#0x1_MultiSig_init_type)
 -  [Function `maybe_extract_withdraw_cap`](#0x1_MultiSig_maybe_extract_withdraw_cap)
 -  [Function `maybe_restore_withdraw_cap`](#0x1_MultiSig_maybe_restore_withdraw_cap)
@@ -32,7 +33,7 @@
 -  [Function `maybe_update_authorities`](#0x1_MultiSig_maybe_update_authorities)
 -  [Function `maybe_update_threshold`](#0x1_MultiSig_maybe_update_threshold)
 -  [Function `get_authorities`](#0x1_MultiSig_get_authorities)
--  [Function `get_n_sigs`](#0x1_MultiSig_get_n_sigs)
+-  [Function `get_n_of_m_cfg`](#0x1_MultiSig_get_n_of_m_cfg)
 
 
 <pre><code><b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
@@ -250,16 +251,6 @@ Tis is a ProposalData type for governance. This Proposal adds or removes a list 
 ## Constants
 
 
-<a name="0x1_MultiSig_ENOT_AUTHORIZED"></a>
-
-Signer not authorized to approve a transaction.
-
-
-<pre><code><b>const</b> <a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>: u64 = 440002;
-</code></pre>
-
-
-
 <a name="0x1_MultiSig_DEFAULT_EPOCHS_EXPIRE"></a>
 
 default setting for a proposal to expire
@@ -295,6 +286,16 @@ Action not found
 
 
 <pre><code><b>const</b> <a href="MultiSig.md#0x1_MultiSig_EGOV_NOT_INITIALIZED">EGOV_NOT_INITIALIZED</a>: u64 = 440000;
+</code></pre>
+
+
+
+<a name="0x1_MultiSig_ENOT_AUTHORIZED"></a>
+
+Signer not authorized to approve a transaction.
+
+
+<pre><code><b>const</b> <a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>: u64 = 440002;
 </code></pre>
 
 
@@ -446,6 +447,30 @@ The owner of this account can't be an authority, since it will subsequently be b
 <pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_is_init">is_init</a>(multisig_address: <b>address</b>): bool {
   <b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address) &&
   <b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt;&gt;(multisig_address)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MultiSig_has_action"></a>
+
+## Function `has_action`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_has_action">has_action</a>&lt;ProposalData: store, key&gt;(addr: <b>address</b>): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_has_action">has_action</a>&lt;ProposalData: key + store&gt;(addr: <b>address</b>):bool {
+  <b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;ProposalData&gt;&gt;(addr)
 }
 </code></pre>
 
@@ -1146,13 +1171,13 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
 
 </details>
 
-<a name="0x1_MultiSig_get_n_sigs"></a>
+<a name="0x1_MultiSig_get_n_of_m_cfg"></a>
 
-## Function `get_n_sigs`
+## Function `get_n_of_m_cfg`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_get_n_sigs">get_n_sigs</a>(multisig_address: <b>address</b>): u64
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_get_n_of_m_cfg">get_n_of_m_cfg</a>(multisig_address: <b>address</b>): (u64, u64)
 </code></pre>
 
 
@@ -1161,9 +1186,9 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_get_n_sigs">get_n_sigs</a>(multisig_address: <b>address</b>): u64 <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_get_n_of_m_cfg">get_n_of_m_cfg</a>(multisig_address: <b>address</b>): (u64, u64) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
   <b>let</b> m = <b>borrow_global</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address);
-  *&m.cfg_default_n_sigs
+  (*&m.cfg_default_n_sigs, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&m.signers))
 }
 </code></pre>
 

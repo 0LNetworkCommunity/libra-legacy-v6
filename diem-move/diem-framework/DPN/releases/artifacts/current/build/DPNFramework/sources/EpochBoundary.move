@@ -33,6 +33,7 @@ module EpochBoundary {
     use DiemFramework::Jail;
     use DiemFramework::Vouch;
     use DiemFramework::MultiSigPayment;
+    use DiemFramework::DonorDirected;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -274,7 +275,7 @@ module EpochBoundary {
         TowerState::reconfig(vm, &outgoing_compliant);
         print(&800900102);
         // process community wallets
-        DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
+        DonorDirected::process_community_wallets(vm, DiemConfig::get_current_epoch());
         print(&800900103);
         // reset counters
         AutoPay::reconfig_reset_tick(vm);
@@ -296,7 +297,7 @@ module EpochBoundary {
     ) {
         print(&800800100);
         CoreAddresses::assert_vm(vm);
-        DiemAccount::migrate_cumu_deposits(vm); // may need to populate data on a migration.
+        // DiemAccount::migrate_cumu_deposits(vm); // may need to populate data on a migration.
         print(&800800101);
         Burn::reset_ratios(vm);
         print(&800800102);

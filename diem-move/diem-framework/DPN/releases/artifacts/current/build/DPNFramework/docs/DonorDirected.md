@@ -16,13 +16,15 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 
 
 -  [Resource `Registry`](#0x1_DonorDirected_Registry)
--  [Resource `Transfers`](#0x1_DonorDirected_Transfers)
+-  [Resource `DonorDirected`](#0x1_DonorDirected_DonorDirected)
 -  [Resource `TimedTransfer`](#0x1_DonorDirected_TimedTransfer)
 -  [Struct `Veto`](#0x1_DonorDirected_Veto)
 -  [Resource `Freeze`](#0x1_DonorDirected_Freeze)
 -  [Constants](#@Constants_0)
 -  [Function `init`](#0x1_DonorDirected_init)
+-  [Function `make_multisig`](#0x1_DonorDirected_make_multisig)
 -  [Function `is_init`](#0x1_DonorDirected_is_init)
+-  [Function `is_donor_directed`](#0x1_DonorDirected_is_donor_directed)
 -  [Function `set_comm`](#0x1_DonorDirected_set_comm)
 -  [Function `get_comm_list`](#0x1_DonorDirected_get_comm_list)
 -  [Function `new_timed_transfer`](#0x1_DonorDirected_new_timed_transfer)
@@ -41,12 +43,17 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 -  [Function `transfer_is_proposed`](#0x1_DonorDirected_transfer_is_proposed)
 -  [Function `transfer_is_rejected`](#0x1_DonorDirected_transfer_is_rejected)
 -  [Function `is_frozen`](#0x1_DonorDirected_is_frozen)
+-  [Function `process_community_wallets`](#0x1_DonorDirected_process_community_wallets)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
+<b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
+<b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
+<b>use</b> <a href="MultiSig.md#0x1_MultiSig">0x1::MultiSig</a>;
 <b>use</b> <a href="NodeWeight.md#0x1_NodeWeight">0x1::NodeWeight</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -82,13 +89,13 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 
 </details>
 
-<a name="0x1_DonorDirected_Transfers"></a>
+<a name="0x1_DonorDirected_DonorDirected"></a>
 
-## Resource `Transfers`
+## Resource `DonorDirected`
 
 
 
-<pre><code><b>struct</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> <b>has</b> key
+<pre><code><b>struct</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> <b>has</b> key
 </code></pre>
 
 
@@ -336,10 +343,11 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_init">init</a>(vm: &signer) {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
 
-  <b>if</b> (!<b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0)) {
-    <b>move_to</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(
+  // TODO: this <b>struct</b> goes <b>to</b> the individual accounts.
+  <b>if</b> (!<b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(@0x0)) {
+    <b>move_to</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(
       vm,
-      <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
+      <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> {
         proposed: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(),
         approved: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(),
         rejected: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(),
@@ -353,6 +361,32 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
       list: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;()
     });
   };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DonorDirected_make_multisig"></a>
+
+## Function `make_multisig`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_make_multisig">make_multisig</a>(sponsor: &signer, cfg_default_n_sigs: u64, new_authorities: vector&lt;<b>address</b>&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_make_multisig">make_multisig</a>(sponsor: &signer, cfg_default_n_sigs: u64, new_authorities: vector&lt;<b>address</b>&gt;) {
+  <a href="MultiSig.md#0x1_MultiSig_init_gov">MultiSig::init_gov</a>(sponsor, cfg_default_n_sigs, &new_authorities);
+  <a href="MultiSig.md#0x1_MultiSig_init_type">MultiSig::init_type</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(sponsor, <b>false</b>); // cannot withdraw through multisig process
+  <a href="MultiSig.md#0x1_MultiSig_finalize_and_brick">MultiSig::finalize_and_brick</a>(sponsor);
 }
 </code></pre>
 
@@ -376,7 +410,31 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_init">is_init</a>():bool {
-  <b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0)
+  <b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(@0x0)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DonorDirected_is_donor_directed"></a>
+
+## Function `is_donor_directed`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_donor_directed">is_donor_directed</a>(addr: <b>address</b>): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_donor_directed">is_donor_directed</a>(addr: <b>address</b>):bool {
+  <b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(addr)
 }
 </code></pre>
 
@@ -470,7 +528,7 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_new_timed_transfer">new_timed_transfer</a>(
   sender: &signer, payee: <b>address</b>, value: u64, description: vector&lt;u8&gt;
-): u64 <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
+): u64 <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> {
   // firstly check <b>if</b> payee is a slow wallet
   // TODO: This function should check <b>if</b> the account is a slow wallet before sending
   // but there's a circular dependency <b>with</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> which <b>has</b> the slow wallet <b>struct</b>.
@@ -484,7 +542,7 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
   //   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(<a href="DonorDirected.md#0x1_DonorDirected_ERR_PREFIX">ERR_PREFIX</a> + 001)
   // );
 
-  <b>let</b> transfers = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0);
+  <b>let</b> transfers = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(@0x0);
   transfers.max_uid = transfers.max_uid + 1;
 
   // add current epoch + 1
@@ -531,7 +589,7 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_veto">veto</a>(
   sender: &signer,
   uid: u64
-) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>, <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
+) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>, <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
   <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   <b>assert</b>!(
     <a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(addr),
@@ -539,7 +597,7 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
   );
   <b>let</b> (opt, i) = <a href="DonorDirected.md#0x1_DonorDirected_find">find</a>(uid, <a href="DonorDirected.md#0x1_DonorDirected_PROPOSED">PROPOSED</a>);
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&opt)) {
-    <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0);
+    <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(@0x0);
     <b>let</b> t = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> c.proposed, i);
     // add voters <b>address</b> <b>to</b> the veto list
     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> t.veto.list, addr);
@@ -573,8 +631,8 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_reject">reject</a>(uid: u64) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>, <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
-  <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0);
+<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_reject">reject</a>(uid: u64) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>, <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
+  <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(@0x0);
   <b>let</b> list = *&c.proposed;
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&list);
   <b>let</b> i = 0;
@@ -612,10 +670,10 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_mark_processed">mark_processed</a>(vm: &signer, t: <a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_mark_processed">mark_processed</a>(vm: &signer, t: <a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
-  <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0);
+  <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(@0x0);
   <b>let</b> list = *&c.proposed;
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&list);
   <b>let</b> i = 0;
@@ -676,8 +734,8 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_tally_veto">tally_veto</a>(index: u64): bool <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
-  <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0);
+<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_tally_veto">tally_veto</a>(index: u64): bool <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> {
+  <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(@0x0);
   <b>let</b> t = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> c.proposed, index);
 
   <b>let</b> votes = 0;
@@ -757,8 +815,8 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_list_tx_by_epoch">list_tx_by_epoch</a>(epoch: u64): vector&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt; <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
-    <b>let</b> c = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0);
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_list_tx_by_epoch">list_tx_by_epoch</a>(epoch: u64): vector&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt; <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> {
+    <b>let</b> c = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(@0x0);
 
     // <b>loop</b> proposed list
     <b>let</b> pending = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;();
@@ -795,8 +853,8 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_list_transfers">list_transfers</a>(type_of: u8): vector&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt; <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
-  <b>let</b> c = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0);
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_list_transfers">list_transfers</a>(type_of: u8): vector&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt; <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> {
+  <b>let</b> c = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(@0x0);
   <b>if</b> (type_of == 0) {
     *&c.proposed
   } <b>else</b> <b>if</b> (type_of == 1) {
@@ -829,7 +887,7 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_find">find</a>(
   uid: u64,
   type_of: u8
-): (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;, u64) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
+): (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;, u64) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> {
   <b>let</b> list = &<a href="DonorDirected.md#0x1_DonorDirected_list_transfers">list_transfers</a>(type_of);
 
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(list);
@@ -915,7 +973,7 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_tx_epoch">get_tx_epoch</a>(uid: u64): u64 <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_tx_epoch">get_tx_epoch</a>(uid: u64): u64 <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> {
   <b>let</b> (opt, _) = <a href="DonorDirected.md#0x1_DonorDirected_find">find</a>(uid, <a href="DonorDirected.md#0x1_DonorDirected_PROPOSED">PROPOSED</a>);
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&opt)) {
     <b>let</b> t = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&opt);
@@ -944,7 +1002,7 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_transfer_is_proposed">transfer_is_proposed</a>(uid: u64): bool <b>acquires</b>  <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_transfer_is_proposed">transfer_is_proposed</a>(uid: u64): bool <b>acquires</b>  <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> {
   <b>let</b> (opt, _) = <a href="DonorDirected.md#0x1_DonorDirected_find">find</a>(uid, <a href="DonorDirected.md#0x1_DonorDirected_PROPOSED">PROPOSED</a>);
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&opt)
 }
@@ -969,7 +1027,7 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_transfer_is_rejected">transfer_is_rejected</a>(uid: u64): bool <b>acquires</b>  <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_transfer_is_rejected">transfer_is_rejected</a>(uid: u64): bool <b>acquires</b>  <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> {
   <b>let</b> (opt, _) = <a href="DonorDirected.md#0x1_DonorDirected_find">find</a>(uid, <a href="DonorDirected.md#0x1_DonorDirected_REJECTED">REJECTED</a>);
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&opt)
 }
@@ -997,6 +1055,65 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_frozen">is_frozen</a>(addr: <b>address</b>): bool <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>{
   <b>let</b> f = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>&gt;(addr);
   f.is_frozen
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DonorDirected_process_community_wallets"></a>
+
+## Function `process_community_wallets`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_process_community_wallets">process_community_wallets</a>(vm: &signer, epoch: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_process_community_wallets">process_community_wallets</a>(
+    vm: &signer, epoch: u64
+) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>, <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>  { //////// 0L ////////
+    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @DiemRoot) <b>return</b>;
+
+    print(&990100);
+    // Migrate on the fly <b>if</b> state doesn't exist on upgrade.
+    <b>if</b> (!<a href="DonorDirected.md#0x1_DonorDirected_is_init">is_init</a>()) {
+        <a href="DonorDirected.md#0x1_DonorDirected_init">init</a>(vm);
+        <b>return</b>
+    };
+    print(&990200);
+    <b>let</b> all = <a href="DonorDirected.md#0x1_DonorDirected_list_transfers">list_transfers</a>(0);
+    print(&all);
+
+    <b>let</b> v = <a href="DonorDirected.md#0x1_DonorDirected_list_tx_by_epoch">list_tx_by_epoch</a>(epoch);
+    <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&v);
+    print(&len);
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; len) {
+        print(&990201);
+        <b>let</b> t: <a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a> = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&v, i);
+        // TODO: Is this the best way <b>to</b> access a <b>struct</b> property from
+        // outside a <b>module</b>?
+        <b>let</b> (payer, payee, value, description) = <a href="DonorDirected.md#0x1_DonorDirected_get_tx_args">get_tx_args</a>(*&t);
+        <b>if</b> (<a href="DonorDirected.md#0x1_DonorDirected_is_frozen">is_frozen</a>(payer)) {
+          i = i + 1;
+          <b>continue</b>
+        };
+        print(&990202);
+        <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(payer, payee, value, description, b"", vm);
+        print(&990203);
+        <a href="DonorDirected.md#0x1_DonorDirected_mark_processed">mark_processed</a>(vm, t);
+        <a href="DonorDirected.md#0x1_DonorDirected_reset_rejection_counter">reset_rejection_counter</a>(vm, payer);
+        print(&990204);
+        i = i + 1;
+    };
 }
 </code></pre>
 

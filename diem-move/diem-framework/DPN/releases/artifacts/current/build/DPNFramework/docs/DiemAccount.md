@@ -49,7 +49,6 @@ before and after every transaction.
 -  [Function `preburn`](#0x1_DiemAccount_preburn)
 -  [Function `extract_withdraw_capability`](#0x1_DiemAccount_extract_withdraw_capability)
 -  [Function `restore_withdraw_capability`](#0x1_DiemAccount_restore_withdraw_capability)
--  [Function `process_community_wallets`](#0x1_DiemAccount_process_community_wallets)
 -  [Function `vm_make_payment_no_limit`](#0x1_DiemAccount_vm_make_payment_no_limit)
 -  [Function `vm_burn_from_balance`](#0x1_DiemAccount_vm_burn_from_balance)
 -  [Function `pay_from`](#0x1_DiemAccount_pay_from)
@@ -105,7 +104,6 @@ before and after every transaction.
 -  [Function `get_cumulative_deposits`](#0x1_DiemAccount_get_cumulative_deposits)
 -  [Function `get_index_cumu_deposits`](#0x1_DiemAccount_get_index_cumu_deposits)
 -  [Function `is_init`](#0x1_DiemAccount_is_init)
--  [Function `migrate_cumu_deposits`](#0x1_DiemAccount_migrate_cumu_deposits)
 -  [Function `vm_init_slow`](#0x1_DiemAccount_vm_init_slow)
 -  [Function `set_slow`](#0x1_DiemAccount_set_slow)
 -  [Function `slow_wallet_epoch_drip`](#0x1_DiemAccount_slow_wallet_epoch_drip)
@@ -137,7 +135,6 @@ before and after every transaction.
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/BCS.md#0x1_BCS">0x1::BCS</a>;
 <b>use</b> <a href="CRSN.md#0x1_CRSN">0x1::CRSN</a>;
 <b>use</b> <a href="ChainId.md#0x1_ChainId">0x1::ChainId</a>;
-<b>use</b> <a href="CommunityWallet.md#0x1_CommunityWallet">0x1::CommunityWallet</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DesignatedDealer.md#0x1_DesignatedDealer">0x1::DesignatedDealer</a>;
@@ -146,7 +143,6 @@ before and after every transaction.
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="DiemTransactionPublishingOption.md#0x1_DiemTransactionPublishingOption">0x1::DiemTransactionPublishingOption</a>;
-<b>use</b> <a href="DonorDirected.md#0x1_DonorDirected">0x1::DonorDirected</a>;
 <b>use</b> <a href="DualAttestation.md#0x1_DualAttestation">0x1::DualAttestation</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
@@ -2821,11 +2817,11 @@ Return a unique capability granting permission to withdraw from the sender's acc
 
     /////// 0L /////////
     // Community wallets have own transfer mechanism.
-    <b>let</b> community_wallets = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">DonorDirected::get_comm_list</a>();
-    <b>assert</b>!(
-        !<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&community_wallets, &sender_addr),
-        <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)
-    );
+    // <b>let</b> community_wallets = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">DonorDirected::get_comm_list</a>();
+    // <b>assert</b>!(
+    //     !<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&community_wallets, &sender_addr),
+    //     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)
+    // );
     <b>assert</b>!(
         !<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(sender_addr),
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED">EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED</a>)
@@ -2926,71 +2922,13 @@ Return the withdraw capability to the account it originally came from
 
 </details>
 
-<a name="0x1_DiemAccount_process_community_wallets"></a>
-
-## Function `process_community_wallets`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">process_community_wallets</a>(vm: &signer, epoch: u64)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">process_community_wallets</a>(
-    vm: &signer, epoch: u64
-) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> { //////// 0L ////////
-    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @DiemRoot) <b>return</b>;
-
-    print(&990100);
-    // Migrate on the fly <b>if</b> state doesn't exist on upgrade.
-    <b>if</b> (!<a href="DonorDirected.md#0x1_DonorDirected_is_init">DonorDirected::is_init</a>()) {
-        <a href="DonorDirected.md#0x1_DonorDirected_init">DonorDirected::init</a>(vm);
-        <b>return</b>
-    };
-    print(&990200);
-    <b>let</b> all = <a href="DonorDirected.md#0x1_DonorDirected_list_transfers">DonorDirected::list_transfers</a>(0);
-    print(&all);
-
-    <b>let</b> v = <a href="DonorDirected.md#0x1_DonorDirected_list_tx_by_epoch">DonorDirected::list_tx_by_epoch</a>(epoch);
-    <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">DonorDirected::TimedTransfer</a>&gt;(&v);
-    print(&len);
-    <b>let</b> i = 0;
-    <b>while</b> (i &lt; len) {
-        print(&990201);
-        <b>let</b> t: <a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">DonorDirected::TimedTransfer</a> = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&v, i);
-        // TODO: Is this the best way <b>to</b> access a <b>struct</b> property from
-        // outside a <b>module</b>?
-        <b>let</b> (payer, payee, value, description) = <a href="DonorDirected.md#0x1_DonorDirected_get_tx_args">DonorDirected::get_tx_args</a>(*&t);
-        <b>if</b> (<a href="DonorDirected.md#0x1_DonorDirected_is_frozen">DonorDirected::is_frozen</a>(payer)) {
-          i = i + 1;
-          <b>continue</b>
-        };
-        print(&990202);
-        <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(payer, payee, value, description, b"", vm);
-        print(&990203);
-        <a href="DonorDirected.md#0x1_DonorDirected_mark_processed">DonorDirected::mark_processed</a>(vm, t);
-        <a href="DonorDirected.md#0x1_DonorDirected_reset_rejection_counter">DonorDirected::reset_rejection_counter</a>(vm, payer);
-        print(&990204);
-        i = i + 1;
-    };
-}
-</code></pre>
-
-
-
-</details>
-
 <a name="0x1_DiemAccount_vm_make_payment_no_limit"></a>
 
 ## Function `vm_make_payment_no_limit`
 
 This function bypasses transaction limits.
 vm_make_payment on the other hand considers payment limits.
+NOTE: Slow wallets who receive funds from here, will be LOCKED, does not unlock automatically.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">vm_make_payment_no_limit</a>&lt;Token: store&gt;(payer: <b>address</b>, payee: <b>address</b>, amount: u64, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;, vm: &signer)
@@ -3165,13 +3103,13 @@ attestation protocol
     /////// 0L /////////
     // in case of slow wallet <b>update</b> the tracker
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&cap.account_address))
-      <a href="DiemAccount.md#0x1_DiemAccount_decrease_unlocked_tracker">decrease_unlocked_tracker</a>(*&cap.account_address, amount);
+      {<a href="DiemAccount.md#0x1_DiemAccount_decrease_unlocked_tracker">decrease_unlocked_tracker</a>(*&cap.account_address, amount);};
 
     // <b>if</b> a payee is a slow wallet and is receiving funds from ordinary
     // or another slow wallet's unlocked funds, it counts toward unlocked coins.
-    // the exceptional case is community wallets, which funds don't count toward unlocks.
-    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee) && !<a href="CommunityWallet.md#0x1_CommunityWallet_is_comm">CommunityWallet::is_comm</a>(*&cap.account_address))
-      <a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(*&payee, amount);
+    // the exceptional case is community wallets, which funds don't count toward unlocks. However, the community wallet payment uses a different function: vm_make_payment_no_limit
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee))
+      {<a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(*&payee, amount);}
 }
 </code></pre>
 
@@ -6696,41 +6634,6 @@ inflation by x% per day from the start of network.
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_is_init">is_init</a>(addr: <b>address</b>): bool {
   <b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(addr)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_DiemAccount_migrate_cumu_deposits"></a>
-
-## Function `migrate_cumu_deposits`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_migrate_cumu_deposits">migrate_cumu_deposits</a>(vm: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_migrate_cumu_deposits">migrate_cumu_deposits</a>(vm: &signer) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> {
-  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-  <b>let</b> list = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">DonorDirected::get_comm_list</a>();
-  <b>let</b> i = 0;
-  <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&list)) {
-    <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&list, i);
-    <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(*addr)) {
-      <b>let</b> sig = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(*addr);
-      <b>let</b> current_bal = <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*addr);
-      <a href="DiemAccount.md#0x1_DiemAccount_init_cumulative_deposits">init_cumulative_deposits</a>(&sig, current_bal);
-    };
-    i = i + 1;
-  }
 }
 </code></pre>
 

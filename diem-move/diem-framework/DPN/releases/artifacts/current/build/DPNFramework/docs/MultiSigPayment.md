@@ -11,6 +11,7 @@
 -  [Function `init_payment_multisig`](#0x1_MultiSigPayment_init_payment_multisig)
 -  [Function `new_payment`](#0x1_MultiSigPayment_new_payment)
 -  [Function `propose_payment`](#0x1_MultiSigPayment_propose_payment)
+-  [Function `is_payment_multisig`](#0x1_MultiSigPayment_is_payment_multisig)
 -  [Function `release_payment`](#0x1_MultiSigPayment_release_payment)
 -  [Function `root_init`](#0x1_MultiSigPayment_root_init)
 -  [Function `add_to_registry`](#0x1_MultiSigPayment_add_to_registry)
@@ -218,6 +219,30 @@ create a payment object, whcih can be send in a proposal.
   };
 
   <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">MultiSig::maybe_restore_withdraw_cap</a>(multisig_addr, cap)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MultiSigPayment_is_payment_multisig"></a>
+
+## Function `is_payment_multisig`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_is_payment_multisig">is_payment_multisig</a>(addr: <b>address</b>): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_is_payment_multisig">is_payment_multisig</a>(addr: <b>address</b>):bool {
+  <a href="MultiSig.md#0x1_MultiSig_has_action">MultiSig::has_action</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(addr)
 }
 </code></pre>
 

@@ -117,6 +117,10 @@ module MultiSigPayment {
     MultiSig::maybe_restore_withdraw_cap(multisig_addr, cap)
   }
 
+  public fun is_payment_multisig(addr: address):bool {
+    MultiSig::has_action<PaymentType>(addr)
+  }
+
 
 
   // Sending payment. Ordinarily an account can only transfer funds if the signer of that account is sending the transaction.
