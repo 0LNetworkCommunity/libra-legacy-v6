@@ -1321,7 +1321,7 @@ module DiemFramework::DiemAccount {
 
         /////// 0L /////////
         // Community wallets have own transfer mechanism.
-        let community_wallets = CommunityWallet::get_comm_list();
+        let community_wallets = DonorDirected::get_comm_list();
         assert!(
             !Vector::contains(&community_wallets, &sender_addr), 
             Errors::limit_exceeded(EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET)
@@ -1386,7 +1386,7 @@ module DiemFramework::DiemAccount {
         
         print(&990100);
         // Migrate on the fly if state doesn't exist on upgrade.
-        if (!DonorDirected::is_init_comm()) {
+        if (!DonorDirected::is_init()) {
             DonorDirected::init(vm);
             return
         };
@@ -3595,7 +3595,7 @@ module DiemFramework::DiemAccount {
 
     public fun migrate_cumu_deposits(vm: &signer) acquires Balance {
       CoreAddresses::assert_vm(vm);
-      let list = CommunityWallet::get_comm_list();
+      let list = DonorDirected::get_comm_list();
       let i = 0;
       while (i < Vector::length<address>(&list)) {
         let addr = Vector::borrow(&list, i);

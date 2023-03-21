@@ -7,7 +7,7 @@
 address DiemFramework {
   /// # Summary
   /// This module enables automatic payments from accounts to community wallets at epoch boundaries.
-  module AutoPay { // renamed to preventhalting from state corruption
+  module AutoPay {
     use Std::Vector;
     use Std::Option::{Self,Option};
     use Std::Signer;
@@ -16,7 +16,6 @@ address DiemFramework {
     use Std::FixedPoint32;
     use DiemFramework::DiemConfig;
     use Std::Errors;
-    // use DiemFramework::DonorDirected;
     use DiemFramework::CommunityWallet;
     use DiemFramework::Roles;
 

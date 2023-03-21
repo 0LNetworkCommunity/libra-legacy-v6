@@ -96,7 +96,7 @@
     // checking in <a href="CommunityWallet.md#0x1_CommunityWallet">CommunityWallet</a> <b>module</b>
     <b>assert</b>!(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(destination), 30002);
 
-    <b>let</b> uid = <a href="CommunityWallet.md#0x1_CommunityWallet_new_timed_transfer">CommunityWallet::new_timed_transfer</a>(&sender, destination, value, memo);
+    <b>let</b> uid = <a href="CommunityWallet.md#0x1_CommunityWallet_new_timed_transfer">CommunityWallet::new_timed_transfer</a>(&sender, sender_addr, destination, value, memo);
     <b>assert</b>!(<a href="DonorDirected.md#0x1_DonorDirected_transfer_is_proposed">DonorDirected::transfer_is_proposed</a>(uid), 30003);
 }
 </code></pre>

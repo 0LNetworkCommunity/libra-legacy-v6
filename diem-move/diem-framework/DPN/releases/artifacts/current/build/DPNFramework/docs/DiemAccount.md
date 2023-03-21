@@ -2821,7 +2821,7 @@ Return a unique capability granting permission to withdraw from the sender's acc
 
     /////// 0L /////////
     // Community wallets have own transfer mechanism.
-    <b>let</b> community_wallets = <a href="CommunityWallet.md#0x1_CommunityWallet_get_comm_list">CommunityWallet::get_comm_list</a>();
+    <b>let</b> community_wallets = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">DonorDirected::get_comm_list</a>();
     <b>assert</b>!(
         !<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&community_wallets, &sender_addr),
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)
@@ -2948,7 +2948,7 @@ Return the withdraw capability to the account it originally came from
 
     print(&990100);
     // Migrate on the fly <b>if</b> state doesn't exist on upgrade.
-    <b>if</b> (!<a href="DonorDirected.md#0x1_DonorDirected_is_init_comm">DonorDirected::is_init_comm</a>()) {
+    <b>if</b> (!<a href="DonorDirected.md#0x1_DonorDirected_is_init">DonorDirected::is_init</a>()) {
         <a href="DonorDirected.md#0x1_DonorDirected_init">DonorDirected::init</a>(vm);
         <b>return</b>
     };
@@ -6720,7 +6720,7 @@ inflation by x% per day from the start of network.
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_migrate_cumu_deposits">migrate_cumu_deposits</a>(vm: &signer) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-  <b>let</b> list = <a href="CommunityWallet.md#0x1_CommunityWallet_get_comm_list">CommunityWallet::get_comm_list</a>();
+  <b>let</b> list = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">DonorDirected::get_comm_list</a>();
   <b>let</b> i = 0;
   <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&list)) {
     <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&list, i);

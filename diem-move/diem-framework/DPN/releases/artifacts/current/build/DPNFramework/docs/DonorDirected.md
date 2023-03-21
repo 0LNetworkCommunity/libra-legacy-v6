@@ -3,17 +3,28 @@
 
 # Module `0x1::DonorDirected`
 
+Donor directed wallets is a service of the chain.
+Any address can voluntarily turn their account into a donor directed account.
+By creating a DonorDirected wallet you are providing certain restrictions and guarantees to the users that interact with this wallet.
+1. The wallet's contents is propoperty of the owner. The owner is free to issue transactions which change the state of the wallet, including transferring funds. There are however time, and veto policies.
+2. All transfers out of the account are timed. Meaning, they will execute automatically after a set period of time passes. The VM address triggers these events at each epoch boundary. The purpose of the delayed transfers is that the transaction can be paused for analysis, and eventually rejected by the donors of the wallet.
+3. Every pending transaction can be "vetoed". This adds one day/epoch to the transaction, extending the delay. If a sufficient number of Donors vote on the Veto, then the transaction will be rejected.
+4. After three consecutive transaction rejections, the account will become frozen. The funds remain in the account but no operations are available until the Donors, un-freeze the account.
+5. Voting for all purposes are done on a pro-rata basis according to the amounts donated. Voting using ParticipationVote method, which in short, biases the threshold based on the turnout of the vote. TL;DR a low turnout of 12.5% would require 100% of the voters to veto, and lower thresholds for higher turnouts until 51%.
+6. The donors can vote to liquidate a frozen DonorDirected account. The result will depend on the configuration of the DonorDirected account from when it was initialized: the funds by default return to the end user who was the donor.
+7. Third party contracts can wrap the Donor Directed wallet. The outcomes of the votes can be returned to a handler in a third party contract For example, liquidiation of a frozen account is programmable: a handler can be coded to determine the outcome of the donor directed wallet. See in CommunityWallets the funds return to the InfrastructureEscrow side-account of the user.
 
 
--  [Resource `CommunityWalletList`](#0x1_DonorDirected_CommunityWalletList)
+-  [Resource `Registry`](#0x1_DonorDirected_Registry)
 -  [Resource `Transfers`](#0x1_DonorDirected_Transfers)
 -  [Resource `TimedTransfer`](#0x1_DonorDirected_TimedTransfer)
 -  [Struct `Veto`](#0x1_DonorDirected_Veto)
 -  [Resource `Freeze`](#0x1_DonorDirected_Freeze)
 -  [Constants](#@Constants_0)
 -  [Function `init`](#0x1_DonorDirected_init)
--  [Function `is_init_comm`](#0x1_DonorDirected_is_init_comm)
+-  [Function `is_init`](#0x1_DonorDirected_is_init)
 -  [Function `set_comm`](#0x1_DonorDirected_set_comm)
+-  [Function `get_comm_list`](#0x1_DonorDirected_get_comm_list)
 -  [Function `new_timed_transfer`](#0x1_DonorDirected_new_timed_transfer)
 -  [Function `veto`](#0x1_DonorDirected_veto)
 -  [Function `reject`](#0x1_DonorDirected_reject)
@@ -44,13 +55,13 @@
 
 
 
-<a name="0x1_DonorDirected_CommunityWalletList"></a>
+<a name="0x1_DonorDirected_Registry"></a>
 
-## Resource `CommunityWalletList`
+## Resource `Registry`
 
 
 
-<pre><code><b>struct</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a> <b>has</b> key
+<pre><code><b>struct</b> <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a> <b>has</b> key
 </code></pre>
 
 
@@ -337,8 +348,8 @@
     )
   };
 
-  <b>if</b> (!<b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) {
-    <b>move_to</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>&gt;(vm, <a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a> {
+  <b>if</b> (!<b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(@0x0)) {
+    <b>move_to</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(vm, <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a> {
       list: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;()
     });
   };
@@ -349,13 +360,13 @@
 
 </details>
 
-<a name="0x1_DonorDirected_is_init_comm"></a>
+<a name="0x1_DonorDirected_is_init"></a>
 
-## Function `is_init_comm`
+## Function `is_init`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_init_comm">is_init_comm</a>(): bool
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_init">is_init</a>(): bool
 </code></pre>
 
 
@@ -364,7 +375,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_init_comm">is_init_comm</a>():bool {
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_init">is_init</a>():bool {
   <b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0)
 }
 </code></pre>
@@ -388,15 +399,15 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_set_comm">set_comm</a>(sig: &signer) {
-  // <b>if</b> (!<b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) <b>return</b>;
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_set_comm">set_comm</a>(sig: &signer) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a> {
+  <b>if</b> (!<b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(@0x0)) <b>return</b>;
 
-  // <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
-  // <b>let</b> list = get_comm_list();
-  // <b>if</b> (!<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&list, &addr)) {
-  //   <b>let</b> s = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
-  //   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> s.list, addr);
-  // };
+  <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
+  <b>let</b> list = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">get_comm_list</a>();
+  <b>if</b> (!<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&list, &addr)) {
+    <b>let</b> s = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(@0x0);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> s.list, addr);
+  };
 
   <b>move_to</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>&gt;(
     sig,
@@ -406,6 +417,35 @@
       unfreeze_votes: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;()
     }
   )
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DonorDirected_get_comm_list"></a>
+
+## Function `get_comm_list`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">get_comm_list</a>(): vector&lt;<b>address</b>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">get_comm_list</a>(): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>{
+  <b>if</b> (<b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(@0x0)) {
+    <b>let</b> s = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(@0x0);
+    <b>return</b> *&s.list
+  } <b>else</b> {
+    <b>return</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;()
+  }
 }
 </code></pre>
 
@@ -438,7 +478,7 @@
   // <b>assert</b>!(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(payee), <a href="DonorDirected.md#0x1_DonorDirected_EIS_NOT_SLOW_WALLET">EIS_NOT_SLOW_WALLET</a>);
 
   <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
-  // <b>let</b> list = get_comm_list();
+  // <b>let</b> list = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">get_comm_list</a>();
   // <b>assert</b>!(
   //   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&list, &sender_addr),
   //   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(<a href="DonorDirected.md#0x1_DonorDirected_ERR_PREFIX">ERR_PREFIX</a> + 001)

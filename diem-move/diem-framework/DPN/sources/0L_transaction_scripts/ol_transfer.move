@@ -7,7 +7,6 @@ module TransferScripts {
     use Std::Signer;
     use DiemFramework::CommunityWallet;
     use DiemFramework::DonorDirected;
-    // use DiemFramework::is_frozen;
 
     public(script) fun balance_transfer(
         sender: signer,
@@ -51,7 +50,7 @@ module TransferScripts {
         // checking in CommunityWallet module
         assert!(DiemAccount::is_slow(destination), 30002);
 
-        let uid = CommunityWallet::new_timed_transfer(&sender, destination, value, memo);
+        let uid = CommunityWallet::new_timed_transfer(&sender, sender_addr, destination, value, memo);
         assert!(DonorDirected::transfer_is_proposed(uid), 30003);
     }
 }
