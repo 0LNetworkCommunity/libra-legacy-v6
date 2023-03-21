@@ -145,6 +145,7 @@ before and after every transaction.
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
 <b>use</b> <a href="DiemTransactionPublishingOption.md#0x1_DiemTransactionPublishingOption">0x1::DiemTransactionPublishingOption</a>;
+<b>use</b> <a href="DonorDirected.md#0x1_DonorDirected">0x1::DonorDirected</a>;
 <b>use</b> <a href="DualAttestation.md#0x1_DualAttestation">0x1::DualAttestation</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Event.md#0x1_Event">0x1::Event</a>;
@@ -169,7 +170,6 @@ before and after every transaction.
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 <b>use</b> <a href="Vouch.md#0x1_Vouch">0x1::Vouch</a>;
-<b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
 </code></pre>
 
 
@@ -2820,7 +2820,7 @@ Return a unique capability granting permission to withdraw from the sender's acc
 
     /////// 0L /////////
     // Community wallets have own transfer mechanism.
-    <b>let</b> community_wallets = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
+    <b>let</b> community_wallets = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">DonorDirected::get_comm_list</a>();
     <b>assert</b>!(
         !<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&community_wallets, &sender_addr),
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)
@@ -2947,33 +2947,33 @@ Return the withdraw capability to the account it originally came from
 
     print(&990100);
     // Migrate on the fly <b>if</b> state doesn't exist on upgrade.
-    <b>if</b> (!<a href="Wallet.md#0x1_Wallet_is_init_comm">Wallet::is_init_comm</a>()) {
-        <a href="Wallet.md#0x1_Wallet_init">Wallet::init</a>(vm);
+    <b>if</b> (!<a href="DonorDirected.md#0x1_DonorDirected_is_init_comm">DonorDirected::is_init_comm</a>()) {
+        <a href="DonorDirected.md#0x1_DonorDirected_init">DonorDirected::init</a>(vm);
         <b>return</b>
     };
     print(&990200);
-    <b>let</b> all = <a href="Wallet.md#0x1_Wallet_list_transfers">Wallet::list_transfers</a>(0);
+    <b>let</b> all = <a href="DonorDirected.md#0x1_DonorDirected_list_transfers">DonorDirected::list_transfers</a>(0);
     print(&all);
 
-    <b>let</b> v = <a href="Wallet.md#0x1_Wallet_list_tx_by_epoch">Wallet::list_tx_by_epoch</a>(epoch);
-    <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">Wallet::TimedTransfer</a>&gt;(&v);
+    <b>let</b> v = <a href="DonorDirected.md#0x1_DonorDirected_list_tx_by_epoch">DonorDirected::list_tx_by_epoch</a>(epoch);
+    <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">DonorDirected::TimedTransfer</a>&gt;(&v);
     print(&len);
     <b>let</b> i = 0;
     <b>while</b> (i &lt; len) {
         print(&990201);
-        <b>let</b> t: <a href="Wallet.md#0x1_Wallet_TimedTransfer">Wallet::TimedTransfer</a> = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&v, i);
+        <b>let</b> t: <a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">DonorDirected::TimedTransfer</a> = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&v, i);
         // TODO: Is this the best way <b>to</b> access a <b>struct</b> property from
         // outside a <b>module</b>?
-        <b>let</b> (payer, payee, value, description) = <a href="Wallet.md#0x1_Wallet_get_tx_args">Wallet::get_tx_args</a>(*&t);
-        <b>if</b> (<a href="Wallet.md#0x1_Wallet_is_frozen">Wallet::is_frozen</a>(payer)) {
+        <b>let</b> (payer, payee, value, description) = <a href="DonorDirected.md#0x1_DonorDirected_get_tx_args">DonorDirected::get_tx_args</a>(*&t);
+        <b>if</b> (<a href="DonorDirected.md#0x1_DonorDirected_is_frozen">DonorDirected::is_frozen</a>(payer)) {
           i = i + 1;
           <b>continue</b>
         };
         print(&990202);
         <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(payer, payee, value, description, b"", vm);
         print(&990203);
-        <a href="Wallet.md#0x1_Wallet_mark_processed">Wallet::mark_processed</a>(vm, t);
-        <a href="Wallet.md#0x1_Wallet_reset_rejection_counter">Wallet::reset_rejection_counter</a>(vm, payer);
+        <a href="DonorDirected.md#0x1_DonorDirected_mark_processed">DonorDirected::mark_processed</a>(vm, t);
+        <a href="DonorDirected.md#0x1_DonorDirected_reset_rejection_counter">DonorDirected::reset_rejection_counter</a>(vm, payer);
         print(&990204);
         i = i + 1;
     };
@@ -3169,7 +3169,7 @@ attestation protocol
     // <b>if</b> a payee is a slow wallet and is receiving funds from ordinary
     // or another slow wallet's unlocked funds, it counts toward unlocked coins.
     // the exceptional case is community wallets, which funds don't count toward unlocks.
-    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee) && !<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(*&cap.account_address))
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee) && !<a href="DonorDirected.md#0x1_DonorDirected_is_comm">DonorDirected::is_comm</a>(*&cap.account_address))
       <a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(*&payee, amount);
 }
 </code></pre>
@@ -6719,7 +6719,7 @@ inflation by x% per day from the start of network.
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_migrate_cumu_deposits">migrate_cumu_deposits</a>(vm: &signer) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-  <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
+  <b>let</b> list = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">DonorDirected::get_comm_list</a>();
   <b>let</b> i = 0;
   <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&list)) {
     <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&list, i);

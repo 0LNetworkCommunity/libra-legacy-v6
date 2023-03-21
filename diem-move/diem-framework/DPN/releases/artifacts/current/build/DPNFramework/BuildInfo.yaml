@@ -68,6 +68,9 @@ compiled_package_info:
       name: ChainId
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: CommunityWallet
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: CoreAddresses
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -117,6 +120,9 @@ compiled_package_info:
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: DiemVersion
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DonorDirected
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: DualAttestation
@@ -314,9 +320,6 @@ compiled_package_info:
       name: VouchScripts
     : DiemFramework
     ? address: "00000000000000000000000000000001"
-      name: Wallet
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
       name: WalletScripts
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -328,7 +331,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 1E45805F2FF1BAE4F9E0F27E3F109F2572A3D7AD120950768A1F447F7938B642
+  source_digest: CE71DCAA4A809C8E883698EEB64368889596E49A59508F1711FAC67780F70A0F
   build_flags:
     dev_mode: false
     test_mode: false

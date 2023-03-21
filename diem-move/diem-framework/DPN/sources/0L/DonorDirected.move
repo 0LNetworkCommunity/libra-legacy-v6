@@ -1,5 +1,5 @@
 address DiemFramework {
-module Wallet {
+module DonorDirected {
     use DiemFramework::CoreAddresses;
     use Std::Vector;
     use Std::Signer;

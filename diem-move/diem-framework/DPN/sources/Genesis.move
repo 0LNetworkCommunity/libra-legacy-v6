@@ -34,7 +34,7 @@ module DiemFramework::Genesis {
     // use DiemFramework::FullnodeSubsidy;
     use DiemFramework::Epoch;
     use DiemFramework::TowerState;
-    use DiemFramework::Wallet;
+    use DiemFramework::DonorDirected;
     use DiemFramework::Migrations;  
     use DiemFramework::MultiSigPayment;
     // use DiemFramework::Testnet; 
@@ -156,7 +156,7 @@ module DiemFramework::Genesis {
         Oracle::initialize(dr_account);
         TowerState::init_miner_list_and_stats(dr_account);
         TowerState::init_difficulty(dr_account);
-        Wallet::init(dr_account);
+        DonorDirected::init(dr_account);
         DiemAccount::vm_init_slow(dr_account);
         Migrations::init(dr_account);
 

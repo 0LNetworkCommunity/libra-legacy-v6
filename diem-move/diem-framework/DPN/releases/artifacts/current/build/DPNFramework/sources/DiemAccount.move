@@ -49,7 +49,7 @@ module DiemFramework::DiemAccount {
     use DiemFramework::Receipts;
     use DiemFramework::DiemSystem;
     use DiemFramework::ValidatorUniverse;
-    use DiemFramework::Wallet;
+    use DiemFramework::DonorDirected;
     use DiemFramework::Ancestry;
     use DiemFramework::Vouch;
     use DiemFramework::Debug::print;
@@ -1320,7 +1320,7 @@ module DiemFramework::DiemAccount {
 
         /////// 0L /////////
         // Community wallets have own transfer mechanism.
-        let community_wallets = Wallet::get_comm_list();
+        let community_wallets = DonorDirected::get_comm_list();
         assert!(
             !Vector::contains(&community_wallets, &sender_addr), 
             Errors::limit_exceeded(EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET)
@@ -1385,33 +1385,33 @@ module DiemFramework::DiemAccount {
         
         print(&990100);
         // Migrate on the fly if state doesn't exist on upgrade.
-        if (!Wallet::is_init_comm()) {
-            Wallet::init(vm);
+        if (!DonorDirected::is_init_comm()) {
+            DonorDirected::init(vm);
             return
         };
         print(&990200);
-        let all = Wallet::list_transfers(0);
+        let all = DonorDirected::list_transfers(0);
         print(&all);
 
-        let v = Wallet::list_tx_by_epoch(epoch);
-        let len = Vector::length<Wallet::TimedTransfer>(&v);
+        let v = DonorDirected::list_tx_by_epoch(epoch);
+        let len = Vector::length<DonorDirected::TimedTransfer>(&v);
         print(&len);
         let i = 0;
         while (i < len) {
             print(&990201);
-            let t: Wallet::TimedTransfer = *Vector::borrow(&v, i);
+            let t: DonorDirected::TimedTransfer = *Vector::borrow(&v, i);
             // TODO: Is this the best way to access a struct property from 
             // outside a module?
-            let (payer, payee, value, description) = Wallet::get_tx_args(*&t);
-            if (Wallet::is_frozen(payer)) {
+            let (payer, payee, value, description) = DonorDirected::get_tx_args(*&t);
+            if (DonorDirected::is_frozen(payer)) {
               i = i + 1;
               continue
             };
             print(&990202);
             vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
             print(&990203);
-            Wallet::mark_processed(vm, t);
-            Wallet::reset_rejection_counter(vm, payer);
+            DonorDirected::mark_processed(vm, t);
+            DonorDirected::reset_rejection_counter(vm, payer);
             print(&990204);
             i = i + 1;
         };
@@ -1552,7 +1552,7 @@ module DiemFramework::DiemAccount {
         // if a payee is a slow wallet and is receiving funds from ordinary
         // or another slow wallet's unlocked funds, it counts toward unlocked coins.
         // the exceptional case is community wallets, which funds don't count toward unlocks.
-        if (is_slow(*&payee) && !Wallet::is_comm(*&cap.account_address))
+        if (is_slow(*&payee) && !DonorDirected::is_comm(*&cap.account_address))
           increase_unlocked_tracker(*&payee, amount);
     }
 
@@ -3594,7 +3594,7 @@ module DiemFramework::DiemAccount {
 
     public fun migrate_cumu_deposits(vm: &signer) acquires Balance {
       CoreAddresses::assert_vm(vm);
-      let list = Wallet::get_comm_list();
+      let list = DonorDirected::get_comm_list();
       let i = 0;
       while (i < Vector::length<address>(&list)) {
         let addr = Vector::borrow(&list, i);

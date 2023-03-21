@@ -242,6 +242,10 @@ module MultiSig {
 
     let ms = borrow_global_mut<MultiSig>(multisig_address);
     let action = borrow_global_mut<Action<ProposalData>>(multisig_address);
+
+    // go through all proposals and clean up expired ones.
+    lazy_cleanup_expired(action);
+
     let n = *&ms.cfg_default_n_sigs;
 
 
@@ -253,6 +257,7 @@ module MultiSig {
 
       let prop = get_proposal(action, &proposal_data);
 
+      // belt and suspenders, the lazy cleaning should have removed expired proposals.
       // stop here if it's expired, but first move the the ms.rejected list.
       if (check_expired(prop)) {
         let rej = Vector::remove(&mut action.pending, idx);
@@ -263,6 +268,8 @@ module MultiSig {
       vote(prop, Signer::address_of(sig), n)
 
     } else {
+      // TODO: the single interface for proposing and voting causes a UI issue. Theres a case that a straggler voter will inadvertently start a new proposal if the vote just closed.
+      // Though it may be that the thirdparty modules need to check for this themselves when voting.
       print(&20003);
 
       let dur = if (Option::is_some(&duration_epochs)) {
@@ -328,9 +335,7 @@ module MultiSig {
     false
   }
 
-  fun lazy_cleanup_expired<ProposalData: store + key>(multisig_address: address) acquires Action {
-    assert!(exists<Action<ProposalData>>(multisig_address), Errors::invalid_state(EACTION_NOT_FOUND));
-    let a = borrow_global_mut<Action<ProposalData>>(multisig_address);
+  fun lazy_cleanup_expired<ProposalData: store + key>(a: &mut Action<ProposalData>) {
     let epoch = DiemConfig::get_current_epoch();
 
     let len = Vector::length(&a.pending);
@@ -341,22 +346,9 @@ module MultiSig {
         let rej = Vector::remove(&mut a.pending, i);
         Vector::push_back(&mut a.rejected, rej);
 
-      }
+      };
+      i = i + 1;
     };
-
-    // let len = Vector::length(&a.approved);
-    // let i = 0;
-    // while (i < len) {
-    //   let p = Vector::borrow(&a.pending, i);
-    //   if (p.id == id) { return (Option::none(), Option::some(i), Option::none()) }
-    // };
-
-    // let len = Vector::length(&a.rejected);
-    // let i = 0;
-    // while (i < len) {
-    //   let p = Vector::borrow(&a.pending, i);
-    //   if (p.id == id) { return (Option::none(), Option::none(), Option::some(i)) }
-    // };
   }
 
   public fun get_expired<ProposalData: store + key>(multisig_address: address, proposal: &ProposalData): bool acquires Action {
@@ -404,21 +396,24 @@ module MultiSig {
     let i = 0;
     while (i < len) {
       let p = Vector::borrow(&a.pending, i);
-      if (p.id == id) { return (Option::some(i), Option::none(), Option::none())}
+      if (p.id == id) { return (Option::some(i), Option::none(), Option::none()) };
+      i = i + 1;
     };
 
     let len = Vector::length(&a.approved);
     let i = 0;
     while (i < len) {
       let p = Vector::borrow(&a.pending, i);
-      if (p.id == id) { return (Option::none(), Option::some(i), Option::none()) }
+      if (p.id == id) { return (Option::none(), Option::some(i), Option::none()) };
+      i = i + 1;
     };
 
     let len = Vector::length(&a.rejected);
     let i = 0;
     while (i < len) {
       let p = Vector::borrow(&a.pending, i);
-      if (p.id == id) { return (Option::none(), Option::none(), Option::some(i)) }
+      if (p.id == id) { return (Option::none(), Option::none(), Option::some(i)) };
+      i = i + 1;
     };
 
     // is_found, and index of pending, approved, rejected
