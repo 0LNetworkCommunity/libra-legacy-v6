@@ -15,12 +15,64 @@ The CommunityWallets will have the following properties enabled by their owners.
 3. The multisig account has a minimum of 5 Authorities, and a threshold of 3 signatures. If there are more authorities, a 3/5 ratio or more should be preserved.
 
 
+-  [Resource `CommunityWalletList`](#0x1_CommunityWallet_CommunityWalletList)
+-  [Constants](#@Constants_0)
 -  [Function `is_community_wallet`](#0x1_CommunityWallet_is_community_wallet)
 -  [Function `is_frozen`](#0x1_CommunityWallet_is_frozen)
 -  [Function `is_pending_liquidation`](#0x1_CommunityWallet_is_pending_liquidation)
+-  [Function `get_comm_list`](#0x1_CommunityWallet_get_comm_list)
+-  [Function `is_comm`](#0x1_CommunityWallet_is_comm)
+-  [Function `new_timed_transfer`](#0x1_CommunityWallet_new_timed_transfer)
+-  [Function `vm_remove_comm`](#0x1_CommunityWallet_vm_remove_comm)
 
 
-<pre><code></code></pre>
+<pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="DonorDirected.md#0x1_DonorDirected">0x1::DonorDirected</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
+</code></pre>
+
+
+
+<a name="0x1_CommunityWallet_CommunityWalletList"></a>
+
+## Resource `CommunityWalletList`
+
+
+
+<pre><code><b>struct</b> <a href="CommunityWallet.md#0x1_CommunityWallet_CommunityWalletList">CommunityWalletList</a> <b>has</b> key
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>list: vector&lt;<b>address</b>&gt;</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a name="@Constants_0"></a>
+
+## Constants
+
+
+<a name="0x1_CommunityWallet_ENOT_AUTHORIZED"></a>
+
+
+
+<pre><code><b>const</b> <a href="CommunityWallet.md#0x1_CommunityWallet_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>: u64 = 23;
+</code></pre>
 
 
 
@@ -97,6 +149,131 @@ The CommunityWallets will have the following properties enabled by their owners.
 
 <pre><code><b>public</b> <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_is_pending_liquidation">is_pending_liquidation</a>() {
 
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_CommunityWallet_get_comm_list"></a>
+
+## Function `get_comm_list`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_get_comm_list">get_comm_list</a>(): vector&lt;<b>address</b>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_get_comm_list">get_comm_list</a>(): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="CommunityWallet.md#0x1_CommunityWallet_CommunityWalletList">CommunityWalletList</a>{
+  <b>if</b> (<b>exists</b>&lt;<a href="CommunityWallet.md#0x1_CommunityWallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) {
+    <b>let</b> s = <b>borrow_global</b>&lt;<a href="CommunityWallet.md#0x1_CommunityWallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
+    <b>return</b> *&s.list
+  } <b>else</b> {
+    <b>return</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;()
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_CommunityWallet_is_comm"></a>
+
+## Function `is_comm`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_is_comm">is_comm</a>(addr: <b>address</b>): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_is_comm">is_comm</a>(addr: <b>address</b>): bool <b>acquires</b> <a href="CommunityWallet.md#0x1_CommunityWallet_CommunityWalletList">CommunityWalletList</a>{
+  <b>let</b> s = <b>borrow_global</b>&lt;<a href="CommunityWallet.md#0x1_CommunityWallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&s.list, &addr)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_CommunityWallet_new_timed_transfer"></a>
+
+## Function `new_timed_transfer`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_new_timed_transfer">new_timed_transfer</a>(sender: &signer, payee: <b>address</b>, value: u64, description: vector&lt;u8&gt;): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_new_timed_transfer">new_timed_transfer</a>(
+sender: &signer, payee: <b>address</b>, value: u64, description: vector&lt;u8&gt;
+): u64 <b>acquires</b> <a href="CommunityWallet.md#0x1_CommunityWallet_CommunityWalletList">CommunityWalletList</a> {
+// firstly check <b>if</b> payee is a slow wallet
+// TODO: This function should check <b>if</b> the account is a slow wallet before sending
+// but there's a circular dependency <b>with</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> which <b>has</b> the slow wallet <b>struct</b>.
+// curretly we <b>move</b> that check <b>to</b> the transaction <b>script</b> <b>to</b> initialize the payment.
+// <b>assert</b>!(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(payee), EIS_NOT_SLOW_WALLET);
+
+<b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+<b>let</b> list = <a href="CommunityWallet.md#0x1_CommunityWallet_get_comm_list">get_comm_list</a>();
+<b>assert</b>!(
+<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&list, &sender_addr),
+<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(<a href="CommunityWallet.md#0x1_CommunityWallet_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>)
+);
+
+<a href="DonorDirected.md#0x1_DonorDirected_new_timed_transfer">DonorDirected::new_timed_transfer</a>(sender, payee, value, description)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_CommunityWallet_vm_remove_comm"></a>
+
+## Function `vm_remove_comm`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_vm_remove_comm">vm_remove_comm</a>(vm: &signer, addr: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_vm_remove_comm">vm_remove_comm</a>(vm: &signer, addr: <b>address</b>) <b>acquires</b> <a href="CommunityWallet.md#0x1_CommunityWallet_CommunityWalletList">CommunityWalletList</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+  <b>if</b> (!<b>exists</b>&lt;<a href="CommunityWallet.md#0x1_CommunityWallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) <b>return</b>;
+
+  <b>let</b> list = <a href="CommunityWallet.md#0x1_CommunityWallet_get_comm_list">get_comm_list</a>();
+  <b>let</b> (yes, i) = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;<b>address</b>&gt;(&list, &addr);
+  <b>if</b> (yes) {
+    <b>let</b> s = <b>borrow_global_mut</b>&lt;<a href="CommunityWallet.md#0x1_CommunityWallet_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> s.list, i);
+  }
 }
 </code></pre>
 

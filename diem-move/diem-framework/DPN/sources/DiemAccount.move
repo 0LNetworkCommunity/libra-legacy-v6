@@ -49,6 +49,7 @@ module DiemFramework::DiemAccount {
     use DiemFramework::Receipts;
     use DiemFramework::DiemSystem;
     use DiemFramework::ValidatorUniverse;
+    use DiemFramework::CommunityWallet;
     use DiemFramework::DonorDirected;
     use DiemFramework::Ancestry;
     use DiemFramework::Vouch;
@@ -1320,7 +1321,7 @@ module DiemFramework::DiemAccount {
 
         /////// 0L /////////
         // Community wallets have own transfer mechanism.
-        let community_wallets = DonorDirected::get_comm_list();
+        let community_wallets = CommunityWallet::get_comm_list();
         assert!(
             !Vector::contains(&community_wallets, &sender_addr), 
             Errors::limit_exceeded(EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET)
@@ -1552,7 +1553,7 @@ module DiemFramework::DiemAccount {
         // if a payee is a slow wallet and is receiving funds from ordinary
         // or another slow wallet's unlocked funds, it counts toward unlocked coins.
         // the exceptional case is community wallets, which funds don't count toward unlocks.
-        if (is_slow(*&payee) && !DonorDirected::is_comm(*&cap.account_address))
+        if (is_slow(*&payee) && !CommunityWallet::is_comm(*&cap.account_address))
           increase_unlocked_tracker(*&payee, amount);
     }
 
@@ -3594,7 +3595,7 @@ module DiemFramework::DiemAccount {
 
     public fun migrate_cumu_deposits(vm: &signer) acquires Balance {
       CoreAddresses::assert_vm(vm);
-      let list = DonorDirected::get_comm_list();
+      let list = CommunityWallet::get_comm_list();
       let i = 0;
       while (i < Vector::length<address>(&list)) {
         let addr = Vector::borrow(&list, i);

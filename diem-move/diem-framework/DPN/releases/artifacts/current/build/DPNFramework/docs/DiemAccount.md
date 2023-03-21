@@ -137,6 +137,7 @@ before and after every transaction.
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/BCS.md#0x1_BCS">0x1::BCS</a>;
 <b>use</b> <a href="CRSN.md#0x1_CRSN">0x1::CRSN</a>;
 <b>use</b> <a href="ChainId.md#0x1_ChainId">0x1::ChainId</a>;
+<b>use</b> <a href="CommunityWallet.md#0x1_CommunityWallet">0x1::CommunityWallet</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DesignatedDealer.md#0x1_DesignatedDealer">0x1::DesignatedDealer</a>;
@@ -2820,7 +2821,7 @@ Return a unique capability granting permission to withdraw from the sender's acc
 
     /////// 0L /////////
     // Community wallets have own transfer mechanism.
-    <b>let</b> community_wallets = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">DonorDirected::get_comm_list</a>();
+    <b>let</b> community_wallets = <a href="CommunityWallet.md#0x1_CommunityWallet_get_comm_list">CommunityWallet::get_comm_list</a>();
     <b>assert</b>!(
         !<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&community_wallets, &sender_addr),
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)
@@ -3169,7 +3170,7 @@ attestation protocol
     // <b>if</b> a payee is a slow wallet and is receiving funds from ordinary
     // or another slow wallet's unlocked funds, it counts toward unlocked coins.
     // the exceptional case is community wallets, which funds don't count toward unlocks.
-    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee) && !<a href="DonorDirected.md#0x1_DonorDirected_is_comm">DonorDirected::is_comm</a>(*&cap.account_address))
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee) && !<a href="CommunityWallet.md#0x1_CommunityWallet_is_comm">CommunityWallet::is_comm</a>(*&cap.account_address))
       <a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(*&payee, amount);
 }
 </code></pre>
@@ -6719,7 +6720,7 @@ inflation by x% per day from the start of network.
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_migrate_cumu_deposits">migrate_cumu_deposits</a>(vm: &signer) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-  <b>let</b> list = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">DonorDirected::get_comm_list</a>();
+  <b>let</b> list = <a href="CommunityWallet.md#0x1_CommunityWallet_get_comm_list">CommunityWallet::get_comm_list</a>();
   <b>let</b> i = 0;
   <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&list)) {
     <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&list, i);

@@ -6,15 +6,14 @@
 
 
 -  [Resource `CommunityWalletList`](#0x1_DonorDirected_CommunityWalletList)
--  [Resource `CommunityTransfers`](#0x1_DonorDirected_CommunityTransfers)
+-  [Resource `Transfers`](#0x1_DonorDirected_Transfers)
 -  [Resource `TimedTransfer`](#0x1_DonorDirected_TimedTransfer)
 -  [Struct `Veto`](#0x1_DonorDirected_Veto)
--  [Resource `CommunityFreeze`](#0x1_DonorDirected_CommunityFreeze)
+-  [Resource `Freeze`](#0x1_DonorDirected_Freeze)
 -  [Constants](#@Constants_0)
 -  [Function `init`](#0x1_DonorDirected_init)
 -  [Function `is_init_comm`](#0x1_DonorDirected_is_init_comm)
 -  [Function `set_comm`](#0x1_DonorDirected_set_comm)
--  [Function `vm_remove_comm`](#0x1_DonorDirected_vm_remove_comm)
 -  [Function `new_timed_transfer`](#0x1_DonorDirected_new_timed_transfer)
 -  [Function `veto`](#0x1_DonorDirected_veto)
 -  [Function `reject`](#0x1_DonorDirected_reject)
@@ -30,8 +29,6 @@
 -  [Function `get_tx_epoch`](#0x1_DonorDirected_get_tx_epoch)
 -  [Function `transfer_is_proposed`](#0x1_DonorDirected_transfer_is_proposed)
 -  [Function `transfer_is_rejected`](#0x1_DonorDirected_transfer_is_rejected)
--  [Function `get_comm_list`](#0x1_DonorDirected_get_comm_list)
--  [Function `is_comm`](#0x1_DonorDirected_is_comm)
 -  [Function `is_frozen`](#0x1_DonorDirected_is_frozen)
 
 
@@ -74,13 +71,13 @@
 
 </details>
 
-<a name="0x1_DonorDirected_CommunityTransfers"></a>
+<a name="0x1_DonorDirected_Transfers"></a>
 
-## Resource `CommunityTransfers`
+## Resource `Transfers`
 
 
 
-<pre><code><b>struct</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a> <b>has</b> key
+<pre><code><b>struct</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> <b>has</b> key
 </code></pre>
 
 
@@ -221,13 +218,13 @@
 
 </details>
 
-<a name="0x1_DonorDirected_CommunityFreeze"></a>
+<a name="0x1_DonorDirected_Freeze"></a>
 
-## Resource `CommunityFreeze`
+## Resource `Freeze`
 
 
 
-<pre><code><b>struct</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityFreeze">CommunityFreeze</a> <b>has</b> key
+<pre><code><b>struct</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> <b>has</b> key
 </code></pre>
 
 
@@ -328,10 +325,10 @@
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_init">init</a>(vm: &signer) {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
 
-  <b>if</b> (!<b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0)) {
-    <b>move_to</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a>&gt;(
+  <b>if</b> (!<b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0)) {
+    <b>move_to</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(
       vm,
-      <a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a> {
+      <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
         proposed: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(),
         approved: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(),
         rejected: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(),
@@ -368,7 +365,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_init_comm">is_init_comm</a>():bool {
-  <b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0)
+  <b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0)
 }
 </code></pre>
 
@@ -391,56 +388,24 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_set_comm">set_comm</a>(sig: &signer) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a> {
-  <b>if</b> (!<b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) <b>return</b>;
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_set_comm">set_comm</a>(sig: &signer) {
+  // <b>if</b> (!<b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) <b>return</b>;
 
-  <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
-  <b>let</b> list = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">get_comm_list</a>();
-  <b>if</b> (!<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&list, &addr)) {
-    <b>let</b> s = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> s.list, addr);
-  };
+  // <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
+  // <b>let</b> list = get_comm_list();
+  // <b>if</b> (!<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&list, &addr)) {
+  //   <b>let</b> s = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
+  //   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> s.list, addr);
+  // };
 
-  <b>move_to</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityFreeze">CommunityFreeze</a>&gt;(
+  <b>move_to</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>&gt;(
     sig,
-    <a href="DonorDirected.md#0x1_DonorDirected_CommunityFreeze">CommunityFreeze</a> {
+    <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
       is_frozen: <b>false</b>,
       consecutive_rejections: 0,
       unfreeze_votes: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;()
     }
   )
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_DonorDirected_vm_remove_comm"></a>
-
-## Function `vm_remove_comm`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_vm_remove_comm">vm_remove_comm</a>(vm: &signer, addr: <b>address</b>)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_vm_remove_comm">vm_remove_comm</a>(vm: &signer, addr: <b>address</b>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a> {
-  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
-  <b>if</b> (!<b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) <b>return</b>;
-
-  <b>let</b> list = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">get_comm_list</a>();
-  <b>let</b> (yes, i) = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;<b>address</b>&gt;(&list, &addr);
-  <b>if</b> (yes) {
-    <b>let</b> s = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> s.list, i);
-  }
 }
 </code></pre>
 
@@ -465,7 +430,7 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_new_timed_transfer">new_timed_transfer</a>(
   sender: &signer, payee: <b>address</b>, value: u64, description: vector&lt;u8&gt;
-): u64 <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a>, <a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a> {
+): u64 <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
   // firstly check <b>if</b> payee is a slow wallet
   // TODO: This function should check <b>if</b> the account is a slow wallet before sending
   // but there's a circular dependency <b>with</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> which <b>has</b> the slow wallet <b>struct</b>.
@@ -473,13 +438,13 @@
   // <b>assert</b>!(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(payee), <a href="DonorDirected.md#0x1_DonorDirected_EIS_NOT_SLOW_WALLET">EIS_NOT_SLOW_WALLET</a>);
 
   <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
-  <b>let</b> list = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">get_comm_list</a>();
-  <b>assert</b>!(
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&list, &sender_addr),
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(<a href="DonorDirected.md#0x1_DonorDirected_ERR_PREFIX">ERR_PREFIX</a> + 001)
-  );
+  // <b>let</b> list = get_comm_list();
+  // <b>assert</b>!(
+  //   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&list, &sender_addr),
+  //   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(<a href="DonorDirected.md#0x1_DonorDirected_ERR_PREFIX">ERR_PREFIX</a> + 001)
+  // );
 
-  <b>let</b> transfers = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
+  <b>let</b> transfers = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0);
   transfers.max_uid = transfers.max_uid + 1;
 
   // add current epoch + 1
@@ -526,7 +491,7 @@
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_veto">veto</a>(
   sender: &signer,
   uid: u64
-) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a>, <a href="DonorDirected.md#0x1_DonorDirected_CommunityFreeze">CommunityFreeze</a> {
+) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>, <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
   <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   <b>assert</b>!(
     <a href="DiemSystem.md#0x1_DiemSystem_is_validator">DiemSystem::is_validator</a>(addr),
@@ -534,7 +499,7 @@
   );
   <b>let</b> (opt, i) = <a href="DonorDirected.md#0x1_DonorDirected_find">find</a>(uid, <a href="DonorDirected.md#0x1_DonorDirected_PROPOSED">PROPOSED</a>);
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&opt)) {
-    <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
+    <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0);
     <b>let</b> t = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> c.proposed, i);
     // add voters <b>address</b> <b>to</b> the veto list
     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<b>address</b>&gt;(&<b>mut</b> t.veto.list, addr);
@@ -568,8 +533,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_reject">reject</a>(uid: u64) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a>, <a href="DonorDirected.md#0x1_DonorDirected_CommunityFreeze">CommunityFreeze</a> {
-  <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
+<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_reject">reject</a>(uid: u64) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>, <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
+  <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0);
   <b>let</b> list = *&c.proposed;
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&list);
   <b>let</b> i = 0;
@@ -577,7 +542,7 @@
     <b>let</b> t = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&list, i);
     <b>if</b> (t.uid == uid) {
       <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> c.proposed, i);
-      <b>let</b> f = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityFreeze">CommunityFreeze</a>&gt;(*&t.payer);
+      <b>let</b> f = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>&gt;(*&t.payer);
       f.consecutive_rejections = f.consecutive_rejections + 1;
       <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> c.rejected, t);
     };
@@ -607,10 +572,10 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_mark_processed">mark_processed</a>(vm: &signer, t: <a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_mark_processed">mark_processed</a>(vm: &signer, t: <a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
-  <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
+  <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0);
   <b>let</b> list = *&c.proposed;
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&list);
   <b>let</b> i = 0;
@@ -646,9 +611,9 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_reset_rejection_counter">reset_rejection_counter</a>(vm: &signer, wallet: <b>address</b>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityFreeze">CommunityFreeze</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_reset_rejection_counter">reset_rejection_counter</a>(vm: &signer, wallet: <b>address</b>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
-  <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityFreeze">CommunityFreeze</a>&gt;(wallet).consecutive_rejections = 0;
+  <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>&gt;(wallet).consecutive_rejections = 0;
 }
 </code></pre>
 
@@ -671,8 +636,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_tally_veto">tally_veto</a>(index: u64): bool <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a> {
-  <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
+<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_tally_veto">tally_veto</a>(index: u64): bool <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
+  <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0);
   <b>let</b> t = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> c.proposed, index);
 
   <b>let</b> votes = 0;
@@ -752,8 +717,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_list_tx_by_epoch">list_tx_by_epoch</a>(epoch: u64): vector&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt; <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a> {
-    <b>let</b> c = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_list_tx_by_epoch">list_tx_by_epoch</a>(epoch: u64): vector&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt; <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
+    <b>let</b> c = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0);
 
     // <b>loop</b> proposed list
     <b>let</b> pending = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;();
@@ -790,8 +755,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_list_transfers">list_transfers</a>(type_of: u8): vector&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt; <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a> {
-  <b>let</b> c = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a>&gt;(@0x0);
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_list_transfers">list_transfers</a>(type_of: u8): vector&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt; <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
+  <b>let</b> c = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a>&gt;(@0x0);
   <b>if</b> (type_of == 0) {
     *&c.proposed
   } <b>else</b> <b>if</b> (type_of == 1) {
@@ -824,7 +789,7 @@
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_find">find</a>(
   uid: u64,
   type_of: u8
-): (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;, u64) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a> {
+): (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;, u64) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
   <b>let</b> list = &<a href="DonorDirected.md#0x1_DonorDirected_list_transfers">list_transfers</a>(type_of);
 
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(list);
@@ -859,9 +824,9 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_maybe_freeze">maybe_freeze</a>(wallet: <b>address</b>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityFreeze">CommunityFreeze</a> {
-  <b>if</b> (<b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityFreeze">CommunityFreeze</a>&gt;(wallet).consecutive_rejections &gt; 2) {
-    <b>let</b> f = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityFreeze">CommunityFreeze</a>&gt;(wallet);
+<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_maybe_freeze">maybe_freeze</a>(wallet: <b>address</b>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
+  <b>if</b> (<b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>&gt;(wallet).consecutive_rejections &gt; 2) {
+    <b>let</b> f = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>&gt;(wallet);
     f.is_frozen = <b>true</b>;
   }
 }
@@ -910,7 +875,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_tx_epoch">get_tx_epoch</a>(uid: u64): u64 <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_tx_epoch">get_tx_epoch</a>(uid: u64): u64 <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
   <b>let</b> (opt, _) = <a href="DonorDirected.md#0x1_DonorDirected_find">find</a>(uid, <a href="DonorDirected.md#0x1_DonorDirected_PROPOSED">PROPOSED</a>);
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&opt)) {
     <b>let</b> t = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&opt);
@@ -939,7 +904,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_transfer_is_proposed">transfer_is_proposed</a>(uid: u64): bool <b>acquires</b>  <a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_transfer_is_proposed">transfer_is_proposed</a>(uid: u64): bool <b>acquires</b>  <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
   <b>let</b> (opt, _) = <a href="DonorDirected.md#0x1_DonorDirected_find">find</a>(uid, <a href="DonorDirected.md#0x1_DonorDirected_PROPOSED">PROPOSED</a>);
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&opt)
 }
@@ -964,63 +929,9 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_transfer_is_rejected">transfer_is_rejected</a>(uid: u64): bool <b>acquires</b>  <a href="DonorDirected.md#0x1_DonorDirected_CommunityTransfers">CommunityTransfers</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_transfer_is_rejected">transfer_is_rejected</a>(uid: u64): bool <b>acquires</b>  <a href="DonorDirected.md#0x1_DonorDirected_Transfers">Transfers</a> {
   <b>let</b> (opt, _) = <a href="DonorDirected.md#0x1_DonorDirected_find">find</a>(uid, <a href="DonorDirected.md#0x1_DonorDirected_REJECTED">REJECTED</a>);
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&opt)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_DonorDirected_get_comm_list"></a>
-
-## Function `get_comm_list`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">get_comm_list</a>(): vector&lt;<b>address</b>&gt;
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">get_comm_list</a>(): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>{
-  <b>if</b> (<b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0)) {
-    <b>let</b> s = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
-    <b>return</b> *&s.list
-  } <b>else</b> {
-    <b>return</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;()
-  }
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_DonorDirected_is_comm"></a>
-
-## Function `is_comm`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_comm">is_comm</a>(addr: <b>address</b>): bool
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_comm">is_comm</a>(addr: <b>address</b>): bool <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>{
-  <b>let</b> s = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityWalletList">CommunityWalletList</a>&gt;(@0x0);
-  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>&lt;<b>address</b>&gt;(&s.list, &addr)
 }
 </code></pre>
 
@@ -1043,8 +954,8 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_frozen">is_frozen</a>(addr: <b>address</b>): bool <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_CommunityFreeze">CommunityFreeze</a>{
-  <b>let</b> f = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_CommunityFreeze">CommunityFreeze</a>&gt;(addr);
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_frozen">is_frozen</a>(addr: <b>address</b>): bool <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>{
+  <b>let</b> f = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>&gt;(addr);
   f.is_frozen
 }
 </code></pre>

@@ -9,7 +9,8 @@
 -  [Function `community_transfer`](#0x1_TransferScripts_community_transfer)
 
 
-<pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<pre><code><b>use</b> <a href="CommunityWallet.md#0x1_CommunityWallet">0x1::CommunityWallet</a>;
+<b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DonorDirected.md#0x1_DonorDirected">0x1::DonorDirected</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
@@ -87,15 +88,15 @@
     // by multiplying by COIN_SCALING_FACTOR.
     <b>let</b> value = unscaled_value * <a href="Globals.md#0x1_Globals_get_coin_scaling_factor">Globals::get_coin_scaling_factor</a>();
     <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&sender);
-    <b>assert</b>!(<a href="DonorDirected.md#0x1_DonorDirected_is_comm">DonorDirected::is_comm</a>(sender_addr), 30001);
+    <b>assert</b>!(<a href="CommunityWallet.md#0x1_CommunityWallet_is_comm">CommunityWallet::is_comm</a>(sender_addr), 30001);
 
     // confirm the destination account <b>has</b> a slow wallet
     // TODO: this check only happens in this <b>script</b> since there's
-    // a circular dependecy issue <b>with</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> and <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> which impedes
-    // checking in <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> <b>module</b>
+    // a circular dependecy issue <b>with</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> and <a href="CommunityWallet.md#0x1_CommunityWallet">CommunityWallet</a> which impedes
+    // checking in <a href="CommunityWallet.md#0x1_CommunityWallet">CommunityWallet</a> <b>module</b>
     <b>assert</b>!(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(destination), 30002);
 
-    <b>let</b> uid = <a href="DonorDirected.md#0x1_DonorDirected_new_timed_transfer">DonorDirected::new_timed_transfer</a>(&sender, destination, value, memo);
+    <b>let</b> uid = <a href="CommunityWallet.md#0x1_CommunityWallet_new_timed_transfer">CommunityWallet::new_timed_transfer</a>(&sender, destination, value, memo);
     <b>assert</b>!(<a href="DonorDirected.md#0x1_DonorDirected_transfer_is_proposed">DonorDirected::transfer_is_proposed</a>(uid), 30003);
 }
 </code></pre>

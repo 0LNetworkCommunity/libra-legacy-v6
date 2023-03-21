@@ -24,7 +24,7 @@ module DonorDirected {
     }
 
     // Timed transfer submission
-    struct CommunityTransfers has key {
+    struct Transfers has key {
       proposed: vector<TimedTransfer>,
       approved: vector<TimedTransfer>,
       rejected: vector<TimedTransfer>,
@@ -47,7 +47,7 @@ module DonorDirected {
       threshold: u64,
     }
 
-    struct CommunityFreeze has key {
+    struct Freeze has key {
       is_frozen: bool,
       consecutive_rejections: u64,
       unfreeze_votes: vector<address>,
@@ -57,10 +57,10 @@ module DonorDirected {
     public fun init(vm: &signer) {
       CoreAddresses::assert_diem_root(vm);
       
-      if (!exists<CommunityTransfers>(@0x0)) {
-        move_to<CommunityTransfers>(
+      if (!exists<Transfers>(@0x0)) {
+        move_to<Transfers>(
           vm,
-          CommunityTransfers {
+          Transfers {
             proposed: Vector::empty<TimedTransfer>(),
             approved: Vector::empty<TimedTransfer>(),
             rejected: Vector::empty<TimedTransfer>(),
@@ -77,22 +77,22 @@ module DonorDirected {
     }
 
     public fun is_init_comm():bool {
-      exists<CommunityTransfers>(@0x0)
+      exists<Transfers>(@0x0)
     }
 
-    public fun set_comm(sig: &signer) acquires CommunityWalletList {
-      if (!exists<CommunityWalletList>(@0x0)) return;
+    public fun set_comm(sig: &signer) {
+      // if (!exists<CommunityWalletList>(@0x0)) return;
 
-      let addr = Signer::address_of(sig);
-      let list = get_comm_list();
-      if (!Vector::contains<address>(&list, &addr)) {
-        let s = borrow_global_mut<CommunityWalletList>(@0x0);
-        Vector::push_back(&mut s.list, addr);
-      };
+      // let addr = Signer::address_of(sig);
+      // let list = get_comm_list();
+      // if (!Vector::contains<address>(&list, &addr)) {
+      //   let s = borrow_global_mut<CommunityWalletList>(@0x0);
+      //   Vector::push_back(&mut s.list, addr);
+      // };
 
-      move_to<CommunityFreeze>(
+      move_to<Freeze>(
         sig, 
-        CommunityFreeze {
+        Freeze {
           is_frozen: false,
           consecutive_rejections: 0,
           unfreeze_votes: Vector::empty<address>()
@@ -100,21 +100,21 @@ module DonorDirected {
       )
     }
 
-    // Utility for vm to remove the CommunityWallet tag from an address
-    public fun vm_remove_comm(vm: &signer, addr: address) acquires CommunityWalletList {
-      CoreAddresses::assert_diem_root(vm);
-      if (!exists<CommunityWalletList>(@0x0)) return;
+    // // Utility for vm to remove the CommunityWallet tag from an address
+    // public fun vm_remove_comm(vm: &signer, addr: address) acquires CommunityWalletList {
+    //   CoreAddresses::assert_diem_root(vm);
+    //   if (!exists<CommunityWalletList>(@0x0)) return;
      
-      let list = get_comm_list();
-      let (yes, i) = Vector::index_of<address>(&list, &addr);
-      if (yes) {
-        let s = borrow_global_mut<CommunityWalletList>(@0x0);
-        Vector::remove(&mut s.list, i);
-      }
-    }
+    //   let list = get_comm_list();
+    //   let (yes, i) = Vector::index_of<address>(&list, &addr);
+    //   if (yes) {
+    //     let s = borrow_global_mut<CommunityWalletList>(@0x0);
+    //     Vector::remove(&mut s.list, i);
+    //   }
+    // }
 
     // Todo: Can be private, used only in tests
-    // The community wallet Signer can propose a timed transaction.
+    // The DonorDirected wallet Signer can propose a timed transaction.
     // the timed transaction defaults to occurring in the 3rd following epoch.
     // TODO: Increase this time?
     // the transaction will automatically occur at the epoch boundary, 
@@ -123,7 +123,7 @@ module DonorDirected {
     // the rejected list.
     public fun new_timed_transfer(
       sender: &signer, payee: address, value: u64, description: vector<u8>
-    ): u64 acquires CommunityTransfers, CommunityWalletList {
+    ): u64 acquires Transfers {
       // firstly check if payee is a slow wallet
       // TODO: This function should check if the account is a slow wallet before sending
       // but there's a circular dependency with DiemAccount which has the slow wallet struct.
@@ -131,13 +131,13 @@ module DonorDirected {
       // assert!(DiemAccount::is_slow(payee), EIS_NOT_SLOW_WALLET);
 
       let sender_addr = Signer::address_of(sender);
-      let list = get_comm_list();
-      assert!(
-        Vector::contains<address>(&list, &sender_addr),
-        Errors::requires_role(ERR_PREFIX + 001)
-      );
+      // let list = get_comm_list();
+      // assert!(
+      //   Vector::contains<address>(&list, &sender_addr),
+      //   Errors::requires_role(ERR_PREFIX + 001)
+      // );
 
-      let transfers = borrow_global_mut<CommunityTransfers>(@0x0);
+      let transfers = borrow_global_mut<Transfers>(@0x0);
       transfers.max_uid = transfers.max_uid + 1;
       
       // add current epoch + 1
@@ -162,14 +162,14 @@ module DonorDirected {
     }
   
   // A validator casts a vote to veto a proposed/pending transaction 
-  // by a community wallet.
+  // by a DonorDirected wallet.
   // The validator identifies the transaction by a unique id.
   // Tallies are computed on the fly, such that if a veto happens, 
   // the community which is faster than waiting for epoch boundaries.
   public fun veto(
     sender: &signer,
     uid: u64
-  ) acquires CommunityTransfers, CommunityFreeze {
+  ) acquires Transfers, Freeze {
     let addr = Signer::address_of(sender);
     assert!(
       DiemSystem::is_validator(addr),
@@ -177,7 +177,7 @@ module DonorDirected {
     );
     let (opt, i) = find(uid, PROPOSED);
     if (Option::is_some<TimedTransfer>(&opt)) {
-      let c = borrow_global_mut<CommunityTransfers>(@0x0);
+      let c = borrow_global_mut<Transfers>(@0x0);
       let t = Vector::borrow_mut<TimedTransfer>(&mut c.proposed, i);
       // add voters address to the veto list
       Vector::push_back<address>(&mut t.veto.list, addr);
@@ -193,8 +193,8 @@ module DonorDirected {
 
   // private function. Once vetoed, the CommunityWallet transaction is 
   // removed from proposed list.
-  fun reject(uid: u64) acquires CommunityTransfers, CommunityFreeze {
-    let c = borrow_global_mut<CommunityTransfers>(@0x0);
+  fun reject(uid: u64) acquires Transfers, Freeze {
+    let c = borrow_global_mut<Transfers>(@0x0);
     let list = *&c.proposed;
     let len = Vector::length(&list);
     let i = 0;
@@ -202,7 +202,7 @@ module DonorDirected {
       let t = *Vector::borrow<TimedTransfer>(&list, i);
       if (t.uid == uid) {
         Vector::remove<TimedTransfer>(&mut c.proposed, i);
-        let f = borrow_global_mut<CommunityFreeze>(*&t.payer);
+        let f = borrow_global_mut<Freeze>(*&t.payer);
         f.consecutive_rejections = f.consecutive_rejections + 1;
         Vector::push_back(&mut c.rejected, t);
       };
@@ -214,10 +214,10 @@ module DonorDirected {
 
     // private function. Once vetoed, the CommunityWallet transaction is 
   // removed from proposed list.
-  public fun mark_processed(vm: &signer, t: TimedTransfer) acquires CommunityTransfers {
+  public fun mark_processed(vm: &signer, t: TimedTransfer) acquires Transfers {
     CoreAddresses::assert_vm(vm);
 
-    let c = borrow_global_mut<CommunityTransfers>(@0x0);
+    let c = borrow_global_mut<Transfers>(@0x0);
     let list = *&c.proposed;
     let len = Vector::length(&list);
     let i = 0;
@@ -233,9 +233,9 @@ module DonorDirected {
     
   }
 
-  public fun reset_rejection_counter(vm: &signer, wallet: address) acquires CommunityFreeze {
+  public fun reset_rejection_counter(vm: &signer, wallet: address) acquires Freeze {
     CoreAddresses::assert_diem_root(vm);
-    borrow_global_mut<CommunityFreeze>(wallet).consecutive_rejections = 0;
+    borrow_global_mut<Freeze>(wallet).consecutive_rejections = 0;
   }
 
   // private function to tally vetos.
@@ -243,8 +243,8 @@ module DonorDirected {
   // tallies everytime called. Only counts votes in the validator set.
   // does not remove an address if not in the validator set, in case 
   // the validator returns to the set on the next tally.
-  fun tally_veto(index: u64): bool acquires CommunityTransfers {
-    let c = borrow_global_mut<CommunityTransfers>(@0x0);
+  fun tally_veto(index: u64): bool acquires Transfers {
+    let c = borrow_global_mut<Transfers>(@0x0);
     let t = Vector::borrow_mut<TimedTransfer>(&mut c.proposed, index);
 
     let votes = 0;
@@ -288,8 +288,8 @@ module DonorDirected {
 
   // Utility to list CommunityWallet transfers due, by epoch. Anyone can call this.
   // This is used by VM in DiemAccount at epoch boundaries to process the wallet transfers.
-  public fun list_tx_by_epoch(epoch: u64): vector<TimedTransfer> acquires CommunityTransfers {
-      let c = borrow_global<CommunityTransfers>(@0x0);
+  public fun list_tx_by_epoch(epoch: u64): vector<TimedTransfer> acquires Transfers {
+      let c = borrow_global<Transfers>(@0x0);
 
       // loop proposed list
       let pending = Vector::empty<TimedTransfer>();
@@ -307,8 +307,8 @@ module DonorDirected {
     }
 
 
-    public fun list_transfers(type_of: u8): vector<TimedTransfer> acquires CommunityTransfers {
-      let c = borrow_global<CommunityTransfers>(@0x0);
+    public fun list_transfers(type_of: u8): vector<TimedTransfer> acquires Transfers {
+      let c = borrow_global<Transfers>(@0x0);
       if (type_of == 0) {
         *&c.proposed
       } else if (type_of == 1) {
@@ -324,7 +324,7 @@ module DonorDirected {
     public fun find(
       uid: u64,
       type_of: u8
-    ): (Option<TimedTransfer>, u64) acquires CommunityTransfers {
+    ): (Option<TimedTransfer>, u64) acquires Transfers {
       let list = &list_transfers(type_of);
 
       let len = Vector::length(list);
@@ -340,11 +340,11 @@ module DonorDirected {
     }
 
 
-    // Private function to freeze a community wallet
-    // community wallets get frozen if 3 consecutive attempts to transfer are rejected.
-    fun maybe_freeze(wallet: address) acquires CommunityFreeze {
-      if (borrow_global<CommunityFreeze>(wallet).consecutive_rejections > 2) {
-        let f = borrow_global_mut<CommunityFreeze>(wallet);
+    // Private function to freeze a DonorDirected wallet
+    // DonorDirected wallets get frozen if 3 consecutive attempts to transfer are rejected.
+    fun maybe_freeze(wallet: address) acquires Freeze {
+      if (borrow_global<Freeze>(wallet).consecutive_rejections > 2) {
+        let f = borrow_global_mut<Freeze>(wallet);
         f.is_frozen = true;
       }
     }
@@ -354,7 +354,7 @@ module DonorDirected {
       (t.payer, t.payee, t.value, *&t.description)
     }
 
-    public fun get_tx_epoch(uid: u64): u64 acquires CommunityTransfers {
+    public fun get_tx_epoch(uid: u64): u64 acquires Transfers {
       let (opt, _) = find(uid, PROPOSED);
       if (Option::is_some<TimedTransfer>(&opt)) {
         let t = Option::borrow<TimedTransfer>(&opt);
@@ -363,36 +363,22 @@ module DonorDirected {
       0
     }
     
-    public fun transfer_is_proposed(uid: u64): bool acquires  CommunityTransfers {
+    public fun transfer_is_proposed(uid: u64): bool acquires  Transfers {
       let (opt, _) = find(uid, PROPOSED);
       Option::is_some<TimedTransfer>(&opt)
     }
 
-    public fun transfer_is_rejected(uid: u64): bool acquires  CommunityTransfers {
+    public fun transfer_is_rejected(uid: u64): bool acquires  Transfers {
       let (opt, _) = find(uid, REJECTED);
       Option::is_some<TimedTransfer>(&opt)
     }
 
-    // Getter for retrieving the list of community wallets.
-    public fun get_comm_list(): vector<address> acquires CommunityWalletList{
-      if (exists<CommunityWalletList>(@0x0)) {
-        let s = borrow_global<CommunityWalletList>(@0x0);
-        return *&s.list
-      } else {
-        return Vector::empty<address>()
-      }
-    }
 
-    // getter to check if is a CommunityWallet
-    public fun is_comm(addr: address): bool acquires CommunityWalletList{
-      let s = borrow_global<CommunityWalletList>(@0x0);
-      Vector::contains<address>(&s.list, &addr)
-    }
 
     // getter to check if wallet is frozen
     // used in DiemAccount before attempting a transfer.
-    public fun is_frozen(addr: address): bool acquires CommunityFreeze{
-      let f = borrow_global<CommunityFreeze>(addr);
+    public fun is_frozen(addr: address): bool acquires Freeze{
+      let f = borrow_global<Freeze>(addr);
       f.is_frozen
     }
 }

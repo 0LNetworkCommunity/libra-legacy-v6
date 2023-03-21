@@ -250,6 +250,16 @@ Tis is a ProposalData type for governance. This Proposal adds or removes a list 
 ## Constants
 
 
+<a name="0x1_MultiSig_ENOT_AUTHORIZED"></a>
+
+Signer not authorized to approve a transaction.
+
+
+<pre><code><b>const</b> <a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>: u64 = 440002;
+</code></pre>
+
+
+
 <a name="0x1_MultiSig_DEFAULT_EPOCHS_EXPIRE"></a>
 
 default setting for a proposal to expire
@@ -285,16 +295,6 @@ Action not found
 
 
 <pre><code><b>const</b> <a href="MultiSig.md#0x1_MultiSig_EGOV_NOT_INITIALIZED">EGOV_NOT_INITIALIZED</a>: u64 = 440000;
-</code></pre>
-
-
-
-<a name="0x1_MultiSig_ENOT_AUTHORIZED"></a>
-
-Signer not authorized to approve a transaction.
-
-
-<pre><code><b>const</b> <a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>: u64 = 440002;
 </code></pre>
 
 
