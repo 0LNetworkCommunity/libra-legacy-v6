@@ -67,9 +67,9 @@ address DiemFramework {
     // The contract may have multiple ballots at a given time.
     // Historical completed ballots are also stored in a separate vector.
 
-    struct Ballot has key, store { // Note, this is a hot potato. Any methods chaning it must return the struct to caller.
+    struct Ballot<Data> has key, store { // Note, this is a hot potato. Any methods chaning it must return the struct to caller.
       guid: GUID,
-      name: vector<u8>, // TODO: change to ascii string
+      data: Data, // TODO: change to ascii string
       cfg_deadline: u64, // original deadline, which may be extended. Note dedaline is at the END of this epoch (cfg_deadline + 1 stops taking votes)
       cfg_max_extensions: u64, // if 0 then no max. Election can run until threshold is met.
       cfg_min_turnout: u64,
@@ -99,16 +99,16 @@ address DiemFramework {
       elections: vector<VoteReceipt>,
     }
 
-    public fun new(
+    public fun new<Data: copy + store>(
       sig: &signer,
-      name: vector<u8>,
+      data: Data,
       max_vote_enrollment: u64,
       deadline: u64,
       max_extensions: u64,
-    ): Ballot {
-        Ballot {
+    ): Ballot<Data> {
+        Ballot<Data> {
           guid: GUID::create(sig),
-          name: name,
+          data,
           cfg_deadline: deadline,
           cfg_max_extensions: max_extensions, // 0 means infinite extensions
           cfg_min_turnout: 1250,
@@ -131,7 +131,7 @@ address DiemFramework {
     // Only the contract, which is the keeper of the Ballot, can allow a user to temporarily hold the Ballot struct to update the vote. The user cannot arbiltrarily update the vote, with an arbitrary number of votes.
     // This is a hot potato, it cannot be dropped.
 
-    public fun vote(ballot: &mut Ballot, user: &signer, approve_reject: bool, weight: u64) acquires IVoted {
+    public fun vote<Data: copy + store>(ballot: &mut Ballot<Data>, user: &signer, approve_reject: bool, weight: u64) acquires IVoted {
       // voting should not be complete
       assert!(!is_complete(ballot), Errors::invalid_state(ECOMPLETED));
 
@@ -170,7 +170,7 @@ address DiemFramework {
 
     }
 
-    fun is_complete(ballot: &mut Ballot): bool {
+    fun is_complete<Data: copy + store>(ballot: &mut Ballot<Data>): bool {
       let epoch = DiemConfig::get_current_epoch();
       // if completed, exit early
       if (ballot.completed) { return true }; // this should be checked above anyways.
@@ -190,7 +190,7 @@ address DiemFramework {
       ballot.completed
     }
 
-    public fun retract(ballot: &mut Ballot, user: &signer) acquires IVoted {
+    public fun retract<Data: copy + store>(ballot: &mut Ballot<Data>, user: &signer) acquires IVoted {
       let user_addr = Signer::address_of(user);
 
       let (idx, is_found) = find_prior_vote_idx(user_addr, &GUID::id(&ballot.guid));
@@ -209,7 +209,7 @@ address DiemFramework {
     }
 
     // we may need to extend the ballot if on the last day (TBD a wider window) the vote had a big shift in favor of the minority vote.
-    fun maybe_extend(ballot: &mut Ballot) {
+    fun maybe_extend<Data: copy + store>(ballot: &mut Ballot<Data>) {
 
       let epoch = DiemConfig::get_current_epoch();
 
@@ -254,7 +254,7 @@ address DiemFramework {
     }
 
     /// stop tallying if the expiration is passed or the threshold has been met.
-    fun maybe_tally(ballot: &mut Ballot) {
+    fun maybe_tally<Data: copy + store>(ballot: &mut Ballot<Data>) {
       let total_votes = ballot.votes_approve + ballot.votes_reject;
 
       assert!(ballot.max_votes >= total_votes, Errors::invalid_state(EVOTES_GREATER_THAN_ENROLLMENT));
@@ -372,12 +372,12 @@ address DiemFramework {
 
     //////// GETTERS ////////
     /// get the ballot id
-    public fun get_ballot_id(ballot: &Ballot): ID {
+    public fun get_ballot_id<Data: copy + store>(ballot: &Ballot<Data>): ID {
       return GUID::id(&ballot.guid)
     }
 
     /// get current tally
-    public fun get_tally(ballot: &Ballot): u64 {
+    public fun get_tally<Data: copy + store>(ballot: &Ballot<Data>): u64 {
       let total = ballot.votes_approve + ballot.votes_reject;
       if (ballot.votes_approve + ballot.votes_reject > ballot.max_votes) {
         return 0
@@ -389,7 +389,7 @@ address DiemFramework {
     }
 
     /// is it complete and what's the result
-    public fun complete_result(ballot: &Ballot): (bool, bool) {
+    public fun complete_result<Data: copy + store>(ballot: &Ballot<Data>): (bool, bool) {
       (ballot.completed, ballot.tally_pass)
     }
 
@@ -424,20 +424,22 @@ address DiemFramework {
     use DiemFramework::Testnet;
 
     struct Vote has key {
-      ballot: Ballot,
+      ballot: Ballot<EmptyType>,
     }
+
+    struct EmptyType has store, copy {}
 
     // initialize this data on the address of the election contract
     public fun init(
       sig: &signer,
-      name: vector<u8>,
+      data: EmptyType,
       deadline: u64,
       max_vote_enrollment: u64,
       max_extensions: u64,
       
     ): GUID::ID {
       assert!(Testnet::is_testnet(), 0);
-      let ballot = ParticipationVote::new(sig, name, deadline, max_vote_enrollment, max_extensions);
+      let ballot = ParticipationVote::new<EmptyType>(sig, data, deadline, max_vote_enrollment, max_extensions);
 
       let id = ParticipationVote::get_ballot_id(&ballot);
       move_to(sig, Vote { ballot });
@@ -447,13 +449,13 @@ address DiemFramework {
     public fun vote(sig: &signer, election_addr: address, weight: u64, approve_reject: bool) acquires Vote {
       assert!(Testnet::is_testnet(), 0);
       let vote = borrow_global_mut<Vote>(election_addr);
-      ParticipationVote::vote(&mut vote.ballot, sig, approve_reject, weight);
+      ParticipationVote::vote<EmptyType>(&mut vote.ballot, sig, approve_reject, weight);
     }
 
     public fun retract(sig: &signer, election_addr: address) acquires Vote {
       assert!(Testnet::is_testnet(), 0);
       let vote = borrow_global_mut<Vote>(election_addr);
-      ParticipationVote::retract(&mut vote.ballot, sig);
+      ParticipationVote::retract<EmptyType>(&mut vote.ballot, sig);
     }
 
     public fun get_id(election_addr: address): GUID::ID acquires Vote {
@@ -464,7 +466,7 @@ address DiemFramework {
 
     public fun get_result(election_addr: address): (bool, bool) acquires Vote {
       let vote = borrow_global_mut<Vote>(election_addr);
-      ParticipationVote::complete_result(&vote.ballot)
+      ParticipationVote::complete_result<EmptyType>(&vote.ballot)
     }
 
   }

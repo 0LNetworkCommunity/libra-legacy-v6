@@ -25,21 +25,29 @@ module DonorDirectedGovernance {
 
     /// Data struct to store all the governance Ballots for vetos
 
-    struct Veto has key {
-      ballots: vector<ParticipationVote::Ballot>,
+    struct VetoBallots has key {
+      ballots: vector<ParticipationVote::Ballot<Veto>>,
+    }
+
+    struct Veto has copy, store {
+      guid: u64,
     }
 
 
     /// Data struct to store all governance Ballots for liquidation
 
-    struct Liquidate has key {
-      ballots: vector<ParticipationVote::Ballot>,
+    struct LiquidateBallots has key {
+      ballots: vector<ParticipationVote::Ballot<Liquidate>>,
     }
 
+    struct Liquidate has copy, store {}
+
+
+
     public fun init_donor_governance(directed_account: &signer) {
-      let veto = Veto { ballots: Vector::empty() };
+      let veto = VetoBallots { ballots: Vector::empty() };
       move_to(directed_account, veto);
-      let liquidate = Liquidate { ballots: Vector::empty() };
+      let liquidate = LiquidateBallots { ballots: Vector::empty() };
       move_to(directed_account, liquidate);
     }
 
@@ -70,17 +78,20 @@ module DonorDirectedGovernance {
 
     /// a private function to propose a ballot for a veto. This is called by a verified donor.
 
-    fun propose_veto(user: &signer, directed_account: address, proposal_guid: u64) acquires Veto {
-      let veto = borrow_global_mut<Veto>(directed_account);
-      let ballot = ParticipationVote::new(
+    fun propose_veto(user: &signer, directed_account: address, proposal_guid: u64) acquires VetoBallots {
+      let vetoballots = borrow_global_mut<VetoBallots>(directed_account);
+
+      let v = Veto { guid: proposal_guid };
+      
+      let ballot = ParticipationVote::new<Veto>(
         user, 
-        b"veto",
+        v, // data
         get_enrollment(directed_account),
         DiemConfig::get_current_epoch() + 3, // TODO: needs to adjust with each new vote.
         0
       );
 
-      Vector::push_back(&mut veto.ballots, ballot);
+      Vector::push_back(&mut vetoballots.ballots, ballot);
     }
 
 
