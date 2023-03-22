@@ -61,7 +61,7 @@ script {
     let a = MultiSig::get_authorities(@DaveMultiSig);
     assert!(Vector::length(&a) == 2, 7357002);
 
-    let b = MultiSig::get_n_sigs(@DaveMultiSig);
+    let (b, _) = MultiSig::get_n_of_m_cfg(@DaveMultiSig);
     assert!(b == 1, 7357003);
   }
 }

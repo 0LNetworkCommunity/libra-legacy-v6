@@ -75,7 +75,7 @@ script {
     assert!(Vector::length(&a) == 2, 7357002);
 
     // the governance proposal will silently, we still have 2 signers required
-    let b = MultiSig::get_n_sigs(@DaveMultiSig);
+    let (b, _) = MultiSig::get_n_of_m_cfg(@DaveMultiSig);
     assert!(b == 2, 7357003);
   }
 }
