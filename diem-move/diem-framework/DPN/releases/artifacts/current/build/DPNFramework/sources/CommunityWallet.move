@@ -36,7 +36,6 @@ module CommunityWallet{
     use Std::Vector;
     use Std::Option;
     use DiemFramework::DonorDirected;
-    use DiemFramework::MultiSigPayment;
     use DiemFramework::MultiSig;
     use DiemFramework::Ancestry;
     // use DiemFramework::DiemAccount;
@@ -70,8 +69,6 @@ module CommunityWallet{
     public fun set_comm_wallet(sender: &signer) {
       let addr = Signer::address_of(sender);
       assert!(DonorDirected::is_donor_directed(addr), Errors::invalid_state(ENOT_DONOR_DIRECTED));
-
-      assert!(MultiSigPayment::is_payment_multisig(addr), Errors::invalid_state(ENOT_DONOR_DIRECTED));
       
       if (is_init(addr)) {
         move_to(sender, CommunityWallet{});
@@ -85,8 +82,8 @@ module CommunityWallet{
       is_init(addr) &&
       // has DonorDirected instantiated
       DonorDirected::is_donor_directed(addr) &&
-      // has MultiSigPayment instantiated
-      MultiSigPayment::is_payment_multisig(addr) &&
+      // has MultiSig instantialized
+      MultiSig::is_init(addr) &&
       // multisig has minimum requirement of 3 signatures, and minimum list of 5 signers, and a minimum of 3/5 threshold. I.e. OK to have 4/5 signatures.
       multisig_thresh(addr) &&
       // the multisig authorities are unrelated per Ancestry
@@ -135,19 +132,30 @@ module CommunityWallet{
     //////// MULTISIG TX HELPERS ////////
 
     /// Helper to initialize the PaymentMultisig, but also while confirming that the signers are not related family
+    /// These transactions can be sent directly to DonorDirected, but this is a helper to make it easier to initialize the multisig with the acestry requirements.
 
-    // TODO: this version of Diem, does not allow vector<address> in the script arguments. So we are hard coding this to initialize with three signers. Gross.
+    // TODO: this version of Diem, does not allow vector<address> in the script arguments. So we are hard coding this to initialize with the minimum of 5 signers.
 
-    public(script) fun init_community_multisig(sig: signer, signer_one: address, signer_two: address, signer_three: address, cfg_n_signers: u64) {
+    public(script) fun init_community_multisig(
+      sig: signer,
+      signer_one: address,
+      signer_two: address,
+      signer_three: address,
+      signer_four: address,
+      signer_five: address,
+    ) {
       let init_signers = Vector::singleton(signer_one);
       Vector::push_back(&mut init_signers, signer_two);
       Vector::push_back(&mut init_signers, signer_three);
+      Vector::push_back(&mut init_signers, signer_four);
+      Vector::push_back(&mut init_signers, signer_five);
 
       let (fam, _, _) = Ancestry::any_family_in_list(*&init_signers);
 
       assert!(!fam, Errors::invalid_argument(ESIGNERS_SYBIL));
 
-      MultiSigPayment::init_payment_multisig(&sig, init_signers, cfg_n_signers);
+      DonorDirected::set_donor_directed(&sig);
+      DonorDirected::make_multisig(&sig, 3, init_signers);
     }
 
     /// add signer to multisig, and check if they may be related in Ancestry tree

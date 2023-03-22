@@ -25,7 +25,6 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 -  [Function `is_root_init`](#0x1_DonorDirected_is_root_init)
 -  [Function `set_donor_directed`](#0x1_DonorDirected_set_donor_directed)
 -  [Function `make_multisig`](#0x1_DonorDirected_make_multisig)
--  [Function `finalize_init`](#0x1_DonorDirected_finalize_init)
 -  [Function `is_donor_directed`](#0x1_DonorDirected_is_donor_directed)
 -  [Function `get_root_registry`](#0x1_DonorDirected_get_root_registry)
 -  [Function `new_timed_transfer_multisig`](#0x1_DonorDirected_new_timed_transfer_multisig)
@@ -40,6 +39,8 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 -  [Function `get_pending_timed_transfer_mut`](#0x1_DonorDirected_get_pending_timed_transfer_mut)
 -  [Function `get_index_of_pending`](#0x1_DonorDirected_get_index_of_pending)
 -  [Function `is_frozen`](#0x1_DonorDirected_is_frozen)
+-  [Function `init_donor_directed`](#0x1_DonorDirected_init_donor_directed)
+-  [Function `finalize_init`](#0x1_DonorDirected_finalize_init)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -425,34 +426,6 @@ Note, as with any multisig, the new_authorities cannot include the sponsor, sinc
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_make_multisig">make_multisig</a>(sponsor: &signer, cfg_default_n_sigs: u64, new_authorities: vector&lt;<b>address</b>&gt;) {
   <a href="MultiSig.md#0x1_MultiSig_init_gov">MultiSig::init_gov</a>(sponsor, cfg_default_n_sigs, &new_authorities);
   <a href="MultiSig.md#0x1_MultiSig_init_type">MultiSig::init_type</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(sponsor, <b>true</b>); // "<b>true</b>": We make this multisig instance hold the WithdrawCapability. Even though we don't need it for any <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> pay functions, we can <b>use</b> it <b>to</b> make sure the entire pipeline of private functions scheduling a payment are authorized. Belt and suspenders.
-  <a href="MultiSig.md#0x1_MultiSig_finalize_and_brick">MultiSig::finalize_and_brick</a>(sponsor);
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_DonorDirected_finalize_init"></a>
-
-## Function `finalize_init`
-
-the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.
-
-
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_finalize_init">finalize_init</a>(sponsor: signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_finalize_init">finalize_init</a>(sponsor: signer) {
-  <b>let</b> multisig_address = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&sponsor);
-  <b>assert</b>!(<a href="DonorDirected.md#0x1_DonorDirected_is_donor_directed">is_donor_directed</a>(multisig_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="DonorDirected.md#0x1_DonorDirected_ENOT_INIT_DONOR_DIRECTED">ENOT_INIT_DONOR_DIRECTED</a>));
-  <a href="MultiSig.md#0x1_MultiSig_finalize_and_brick">MultiSig::finalize_and_brick</a>(&sponsor);
 }
 </code></pre>
 
@@ -946,6 +919,63 @@ DonorDirected wallets get frozen if 3 consecutive attempts to transfer are rejec
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_frozen">is_frozen</a>(addr: <b>address</b>): bool <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>{
   <b>let</b> f = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>&gt;(addr);
   f.is_frozen
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DonorDirected_init_donor_directed"></a>
+
+## Function `init_donor_directed`
+
+Initialize the DonorDirected wallet with Three Signers
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_init_donor_directed">init_donor_directed</a>(sig: signer, signer_one: <b>address</b>, signer_two: <b>address</b>, signer_three: <b>address</b>, cfg_n_signers: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_init_donor_directed">init_donor_directed</a>(sig: signer, signer_one: <b>address</b>, signer_two: <b>address</b>, signer_three: <b>address</b>, cfg_n_signers: u64) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a> {
+  <b>let</b> init_signers = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>(signer_one);
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> init_signers, signer_two);
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> init_signers, signer_three);
+
+  <a href="DonorDirected.md#0x1_DonorDirected_set_donor_directed">set_donor_directed</a>(&sig);
+  <a href="DonorDirected.md#0x1_DonorDirected_make_multisig">make_multisig</a>(&sig, cfg_n_signers, init_signers);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DonorDirected_finalize_init"></a>
+
+## Function `finalize_init`
+
+the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_finalize_init">finalize_init</a>(sponsor: signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_finalize_init">finalize_init</a>(sponsor: signer) {
+  <b>let</b> multisig_address = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&sponsor);
+  <b>assert</b>!(<a href="DonorDirected.md#0x1_DonorDirected_is_donor_directed">is_donor_directed</a>(multisig_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="DonorDirected.md#0x1_DonorDirected_ENOT_INIT_DONOR_DIRECTED">ENOT_INIT_DONOR_DIRECTED</a>));
+  <a href="MultiSig.md#0x1_MultiSig_finalize_and_brick">MultiSig::finalize_and_brick</a>(&sponsor);
 }
 </code></pre>
 

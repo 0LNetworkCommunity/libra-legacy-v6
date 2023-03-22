@@ -32,7 +32,6 @@ The CommunityWallets will have the following properties enabled by their owners.
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="MultiSig.md#0x1_MultiSig">0x1::MultiSig</a>;
-<b>use</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment">0x1::MultiSigPayment</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
@@ -193,8 +192,6 @@ The multisig threshold does not equal 3/5
   <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   <b>assert</b>!(<a href="DonorDirected.md#0x1_DonorDirected_is_donor_directed">DonorDirected::is_donor_directed</a>(addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="CommunityWallet.md#0x1_CommunityWallet_ENOT_DONOR_DIRECTED">ENOT_DONOR_DIRECTED</a>));
 
-  <b>assert</b>!(<a href="MultiSigPayment.md#0x1_MultiSigPayment_is_payment_multisig">MultiSigPayment::is_payment_multisig</a>(addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="CommunityWallet.md#0x1_CommunityWallet_ENOT_DONOR_DIRECTED">ENOT_DONOR_DIRECTED</a>));
-
   <b>if</b> (<a href="CommunityWallet.md#0x1_CommunityWallet_is_init">is_init</a>(addr)) {
     <b>move_to</b>(sender, <a href="CommunityWallet.md#0x1_CommunityWallet">CommunityWallet</a>{});
   }
@@ -227,8 +224,8 @@ if it is not qualifying it wont be part of the burn funds matching.
   <a href="CommunityWallet.md#0x1_CommunityWallet_is_init">is_init</a>(addr) &&
   // <b>has</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> instantiated
   <a href="DonorDirected.md#0x1_DonorDirected_is_donor_directed">DonorDirected::is_donor_directed</a>(addr) &&
-  // <b>has</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment">MultiSigPayment</a> instantiated
-  <a href="MultiSigPayment.md#0x1_MultiSigPayment_is_payment_multisig">MultiSigPayment::is_payment_multisig</a>(addr) &&
+  // <b>has</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> instantialized
+  <a href="MultiSig.md#0x1_MultiSig_is_init">MultiSig::is_init</a>(addr) &&
   // multisig <b>has</b> minimum requirement of 3 signatures, and minimum list of 5 signers, and a minimum of 3/5 threshold. I.e. OK <b>to</b> have 4/5 signatures.
   <a href="CommunityWallet.md#0x1_CommunityWallet_multisig_thresh">multisig_thresh</a>(addr) &&
   // the multisig authorities are unrelated per <a href="Ancestry.md#0x1_Ancestry">Ancestry</a>
@@ -309,9 +306,10 @@ if it is not qualifying it wont be part of the burn funds matching.
 ## Function `init_community_multisig`
 
 Helper to initialize the PaymentMultisig, but also while confirming that the signers are not related family
+These transactions can be sent directly to DonorDirected, but this is a helper to make it easier to initialize the multisig with the acestry requirements.
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_init_community_multisig">init_community_multisig</a>(sig: signer, signer_one: <b>address</b>, signer_two: <b>address</b>, signer_three: <b>address</b>, cfg_n_signers: u64)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_init_community_multisig">init_community_multisig</a>(sig: signer, signer_one: <b>address</b>, signer_two: <b>address</b>, signer_three: <b>address</b>, signer_four: <b>address</b>, signer_five: <b>address</b>)
 </code></pre>
 
 
@@ -320,16 +318,26 @@ Helper to initialize the PaymentMultisig, but also while confirming that the sig
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_init_community_multisig">init_community_multisig</a>(sig: signer, signer_one: <b>address</b>, signer_two: <b>address</b>, signer_three: <b>address</b>, cfg_n_signers: u64) {
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_init_community_multisig">init_community_multisig</a>(
+  sig: signer,
+  signer_one: <b>address</b>,
+  signer_two: <b>address</b>,
+  signer_three: <b>address</b>,
+  signer_four: <b>address</b>,
+  signer_five: <b>address</b>,
+) {
   <b>let</b> init_signers = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>(signer_one);
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> init_signers, signer_two);
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> init_signers, signer_three);
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> init_signers, signer_four);
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> init_signers, signer_five);
 
   <b>let</b> (fam, _, _) = <a href="Ancestry.md#0x1_Ancestry_any_family_in_list">Ancestry::any_family_in_list</a>(*&init_signers);
 
   <b>assert</b>!(!fam, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="CommunityWallet.md#0x1_CommunityWallet_ESIGNERS_SYBIL">ESIGNERS_SYBIL</a>));
 
-  <a href="MultiSigPayment.md#0x1_MultiSigPayment_init_payment_multisig">MultiSigPayment::init_payment_multisig</a>(&sig, init_signers, cfg_n_signers);
+  <a href="DonorDirected.md#0x1_DonorDirected_set_donor_directed">DonorDirected::set_donor_directed</a>(&sig);
+  <a href="DonorDirected.md#0x1_DonorDirected_make_multisig">DonorDirected::make_multisig</a>(&sig, 3, init_signers);
 }
 </code></pre>
 

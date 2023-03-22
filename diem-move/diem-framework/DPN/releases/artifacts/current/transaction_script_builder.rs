@@ -2245,7 +2245,17 @@ pub enum ScriptFunctionCall {
     },
 
     /// Helper to initialize the PaymentMultisig, but also while confirming that the signers are not related family
+    /// These transactions can be sent directly to DonorDirected, but this is a helper to make it easier to initialize the multisig with the acestry requirements.
     InitCommunityMultisig {
+        signer_one: AccountAddress,
+        signer_two: AccountAddress,
+        signer_three: AccountAddress,
+        signer_four: AccountAddress,
+        signer_five: AccountAddress,
+    },
+
+    /// Initialize the DonorDirected wallet with Three Signers
+    InitDonorDirected {
         signer_one: AccountAddress,
         signer_two: AccountAddress,
         signer_three: AccountAddress,
@@ -3840,8 +3850,21 @@ impl ScriptFunctionCall {
                 signer_one,
                 signer_two,
                 signer_three,
-                cfg_n_signers,
+                signer_four,
+                signer_five,
             } => encode_init_community_multisig_script_function(
+                signer_one,
+                signer_two,
+                signer_three,
+                signer_four,
+                signer_five,
+            ),
+            InitDonorDirected {
+                signer_one,
+                signer_two,
+                signer_three,
+                cfg_n_signers,
+            } => encode_init_donor_directed_script_function(
                 signer_one,
                 signer_two,
                 signer_three,
@@ -5251,7 +5274,33 @@ pub fn encode_freeze_account_script_function(
 }
 
 /// Helper to initialize the PaymentMultisig, but also while confirming that the signers are not related family
+/// These transactions can be sent directly to DonorDirected, but this is a helper to make it easier to initialize the multisig with the acestry requirements.
 pub fn encode_init_community_multisig_script_function(
+    signer_one: AccountAddress,
+    signer_two: AccountAddress,
+    signer_three: AccountAddress,
+    signer_four: AccountAddress,
+    signer_five: AccountAddress,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("CommunityWallet").to_owned(),
+        ),
+        ident_str!("init_community_multisig").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&signer_one).unwrap(),
+            bcs::to_bytes(&signer_two).unwrap(),
+            bcs::to_bytes(&signer_three).unwrap(),
+            bcs::to_bytes(&signer_four).unwrap(),
+            bcs::to_bytes(&signer_five).unwrap(),
+        ],
+    ))
+}
+
+/// Initialize the DonorDirected wallet with Three Signers
+pub fn encode_init_donor_directed_script_function(
     signer_one: AccountAddress,
     signer_two: AccountAddress,
     signer_three: AccountAddress,
@@ -5260,9 +5309,9 @@ pub fn encode_init_community_multisig_script_function(
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
             AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("CommunityWallet").to_owned(),
+            ident_str!("DonorDirected").to_owned(),
         ),
-        ident_str!("init_community_multisig").to_owned(),
+        ident_str!("init_donor_directed").to_owned(),
         vec![],
         vec![
             bcs::to_bytes(&signer_one).unwrap(),
@@ -8968,6 +9017,22 @@ fn decode_init_community_multisig_script_function(
             signer_one: bcs::from_bytes(script.args().get(0)?).ok()?,
             signer_two: bcs::from_bytes(script.args().get(1)?).ok()?,
             signer_three: bcs::from_bytes(script.args().get(2)?).ok()?,
+            signer_four: bcs::from_bytes(script.args().get(3)?).ok()?,
+            signer_five: bcs::from_bytes(script.args().get(4)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_init_donor_directed_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::InitDonorDirected {
+            signer_one: bcs::from_bytes(script.args().get(0)?).ok()?,
+            signer_two: bcs::from_bytes(script.args().get(1)?).ok()?,
+            signer_three: bcs::from_bytes(script.args().get(2)?).ok()?,
             cfg_n_signers: bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
@@ -10066,6 +10131,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "CommunityWalletinit_community_multisig".to_string(),
             Box::new(decode_init_community_multisig_script_function),
+        );
+        map.insert(
+            "DonorDirectedinit_donor_directed".to_string(),
+            Box::new(decode_init_donor_directed_script_function),
         );
         map.insert(
             "VouchScriptsinit_vouch".to_string(),

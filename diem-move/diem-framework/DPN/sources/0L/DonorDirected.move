@@ -142,15 +142,8 @@ module DonorDirected {
     public fun make_multisig(sponsor: &signer, cfg_default_n_sigs: u64, new_authorities: vector<address>) {
       MultiSig::init_gov(sponsor, cfg_default_n_sigs, &new_authorities);
       MultiSig::init_type<TimedTransfer>(sponsor, true); // "true": We make this multisig instance hold the WithdrawCapability. Even though we don't need it for any DiemAccount pay functions, we can use it to make sure the entire pipeline of private functions scheduling a payment are authorized. Belt and suspenders.
-      MultiSig::finalize_and_brick(sponsor);
     }
 
-    /// the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.
-    public(script) fun finalize_init(sponsor: signer) {
-      let multisig_address = Signer::address_of(&sponsor);
-      assert!(is_donor_directed(multisig_address), Errors::invalid_state(ENOT_INIT_DONOR_DIRECTED));
-      MultiSig::finalize_and_brick(&sponsor);
-    }
 
     /// Check if the account is a donor directed account, and initialized properly.
     public fun is_donor_directed(multisig_address: address):bool {
@@ -418,6 +411,26 @@ module DonorDirected {
       f.is_frozen
     }
 
+    //////// TRANSACTION SCRIPTS ////////
+
+    /// Initialize the DonorDirected wallet with Three Signers
+
+    // TODO: this version of Diem, does not allow vector<address> in the script arguments. So we are hard coding this to initialize with three signers. Gross.
+    public(script) fun init_donor_directed(sig: signer, signer_one: address, signer_two: address, signer_three: address, cfg_n_signers: u64) acquires Registry {
+      let init_signers = Vector::singleton(signer_one);
+      Vector::push_back(&mut init_signers, signer_two);
+      Vector::push_back(&mut init_signers, signer_three);
+
+      set_donor_directed(&sig);
+      make_multisig(&sig, cfg_n_signers, init_signers);
+    }
+    
+    /// the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.
+    public(script) fun finalize_init(sponsor: signer) {
+      let multisig_address = Signer::address_of(&sponsor);
+      assert!(is_donor_directed(multisig_address), Errors::invalid_state(ENOT_INIT_DONOR_DIRECTED));
+      MultiSig::finalize_and_brick(&sponsor);
+    }
 
 
 }

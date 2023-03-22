@@ -162,10 +162,6 @@ module MultiSig {
     exists<Action<ProposalData>>(addr)
   }
 
-
-
-
-
   /// An initial "sponsor" who is the signer of the initialization account calls this function.
   // This function creates the data structures, but also IMPORTANTLY it rotates the AuthKey of the account to a system-wide unusuable key (b"brick_all_your_base_are_belong_to_us").
   public fun init_type<ProposalData: key + store >(
@@ -175,8 +171,6 @@ module MultiSig {
     let multisig_address = Signer::address_of(sig);
     // TODO: there is no way of creating a new Action by multisig. The "signer" would need to be spoofed, which DiemAccount does only in specific and scary situations (e.g. vm_create_account_migration)
 
-  
-    
     assert!(is_init(multisig_address), Errors::invalid_argument(EGOV_NOT_INITIALIZED));
 
     assert!(!exists<Action<ProposalData>>(multisig_address), Errors::invalid_argument(EACTION_ALREADY_EXISTS));
@@ -199,7 +193,6 @@ module MultiSig {
         rejected: Vector::empty(),
       });
   }
-
 
 
   fun maybe_extract_withdraw_cap(sig: &signer) acquires MultiSig {
