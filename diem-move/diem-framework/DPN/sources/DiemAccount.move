@@ -1377,6 +1377,12 @@ module DiemFramework::DiemAccount {
         ensures spec_holds_own_withdraw_cap(cap_addr);
     }
 
+    //////// 0L ////////
+    /// getter for the withdraw capability's account_address
+    public fun get_withdraw_cap_address(cap: &WithdrawCapability): address {
+        cap.account_address
+    }
+
 
 
     /////// 0L /////////

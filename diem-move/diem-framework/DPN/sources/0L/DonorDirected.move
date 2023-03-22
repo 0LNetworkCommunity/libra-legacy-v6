@@ -31,7 +31,7 @@ module DonorDirected {
     use DiemFramework::DiemSystem;
     use DiemFramework::NodeWeight;
     use DiemFramework::MultiSig;
-    // use DiemFramework::DiemAccount;
+    use DiemFramework::DiemAccount::{Self, WithdrawCapability};
     // use DiemFramework::GAS::GAS;
     use DiemFramework::Debug::print;
 
@@ -153,7 +153,7 @@ module DonorDirected {
     /// Note, as with any multisig, the new_authorities cannot include the sponsor, since that account will no longer be able to sign transactions.
     public fun make_multisig(sponsor: &signer, cfg_default_n_sigs: u64, new_authorities: vector<address>) {
       MultiSig::init_gov(sponsor, cfg_default_n_sigs, &new_authorities);
-      MultiSig::init_type<TimedTransfer>(sponsor, false); // cannot withdraw through multisig process
+      MultiSig::init_type<TimedTransfer>(sponsor, true); // "true": We make this multisig instance hold the WithdrawCapability. Even though we don't need it for any DiemAccount pay functions, we can use it to make sure the entire pipeline of private functions scheduling a payment are authorized. Belt and suspenders.
       MultiSig::finalize_and_brick(sponsor);
     }
 
@@ -164,8 +164,7 @@ module DonorDirected {
       MultiSig::finalize_and_brick(&sponsor);
     }
 
-
-
+    /// Check if the account is a donor directed account, and initialized properly.
     public fun is_donor_directed(multisig_address: address):bool {
       MultiSig::is_init(multisig_address) && 
       MultiSig::has_action<DonorDirectedProp>(multisig_address) &&
@@ -186,6 +185,36 @@ module DonorDirected {
       }
     }
 
+    ///////// MULTISIG ACTIONS TO SCHEDULE A TIMED TRANSFER /////////
+    /// As in any MultiSig instance, the transaction which proposes the action (the scheduled transfer) must be signed by an authority on the MultiSig.
+    /// The same function is the handler for the approval case of the MultiSig action.
+    /// Since Donor Directed accounts are involved with sensitive assets, we have moved the WithdrawCapability to the MultiSig instance. Even though we don't need it for any DiemAccount functions for paying, we use it to ensure no private functions related to assets can be called. Belt and suspenders.
+
+    /// Returns the GUID of the transfer.
+    public fun new_timed_transfer_multisig(
+      sender: &signer, multisig_address: address, payee: address, value: u64, description: vector<u8>
+    ): Option<u64> acquires DonorDirected {
+      let p = DonorDirectedProp {
+        payee,
+        value,
+        description: copy description,
+      };
+
+      let (passed, withdraw_cap_opt) = MultiSig::propose<DonorDirectedProp>(sender, multisig_address, p, Option::none());
+
+      let id_opt = if (passed && Option::is_some(&withdraw_cap_opt)) {
+        let id = schedule(Option::borrow(&withdraw_cap_opt), payee, value, description);
+        Option::some(id)
+      } else {
+        Option::none()
+      };
+
+      MultiSig::maybe_restore_withdraw_cap(sender, multisig_address, withdraw_cap_opt);
+
+      id_opt
+      
+
+    }
 
     /// Private function which handles the logic of adding a new timed transfer
     /// DANGER upstream functions need to check the sender is authorized.
@@ -200,9 +229,10 @@ module DonorDirected {
     // the rejected list.
 
     fun schedule(
-      multisig_address: address, payee: address, value: u64, description: vector<u8>
+      withdraw_capability: &WithdrawCapability, payee: address, value: u64, description: vector<u8>
     ): u64 acquires DonorDirected {
-
+      
+      let multisig_address = DiemAccount::get_withdraw_cap_address(withdraw_capability);
       let transfers = borrow_global_mut<DonorDirected>(multisig_address);
       transfers.max_uid = transfers.max_uid + 1;
       
@@ -225,26 +255,6 @@ module DonorDirected {
       Vector::push_back<TimedTransfer>(&mut transfers.proposed, t);
       return transfers.max_uid
     }
-
-
-    public fun new_timed_transfer_multisig(
-      sender: &signer, multisig_address: address, payee: address, value: u64, description: vector<u8>
-    ): Option<u64> acquires DonorDirected {
-      let p = DonorDirectedProp {
-        payee,
-        value,
-        description: copy description,
-      };
-
-      let (passed, opt) = MultiSig::propose<DonorDirectedProp>(sender, multisig_address, p, Option::none());
-      MultiSig::maybe_restore_withdraw_cap(sender, multisig_address, opt);
-      if (passed) {
-        return Option::some(schedule(multisig_address, payee, value, description))
-      };
-      Option::none()
-
-    }
-
 
   // A validator casts a vote to veto a proposed/pending transaction 
   // by a DonorDirected wallet.
