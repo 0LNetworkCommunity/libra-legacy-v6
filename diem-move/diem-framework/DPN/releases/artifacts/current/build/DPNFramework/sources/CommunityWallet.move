@@ -39,8 +39,8 @@ module CommunityWallet{
     use DiemFramework::MultiSigPayment;
     use DiemFramework::MultiSig;
     use DiemFramework::Ancestry;
-    use DiemFramework::DiemAccount;
-
+    // use DiemFramework::DiemAccount;
+    
     const ENOT_AUTHORIZED: u64 = 023;
 
     const ENOT_QUALIFY_COMMUNITY_WALLET: u64 = 12000;
@@ -117,20 +117,20 @@ module CommunityWallet{
       fam
     }
 
-    public fun new_timed_transfer(
-      sender: &signer, multisig_wallet: address, payee: address, value: u64, description: vector<u8>
-    ): u64  {
+    // public fun new_timed_transfer(
+    //   sender: &signer, multisig_wallet: address, payee: address, value: u64, description: vector<u8>
+    // ): u64  {
 
-      // firstly check if payee is a slow wallet
-      assert!(DiemAccount::is_slow(payee), Errors::invalid_argument(EPAYEE_NOT_SLOW_WALLET));
+    //   // firstly check if payee is a slow wallet
+    //   assert!(DiemAccount::is_slow(payee), Errors::invalid_argument(EPAYEE_NOT_SLOW_WALLET));
 
-      assert!(
-        is_comm(multisig_wallet),
-        Errors::requires_role(ENOT_QUALIFY_COMMUNITY_WALLET)
-      );
+    //   assert!(
+    //     is_comm(multisig_wallet),
+    //     Errors::requires_role(ENOT_QUALIFY_COMMUNITY_WALLET)
+    //   );
 
-      DonorDirected::new_timed_transfer(sender, payee, value, description)
-    }
+    //   DonorDirected::new_timed_transfer(sender, payee, value, description)
+    // }
 
     //////// MULTISIG TX HELPERS ////////
 

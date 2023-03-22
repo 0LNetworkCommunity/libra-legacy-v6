@@ -1784,6 +1784,7 @@ pub enum ScriptFunctionCall {
     ClaimMakeWhole {},
 
     CommunityTransfer {
+        multisig_address: AccountAddress,
         destination: AccountAddress,
         unscaled_value: u64,
         memo: Bytes,
@@ -2163,6 +2164,9 @@ pub enum ScriptFunctionCall {
     DemoE2e {
         world: u64,
     },
+
+    /// the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.
+    FinalizeInit {},
 
     /// # Summary
     /// Shifts the window held by the CRSN resource published under `account`
@@ -3708,10 +3712,16 @@ impl ScriptFunctionCall {
             } => encode_cancel_burn_with_amount_script_function(token, preburn_address, amount),
             ClaimMakeWhole {} => encode_claim_make_whole_script_function(),
             CommunityTransfer {
+                multisig_address,
                 destination,
                 unscaled_value,
                 memo,
-            } => encode_community_transfer_script_function(destination, unscaled_value, memo),
+            } => encode_community_transfer_script_function(
+                multisig_address,
+                destination,
+                unscaled_value,
+                memo,
+            ),
             CreateAccUser {
                 challenge,
                 solution,
@@ -3820,6 +3830,7 @@ impl ScriptFunctionCall {
             ),
             CreateVaspDomains {} => encode_create_vasp_domains_script_function(),
             DemoE2e { world } => encode_demo_e2e_script_function(world),
+            FinalizeInit {} => encode_finalize_init_script_function(),
             ForceExpire { shift_amount } => encode_force_expire_script_function(shift_amount),
             FreezeAccount {
                 sliding_nonce,
@@ -4577,6 +4588,7 @@ pub fn encode_claim_make_whole_script_function() -> TransactionPayload {
 }
 
 pub fn encode_community_transfer_script_function(
+    multisig_address: AccountAddress,
     destination: AccountAddress,
     unscaled_value: u64,
     memo: Vec<u8>,
@@ -4589,6 +4601,7 @@ pub fn encode_community_transfer_script_function(
         ident_str!("community_transfer").to_owned(),
         vec![],
         vec![
+            bcs::to_bytes(&multisig_address).unwrap(),
             bcs::to_bytes(&destination).unwrap(),
             bcs::to_bytes(&unscaled_value).unwrap(),
             bcs::to_bytes(&memo).unwrap(),
@@ -5124,6 +5137,19 @@ pub fn encode_demo_e2e_script_function(world: u64) -> TransactionPayload {
         ident_str!("demo_e2e").to_owned(),
         vec![],
         vec![bcs::to_bytes(&world).unwrap()],
+    ))
+}
+
+/// the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.
+pub fn encode_finalize_init_script_function() -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("DonorDirected").to_owned(),
+        ),
+        ident_str!("finalize_init").to_owned(),
+        vec![],
+        vec![],
     ))
 }
 
@@ -8730,9 +8756,10 @@ fn decode_community_transfer_script_function(
 ) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::CommunityTransfer {
-            destination: bcs::from_bytes(script.args().get(0)?).ok()?,
-            unscaled_value: bcs::from_bytes(script.args().get(1)?).ok()?,
-            memo: bcs::from_bytes(script.args().get(2)?).ok()?,
+            multisig_address: bcs::from_bytes(script.args().get(0)?).ok()?,
+            destination: bcs::from_bytes(script.args().get(1)?).ok()?,
+            unscaled_value: bcs::from_bytes(script.args().get(2)?).ok()?,
+            memo: bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
@@ -8895,6 +8922,16 @@ fn decode_demo_e2e_script_function(payload: &TransactionPayload) -> Option<Scrip
         Some(ScriptFunctionCall::DemoE2e {
             world: bcs::from_bytes(script.args().get(0)?).ok()?,
         })
+    } else {
+        None
+    }
+}
+
+fn decode_finalize_init_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(_script) = payload {
+        Some(ScriptFunctionCall::FinalizeInit {})
     } else {
         None
     }
@@ -10013,6 +10050,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "DemoScriptsdemo_e2e".to_string(),
             Box::new(decode_demo_e2e_script_function),
+        );
+        map.insert(
+            "DonorDirectedfinalize_init".to_string(),
+            Box::new(decode_finalize_init_script_function),
         );
         map.insert(
             "AccountAdministrationScriptsforce_expire".to_string(),

@@ -23,13 +23,11 @@ The CommunityWallets will have the following properties enabled by their owners.
 -  [Function `is_comm`](#0x1_CommunityWallet_is_comm)
 -  [Function `multisig_thresh`](#0x1_CommunityWallet_multisig_thresh)
 -  [Function `multisig_common_ancestry`](#0x1_CommunityWallet_multisig_common_ancestry)
--  [Function `new_timed_transfer`](#0x1_CommunityWallet_new_timed_transfer)
 -  [Function `init_community_multisig`](#0x1_CommunityWallet_init_community_multisig)
 -  [Function `add_signer_community_multisig`](#0x1_CommunityWallet_add_signer_community_multisig)
 
 
 <pre><code><b>use</b> <a href="Ancestry.md#0x1_Ancestry">0x1::Ancestry</a>;
-<b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DonorDirected.md#0x1_DonorDirected">0x1::DonorDirected</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
@@ -299,41 +297,6 @@ if it is not qualifying it wont be part of the burn funds matching.
   <b>let</b> (fam, _, _) = <a href="Ancestry.md#0x1_Ancestry_any_family_in_list">Ancestry::any_family_in_list</a>(list);
 
   fam
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_CommunityWallet_new_timed_transfer"></a>
-
-## Function `new_timed_transfer`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_new_timed_transfer">new_timed_transfer</a>(sender: &signer, multisig_wallet: <b>address</b>, payee: <b>address</b>, value: u64, description: vector&lt;u8&gt;): u64
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_new_timed_transfer">new_timed_transfer</a>(
-  sender: &signer, multisig_wallet: <b>address</b>, payee: <b>address</b>, value: u64, description: vector&lt;u8&gt;
-): u64  {
-
-  // firstly check <b>if</b> payee is a slow wallet
-  <b>assert</b>!(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(payee), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="CommunityWallet.md#0x1_CommunityWallet_EPAYEE_NOT_SLOW_WALLET">EPAYEE_NOT_SLOW_WALLET</a>));
-
-  <b>assert</b>!(
-    <a href="CommunityWallet.md#0x1_CommunityWallet_is_comm">is_comm</a>(multisig_wallet),
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(<a href="CommunityWallet.md#0x1_CommunityWallet_ENOT_QUALIFY_COMMUNITY_WALLET">ENOT_QUALIFY_COMMUNITY_WALLET</a>)
-  );
-
-  <a href="DonorDirected.md#0x1_DonorDirected_new_timed_transfer">DonorDirected::new_timed_transfer</a>(sender, payee, value, description)
 }
 </code></pre>
 

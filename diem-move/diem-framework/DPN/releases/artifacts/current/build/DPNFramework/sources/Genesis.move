@@ -156,7 +156,7 @@ module DiemFramework::Genesis {
         Oracle::initialize(dr_account);
         TowerState::init_miner_list_and_stats(dr_account);
         TowerState::init_difficulty(dr_account);
-        DonorDirected::init(dr_account);
+        DonorDirected::init_root_registry(dr_account);
         DiemAccount::vm_init_slow(dr_account);
         Migrations::init(dr_account);
 

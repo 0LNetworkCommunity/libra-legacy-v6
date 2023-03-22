@@ -21,7 +21,7 @@ module Burn {
 
   public fun reset_ratios(vm: &signer) acquires DepositInfo {
     CoreAddresses::assert_diem_root(vm);
-    let list = DonorDirected::get_comm_list();
+    let list = DonorDirected::get_root_registry();
 
     let len = Vector::length(&list);
     let i = 0;

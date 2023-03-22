@@ -35,7 +35,7 @@
   };
 
   <b>if</b> (type_of == 1) {
-      <a href="DonorDirected.md#0x1_DonorDirected_set_comm">DonorDirected::set_comm</a>(&sender);
+      <a href="DonorDirected.md#0x1_DonorDirected_set_donor_directed">DonorDirected::set_donor_directed</a>(&sender);
   };
 }
 </code></pre>

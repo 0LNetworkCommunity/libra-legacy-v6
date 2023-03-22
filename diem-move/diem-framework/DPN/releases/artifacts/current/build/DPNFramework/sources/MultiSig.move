@@ -150,11 +150,14 @@ module MultiSig {
     }
   }
 
-  fun is_init(multisig_address: address): bool {
+  //////// Helper functions to check initialization //////////
+  /// Is the Multisig Governance initialized?
+  public fun is_init(multisig_address: address): bool {
     exists<MultiSig>(multisig_address) &&
     exists<Action<PropGovSigners>>(multisig_address)
   }
 
+  /// Has a multisig struct for a given action been created?
   public fun has_action<ProposalData: key + store>(addr: address):bool {
     exists<Action<ProposalData>>(addr)
   }
@@ -212,7 +215,8 @@ module MultiSig {
     }
   }
   
-  public fun maybe_restore_withdraw_cap(multisig_addr: address, w: Option<WithdrawCapability>) acquires MultiSig {
+  public fun maybe_restore_withdraw_cap(sig: &signer, multisig_addr: address, w: Option<WithdrawCapability>) acquires MultiSig {
+    assert_authorized(sig, multisig_addr);
     assert!(exists<MultiSig>(multisig_addr), Errors::invalid_argument(ENOT_AUTHORIZED));
     if (Option::is_some(&w)) {
       let ms = borrow_global_mut<MultiSig>(multisig_addr);
@@ -243,7 +247,12 @@ module MultiSig {
   // Only the first proposer can set the expiration time. It will be ignored when a duplicate is caught.
 
 
-  public fun propose<ProposalData: key + store + copy + drop>(sig: &signer, multisig_address: address, proposal_data: ProposalData, duration_epochs: Option<u64>):(bool, Option<WithdrawCapability>) acquires MultiSig, Action {
+  public fun propose<ProposalData: key + store + copy + drop>(
+    sig: &signer,
+    multisig_address: address,
+    proposal_data: ProposalData,
+    duration_epochs: Option<u64>
+  ):(bool, Option<WithdrawCapability>) acquires MultiSig, Action {
     print(&20001);
     assert_authorized(sig, multisig_address);
 
@@ -472,7 +481,7 @@ module MultiSig {
        maybe_update_threshold(ms, &prop.n_of_m);
     };
 
-    maybe_restore_withdraw_cap(multisig_address, withdraw_opt);
+    maybe_restore_withdraw_cap(sig, multisig_address, withdraw_opt);
   }
 
 fun maybe_update_authorities(ms: &mut MultiSig, add_remove: bool, addresses: vector<address>) {

@@ -114,7 +114,7 @@ module MultiSigPayment {
       Option::fill(&mut cap, c);
     };
     
-    MultiSig::maybe_restore_withdraw_cap(multisig_addr, cap)
+    MultiSig::maybe_restore_withdraw_cap(sig, multisig_addr, cap)
   }
 
   public fun is_payment_multisig(addr: address):bool {

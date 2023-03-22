@@ -10,7 +10,7 @@ module WalletScripts {
       };
 
       if (type_of == 1) {
-          DonorDirected::set_comm(&sender);
+          DonorDirected::set_donor_directed(&sender);
       };
     }
 }

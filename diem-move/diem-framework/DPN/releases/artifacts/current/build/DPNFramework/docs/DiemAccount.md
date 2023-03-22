@@ -2817,7 +2817,7 @@ Return a unique capability granting permission to withdraw from the sender's acc
 
     /////// 0L /////////
     // Community wallets have own transfer mechanism.
-    // <b>let</b> community_wallets = <a href="DonorDirected.md#0x1_DonorDirected_get_comm_list">DonorDirected::get_comm_list</a>();
+    // <b>let</b> community_wallets = DonorDirected::get_comm_list();
     // <b>assert</b>!(
     //     !<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&community_wallets, &sender_addr),
     //     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)

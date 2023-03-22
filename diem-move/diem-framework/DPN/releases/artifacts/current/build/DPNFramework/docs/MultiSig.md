@@ -433,9 +433,10 @@ The owner of this account can't be an authority, since it will subsequently be b
 
 ## Function `is_init`
 
+Is the Multisig Governance initialized?
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_is_init">is_init</a>(multisig_address: <b>address</b>): bool
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_is_init">is_init</a>(multisig_address: <b>address</b>): bool
 </code></pre>
 
 
@@ -444,7 +445,7 @@ The owner of this account can't be an authority, since it will subsequently be b
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_is_init">is_init</a>(multisig_address: <b>address</b>): bool {
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_is_init">is_init</a>(multisig_address: <b>address</b>): bool {
   <b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address) &&
   <b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt;&gt;(multisig_address)
 }
@@ -458,6 +459,7 @@ The owner of this account can't be an authority, since it will subsequently be b
 
 ## Function `has_action`
 
+Has a multisig struct for a given action been created?
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_has_action">has_action</a>&lt;ProposalData: store, key&gt;(addr: <b>address</b>): bool
@@ -570,7 +572,7 @@ An initial "sponsor" who is the signer of the initialization account calls this 
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">maybe_restore_withdraw_cap</a>(multisig_addr: <b>address</b>, w: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">maybe_restore_withdraw_cap</a>(sig: &signer, multisig_addr: <b>address</b>, w: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>&gt;)
 </code></pre>
 
 
@@ -579,7 +581,8 @@ An initial "sponsor" who is the signer of the initialization account calls this 
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">maybe_restore_withdraw_cap</a>(multisig_addr: <b>address</b>, w: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;WithdrawCapability&gt;) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">maybe_restore_withdraw_cap</a>(sig: &signer, multisig_addr: <b>address</b>, w: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;WithdrawCapability&gt;) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
+  <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>(sig, multisig_addr);
   <b>assert</b>!(<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>));
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&w)) {
     <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_addr);
@@ -660,7 +663,12 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_propose">propose</a>&lt;ProposalData: key + store + <b>copy</b> + drop&gt;(sig: &signer, multisig_address: <b>address</b>, proposal_data: ProposalData, duration_epochs: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt;):(bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;WithdrawCapability&gt;) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_propose">propose</a>&lt;ProposalData: key + store + <b>copy</b> + drop&gt;(
+  sig: &signer,
+  multisig_address: <b>address</b>,
+  proposal_data: ProposalData,
+  duration_epochs: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt;
+):(bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;WithdrawCapability&gt;) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
   print(&20001);
   <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>(sig, multisig_address);
 
@@ -1068,7 +1076,7 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
      <a href="MultiSig.md#0x1_MultiSig_maybe_update_threshold">maybe_update_threshold</a>(ms, &prop.n_of_m);
   };
 
-  <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">maybe_restore_withdraw_cap</a>(multisig_address, withdraw_opt);
+  <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">maybe_restore_withdraw_cap</a>(sig, multisig_address, withdraw_opt);
 }
 </code></pre>
 

@@ -14,6 +14,7 @@
 <b>use</b> <a href="DonorDirected.md#0x1_DonorDirected">0x1::DonorDirected</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 </code></pre>
 
@@ -67,7 +68,7 @@
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_transfer.md#0x1_TransferScripts_community_transfer">community_transfer</a>(sender: signer, destination: <b>address</b>, unscaled_value: u64, memo: vector&lt;u8&gt;)
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_transfer.md#0x1_TransferScripts_community_transfer">community_transfer</a>(sender: signer, multisig_address: <b>address</b>, destination: <b>address</b>, unscaled_value: u64, memo: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -78,6 +79,7 @@
 
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_transfer.md#0x1_TransferScripts_community_transfer">community_transfer</a>(
     sender: signer,
+    multisig_address: <b>address</b>,
     destination: <b>address</b>,
     unscaled_value: u64,
     memo: vector&lt;u8&gt;,
@@ -96,8 +98,8 @@
     // checking in <a href="CommunityWallet.md#0x1_CommunityWallet">CommunityWallet</a> <b>module</b>
     <b>assert</b>!(<a href="DiemAccount.md#0x1_DiemAccount_is_slow">DiemAccount::is_slow</a>(destination), 30002);
 
-    <b>let</b> uid = <a href="CommunityWallet.md#0x1_CommunityWallet_new_timed_transfer">CommunityWallet::new_timed_transfer</a>(&sender, sender_addr, destination, value, memo);
-    <b>assert</b>!(<a href="DonorDirected.md#0x1_DonorDirected_transfer_is_proposed">DonorDirected::transfer_is_proposed</a>(uid), 30003);
+    <b>let</b> _uid = <a href="DonorDirected.md#0x1_DonorDirected_new_timed_transfer_multisig">DonorDirected::new_timed_transfer_multisig</a>(&sender, multisig_address, destination, value, memo);
+    // <b>assert</b>!(<a href="DonorDirected.md#0x1_DonorDirected_transfer_is_proposed">DonorDirected::transfer_is_proposed</a>(uid, multisig_address), 30003);
 }
 </code></pre>
 

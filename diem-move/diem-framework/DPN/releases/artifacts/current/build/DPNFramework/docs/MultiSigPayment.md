@@ -218,7 +218,7 @@ create a payment object, whcih can be send in a proposal.
     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_fill">Option::fill</a>(&<b>mut</b> cap, c);
   };
 
-  <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">MultiSig::maybe_restore_withdraw_cap</a>(multisig_addr, cap)
+  <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">MultiSig::maybe_restore_withdraw_cap</a>(sig, multisig_addr, cap)
 }
 </code></pre>
 

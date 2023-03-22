@@ -224,7 +224,7 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
     <a href="Oracle.md#0x1_Oracle_initialize">Oracle::initialize</a>(dr_account);
     <a href="TowerState.md#0x1_TowerState_init_miner_list_and_stats">TowerState::init_miner_list_and_stats</a>(dr_account);
     <a href="TowerState.md#0x1_TowerState_init_difficulty">TowerState::init_difficulty</a>(dr_account);
-    <a href="DonorDirected.md#0x1_DonorDirected_init">DonorDirected::init</a>(dr_account);
+    <a href="DonorDirected.md#0x1_DonorDirected_init_root_registry">DonorDirected::init_root_registry</a>(dr_account);
     <a href="DiemAccount.md#0x1_DiemAccount_vm_init_slow">DiemAccount::vm_init_slow</a>(dr_account);
     <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(dr_account);
 
