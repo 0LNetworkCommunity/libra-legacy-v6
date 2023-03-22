@@ -24,6 +24,7 @@ A module for generating globally unique identifiers
 -  [Function `id_creation_num`](#0x1_GUID_id_creation_num)
 -  [Function `eq_id`](#0x1_GUID_eq_id)
 -  [Function `get_next_creation_num`](#0x1_GUID_get_next_creation_num)
+-  [Function `get_capability_address`](#0x1_GUID_get_capability_address)
 
 
 <pre><code><b>use</b> <a href="Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -497,6 +498,30 @@ Return the number of the next GUID to be created by <code>addr</code>
     } <b>else</b> {
         <b>borrow_global</b>&lt;<a href="GUID.md#0x1_GUID_Generator">Generator</a>&gt;(addr).counter
     }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_GUID_get_capability_address"></a>
+
+## Function `get_capability_address`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="GUID.md#0x1_GUID_get_capability_address">get_capability_address</a>(cap: &<a href="GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>): <b>address</b>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="GUID.md#0x1_GUID_get_capability_address">get_capability_address</a>(cap: &<a href="GUID.md#0x1_GUID_CreateCapability">CreateCapability</a>): <b>address</b> {
+    *&cap.addr
 }
 </code></pre>
 

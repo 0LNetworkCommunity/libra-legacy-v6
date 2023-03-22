@@ -51,6 +51,10 @@ address DiemFramework {
     const EALREADY_VOTED: u64 = 300013;
     /// The voter has not voted yet. Cannot retract a vote.
     const ENOT_VOTED: u64 = 300014;
+    /// No ballot found under that GUID
+    const ENO_BALLOT_FOUND: u64 = 300015;
+    /// Bad status enum
+    const EBAD_STATUS_ENUM: u64 = 300016;
 
     // TODO: These may be variable on a per project basis. And these
     // should just be defaults.
@@ -61,13 +65,95 @@ address DiemFramework {
     const THRESH_AT_HIGH_TURNOUT_Y2: u64 = 5100;// 51% pass at high turnout
     const MINORITY_EXT_MARGIN: u64 = 500; // The change in vote gap between majority and minority must have changed in the last day by this amount to for the minority to get an extension.
 
-    // Any user account can create an election.
-    // usually a smart contract will be the one to create the election 
+    // poor man's enum for the ballot status. Wen enum?
+    const PENDING: u8  = 1;
+    const APPROVED: u8 = 2;
+    const REJECTED: u8 = 3;
+
+
+    // Participation is a Library for Creating Ballots or Polls
+    // Polls is a helper to keep track of Ballots but it is not required.
+
+    // usually a smart contract will be the one to create the ballots 
     // connected to some contract logic.
+
+    // A ballot that passes, can be used for lazy triggering of actions related to the ballot.
+
     // The contract may have multiple ballots at a given time.
     // Historical completed ballots are also stored in a separate vector.
+    // Developers can use Poll struct to instantiate an election.
+    // or then can use Ballot, for a custom voting solution.
+    // lastly the developer can simply wrap refereundum into another struct with more context.
 
-    struct Ballot<Data> has key, store { // Note, this is a hot potato. Any methods chaning it must return the struct to caller.
+    struct Poll<Data> has key, store, drop {
+      ballots_pending: vector<Ballot<Data>>,
+      ballots_approved: vector<Ballot<Data>>,
+      ballots_rejected: vector<Ballot<Data>>,
+    }
+
+    public fun new_poll<Data: copy + store>(): Poll<Data> {
+      Poll {
+        ballots_pending: Vector::empty(),
+        ballots_approved: Vector::empty(),
+        ballots_rejected: Vector::empty(),
+      }
+    }
+
+    public fun propose_ballot<Data: copy + store>(
+      guid_cap: &GUID::CreateCapability,
+      poll: &mut Poll<Data>,
+      data: Data,
+      max_vote_enrollment: u64,
+      deadline: u64,
+      max_extensions: u64,
+    ): &mut Ballot<Data> {
+      let ballot = new_ballot(guid_cap, data, max_vote_enrollment, deadline, max_extensions);
+      let len = Vector::length(&poll.ballots_pending);
+      Vector::push_back(&mut poll.ballots_pending, ballot);
+      Vector::borrow_mut(&mut poll.ballots_pending, len + 1)
+    }
+    /// private function to search in the ballots for an existsing veto. Returns and option type with the Ballot id.
+    public fun get_ballot_mut<Data: copy + store> (poll: &mut Poll<Data>, proposal_guid: &GUID::ID, status_enum: u8): &mut Ballot<Data> {
+      
+      let (found, idx) = find_index_of_ballot(poll, proposal_guid, status_enum);
+      assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
+
+      let list = get_list_ballots_by_enum<Data>(poll, status_enum);
+
+      Vector::borrow_mut(list, idx)
+    }
+
+    fun find_index_of_ballot<Data: copy + store>(poll: &mut Poll<Data>, proposal_guid: &GUID::ID, status_enum: u8): (bool, u64) {
+
+     let list = get_list_ballots_by_enum<Data>(poll, status_enum);
+
+      let i = 0;
+      while (i < Vector::length(list)) {
+        let b = Vector::borrow(list, i);
+        if (&get_ballot_id(b) == proposal_guid) {
+          return (true, i)
+        };
+        i = i + 1;
+      };
+
+      (false, 0)
+    }
+
+    fun get_list_ballots_by_enum<Data: copy + store>(poll: &mut Poll<Data>, status_enum: u8): &mut vector<Ballot<Data>> {
+     if (status_enum == PENDING) {
+        &mut poll.ballots_pending
+      } else if (status_enum == APPROVED) {
+        &mut poll.ballots_approved
+      } else if (status_enum == REJECTED) {
+        &mut poll.ballots_rejected
+      } else {
+        assert!(false, Errors::invalid_argument(EBAD_STATUS_ENUM));
+        &mut poll.ballots_rejected // dummy return
+      }
+    }
+
+
+    struct Ballot<Data> has key, store, drop { // Note, this is a hot potato. Any methods chaning it must return the struct to caller.
       guid: GUID,
       data: Data, // TODO: change to ascii string
       cfg_deadline: u64, // original deadline, which may be extended. Note dedaline is at the END of this epoch (cfg_deadline + 1 stops taking votes)
@@ -99,15 +185,15 @@ address DiemFramework {
       elections: vector<VoteReceipt>,
     }
 
-    public fun new<Data: copy + store>(
-      sig: &signer,
+    public fun new_ballot<Data: copy + store>(
+      guid_cap: &GUID::CreateCapability,
       data: Data,
       max_vote_enrollment: u64,
       deadline: u64,
       max_extensions: u64,
     ): Ballot<Data> {
         Ballot<Data> {
-          guid: GUID::create(sig),
+          guid: GUID::create_with_capability(GUID::get_capability_address(guid_cap), guid_cap),
           data,
           cfg_deadline: deadline,
           cfg_max_extensions: max_extensions, // 0 means infinite extensions
@@ -459,9 +545,10 @@ address DiemFramework {
       
     ): GUID::ID {
       assert!(Testnet::is_testnet(), 0);
-      let ballot = ParticipationVote::new<EmptyType>(sig, data, deadline, max_vote_enrollment, max_extensions);
+      let cap = GUID::gen_create_capability(sig);
+      let ballot = ParticipationVote::new_ballot<EmptyType>(&cap, data, deadline, max_vote_enrollment, max_extensions);
 
-      let id = ParticipationVote::get_ballot_id(&ballot);
+      let id = ParticipationVote::get_ballot_id<EmptyType>(&ballot);
       move_to(sig, Vote { ballot });
       id
     }

@@ -13,13 +13,12 @@ address DiemFramework {
 module DonorDirectedGovernance {
     friend DiemFramework::DonorDirected;
 
-    use Std::Vector;
     use Std::Errors;
     use Std::Signer;
     // use Std::Option::{Self, Option};
     use Std::GUID;
     use DiemFramework::Receipts;
-    use DiemFramework::ParticipationVote::{Self, Ballot};
+    use DiemFramework::ParticipationVote::{Self, Poll, Ballot};
     use DiemFramework::DiemConfig;
     use DiemFramework::DiemAccount;
 
@@ -29,30 +28,31 @@ module DonorDirectedGovernance {
     const ENO_BALLOT_FOUND: u64 = 220001;
 
     /// Data struct to store all the governance Ballots for vetos
-
-    struct VetoBallots has key {
-      ballots: vector<ParticipationVote::Ballot<Veto>>,
+    /// allows for a generic type of Governance action, using the Participation Vote Poll type to keep track of ballots
+    struct Governance<GovAction> has key {
+      poll: Poll<GovAction>,
     }
 
+    /// this is a GovAction type for veto
     struct Veto has copy, store {
       guid: u64,
     }
 
-
-    /// Data struct to store all governance Ballots for liquidation
-
-    struct LiquidateBallots has key {
-      ballots: vector<ParticipationVote::Ballot<Liquidate>>,
-    }
-
+    /// this is a GovAction type for liquidation
     struct Liquidate has copy, store {}
 
 
 
     public fun init_donor_governance(directed_account: &signer) {
-      let veto = VetoBallots { ballots: Vector::empty() };
+      let veto = Governance<Veto> { 
+          poll: ParticipationVote::new_poll<Veto>() 
+      };
+
       move_to(directed_account, veto);
-      let liquidate = LiquidateBallots { ballots: Vector::empty() };
+
+      let liquidate = Governance<Liquidate> { 
+          poll: ParticipationVote::new_poll<Liquidate>() 
+      };
       move_to(directed_account, liquidate);
     }
 
@@ -60,7 +60,6 @@ module DonorDirectedGovernance {
     fun get_enrollment(directed_account: address): u64 {
       DiemAccount::get_cumulative_deposits(directed_account)
     }
-
 
     /// public function to check that a user account is a Donor for a DonorDirected account.
 
@@ -81,22 +80,24 @@ module DonorDirectedGovernance {
       cumulative_donations
     }
 
+
+    //////// VETO FUNCTIONS ////////
+
     /// a private function to propose a ballot for a veto. This is called by a verified donor.
 
-    fun propose_veto(user: &signer, directed_account: address, proposal_guid: u64) acquires VetoBallots {
-      let vetoballots = borrow_global_mut<VetoBallots>(directed_account);
+    fun propose_veto(cap: &GUID::CreateCapability, directed_account: address, proposal_guid: u64) acquires Governance {
+      let gov_state = borrow_global_mut<Governance<Veto>>(directed_account);
 
       let v = Veto { guid: proposal_guid };
       
-      let ballot = ParticipationVote::new<Veto>(
-        user, 
-        v, // data
+      ParticipationVote::propose_ballot(
+        cap,
+        &mut gov_state.poll,
+        v,
         get_enrollment(directed_account),
-        DiemConfig::get_current_epoch() + 3, // TODO: needs to adjust with each new vote.
-        0
+        DiemConfig::get_current_epoch() + 7, // 7 epochs is about 1 week
+        0, // TODO: remove this parameter from the ParticipationVote module
       );
-
-      Vector::push_back(&mut vetoballots.ballots, ballot);
     }
 
 
@@ -110,55 +111,74 @@ module DonorDirectedGovernance {
 
       ParticipationVote::vote<Veto>(ballot, user, veto_tx, user_votes)
     }
+  
 
+    /// private function to search in the ballots for an existsing veto. Returns and option type with the Ballot id.
+    fun get_pending_ballot<GovAction: copy + store> (gov_state: &mut Governance<GovAction>, proposal_guid: &GUID::ID): &mut ParticipationVote::Ballot<GovAction> {
+      
+      // let (found, idx) = find_index_of_ballot(gov_state, proposal_guid);
+      // assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
+
+      let ballot = ParticipationVote::get_ballot_mut(&mut gov_state.poll, proposal_guid, 0); // 0 enum of pending ballots
+      ballot
+    }
+
+    // fun find_index_of_ballot<GovAction: copy + store>(gov_state: &mut Governance<GovAction>, proposal_guid: &GUID::ID): (bool, u64) {
+    //   // let gov_state = borrow_global<Ballots>(directed_account);
+    //   let i = 0;
+    //   while (i < Vector::length(&gov_state.poll)) {
+    //     let b = Vector::borrow(&gov_state.poll, i);
+    //     if (&ParticipationVote::get_pending_ballot_id(b) == proposal_guid) {
+    //       return (true, i)
+    //     };
+    //     i = i + 1;
+    //   };
+
+    //   (false, 0)
+    // }
 
     /// Public script transaction to propose a veto, or vote on it if it already exists.
 
     /// should only be called by the DonorDirected.move so that the handlers can be called on "pass" conditions.
 
-    public(friend) fun veto_by_id(user: &signer, proposal_guid: &GUID::ID): bool acquires VetoBallots {
+    public(friend) fun veto_by_id(user: &signer, proposal_guid: &GUID::ID): bool acquires Governance {
       let directed_account = GUID::id_creator_address(proposal_guid);
       assert_authorized(user, directed_account);
 
-      let vb = borrow_global_mut<VetoBallots>(directed_account);
-      let ballot = get_veto_ballot(vb, proposal_guid);
+      let vb = borrow_global_mut<Governance<Veto>>(directed_account);
+      let ballot = get_pending_ballot<Veto>(vb, proposal_guid);
 
       vote_veto(user, ballot, directed_account)
     }
 
-    public(friend) fun sync_ballot_and_tx_expiration(user: &signer, proposal_guid: &GUID::ID, epoch_deadline: u64) acquires VetoBallots {
+    public(friend) fun sync_ballot_and_tx_expiration(user: &signer, proposal_guid: &GUID::ID, epoch_deadline: u64) acquires Governance {
       let directed_account = GUID::id_creator_address(proposal_guid);
       assert_authorized(user, directed_account);
 
-      let vb = borrow_global_mut<VetoBallots>(directed_account);
-      let ballot = get_veto_ballot(vb, proposal_guid);
+      let vb = borrow_global_mut<Governance<Veto>>(directed_account);
+      let ballot = get_pending_ballot(vb, proposal_guid);
 
       ParticipationVote::extend_deadline(ballot, epoch_deadline);
 
     }
 
-    /// private function to search in the ballots for an existsing veto. Returns and option type with the Ballot id.
-    fun get_veto_ballot(vetoballots: &mut VetoBallots, proposal_guid: &GUID::ID): &mut ParticipationVote::Ballot<Veto> {
-      
-      let (found, idx) = find_index_veto(vetoballots, proposal_guid);
-      assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
 
-      Vector::borrow_mut(&mut vetoballots.ballots, idx)
+    //////// LIQUIDATION FUNCTIONS ////////
+
+    fun propose_gov<GovAction: copy + store>(cap: &GUID::CreateCapability, directed_account: address, data: GovAction) acquires Governance {
+      let gov_state = borrow_global_mut<Governance<GovAction>>(directed_account);
+
+      ParticipationVote::propose_ballot(
+        cap,
+        &mut gov_state.poll,
+        data,
+        get_enrollment(directed_account),
+        DiemConfig::get_current_epoch() + 7, // 7 epochs is about 1 week
+        0, // TODO: remove this parameter from the ParticipationVote module
+      );
     }
 
-    fun find_index_veto(vetoballots: &mut VetoBallots, proposal_guid: &GUID::ID): (bool, u64) {
-      // let vetoballots = borrow_global<VetoBallots>(directed_account);
-      let i = 0;
-      while (i < Vector::length(&vetoballots.ballots)) {
-        let b = Vector::borrow(&vetoballots.ballots, i);
-        if (&ParticipationVote::get_ballot_id(b) == proposal_guid) {
-          return (true, i)
-        };
-        i = i + 1;
-      };
 
-      (false, 0)
-    }
 
 }
 }

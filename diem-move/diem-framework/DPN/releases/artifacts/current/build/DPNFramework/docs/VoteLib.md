@@ -99,9 +99,10 @@
 
 ): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a> {
   <b>assert</b>!(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 0);
-  <b>let</b> ballot = <a href="VoteLib.md#0x1_ParticipationVote_new">ParticipationVote::new</a>&lt;<a href="VoteLib.md#0x1_DummyTestVote_EmptyType">EmptyType</a>&gt;(sig, data, deadline, max_vote_enrollment, max_extensions);
+  <b>let</b> cap = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_gen_create_capability">GUID::gen_create_capability</a>(sig);
+  <b>let</b> ballot = <a href="VoteLib.md#0x1_ParticipationVote_new_ballot">ParticipationVote::new_ballot</a>&lt;<a href="VoteLib.md#0x1_DummyTestVote_EmptyType">EmptyType</a>&gt;(&cap, data, deadline, max_vote_enrollment, max_extensions);
 
-  <b>let</b> id = <a href="VoteLib.md#0x1_ParticipationVote_get_ballot_id">ParticipationVote::get_ballot_id</a>(&ballot);
+  <b>let</b> id = <a href="VoteLib.md#0x1_ParticipationVote_get_ballot_id">ParticipationVote::get_ballot_id</a>&lt;<a href="VoteLib.md#0x1_DummyTestVote_EmptyType">EmptyType</a>&gt;(&ballot);
   <b>move_to</b>(sig, <a href="VoteLib.md#0x1_DummyTestVote_Vote">Vote</a> { ballot });
   id
 }

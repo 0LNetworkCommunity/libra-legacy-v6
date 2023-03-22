@@ -12,9 +12,8 @@ The voting on a veto of a transaction or an outright liquidation of the account 
 The voting mechanism is a ParticipationVote. Such votes ajust the threshold for passing a vote based on the actual turnout. I.e. The fewer people that vote, the higher the threshold to reach consensus. But a vote is not scuttled if the turnout is low. See more details in the ParticipationVote.move module.
 
 
--  [Resource `VetoBallots`](#0x1_DonorDirectedGovernance_VetoBallots)
+-  [Resource `Governance`](#0x1_DonorDirectedGovernance_Governance)
 -  [Struct `Veto`](#0x1_DonorDirectedGovernance_Veto)
--  [Resource `LiquidateBallots`](#0x1_DonorDirectedGovernance_LiquidateBallots)
 -  [Struct `Liquidate`](#0x1_DonorDirectedGovernance_Liquidate)
 -  [Constants](#@Constants_0)
 -  [Function `init_donor_governance`](#0x1_DonorDirectedGovernance_init_donor_governance)
@@ -24,10 +23,10 @@ The voting mechanism is a ParticipationVote. Such votes ajust the threshold for 
 -  [Function `get_user_donations`](#0x1_DonorDirectedGovernance_get_user_donations)
 -  [Function `propose_veto`](#0x1_DonorDirectedGovernance_propose_veto)
 -  [Function `vote_veto`](#0x1_DonorDirectedGovernance_vote_veto)
+-  [Function `get_pending_ballot`](#0x1_DonorDirectedGovernance_get_pending_ballot)
 -  [Function `veto_by_id`](#0x1_DonorDirectedGovernance_veto_by_id)
 -  [Function `sync_ballot_and_tx_expiration`](#0x1_DonorDirectedGovernance_sync_ballot_and_tx_expiration)
--  [Function `get_veto_ballot`](#0x1_DonorDirectedGovernance_get_veto_ballot)
--  [Function `find_index_veto`](#0x1_DonorDirectedGovernance_find_index_veto)
+-  [Function `propose_gov`](#0x1_DonorDirectedGovernance_propose_gov)
 
 
 <pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
@@ -37,19 +36,19 @@ The voting mechanism is a ParticipationVote. Such votes ajust the threshold for 
 <b>use</b> <a href="VoteLib.md#0x1_ParticipationVote">0x1::ParticipationVote</a>;
 <b>use</b> <a href="Receipts.md#0x1_Receipts">0x1::Receipts</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
-<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
 
 
-<a name="0x1_DonorDirectedGovernance_VetoBallots"></a>
+<a name="0x1_DonorDirectedGovernance_Governance"></a>
 
-## Resource `VetoBallots`
+## Resource `Governance`
 
 Data struct to store all the governance Ballots for vetos
+allows for a generic type of Governance action, using the Participation Vote Poll type to keep track of ballots
 
 
-<pre><code><b>struct</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_VetoBallots">VetoBallots</a> <b>has</b> key
+<pre><code><b>struct</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a>&lt;GovAction&gt; <b>has</b> key
 </code></pre>
 
 
@@ -60,7 +59,7 @@ Data struct to store all the governance Ballots for vetos
 
 <dl>
 <dt>
-<code>ballots: vector&lt;<a href="VoteLib.md#0x1_ParticipationVote_Ballot">ParticipationVote::Ballot</a>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Veto">DonorDirectedGovernance::Veto</a>&gt;&gt;</code>
+<code>poll: <a href="VoteLib.md#0x1_ParticipationVote_Poll">ParticipationVote::Poll</a>&lt;GovAction&gt;</code>
 </dt>
 <dd>
 
@@ -74,6 +73,7 @@ Data struct to store all the governance Ballots for vetos
 
 ## Struct `Veto`
 
+this is a GovAction type for veto
 
 
 <pre><code><b>struct</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Veto">Veto</a> <b>has</b> <b>copy</b>, store
@@ -97,38 +97,11 @@ Data struct to store all the governance Ballots for vetos
 
 </details>
 
-<a name="0x1_DonorDirectedGovernance_LiquidateBallots"></a>
-
-## Resource `LiquidateBallots`
-
-Data struct to store all governance Ballots for liquidation
-
-
-<pre><code><b>struct</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_LiquidateBallots">LiquidateBallots</a> <b>has</b> key
-</code></pre>
-
-
-
-<details>
-<summary>Fields</summary>
-
-
-<dl>
-<dt>
-<code>ballots: vector&lt;<a href="VoteLib.md#0x1_ParticipationVote_Ballot">ParticipationVote::Ballot</a>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Liquidate">DonorDirectedGovernance::Liquidate</a>&gt;&gt;</code>
-</dt>
-<dd>
-
-</dd>
-</dl>
-
-
-</details>
-
 <a name="0x1_DonorDirectedGovernance_Liquidate"></a>
 
 ## Struct `Liquidate`
 
+this is a GovAction type for liquidation
 
 
 <pre><code><b>struct</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Liquidate">Liquidate</a> <b>has</b> <b>copy</b>, store
@@ -157,22 +130,22 @@ Data struct to store all governance Ballots for liquidation
 ## Constants
 
 
-<a name="0x1_DonorDirectedGovernance_ENOT_A_DONOR"></a>
-
-Is not a donor to this account
-
-
-<pre><code><b>const</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_ENOT_A_DONOR">ENOT_A_DONOR</a>: u64 = 220000;
-</code></pre>
-
-
-
 <a name="0x1_DonorDirectedGovernance_ENO_BALLOT_FOUND"></a>
 
 No ballot found under that GUID
 
 
 <pre><code><b>const</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>: u64 = 220001;
+</code></pre>
+
+
+
+<a name="0x1_DonorDirectedGovernance_ENOT_A_DONOR"></a>
+
+Is not a donor to this account
+
+
+<pre><code><b>const</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_ENOT_A_DONOR">ENOT_A_DONOR</a>: u64 = 220000;
 </code></pre>
 
 
@@ -193,9 +166,15 @@ No ballot found under that GUID
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_init_donor_governance">init_donor_governance</a>(directed_account: &signer) {
-  <b>let</b> veto = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_VetoBallots">VetoBallots</a> { ballots: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>() };
+  <b>let</b> veto = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Veto">Veto</a>&gt; {
+      poll: <a href="VoteLib.md#0x1_ParticipationVote_new_poll">ParticipationVote::new_poll</a>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Veto">Veto</a>&gt;()
+  };
+
   <b>move_to</b>(directed_account, veto);
-  <b>let</b> liquidate = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_LiquidateBallots">LiquidateBallots</a> { ballots: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>() };
+
+  <b>let</b> liquidate = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Liquidate">Liquidate</a>&gt; {
+      poll: <a href="VoteLib.md#0x1_ParticipationVote_new_poll">ParticipationVote::new_poll</a>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Liquidate">Liquidate</a>&gt;()
+  };
   <b>move_to</b>(directed_account, liquidate);
 }
 </code></pre>
@@ -313,7 +292,7 @@ For an individual donor, get the amount of votes that they can cast, based on th
 a private function to propose a ballot for a veto. This is called by a verified donor.
 
 
-<pre><code><b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_propose_veto">propose_veto</a>(user: &signer, directed_account: <b>address</b>, proposal_guid: u64)
+<pre><code><b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_propose_veto">propose_veto</a>(cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, directed_account: <b>address</b>, proposal_guid: u64)
 </code></pre>
 
 
@@ -322,20 +301,19 @@ a private function to propose a ballot for a veto. This is called by a verified 
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_propose_veto">propose_veto</a>(user: &signer, directed_account: <b>address</b>, proposal_guid: u64) <b>acquires</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_VetoBallots">VetoBallots</a> {
-  <b>let</b> vetoballots = <b>borrow_global_mut</b>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_VetoBallots">VetoBallots</a>&gt;(directed_account);
+<pre><code><b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_propose_veto">propose_veto</a>(cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a> ,directed_account: <b>address</b>, proposal_guid: u64) <b>acquires</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a> {
+  <b>let</b> gov_state = <b>borrow_global_mut</b>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Veto">Veto</a>&gt;&gt;(directed_account);
 
   <b>let</b> v = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Veto">Veto</a> { guid: proposal_guid };
 
-  <b>let</b> ballot = <a href="VoteLib.md#0x1_ParticipationVote_new">ParticipationVote::new</a>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Veto">Veto</a>&gt;(
-    user,
-    v, // data
+  <a href="VoteLib.md#0x1_ParticipationVote_propose_ballot">ParticipationVote::propose_ballot</a>(
+    cap,
+    &<b>mut</b> gov_state.poll,
+    v,
     <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_get_enrollment">get_enrollment</a>(directed_account),
-    <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() + 3, // TODO: needs <b>to</b> adjust <b>with</b> each new vote.
-    0
+    <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() + 7, // 7 epochs is about 1 week
+    0, // TODO: remove this parameter from the <a href="VoteLib.md#0x1_ParticipationVote">ParticipationVote</a> <b>module</b>
   );
-
-  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> vetoballots.ballots, ballot);
 }
 </code></pre>
 
@@ -372,6 +350,36 @@ private function to vote on a ballot based on a Donor's voting power.
 
 </details>
 
+<a name="0x1_DonorDirectedGovernance_get_pending_ballot"></a>
+
+## Function `get_pending_ballot`
+
+private function to search in the ballots for an existsing veto. Returns and option type with the Ballot id.
+
+
+<pre><code><b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_get_pending_ballot">get_pending_ballot</a>&lt;GovAction: <b>copy</b>, store&gt;(gov_state: &<b>mut</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">DonorDirectedGovernance::Governance</a>&lt;GovAction&gt;, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): &<b>mut</b> <a href="VoteLib.md#0x1_ParticipationVote_Ballot">ParticipationVote::Ballot</a>&lt;GovAction&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_get_pending_ballot">get_pending_ballot</a>&lt;GovAction: <b>copy</b> + store&gt; (gov_state: &<b>mut</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a>&lt;GovAction&gt;, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): &<b>mut</b> <a href="VoteLib.md#0x1_ParticipationVote_Ballot">ParticipationVote::Ballot</a>&lt;GovAction&gt; {
+
+  // <b>let</b> (found, idx) = find_index_of_ballot(gov_state, proposal_guid);
+  // <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
+
+  <b>let</b> ballot = <a href="VoteLib.md#0x1_ParticipationVote_get_ballot_mut">ParticipationVote::get_ballot_mut</a>(&<b>mut</b> gov_state.poll, proposal_guid, 0); // 0 enum of pending ballots
+  ballot
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_DonorDirectedGovernance_veto_by_id"></a>
 
 ## Function `veto_by_id`
@@ -389,12 +397,12 @@ should only be called by the DonorDirected.move so that the handlers can be call
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_veto_by_id">veto_by_id</a>(user: &signer, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): bool <b>acquires</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_VetoBallots">VetoBallots</a> {
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_veto_by_id">veto_by_id</a>(user: &signer, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): bool <b>acquires</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a> {
   <b>let</b> directed_account = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_id_creator_address">GUID::id_creator_address</a>(proposal_guid);
   <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_assert_authorized">assert_authorized</a>(user, directed_account);
 
-  <b>let</b> vb = <b>borrow_global_mut</b>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_VetoBallots">VetoBallots</a>&gt;(directed_account);
-  <b>let</b> ballot = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_get_veto_ballot">get_veto_ballot</a>(vb, proposal_guid);
+  <b>let</b> vb = <b>borrow_global_mut</b>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Veto">Veto</a>&gt;&gt;(directed_account);
+  <b>let</b> ballot = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_get_pending_ballot">get_pending_ballot</a>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Veto">Veto</a>&gt;(vb, proposal_guid);
 
   <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_vote_veto">vote_veto</a>(user, ballot, directed_account)
 }
@@ -419,12 +427,12 @@ should only be called by the DonorDirected.move so that the handlers can be call
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_sync_ballot_and_tx_expiration">sync_ballot_and_tx_expiration</a>(user: &signer, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, epoch_deadline: u64) <b>acquires</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_VetoBallots">VetoBallots</a> {
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_sync_ballot_and_tx_expiration">sync_ballot_and_tx_expiration</a>(user: &signer, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, epoch_deadline: u64) <b>acquires</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a> {
   <b>let</b> directed_account = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_id_creator_address">GUID::id_creator_address</a>(proposal_guid);
   <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_assert_authorized">assert_authorized</a>(user, directed_account);
 
-  <b>let</b> vb = <b>borrow_global_mut</b>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_VetoBallots">VetoBallots</a>&gt;(directed_account);
-  <b>let</b> ballot = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_get_veto_ballot">get_veto_ballot</a>(vb, proposal_guid);
+  <b>let</b> vb = <b>borrow_global_mut</b>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Veto">Veto</a>&gt;&gt;(directed_account);
+  <b>let</b> ballot = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_get_pending_ballot">get_pending_ballot</a>(vb, proposal_guid);
 
   <a href="VoteLib.md#0x1_ParticipationVote_extend_deadline">ParticipationVote::extend_deadline</a>(ballot, epoch_deadline);
 
@@ -435,14 +443,13 @@ should only be called by the DonorDirected.move so that the handlers can be call
 
 </details>
 
-<a name="0x1_DonorDirectedGovernance_get_veto_ballot"></a>
+<a name="0x1_DonorDirectedGovernance_propose_gov"></a>
 
-## Function `get_veto_ballot`
-
-private function to search in the ballots for an existsing veto. Returns and option type with the Ballot id.
+## Function `propose_gov`
 
 
-<pre><code><b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_get_veto_ballot">get_veto_ballot</a>(vetoballots: &<b>mut</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_VetoBallots">DonorDirectedGovernance::VetoBallots</a>, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): &<b>mut</b> <a href="VoteLib.md#0x1_ParticipationVote_Ballot">ParticipationVote::Ballot</a>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Veto">DonorDirectedGovernance::Veto</a>&gt;
+
+<pre><code><b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_propose_gov">propose_gov</a>&lt;GovAction: <b>copy</b>, store&gt;(cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, directed_account: <b>address</b>, data: GovAction)
 </code></pre>
 
 
@@ -451,46 +458,17 @@ private function to search in the ballots for an existsing veto. Returns and opt
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_get_veto_ballot">get_veto_ballot</a>(vetoballots: &<b>mut</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_VetoBallots">VetoBallots</a>, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): &<b>mut</b> <a href="VoteLib.md#0x1_ParticipationVote_Ballot">ParticipationVote::Ballot</a>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Veto">Veto</a>&gt; {
+<pre><code><b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_propose_gov">propose_gov</a>&lt;GovAction: <b>copy</b> + store&gt;(cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, directed_account: <b>address</b>, data: GovAction) <b>acquires</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a> {
+  <b>let</b> gov_state = <b>borrow_global_mut</b>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a>&lt;GovAction&gt;&gt;(directed_account);
 
-  <b>let</b> (found, idx) = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_find_index_veto">find_index_veto</a>(vetoballots, proposal_guid);
-  <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
-
-  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>(&<b>mut</b> vetoballots.ballots, idx)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_DonorDirectedGovernance_find_index_veto"></a>
-
-## Function `find_index_veto`
-
-
-
-<pre><code><b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_find_index_veto">find_index_veto</a>(vetoballots: &<b>mut</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_VetoBallots">DonorDirectedGovernance::VetoBallots</a>, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_find_index_veto">find_index_veto</a>(vetoballots: &<b>mut</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_VetoBallots">VetoBallots</a>, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64) {
-  // <b>let</b> vetoballots = <b>borrow_global</b>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_VetoBallots">VetoBallots</a>&gt;(directed_account);
-  <b>let</b> i = 0;
-  <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&vetoballots.ballots)) {
-    <b>let</b> b = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&vetoballots.ballots, i);
-    <b>if</b> (&<a href="VoteLib.md#0x1_ParticipationVote_get_ballot_id">ParticipationVote::get_ballot_id</a>(b) == proposal_guid) {
-      <b>return</b> (<b>true</b>, i)
-    };
-    i = i + 1;
-  };
-
-  (<b>false</b>, 0)
+  <a href="VoteLib.md#0x1_ParticipationVote_propose_ballot">ParticipationVote::propose_ballot</a>(
+    cap,
+    &<b>mut</b> gov_state.poll,
+    data,
+    <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_get_enrollment">get_enrollment</a>(directed_account),
+    <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>() + 7, // 7 epochs is about 1 week
+    0, // TODO: remove this parameter from the <a href="VoteLib.md#0x1_ParticipationVote">ParticipationVote</a> <b>module</b>
+  );
 }
 </code></pre>
 

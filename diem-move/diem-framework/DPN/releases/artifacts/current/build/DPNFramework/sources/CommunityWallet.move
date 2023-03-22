@@ -114,21 +114,6 @@ module CommunityWallet{
       fam
     }
 
-    // public fun new_timed_transfer(
-    //   sender: &signer, multisig_wallet: address, payee: address, value: u64, description: vector<u8>
-    // ): u64  {
-
-    //   // firstly check if payee is a slow wallet
-    //   assert!(DiemAccount::is_slow(payee), Errors::invalid_argument(EPAYEE_NOT_SLOW_WALLET));
-
-    //   assert!(
-    //     is_comm(multisig_wallet),
-    //     Errors::requires_role(ENOT_QUALIFY_COMMUNITY_WALLET)
-    //   );
-
-    //   DonorDirected::new_timed_transfer(sender, payee, value, description)
-    // }
-
     //////// MULTISIG TX HELPERS ////////
 
     /// Helper to initialize the PaymentMultisig, but also while confirming that the signers are not related family
