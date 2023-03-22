@@ -26,13 +26,15 @@ module DonorDirected {
     use Std::Vector;
     use Std::Signer;
     use Std::Errors;
+    use Std::GUID;
     use DiemFramework::DiemConfig;
     use Std::Option::{Self,Option};
     use DiemFramework::DiemSystem;
+    use DiemFramework::GAS::GAS;
     use DiemFramework::NodeWeight;
     use DiemFramework::MultiSig;
     use DiemFramework::DiemAccount::{Self, WithdrawCapability};
-    // use DiemFramework::GAS::GAS;
+    use DiemFramework::DonorDirectedGovernance;
     use DiemFramework::Debug::print;
 
     const ERR_PREFIX: u64 = 023;
@@ -59,7 +61,7 @@ module DonorDirected {
       proposed: vector<TimedTransfer>,
       approved: vector<TimedTransfer>,
       rejected: vector<TimedTransfer>,
-      max_uid: u64,
+      guid_capability: GUID::CreateCapability,
     }
 
     /// each multisig auth will propose a transfer
@@ -71,8 +73,8 @@ module DonorDirected {
       description: vector<u8>,
     }
 
-    struct TimedTransfer has copy, drop, key, store {
-      uid: u64,
+    struct TimedTransfer has drop, key, store {
+      uid: GUID::GUID,
       expire_epoch: u64,
       payee: address,
       value: u64,
@@ -138,11 +140,12 @@ module DonorDirected {
         }
       );
 
+      let guid_capability = GUID::gen_create_capability(sig);
       move_to(sig, DonorDirected {
           proposed: Vector::empty(),
           approved: Vector::empty(),
           rejected: Vector::empty(),
-          max_uid: 0,
+          guid_capability,
         })
 
     }
@@ -193,7 +196,7 @@ module DonorDirected {
     /// Returns the GUID of the transfer.
     public fun new_timed_transfer_multisig(
       sender: &signer, multisig_address: address, payee: address, value: u64, description: vector<u8>
-    ): Option<u64> acquires DonorDirected {
+    ): Option<GUID::ID> acquires DonorDirected {
       let p = DonorDirectedProp {
         payee,
         value,
@@ -230,17 +233,17 @@ module DonorDirected {
 
     fun schedule(
       withdraw_capability: &WithdrawCapability, payee: address, value: u64, description: vector<u8>
-    ): u64 acquires DonorDirected {
+    ): GUID::ID acquires DonorDirected {
       
       let multisig_address = DiemAccount::get_withdraw_cap_address(withdraw_capability);
       let transfers = borrow_global_mut<DonorDirected>(multisig_address);
-      transfers.max_uid = transfers.max_uid + 1;
+      let uid = GUID::create_with_capability(multisig_address, &transfers.guid_capability);
       
       // add current epoch + 1
       let current_epoch = DiemConfig::get_current_epoch();
 
       let t = TimedTransfer {
-        uid: transfers.max_uid,
+        uid,
         expire_epoch: current_epoch + 2, // pays at the end of second (start of third epoch),
         payee: payee,
         value: value,
@@ -252,82 +255,127 @@ module DonorDirected {
         }
       };
 
+      let id = GUID::id(&t.uid);
       Vector::push_back<TimedTransfer>(&mut transfers.proposed, t);
-      return transfers.max_uid
+      return id
     }
+
+  ///////// PROCESS PAYMENTS /////////
+      //////// 0L ////////
+    public fun process_donor_directed_accounts(
+      vm: &signer,
+    ) acquires Registry, DonorDirected, Freeze { //////// 0L ////////
+
+    print(&990100);
+      let epoch = DiemConfig::get_current_epoch();
+
+      let list = get_root_registry();
+
+      let i = 0;
+      while (i < Vector::length(&list)) {
+        let multisig_address = Vector::borrow(&list, i);
+        if (exists<DonorDirected>(*multisig_address)) {
+          let state = borrow_global_mut<DonorDirected>(*multisig_address);
+          maybe_pay_if_deadline_today(vm, state);
+        };
+        i = i + 1;
+      }
+    }
+
+    fun maybe_pay_if_deadline_today(vm: &signer, state: &mut DonorDirected) acquires Freeze {
+      let epoch = DiemConfig::get_current_epoch();
+      let i = 0;
+      while (i < Vector::length(&state.proposed)) {
+
+        let this_exp = *&Vector::borrow(&state.proposed, i).expire_epoch;
+        if (this_exp == epoch) {
+          let t = Vector::remove<TimedTransfer>(&mut state.proposed, i);
+
+          let multisig_address = GUID::creator_address(&t.uid);
+          DiemAccount::vm_make_payment_no_limit<GAS>(multisig_address, t.payee, t.value, *&t.description, b"", vm);
+
+          // update the records
+          Vector::push_back(&mut state.approved, t);
+
+          // if theres a single transaction that gets approved, then the freeze consecutive rejection counter is reset
+          reset_rejection_counter(vm, multisig_address)
+        };
+
+        i = i + 1;
+      };
+  
+    }
+
+
+  //////// GOVERNANCE HANDLERS ////////
+
+  // Governance logic is defined in DonorDirectedGovernance.move
+  // Below are functions to handle the cases for rejecting and freezing accounts based on governance outcomes.
 
   // A validator casts a vote to veto a proposed/pending transaction 
   // by a DonorDirected wallet.
   // The validator identifies the transaction by a unique id.
   // Tallies are computed on the fly, such that if a veto happens, 
   // the community which is faster than waiting for epoch boundaries.
-  public fun veto(
+  public fun veto_handler(
     sender: &signer,
-    uid: u64,
-    multisig_address: address
-  ) acquires DonorDirected, Freeze {
-    let addr = Signer::address_of(sender);
-    assert!(
-      DiemSystem::is_validator(addr),
-      Errors::requires_role(ENOT_AUTHORIZED_TO_VOTE)
-    );
-    let (opt, i) = find(uid, PROPOSED, multisig_address);
-    if (Option::is_some<TimedTransfer>(&opt)) {
-      let c = borrow_global_mut<DonorDirected>(multisig_address);
-      let t = Vector::borrow_mut<TimedTransfer>(&mut c.proposed, i);
-      // add voters address to the veto list
-      Vector::push_back<address>(&mut t.veto.list, addr);
-      // if not at rejection threshold
-      // add latency to the payment, to get further reviews
-      t.expire_epoch = t.expire_epoch + 1;
+    uid: &GUID::ID,
+  ) {
+    // let id_from_guid = GUID::create_id(multisig_address, uid);
+    let passed = DonorDirectedGovernance::veto_by_id(sender, uid);
 
-      if (tally_veto(i, multisig_address)) {
-        reject(uid, multisig_address)
-      }
+    if (passed) {
+      // if the veto passes, freeze the account
+      reject(uid);
+      // freeze_account(multisig_address);
     };
+    // let addr = Signer::address_of(sender);
+    // assert!(
+    //   DiemSystem::is_validator(addr),
+    //   Errors::requires_role(ENOT_AUTHORIZED_TO_VOTE)
+    // );
+    // let (opt, i) = find(uid, PROPOSED, multisig_address);
+    // if (Option::is_some<TimedTransfer>(&opt)) {
+    //   let c = borrow_global_mut<DonorDirected>(multisig_address);
+    //   let t = Vector::borrow_mut<TimedTransfer>(&mut c.proposed, i);
+    //   // add voters address to the veto list
+    //   Vector::push_back<address>(&mut t.veto.list, addr);
+    //   // if not at rejection threshold
+    //   // add latency to the payment, to get further reviews
+    //   t.expire_epoch = t.expire_epoch + 1;
+
+    //   if (tally_veto(i, multisig_address)) {
+    //     reject(uid, multisig_address)
+    //   }
+    // };
   }
 
   // private function. Once vetoed, the CommunityWallet transaction is 
   // removed from proposed list.
-  fun reject(uid: u64, multisig_address: address) acquires DonorDirected, Freeze {
-    let c = borrow_global_mut<DonorDirected>(multisig_address);
-    let list = *&c.proposed;
-    let len = Vector::length(&list);
-    let i = 0;
-    while (i < len) {
-      let t = *Vector::borrow<TimedTransfer>(&list, i);
-      if (t.uid == uid) {
-        Vector::remove<TimedTransfer>(&mut c.proposed, i);
-        let f = borrow_global_mut<Freeze>(multisig_address);
-        f.consecutive_rejections = f.consecutive_rejections + 1;
-        Vector::push_back(&mut c.rejected, t);
-      };
+  fun reject(uid: &GUID::ID)  {
+    // let multisig_address = GUID::id_creator_address(uid);
+    // let c = borrow_global_mut<DonorDirected>(multisig_address);
+    // let list = *&c.proposed;
+    // let len = Vector::length(&list);
+    // let i = 0;
+    // while (i < len) {
+    //   let t = *Vector::borrow<TimedTransfer>(&list, i);
+    //   if (&t.uid == &uid) {
+    //     // remove from proposed list
+    //     Vector::remove<TimedTransfer>(&mut c.proposed, i);
+    //     Vector::push_back(&mut c.rejected, t);
+    //     // increment consecutive rejections counter
+    //     let f = borrow_global_mut<Freeze>(multisig_address);
+    //     f.consecutive_rejections = f.consecutive_rejections + 1;
+        
+    //   };
 
-      i = i + 1;
-    };
+    //   i = i + 1;
+    // };
     
   }
 
-    // private function. Once vetoed, the CommunityWallet transaction is 
-  // removed from proposed list.
-  public fun mark_processed(vm: &signer, multisig_address: address, t: TimedTransfer) acquires DonorDirected {
-    CoreAddresses::assert_vm(vm);
 
-    let c = borrow_global_mut<DonorDirected>(multisig_address);
-    let list = *&c.proposed;
-    let len = Vector::length(&list);
-    let i = 0;
-    while (i < len) {
-      let search = *Vector::borrow<TimedTransfer>(&list, i);
-      if (search.uid == t.uid) {
-        Vector::remove<TimedTransfer>(&mut c.proposed, i);
-        Vector::push_back(&mut c.approved, search);
-      };
-
-      i = i + 1;
-    };
-    
-  }
 
   public fun reset_rejection_counter(vm: &signer, wallet: address) acquires Freeze {
     CoreAddresses::assert_diem_root(vm);
@@ -382,59 +430,7 @@ module DonorDirected {
       threshold
   }
 
-  // Utility to list CommunityWallet transfers due, by epoch. Anyone can call this.
-  // This is used by VM in DiemAccount at epoch boundaries to process the wallet transfers.
-  public fun list_tx_by_epoch(epoch: u64, multisig_address: address): vector<TimedTransfer> acquires DonorDirected {
-      let c = borrow_global<DonorDirected>(multisig_address);
 
-      // loop proposed list
-      let pending = Vector::empty<TimedTransfer>();
-      let len = Vector::length(&c.proposed);
-      let i = 0;
-      while (i < len) {
-        let t = Vector::borrow(&c.proposed, i);
-        if (t.expire_epoch == epoch) {
-          
-          Vector::push_back<TimedTransfer>(&mut pending, *t);
-        };
-        i = i + 1;
-      };
-      return pending
-    }
-
-
-    public fun list_transfers(type_of: u8, multisig_address: address): vector<TimedTransfer> acquires DonorDirected {
-      let c = borrow_global<DonorDirected>(multisig_address);
-      if (type_of == 0) {
-        *&c.proposed
-      } else if (type_of == 1) {
-        *&c.approved
-      } else {
-        *&c.rejected
-      }
-    }
-
-        // Todo: Can be private, used only in tests
-    // Utlity to query a CommunityWallet transfer wallet.
-    // Note: does not need to be a public function, except for use in tests.
-    public fun find(
-      uid: u64,
-      type_of: u8,
-      multisig_address: address,
-    ): (Option<TimedTransfer>, u64) acquires DonorDirected {
-      let list = &list_transfers(type_of, multisig_address);
-
-      let len = Vector::length(list);
-      let i = 0;
-      while (i < len) {
-        let t = *Vector::borrow<TimedTransfer>(list, i);
-        if (t.uid == uid) {
-          return (Option::some<TimedTransfer>(t), i)
-        };
-        i = i + 1;
-      };
-      (Option::none<TimedTransfer>(), 0)
-    }
 
 
     // Private function to freeze a DonorDirected wallet
@@ -451,23 +447,25 @@ module DonorDirected {
       (t.payee, t.value, *&t.description)
     }
 
-    public fun get_tx_epoch(uid: u64, multisig_address: address): u64 acquires DonorDirected {
-      let (opt, _) = find(uid, PROPOSED, multisig_address);
-      if (Option::is_some<TimedTransfer>(&opt)) {
-        let t = Option::borrow<TimedTransfer>(&opt);
-        return *&t.expire_epoch
-      };
-      0
-    }
+    // public fun get_tx_epoch(uid: u64, multisig_address: address): u64 {
+    //   let (opt, _) = find(uid, PROPOSED, multisig_address);
+    //   if (Option::is_some<TimedTransfer>(&opt)) {
+    //     let t = Option::borrow<TimedTransfer>(&opt);
+    //     return *&t.expire_epoch
+    //   };
+    //   0
+    // }
     
-    public fun transfer_is_proposed(uid: u64, multisig_address: address): bool acquires  DonorDirected {
-      let (opt, _) = find(uid, PROPOSED, multisig_address);
-      Option::is_some<TimedTransfer>(&opt)
+    public fun transfer_is_proposed(uid: u64, multisig_address: address): bool {
+      // let (opt, _) = find(uid, PROPOSED, multisig_address);
+      // Option::is_some<TimedTransfer>(&opt)
+      false
     }
 
-    public fun transfer_is_rejected(uid: u64, multisig_address: address): bool acquires  DonorDirected {
-      let (opt, _) = find(uid, REJECTED, multisig_address);
-      Option::is_some<TimedTransfer>(&opt)
+    public fun transfer_is_rejected(uid: u64, multisig_address: address): bool  {
+      // let (opt, _) = find(uid, REJECTED, multisig_address);
+      // Option::is_some<TimedTransfer>(&opt)
+      false
     }
 
 
@@ -480,46 +478,6 @@ module DonorDirected {
     }
 
 
-    //////// 0L ////////
-    public fun process_community_wallets(
-        _vm: &signer, _epoch: u64
-    )  { //////// 0L ////////
 
-    print(&990100);
-        // if (Signer::address_of(vm) != @DiemRoot) return;
-        
-        // print(&990100);
-        // // Migrate on the fly if state doesn't exist on upgrade.
-        // if (!is_init()) {
-        //     init(vm);
-        //     return
-        // };
-        // print(&990200);
-        // let all = list_transfers(0);
-        // print(&all);
-
-        // let v = list_tx_by_epoch(epoch);
-        // let len = Vector::length<TimedTransfer>(&v);
-        // print(&len);
-        // let i = 0;
-        // while (i < len) {
-        //     print(&990201);
-        //     let t: TimedTransfer = *Vector::borrow(&v, i);
-        //     // TODO: Is this the best way to access a struct property from 
-        //     // outside a module?
-        //     let (payee, value, description) = get_tx_args(*&t);
-        //     if (is_frozen(payer)) {
-        //       i = i + 1;
-        //       continue
-        //     };
-        //     print(&990202);
-        //     DiemAccount::vm_make_payment_no_limit<GAS>(payer, payee, value, description, b"", vm);
-        //     print(&990203);
-        //     mark_processed(vm, t);
-        //     reset_rejection_counter(vm, payer);
-        //     print(&990204);
-        //     i = i + 1;
-        // };
-    }
 }
 }

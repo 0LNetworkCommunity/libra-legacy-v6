@@ -87,7 +87,7 @@ address DiemFramework {
       provisional_pass_epoch: u64, // once a threshold is met, mark that epoch, a further vote on the next epoch will seal the election, to give time for the minority to vote.
       tally_approve: u64,  // use two decimal places 1234 = 12.34%
       tally_turnout: u64, // use two decimal places 1234 = 12.34%
-      tally_pass: bool, // if it passed, for archival purposes
+      tally_pass: bool, // if it passed
     }
 
     struct VoteReceipt has key, store, drop, copy { 
@@ -131,7 +131,9 @@ address DiemFramework {
     // Only the contract, which is the keeper of the Ballot, can allow a user to temporarily hold the Ballot struct to update the vote. The user cannot arbiltrarily update the vote, with an arbitrary number of votes.
     // This is a hot potato, it cannot be dropped.
 
-    public fun vote<Data: copy + store>(ballot: &mut Ballot<Data>, user: &signer, approve_reject: bool, weight: u64) acquires IVoted {
+    // the vote flow will return if the ballot passed (on the vote that gets over the threshold). This can be used for triggering actions lazily.
+
+    public fun vote<Data: copy + store>(ballot: &mut Ballot<Data>, user: &signer, approve_reject: bool, weight: u64): bool acquires IVoted {
       // voting should not be complete
       assert!(!is_complete(ballot), Errors::invalid_state(ECOMPLETED));
 
@@ -168,6 +170,7 @@ address DiemFramework {
       // this will handle the case of updating the receipt in case this is a second vote.
       make_receipt(user, &GUID::id(&ballot.guid), approve_reject, weight);
 
+      ballot.tally_pass // return if it passed, so it can be used in a third party contract handler for lazy evaluation.
     }
 
     fun is_complete<Data: copy + store>(ballot: &mut Ballot<Data>): bool {

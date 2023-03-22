@@ -1,6 +1,6 @@
 address DiemFramework {
 
-/// DonorDirected wallet governance. See documentation at DonorDirected.move
+  /// DonorDirected wallet governance. See documentation at DonorDirected.move
 
 
   /// For each DonorDirected account there are Donors.
@@ -11,6 +11,7 @@ address DiemFramework {
   /// The voting on a veto of a transaction or an outright liquidation of the account is done by the Donors.
   /// The voting mechanism is a ParticipationVote. Such votes ajust the threshold for passing a vote based on the actual turnout. I.e. The fewer people that vote, the higher the threshold to reach consensus. But a vote is not scuttled if the turnout is low. See more details in the ParticipationVote.move module.
 module DonorDirectedGovernance {
+    friend DiemFramework::DonorDirected;
 
     use Std::Vector;
     use Std::Errors;
@@ -102,24 +103,27 @@ module DonorDirectedGovernance {
     /// private function to vote on a ballot based on a Donor's voting power.
 
     // Todo: the ballot data should contain the multisig address in GUID
-    fun vote_veto(user: &signer, ballot: &mut Ballot<Veto>, multisig_address: address) {
+    fun vote_veto(user: &signer, ballot: &mut Ballot<Veto>, multisig_address: address): bool {
       let user_votes = get_user_donations(multisig_address, Signer::address_of(user));
 
       let veto_tx = true; // True means  approve the ballot, meaning: "veto transaction". Rejecting the ballot would mean "approve transaction".
 
-      ParticipationVote::vote<Veto>(ballot, user, veto_tx, user_votes); 
+      ParticipationVote::vote<Veto>(ballot, user, veto_tx, user_votes)
     }
 
 
     /// Public script transaction to propose a veto, or vote on it if it already exists.
 
-    public fun veto_by_id(user: signer, directed_account: address, proposal_guid: &GUID::ID) acquires VetoBallots {
-      assert_authorized(&user, directed_account);
+    /// should only be called by the DonorDirected.move so that the handlers can be called on "pass" conditions.
+
+    public(friend) fun veto_by_id(user: &signer, proposal_guid: &GUID::ID): bool acquires VetoBallots {
+      let directed_account = GUID::id_creator_address(proposal_guid);
+      assert_authorized(user, directed_account);
 
       let vb = borrow_global_mut<VetoBallots>(directed_account);
       let ballot = get_veto_ballot(vb, proposal_guid);
 
-      vote_veto(&user, ballot, directed_account);
+      vote_veto(user, ballot, directed_account)
     }
 
 
