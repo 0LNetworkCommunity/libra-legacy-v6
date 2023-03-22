@@ -431,7 +431,7 @@ module DonorDirected {
     }
 
 
-        //////// 0L ////////
+    //////// 0L ////////
     public fun process_community_wallets(
         vm: &signer, epoch: u64
     ) acquires DonorDirected, Freeze  { //////// 0L ////////
