@@ -106,7 +106,7 @@ address DiemFramework {
       status_enum: u8
     ): &mut Ballot<TallyType> {
 
-      let list = get_list_ballots_by_enum<TallyType>(poll, status_enum);
+      let list = get_list_ballots_by_enum_mut<TallyType>(poll, status_enum);
 
       assert!(Vector::length(list) > idx, Errors::invalid_argument(ENO_BALLOT_FOUND));
 
@@ -115,10 +115,11 @@ address DiemFramework {
 
 
 
+
     /// find the ballot wherever it is: pending, approved, rejected.
-    /// returns a tuple of (is_found: bool, index: u64, status_enum: u8)
+    /// returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bool)
     public fun find_anywhere<TallyType: copy + drop + store> (
-      poll: &mut Vote<TallyType>,
+      poll: &Vote<TallyType>,
       proposal_guid: &GUID::ID,
     ): (bool, u64, u8, bool) {
 
@@ -146,9 +147,37 @@ address DiemFramework {
       (false, 0, 0, false)
     }
 
+   /// returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bool)
+    public fun find_anywhere_by_data<TallyType: copy + drop + store> (
+      poll: &Vote<TallyType>,
+      tally_type: &TallyType,
+    ): (bool, u64, u8, bool)  {
+     // looking in pending
+     let (found, idx) = find_index_of_ballot_by_data(poll, tally_type, PENDING);
+     if (found) {
+      let complete = is_completed(Vector::borrow(&poll.ballots_pending, idx));
+       return (true, idx, PENDING, complete)
+     };
+
+     // looking in approved
+      let (found, idx) = find_index_of_ballot_by_data(poll, tally_type, APPROVED);
+      if (found) {
+        let complete = is_completed(Vector::borrow(&poll.ballots_approved, idx));
+        return (true, idx, APPROVED, complete)
+      };
+
+     // looking in rejected
+      let (found, idx) = find_index_of_ballot_by_data(poll, tally_type, REJECTED);
+      if (found) {
+        let complete = is_completed(Vector::borrow(&poll.ballots_rejected, idx));
+        return (true, idx, REJECTED, complete)
+      };
+
+      (false, 0, 0, false)
+    }
 
     public fun find_index_of_ballot<TallyType: copy + drop + store> (
-      poll: &mut Vote<TallyType>,
+      poll: &Vote<TallyType>,
       proposal_guid: &GUID::ID,
       status_enum: u8,
     ): (bool, u64) {
@@ -168,7 +197,41 @@ address DiemFramework {
       (false, 0)
     }
 
-    public fun get_list_ballots_by_enum<TallyType: copy + drop + store >(poll: &mut Vote<TallyType>, status_enum: u8): &mut vector<Ballot<TallyType>> {
+
+    public fun find_index_of_ballot_by_data<TallyType: copy + drop + store> (
+      poll: &Vote<TallyType>,
+      tally_type: &TallyType,
+      status_enum: u8,
+    ): (bool, u64) {
+
+     let list = get_list_ballots_by_enum<TallyType>(poll, status_enum);
+
+      let i = 0;
+      while (i < Vector::length(list)) {
+        let b = Vector::borrow(list, i);
+
+        if (&b.tally_type == tally_type) {
+          return (true, i)
+        };
+        i = i + 1;
+      };
+
+      (false, 0)
+    }
+    public fun get_list_ballots_by_enum<TallyType: copy + drop + store >(poll: &Vote<TallyType>, status_enum: u8): &vector<Ballot<TallyType>> {
+     if (status_enum == PENDING) {
+        &poll.ballots_pending
+      } else if (status_enum == APPROVED) {
+        &poll.ballots_approved
+      } else if (status_enum == REJECTED) {
+        &poll.ballots_rejected
+      } else {
+        assert!(false, Errors::invalid_argument(EBAD_STATUS_ENUM));
+        & poll.ballots_rejected // dummy return
+      }
+    }
+
+    public fun get_list_ballots_by_enum_mut<TallyType: copy + drop + store >(poll: &mut Vote<TallyType>, status_enum: u8): &mut vector<Ballot<TallyType>> {
      if (status_enum == PENDING) {
         &mut poll.ballots_pending
       } else if (status_enum == APPROVED) {
@@ -183,6 +246,15 @@ address DiemFramework {
 
     public fun get_ballot_id<TallyType: copy + drop + store >(ballot: &Ballot<TallyType>): ID {
       return GUID::id(&ballot.guid)
+    }
+
+
+    public fun get_ballot_type<TallyType: copy + drop + store >(ballot: &Ballot<TallyType>): &TallyType {
+      return &ballot.tally_type
+    }
+
+    public fun get_ballot_type_mut<TallyType: copy + drop + store >(ballot: &mut Ballot<TallyType>): &mut TallyType {
+      return &mut ballot.tally_type
     }
 
 
@@ -204,7 +276,7 @@ address DiemFramework {
     ): Ballot<TallyType>{
       let (found, idx) = find_index_of_ballot(poll, id, from_status_enum);
       assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
-      let from_list = get_list_ballots_by_enum<TallyType>(poll, from_status_enum);
+      let from_list = get_list_ballots_by_enum_mut<TallyType>(poll, from_status_enum);
       Vector::remove(from_list, idx)
     }
 
@@ -216,7 +288,7 @@ address DiemFramework {
       to_status_enum: u8,
     ) {
       let b = extract_ballot(poll, id, from_status_enum);
-      let to_list = get_list_ballots_by_enum<TallyType>(poll, to_status_enum);
+      let to_list = get_list_ballots_by_enum_mut<TallyType>(poll, to_status_enum);
       Vector::push_back(to_list, b);
     }
 

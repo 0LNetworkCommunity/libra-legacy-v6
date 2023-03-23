@@ -15,12 +15,14 @@
 
 
 address DiemFramework {
-module MultiSig {
+module MultiSigTwo {
   use Std::Vector;
   use Std::Option::{Self, Option};
   use Std::Signer;
   use Std::Errors;
+  use Std::GUID;
   use DiemFramework::DiemAccount::{Self, WithdrawCapability};
+  use DiemFramework::VoteLib::{Self, Vote};
   use DiemFramework::DiemConfig;
   use DiemFramework::Debug::print;
 
@@ -40,7 +42,7 @@ module MultiSig {
   /// The multisig setup  is not finalized, the sponsor needs to brick their authkey. The account setup sponsor needs to be verifiably locked out before operations can begin. 
   const ENOT_FINALIZED_NOT_BRICK: u64 = 440005; 
 
-  /// Already registered thie action type
+  /// Already registered this action type
   const EACTION_ALREADY_EXISTS: u64 = 440006;
 
   /// Action not found
@@ -48,6 +50,9 @@ module MultiSig {
 
   /// Proposal is expired
   const EPROPOSAL_EXPIRED: u64 = 440008;
+
+  /// Proposal is expired
+  const EDUPLICATE_PROPOSAL: u64 = 440009;
 
   
 
@@ -79,7 +84,8 @@ module MultiSig {
     cfg_default_n_sigs: u64,
     signers: vector<address>,
     withdraw_capability: Option<WithdrawCapability>,
-    counter: u64, // TODO: Use GUID? the monotonically increasing id of proposal. Also equal to length of proposals. And the ID of the NEXT proposal to be submitted.
+    counter: u64,
+    guid_capability: GUID::CreateCapability, // this is needed to create GUIDs for the VoteLib.
   }
 
   struct Action<ProposalData> has key, store {
@@ -87,6 +93,7 @@ module MultiSig {
     pending: vector<Proposal<ProposalData>>,
     approved: vector<Proposal<ProposalData>>,
     rejected:  vector<Proposal<ProposalData>>,
+    vote: Vote<Proposal<ProposalData>>,
   }
 
   // all proposals share some common fields
@@ -134,9 +141,10 @@ module MultiSig {
         move_to(sig, MultiSig {
         cfg_duration_epochs: DEFAULT_EPOCHS_EXPIRE,
         cfg_default_n_sigs,
-        withdraw_capability: Option::none(),
         signers: *m_seed_authorities,
         counter: 0,
+        withdraw_capability: Option::none(),
+        guid_capability: GUID::gen_create_capability(sig),
       });
     };
 
@@ -146,6 +154,7 @@ module MultiSig {
         pending: Vector::empty(),
         approved: Vector::empty(),
         rejected: Vector::empty(),
+        vote: VoteLib::new_poll<Proposal<PropGovSigners>>(),
       });
     }
   }
@@ -164,7 +173,7 @@ module MultiSig {
 
   /// An initial "sponsor" who is the signer of the initialization account calls this function.
   // This function creates the data structures, but also IMPORTANTLY it rotates the AuthKey of the account to a system-wide unusuable key (b"brick_all_your_base_are_belong_to_us").
-  public fun init_type<ProposalData: key + store >(
+  public fun init_type<ProposalData: key + store + copy + drop >(
     sig: &signer,
     can_withdraw: bool,
    ) acquires MultiSig {
@@ -191,6 +200,7 @@ module MultiSig {
         pending: Vector::empty(),
         approved: Vector::empty(),
         rejected: Vector::empty(),
+        vote: VoteLib::new_poll<Proposal<ProposalData>>(),
       });
   }
 
@@ -314,6 +324,92 @@ module MultiSig {
     (approved, Option::none())
   }
 
+
+  public fun propose_new<ProposalData: key + store + copy + drop>(
+    sig: &signer,
+    multisig_address: address,
+    proposal_data: Proposal<ProposalData>,
+    duration_epochs: Option<u64>
+  ):(bool, Option<WithdrawCapability>)  acquires MultiSig, Action {
+    // print(&20001);
+    assert_authorized(sig, multisig_address);
+
+    let ms = borrow_global_mut<MultiSig>(multisig_address);
+    let action = borrow_global_mut<Action<ProposalData>>(multisig_address);
+    
+    // does this proposal already exist in the pending list?
+    let (found, _idx, status_enum, _is_complete) = VoteLib::find_anywhere_by_data<Proposal<ProposalData>>(&action.vote, &proposal_data);
+    
+    if (found && status_enum == 0) {
+      assert!(false, Errors::invalid_argument(EDUPLICATE_PROPOSAL));
+    };
+
+    let ballot = VoteLib::propose_ballot(&mut action.vote, &ms.guid_capability, proposal_data);
+
+    let id = VoteLib::get_ballot_id(ballot);
+
+    // // go through all proposals and clean up expired ones.
+    lazy_cleanup_expired(action);
+
+    // let n = *&ms.cfg_default_n_sigs;
+
+
+    // // check if we have this proposal already
+    // let (found, idx) = find_index_of_pending<ProposalData>(action, &proposal_data);
+
+    // let approved = if (found) {
+    //   print(&20002);
+
+    //   let prop = get_proposal(action, &proposal_data);
+
+    //   // belt and suspenders, the lazy cleaning should have removed expired proposals.
+    //   // stop here if it's expired, but first move the the ms.rejected list.
+    //   if (check_expired(prop)) {
+    //     let rej = Vector::remove(&mut action.pending, idx);
+    //     Vector::push_back(&mut action.rejected, rej);
+    //     return (false, Option::none())
+    //   };
+
+    //   vote(prop, Signer::address_of(sig), n)
+
+    // } else {
+    //   // TODO: the single interface for proposing and voting causes a UI issue. Theres a case that a straggler voter will inadvertently start a new proposal if the vote just closed.
+    //   // Though it may be that the thirdparty modules need to check for this themselves when voting.
+    //   print(&20003);
+
+    //   let dur = if (Option::is_some(&duration_epochs)) {
+    //     Option::borrow(&duration_epochs)
+    //   } else {
+    //     &ms.cfg_duration_epochs
+    //   };
+
+    //   Vector::push_back(&mut action.pending, Proposal<ProposalData> {
+    //     id: ms.counter,
+    //     proposal_data: proposal_data,
+    //     votes: Vector::singleton(Signer::address_of(sig)),
+    //     approved: false,
+    //     expiration_epoch: DiemConfig::get_current_epoch() + *dur,
+    //   });
+    //   ms.counter = ms.counter + 1;
+    //   false
+    // };
+
+    // print(&20004);
+    // // let w = borrow_global_mut<Withdraw>(multisig_address);
+
+    // if (approved &&
+    //   Option::is_some(&ms.withdraw_capability) &&
+    //   action.can_withdraw
+    // ) {
+    //   print(&20005);
+    //     let cap = Option::extract(&mut ms.withdraw_capability);
+    //     print(&20006);
+
+    //     return (approved, Option::some(cap))
+    // };
+    (false, Option::none())
+  }
+
   // votes on a proposal, returns true if it passed
   fun vote<ProposalData: key + store + drop>(prop: &mut Proposal<ProposalData>, sender_addr: address, n: u64): bool {
     print(&30001);
@@ -344,16 +440,23 @@ module MultiSig {
     false
   }
 
-  fun lazy_cleanup_expired<ProposalData: store + key>(a: &mut Action<ProposalData>) {
+  fun lazy_cleanup_expired<ProposalData: key + store + copy + drop>(a: &mut Action<ProposalData>) {
     let epoch = DiemConfig::get_current_epoch();
 
-    let len = Vector::length(&a.pending);
+    let b_vec = VoteLib::get_list_ballots_by_enum(&a.vote, 0);
+
+    let len = Vector::length(b_vec);
     let i = 0;
     while (i < len) {
-      let ex = *&Vector::borrow(&a.pending, i).expiration_epoch;
-      if (epoch > ex) { 
-        let rej = Vector::remove(&mut a.pending, i);
-        Vector::push_back(&mut a.rejected, rej);
+      
+      let b = Vector::borrow(b_vec, i);
+      let t = VoteLib::get_ballot_type<Proposal<ProposalData>>(b);
+
+      
+      if (epoch > t.expiration_epoch) { 
+        let id = VoteLib::get_ballot_id(b);
+        
+        VoteLib::move_ballot(&mut a.vote, &id, 0, 1);
 
       };
       i = i + 1;

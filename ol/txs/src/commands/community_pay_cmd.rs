@@ -53,6 +53,7 @@ impl Runnable for CommunityPayCmd {
             ),
             Err(e) => {
                 println!("ERROR: could not create community transfer proposal:");
+                dbg!(&e);
                 if let Some(loc) = &e.location {
                     if loc.contains("TransferScripts") {
                         match e.abort_code {
