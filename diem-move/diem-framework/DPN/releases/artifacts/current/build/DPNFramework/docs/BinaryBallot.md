@@ -1,25 +1,25 @@
 
-<a name="0x1_BinaryBallot"></a>
+<a name="0x1_BinaryTally"></a>
 
-# Module `0x1::BinaryBallot`
+# Module `0x1::BinaryTally`
 
 
 
--  [Struct `BinaryBallot`](#0x1_BinaryBallot_BinaryBallot)
--  [Struct `BallotDeadline`](#0x1_BinaryBallot_BallotDeadline)
+-  [Struct `BinaryTally`](#0x1_BinaryTally_BinaryTally)
+-  [Struct `BallotDeadline`](#0x1_BinaryTally_BallotDeadline)
 
 
 <pre><code></code></pre>
 
 
 
-<a name="0x1_BinaryBallot_BinaryBallot"></a>
+<a name="0x1_BinaryTally_BinaryTally"></a>
 
-## Struct `BinaryBallot`
+## Struct `BinaryTally`
 
 
 
-<pre><code><b>struct</b> <a href="BinaryBallot.md#0x1_BinaryBallot">BinaryBallot</a>&lt;Issue, TallyType&gt; <b>has</b> drop, store
+<pre><code><b>struct</b> <a href="BinaryBallot.md#0x1_BinaryTally">BinaryTally</a> <b>has</b> drop, store
 </code></pre>
 
 
@@ -30,25 +30,13 @@
 
 <dl>
 <dt>
-<code>cfg_deadline: <a href="BinaryBallot.md#0x1_BinaryBallot_BallotDeadline">BinaryBallot::BallotDeadline</a></code>
+<code>cfg_deadline: <a href="BinaryBallot.md#0x1_BinaryTally_BallotDeadline">BinaryTally::BallotDeadline</a></code>
 </dt>
 <dd>
 
 </dd>
 <dt>
 <code>cfg_enrollment_votes: u64</code>
-</dt>
-<dd>
-
-</dd>
-<dt>
-<code>issue: Issue</code>
-</dt>
-<dd>
-
-</dd>
-<dt>
-<code>tally: TallyType</code>
 </dt>
 <dd>
 
@@ -76,13 +64,13 @@
 
 </details>
 
-<a name="0x1_BinaryBallot_BallotDeadline"></a>
+<a name="0x1_BinaryTally_BallotDeadline"></a>
 
 ## Struct `BallotDeadline`
 
 
 
-<pre><code><b>struct</b> <a href="BinaryBallot.md#0x1_BinaryBallot_BallotDeadline">BallotDeadline</a> <b>has</b> drop, store
+<pre><code><b>struct</b> <a href="BinaryBallot.md#0x1_BinaryTally_BallotDeadline">BallotDeadline</a> <b>has</b> drop, store
 </code></pre>
 
 

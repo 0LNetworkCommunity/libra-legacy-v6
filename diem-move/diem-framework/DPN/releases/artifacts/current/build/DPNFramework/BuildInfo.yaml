@@ -47,7 +47,7 @@ compiled_package_info:
       name: BCS
     : Std
     ? address: "00000000000000000000000000000001"
-      name: BinaryBallot
+      name: BinaryTally
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: BitVector
@@ -151,6 +151,9 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: Event
     : Std
+    ? address: "00000000000000000000000000000001"
+      name: ExampleStandalonePoll
+    : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: FIFO
     : DiemFramework
@@ -323,6 +326,9 @@ compiled_package_info:
       name: VectorHelper
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: VoteLib
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Vouch
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -340,7 +346,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 0671D39F0E0AD08024CCAD268BFED3C214CB645A6668914264B2FAF6081F4D20
+  source_digest: 726C65FCF9B4F9494CC1283EB3375E999143B4FD3223575D8028F86990C91C56
   build_flags:
     dev_mode: false
     test_mode: false
