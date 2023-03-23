@@ -85,7 +85,7 @@ module DonorDirectedGovernance {
 
     /// a private function to propose a ballot for a veto. This is called by a verified donor.
 
-    fun propose_veto(cap: &GUID::CreateCapability ,directed_account: address, proposal_guid: u64) acquires Governance {
+    fun propose_veto(cap: &GUID::CreateCapability, directed_account: address, proposal_guid: u64) acquires Governance {
       let gov_state = borrow_global_mut<Governance<Veto>>(directed_account);
 
       let v = Veto { guid: proposal_guid };

@@ -44,7 +44,10 @@ module Std::GUID {
         ID { creation_num, addr }
     }
 
-    public fun create_with_capability(addr: address, _cap: &CreateCapability): GUID acquires Generator {
+    //////// 0L ////////
+    // not sure why we are sending the address if we have it it createcapability
+    public fun create_with_capability(_addr: address, cap: &CreateCapability): GUID acquires Generator {
+        let addr = *&cap.addr;
         assert!(exists<Generator>(addr), EGUID_GENERATOR_NOT_PUBLISHED);
         create_impl(addr)
     }

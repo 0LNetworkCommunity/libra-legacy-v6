@@ -225,7 +225,7 @@ Create a non-privileged id from <code>addr</code> and <code>creation_num</code>
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="GUID.md#0x1_GUID_create_with_capability">create_with_capability</a>(addr: <b>address</b>, _cap: &<a href="GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>): <a href="GUID.md#0x1_GUID_GUID">GUID::GUID</a>
+<pre><code><b>public</b> <b>fun</b> <a href="GUID.md#0x1_GUID_create_with_capability">create_with_capability</a>(_addr: <b>address</b>, cap: &<a href="GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>): <a href="GUID.md#0x1_GUID_GUID">GUID::GUID</a>
 </code></pre>
 
 
@@ -234,7 +234,8 @@ Create a non-privileged id from <code>addr</code> and <code>creation_num</code>
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="GUID.md#0x1_GUID_create_with_capability">create_with_capability</a>(addr: <b>address</b>, _cap: &<a href="GUID.md#0x1_GUID_CreateCapability">CreateCapability</a>): <a href="GUID.md#0x1_GUID">GUID</a> <b>acquires</b> <a href="GUID.md#0x1_GUID_Generator">Generator</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="GUID.md#0x1_GUID_create_with_capability">create_with_capability</a>(_addr: <b>address</b>, cap: &<a href="GUID.md#0x1_GUID_CreateCapability">CreateCapability</a>): <a href="GUID.md#0x1_GUID">GUID</a> <b>acquires</b> <a href="GUID.md#0x1_GUID_Generator">Generator</a> {
+    <b>let</b> addr = *&cap.addr;
     <b>assert</b>!(<b>exists</b>&lt;<a href="GUID.md#0x1_GUID_Generator">Generator</a>&gt;(addr), <a href="GUID.md#0x1_GUID_EGUID_GENERATOR_NOT_PUBLISHED">EGUID_GENERATOR_NOT_PUBLISHED</a>);
     <a href="GUID.md#0x1_GUID_create_impl">create_impl</a>(addr)
 }
