@@ -1,45 +1,9 @@
-///////////////////////////////////////////////////////////////////////////
-// 0L Module
-// VoteLib
-// Intatiate different types of user-interactive voting
-///////////////////////////////////////////////////////////////////////////
 
-// TODO: Move this to a separate address. Potentially has separate governance.
-address DiemFramework { 
-
-  module ParticipationVote {
-
-    // ParticipationVote is a single issue referendum, with only votes in favor or against.
-    // The design of the policies attempts to accomodate online voting where votes tend to happen:
-    // 1. publicly
-    // 2. asynchronously
-    // 3. with a low turnout
-    // 4. of voters with high conviction
-
-    // Low turnouts are not indicative of disinterest (often termed voter apathy), but instead it is just "rational ignorance" of the matters being voted. Adaptive deadlines and thresholds are an attempt to encourage more familiarity with the matters, and thus more participation. At the same time it allows for consensus decisions to be reached in a timely manner by the active and interested participants.
-
-    // The ballots have dynamic deadlines and thresholds.
-    // deadlines can be extended by dissenting votes from the current majority vote. This cannot be done indefinitely, as the extension is capped by the max_deadline.
-    // The threshold (percent approval/rejection which needs to be met) is determined post-hoc. Referenda are expensive, for communities, leaders, and voters. Instead of scapping a vote which doesn't achieve a pre-established number of participants (quorum), the vote is allowed to be tallied and be seen as valid. However, the threshold must be higher (more than 51%) in cases where the turnout is low. In blockchain polkadot network has prior art for this: https://wiki.polkadot.network/docs/en/learn-governance#adaptive-quorum-biasing
-    // In Polkadot implementation there are positive and negative biasing. Negative biasing (when turnout is low, a lower amount of votes is needed) seems to be an edge case.
-
-    // Regarding deadlines. The problem with adaptive thresholds is that it favors the engaged community. If you are unaware of the process, or if the process occurred silently, it's very challenging to swing the vote. So the minority vote may be disadvantaged due to lack of engagement, and there should be some accomodation. If they are coming late to the vote, AND in significant numbers, then they can get an extension. The initial design aims to allow an extension if on the day the poll closes, a sufficient amount of the vote was shifted in the minority direction, an extra day is added. This will happen for each new deadline.
-
-    // THE BALLOT
-    // Ballot is a single proposal that can be voted on.
-    // Each ballot will run for the minimum period of time.
-    // The deadline can be extended with dissenting votes from the current majority vote.
-    // The turnout can be extended with dissenting votes from the current majority vote.
-    // the threshold is dictated by the turnout. In this implementation the curve is fixed, and linear.
-    // At 1/8th turnout, the threshold to be met is 100%
-    // At 7/8th turnout, the threshold to be met is 51%
-
-    use Std::FixedPoint32;
+address DiemFramework {
+    module VoteLib {
     use Std::Vector;
-    use Std::Signer;
-    use Std::GUID::{Self, GUID, ID};
+    use Std::GUID::{Self, ID};
     use Std::Errors;
-    use DiemFramework::DiemConfig;
 
     /// The ballot has already been completed.
     const ECOMPLETED: u64 = 300010; 
@@ -81,56 +45,121 @@ address DiemFramework {
 
     // The contract may have multiple ballots at a given time.
     // Historical completed ballots are also stored in a separate vector.
-    // Developers can use Poll struct to instantiate an election.
+    // Developers can use Vote struct to instantiate an election.
     // or then can use Ballot, for a custom voting solution.
     // lastly the developer can simply wrap refereundum into another struct with more context.
 
-    struct Poll<Data> has key, store, drop {
-      ballots_pending: vector<Ballot<Data>>,
-      ballots_approved: vector<Ballot<Data>>,
-      ballots_rejected: vector<Ballot<Data>>,
+    struct Vote<TallyType> has key, store, drop {
+      ballots_pending: vector<Ballot<TallyType>>,
+      ballots_approved: vector<Ballot<TallyType>>,
+      ballots_rejected: vector<Ballot<TallyType>>,
     }
 
-    public fun new_poll<Data: copy + store>(): Poll<Data> {
-      Poll {
+    struct Ballot<TallyType> has key, store, drop {
+      guid: GUID::GUID,
+      // issue: IssueData, // issue is the data of what is being decided.
+      tally_type: TallyType, // a tally type includes how the count happens and the deadline.
+      completed: bool,
+    }
+
+
+    //////// FOR STANDALONE POLLS ////////
+    /// Developers may simply initialize a poll at the root level of their address, Or they can wrap the poll in another struct. There are different APIs for each. One group of APIs are for standalone polls which require the GUID CreateCapability. The other group of APIs are for polls that are wrapped in another struct, and this one assumes the sender can access a mutable instance of the Vote struct, which may be stored under a key of another Struct.
+
+
+    //////// POLL METHODS ////////
+    // For
+    /// The poll constructor. Use this to create a poll that you are wrapping in another struct. 
+    // E.g. `struct Mystruct<TallyType> has key { poll: Vote<TallyType> }`
+    public fun new_poll<TallyType: copy + drop + store>(): Vote<TallyType> {
+      Vote {
         ballots_pending: Vector::empty(),
         ballots_approved: Vector::empty(),
         ballots_rejected: Vector::empty(),
       }
     }
 
-    public fun propose_ballot<Data: copy + store>(
-      guid_cap: &GUID::CreateCapability,
-      poll: &mut Poll<Data>,
-      data: Data,
-      max_vote_enrollment: u64,
-      deadline: u64,
-      max_extensions: u64,
-    ): &mut Ballot<Data> {
-      let ballot = new_ballot(guid_cap, data, max_vote_enrollment, deadline, max_extensions);
+    /// If you have a mutable Vote instance AND you have the GUID Create Capability, you can use this to create a ballot.
+    public fun propose_ballot<TallyType: copy + drop + store>(
+      poll: &mut Vote<TallyType>,
+      guid_cap: &GUID::CreateCapability, // whoever is ceating this issue needs access to the GUID creation capability
+      // issue: IssueData,
+      tally_type: TallyType,
+    ): &mut Ballot<TallyType>  {
+      let b = Ballot {
+
+        guid: GUID::create_with_capability(@0xDEADBEEF, guid_cap), // address is ignored.
+        // issue,
+        tally_type,
+        completed: false,
+       
+      };
       let len = Vector::length(&poll.ballots_pending);
-      Vector::push_back(&mut poll.ballots_pending, ballot);
+      Vector::push_back(&mut poll.ballots_pending, b);
       Vector::borrow_mut(&mut poll.ballots_pending, len + 1)
     }
-    /// private function to search in the ballots for an existsing veto. Returns and option type with the Ballot id.
-    public fun get_ballot_mut<Data: copy + store> (poll: &mut Poll<Data>, proposal_guid: &GUID::ID, status_enum: u8): &mut Ballot<Data> {
-      
-      let (found, idx) = find_index_of_ballot(poll, proposal_guid, status_enum);
-      assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
 
-      let list = get_list_ballots_by_enum<Data>(poll, status_enum);
+    /// private function to search in the ballots for an existsing veto. Returns and option type with the Ballot id.
+    public fun get_ballot_mut<TallyType: copy + drop + store> (
+      poll: &mut Vote<TallyType>,
+      idx: u64, 
+      status_enum: u8
+    ): &mut Ballot<TallyType> {
+
+      let list = get_list_ballots_by_enum<TallyType>(poll, status_enum);
+
+      assert!(Vector::length(list) > idx, Errors::invalid_argument(ENO_BALLOT_FOUND));
 
       Vector::borrow_mut(list, idx)
     }
 
-    fun find_index_of_ballot<Data: copy + store>(poll: &mut Poll<Data>, proposal_guid: &GUID::ID, status_enum: u8): (bool, u64) {
 
-     let list = get_list_ballots_by_enum<Data>(poll, status_enum);
+
+    /// find the ballot wherever it is: pending, approved, rejected.
+    /// returns a tuple of (is_found: bool, index: u64, status_enum: u8)
+    public fun find_anywhere<TallyType: copy + drop + store> (
+      poll: &mut Vote<TallyType>,
+      proposal_guid: &GUID::ID,
+    ): (bool, u64, u8, bool) {
+
+     // looking in pending
+     let (found, idx) = find_index_of_ballot(poll, proposal_guid, PENDING);
+     if (found) {
+      let complete = is_completed(Vector::borrow(&poll.ballots_pending, idx));
+       return (true, idx, PENDING, complete)
+     };
+
+     // looking in approved
+      let (found, idx) = find_index_of_ballot(poll, proposal_guid, APPROVED);
+      if (found) {
+        let complete = is_completed(Vector::borrow(&poll.ballots_approved, idx));
+        return (true, idx, APPROVED, complete)
+      };
+
+     // looking in rejected
+      let (found, idx) = find_index_of_ballot(poll, proposal_guid, REJECTED);
+      if (found) {
+        let complete = is_completed(Vector::borrow(&poll.ballots_rejected, idx));
+        return (true, idx, REJECTED, complete)
+      };
+
+      (false, 0, 0, false)
+    }
+
+
+    public fun find_index_of_ballot<TallyType: copy + drop + store> (
+      poll: &mut Vote<TallyType>,
+      proposal_guid: &GUID::ID,
+      status_enum: u8,
+    ): (bool, u64) {
+
+     let list = get_list_ballots_by_enum<TallyType>(poll, status_enum);
 
       let i = 0;
       while (i < Vector::length(list)) {
         let b = Vector::borrow(list, i);
-        if (&get_ballot_id(b) == proposal_guid) {
+
+        if (&GUID::id(&b.guid) == proposal_guid) {
           return (true, i)
         };
         i = i + 1;
@@ -139,7 +168,7 @@ address DiemFramework {
       (false, 0)
     }
 
-    fun get_list_ballots_by_enum<Data: copy + store>(poll: &mut Poll<Data>, status_enum: u8): &mut vector<Ballot<Data>> {
+    public fun get_list_ballots_by_enum<TallyType: copy + drop + store >(poll: &mut Vote<TallyType>, status_enum: u8): &mut vector<Ballot<TallyType>> {
      if (status_enum == PENDING) {
         &mut poll.ballots_pending
       } else if (status_enum == APPROVED) {
@@ -152,428 +181,301 @@ address DiemFramework {
       }
     }
 
-
-    struct Ballot<Data> has key, store, drop { // Note, this is a hot potato. Any methods chaning it must return the struct to caller.
-      guid: GUID,
-      data: Data, // TODO: change to ascii string
-      cfg_deadline: u64, // original deadline, which may be extended. Note dedaline is at the END of this epoch (cfg_deadline + 1 stops taking votes)
-      cfg_max_extensions: u64, // if 0 then no max. Election can run until threshold is met.
-      cfg_min_turnout: u64,
-      cfg_minority_extension: bool,
-      completed: bool,
-      max_votes: u64, // what's the entire universe of votes. i.e. 100% turnout
-      // vote_tickets: VoteTicket, // the tickets that can be used to vote, which will be deducted as votes are cast. It is initialized with the max_votes.
-      // Note the developer needs to be aware that if the right to vote changes throughout the period of the election (more coins, participants etc) then the max_votes and tickets could skew from expected results. Vote tickets can be distributed in advance.
-      votes_approve: u64, // the running tally of approving votes,
-      votes_reject: u64, // the running tally of rejecting votes,
-      extended_deadline: u64, // which epoch was the deadline extended to
-      last_epoch_voted: u64, // the last epoch which received a vote
-      last_epoch_approve: u64, // what was the approval percentage at the last epoch. For purposes of calculating extensions.
-      last_epoch_reject: u64, // what was the rejection percentage at the last epoch. For purposes of calculating extensions.
-      provisional_pass_epoch: u64, // once a threshold is met, mark that epoch, a further vote on the next epoch will seal the election, to give time for the minority to vote.
-      tally_approve: u64,  // use two decimal places 1234 = 12.34%
-      tally_turnout: u64, // use two decimal places 1234 = 12.34%
-      tally_pass: bool, // if it passed
-    }
-
-    struct VoteReceipt has key, store, drop, copy { 
-      guid: GUID::ID,
-      approve_reject: bool,
-      weight: u64,
-    }
-    struct IVoted has key {
-      elections: vector<VoteReceipt>,
-    }
-
-    public fun new_ballot<Data: copy + store>(
-      guid_cap: &GUID::CreateCapability,
-      data: Data,
-      max_vote_enrollment: u64,
-      deadline: u64,
-      max_extensions: u64,
-    ): Ballot<Data> {
-        Ballot<Data> {
-          guid: GUID::create_with_capability(GUID::get_capability_address(guid_cap), guid_cap),
-          data,
-          cfg_deadline: deadline,
-          cfg_max_extensions: max_extensions, // 0 means infinite extensions
-          cfg_min_turnout: 1250,
-          cfg_minority_extension: true,
-          completed: false,
-          max_votes: max_vote_enrollment,
-          votes_approve: 0,
-          votes_reject: 0,
-          extended_deadline: deadline,
-          last_epoch_voted: 0,
-          last_epoch_approve: 0,
-          last_epoch_reject: 0,
-          provisional_pass_epoch: 0,
-          tally_approve: 0,
-          tally_turnout: 0,
-          tally_pass: false,
-        }
-    }
-
-    // Only the contract, which is the keeper of the Ballot, can allow a user to temporarily hold the Ballot struct to update the vote. The user cannot arbiltrarily update the vote, with an arbitrary number of votes.
-    // This is a hot potato, it cannot be dropped.
-
-    // the vote flow will return if the ballot passed (on the vote that gets over the threshold). This can be used for triggering actions lazily.
-
-    public fun vote<Data: copy + store>(ballot: &mut Ballot<Data>, user: &signer, approve_reject: bool, weight: u64): bool acquires IVoted {
-      // voting should not be complete
-      assert!(!is_complete(ballot), Errors::invalid_state(ECOMPLETED));
-
-      // check if this person voted already.
-      // If the vote is the same directionally (approve, reject), exit early.
-      // otherwise, need to subtract the old vote and add the new vote.
-      let user_addr = Signer::address_of(user);
-      let (_, is_found) = find_prior_vote_idx(user_addr, &GUID::id(&ballot.guid));
-
-      assert!(!is_found, Errors::invalid_state(EALREADY_VOTED));
-
-      // if we are in a new epoch than the previous last voter, then store that epoch data.
-      let epoch_now = DiemConfig::get_current_epoch();
-      if (epoch_now > ballot.last_epoch_voted) {
-        ballot.last_epoch_approve = ballot.votes_approve;
-        ballot.last_epoch_reject = ballot.votes_reject;
-      };
-
-      // in every case, add the new vote
-      ballot.last_epoch_voted = epoch_now;
-      if (approve_reject) {
-        ballot.votes_approve = ballot.votes_approve + weight;
-      } else {
-        ballot.votes_reject = ballot.votes_reject + weight;
-      };
-
-      // always tally on each vote
-      // make sure all extensions happened in previous step.
-      maybe_tally(ballot);
-
-      // this will handle the case of updating the receipt in case this is a second vote.
-      make_receipt(user, &GUID::id(&ballot.guid), approve_reject, weight);
-
-      ballot.tally_pass // return if it passed, so it can be used in a third party contract handler for lazy evaluation.
-    }
-
-    fun is_complete<Data: copy + store>(ballot: &mut Ballot<Data>): bool {
-      let epoch = DiemConfig::get_current_epoch();
-      // if completed, exit early
-      if (ballot.completed) { return true }; // this should be checked above anyways.
-
-      // this may be a vote that never expires, until a decision is reached
-      if (ballot.cfg_deadline == 0 ) { return false };
-
-      // if original and extended deadline have passed, stop tally
-      // while we are here, update to "completed".
-      if (
-        epoch > ballot.cfg_deadline &&
-        epoch > ballot.extended_deadline
-      ) { 
-        ballot.completed = true;
-        return true
-      };
-      ballot.completed
-    }
-
-    public fun retract<Data: copy + store>(ballot: &mut Ballot<Data>, user: &signer) acquires IVoted {
-      let user_addr = Signer::address_of(user);
-
-      let (idx, is_found) = find_prior_vote_idx(user_addr, &GUID::id(&ballot.guid));
-      assert!(is_found, Errors::invalid_state(ENOT_VOTED));
-
-      let (approve_reject, weight) = get_receipt_data(user_addr, &GUID::id(&ballot.guid));
-
-      if (approve_reject) {
-        ballot.votes_approve = ballot.votes_approve - weight;
-      } else {
-        ballot.votes_reject = ballot.votes_reject - weight;
-      };
-
-      let ivoted = borrow_global_mut<IVoted>(user_addr);
-      Vector::remove(&mut ivoted.elections, idx);
-    }
-
-    /// The handler for a third party contract may wish to extend the ballot deadline.
-    /// DANGER: the thirdparty ballot contract needs to know what it is doing. If this ballot object is exposed to end users it's game over.
-
-    public fun extend_deadline<Data: copy + store>(ballot: &mut Ballot<Data>, new_epoch: u64) {
-      
-      ballot.extended_deadline = new_epoch;
-    }
-
-    /// A third party contract can optionally call this function to extend the deadline to extend ballots in competitive situations.
-    /// we may need to extend the ballot if on the last day (TBD a wider window) the vote had a big shift in favor of the minority vote.
-    /// All that needs to be done, is on the return of vote(), to then call this function. 
-    /// It's a useful feature, but it will not be included by default in all votes.
-
-    public fun maybe_auto_competitive_extend<Data: copy + store>(ballot: &mut Ballot<Data>):u64  {
-
-      let epoch = DiemConfig::get_current_epoch();
-
-      // TODO: The exension window below of 1 day is not sufficient to make
-      // much difference in practice (the threshold is most likely reached at that point).
-
-      // Are we on the last day of voting (extension window)? If not exit
-      if (epoch == ballot.extended_deadline || epoch == ballot.cfg_deadline) { return ballot.extended_deadline };
-
-      if (is_competitive(ballot)) {
-        // we may have extended already, but we don't want to extend more than once per day.
-        if (ballot.extended_deadline > epoch) { return ballot.extended_deadline };
-
-        // extend the deadline by 1 day
-        ballot.extended_deadline = epoch + 1;
-      };
-
-
-      ballot.extended_deadline
-    }
-
-    fun is_competitive<Data: copy + store>(ballot: &Ballot<Data>): bool {
-      let (prev_lead, prev_trail, prev_lead_updated, prev_trail_updated) = if (ballot.last_epoch_approve > ballot.last_epoch_reject) {
-        // if the "approve" vote WAS leading.
-        (ballot.last_epoch_approve, ballot.last_epoch_reject, ballot.votes_approve, ballot.votes_reject)
-        
-      } else {
-        (ballot.last_epoch_reject, ballot.last_epoch_approve, ballot.votes_reject, ballot.votes_approve)
-      };
-
-
-      // no votes yet 
-      if (prev_lead == 0 && prev_trail == 0) { return false }; 
-      if (prev_lead_updated == 0 && prev_trail_updated == 0) { return false};
-
-      let prior_margin = ((prev_lead - prev_trail) * PCT_SCALE) / (prev_lead + prev_trail);
-
-
-      // the current margin may have flipped, so we need to check the direction of the vote.
-      // if so then give an automatic extensions
-      if (prev_lead_updated < prev_trail_updated) {
-        return true
-      } else {
-        let current_margin = (prev_lead_updated - prev_trail_updated) * PCT_SCALE / (prev_lead_updated + prev_trail_updated);
-
-        if (current_margin - prior_margin > MINORITY_EXT_MARGIN) {
-          return true
-        }
-      };
-      false
-    }
-
-    /// stop tallying if the expiration is passed or the threshold has been met.
-    fun maybe_tally<Data: copy + store>(ballot: &mut Ballot<Data>) {
-      let total_votes = ballot.votes_approve + ballot.votes_reject;
-
-      assert!(ballot.max_votes >= total_votes, Errors::invalid_state(EVOTES_GREATER_THAN_ENROLLMENT));
-
-      // figure out the turnout
-      let m = FixedPoint32::create_from_rational(total_votes, ballot.max_votes);
-
-      ballot.tally_turnout = FixedPoint32::multiply_u64(PCT_SCALE, m); // scale up
-      // calculate the dynamic threshold needed.
-      let t = get_threshold_from_turnout(total_votes, ballot.max_votes);
-      // check the threshold that needs to be met met turnout
-      ballot.tally_approve = FixedPoint32::multiply_u64(PCT_SCALE, FixedPoint32::create_from_rational(ballot.votes_approve, total_votes));
-      // the first vote which crosses the threshold causes the poll to end.
-      if (ballot.tally_approve > t) {
-
-        // before marking it pass, make sure the minimum quorum was met
-        // by default 12.50%
-        if (ballot.tally_turnout > ballot.cfg_min_turnout) {
-          let epoch = DiemConfig::get_current_epoch();
-
-          if (ballot.provisional_pass_epoch == 0) {
-            // automatically passing once the threshold is reached disadvantages inactive participants. We propose it takes one vote plus one day once reaching threshold.
-            ballot.provisional_pass_epoch = epoch;
-          } else if (epoch > ballot.provisional_pass_epoch) {
-            // multiple days may have passed since the provisional pass.
-            ballot.completed = true;
-            ballot.tally_pass = true;
-          }
-        }
-      }
-    }
-
-    // TODO: this should probably use Decimal.move
-    // can't multiply FixedPoint32 types directly.
-    public fun get_threshold_from_turnout(voters: u64, max_votes: u64): u64 {
-      // let's just do a line
-
-      let turnout = FixedPoint32::create_from_rational(voters, max_votes);
-      let turnout_scaled_x = FixedPoint32::multiply_u64(PCT_SCALE, turnout); // scale to two decimal points.
-      // only implemeting the negative slope case. Unsure why the other is needed.
-
-      assert!(THRESH_AT_LOW_TURNOUT_Y1 > THRESH_AT_HIGH_TURNOUT_Y2, Errors::invalid_state(EVOTE_CALC_PARAMS));
-
-      // the minimum passing threshold is the low turnout threshold.
-      // same for the maximum turnout threshold.
-      if (turnout_scaled_x < LOW_TURNOUT_X1) {
-        return THRESH_AT_LOW_TURNOUT_Y1
-      } else if (turnout_scaled_x > HIGH_TURNOUT_X2) {
-        return THRESH_AT_HIGH_TURNOUT_Y2
-      };
-
-
-      let abs_m = FixedPoint32::create_from_rational(
-        (THRESH_AT_LOW_TURNOUT_Y1 - THRESH_AT_HIGH_TURNOUT_Y2), (HIGH_TURNOUT_X2 - LOW_TURNOUT_X1)
-      );
-
-      let abs_mx = FixedPoint32::multiply_u64(LOW_TURNOUT_X1, *&abs_m);
-      let b = THRESH_AT_LOW_TURNOUT_Y1 + abs_mx;
-      let y =  b - FixedPoint32::multiply_u64(turnout_scaled_x, *&abs_m);
-
-      return y
-    }
-
-    fun make_receipt(user_sig: &signer, vote_id: &ID, approve_reject: bool, weight: u64) acquires IVoted {
-
-      let user_addr = Signer::address_of(user_sig);
-
-      let receipt = VoteReceipt {
-        guid: *vote_id,
-        approve_reject: approve_reject,
-        weight: weight,
-      };
-
-      if (!exists<IVoted>(user_addr)) {
-        let ivoted = IVoted {
-          elections: Vector::empty(),
-        };
-        move_to<IVoted>(user_sig, ivoted);
-      };
-
-      let (idx, is_found) = find_prior_vote_idx(user_addr, vote_id);
-
-      // for safety remove the old vote if it exists.
-      let ivoted = borrow_global_mut<IVoted>(user_addr);
-      if (is_found) {
-        Vector::remove(&mut ivoted.elections, idx);
-      };
-      Vector::push_back(&mut ivoted.elections, receipt);
-    }
-
-    fun find_prior_vote_idx(user_addr: address, vote_id: &ID): (u64, bool) acquires IVoted {
-      if (!exists<IVoted>(user_addr)) {
-        return (0, false)
-      };
-      
-      let ivoted = borrow_global<IVoted>(user_addr);
-      let len = Vector::length(&ivoted.elections);
-      let i = 0;
-      while (i < len) {
-        let receipt = Vector::borrow(&ivoted.elections, i);
-        if (&receipt.guid == vote_id) {
-          return (i, true)
-        };
-        i = i + 1;
-      };
-
-      return (0, false)
-    }
-
-    fun get_vote_receipt(user_addr: address, idx: u64): VoteReceipt acquires IVoted {
-      let ivoted = borrow_global<IVoted>(user_addr);
-      let r = Vector::borrow(&ivoted.elections, idx);
-      return *r
-    }
-
-    //////// GETTERS ////////
-    /// get the ballot id
-    public fun get_ballot_id<Data: copy + store>(ballot: &Ballot<Data>): ID {
+    public fun get_ballot_id<TallyType: copy + drop + store >(ballot: &Ballot<TallyType>): ID {
       return GUID::id(&ballot.guid)
     }
 
-    /// get current tally
-    public fun get_tally<Data: copy + store>(ballot: &Ballot<Data>): u64 {
-      let total = ballot.votes_approve + ballot.votes_reject;
-      if (ballot.votes_approve + ballot.votes_reject > ballot.max_votes) {
-        return 0
-      };
-      if (ballot.max_votes == 0) {
-        return 0
-      };
-      return FixedPoint32::multiply_u64(PCT_SCALE, FixedPoint32::create_from_rational(total, ballot.max_votes))
+
+    public fun is_completed<TallyType: copy + drop + store>(b: &Ballot<TallyType>):bool {
+      b.completed
     }
 
-    /// is it complete and what's the result
-    public fun complete_result<Data: copy + store>(ballot: &Ballot<Data>): (bool, bool) {
-      (ballot.completed, ballot.tally_pass)
+    public fun complete_ballot<TallyType: copy + drop + store>(
+      ballot: &mut Ballot<TallyType>,
+    ) {
+      ballot.completed = true;
+    }
+
+    /// Pop a ballot off a list and return it. This is owned not mutable.
+    public fun extract_ballot<TallyType: copy + drop + store>(
+      poll: &mut Vote<TallyType>,
+      id: &GUID::ID,
+      from_status_enum: u8,
+    ): Ballot<TallyType>{
+      let (found, idx) = find_index_of_ballot(poll, id, from_status_enum);
+      assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
+      let from_list = get_list_ballots_by_enum<TallyType>(poll, from_status_enum);
+      Vector::remove(from_list, idx)
+    }
+
+    /// extract a ballot and put on another list.
+    public fun move_ballot<TallyType: copy + drop + store>(
+      poll: &mut Vote<TallyType>,
+      id: &GUID::ID,
+      from_status_enum: u8,
+      to_status_enum: u8,
+    ) {
+      let b = extract_ballot(poll, id, from_status_enum);
+      let to_list = get_list_ballots_by_enum<TallyType>(poll, to_status_enum);
+      Vector::push_back(to_list, b);
     }
 
 
-    /// gets the receipt data
-    // should return an OPTION.
-    public fun get_receipt_data(user_addr: address, vote_id: &ID): (bool, u64) acquires IVoted {
-      let (idx, found) = find_prior_vote_idx(user_addr, vote_id);
-      if (found) {
-          let v = get_vote_receipt(user_addr, idx);
-          return (v.approve_reject, v.weight)
-        };
-      return (false, 0)
-    } 
+    /// third party contracts need to be able to access the data in the poll struct. But they are not able to borrow it.
+    public fun get_tally_copy<TallyType: copy + drop + store>(
+      poll: &mut Vote<TallyType>,
+      id: &GUID::ID,
+    ): TallyType {
+      let (found, idx, status_enum, _completed) = find_anywhere(poll, id);
+      assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
+      let ballot = get_ballot_mut(poll, idx, status_enum);
+      *&ballot.tally_type
+    }
+
+    //////// STANDALONE VOTE ////////
+    /// Initialize poll struct which will be stored as-is on the account under Vote<Type>.
+    /// Developers who need more flexibility, can instead construct the Vote object and then wrap it in another struct on their third party module.
+    public fun standalone_init_poll_at_address<TallyType: copy + drop + store>(
+      sig: &signer,
+      poll: Vote<TallyType>,
+    ) {
+      move_to<Vote<TallyType>>(sig, poll)
+    }
+
+    /// If the Vote is standalone at root of address, you can use thie function as long as the CreateCapability is available.
+    public fun standalone_propose_ballot<TallyType: copy + drop + store>(
+      guid_cap: &GUID::CreateCapability,
+      tally_type: TallyType,
+    ) acquires Vote {
+      let addr = GUID::get_capability_address(guid_cap);
+      let poll = borrow_global_mut<Vote<TallyType>>(addr);
+      propose_ballot(poll, guid_cap, tally_type);
+    }
+
+    public fun standalone_update_tally<TallyType: copy + drop + store> (
+      guid_cap: &GUID::CreateCapability,
+      uid: &GUID::ID,
+      tally_type: TallyType,
+    ) acquires Vote {
+      let addr = GUID::get_capability_address(guid_cap);
+      let poll = borrow_global_mut<Vote<TallyType>>(addr);
+      let (found, idx, status_enum, _completed) = find_anywhere(poll, uid);
+      assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
+      let b = get_ballot_mut(poll, idx, status_enum);
+      b.tally_type = tally_type;
+    }
+
+    /// tuple if the ballot is (found, its index, its status enum, is it completed)
+    public fun standalone_find_anywhere<TallyType: copy + drop + store>(guid_cap: &GUID::CreateCapability, uid: &GUID::ID): (bool, u64, u8, bool) acquires Vote {
+      let vote_address = GUID::get_capability_address(guid_cap);
+      let poll = borrow_global_mut<Vote<TallyType>>(vote_address);
+      find_anywhere(poll, uid)
+    }
+
+    public fun standalone_get_tally_copy<TallyType: copy + drop + store>(guid_cap: &GUID::CreateCapability, uid: &GUID::ID): TallyType acquires Vote {
+      let vote_address = GUID::get_capability_address(guid_cap);
+      let poll = borrow_global_mut<Vote<TallyType>>(vote_address);
+      get_tally_copy(poll, uid)
+    }
+
+    public fun standalone_complete_and_move<TallyType: copy + drop + store>(guid_cap: &GUID::CreateCapability, uid: &GUID::ID, to_status_enum: u8) acquires Vote {
+      let vote_address = GUID::get_capability_address(guid_cap);
+      let poll = borrow_global_mut<Vote<TallyType>>(vote_address);
+      
+      let (found, idx, from_status_enum, _completed) = find_anywhere(poll, uid);
+      assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
+
+      let b = get_ballot_mut(poll, idx, from_status_enum);
+      complete_ballot(b);
+      move_ballot(poll, uid, from_status_enum, to_status_enum);
+
+    }
+
   }
 
-  // // TODO: Fix publishing on test harness.
-  // // see test _meta_import_vote.move
-  // // There's an issue with the test harness, where it cannot publish the module
-  // // task 2 'run'. lines 31-51:
-  // // Error: error[E03002]: unbound module
-  // // /var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/.tmp3EAMzm:3:9
-  // // 
-  // //      use 0x1::GUID;
-  // //          ^^^^^^^^^ Invalid 'use'. Unbound module: '0x1::GUID'
+  /// This is an example of how to use VoteLib, to create a standalone poll.
+  /// In this example we are making a naive DAO payment approval system.
+  /// whenever the deadline passes, the next vote will trigger a tally
+  /// and if the tally is successful, the payment will be made.
+  /// If the tally is not successful, the payment will be rejected.
+  module ExampleStandalonePoll {
 
-  module DummyTestVote {
-
-    use DiemFramework::ParticipationVote::{Self, Ballot};
+    use DiemFramework::VoteLib;
     use Std::GUID;
-    use DiemFramework::Testnet;
+    use Std::Vector;
+    use Std::Signer;
+    use Std::Errors;
+    use Std::Option::{Self, Option};
+    use DiemFramework::DiemConfig;
 
-    struct Vote has key {
-      ballot: Ballot<EmptyType>,
+    const EINVALID_VOTE: u64 = 0;
+
+    struct DummyTally has store, drop, copy {}
+
+    /// a tally can have any kind of data to support the vote.
+    /// this is an example of a binary count.
+    /// A dev should also insert data into the tally, to be used in an
+    /// action that is triggered on completion.
+    struct UsefulTally<IssueData> has store, drop, copy {
+      votes_for: u64,
+      votes_against: u64,
+      voters: vector<address>, // this is a list of voters who have voted. You may prefer to move the voted flag to the end user's address (or do a bloom filter).
+      deadline_epoch: u64,
+      tally_result: Option<bool>,
+      issue_data: IssueData,
     }
 
-    struct EmptyType has store, copy {}
+    /// a tally can have some arbitrary data payload.
+    struct ExampleIssueData has store, drop, copy {
+      pay_this_person: address,
+      amount: u64,
+      description: vector<u8>,
+    }
 
-    // initialize this data on the address of the election contract
-    public fun init(
-      sig: &signer,
-      data: EmptyType,
-      deadline: u64,
-      max_vote_enrollment: u64,
-      max_extensions: u64,
+    /// the ability to update tallies is usually restricted to signer
+    /// since the signer is the one who can create the GUID::CreateCapability
+    /// A third party contract can store that capability to access based on its own vote logic. Danger.
+    struct VoteCapability has key {
+      guid_cap: GUID::CreateCapability,
+    }
+
+    /// The signer can always access a new GUID::CreateCapability
+    /// On a multisig type account, will need to store the CreateCapability 
+    /// wherever the multisig authorities can access it. Be careful ou there!
+    public fun init_empty_tally(sig: &signer) {
+      let poll = VoteLib::new_poll<DummyTally>();
+
+
+      let guid_cap = GUID::gen_create_capability(sig);
+
+      VoteLib::standalone_init_poll_at_address<DummyTally>(sig, poll);
+
+      VoteLib::standalone_propose_ballot<DummyTally>(&guid_cap, DummyTally {})
+
+    }
+
+
+    public fun init_useful_tally(sig: &signer) {
+      let poll = VoteLib::new_poll<UsefulTally<ExampleIssueData>>();
+
+
+      let guid_cap = GUID::gen_create_capability(sig);
+
+      VoteLib::standalone_init_poll_at_address<UsefulTally<ExampleIssueData>>(sig, poll);
+
+      let t = UsefulTally {
+        votes_for: 0,
+        votes_against: 0,
+        voters: Vector::empty(),
+        deadline_epoch: DiemConfig::get_current_epoch() + 7,
+        tally_result: Option::none<bool>(),
+        issue_data: ExampleIssueData {
+          pay_this_person: @0xDEADBEEF,
+          amount: 0,
+          description: b"hello world",
+        }
+      };
+
+      VoteLib::standalone_propose_ballot<UsefulTally<ExampleIssueData>>(&guid_cap, t);
+
+      // store the capability in the account so it can be used later by someone other than the owner of the account. (e.g. a voter.)
+      move_to(sig, VoteCapability { guid_cap });
+    }
+
+    // The voting handlers are defined by the thrid party module NOT the VoteLib module. The VoteLib module only provides the APIs to move proposals from one list to another. The external contract needs to decide how that should happen.
+
+    public fun vote(sig: &signer, vote_address: address, id: &GUID::ID, vote_for: bool) acquires VoteCapability {
+
+      // get the GUID capability stored here
+      let cap = &borrow_global<VoteCapability>(vote_address).guid_cap;
+
+      let (found, _idx, status_enum, is_completed) = VoteLib::standalone_find_anywhere<UsefulTally<ExampleIssueData>>(cap, id);
+
+      assert!(found, Errors::invalid_argument(EINVALID_VOTE));
+      assert!(!is_completed, Errors::invalid_argument(EINVALID_VOTE));
+      // is a pending ballot
+      assert!(status_enum == 0, Errors::invalid_argument(EINVALID_VOTE));
+
+
+
+      // check signer did not already vote
+      let t = VoteLib::standalone_get_tally_copy<UsefulTally<ExampleIssueData>>(cap, id);
+
+      // check if the signer has already voted
+      let signer_addr = Signer::address_of(sig);
+      let found = Vector::contains(&t.voters, &signer_addr);
+      assert!(!found, Errors::invalid_argument(0));
+
+      if (vote_for) {
+        t.votes_for = t.votes_for + 1;
+      } else {
+        t.votes_against = t.votes_against + 1;
+      };
+
+
+      // add the signer to the list of voters
+      Vector::push_back(&mut t.voters, signer_addr);
       
-    ): GUID::ID {
-      assert!(Testnet::is_testnet(), 0);
-      let cap = GUID::gen_create_capability(sig);
-      let ballot = ParticipationVote::new_ballot<EmptyType>(&cap, data, deadline, max_vote_enrollment, max_extensions);
 
-      let id = ParticipationVote::get_ballot_id<EmptyType>(&ballot);
-      move_to(sig, Vote { ballot });
-      id
+      // update the tally
+
+      maybe_tally(&mut t);
+
+      // update the ballot
+      VoteLib::standalone_update_tally<UsefulTally<ExampleIssueData>>(cap, id,  copy t);
+
+
+      if (Option::is_some(&t.tally_result)) {
+        let passed = *Option::borrow(&t.tally_result);
+        let status_enum = if (passed) {
+          // run the payment handler
+          payment_handler(&t);
+          1 // approved
+        } else {
+          
+          2 // rejected
+        };
+        // since we have a result lets update the VoteLib state
+        VoteLib::standalone_complete_and_move<UsefulTally<ExampleIssueData>>(cap, id, status_enum);
+
+      }
+
+      
+
+
     }
 
-    public fun vote(sig: &signer, election_addr: address, weight: u64, approve_reject: bool) acquires Vote {
-      assert!(Testnet::is_testnet(), 0);
-      let vote = borrow_global_mut<Vote>(election_addr);
-      ParticipationVote::vote<EmptyType>(&mut vote.ballot, sig, approve_reject, weight);
+    fun payment_handler(t: &UsefulTally<ExampleIssueData>) {
+        
+          // do the action
+          // pay the person
+
+                
+        let _payee = t.issue_data.pay_this_person;
+        let _amount = t.issue_data.amount;
+        let _description = *&t.issue_data.description;
+        // MAKE THE PAYMENT.
     }
 
-    public fun retract(sig: &signer, election_addr: address) acquires Vote {
-      assert!(Testnet::is_testnet(), 0);
-      let vote = borrow_global_mut<Vote>(election_addr);
-      ParticipationVote::retract<EmptyType>(&mut vote.ballot, sig);
-    }
+    fun maybe_tally(t: &mut UsefulTally<ExampleIssueData>): Option<bool> {
+      // check if the tally is complete
+      // if so, move the tally to the completed list
+      // if not, do nothing
 
-    public fun get_id(election_addr: address): GUID::ID acquires Vote {
-      assert!(Testnet::is_testnet(), 0);
-      let vote = borrow_global_mut<Vote>(election_addr);
-      ParticipationVote::get_ballot_id(&vote.ballot)
-    }
+      if (DiemConfig::get_current_epoch() > t.deadline_epoch) {
+        // tally is complete
+        // move the tally to the completed list
+        // call the action
+        if (t.votes_for > t.votes_against) {
+          t.tally_result = Option::some(true);
+        } else {
+          t.tally_result = Option::some(false);
+        }
 
-    public fun get_result(election_addr: address): (bool, bool) acquires Vote {
-      let vote = borrow_global_mut<Vote>(election_addr);
-      ParticipationVote::complete_result<EmptyType>(&vote.ballot)
+      };
+
+      *&t.tally_result
+
     }
 
   }
