@@ -34,7 +34,6 @@ when executing from a fresh state.
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
 <b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
-<b>use</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment">0x1::MultiSigPayment</a>;
 <b>use</b> <a href="Oracle.md#0x1_Oracle">0x1::Oracle</a>;
 <b>use</b> <a href="ParallelExecutionConfig.md#0x1_ParallelExecutionConfig">0x1::ParallelExecutionConfig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
@@ -235,7 +234,7 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
     <a href="Epoch.md#0x1_Epoch_initialize">Epoch::initialize</a>(dr_account); /////// 0L /////////
 
     // Initialize Root Security metered services
-    <a href="MultiSigPayment.md#0x1_MultiSigPayment_root_init">MultiSigPayment::root_init</a>(dr_account); //////// 0L ////////
+    // MultiSigPayment::root_init(dr_account); //////// 0L ////////
 
 
     // <b>if</b> this is tesnet, fund the root account so the smoketests can run. They <b>use</b> <a href="PaymentScripts.md#0x1_PaymentScripts">PaymentScripts</a> functions <b>to</b> test many things.

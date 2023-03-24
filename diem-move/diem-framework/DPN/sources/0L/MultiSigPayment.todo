@@ -102,7 +102,7 @@ module MultiSigPayment {
   public fun propose_payment(sig: &signer, multisig_addr: address, recipient: address, amount: u64, note: vector<u8>, duration_epochs: Option<u64>) {
     let p = new_payment(recipient, amount, *&note);
 
-    let (approved, cap) = MultiSig::propose<PaymentType>(sig, multisig_addr, copy p, duration_epochs);
+    let (approved, cap) = MultiSig::propose_new<PaymentType>(sig, multisig_addr, copy p, duration_epochs);
 
     if (Option::is_some(&cap)) {
       let c = Option::extract(&mut cap);

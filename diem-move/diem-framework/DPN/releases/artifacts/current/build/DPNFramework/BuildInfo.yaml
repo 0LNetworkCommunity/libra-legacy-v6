@@ -152,9 +152,6 @@ compiled_package_info:
       name: Event
     : Std
     ? address: "00000000000000000000000000000001"
-      name: ExampleStandalonePoll
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
       name: FIFO
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -198,12 +195,6 @@ compiled_package_info:
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: MultiSig
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
-      name: MultiSigPayment
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
-      name: MultiSigTwo
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: NetworkIdentity
@@ -349,7 +340,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 8F4F3CACEC77CD4B2159679FD819800E51479176EE706CB284AB8FDE3F9F572E
+  source_digest: 5B2C1895508DFA6C76E12C94E084D5DB3C9B220E53A9BD5E50DCFDAC90E230A2
   build_flags:
     dev_mode: false
     test_mode: false

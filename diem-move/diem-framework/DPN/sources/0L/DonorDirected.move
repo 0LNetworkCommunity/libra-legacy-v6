@@ -52,7 +52,7 @@ module DonorDirected {
       guid_capability: GUID::CreateCapability,
     }
 
-    struct TimedTransfer has drop, key, store {
+    struct TimedTransfer has drop, key, store { // TODO: remove key, copy
       uid: GUID::GUID,
       expire_epoch: u64,
       payee: address,
