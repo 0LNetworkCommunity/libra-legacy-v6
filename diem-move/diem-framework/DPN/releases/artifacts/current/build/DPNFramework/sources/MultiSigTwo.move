@@ -272,82 +272,6 @@ module MultiSigTwo {
   // The default will be 14 days.
   // Only the first proposer can set the expiration time. It will be ignored when a duplicate is caught.
 
-
-  // public fun propose<ProposalData: key + store + copy + drop>(
-  //   sig: &signer,
-  //   multisig_address: address,
-  //   proposal_data: ProposalData,
-  //   duration_epochs: Option<u64>
-  // ):(bool, Option<WithdrawCapability>) acquires MultiSig, Action {
-  //   print(&20001);
-  //   assert_authorized(sig, multisig_address);
-
-  //   let ms = borrow_global_mut<MultiSig>(multisig_address);
-  //   let action = borrow_global_mut<Action<ProposalData>>(multisig_address);
-
-  //   // go through all proposals and clean up expired ones.
-  //   lazy_cleanup_expired(action);
-
-  //   let n = *&ms.cfg_default_n_sigs;
-
-
-  //   // check if we have this proposal already
-  //   let (found, idx) = find_index_of_pending<ProposalData>(action, &proposal_data);
-
-  //   let approved = if (found) {
-  //     print(&20002);
-
-  //     let prop = get_proposal(action, &proposal_data);
-
-  //     // belt and suspenders, the lazy cleaning should have removed expired proposals.
-  //     // stop here if it's expired, but first move the the ms.rejected list.
-  //     if (check_expired(prop)) {
-  //       let rej = Vector::remove(&mut action.pending, idx);
-  //       Vector::push_back(&mut action.rejected, rej);
-  //       return (false, Option::none())
-  //     };
-
-  //     vote(prop, Signer::address_of(sig), n)
-
-  //   } else {
-  //     // TODO: the single interface for proposing and voting causes a UI issue. Theres a case that a straggler voter will inadvertently start a new proposal if the vote just closed.
-  //     // Though it may be that the thirdparty modules need to check for this themselves when voting.
-  //     print(&20003);
-
-  //     let dur = if (Option::is_some(&duration_epochs)) {
-  //       Option::borrow(&duration_epochs)
-  //     } else {
-  //       &ms.cfg_duration_epochs
-  //     };
-
-  //     Vector::push_back(&mut action.pending, Proposal<ProposalData> {
-  //       id: ms.counter,
-  //       proposal_data: proposal_data,
-  //       votes: Vector::singleton(Signer::address_of(sig)),
-  //       approved: false,
-  //       expiration_epoch: DiemConfig::get_current_epoch() + *dur,
-  //     });
-  //     ms.counter = ms.counter + 1;
-  //     false
-  //   };
-
-  //   print(&20004);
-  //   // let w = borrow_global_mut<Withdraw>(multisig_address);
-
-  //   if (approved &&
-  //     Option::is_some(&ms.withdraw_capability) &&
-  //     action.can_withdraw
-  //   ) {
-  //     print(&20005);
-  //       let cap = Option::extract(&mut ms.withdraw_capability);
-  //       print(&20006);
-
-  //       return (approved, Option::some(cap))
-  //   };
-  //   (approved, Option::none())
-  // }
-
-
   public fun propose_new<ProposalData: key + store + copy + drop>(
     sig: &signer,
     multisig_address: address,
@@ -373,7 +297,6 @@ module MultiSigTwo {
     let id = VoteLib::get_ballot_id(ballot);
 
     id
-
   }
 
 
@@ -398,11 +321,12 @@ module MultiSigTwo {
 
     Vector::push_back(&mut t.votes, Signer::address_of(sig));
 
-    tally_two(t, *&ms.cfg_default_n_sigs)
+    tally(t, *&ms.cfg_default_n_sigs)
 
   }
 
 
+  /// helper function to vote with ID only
   public fun vote_with_id<ProposalData: key + store + copy + drop>(sig: &signer, id: &GUID::ID, multisig_address: address): bool acquires MultiSig, Action {
     assert_authorized(sig, multisig_address);
 
@@ -414,7 +338,7 @@ module MultiSigTwo {
 
     Vector::push_back(&mut t.votes, Signer::address_of(sig));
 
-    tally_two(t, n_sigs)
+    tally(t, n_sigs)
 
   }
 
@@ -437,39 +361,9 @@ module MultiSigTwo {
 
     Vector::push_back(&mut t.votes, Signer::address_of(sig));
 
-    let passed = tally_two(t, *&ms.cfg_default_n_sigs);
+    let passed = tally(t, *&ms.cfg_default_n_sigs);
 
     (passed, *&t.proposal_data, Option::none())
-  }
-
-
-  fun tally_two<ProposalData: key + store + drop>(prop: &mut Proposal<ProposalData>, n: u64): bool {
-    print(&40001);
-
-    print(&prop.votes);
-
-    if (Vector::length(&prop.votes) >= n) {
-      prop.approved = true;
-      print(&40002);
-
-      return true
-    };
-
-    false
-  }
-
-  // votes on a proposal, returns true if it passed
-  fun vote<ProposalData: key + store + drop>(prop: &mut Proposal<ProposalData>, sender_addr: address, n: u64): bool {
-    print(&30001);
-    // should not get here if it is expired. Should have checked before.
-    assert!(!check_expired(prop), Errors::invalid_state(EPROPOSAL_EXPIRED));
-
-    if (!Vector::contains(&prop.votes, &sender_addr)) {
-      Vector::push_back(&mut prop.votes, sender_addr);
-      print(&30002);
-
-    };
-    tally(prop, n)
   }
 
 
@@ -487,6 +381,36 @@ module MultiSigTwo {
 
     false
   }
+
+  // // votes on a proposal, returns true if it passed
+  // fun vote<ProposalData: key + store + drop>(prop: &mut Proposal<ProposalData>, sender_addr: address, n: u64): bool {
+  //   print(&30001);
+  //   // should not get here if it is expired. Should have checked before.
+  //   assert!(!check_expired(prop), Errors::invalid_state(EPROPOSAL_EXPIRED));
+
+  //   if (!Vector::contains(&prop.votes, &sender_addr)) {
+  //     Vector::push_back(&mut prop.votes, sender_addr);
+  //     print(&30002);
+
+  //   };
+  //   tally(prop, n)
+  // }
+
+
+  // fun tally<ProposalData: key + store + drop>(prop: &mut Proposal<ProposalData>, n: u64): bool {
+  //   print(&40001);
+
+  //   print(&prop.votes);
+
+  //   if (Vector::length(&prop.votes) >= n) {
+  //     prop.approved = true;
+  //     print(&40002);
+
+  //     return true
+  //   };
+
+  //   false
+  // }
 
   fun find_expired<ProposalData: key + store + copy + drop>(a: & Action<ProposalData>): vector<GUID::ID>{
     let epoch = DiemConfig::get_current_epoch();

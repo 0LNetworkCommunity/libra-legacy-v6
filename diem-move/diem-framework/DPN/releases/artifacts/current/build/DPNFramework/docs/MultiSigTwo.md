@@ -24,8 +24,6 @@
 -  [Function `vote_with_data`](#0x1_MultiSigTwo_vote_with_data)
 -  [Function `vote_with_id`](#0x1_MultiSigTwo_vote_with_id)
 -  [Function `vote_impl`](#0x1_MultiSigTwo_vote_impl)
--  [Function `tally_two`](#0x1_MultiSigTwo_tally_two)
--  [Function `vote`](#0x1_MultiSigTwo_vote)
 -  [Function `tally`](#0x1_MultiSigTwo_tally)
 -  [Function `find_expired`](#0x1_MultiSigTwo_find_expired)
 -  [Function `lazy_cleanup_expired`](#0x1_MultiSigTwo_lazy_cleanup_expired)
@@ -757,7 +755,6 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
   <b>let</b> id = <a href="VoteLib.md#0x1_VoteLib_get_ballot_id">VoteLib::get_ballot_id</a>(ballot);
 
   id
-
 }
 </code></pre>
 
@@ -801,7 +798,7 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
 
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> t.votes, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig));
 
-  <a href="MultiSigTwo.md#0x1_MultiSigTwo_tally_two">tally_two</a>(t, *&ms.cfg_default_n_sigs)
+  <a href="MultiSigTwo.md#0x1_MultiSigTwo_tally">tally</a>(t, *&ms.cfg_default_n_sigs)
 
 }
 </code></pre>
@@ -814,6 +811,7 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
 
 ## Function `vote_with_id`
 
+helper function to vote with ID only
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MultiSigTwo.md#0x1_MultiSigTwo_vote_with_id">vote_with_id</a>&lt;ProposalData: <b>copy</b>, drop, store, key&gt;(sig: &signer, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, multisig_address: <b>address</b>): bool
@@ -836,7 +834,7 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
 
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> t.votes, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig));
 
-  <a href="MultiSigTwo.md#0x1_MultiSigTwo_tally_two">tally_two</a>(t, n_sigs)
+  <a href="MultiSigTwo.md#0x1_MultiSigTwo_tally">tally</a>(t, n_sigs)
 
 }
 </code></pre>
@@ -879,77 +877,9 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
 
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> t.votes, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig));
 
-  <b>let</b> passed = <a href="MultiSigTwo.md#0x1_MultiSigTwo_tally_two">tally_two</a>(t, *&ms.cfg_default_n_sigs);
+  <b>let</b> passed = <a href="MultiSigTwo.md#0x1_MultiSigTwo_tally">tally</a>(t, *&ms.cfg_default_n_sigs);
 
   (passed, *&t.proposal_data, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_none">Option::none</a>())
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_MultiSigTwo_tally_two"></a>
-
-## Function `tally_two`
-
-
-
-<pre><code><b>fun</b> <a href="MultiSigTwo.md#0x1_MultiSigTwo_tally_two">tally_two</a>&lt;ProposalData: drop, store, key&gt;(prop: &<b>mut</b> <a href="MultiSigTwo.md#0x1_MultiSigTwo_Proposal">MultiSigTwo::Proposal</a>&lt;ProposalData&gt;, n: u64): bool
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="MultiSigTwo.md#0x1_MultiSigTwo_tally_two">tally_two</a>&lt;ProposalData: key + store + drop&gt;(prop: &<b>mut</b> <a href="MultiSigTwo.md#0x1_MultiSigTwo_Proposal">Proposal</a>&lt;ProposalData&gt;, n: u64): bool {
-  print(&40001);
-
-  print(&prop.votes);
-
-  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&prop.votes) &gt;= n) {
-    prop.approved = <b>true</b>;
-    print(&40002);
-
-    <b>return</b> <b>true</b>
-  };
-
-  <b>false</b>
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_MultiSigTwo_vote"></a>
-
-## Function `vote`
-
-
-
-<pre><code><b>fun</b> <a href="MultiSigTwo.md#0x1_MultiSigTwo_vote">vote</a>&lt;ProposalData: drop, store, key&gt;(prop: &<b>mut</b> <a href="MultiSigTwo.md#0x1_MultiSigTwo_Proposal">MultiSigTwo::Proposal</a>&lt;ProposalData&gt;, sender_addr: <b>address</b>, n: u64): bool
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="MultiSigTwo.md#0x1_MultiSigTwo_vote">vote</a>&lt;ProposalData: key + store + drop&gt;(prop: &<b>mut</b> <a href="MultiSigTwo.md#0x1_MultiSigTwo_Proposal">Proposal</a>&lt;ProposalData&gt;, sender_addr: <b>address</b>, n: u64): bool {
-  print(&30001);
-  // should not get here <b>if</b> it is expired. Should have checked before.
-  <b>assert</b>!(!<a href="MultiSigTwo.md#0x1_MultiSigTwo_check_expired">check_expired</a>(prop), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="MultiSigTwo.md#0x1_MultiSigTwo_EPROPOSAL_EXPIRED">EPROPOSAL_EXPIRED</a>));
-
-  <b>if</b> (!<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&prop.votes, &sender_addr)) {
-    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> prop.votes, sender_addr);
-    print(&30002);
-
-  };
-  <a href="MultiSigTwo.md#0x1_MultiSigTwo_tally">tally</a>(prop, n)
 }
 </code></pre>
 
