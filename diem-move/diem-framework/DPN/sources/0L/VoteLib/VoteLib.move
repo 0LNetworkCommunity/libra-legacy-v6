@@ -49,13 +49,13 @@ address DiemFramework {
     // or then can use Ballot, for a custom voting solution.
     // lastly the developer can simply wrap refereundum into another struct with more context.
 
-    struct Vote<TallyType> has key, store, drop {
+    struct Vote<TallyType> has store, drop { // Vote cannot be stored in global storage, and cannot be copied
       ballots_pending: vector<Ballot<TallyType>>,
       ballots_approved: vector<Ballot<TallyType>>,
       ballots_rejected: vector<Ballot<TallyType>>,
     }
 
-    struct Ballot<TallyType> has key, store, drop {
+    struct Ballot<TallyType> has store, drop { // ballots cannot be stored in global storage and cannot be copied
       guid: GUID::GUID,
       // issue: IssueData, // issue is the data of what is being decided.
       tally_type: TallyType, // a tally type includes how the count happens and the deadline.
@@ -86,9 +86,11 @@ address DiemFramework {
       // issue: IssueData,
       tally_type: TallyType,
     ): &mut Ballot<TallyType>  {
+      let ignored_addr = GUID::get_capability_address(guid_cap); // Note 0L's modification to Std::GUID, to get_capability_address
+
       let b = Ballot {
 
-        guid: GUID::create_with_capability(@0xDEADBEEF, guid_cap), // address is ignored.
+        guid: GUID::create_with_capability(ignored_addr, guid_cap), // Note 0L's modification to Std::GUID, address is ignored.
         // issue,
         tally_type,
         completed: false,
@@ -304,9 +306,7 @@ address DiemFramework {
       let to_list = get_list_ballots_by_enum_mut<TallyType>(poll, to_status_enum);
       Vector::push_back(to_list, b);
     }
-
-
-    /// third party contracts need to be able to access the data in the poll struct. But they are not able to borrow it.
+     // /// third party contracts need to be able to access the data in the poll struct. But they are not able to borrow it.
     // public fun get_tally_copy<TallyType: drop + store>(
     //   poll: &mut Vote<TallyType>,
     //   id: &GUID::ID,
@@ -317,64 +317,7 @@ address DiemFramework {
     //   *&ballot.tally_type
     // }
 
-    //////// STANDALONE VOTE ////////
-    /// Initialize poll struct which will be stored as-is on the account under Vote<Type>.
-    /// Developers who need more flexibility, can instead construct the Vote object and then wrap it in another struct on their third party module.
-    public fun standalone_init_poll_at_address<TallyType: drop + store>(
-      sig: &signer,
-      poll: Vote<TallyType>,
-    ) {
-      move_to<Vote<TallyType>>(sig, poll)
-    }
 
-    /// If the Vote is standalone at root of address, you can use thie function as long as the CreateCapability is available.
-    public fun standalone_propose_ballot<TallyType: drop + store>(
-      guid_cap: &GUID::CreateCapability,
-      tally_type: TallyType,
-    ) acquires Vote {
-      let addr = GUID::get_capability_address(guid_cap);
-      let poll = borrow_global_mut<Vote<TallyType>>(addr);
-      propose_ballot(poll, guid_cap, tally_type);
-    }
-
-    public fun standalone_update_tally<TallyType: drop + store> (
-      guid_cap: &GUID::CreateCapability,
-      uid: &GUID::ID,
-      tally_type: TallyType,
-    ) acquires Vote {
-      let addr = GUID::get_capability_address(guid_cap);
-      let poll = borrow_global_mut<Vote<TallyType>>(addr);
-      let (found, idx, status_enum, _completed) = find_anywhere(poll, uid);
-      assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
-      let b = get_ballot_mut(poll, idx, status_enum);
-      b.tally_type = tally_type;
-    }
-
-    /// tuple if the ballot is (found, its index, its status enum, is it completed)
-    public fun standalone_find_anywhere<TallyType: drop + store>(guid_cap: &GUID::CreateCapability, uid: &GUID::ID): (bool, u64, u8, bool) acquires Vote {
-      let vote_address = GUID::get_capability_address(guid_cap);
-      let poll = borrow_global_mut<Vote<TallyType>>(vote_address);
-      find_anywhere(poll, uid)
-    }
-
-    // public fun standalone_get_tally_copy<TallyType: drop + store>(guid_cap: &GUID::CreateCapability, uid: &GUID::ID): TallyType acquires Vote {
-    //   let vote_address = GUID::get_capability_address(guid_cap);
-    //   let poll = borrow_global_mut<Vote<TallyType>>(vote_address);
-    //   get_tally_copy(poll, uid)
-    // }
-
-    public fun standalone_complete_and_move<TallyType: drop + store>(guid_cap: &GUID::CreateCapability, uid: &GUID::ID, to_status_enum: u8) acquires Vote {
-      let vote_address = GUID::get_capability_address(guid_cap);
-      let poll = borrow_global_mut<Vote<TallyType>>(vote_address);
-      
-      let (found, idx, from_status_enum, _completed) = find_anywhere(poll, uid);
-      assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
-
-      let b = get_ballot_mut(poll, idx, from_status_enum);
-      complete_ballot(b);
-      move_ballot(poll, uid, from_status_enum, to_status_enum);
-
-    }
 
   }
 
