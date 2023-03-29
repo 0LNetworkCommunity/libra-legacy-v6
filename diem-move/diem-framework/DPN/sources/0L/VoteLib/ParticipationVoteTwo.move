@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////
 // 0L Module
-// VoteLib
-// Intatiate different types of user-interactive voting
+// TurnoutTally
+// Binary voting with threshold adjusted for turnout
 ///////////////////////////////////////////////////////////////////////////
 
 // TODO: Move this to a separate address. Potentially has separate governance.
@@ -9,7 +9,7 @@ address DiemFramework {
 
   module TurnoutTally {
 
-    // ParticipationVote is a module that constructs a TallyType, for use with VoteLib's Ballot module. It does not store any state itself, you'll need to import it into a module.
+    // TurnoutTally is a module that constructs a TallyType, for use with VoteLib's Ballot module. It does not store any state itself, you'll need to import it into a module.
 
     // The tally design single issue referendum, with only votes in favor or against, but with an adaptive threshold for the vote to pass.
 
@@ -380,7 +380,7 @@ address DiemFramework {
     }
 
     /// is it complete and what's the result
-    public fun complete_result<Data: copy + store>(ballot: &TurnoutTally<Data>): (bool, bool) {
+    public fun is_complete_result<Data: copy + store>(ballot: &TurnoutTally<Data>): (bool, bool) {
       (ballot.completed, ballot.tally_pass)
     }
 
@@ -426,10 +426,10 @@ address DiemFramework {
       assert!(Testnet::is_testnet(), 0);
       // let cap = GUID::gen_create_capability(sig);
       // new_tracker
-      // let ballot = ParticipationVote::new_tally_struct<EmptyType>(&cap, data, deadline, max_vote_enrollment, max_extensions);
+      // let ballot = TurnoutTally::new_tally_struct<EmptyType>(&cap, data, deadline, max_vote_enrollment, max_extensions);
       let tracker = Ballot::new_tracker<TurnoutTally<EmptyType>>();
       
-      // let id = ParticipationVote::get_ballot_id<EmptyType>(&ballot);
+      // let id = TurnoutTally::get_ballot_id<EmptyType>(&ballot);
       move_to<Vote<TurnoutTally<EmptyType>>>(sig, Vote { 
         tracker,
         enrollment: Vector::empty()
