@@ -45,13 +45,13 @@
 address DiemFramework {
 module MultiSigPayment {
   use Std::Vector;
-  use Std::Option::{Self, Option};
+  use Std::Option::Option;
   use Std::FixedPoint32;
   use Std::Signer;
   use DiemFramework::DiemAccount::{Self, WithdrawCapability};
   use DiemFramework::Debug::print;
   use DiemFramework::GAS::GAS;
-  use DiemFramework::MultiSig;
+  use DiemFramework::MultiSigT as MultiSig;
   use DiemFramework::CoreAddresses;
   use DiemFramework::TransactionFee;
 
@@ -100,21 +100,11 @@ module MultiSigPayment {
 
 
   public fun propose_payment(sig: &signer, multisig_addr: address, recipient: address, amount: u64, note: vector<u8>, duration_epochs: Option<u64>) {
-    let p = new_payment(recipient, amount, *&note);
 
-    let (approved, cap) = MultiSig::propose_new<PaymentType>(sig, multisig_addr, copy p, duration_epochs);
+    let pay = new_payment(recipient, amount, *&note);
+    let prop = MultiSig::proposal_constructor(pay, duration_epochs);
 
-    if (Option::is_some(&cap)) {
-      let c = Option::extract(&mut cap);
-      
-      if (approved) {
-        release_payment(&p, &c);
-      };
-
-      Option::fill(&mut cap, c);
-    };
-    
-    MultiSig::maybe_restore_withdraw_cap(sig, multisig_addr, cap)
+    MultiSig::propose_new<PaymentType>(sig, multisig_addr, prop);
   }
 
   public fun is_payment_multisig(addr: address):bool {
@@ -137,8 +127,6 @@ module MultiSigPayment {
       b""
     );
   }
-
-
 
   //////// ROOT SERVICE FEE BILLING ////////
 

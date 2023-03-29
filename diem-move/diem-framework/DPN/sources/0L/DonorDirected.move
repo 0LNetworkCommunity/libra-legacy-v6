@@ -26,9 +26,9 @@ module DonorDirected {
     use Std::Errors;
     use Std::GUID;
     use DiemFramework::DiemConfig;
-    use Std::Option::{Self,Option};
+    use Std::Option::{Self, Option};
     use DiemFramework::GAS::GAS;
-    use DiemFramework::MultiSig;
+    use DiemFramework::MultiSigT as MultiSig;
     use DiemFramework::DiemAccount::{Self, WithdrawCapability};
     use DiemFramework::DonorDirectedGovernance;
 
@@ -171,25 +171,28 @@ module DonorDirected {
     /// Returns the GUID of the transfer.
     public fun new_timed_transfer_multisig(
       sender: &signer, multisig_address: address, payee: address, value: u64, description: vector<u8>
-    ): Option<GUID::ID> acquires DonorDirected {
+    ): GUID::ID {
       let p = DonorDirectedProp {
         payee,
         value,
         description: copy description,
       };
 
-      let (passed, withdraw_cap_opt) = MultiSig::propose<DonorDirectedProp>(sender, multisig_address, p, Option::none());
+      // TODO: get expiration
+      let prop = MultiSig::proposal_constructor(p, Option::none());
 
-      let id_opt = if (passed && Option::is_some(&withdraw_cap_opt)) {
-        let id = schedule(Option::borrow(&withdraw_cap_opt), payee, value, description);
-        Option::some(id)
-      } else {
-        Option::none()
-      };
+      MultiSig::propose_new<DonorDirectedProp>(sender, multisig_address, prop)
 
-      MultiSig::maybe_restore_withdraw_cap(sender, multisig_address, withdraw_cap_opt);
+      // let id_opt = if (passed && Option::is_some(&withdraw_cap_opt)) {
+      //   let id = schedule(Option::borrow(&withdraw_cap_opt), payee, value, description);
+      //   Option::some(id)
+      // } else {
+      //   Option::none()
+      // };
 
-      id_opt
+      // MultiSig::maybe_restore_withdraw_cap(sender, multisig_address, withdraw_cap_opt);
+
+      // id_opt
       
 
     }

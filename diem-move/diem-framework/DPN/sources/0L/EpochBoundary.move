@@ -32,7 +32,7 @@ module EpochBoundary {
     use DiemFramework::Cases;
     use DiemFramework::Jail;
     use DiemFramework::Vouch;
-    // use DiemFramework::MultiSigPayment;
+    use DiemFramework::MultiSigPayment;
     use DiemFramework::DonorDirected;
 
     // This function is called by block-prologue once after n blocks.
@@ -334,8 +334,8 @@ module EpochBoundary {
         print(&800800107);
     }
 
-    fun root_service_billing(_vm: &signer) {
-      // MultiSigPayment::root_security_fee_billing(vm);
+    fun root_service_billing(vm: &signer) {
+      MultiSigPayment::root_security_fee_billing(vm);
     }
 }
 }
