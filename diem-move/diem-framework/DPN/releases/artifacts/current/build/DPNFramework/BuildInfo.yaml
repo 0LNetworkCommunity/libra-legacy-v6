@@ -47,7 +47,7 @@ compiled_package_info:
       name: BCS
     : Std
     ? address: "00000000000000000000000000000001"
-      name: BinaryTally
+      name: BinaryPoll
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: BitVector
@@ -152,9 +152,6 @@ compiled_package_info:
       name: Event
     : Std
     ? address: "00000000000000000000000000000001"
-      name: ExampleStandalonePoll
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
       name: FIFO
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -225,9 +222,6 @@ compiled_package_info:
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: PersistenceDemo
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
-      name: Poll
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: Receipts
@@ -343,7 +337,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: F4BCA7570AAE1B62A80197BF9EF1C77808CC07882C5304A431F7370D3666F9B9
+  source_digest: 846F4F1E1CCFF0CFEF338BCFE8D3E6338E2AFD4776D362F7260F56C1D8689BD2
   build_flags:
     dev_mode: false
     test_mode: false
