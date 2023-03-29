@@ -227,9 +227,6 @@ compiled_package_info:
       name: ParticipationVote
     : DiemFramework
     ? address: "00000000000000000000000000000001"
-      name: ParticipationVoteTwo
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
       name: PaymentScripts
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -296,6 +293,9 @@ compiled_package_info:
       name: TreasuryComplianceScripts
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: TurnoutTally
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Upgrade
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -346,7 +346,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: C66D22A53B46340A0AFB685C5A515151B6647FFC38D0BBEB985E507B4DCB0C8A
+  source_digest: A18156C27108CF4255804A6ADBAA63B8B71ABC5FF18060D5F7B8C0C3FB9E4AF4
   build_flags:
     dev_mode: false
     test_mode: false

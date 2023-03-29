@@ -7,9 +7,12 @@
 // TODO: Move this to a separate address. Potentially has separate governance.
 address DiemFramework { 
 
-  module ParticipationVoteTwo {
+  module TurnoutTally {
 
-    // ParticipationVote is a single issue referendum, with only votes in favor or against.
+    // ParticipationVote is a module that constructs a TallyType, for use with VoteLib's Ballot module. It does not store any state itself, you'll need to import it into a module.
+
+    // The tally design single issue referendum, with only votes in favor or against, but with an adaptive threshold for the vote to pass.
+
     // The design of the policies attempts to accomodate online voting where votes tend to happen:
     // 1. publicly
     // 2. asynchronously
@@ -87,86 +90,93 @@ address DiemFramework {
 
     /// for voting to happen with the VoteLib module, the GUID creation capability must be passed in, and so the signer for the addres (the "sponsor" of the ballot) must move the capability to be accessible by the contract logic.
 
-    struct VoteCapability has key {
-      guid_cap: GUID::CreateCapability,
-    }
+
+    // struct ParticipationVote<B> has key {
+    //   guid_cap: GUID::CreateCapability,
+    //   tracker: BallotTracker<B>,
+    // }
     
-    struct Poll<Data> has key, store, drop {
-      ballots_pending: vector<Ballot<Data>>,
-      ballots_approved: vector<Ballot<Data>>,
-      ballots_rejected: vector<Ballot<Data>>,
-    }
+    // struct WrapPoll<Data> has key {
+    //   poll: Poll<Data>,
+    // }
 
-    public fun new_poll<Data: copy + store>(): Poll<Data> {
-      Poll {
-        ballots_pending: Vector::empty(),
-        ballots_approved: Vector::empty(),
-        ballots_rejected: Vector::empty(),
-      }
-    }
+    // struct Poll<Data> has key, store, drop {
+    //   ballots_pending: vector<Ballot<Data>>,
+    //   ballots_approved: vector<Ballot<Data>>,
+    //   ballots_rejected: vector<Ballot<Data>>,
+    // }
 
-    public fun propose_ballot<Data: copy + store>(
-      guid_cap: &GUID::CreateCapability,
-      poll: &mut Poll<Data>,
-      data: Data,
-      max_vote_enrollment: u64,
-      deadline: u64,
-      max_extensions: u64,
-    ): &mut Ballot<Data> {
-      let ballot = new_ballot(guid_cap, data, max_vote_enrollment, deadline, max_extensions);
-      let len = Vector::length(&poll.ballots_pending);
-      Vector::push_back(&mut poll.ballots_pending, ballot);
-      Vector::borrow_mut(&mut poll.ballots_pending, len + 1)
-    }
-    /// private function to search in the ballots for an existsing veto. Returns and option type with the Ballot id.
-    public fun get_ballot_mut<Data: copy + store> (poll: &mut Poll<Data>, proposal_guid: &GUID::ID, status_enum: u8): &mut Ballot<Data> {
+    // public fun new_poll<Data: copy + store>(): Poll<Data> {
+    //   Poll {
+    //     ballots_pending: Vector::empty(),
+    //     ballots_approved: Vector::empty(),
+    //     ballots_rejected: Vector::empty(),
+    //   }
+    // }
+
+    // public fun propose_ballot<Data: copy + store>(
+    //   guid_cap: &GUID::CreateCapability,
+    //   poll: &mut Poll<Data>,
+    //   data: Data,
+    //   max_vote_enrollment: u64,
+    //   deadline: u64,
+    //   max_extensions: u64,
+    // ): &mut Ballot<Data> {
+    //   let ballot = new_tally_struct(guid_cap, data, max_vote_enrollment, deadline, max_extensions);
+    //   let len = Vector::length(&poll.ballots_pending);
+    //   Vector::push_back(&mut poll.ballots_pending, ballot);
+    //   Vector::borrow_mut(&mut poll.ballots_pending, len + 1)
+    // }
+    // /// private function to search in the ballots for an existsing veto. Returns and option type with the Ballot id.
+    // public fun get_ballot_mut<Data: copy + store> (poll: &mut Poll<Data>, proposal_guid: &GUID::ID, status_enum: u8): &mut Ballot<Data> {
       
-      let (found, idx) = find_index_of_ballot(poll, proposal_guid, status_enum);
-      assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
+    //   let (found, idx) = find_index_of_ballot(poll, proposal_guid, status_enum);
+    //   assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
 
-      let list = get_list_ballots_by_enum<Data>(poll, status_enum);
+    //   let list = get_list_ballots_by_enum<Data>(poll, status_enum);
 
-      Vector::borrow_mut(list, idx)
-    }
+    //   Vector::borrow_mut(list, idx)
+    // }
 
-    fun find_index_of_ballot<Data: copy + store>(poll: &mut Poll<Data>, proposal_guid: &GUID::ID, status_enum: u8): (bool, u64) {
+    // fun find_index_of_ballot<Data: copy + store>(poll: &mut Poll<Data>, proposal_guid: &GUID::ID, status_enum: u8): (bool, u64) {
 
-     let list = get_list_ballots_by_enum<Data>(poll, status_enum);
+    //  let list = get_list_ballots_by_enum<Data>(poll, status_enum);
 
-      let i = 0;
-      while (i < Vector::length(list)) {
-        let b = Vector::borrow(list, i);
-        if (&get_ballot_id(b) == proposal_guid) {
-          return (true, i)
-        };
-        i = i + 1;
-      };
+    //   let i = 0;
+    //   while (i < Vector::length(list)) {
+    //     let b = Vector::borrow(list, i);
+    //     if (&get_ballot_id(b) == proposal_guid) {
+    //       return (true, i)
+    //     };
+    //     i = i + 1;
+    //   };
 
-      (false, 0)
-    }
+    //   (false, 0)
+    // }
 
-    fun get_list_ballots_by_enum<Data: copy + store>(poll: &mut Poll<Data>, status_enum: u8): &mut vector<Ballot<Data>> {
-     if (status_enum == PENDING) {
-        &mut poll.ballots_pending
-      } else if (status_enum == APPROVED) {
-        &mut poll.ballots_approved
-      } else if (status_enum == REJECTED) {
-        &mut poll.ballots_rejected
-      } else {
-        assert!(false, Errors::invalid_argument(EBAD_STATUS_ENUM));
-        &mut poll.ballots_rejected // dummy return
-      }
-    }
+    // fun get_list_ballots_by_enum<Data: copy + store>(poll: &mut Poll<Data>, status_enum: u8): &mut vector<Ballot<Data>> {
+    //  if (status_enum == PENDING) {
+    //     &mut poll.ballots_pending
+    //   } else if (status_enum == APPROVED) {
+    //     &mut poll.ballots_approved
+    //   } else if (status_enum == REJECTED) {
+    //     &mut poll.ballots_rejected
+    //   } else {
+    //     assert!(false, Errors::invalid_argument(EBAD_STATUS_ENUM));
+    //     &mut poll.ballots_rejected // dummy return
+    //   }
+    // }
 
 
-    struct Ballot<Data> has key, store, drop { // Note, this is a hot potato. Any methods chaning it must return the struct to caller.
+    struct TurnoutTally<Data> has key, store, drop { // Note, this is a hot potato. Any methods chaning it must return the struct to caller.
       guid: GUID,
       data: Data, // TODO: change to ascii string
       cfg_deadline: u64, // original deadline, which may be extended. Note dedaline is at the END of this epoch (cfg_deadline + 1 stops taking votes)
       cfg_max_extensions: u64, // if 0 then no max. Election can run until threshold is met.
       cfg_min_turnout: u64,
-      cfg_minority_extension: bool,
+      cfg_minority_extension: bool,      
       completed: bool,
+      enrollment: vector<address>, // optional to check for enrollment.
       max_votes: u64, // what's the entire universe of votes. i.e. 100% turnout
       // vote_tickets: VoteTicket, // the tickets that can be used to vote, which will be deducted as votes are cast. It is initialized with the max_votes.
       // Note the developer needs to be aware that if the right to vote changes throughout the period of the election (more coins, participants etc) then the max_votes and tickets could skew from expected results. Vote tickets can be distributed in advance.
@@ -191,14 +201,14 @@ address DiemFramework {
       elections: vector<VoteReceipt>,
     }
 
-    public fun new_ballot<Data: copy + store>(
+    public fun new_tally_struct<Data: drop + store>(
       guid_cap: &GUID::CreateCapability,
       data: Data,
       max_vote_enrollment: u64,
       deadline: u64,
       max_extensions: u64,
-    ): Ballot<Data> {
-        Ballot<Data> {
+    ): TurnoutTally<Data> {
+        TurnoutTally<Data> {
           guid: GUID::create_with_capability(GUID::get_capability_address(guid_cap), guid_cap),
           data,
           cfg_deadline: deadline,
@@ -206,6 +216,7 @@ address DiemFramework {
           cfg_min_turnout: 1250,
           cfg_minority_extension: true,
           completed: false,
+          enrollment: Vector::empty<address>(), // TODO: maybe consider merkle roots, or bloom filters here.
           max_votes: max_vote_enrollment,
           votes_approve: 0,
           votes_reject: 0,
@@ -220,12 +231,17 @@ address DiemFramework {
         }
     }
 
-    // Only the contract, which is the keeper of the Ballot, can allow a user to temporarily hold the Ballot struct to update the vote. The user cannot arbiltrarily update the vote, with an arbitrary number of votes.
+    public fun update_enrollment<Data: drop + store>(ballot: &mut TurnoutTally<Data>, enrollment: vector<address>) {
+      assert!(!is_complete(ballot), Errors::invalid_state(ECOMPLETED));
+      ballot.enrollment = enrollment;
+    }
+
+    // Only the contract, which is the keeper of the TurnoutTally, can allow a user to temporarily hold the TurnoutTally struct to update the vote. The user cannot arbiltrarily update the vote, with an arbitrary number of votes.
     // This is a hot potato, it cannot be dropped.
 
     // the vote flow will return if the ballot passed (on the vote that gets over the threshold). This can be used for triggering actions lazily.
 
-    public fun vote<Data: copy + store>(ballot: &mut Ballot<Data>, user: &signer, approve_reject: bool, weight: u64): bool acquires IVoted {
+    public fun vote<Data: drop + store>(ballot: &mut TurnoutTally<Data>, user: &signer, approve_reject: bool, weight: u64): bool acquires IVoted {
       // voting should not be complete
       assert!(!is_complete(ballot), Errors::invalid_state(ECOMPLETED));
 
@@ -262,7 +278,7 @@ address DiemFramework {
       ballot.tally_pass // return if it passed, so it can be used in a third party contract handler for lazy evaluation.
     }
 
-    fun is_complete<Data: copy + store>(ballot: &mut Ballot<Data>): bool {
+    fun is_complete<Data: drop + store>(ballot: &mut TurnoutTally<Data>): bool {
       let epoch = DiemConfig::get_current_epoch();
       // if completed, exit early
       if (ballot.completed) { return true }; // this should be checked above anyways.
@@ -282,7 +298,7 @@ address DiemFramework {
       ballot.completed
     }
 
-    public fun retract<Data: copy + store>(ballot: &mut Ballot<Data>, user: &signer) acquires IVoted {
+    public fun retract<Data: drop + store>(ballot: &mut TurnoutTally<Data>, user: &signer) acquires IVoted {
       let user_addr = Signer::address_of(user);
 
       let (idx, is_found) = find_prior_vote_idx(user_addr, &GUID::id(&ballot.guid));
@@ -303,7 +319,7 @@ address DiemFramework {
     /// The handler for a third party contract may wish to extend the ballot deadline.
     /// DANGER: the thirdparty ballot contract needs to know what it is doing. If this ballot object is exposed to end users it's game over.
 
-    public fun extend_deadline<Data: copy + store>(ballot: &mut Ballot<Data>, new_epoch: u64) {
+    public fun extend_deadline<Data: drop + store>(ballot: &mut TurnoutTally<Data>, new_epoch: u64) {
       
       ballot.extended_deadline = new_epoch;
     }
@@ -313,7 +329,7 @@ address DiemFramework {
     /// All that needs to be done, is on the return of vote(), to then call this function. 
     /// It's a useful feature, but it will not be included by default in all votes.
 
-    public fun maybe_auto_competitive_extend<Data: copy + store>(ballot: &mut Ballot<Data>):u64  {
+    public fun maybe_auto_competitive_extend<Data: drop + store>(ballot: &mut TurnoutTally<Data>):u64  {
 
       let epoch = DiemConfig::get_current_epoch();
 
@@ -335,7 +351,7 @@ address DiemFramework {
       ballot.extended_deadline
     }
 
-    fun is_competitive<Data: copy + store>(ballot: &Ballot<Data>): bool {
+    fun is_competitive<Data: drop + store>(ballot: &TurnoutTally<Data>): bool {
       let (prev_lead, prev_trail, prev_lead_updated, prev_trail_updated) = if (ballot.last_epoch_approve > ballot.last_epoch_reject) {
         // if the "approve" vote WAS leading.
         (ballot.last_epoch_approve, ballot.last_epoch_reject, ballot.votes_approve, ballot.votes_reject)
@@ -367,7 +383,7 @@ address DiemFramework {
     }
 
     /// stop tallying if the expiration is passed or the threshold has been met.
-    fun maybe_tally<Data: copy + store>(ballot: &mut Ballot<Data>) {
+    fun maybe_tally<Data: drop + store>(ballot: &mut TurnoutTally<Data>) {
       let total_votes = ballot.votes_approve + ballot.votes_reject;
 
       assert!(ballot.max_votes >= total_votes, Errors::invalid_state(EVOTES_GREATER_THAN_ENROLLMENT));
@@ -485,12 +501,12 @@ address DiemFramework {
 
     //////// GETTERS ////////
     /// get the ballot id
-    public fun get_ballot_id<Data: copy + store>(ballot: &Ballot<Data>): ID {
+    public fun get_ballot_id<Data: copy + store>(ballot: &TurnoutTally<Data>): ID {
       return GUID::id(&ballot.guid)
     }
 
     /// get current tally
-    public fun get_tally<Data: copy + store>(ballot: &Ballot<Data>): u64 {
+    public fun get_tally<Data: copy + store>(ballot: &TurnoutTally<Data>): u64 {
       let total = ballot.votes_approve + ballot.votes_reject;
       if (ballot.votes_approve + ballot.votes_reject > ballot.max_votes) {
         return 0
@@ -502,7 +518,7 @@ address DiemFramework {
     }
 
     /// is it complete and what's the result
-    public fun complete_result<Data: copy + store>(ballot: &Ballot<Data>): (bool, bool) {
+    public fun complete_result<Data: copy + store>(ballot: &TurnoutTally<Data>): (bool, bool) {
       (ballot.completed, ballot.tally_pass)
     }
 
@@ -531,55 +547,74 @@ address DiemFramework {
 
   module DummyTestVoteTwo {
 
-    use DiemFramework::ParticipationVote::{Self, Ballot};
+    use DiemFramework::TurnoutTally::{Self, TurnoutTally};
+    use DiemFramework::Ballot::{Self, BallotTracker};
+
     use Std::GUID;
+    use Std::Signer;
+    use Std::Vector;
     use DiemFramework::Testnet;
 
-    struct Vote has key {
-      ballot: Ballot<EmptyType>,
+    struct Vote<D> has key {
+      // ballot: TurnoutTally<EmptyType>,
+      tracker: BallotTracker<D>,
+      enrollment: vector<address>
     }
 
-    struct EmptyType has store, copy {}
+    struct EmptyType has store, drop {}
 
     // initialize this data on the address of the election contract
     public fun init(
       sig: &signer,
-      data: EmptyType,
-      deadline: u64,
-      max_vote_enrollment: u64,
-      max_extensions: u64,
+      // data: EmptyType,
+      // deadline: u64,
+      // max_vote_enrollment: u64,
+      // max_extensions: u64,
       
-    ): GUID::ID {
+    ) {
+      assert!(Testnet::is_testnet(), 0);
+      // let cap = GUID::gen_create_capability(sig);
+      // new_tracker
+      // let ballot = ParticipationVote::new_tally_struct<EmptyType>(&cap, data, deadline, max_vote_enrollment, max_extensions);
+      let tracker = Ballot::new_tracker<TurnoutTally<EmptyType>>();
+      
+      // let id = ParticipationVote::get_ballot_id<EmptyType>(&ballot);
+      move_to<Vote<TurnoutTally<EmptyType>>>(sig, Vote { 
+        tracker,
+        enrollment: Vector::empty()
+      });
+      // id
+    }
+
+    public fun propose_ballot_by_owner(sig: &signer) acquires Vote {
       assert!(Testnet::is_testnet(), 0);
       let cap = GUID::gen_create_capability(sig);
-      let ballot = ParticipationVote::new_ballot<EmptyType>(&cap, data, deadline, max_vote_enrollment, max_extensions);
 
-      let id = ParticipationVote::get_ballot_id<EmptyType>(&ballot);
-      move_to(sig, Vote { ballot });
-      id
+      // let vote = borrow_global_mut<Vote<TurnoutTally<EmptyType>>>(Signer::address_of(sig));
+      // let tracker = &mut vote.tracker;
+
+      let noop = EmptyType {};
+
+      let t = TurnoutTally::new_tally_struct<EmptyType>(&cap, noop, 100, 4, 0);
+
+      let vote = borrow_global_mut<Vote<TurnoutTally<EmptyType>>>(Signer::address_of(sig));
+      Ballot::propose_ballot<TurnoutTally<EmptyType>>(&mut vote.tracker, &cap, t);
     }
 
-    public fun vote(sig: &signer, election_addr: address, weight: u64, approve_reject: bool) acquires Vote {
+     public fun vote(sig: &signer, election_addr: address, uid: &GUID::ID, weight: u64, approve_reject: bool) acquires Vote {
       assert!(Testnet::is_testnet(), 0);
-      let vote = borrow_global_mut<Vote>(election_addr);
-      ParticipationVote::vote<EmptyType>(&mut vote.ballot, sig, approve_reject, weight);
+      let vote = borrow_global_mut<Vote<TurnoutTally<EmptyType>>>(election_addr);
+      let ballot = Ballot::get_ballot_by_id_mut<TurnoutTally<EmptyType>>(&mut vote.tracker, uid);
+      let tally = Ballot::get_type_struct_mut<TurnoutTally<EmptyType>>(ballot);
+      TurnoutTally::vote<EmptyType>(tally, sig, approve_reject, weight);
     }
 
-    public fun retract(sig: &signer, election_addr: address) acquires Vote {
+    public fun retract(sig: &signer, uid: &GUID::ID, election_addr: address) acquires Vote {
       assert!(Testnet::is_testnet(), 0);
-      let vote = borrow_global_mut<Vote>(election_addr);
-      ParticipationVote::retract<EmptyType>(&mut vote.ballot, sig);
-    }
-
-    public fun get_id(election_addr: address): GUID::ID acquires Vote {
-      assert!(Testnet::is_testnet(), 0);
-      let vote = borrow_global_mut<Vote>(election_addr);
-      ParticipationVote::get_ballot_id(&vote.ballot)
-    }
-
-    public fun get_result(election_addr: address): (bool, bool) acquires Vote {
-      let vote = borrow_global_mut<Vote>(election_addr);
-      ParticipationVote::complete_result<EmptyType>(&vote.ballot)
+      let vote = borrow_global_mut<Vote<TurnoutTally<EmptyType>>>(election_addr);
+      let ballot = Ballot::get_ballot_by_id_mut<TurnoutTally<EmptyType>>(&mut vote.tracker, uid);
+      let tally = Ballot::get_type_struct_mut<TurnoutTally<EmptyType>>(ballot);
+      TurnoutTally::retract<EmptyType>(tally, sig);
     }
 
   }

@@ -37,7 +37,7 @@
 -  [Function `get_n_of_m_cfg`](#0x1_MultiSig_get_n_of_m_cfg)
 
 
-<pre><code><b>use</b> <a href="VoteLib.md#0x1_Ballot">0x1::Ballot</a>;
+<pre><code><b>use</b> <a href="Ballot.md#0x1_Ballot">0x1::Ballot</a>;
 <b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
@@ -160,7 +160,7 @@ Note, the WithdrawCApability is moved to this shared structure, and as such the 
 
 </dd>
 <dt>
-<code>vote: <a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;ProposalData&gt;&gt;</code>
+<code>vote: <a href="Ballot.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;ProposalData&gt;&gt;</code>
 </dt>
 <dd>
 
@@ -487,7 +487,7 @@ The owner of this account can't be an authority, since it will subsequently be b
       pending: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
       approved: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
       rejected: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-      vote: <a href="VoteLib.md#0x1_Ballot_new_tracker">Ballot::new_tracker</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt;&gt;(),
+      vote: <a href="Ballot.md#0x1_Ballot_new_tracker">Ballot::new_tracker</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt;&gt;(),
     });
   }
 }
@@ -591,7 +591,7 @@ An initial "sponsor" who is the signer of the initialization account calls this 
       pending: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
       approved: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
       rejected: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
-      vote: <a href="VoteLib.md#0x1_Ballot_new_tracker">Ballot::new_tracker</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(),
+      vote: <a href="Ballot.md#0x1_Ballot_new_tracker">Ballot::new_tracker</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(),
     });
 }
 </code></pre>
@@ -744,7 +744,7 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
   <a href="MultiSig.md#0x1_MultiSig_lazy_cleanup_expired">lazy_cleanup_expired</a>(action);
 
   // does this proposal already exist in the pending list?
-  <b>let</b> (found, guid, _idx, status_enum, _is_complete) = <a href="VoteLib.md#0x1_Ballot_find_anywhere_by_data">Ballot::find_anywhere_by_data</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(&action.vote, &proposal_data);
+  <b>let</b> (found, guid, _idx, status_enum, _is_complete) = <a href="Ballot.md#0x1_Ballot_find_anywhere_by_data">Ballot::find_anywhere_by_data</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(&action.vote, &proposal_data);
 
   <b>if</b> (found && status_enum == 0) {
     // this exact proposal is already pending, so we we will just <b>return</b> the guid of the existing proposal.
@@ -752,9 +752,9 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
     <b>return</b> guid
   };
 
-  <b>let</b> ballot = <a href="VoteLib.md#0x1_Ballot_propose_ballot">Ballot::propose_ballot</a>(&<b>mut</b> action.vote, &ms.guid_capability, proposal_data);
+  <b>let</b> ballot = <a href="Ballot.md#0x1_Ballot_propose_ballot">Ballot::propose_ballot</a>(&<b>mut</b> action.vote, &ms.guid_capability, proposal_data);
 
-  <b>let</b> id = <a href="VoteLib.md#0x1_Ballot_get_ballot_id">Ballot::get_ballot_id</a>(ballot);
+  <b>let</b> id = <a href="Ballot.md#0x1_Ballot_get_ballot_id">Ballot::get_ballot_id</a>(ballot);
 
   id
 }
@@ -789,14 +789,14 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
 
 
   // does this proposal already exist in the pending list?
-  <b>let</b> (found, _ , idx, status_enum, is_complete) = <a href="VoteLib.md#0x1_Ballot_find_anywhere_by_data">Ballot::find_anywhere_by_data</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(&action.vote, proposal);
+  <b>let</b> (found, _ , idx, status_enum, is_complete) = <a href="Ballot.md#0x1_Ballot_find_anywhere_by_data">Ballot::find_anywhere_by_data</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(&action.vote, proposal);
 
   <b>assert</b>!((found && status_enum == 0 && !is_complete), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_EPROPOSAL_NOT_FOUND">EPROPOSAL_NOT_FOUND</a>));
 
-  <b>let</b> b = <a href="VoteLib.md#0x1_Ballot_get_ballot_mut">Ballot::get_ballot_mut</a>(&<b>mut</b> action.vote, idx, status_enum);
+  <b>let</b> b = <a href="Ballot.md#0x1_Ballot_get_ballot_mut">Ballot::get_ballot_mut</a>(&<b>mut</b> action.vote, idx, status_enum);
 
 
-  <b>let</b> t = <a href="VoteLib.md#0x1_Ballot_get_type_struct_mut">Ballot::get_type_struct_mut</a>(b);
+  <b>let</b> t = <a href="Ballot.md#0x1_Ballot_get_type_struct_mut">Ballot::get_type_struct_mut</a>(b);
 
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> t.votes, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig));
 
@@ -868,12 +868,12 @@ helper function to vote with ID only
 
 
   // does this proposal already exist in the pending list?
-  <b>let</b> (found, _idx, status_enum, is_complete) = <a href="VoteLib.md#0x1_Ballot_find_anywhere">Ballot::find_anywhere</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(&action.vote, id);
+  <b>let</b> (found, _idx, status_enum, is_complete) = <a href="Ballot.md#0x1_Ballot_find_anywhere">Ballot::find_anywhere</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(&action.vote, id);
 
   <b>assert</b>!((found && status_enum == 0 && !is_complete), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_EPROPOSAL_NOT_FOUND">EPROPOSAL_NOT_FOUND</a>));
 
-  <b>let</b> b = <a href="VoteLib.md#0x1_Ballot_get_ballot_by_id_mut">Ballot::get_ballot_by_id_mut</a>(&<b>mut</b> action.vote, id);
-  <b>let</b> t = <a href="VoteLib.md#0x1_Ballot_get_type_struct_mut">Ballot::get_type_struct_mut</a>(b);
+  <b>let</b> b = <a href="Ballot.md#0x1_Ballot_get_ballot_by_id_mut">Ballot::get_ballot_by_id_mut</a>(&<b>mut</b> action.vote, id);
+  <b>let</b> t = <a href="Ballot.md#0x1_Ballot_get_type_struct_mut">Ballot::get_type_struct_mut</a>(b);
 
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> t.votes, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig));
 
@@ -939,17 +939,17 @@ helper function to vote with ID only
 
 <pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_find_expired">find_expired</a>&lt;ProposalData: key + store + <b>copy</b> + drop&gt;(a: & <a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;ProposalData&gt;): vector&lt;<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>&gt;{
   <b>let</b> epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
-  <b>let</b> b_vec = <a href="VoteLib.md#0x1_Ballot_get_list_ballots_by_enum">Ballot::get_list_ballots_by_enum</a>(&a.vote, 0);
+  <b>let</b> b_vec = <a href="Ballot.md#0x1_Ballot_get_list_ballots_by_enum">Ballot::get_list_ballots_by_enum</a>(&a.vote, 0);
   <b>let</b> id_vec = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>();
   <b>let</b> i = 0;
   <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(b_vec)) {
 
     <b>let</b> b = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(b_vec, i);
-    <b>let</b> t = <a href="VoteLib.md#0x1_Ballot_get_type_struct">Ballot::get_type_struct</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(b);
+    <b>let</b> t = <a href="Ballot.md#0x1_Ballot_get_type_struct">Ballot::get_type_struct</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(b);
 
 
     <b>if</b> (epoch &gt; t.expiration_epoch) {
-      <b>let</b> id = <a href="VoteLib.md#0x1_Ballot_get_ballot_id">Ballot::get_ballot_id</a>(b);
+      <b>let</b> id = <a href="Ballot.md#0x1_Ballot_get_ballot_id">Ballot::get_ballot_id</a>(b);
 
       <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> id_vec, id);
 
@@ -985,13 +985,13 @@ helper function to vote with ID only
   <b>let</b> expired_vec = <a href="MultiSig.md#0x1_MultiSig_find_expired">find_expired</a>(a);
   // <b>let</b> epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
 
-  // <b>let</b> b_vec = <a href="VoteLib.md#0x1_Ballot_get_list_ballots_by_enum">Ballot::get_list_ballots_by_enum</a>(&a.vote, 0);
+  // <b>let</b> b_vec = <a href="Ballot.md#0x1_Ballot_get_list_ballots_by_enum">Ballot::get_list_ballots_by_enum</a>(&a.vote, 0);
 
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&expired_vec);
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
     <b>let</b> id = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&expired_vec, i);
-     <a href="VoteLib.md#0x1_Ballot_move_ballot">Ballot::move_ballot</a>(&<b>mut</b> a.vote, id, 0, 1);
+     <a href="Ballot.md#0x1_Ballot_move_ballot">Ballot::move_ballot</a>(&<b>mut</b> a.vote, id, 0, 1);
     i = i + 1;
   };
 }
