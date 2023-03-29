@@ -17,12 +17,13 @@ So this module is a wrapper around VoteLib with simple storage and simple logic.
 -  [Function `init_polling_at_address`](#0x1_BinaryPoll_init_polling_at_address)
 -  [Function `propose_ballot_by_owner`](#0x1_BinaryPoll_propose_ballot_by_owner)
 -  [Function `propose_ballot_with_capability`](#0x1_BinaryPoll_propose_ballot_with_capability)
--  [Function `standalone_update_tally`](#0x1_BinaryPoll_standalone_update_tally)
--  [Function `standalone_find_anywhere`](#0x1_BinaryPoll_standalone_find_anywhere)
--  [Function `standalone_complete_and_move`](#0x1_BinaryPoll_standalone_complete_and_move)
--  [Function `assert_enrolled`](#0x1_BinaryPoll_assert_enrolled)
--  [Function `assert_not_voted`](#0x1_BinaryPoll_assert_not_voted)
+-  [Function `force_update_tally`](#0x1_BinaryPoll_force_update_tally)
+-  [Function `is_enrolled`](#0x1_BinaryPoll_is_enrolled)
+-  [Function `has_voted`](#0x1_BinaryPoll_has_voted)
+-  [Function `find_with_cap`](#0x1_BinaryPoll_find_with_cap)
+-  [Function `find_by_address`](#0x1_BinaryPoll_find_by_address)
 -  [Function `vote`](#0x1_BinaryPoll_vote)
+-  [Function `complete_and_move`](#0x1_BinaryPoll_complete_and_move)
 -  [Function `maybe_tally`](#0x1_BinaryPoll_maybe_tally)
 -  [Function `maybe_complete`](#0x1_BinaryPoll_maybe_complete)
 
@@ -45,8 +46,12 @@ So this module is a wrapper around VoteLib with simple storage and simple logic.
 We keep a tracker of all the Polls for a given Issue.
 VoteLib leverages generics to make ballots have rich data, for custom handlers.
 This makes it confusing at first glance, because it creates a russian doll of structs.
-In BinaryPoll we have a single place to track every BinaryCounter of a given "issue" that can carry IssueData as a payload. What is happening here is that we have a
-struct VoteLib::BallotTracker<VoteLib::Ballot<BinaryPoll::BinaryCounter<IssueData { whatever: you_decide }>> {
+In BinaryPoll we have a single place to track every BinaryCounter of a given "issue" that can carry IssueData as a payload.
+The "B" generic is deceptively simple. How the state actually looks in memory is:
+struct VoteLib::BallotTracker<
+VoteLib::Ballot<
+BinaryPoll::BinaryCounter<
+IssueData { whatever: you_decide }
 
 
 <pre><code><b>struct</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;B&gt; <b>has</b> drop, store, key
@@ -74,10 +79,15 @@ struct VoteLib::BallotTracker<VoteLib::Ballot<BinaryPoll::BinaryCounter<IssueDat
 
 ## Struct `BinaryCounter`
 
-a tally can have any kind of data to support the vote.
-this is an example of a binary count.
-A dev should also insert data into the tally, to be used in an
-action that is triggered on completion.
+in VoteLib a TallyType can have any kind of data to support the vote.
+In our case it's a BinaryCounter type.
+The counter fields are very straightforward.
+What may not be straigtforward is the "issue_data" field.
+This is a generic field that can be used to store any kind of data.
+If for example you want every ballot to just have a description, but on each ballot the description is different (like a referendum "prop"). MyCoolVote { vote_text: ASCII };
+If your vote is always a recurring topic, it could be as simple as an empty struct where the definition has some semantics. <code>DoWeForkThisChain {}</code>
+or more interestingly, it could be an address for a payment <code>PayThisGuy { user: <b>address</b>, amount: u64 }</code> which then you can handle with a custom payment logic.
+The data stored in IssueData can be used to trigger an event lazily when a voter finally crosses the threshold for the count
 
 
 <pre><code><b>struct</b> <a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt; <b>has</b> drop, store
@@ -339,13 +349,14 @@ If the BallotTracker is standalone at root of address, you can use thie function
 
 </details>
 
-<a name="0x1_BinaryPoll_standalone_update_tally"></a>
+<a name="0x1_BinaryPoll_force_update_tally"></a>
 
-## Function `standalone_update_tally`
+## Function `force_update_tally`
+
+Convenience function to overwrite the tally data of a ballot.
 
 
-
-<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_standalone_update_tally">standalone_update_tally</a>&lt;IssueData: drop, store&gt;(guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, tally_type: IssueData)
+<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_force_update_tally">force_update_tally</a>&lt;IssueData: drop, store&gt;(guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, tally_type: IssueData)
 </code></pre>
 
 
@@ -354,13 +365,13 @@ If the BallotTracker is standalone at root of address, you can use thie function
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_standalone_update_tally">standalone_update_tally</a>&lt;IssueData: drop + store&gt; (
+<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_force_update_tally">force_update_tally</a>&lt;IssueData: drop + store&gt; (
   guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>,
   uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>,
   tally_type: IssueData,
 ) <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
 
-  <b>let</b> (found, idx, status_enum, _completed) = <a href="BinaryPoll.md#0x1_BinaryPoll_standalone_find_anywhere">standalone_find_anywhere</a>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(guid_cap, uid);
+  <b>let</b> (found, idx, status_enum, _completed) = <a href="BinaryPoll.md#0x1_BinaryPoll_find_with_cap">find_with_cap</a>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(guid_cap, uid);
   <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="BinaryPoll.md#0x1_BinaryPoll_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
 
   <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_get_capability_address">GUID::get_capability_address</a>(guid_cap);
@@ -375,14 +386,13 @@ If the BallotTracker is standalone at root of address, you can use thie function
 
 </details>
 
-<a name="0x1_BinaryPoll_standalone_find_anywhere"></a>
+<a name="0x1_BinaryPoll_is_enrolled"></a>
 
-## Function `standalone_find_anywhere`
-
-tuple if the ballot is (found, its index, its status enum, is it completed)
+## Function `is_enrolled`
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_standalone_find_anywhere">standalone_find_anywhere</a>&lt;IssueData: drop, store&gt;(guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8, bool)
+
+<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_is_enrolled">is_enrolled</a>&lt;IssueData: drop, store&gt;(sig: &signer, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): bool
 </code></pre>
 
 
@@ -391,9 +401,74 @@ tuple if the ballot is (found, its index, its status enum, is it completed)
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_standalone_find_anywhere">standalone_find_anywhere</a>&lt;IssueData: drop + store&gt;(guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8, bool) <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_is_enrolled">is_enrolled</a>&lt;IssueData: drop + store&gt;(
+  sig: &signer,
+  uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>,
+
+): bool <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
+  <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
+  <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;&gt;&gt;(addr);
+  <b>let</b> ballot = <a href="VoteLib.md#0x1_VoteLib_get_ballot_by_id">VoteLib::get_ballot_by_id</a>(&state.tracker, uid);
+  <b>let</b> tally_type: &<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;  = <a href="VoteLib.md#0x1_VoteLib_get_type_struct">VoteLib::get_type_struct</a>(ballot);
+   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&tally_type.enrollment, &addr)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_BinaryPoll_has_voted"></a>
+
+## Function `has_voted`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_has_voted">has_voted</a>&lt;IssueData: drop, store&gt;(sig: &signer, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_has_voted">has_voted</a>&lt;IssueData: drop + store&gt;(
+  sig: &signer,
+  uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>,
+
+): bool <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
+  <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
+  <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;&gt;&gt;(addr);
+  <b>let</b> ballot = <a href="VoteLib.md#0x1_VoteLib_get_ballot_by_id">VoteLib::get_ballot_by_id</a>(&state.tracker, uid);
+  <b>let</b> tally_type: &<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;  = <a href="VoteLib.md#0x1_VoteLib_get_type_struct">VoteLib::get_type_struct</a>(ballot);
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&tally_type.voted, &addr)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_BinaryPoll_find_with_cap"></a>
+
+## Function `find_with_cap`
+
+Helper to get data from capability, prevent boilerplate. Returns tuple if the ballot is (found, its index, its status enum, is it completed)
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_find_with_cap">find_with_cap</a>&lt;IssueData: drop, store&gt;(guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8, bool)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_find_with_cap">find_with_cap</a>&lt;IssueData: drop + store&gt;(guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8, bool) <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
   <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_get_capability_address">GUID::get_capability_address</a>(guid_cap);
-  <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(addr);
+  <b>let</b> state = <b>borrow_global</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(addr);
   <a href="VoteLib.md#0x1_VoteLib_find_anywhere">VoteLib::find_anywhere</a>(&state.tracker, uid)
 }
 </code></pre>
@@ -402,13 +477,14 @@ tuple if the ballot is (found, its index, its status enum, is it completed)
 
 </details>
 
-<a name="0x1_BinaryPoll_standalone_complete_and_move"></a>
+<a name="0x1_BinaryPoll_find_by_address"></a>
 
-## Function `standalone_complete_and_move`
+## Function `find_by_address`
+
+Public helper to get data on an issue without privileges. Returns tuple if the ballot is (found, its index, its status enum, is it completed)
 
 
-
-<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_standalone_complete_and_move">standalone_complete_and_move</a>&lt;IssueData: drop, store&gt;(guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, to_status_enum: u8)
+<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_find_by_address">find_by_address</a>&lt;IssueData: drop, store&gt;(poll_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8, bool)
 </code></pre>
 
 
@@ -417,81 +493,9 @@ tuple if the ballot is (found, its index, its status enum, is it completed)
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_standalone_complete_and_move">standalone_complete_and_move</a>&lt;IssueData: drop + store&gt;(guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, to_status_enum: u8) <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
-  <b>let</b> (found, _idx, status_enum, _completed) = <a href="BinaryPoll.md#0x1_BinaryPoll_standalone_find_anywhere">standalone_find_anywhere</a>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(guid_cap, uid);
-  <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="BinaryPoll.md#0x1_BinaryPoll_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
-
-  <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_get_capability_address">GUID::get_capability_address</a>(guid_cap));
-  <b>let</b> b = <a href="VoteLib.md#0x1_VoteLib_get_ballot_by_id_mut">VoteLib::get_ballot_by_id_mut</a>(&<b>mut</b> state.tracker, uid);
-  <a href="VoteLib.md#0x1_VoteLib_complete_ballot">VoteLib::complete_ballot</a>(b);
-  <a href="VoteLib.md#0x1_VoteLib_move_ballot">VoteLib::move_ballot</a>(&<b>mut</b> state.tracker, uid, status_enum, to_status_enum);
-
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_BinaryPoll_assert_enrolled"></a>
-
-## Function `assert_enrolled`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_assert_enrolled">assert_enrolled</a>&lt;IssueData: drop, store&gt;(sig: &signer, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_assert_enrolled">assert_enrolled</a>&lt;IssueData: drop + store&gt;(
-  sig: &signer,
-  uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>,
-
-) <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
-  <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
-  <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;&gt;&gt;(addr);
-  <b>let</b> ballot = <a href="VoteLib.md#0x1_VoteLib_get_ballot_by_id">VoteLib::get_ballot_by_id</a>(&state.tracker, uid);
-  <b>let</b> tally_type: &<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;  = <a href="VoteLib.md#0x1_VoteLib_get_type_struct">VoteLib::get_type_struct</a>(ballot);
-  <b>let</b> enrolled = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&tally_type.enrollment, &addr);
-  <b>assert</b>!(enrolled, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="BinaryPoll.md#0x1_BinaryPoll_ENOT_ENROLLED">ENOT_ENROLLED</a>));
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_BinaryPoll_assert_not_voted"></a>
-
-## Function `assert_not_voted`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_assert_not_voted">assert_not_voted</a>&lt;IssueData: drop, store&gt;(sig: &signer, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_assert_not_voted">assert_not_voted</a>&lt;IssueData: drop + store&gt;(
-  sig: &signer,
-  uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>,
-
-) <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
-  <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
-  <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;&gt;&gt;(addr);
-  <b>let</b> ballot = <a href="VoteLib.md#0x1_VoteLib_get_ballot_by_id">VoteLib::get_ballot_by_id</a>(&state.tracker, uid);
-  <b>let</b> tally_type: &<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;  = <a href="VoteLib.md#0x1_VoteLib_get_type_struct">VoteLib::get_type_struct</a>(ballot);
-  <b>let</b> voted = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&tally_type.voted, &addr);
-  <b>assert</b>!(!voted, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="BinaryPoll.md#0x1_BinaryPoll_EALREADY_VOTED">EALREADY_VOTED</a>));
+<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_find_by_address">find_by_address</a>&lt;IssueData: drop + store&gt;(poll_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8, bool) <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
+  <b>let</b> state = <b>borrow_global</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(poll_address);
+  <a href="VoteLib.md#0x1_VoteLib_find_anywhere">VoteLib::find_anywhere</a>(&state.tracker, uid)
 }
 </code></pre>
 
@@ -520,14 +524,16 @@ tuple if the ballot is (found, its index, its status enum, is it completed)
   {
 
   // expensive calls since we are getting <b>mut</b> data below have the state above, but this is a demo
-  <a href="BinaryPoll.md#0x1_BinaryPoll_assert_enrolled">assert_enrolled</a>&lt;IssueData&gt;(sig, uid);
-  <a href="BinaryPoll.md#0x1_BinaryPoll_assert_not_voted">assert_not_voted</a>&lt;IssueData&gt;(sig, uid);
+
+  <b>assert</b>!(<a href="BinaryPoll.md#0x1_BinaryPoll_is_enrolled">is_enrolled</a>&lt;IssueData&gt;(sig, uid), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="BinaryPoll.md#0x1_BinaryPoll_ENOT_ENROLLED">ENOT_ENROLLED</a>));
+
+  <b>assert</b>!(!<a href="BinaryPoll.md#0x1_BinaryPoll_has_voted">has_voted</a>&lt;IssueData&gt;(sig, uid), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="BinaryPoll.md#0x1_BinaryPoll_EALREADY_VOTED">EALREADY_VOTED</a>));
 
   // get the <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID">GUID</a> capability stored here
   <b>let</b> cap = &<b>borrow_global</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_VoteCapability">VoteCapability</a>&gt;(vote_address).guid_cap;
 
 
-  <b>let</b> (found, _idx, status_enum, is_completed) = <a href="BinaryPoll.md#0x1_BinaryPoll_standalone_find_anywhere">standalone_find_anywhere</a>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;&gt;(cap, uid);
+  <b>let</b> (found, _idx, status_enum, is_completed) = <a href="BinaryPoll.md#0x1_BinaryPoll_find_with_cap">find_with_cap</a>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;&gt;(cap, uid);
 
   <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="BinaryPoll.md#0x1_BinaryPoll_EINVALID_VOTE">EINVALID_VOTE</a>));
   <b>assert</b>!(!is_completed, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="BinaryPoll.md#0x1_BinaryPoll_EINVALID_VOTE">EINVALID_VOTE</a>));
@@ -560,11 +566,42 @@ tuple if the ballot is (found, its index, its status enum, is it completed)
 
 </details>
 
+<a name="0x1_BinaryPoll_complete_and_move"></a>
+
+## Function `complete_and_move`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_complete_and_move">complete_and_move</a>&lt;IssueData: drop, store&gt;(guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, to_status_enum: u8)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_complete_and_move">complete_and_move</a>&lt;IssueData: drop + store&gt;(guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, to_status_enum: u8) <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
+  <b>let</b> (found, _idx, status_enum, _completed) = <a href="BinaryPoll.md#0x1_BinaryPoll_find_with_cap">find_with_cap</a>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(guid_cap, uid);
+  <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="BinaryPoll.md#0x1_BinaryPoll_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
+
+  <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_get_capability_address">GUID::get_capability_address</a>(guid_cap));
+  <b>let</b> b = <a href="VoteLib.md#0x1_VoteLib_get_ballot_by_id_mut">VoteLib::get_ballot_by_id_mut</a>(&<b>mut</b> state.tracker, uid);
+  <a href="VoteLib.md#0x1_VoteLib_complete_ballot">VoteLib::complete_ballot</a>(b);
+  <a href="VoteLib.md#0x1_VoteLib_move_ballot">VoteLib::move_ballot</a>(&<b>mut</b> state.tracker, uid, status_enum, to_status_enum);
+
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_BinaryPoll_maybe_tally"></a>
 
 ## Function `maybe_tally`
 
-just check the tally and mark the result.
+Just check the tally and mark the result.
 this function doesn't move the ballot to a different list, since it doesn't have the outer struct and data needed.
 
 
@@ -602,7 +639,7 @@ this function doesn't move the ballot to a different list, since it doesn't have
 
 ## Function `maybe_complete`
 
-with access to the outer struct of the Poll, move completed ballots to their correct location: approved or rejected
+With access to the outer struct of the Poll, move completed ballots to their correct location: approved or rejected
 returns an Option type for approved or rejected, so that the caller can decide what to do with the result.
 
 
@@ -624,7 +661,7 @@ returns an Option type for approved or rejected, so that the caller can decide w
       <a href="BinaryPoll.md#0x1_BinaryPoll_REJECTED">REJECTED</a> // rejected
     };
     // since we have a result lets <b>update</b> the <a href="VoteLib.md#0x1_VoteLib">VoteLib</a> state
-    <a href="BinaryPoll.md#0x1_BinaryPoll_standalone_complete_and_move">standalone_complete_and_move</a>&lt;IssueData&gt;(cap, uid, *&status_enum);
+    <a href="BinaryPoll.md#0x1_BinaryPoll_complete_and_move">complete_and_move</a>&lt;IssueData&gt;(cap, uid, *&status_enum);
     <b>return</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_some">Option::some</a>(status_enum)
   };
 
