@@ -22,7 +22,7 @@ module MultiSigT {
   use Std::Errors;
   use Std::GUID;
   use DiemFramework::DiemAccount::{Self, WithdrawCapability};
-  use DiemFramework::VoteLib::{Self, Vote};
+  use DiemFramework::VoteLib::{Self, BallotTracker};
   use DiemFramework::DiemConfig;
   use DiemFramework::Debug::print;
 
@@ -98,7 +98,7 @@ module MultiSigT {
     pending: vector<Proposal<ProposalData>>,
     approved: vector<Proposal<ProposalData>>,
     rejected:  vector<Proposal<ProposalData>>,
-    vote: Vote<Proposal<ProposalData>>,
+    vote: BallotTracker<Proposal<ProposalData>>,
   }
 
   // all proposals share some common fields
@@ -177,7 +177,7 @@ module MultiSigT {
         pending: Vector::empty(),
         approved: Vector::empty(),
         rejected: Vector::empty(),
-        vote: VoteLib::new_poll<Proposal<PropGovSigners>>(),
+        vote: VoteLib::new_tracker<Proposal<PropGovSigners>>(),
       });
     }
   }
@@ -223,7 +223,7 @@ module MultiSigT {
         pending: Vector::empty(),
         approved: Vector::empty(),
         rejected: Vector::empty(),
-        vote: VoteLib::new_poll<Proposal<ProposalData>>(),
+        vote: VoteLib::new_tracker<Proposal<ProposalData>>(),
       });
   }
 
@@ -317,7 +317,7 @@ module MultiSigT {
     let b = VoteLib::get_ballot_mut(&mut action.vote, idx, status_enum);
 
 
-    let t = VoteLib::get_ballot_type_mut(b);
+    let t = VoteLib::get_type_struct_mut(b);
 
     Vector::push_back(&mut t.votes, Signer::address_of(sig));
 
@@ -334,7 +334,7 @@ module MultiSigT {
     let n_sigs = *&borrow_global_mut<MultiSig>(multisig_address).cfg_default_n_sigs;
 
     let b = VoteLib::get_ballot_by_id_mut(&mut action.vote, id);
-    let t = VoteLib::get_ballot_type_mut(b);
+    let t = VoteLib::get_type_struct_mut(b);
 
     Vector::push_back(&mut t.votes, Signer::address_of(sig));
 
@@ -357,7 +357,7 @@ module MultiSigT {
     assert!((found && status_enum == 0 && !is_complete), Errors::invalid_argument(EPROPOSAL_NOT_FOUND));
 
     let b = VoteLib::get_ballot_by_id_mut(&mut action.vote, id);
-    let t = VoteLib::get_ballot_type_mut(b);
+    let t = VoteLib::get_type_struct_mut(b);
 
     Vector::push_back(&mut t.votes, Signer::address_of(sig));
 
@@ -391,7 +391,7 @@ module MultiSigT {
     while (i < Vector::length(b_vec)) {
       
       let b = Vector::borrow(b_vec, i);
-      let t = VoteLib::get_ballot_type<Proposal<ProposalData>>(b);
+      let t = VoteLib::get_type_struct<Proposal<ProposalData>>(b);
 
       
       if (epoch > t.expiration_epoch) { 

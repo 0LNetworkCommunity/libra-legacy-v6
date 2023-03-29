@@ -47,7 +47,7 @@ address DiemFramework {
     /// The counter fields are very straightforward.
     /// What may not be straigtforward is the "issue_data" field.
     /// This is a generic field that can be used to store any kind of data.
-    /// If for example you want every ballot to just have a description, but on each ballot the description is different (like a referendum "prop"). MyCoolVote { vote_text: ASCII }; (See SignalingPoll.move)
+    /// If for example you want every ballot to just have a description, but on each ballot the description is different (like a referendum "prop"). MyCoolVote { vote_text: ASCII };
     /// If your vote is always a recurring topic, it could be as simple as an empty struct where the definition has some semantics. `DoWeForkThisChain {}`
     /// or more interestingly, it could be an address for a payment `PayThisGuy { user: address, amount: u64 }` which then you can handle with a custom payment logic.
 
