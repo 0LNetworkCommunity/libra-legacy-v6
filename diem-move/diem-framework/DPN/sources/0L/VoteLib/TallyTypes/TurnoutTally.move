@@ -1,7 +1,7 @@
 ///////////////////////////////////////////////////////////////////////////
 // 0L Module
-// VoteLib
-// Intatiate different types of user-interactive voting
+// TurnoutTally
+// Binary voting with threshold adjusted for turnout
 ///////////////////////////////////////////////////////////////////////////
 
 // TODO: Move this to a separate address. Potentially has separate governance.
@@ -9,7 +9,7 @@ address DiemFramework {
 
   module TurnoutTally {
 
-    // ParticipationVote is a module that constructs a TallyType, for use with VoteLib's Ballot module. It does not store any state itself, you'll need to import it into a module.
+    // TurnoutTally is a module that constructs a TallyType, for use with VoteLib's Ballot module. It does not store any state itself, you'll need to import it into a module.
 
     // The tally design single issue referendum, with only votes in favor or against, but with an adaptive threshold for the vote to pass.
 
@@ -380,92 +380,8 @@ address DiemFramework {
     }
 
     /// is it complete and what's the result
-    public fun complete_result<Data: copy + store>(ballot: &TurnoutTally<Data>): (bool, bool) {
+    public fun is_complete_result<Data: copy + store>(ballot: &TurnoutTally<Data>): (bool, bool) {
       (ballot.completed, ballot.tally_pass)
-    }
-
-  }
-
-  // // TODO: Fix publishing on test harness.
-  // // see test _meta_import_vote.move
-  // // There's an issue with the test harness, where it cannot publish the module
-  // // task 2 'run'. lines 31-51:
-  // // Error: error[E03002]: unbound module
-  // // /var/folders/0s/7kz0td0j5pqffbc143hq52bm0000gn/T/.tmp3EAMzm:3:9
-  // // 
-  // //      use 0x1::GUID;
-  // //          ^^^^^^^^^ Invalid 'use'. Unbound module: '0x1::GUID'
-
-  module DummyTestVoteTwo {
-
-    use DiemFramework::TurnoutTally::{Self, TurnoutTally};
-    use DiemFramework::Ballot::{Self, BallotTracker};
-
-    use Std::GUID;
-    use Std::Signer;
-    use Std::Vector;
-    use DiemFramework::Testnet;
-
-    struct Vote<D> has key {
-      // ballot: TurnoutTally<EmptyType>,
-      tracker: BallotTracker<D>,
-      enrollment: vector<address>
-    }
-
-    struct EmptyType has store, drop {}
-
-    // initialize this data on the address of the election contract
-    public fun init(
-      sig: &signer,
-      // data: EmptyType,
-      // deadline: u64,
-      // max_vote_enrollment: u64,
-      // max_extensions: u64,
-      
-    ) {
-      assert!(Testnet::is_testnet(), 0);
-      // let cap = GUID::gen_create_capability(sig);
-      // new_tracker
-      // let ballot = ParticipationVote::new_tally_struct<EmptyType>(&cap, data, deadline, max_vote_enrollment, max_extensions);
-      let tracker = Ballot::new_tracker<TurnoutTally<EmptyType>>();
-      
-      // let id = ParticipationVote::get_ballot_id<EmptyType>(&ballot);
-      move_to<Vote<TurnoutTally<EmptyType>>>(sig, Vote { 
-        tracker,
-        enrollment: Vector::empty()
-      });
-      // id
-    }
-
-    public fun propose_ballot_by_owner(sig: &signer) acquires Vote {
-      assert!(Testnet::is_testnet(), 0);
-      let cap = GUID::gen_create_capability(sig);
-
-      // let vote = borrow_global_mut<Vote<TurnoutTally<EmptyType>>>(Signer::address_of(sig));
-      // let tracker = &mut vote.tracker;
-
-      let noop = EmptyType {};
-
-      let t = TurnoutTally::new_tally_struct<EmptyType>(&cap, noop, 100, 4, 0);
-
-      let vote = borrow_global_mut<Vote<TurnoutTally<EmptyType>>>(Signer::address_of(sig));
-      Ballot::propose_ballot<TurnoutTally<EmptyType>>(&mut vote.tracker, &cap, t);
-    }
-
-     public fun vote(sig: &signer, election_addr: address, uid: &GUID::ID, weight: u64, approve_reject: bool) acquires Vote {
-      assert!(Testnet::is_testnet(), 0);
-      let vote = borrow_global_mut<Vote<TurnoutTally<EmptyType>>>(election_addr);
-      let ballot = Ballot::get_ballot_by_id_mut<TurnoutTally<EmptyType>>(&mut vote.tracker, uid);
-      let tally = Ballot::get_type_struct_mut<TurnoutTally<EmptyType>>(ballot);
-      TurnoutTally::vote<EmptyType>(tally, sig, approve_reject, weight);
-    }
-
-    public fun retract(sig: &signer, uid: &GUID::ID, election_addr: address) acquires Vote {
-      assert!(Testnet::is_testnet(), 0);
-      let vote = borrow_global_mut<Vote<TurnoutTally<EmptyType>>>(election_addr);
-      let ballot = Ballot::get_ballot_by_id_mut<TurnoutTally<EmptyType>>(&mut vote.tracker, uid);
-      let tally = Ballot::get_type_struct_mut<TurnoutTally<EmptyType>>(ballot);
-      TurnoutTally::retract<EmptyType>(tally, sig);
     }
 
   }

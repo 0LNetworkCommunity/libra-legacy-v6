@@ -50,7 +50,7 @@ compiled_package_info:
       name: Ballot
     : DiemFramework
     ? address: "00000000000000000000000000000001"
-      name: BinaryPoll
+      name: BinaryTally
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: BitVector
@@ -138,9 +138,6 @@ compiled_package_info:
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: DummyTestVote
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
-      name: DummyTestVoteTwo
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: Epoch
@@ -293,7 +290,13 @@ compiled_package_info:
       name: TreasuryComplianceScripts
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: TurnkeyBinaryPoll
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: TurnoutTally
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: TurnoutTallyDemo
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: Upgrade
@@ -349,7 +352,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 360151EB84AE2889159BAFD3057C3A855F59BF7051E05290571A1491120057ED
+  source_digest: 616C96DAC921CBA46CC2F97F816065972C90350C52016D4898A8A3812B17FD43
   build_flags:
     dev_mode: false
     test_mode: false
