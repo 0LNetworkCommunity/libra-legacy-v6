@@ -43,6 +43,7 @@ address DiemFramework {
     use Std::GUID::{Self, GUID, ID};
     use Std::Errors;
     use DiemFramework::DiemConfig;
+    use DiemFramework::VoteReceipt;
 
     /// The ballot has already been completed.
     const ECOMPLETED: u64 = 300010; 
@@ -91,83 +92,6 @@ address DiemFramework {
     /// for voting to happen with the VoteLib module, the GUID creation capability must be passed in, and so the signer for the addres (the "sponsor" of the ballot) must move the capability to be accessible by the contract logic.
 
 
-    // struct ParticipationVote<B> has key {
-    //   guid_cap: GUID::CreateCapability,
-    //   tracker: BallotTracker<B>,
-    // }
-    
-    // struct WrapPoll<Data> has key {
-    //   poll: Poll<Data>,
-    // }
-
-    // struct Poll<Data> has key, store, drop {
-    //   ballots_pending: vector<Ballot<Data>>,
-    //   ballots_approved: vector<Ballot<Data>>,
-    //   ballots_rejected: vector<Ballot<Data>>,
-    // }
-
-    // public fun new_poll<Data: copy + store>(): Poll<Data> {
-    //   Poll {
-    //     ballots_pending: Vector::empty(),
-    //     ballots_approved: Vector::empty(),
-    //     ballots_rejected: Vector::empty(),
-    //   }
-    // }
-
-    // public fun propose_ballot<Data: copy + store>(
-    //   guid_cap: &GUID::CreateCapability,
-    //   poll: &mut Poll<Data>,
-    //   data: Data,
-    //   max_vote_enrollment: u64,
-    //   deadline: u64,
-    //   max_extensions: u64,
-    // ): &mut Ballot<Data> {
-    //   let ballot = new_tally_struct(guid_cap, data, max_vote_enrollment, deadline, max_extensions);
-    //   let len = Vector::length(&poll.ballots_pending);
-    //   Vector::push_back(&mut poll.ballots_pending, ballot);
-    //   Vector::borrow_mut(&mut poll.ballots_pending, len + 1)
-    // }
-    // /// private function to search in the ballots for an existsing veto. Returns and option type with the Ballot id.
-    // public fun get_ballot_mut<Data: copy + store> (poll: &mut Poll<Data>, proposal_guid: &GUID::ID, status_enum: u8): &mut Ballot<Data> {
-      
-    //   let (found, idx) = find_index_of_ballot(poll, proposal_guid, status_enum);
-    //   assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
-
-    //   let list = get_list_ballots_by_enum<Data>(poll, status_enum);
-
-    //   Vector::borrow_mut(list, idx)
-    // }
-
-    // fun find_index_of_ballot<Data: copy + store>(poll: &mut Poll<Data>, proposal_guid: &GUID::ID, status_enum: u8): (bool, u64) {
-
-    //  let list = get_list_ballots_by_enum<Data>(poll, status_enum);
-
-    //   let i = 0;
-    //   while (i < Vector::length(list)) {
-    //     let b = Vector::borrow(list, i);
-    //     if (&get_ballot_id(b) == proposal_guid) {
-    //       return (true, i)
-    //     };
-    //     i = i + 1;
-    //   };
-
-    //   (false, 0)
-    // }
-
-    // fun get_list_ballots_by_enum<Data: copy + store>(poll: &mut Poll<Data>, status_enum: u8): &mut vector<Ballot<Data>> {
-    //  if (status_enum == PENDING) {
-    //     &mut poll.ballots_pending
-    //   } else if (status_enum == APPROVED) {
-    //     &mut poll.ballots_approved
-    //   } else if (status_enum == REJECTED) {
-    //     &mut poll.ballots_rejected
-    //   } else {
-    //     assert!(false, Errors::invalid_argument(EBAD_STATUS_ENUM));
-    //     &mut poll.ballots_rejected // dummy return
-    //   }
-    // }
-
-
     struct TurnoutTally<Data> has key, store, drop { // Note, this is a hot potato. Any methods chaning it must return the struct to caller.
       guid: GUID,
       data: Data, // TODO: change to ascii string
@@ -190,15 +114,6 @@ address DiemFramework {
       tally_approve: u64,  // use two decimal places 1234 = 12.34%
       tally_turnout: u64, // use two decimal places 1234 = 12.34%
       tally_pass: bool, // if it passed
-    }
-
-    struct VoteReceipt has key, store, drop, copy { 
-      guid: GUID::ID,
-      approve_reject: bool,
-      weight: u64,
-    }
-    struct IVoted has key {
-      elections: vector<VoteReceipt>,
     }
 
     public fun new_tally_struct<Data: drop + store>(
@@ -241,7 +156,7 @@ address DiemFramework {
 
     // the vote flow will return if the ballot passed (on the vote that gets over the threshold). This can be used for triggering actions lazily.
 
-    public fun vote<Data: drop + store>(ballot: &mut TurnoutTally<Data>, user: &signer, approve_reject: bool, weight: u64): bool acquires IVoted {
+    public fun vote<Data: drop + store>(ballot: &mut TurnoutTally<Data>, user: &signer, approve_reject: bool, weight: u64): bool {
       // voting should not be complete
       assert!(!is_complete(ballot), Errors::invalid_state(ECOMPLETED));
 
@@ -249,7 +164,7 @@ address DiemFramework {
       // If the vote is the same directionally (approve, reject), exit early.
       // otherwise, need to subtract the old vote and add the new vote.
       let user_addr = Signer::address_of(user);
-      let (_, is_found) = find_prior_vote_idx(user_addr, &GUID::id(&ballot.guid));
+      let (_, is_found) = VoteReceipt::find_prior_vote_idx(user_addr, &GUID::id(&ballot.guid));
 
       assert!(!is_found, Errors::invalid_state(EALREADY_VOTED));
 
@@ -273,7 +188,7 @@ address DiemFramework {
       maybe_tally(ballot);
 
       // this will handle the case of updating the receipt in case this is a second vote.
-      make_receipt(user, &GUID::id(&ballot.guid), approve_reject, weight);
+      VoteReceipt::make_receipt(user, &GUID::id(&ballot.guid), approve_reject, weight);
 
       ballot.tally_pass // return if it passed, so it can be used in a third party contract handler for lazy evaluation.
     }
@@ -298,13 +213,13 @@ address DiemFramework {
       ballot.completed
     }
 
-    public fun retract<Data: drop + store>(ballot: &mut TurnoutTally<Data>, user: &signer) acquires IVoted {
+    public fun retract<Data: drop + store>(ballot: &mut TurnoutTally<Data>, user: &signer) {
       let user_addr = Signer::address_of(user);
 
-      let (idx, is_found) = find_prior_vote_idx(user_addr, &GUID::id(&ballot.guid));
+      let (_idx, is_found) = VoteReceipt::find_prior_vote_idx(user_addr, &GUID::id(&ballot.guid));
       assert!(is_found, Errors::invalid_state(ENOT_VOTED));
 
-      let (approve_reject, weight) = get_receipt_data(user_addr, &GUID::id(&ballot.guid));
+      let (approve_reject, weight) = VoteReceipt::get_receipt_data(user_addr, &GUID::id(&ballot.guid));
 
       if (approve_reject) {
         ballot.votes_approve = ballot.votes_approve - weight;
@@ -312,8 +227,7 @@ address DiemFramework {
         ballot.votes_reject = ballot.votes_reject - weight;
       };
 
-      let ivoted = borrow_global_mut<IVoted>(user_addr);
-      Vector::remove(&mut ivoted.elections, idx);
+      VoteReceipt::remove_vote_receipt(user, &GUID::id(&ballot.guid));
     }
 
     /// The handler for a third party contract may wish to extend the ballot deadline.
@@ -447,58 +361,6 @@ address DiemFramework {
       return y
     }
 
-    fun make_receipt(user_sig: &signer, vote_id: &ID, approve_reject: bool, weight: u64) acquires IVoted {
-
-      let user_addr = Signer::address_of(user_sig);
-
-      let receipt = VoteReceipt {
-        guid: *vote_id,
-        approve_reject: approve_reject,
-        weight: weight,
-      };
-
-      if (!exists<IVoted>(user_addr)) {
-        let ivoted = IVoted {
-          elections: Vector::empty(),
-        };
-        move_to<IVoted>(user_sig, ivoted);
-      };
-
-      let (idx, is_found) = find_prior_vote_idx(user_addr, vote_id);
-
-      // for safety remove the old vote if it exists.
-      let ivoted = borrow_global_mut<IVoted>(user_addr);
-      if (is_found) {
-        Vector::remove(&mut ivoted.elections, idx);
-      };
-      Vector::push_back(&mut ivoted.elections, receipt);
-    }
-
-    fun find_prior_vote_idx(user_addr: address, vote_id: &ID): (u64, bool) acquires IVoted {
-      if (!exists<IVoted>(user_addr)) {
-        return (0, false)
-      };
-      
-      let ivoted = borrow_global<IVoted>(user_addr);
-      let len = Vector::length(&ivoted.elections);
-      let i = 0;
-      while (i < len) {
-        let receipt = Vector::borrow(&ivoted.elections, i);
-        if (&receipt.guid == vote_id) {
-          return (i, true)
-        };
-        i = i + 1;
-      };
-
-      return (0, false)
-    }
-
-    fun get_vote_receipt(user_addr: address, idx: u64): VoteReceipt acquires IVoted {
-      let ivoted = borrow_global<IVoted>(user_addr);
-      let r = Vector::borrow(&ivoted.elections, idx);
-      return *r
-    }
-
     //////// GETTERS ////////
     /// get the ballot id
     public fun get_ballot_id<Data: copy + store>(ballot: &TurnoutTally<Data>): ID {
@@ -522,17 +384,6 @@ address DiemFramework {
       (ballot.completed, ballot.tally_pass)
     }
 
-
-    /// gets the receipt data
-    // should return an OPTION.
-    public fun get_receipt_data(user_addr: address, vote_id: &ID): (bool, u64) acquires IVoted {
-      let (idx, found) = find_prior_vote_idx(user_addr, vote_id);
-      if (found) {
-          let v = get_vote_receipt(user_addr, idx);
-          return (v.approve_reject, v.weight)
-        };
-      return (false, 0)
-    } 
   }
 
   // // TODO: Fix publishing on test harness.

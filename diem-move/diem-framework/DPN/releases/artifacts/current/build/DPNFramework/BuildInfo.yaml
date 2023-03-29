@@ -329,6 +329,9 @@ compiled_package_info:
       name: VectorHelper
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: VoteReceipt
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Vouch
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -346,7 +349,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: A18156C27108CF4255804A6ADBAA63B8B71ABC5FF18060D5F7B8C0C3FB9E4AF4
+  source_digest: 360151EB84AE2889159BAFD3057C3A855F59BF7051E05290571A1491120057ED
   build_flags:
     dev_mode: false
     test_mode: false
