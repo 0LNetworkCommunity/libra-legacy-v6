@@ -28,7 +28,7 @@ module DonorDirected {
     use DiemFramework::DiemConfig;
     use Std::Option;
     use DiemFramework::GAS::GAS;
-    use DiemFramework::MultiSigT as MultiSig;
+    use DiemFramework::MultiSig;
     use DiemFramework::DiemAccount::{Self, WithdrawCapability};
     use DiemFramework::DonorDirectedGovernance;
 

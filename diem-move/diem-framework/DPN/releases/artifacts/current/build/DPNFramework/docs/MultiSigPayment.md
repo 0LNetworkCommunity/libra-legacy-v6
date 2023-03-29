@@ -26,7 +26,7 @@
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID">0x1::GUID</a>;
-<b>use</b> <a href="MultiSigT.md#0x1_MultiSigT">0x1::MultiSigT</a>;
+<b>use</b> <a href="MultiSig.md#0x1_MultiSig">0x1::MultiSig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
@@ -151,8 +151,8 @@ init_type will throw errors if the type is already initialized.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_init_payment_multisig">init_payment_multisig</a>(sponsor: &signer, init_signers: vector&lt;<b>address</b>&gt;, cfg_n_signers: u64) <b>acquires</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_RootMultiSigRegistry">RootMultiSigRegistry</a> {
-  MultiSig::init_gov(sponsor, cfg_n_signers, &init_signers);
-  MultiSig::init_type&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sponsor, <b>true</b>);
+  <a href="MultiSig.md#0x1_MultiSig_init_gov">MultiSig::init_gov</a>(sponsor, cfg_n_signers, &init_signers);
+  <a href="MultiSig.md#0x1_MultiSig_init_type">MultiSig::init_type</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sponsor, <b>true</b>);
   <a href="MultiSigPayment.md#0x1_MultiSigPayment_add_to_registry">add_to_registry</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sponsor));
 }
 </code></pre>
@@ -208,10 +208,10 @@ create a payment object, whcih can be send in a proposal.
 <pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_propose_payment">propose_payment</a>(sig: &signer, multisig_addr: <b>address</b>, recipient: <b>address</b>, amount: u64, note: vector&lt;u8&gt;, duration_epochs: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt;) {
 
   <b>let</b> pay = <a href="MultiSigPayment.md#0x1_MultiSigPayment_new_payment">new_payment</a>(recipient, amount, *&note);
-  <b>let</b> prop = MultiSig::proposal_constructor(pay, duration_epochs);
+  <b>let</b> prop = <a href="MultiSig.md#0x1_MultiSig_proposal_constructor">MultiSig::proposal_constructor</a>(pay, duration_epochs);
 
-  <b>let</b> guid = MultiSig::propose_new&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sig, multisig_addr, prop);
-  // MultiSig::vote_with_id(sig, guid, multisig_addr);
+  <b>let</b> guid = <a href="MultiSig.md#0x1_MultiSig_propose_new">MultiSig::propose_new</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sig, multisig_addr, prop);
+  // <a href="MultiSig.md#0x1_MultiSig_vote_with_id">MultiSig::vote_with_id</a>(sig, guid, multisig_addr);
   <a href="MultiSigPayment.md#0x1_MultiSigPayment_vote_payment">vote_payment</a>(sig, multisig_addr, &guid);
 
 
@@ -240,7 +240,7 @@ create a payment object, whcih can be send in a proposal.
 
 <pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_vote_payment">vote_payment</a>(sig: &signer, multisig_address: <b>address</b>, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>) {
 
-  <b>let</b> (passed, data, cap_opt) = MultiSig::vote_with_id&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sig, id, multisig_address);
+  <b>let</b> (passed, data, cap_opt) = <a href="MultiSig.md#0x1_MultiSig_vote_with_id">MultiSig::vote_with_id</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sig, id, multisig_address);
 
   <b>if</b> (passed && <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&cap_opt)) {
     <b>let</b> cap = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>(&cap_opt);
@@ -248,7 +248,7 @@ create a payment object, whcih can be send in a proposal.
     <a href="MultiSigPayment.md#0x1_MultiSigPayment_release_payment">release_payment</a>(&data, cap);
   };
 
-  MultiSig::maybe_restore_withdraw_cap(sig, multisig_address, cap_opt); // don't need this and can't drop.
+  <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">MultiSig::maybe_restore_withdraw_cap</a>(sig, multisig_address, cap_opt); // don't need this and can't drop.
 
 }
 </code></pre>
@@ -273,7 +273,7 @@ create a payment object, whcih can be send in a proposal.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_is_payment_multisig">is_payment_multisig</a>(addr: <b>address</b>):bool {
-  MultiSig::has_action&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(addr)
+  <a href="MultiSig.md#0x1_MultiSig_has_action">MultiSig::has_action</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(addr)
 }
 </code></pre>
 

@@ -36,9 +36,8 @@ module CommunityWallet{
     use Std::Vector;
     use Std::Option;
     use DiemFramework::DonorDirected;
-    use DiemFramework::MultiSigT as MultiSig;
+    use DiemFramework::MultiSig;
     use DiemFramework::Ancestry;
-    // use DiemFramework::DiemAccount;
     
     const ENOT_AUTHORIZED: u64 = 023;
 

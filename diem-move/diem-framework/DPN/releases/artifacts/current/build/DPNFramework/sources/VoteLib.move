@@ -23,7 +23,7 @@ address DiemFramework {
       /// Note to devs new to Move. Because of how Move language works, you are not able to mutate the Ballot type in a third party module. But there isn't much to do on it anyway, only mark it "completed". And there is a method for that.
       /// What you may initially struggle with is the TallyType cannot be modified in this library, it must be mutated in the Library that defines your TallyType (see BinaryBallot). So you should borrow a mutable reference of the TallyType with get_type_struct_mut(), and then mutate it in your contract.
 
-    module VoteLib {
+    module Ballot {
     use Std::Vector;
     use Std::GUID::{Self, ID};
     use Std::Errors;
@@ -40,17 +40,17 @@ address DiemFramework {
     const REJECTED: u8 = 3;
 
 
-    struct BallotTracker<TallyType> has store, drop { // BallotTracker cannot be stored in global storage, and cannot be copied
-      ballots_pending: vector<Ballot<TallyType>>,
-      ballots_approved: vector<Ballot<TallyType>>,
-      ballots_rejected: vector<Ballot<TallyType>>,
-    }
-
     struct Ballot<TallyType> has store, drop { // ballots cannot be stored in global storage and cannot be copied
       guid: GUID::GUID,
       // issue: IssueData, // issue is the data of what is being decided.
       tally_type: TallyType, // a tally type includes how the count happens and the deadline.
       completed: bool,
+    }
+
+    struct BallotTracker<TallyType> has store, drop { // BallotTracker cannot be stored in global storage, and cannot be copied
+      ballots_pending: vector<Ballot<TallyType>>,
+      ballots_approved: vector<Ballot<TallyType>>,
+      ballots_rejected: vector<Ballot<TallyType>>,
     }
 
     ////////  CONSTRUCTORS ////////

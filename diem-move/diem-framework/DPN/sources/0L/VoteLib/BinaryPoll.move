@@ -2,12 +2,12 @@ address DiemFramework {
   /// This is a simple implementation of a simple binary choice poll with a deadline.
   /// It can be used to instantiate very simple referenda, and to programatically initiate actions/events/transactions based on a result.
   /// It's also intended as a demonstration. Developers can use this as a template to create their own tally algorithm and other workflows.
-  /// VoteLib itself does not have any storage. It just creates the ballot box, and the methods to query or mutate the ballot box, and ballots.
-  /// So this module is a wrapper around VoteLib with simple storage and simple logic.
+  /// Ballot itself does not have any storage. It just creates the ballot box, and the methods to query or mutate the ballot box, and ballots.
+  /// So this module is a wrapper around Ballot with simple storage and simple logic.
 
   module BinaryPoll {
 
-    use DiemFramework::VoteLib::{Self, BallotTracker};
+    use DiemFramework::Ballot::{Self, BallotTracker};
     use Std::GUID;
     use Std::Vector;
     use Std::Signer;
@@ -21,20 +21,20 @@ address DiemFramework {
     const EALREADY_VOTED: u64 = 3;
     const EINVALID_VOTE: u64 = 4;
 
-    // Duplicated from VoteLib
+    // Duplicated from Ballot
     const PENDING: u8  = 1;
     const APPROVED: u8 = 2;
     const REJECTED: u8 = 3;
 
     /// We keep a tracker of all the Polls for a given Issue.
-    /// VoteLib leverages generics to make ballots have rich data, for custom handlers.
+    /// Ballot leverages generics to make ballots have rich data, for custom handlers.
     /// This makes it confusing at first glance, because it creates a russian doll of structs.
 
     /// In BinaryPoll we have a single place to track every BinaryCounter of a given "issue" that can carry IssueData as a payload. 
     
     /// The "B" generic is deceptively simple. How the state actually looks in memory is:
-    /// struct VoteLib::BallotTracker<
-    ///     VoteLib::Ballot<
+    /// struct Ballot::BallotTracker<
+    ///     Ballot::Ballot<
     ///       BinaryPoll::BinaryCounter<
     ///         IssueData { whatever: you_decide }
 
@@ -42,7 +42,7 @@ address DiemFramework {
       tracker: BallotTracker<B>,
     }
 
-    /// in VoteLib a TallyType can have any kind of data to support the vote.
+    /// in Ballot a TallyType can have any kind of data to support the vote.
     /// In our case it's a BinaryCounter type.
     /// The counter fields are very straightforward.
     /// What may not be straigtforward is the "issue_data" field.
@@ -81,7 +81,7 @@ address DiemFramework {
       sig: &signer,
     ) {
       move_to<AllPolls<IssueData>>(sig, AllPolls {
-        tracker: VoteLib::new_tracker<IssueData>(),
+        tracker: Ballot::new_tracker<IssueData>(),
       });
 
       // store the capability in the account so the functions below can mutate the ballot and ballot box (by sharing the token/capability needed to create GUIDs)
@@ -109,7 +109,7 @@ address DiemFramework {
     ) acquires AllPolls {
       let addr = GUID::get_capability_address(guid_cap);
       let state = borrow_global_mut<AllPolls<IssueData>>(addr);
-      VoteLib::propose_ballot(&mut state.tracker, guid_cap, tally_type);
+      Ballot::propose_ballot(&mut state.tracker, guid_cap, tally_type);
     }
 
     /// Convenience function to overwrite the tally data of a ballot.
@@ -125,8 +125,8 @@ address DiemFramework {
       let addr = GUID::get_capability_address(guid_cap);
       let state = borrow_global_mut<AllPolls<IssueData>>(addr);
 
-      let b = VoteLib::get_ballot_mut(&mut state.tracker, idx, status_enum);
-      VoteLib::set_ballot_data(b, tally_type);
+      let b = Ballot::get_ballot_mut(&mut state.tracker, idx, status_enum);
+      Ballot::set_ballot_data(b, tally_type);
     }
 
     ///////// GETTERS  ////////
@@ -137,8 +137,8 @@ address DiemFramework {
     ): bool acquires AllPolls {
       let addr = Signer::address_of(sig);
       let state = borrow_global_mut<AllPolls<BinaryCounter<IssueData>>>(addr);
-      let ballot = VoteLib::get_ballot_by_id(&state.tracker, uid);
-      let tally_type: &BinaryCounter<IssueData>  = VoteLib::get_type_struct(ballot);
+      let ballot = Ballot::get_ballot_by_id(&state.tracker, uid);
+      let tally_type: &BinaryCounter<IssueData>  = Ballot::get_type_struct(ballot);
        Vector::contains(&tally_type.enrollment, &addr)
     }
 
@@ -149,8 +149,8 @@ address DiemFramework {
     ): bool acquires AllPolls {
       let addr = Signer::address_of(sig);
       let state = borrow_global_mut<AllPolls<BinaryCounter<IssueData>>>(addr);
-      let ballot = VoteLib::get_ballot_by_id(&state.tracker, uid);
-      let tally_type: &BinaryCounter<IssueData>  = VoteLib::get_type_struct(ballot);
+      let ballot = Ballot::get_ballot_by_id(&state.tracker, uid);
+      let tally_type: &BinaryCounter<IssueData>  = Ballot::get_type_struct(ballot);
       Vector::contains(&tally_type.voted, &addr)
     }
 
@@ -159,17 +159,17 @@ address DiemFramework {
     public fun find_with_cap<IssueData: drop + store>(guid_cap: &GUID::CreateCapability, uid: &GUID::ID): (bool, u64, u8, bool) acquires AllPolls {
       let addr = GUID::get_capability_address(guid_cap);
       let state = borrow_global<AllPolls<IssueData>>(addr);
-      VoteLib::find_anywhere(&state.tracker, uid)
+      Ballot::find_anywhere(&state.tracker, uid)
     }
 
     /// Public helper to get data on an issue without privileges. Returns tuple if the ballot is (found, its index, its status enum, is it completed)
     public fun find_by_address<IssueData: drop + store>(poll_address: address, uid: &GUID::ID): (bool, u64, u8, bool) acquires AllPolls {
       let state = borrow_global<AllPolls<IssueData>>(poll_address);
-      VoteLib::find_anywhere(&state.tracker, uid)
+      Ballot::find_anywhere(&state.tracker, uid)
     }
 
     //////// TALLY FUNCTIONS ////////
-    // The voting handlers are defined by the third party module NOT the VoteLib module. The VoteLib module only provides the APIs to move proposals from one list to another. The external contract needs to decide how that should happen.
+    // The voting handlers are defined by the third party module NOT the Ballot module. The Ballot module only provides the APIs to move proposals from one list to another. The external contract needs to decide how that should happen.
 
     public fun vote<IssueData: drop + store>(sig: &signer, vote_address: address, uid: &GUID::ID, vote_for: bool) acquires VoteCapability, AllPolls {
 
@@ -197,8 +197,8 @@ address DiemFramework {
 
       let addr = Signer::address_of(sig);
       let state = borrow_global_mut<AllPolls<BinaryCounter<IssueData>>>(addr);
-      let ballot = VoteLib::get_ballot_by_id_mut(&mut state.tracker, uid);
-      let tally_type: &mut BinaryCounter<IssueData> = VoteLib::get_type_struct_mut(ballot);
+      let ballot = Ballot::get_ballot_by_id_mut(&mut state.tracker, uid);
+      let tally_type: &mut BinaryCounter<IssueData> = Ballot::get_type_struct_mut(ballot);
 
       if (vote_for) {
         tally_type.votes_for = tally_type.votes_for + 1;
@@ -219,9 +219,9 @@ address DiemFramework {
       assert!(found, Errors::invalid_argument(ENO_BALLOT_FOUND));
 
       let state = borrow_global_mut<AllPolls<IssueData>>(GUID::get_capability_address(guid_cap));
-      let b = VoteLib::get_ballot_by_id_mut(&mut state.tracker, uid);
-      VoteLib::complete_ballot(b);
-      VoteLib::move_ballot(&mut state.tracker, uid, status_enum, to_status_enum);
+      let b = Ballot::get_ballot_by_id_mut(&mut state.tracker, uid);
+      Ballot::complete_ballot(b);
+      Ballot::move_ballot(&mut state.tracker, uid, status_enum, to_status_enum);
 
     }
 
@@ -253,7 +253,7 @@ address DiemFramework {
         } else { 
           REJECTED // rejected
         };
-        // since we have a result lets update the VoteLib state
+        // since we have a result lets update the Ballot state
         complete_and_move<IssueData>(cap, uid, *&status_enum);
         return Option::some(status_enum)
       };

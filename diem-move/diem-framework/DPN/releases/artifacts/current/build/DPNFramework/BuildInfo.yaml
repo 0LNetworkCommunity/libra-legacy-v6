@@ -47,6 +47,9 @@ compiled_package_info:
       name: BCS
     : Std
     ? address: "00000000000000000000000000000001"
+      name: Ballot
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: BinaryPoll
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -137,6 +140,9 @@ compiled_package_info:
       name: DummyTestVote
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: DummyTestVoteTwo
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Epoch
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -194,10 +200,10 @@ compiled_package_info:
       name: Mock
     : DiemFramework
     ? address: "00000000000000000000000000000001"
-      name: MultiSigPayment
+      name: MultiSig
     : DiemFramework
     ? address: "00000000000000000000000000000001"
-      name: MultiSigT
+      name: MultiSigPayment
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: NetworkIdentity
@@ -219,6 +225,9 @@ compiled_package_info:
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: ParticipationVote
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: ParticipationVoteTwo
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: PaymentScripts
@@ -320,9 +329,6 @@ compiled_package_info:
       name: VectorHelper
     : DiemFramework
     ? address: "00000000000000000000000000000001"
-      name: VoteLib
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
       name: Vouch
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -340,7 +346,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 86DDBEFAB330FA227B8EA86B959C01923F17E54BD9F5ED2C74995FDA015FBA58
+  source_digest: C66D22A53B46340A0AFB685C5A515151B6647FFC38D0BBEB985E507B4DCB0C8A
   build_flags:
     dev_mode: false
     test_mode: false

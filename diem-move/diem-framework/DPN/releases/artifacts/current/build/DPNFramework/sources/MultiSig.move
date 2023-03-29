@@ -15,14 +15,14 @@
 
 
 address DiemFramework {
-module MultiSigT {
+module MultiSig {
   use Std::Vector;
   use Std::Option::{Self, Option};
   use Std::Signer;
   use Std::Errors;
   use Std::GUID;
   use DiemFramework::DiemAccount::{Self, WithdrawCapability};
-  use DiemFramework::VoteLib::{Self, BallotTracker};
+  use DiemFramework::Ballot::{Self, BallotTracker};
   use DiemFramework::DiemConfig;
   use DiemFramework::Debug::print;
 
@@ -90,7 +90,7 @@ module MultiSigT {
     signers: vector<address>,
     withdraw_capability: Option<WithdrawCapability>,
     counter: u64,
-    guid_capability: GUID::CreateCapability, // this is needed to create GUIDs for the VoteLib.
+    guid_capability: GUID::CreateCapability, // this is needed to create GUIDs for the Ballot.
   }
 
   struct Action<ProposalData> has key, store {
@@ -105,7 +105,7 @@ module MultiSigT {
   // and each proposal can add type-specific parameters
   // The handler for such specific parameters needs to included in code by an external contract.
   // MultiSig, will only say if it passed or not.
-  // Note: The underlying VoteLib deals with the GUID generation
+  // Note: The underlying Ballot deals with the GUID generation
   struct Proposal<ProposalData> has key, store, drop {
     // id: u64,
     // The transaction to be executed
@@ -177,7 +177,7 @@ module MultiSigT {
         pending: Vector::empty(),
         approved: Vector::empty(),
         rejected: Vector::empty(),
-        vote: VoteLib::new_tracker<Proposal<PropGovSigners>>(),
+        vote: Ballot::new_tracker<Proposal<PropGovSigners>>(),
       });
     }
   }
@@ -223,7 +223,7 @@ module MultiSigT {
         pending: Vector::empty(),
         approved: Vector::empty(),
         rejected: Vector::empty(),
-        vote: VoteLib::new_tracker<Proposal<ProposalData>>(),
+        vote: Ballot::new_tracker<Proposal<ProposalData>>(),
       });
   }
 
@@ -286,7 +286,7 @@ module MultiSigT {
     lazy_cleanup_expired(action);
 
     // does this proposal already exist in the pending list?
-    let (found, guid, _idx, status_enum, _is_complete) = VoteLib::find_anywhere_by_data<Proposal<ProposalData>>(&action.vote, &proposal_data);
+    let (found, guid, _idx, status_enum, _is_complete) = Ballot::find_anywhere_by_data<Proposal<ProposalData>>(&action.vote, &proposal_data);
     
     if (found && status_enum == 0) {
       // this exact proposal is already pending, so we we will just return the guid of the existing proposal.
@@ -294,9 +294,9 @@ module MultiSigT {
       return guid
     };
 
-    let ballot = VoteLib::propose_ballot(&mut action.vote, &ms.guid_capability, proposal_data);
+    let ballot = Ballot::propose_ballot(&mut action.vote, &ms.guid_capability, proposal_data);
 
-    let id = VoteLib::get_ballot_id(ballot);
+    let id = Ballot::get_ballot_id(ballot);
 
     id
   }
@@ -312,14 +312,14 @@ module MultiSigT {
 
 
     // does this proposal already exist in the pending list?
-    let (found, _ , idx, status_enum, is_complete) = VoteLib::find_anywhere_by_data<Proposal<ProposalData>>(&action.vote, proposal);
+    let (found, _ , idx, status_enum, is_complete) = Ballot::find_anywhere_by_data<Proposal<ProposalData>>(&action.vote, proposal);
     
     assert!((found && status_enum == 0 && !is_complete), Errors::invalid_argument(EPROPOSAL_NOT_FOUND));
 
-    let b = VoteLib::get_ballot_mut(&mut action.vote, idx, status_enum);
+    let b = Ballot::get_ballot_mut(&mut action.vote, idx, status_enum);
 
 
-    let t = VoteLib::get_type_struct_mut(b);
+    let t = Ballot::get_type_struct_mut(b);
 
     Vector::push_back(&mut t.votes, Signer::address_of(sig));
 
@@ -352,12 +352,12 @@ module MultiSigT {
 
 
     // does this proposal already exist in the pending list?
-    let (found, _idx, status_enum, is_complete) = VoteLib::find_anywhere<Proposal<ProposalData>>(&action.vote, id);
+    let (found, _idx, status_enum, is_complete) = Ballot::find_anywhere<Proposal<ProposalData>>(&action.vote, id);
     
     assert!((found && status_enum == 0 && !is_complete), Errors::invalid_argument(EPROPOSAL_NOT_FOUND));
 
-    let b = VoteLib::get_ballot_by_id_mut(&mut action.vote, id);
-    let t = VoteLib::get_type_struct_mut(b);
+    let b = Ballot::get_ballot_by_id_mut(&mut action.vote, id);
+    let t = Ballot::get_type_struct_mut(b);
 
     Vector::push_back(&mut t.votes, Signer::address_of(sig));
 
@@ -385,17 +385,17 @@ module MultiSigT {
 
   fun find_expired<ProposalData: key + store + copy + drop>(a: & Action<ProposalData>): vector<GUID::ID>{
     let epoch = DiemConfig::get_current_epoch();
-    let b_vec = VoteLib::get_list_ballots_by_enum(&a.vote, 0);
+    let b_vec = Ballot::get_list_ballots_by_enum(&a.vote, 0);
     let id_vec = Vector::empty();
     let i = 0;
     while (i < Vector::length(b_vec)) {
       
       let b = Vector::borrow(b_vec, i);
-      let t = VoteLib::get_type_struct<Proposal<ProposalData>>(b);
+      let t = Ballot::get_type_struct<Proposal<ProposalData>>(b);
 
       
       if (epoch > t.expiration_epoch) { 
-        let id = VoteLib::get_ballot_id(b);
+        let id = Ballot::get_ballot_id(b);
 
         Vector::push_back(&mut id_vec, id);
 
@@ -411,13 +411,13 @@ module MultiSigT {
     let expired_vec = find_expired(a);
     // let epoch = DiemConfig::get_current_epoch();
 
-    // let b_vec = VoteLib::get_list_ballots_by_enum(&a.vote, 0);
+    // let b_vec = Ballot::get_list_ballots_by_enum(&a.vote, 0);
 
     let len = Vector::length(&expired_vec);
     let i = 0;
     while (i < len) {
       let id = Vector::borrow(&expired_vec, i);
-       VoteLib::move_ballot(&mut a.vote, id, 0, 1);
+       Ballot::move_ballot(&mut a.vote, id, 0, 1);
       i = i + 1;
     };
   }

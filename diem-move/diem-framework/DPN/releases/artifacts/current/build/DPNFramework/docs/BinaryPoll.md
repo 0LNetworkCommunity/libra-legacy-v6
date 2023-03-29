@@ -6,8 +6,8 @@
 This is a simple implementation of a simple binary choice poll with a deadline.
 It can be used to instantiate very simple referenda, and to programatically initiate actions/events/transactions based on a result.
 It's also intended as a demonstration. Developers can use this as a template to create their own tally algorithm and other workflows.
-VoteLib itself does not have any storage. It just creates the ballot box, and the methods to query or mutate the ballot box, and ballots.
-So this module is a wrapper around VoteLib with simple storage and simple logic.
+Ballot itself does not have any storage. It just creates the ballot box, and the methods to query or mutate the ballot box, and ballots.
+So this module is a wrapper around Ballot with simple storage and simple logic.
 
 
 -  [Resource `AllPolls`](#0x1_BinaryPoll_AllPolls)
@@ -28,13 +28,13 @@ So this module is a wrapper around VoteLib with simple storage and simple logic.
 -  [Function `maybe_complete`](#0x1_BinaryPoll_maybe_complete)
 
 
-<pre><code><b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
+<pre><code><b>use</b> <a href="VoteLib.md#0x1_Ballot">0x1::Ballot</a>;
+<b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID">0x1::GUID</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
-<b>use</b> <a href="VoteLib.md#0x1_VoteLib">0x1::VoteLib</a>;
 </code></pre>
 
 
@@ -44,12 +44,12 @@ So this module is a wrapper around VoteLib with simple storage and simple logic.
 ## Resource `AllPolls`
 
 We keep a tracker of all the Polls for a given Issue.
-VoteLib leverages generics to make ballots have rich data, for custom handlers.
+Ballot leverages generics to make ballots have rich data, for custom handlers.
 This makes it confusing at first glance, because it creates a russian doll of structs.
 In BinaryPoll we have a single place to track every BinaryCounter of a given "issue" that can carry IssueData as a payload.
 The "B" generic is deceptively simple. How the state actually looks in memory is:
-struct VoteLib::BallotTracker<
-VoteLib::Ballot<
+struct Ballot::BallotTracker<
+Ballot::Ballot<
 BinaryPoll::BinaryCounter<
 IssueData { whatever: you_decide }
 
@@ -65,7 +65,7 @@ IssueData { whatever: you_decide }
 
 <dl>
 <dt>
-<code>tracker: <a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;B&gt;</code>
+<code>tracker: <a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;B&gt;</code>
 </dt>
 <dd>
 
@@ -79,7 +79,7 @@ IssueData { whatever: you_decide }
 
 ## Struct `BinaryCounter`
 
-in VoteLib a TallyType can have any kind of data to support the vote.
+in Ballot a TallyType can have any kind of data to support the vote.
 In our case it's a BinaryCounter type.
 The counter fields are very straightforward.
 What may not be straigtforward is the "issue_data" field.
@@ -276,7 +276,7 @@ Developers who need more flexibility, can instead construct the BallotTracker ob
   sig: &signer,
 ) {
   <b>move_to</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(sig, <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
-    tracker: <a href="VoteLib.md#0x1_VoteLib_new_tracker">VoteLib::new_tracker</a>&lt;IssueData&gt;(),
+    tracker: <a href="VoteLib.md#0x1_Ballot_new_tracker">Ballot::new_tracker</a>&lt;IssueData&gt;(),
   });
 
   // store the capability in the account so the functions below can mutate the ballot and ballot box (by sharing the token/capability needed <b>to</b> create GUIDs)
@@ -341,7 +341,7 @@ If the BallotTracker is standalone at root of address, you can use thie function
 ) <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
  <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_get_capability_address">GUID::get_capability_address</a>(guid_cap);
  <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(addr);
- <a href="VoteLib.md#0x1_VoteLib_propose_ballot">VoteLib::propose_ballot</a>(&<b>mut</b> state.tracker, guid_cap, tally_type);
+ <a href="VoteLib.md#0x1_Ballot_propose_ballot">Ballot::propose_ballot</a>(&<b>mut</b> state.tracker, guid_cap, tally_type);
 }
 </code></pre>
 
@@ -377,8 +377,8 @@ Convenience function to overwrite the tally data of a ballot.
   <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_get_capability_address">GUID::get_capability_address</a>(guid_cap);
   <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(addr);
 
-  <b>let</b> b = <a href="VoteLib.md#0x1_VoteLib_get_ballot_mut">VoteLib::get_ballot_mut</a>(&<b>mut</b> state.tracker, idx, status_enum);
-  <a href="VoteLib.md#0x1_VoteLib_set_ballot_data">VoteLib::set_ballot_data</a>(b, tally_type);
+  <b>let</b> b = <a href="VoteLib.md#0x1_Ballot_get_ballot_mut">Ballot::get_ballot_mut</a>(&<b>mut</b> state.tracker, idx, status_enum);
+  <a href="VoteLib.md#0x1_Ballot_set_ballot_data">Ballot::set_ballot_data</a>(b, tally_type);
 }
 </code></pre>
 
@@ -408,8 +408,8 @@ Convenience function to overwrite the tally data of a ballot.
 ): bool <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
   <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
   <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;&gt;&gt;(addr);
-  <b>let</b> ballot = <a href="VoteLib.md#0x1_VoteLib_get_ballot_by_id">VoteLib::get_ballot_by_id</a>(&state.tracker, uid);
-  <b>let</b> tally_type: &<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;  = <a href="VoteLib.md#0x1_VoteLib_get_type_struct">VoteLib::get_type_struct</a>(ballot);
+  <b>let</b> ballot = <a href="VoteLib.md#0x1_Ballot_get_ballot_by_id">Ballot::get_ballot_by_id</a>(&state.tracker, uid);
+  <b>let</b> tally_type: &<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;  = <a href="VoteLib.md#0x1_Ballot_get_type_struct">Ballot::get_type_struct</a>(ballot);
    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&tally_type.enrollment, &addr)
 }
 </code></pre>
@@ -440,8 +440,8 @@ Convenience function to overwrite the tally data of a ballot.
 ): bool <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
   <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
   <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;&gt;&gt;(addr);
-  <b>let</b> ballot = <a href="VoteLib.md#0x1_VoteLib_get_ballot_by_id">VoteLib::get_ballot_by_id</a>(&state.tracker, uid);
-  <b>let</b> tally_type: &<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;  = <a href="VoteLib.md#0x1_VoteLib_get_type_struct">VoteLib::get_type_struct</a>(ballot);
+  <b>let</b> ballot = <a href="VoteLib.md#0x1_Ballot_get_ballot_by_id">Ballot::get_ballot_by_id</a>(&state.tracker, uid);
+  <b>let</b> tally_type: &<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;  = <a href="VoteLib.md#0x1_Ballot_get_type_struct">Ballot::get_type_struct</a>(ballot);
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&tally_type.voted, &addr)
 }
 </code></pre>
@@ -469,7 +469,7 @@ Helper to get data from capability, prevent boilerplate. Returns tuple if the ba
 <pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_find_with_cap">find_with_cap</a>&lt;IssueData: drop + store&gt;(guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8, bool) <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
   <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_get_capability_address">GUID::get_capability_address</a>(guid_cap);
   <b>let</b> state = <b>borrow_global</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(addr);
-  <a href="VoteLib.md#0x1_VoteLib_find_anywhere">VoteLib::find_anywhere</a>(&state.tracker, uid)
+  <a href="VoteLib.md#0x1_Ballot_find_anywhere">Ballot::find_anywhere</a>(&state.tracker, uid)
 }
 </code></pre>
 
@@ -495,7 +495,7 @@ Public helper to get data on an issue without privileges. Returns tuple if the b
 
 <pre><code><b>public</b> <b>fun</b> <a href="BinaryPoll.md#0x1_BinaryPoll_find_by_address">find_by_address</a>&lt;IssueData: drop + store&gt;(poll_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8, bool) <b>acquires</b> <a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a> {
   <b>let</b> state = <b>borrow_global</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(poll_address);
-  <a href="VoteLib.md#0x1_VoteLib_find_anywhere">VoteLib::find_anywhere</a>(&state.tracker, uid)
+  <a href="VoteLib.md#0x1_Ballot_find_anywhere">Ballot::find_anywhere</a>(&state.tracker, uid)
 }
 </code></pre>
 
@@ -544,8 +544,8 @@ Public helper to get data on an issue without privileges. Returns tuple if the b
 
   <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
   <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt;&gt;&gt;(addr);
-  <b>let</b> ballot = <a href="VoteLib.md#0x1_VoteLib_get_ballot_by_id_mut">VoteLib::get_ballot_by_id_mut</a>(&<b>mut</b> state.tracker, uid);
-  <b>let</b> tally_type: &<b>mut</b> <a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt; = <a href="VoteLib.md#0x1_VoteLib_get_type_struct_mut">VoteLib::get_type_struct_mut</a>(ballot);
+  <b>let</b> ballot = <a href="VoteLib.md#0x1_Ballot_get_ballot_by_id_mut">Ballot::get_ballot_by_id_mut</a>(&<b>mut</b> state.tracker, uid);
+  <b>let</b> tally_type: &<b>mut</b> <a href="BinaryPoll.md#0x1_BinaryPoll_BinaryCounter">BinaryCounter</a>&lt;IssueData&gt; = <a href="VoteLib.md#0x1_Ballot_get_type_struct_mut">Ballot::get_type_struct_mut</a>(ballot);
 
   <b>if</b> (vote_for) {
     tally_type.votes_for = tally_type.votes_for + 1;
@@ -586,9 +586,9 @@ Public helper to get data on an issue without privileges. Returns tuple if the b
   <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="BinaryPoll.md#0x1_BinaryPoll_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
 
   <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="BinaryPoll.md#0x1_BinaryPoll_AllPolls">AllPolls</a>&lt;IssueData&gt;&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_get_capability_address">GUID::get_capability_address</a>(guid_cap));
-  <b>let</b> b = <a href="VoteLib.md#0x1_VoteLib_get_ballot_by_id_mut">VoteLib::get_ballot_by_id_mut</a>(&<b>mut</b> state.tracker, uid);
-  <a href="VoteLib.md#0x1_VoteLib_complete_ballot">VoteLib::complete_ballot</a>(b);
-  <a href="VoteLib.md#0x1_VoteLib_move_ballot">VoteLib::move_ballot</a>(&<b>mut</b> state.tracker, uid, status_enum, to_status_enum);
+  <b>let</b> b = <a href="VoteLib.md#0x1_Ballot_get_ballot_by_id_mut">Ballot::get_ballot_by_id_mut</a>(&<b>mut</b> state.tracker, uid);
+  <a href="VoteLib.md#0x1_Ballot_complete_ballot">Ballot::complete_ballot</a>(b);
+  <a href="VoteLib.md#0x1_Ballot_move_ballot">Ballot::move_ballot</a>(&<b>mut</b> state.tracker, uid, status_enum, to_status_enum);
 
 }
 </code></pre>
@@ -660,7 +660,7 @@ returns an Option type for approved or rejected, so that the caller can decide w
     } <b>else</b> {
       <a href="BinaryPoll.md#0x1_BinaryPoll_REJECTED">REJECTED</a> // rejected
     };
-    // since we have a result lets <b>update</b> the <a href="VoteLib.md#0x1_VoteLib">VoteLib</a> state
+    // since we have a result lets <b>update</b> the <a href="VoteLib.md#0x1_Ballot">Ballot</a> state
     <a href="BinaryPoll.md#0x1_BinaryPoll_complete_and_move">complete_and_move</a>&lt;IssueData&gt;(cap, uid, *&status_enum);
     <b>return</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_some">Option::some</a>(status_enum)
   };

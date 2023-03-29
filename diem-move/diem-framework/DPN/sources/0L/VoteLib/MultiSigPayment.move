@@ -52,7 +52,7 @@ module MultiSigPayment {
   use DiemFramework::DiemAccount::{Self, WithdrawCapability};
   use DiemFramework::Debug::print;
   use DiemFramework::GAS::GAS;
-  use DiemFramework::MultiSigT as MultiSig;
+  use DiemFramework::MultiSig;
   use DiemFramework::CoreAddresses;
   use DiemFramework::TransactionFee;
 

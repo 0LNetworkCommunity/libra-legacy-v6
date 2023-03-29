@@ -1,7 +1,7 @@
 
-<a name="0x1_VoteLib"></a>
+<a name="0x1_Ballot"></a>
 
-# Module `0x1::VoteLib`
+# Module `0x1::Ballot`
 
 VoteLib is a primitive for creating Ballots, keeping track of them.
 This library does not keep or manage any state. The BallotTracker and Ballots will be stored in your external contract.
@@ -20,29 +20,29 @@ Note to devs new to Move. Because of how Move language works, you are not able t
 What you may initially struggle with is the TallyType cannot be modified in this library, it must be mutated in the Library that defines your TallyType (see BinaryBallot). So you should borrow a mutable reference of the TallyType with get_type_struct_mut(), and then mutate it in your contract.
 
 
--  [Struct `BallotTracker`](#0x1_VoteLib_BallotTracker)
--  [Struct `Ballot`](#0x1_VoteLib_Ballot)
+-  [Struct `Ballot`](#0x1_Ballot_Ballot)
+-  [Struct `BallotTracker`](#0x1_Ballot_BallotTracker)
 -  [Constants](#@Constants_0)
--  [Function `new_tracker`](#0x1_VoteLib_new_tracker)
--  [Function `propose_ballot`](#0x1_VoteLib_propose_ballot)
--  [Function `is_completed`](#0x1_VoteLib_is_completed)
--  [Function `get_ballot_by_id`](#0x1_VoteLib_get_ballot_by_id)
--  [Function `get_ballot_by_id_mut`](#0x1_VoteLib_get_ballot_by_id_mut)
--  [Function `get_ballot`](#0x1_VoteLib_get_ballot)
--  [Function `get_ballot_mut`](#0x1_VoteLib_get_ballot_mut)
--  [Function `get_type_struct`](#0x1_VoteLib_get_type_struct)
--  [Function `get_type_struct_mut`](#0x1_VoteLib_get_type_struct_mut)
--  [Function `find_anywhere`](#0x1_VoteLib_find_anywhere)
--  [Function `find_anywhere_by_data`](#0x1_VoteLib_find_anywhere_by_data)
--  [Function `find_index_of_ballot`](#0x1_VoteLib_find_index_of_ballot)
--  [Function `find_index_of_ballot_by_data`](#0x1_VoteLib_find_index_of_ballot_by_data)
--  [Function `get_list_ballots_by_enum`](#0x1_VoteLib_get_list_ballots_by_enum)
--  [Function `get_list_ballots_by_enum_mut`](#0x1_VoteLib_get_list_ballots_by_enum_mut)
--  [Function `get_ballot_id`](#0x1_VoteLib_get_ballot_id)
--  [Function `set_ballot_data`](#0x1_VoteLib_set_ballot_data)
--  [Function `complete_ballot`](#0x1_VoteLib_complete_ballot)
--  [Function `extract_ballot`](#0x1_VoteLib_extract_ballot)
--  [Function `move_ballot`](#0x1_VoteLib_move_ballot)
+-  [Function `new_tracker`](#0x1_Ballot_new_tracker)
+-  [Function `propose_ballot`](#0x1_Ballot_propose_ballot)
+-  [Function `is_completed`](#0x1_Ballot_is_completed)
+-  [Function `get_ballot_by_id`](#0x1_Ballot_get_ballot_by_id)
+-  [Function `get_ballot_by_id_mut`](#0x1_Ballot_get_ballot_by_id_mut)
+-  [Function `get_ballot`](#0x1_Ballot_get_ballot)
+-  [Function `get_ballot_mut`](#0x1_Ballot_get_ballot_mut)
+-  [Function `get_type_struct`](#0x1_Ballot_get_type_struct)
+-  [Function `get_type_struct_mut`](#0x1_Ballot_get_type_struct_mut)
+-  [Function `find_anywhere`](#0x1_Ballot_find_anywhere)
+-  [Function `find_anywhere_by_data`](#0x1_Ballot_find_anywhere_by_data)
+-  [Function `find_index_of_ballot`](#0x1_Ballot_find_index_of_ballot)
+-  [Function `find_index_of_ballot_by_data`](#0x1_Ballot_find_index_of_ballot_by_data)
+-  [Function `get_list_ballots_by_enum`](#0x1_Ballot_get_list_ballots_by_enum)
+-  [Function `get_list_ballots_by_enum_mut`](#0x1_Ballot_get_list_ballots_by_enum_mut)
+-  [Function `get_ballot_id`](#0x1_Ballot_get_ballot_id)
+-  [Function `set_ballot_data`](#0x1_Ballot_set_ballot_data)
+-  [Function `complete_ballot`](#0x1_Ballot_complete_ballot)
+-  [Function `extract_ballot`](#0x1_Ballot_extract_ballot)
+-  [Function `move_ballot`](#0x1_Ballot_move_ballot)
 
 
 <pre><code><b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
@@ -52,52 +52,13 @@ What you may initially struggle with is the TallyType cannot be modified in this
 
 
 
-<a name="0x1_VoteLib_BallotTracker"></a>
-
-## Struct `BallotTracker`
-
-
-
-<pre><code><b>struct</b> <a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt; <b>has</b> drop, store
-</code></pre>
-
-
-
-<details>
-<summary>Fields</summary>
-
-
-<dl>
-<dt>
-<code>ballots_pending: vector&lt;<a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;&gt;</code>
-</dt>
-<dd>
-
-</dd>
-<dt>
-<code>ballots_approved: vector&lt;<a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;&gt;</code>
-</dt>
-<dd>
-
-</dd>
-<dt>
-<code>ballots_rejected: vector&lt;<a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;&gt;</code>
-</dt>
-<dd>
-
-</dd>
-</dl>
-
-
-</details>
-
-<a name="0x1_VoteLib_Ballot"></a>
+<a name="0x1_Ballot_Ballot"></a>
 
 ## Struct `Ballot`
 
 
 
-<pre><code><b>struct</b> <a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt; <b>has</b> drop, store
+<pre><code><b>struct</b> <a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt; <b>has</b> drop, store
 </code></pre>
 
 
@@ -130,66 +91,105 @@ What you may initially struggle with is the TallyType cannot be modified in this
 
 </details>
 
+<a name="0x1_Ballot_BallotTracker"></a>
+
+## Struct `BallotTracker`
+
+
+
+<pre><code><b>struct</b> <a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt; <b>has</b> drop, store
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>ballots_pending: vector&lt;<a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;&gt;</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>ballots_approved: vector&lt;<a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;&gt;</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>ballots_rejected: vector&lt;<a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;&gt;</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
 <a name="@Constants_0"></a>
 
 ## Constants
 
 
-<a name="0x1_VoteLib_APPROVED"></a>
+<a name="0x1_Ballot_APPROVED"></a>
 
 
 
-<pre><code><b>const</b> <a href="VoteLib.md#0x1_VoteLib_APPROVED">APPROVED</a>: u8 = 2;
+<pre><code><b>const</b> <a href="VoteLib.md#0x1_Ballot_APPROVED">APPROVED</a>: u8 = 2;
 </code></pre>
 
 
 
-<a name="0x1_VoteLib_EBAD_STATUS_ENUM"></a>
+<a name="0x1_Ballot_EBAD_STATUS_ENUM"></a>
 
 Bad status enum
 
 
-<pre><code><b>const</b> <a href="VoteLib.md#0x1_VoteLib_EBAD_STATUS_ENUM">EBAD_STATUS_ENUM</a>: u64 = 300011;
+<pre><code><b>const</b> <a href="VoteLib.md#0x1_Ballot_EBAD_STATUS_ENUM">EBAD_STATUS_ENUM</a>: u64 = 300011;
 </code></pre>
 
 
 
-<a name="0x1_VoteLib_ENO_BALLOT_FOUND"></a>
+<a name="0x1_Ballot_ENO_BALLOT_FOUND"></a>
 
 No ballot found under that GUID
 
 
-<pre><code><b>const</b> <a href="VoteLib.md#0x1_VoteLib_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>: u64 = 300010;
+<pre><code><b>const</b> <a href="VoteLib.md#0x1_Ballot_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>: u64 = 300010;
 </code></pre>
 
 
 
-<a name="0x1_VoteLib_PENDING"></a>
+<a name="0x1_Ballot_PENDING"></a>
 
 
 
-<pre><code><b>const</b> <a href="VoteLib.md#0x1_VoteLib_PENDING">PENDING</a>: u8 = 1;
+<pre><code><b>const</b> <a href="VoteLib.md#0x1_Ballot_PENDING">PENDING</a>: u8 = 1;
 </code></pre>
 
 
 
-<a name="0x1_VoteLib_REJECTED"></a>
+<a name="0x1_Ballot_REJECTED"></a>
 
 
 
-<pre><code><b>const</b> <a href="VoteLib.md#0x1_VoteLib_REJECTED">REJECTED</a>: u8 = 3;
+<pre><code><b>const</b> <a href="VoteLib.md#0x1_Ballot_REJECTED">REJECTED</a>: u8 = 3;
 </code></pre>
 
 
 
-<a name="0x1_VoteLib_new_tracker"></a>
+<a name="0x1_Ballot_new_tracker"></a>
 
 ## Function `new_tracker`
 
 The poll constructor. Use this to create the tracker for each (generic) TallyType that you are instantiating. You may have multiple polls, each with a different TallyType tracker.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_new_tracker">new_tracker</a>&lt;TallyType: drop, store&gt;(): <a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;TallyType&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_new_tracker">new_tracker</a>&lt;TallyType: drop, store&gt;(): <a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;
 </code></pre>
 
 
@@ -198,8 +198,8 @@ The poll constructor. Use this to create the tracker for each (generic) TallyTyp
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_new_tracker">new_tracker</a>&lt;TallyType: drop + store&gt;(): <a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt; {
-  <a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_new_tracker">new_tracker</a>&lt;TallyType: drop + store&gt;(): <a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt; {
+  <a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a> {
     ballots_pending: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
     ballots_approved: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
     ballots_rejected: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
@@ -211,14 +211,14 @@ The poll constructor. Use this to create the tracker for each (generic) TallyTyp
 
 </details>
 
-<a name="0x1_VoteLib_propose_ballot"></a>
+<a name="0x1_Ballot_propose_ballot"></a>
 
 ## Function `propose_ballot`
 
 If you have a mutable BallotTracker instance AND you have the GUID Create Capability, you can use this to create a ballot.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_propose_ballot">propose_ballot</a>&lt;TallyType: drop, store&gt;(tracker: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;TallyType&gt;, guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, tally_type: TallyType): &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_propose_ballot">propose_ballot</a>&lt;TallyType: drop, store&gt;(tracker: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, tally_type: TallyType): &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;
 </code></pre>
 
 
@@ -227,15 +227,15 @@ If you have a mutable BallotTracker instance AND you have the GUID Create Capabi
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_propose_ballot">propose_ballot</a>&lt;TallyType:  drop + store&gt;(
-  tracker: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_propose_ballot">propose_ballot</a>&lt;TallyType:  drop + store&gt;(
+  tracker: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
   guid_cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>, // whoever is ceating this issue needs access <b>to</b> the <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID">GUID</a> creation capability
   // issue: IssueData,
   tally_type: TallyType,
-): &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt;  {
+): &<b>mut</b> <a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt;  {
   <b>let</b> ignored_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_get_capability_address">GUID::get_capability_address</a>(guid_cap); // Note 0L's modification <b>to</b> Std::GUID, <b>to</b> get_capability_address
 
-  <b>let</b> b = <a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a> {
+  <b>let</b> b = <a href="VoteLib.md#0x1_Ballot">Ballot</a> {
 
     guid: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_create_with_capability">GUID::create_with_capability</a>(ignored_addr, guid_cap), // Note 0L's modification <b>to</b> Std::GUID, <b>address</b> is ignored.
     // issue,
@@ -253,13 +253,13 @@ If you have a mutable BallotTracker instance AND you have the GUID Create Capabi
 
 </details>
 
-<a name="0x1_VoteLib_is_completed"></a>
+<a name="0x1_Ballot_is_completed"></a>
 
 ## Function `is_completed`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_is_completed">is_completed</a>&lt;TallyType: drop, store&gt;(b: &<a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;): bool
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_is_completed">is_completed</a>&lt;TallyType: drop, store&gt;(b: &<a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;): bool
 </code></pre>
 
 
@@ -268,7 +268,7 @@ If you have a mutable BallotTracker instance AND you have the GUID Create Capabi
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_is_completed">is_completed</a>&lt;TallyType: drop + store&gt;(b: &<a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt;):bool {
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_is_completed">is_completed</a>&lt;TallyType: drop + store&gt;(b: &<a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt;):bool {
   b.completed
 }
 </code></pre>
@@ -277,13 +277,13 @@ If you have a mutable BallotTracker instance AND you have the GUID Create Capabi
 
 </details>
 
-<a name="0x1_VoteLib_get_ballot_by_id"></a>
+<a name="0x1_Ballot_get_ballot_by_id"></a>
 
 ## Function `get_ballot_by_id`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_ballot_by_id">get_ballot_by_id</a>&lt;TallyType: drop, store&gt;(poll: &<a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;TallyType&gt;, guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): &<a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_ballot_by_id">get_ballot_by_id</a>&lt;TallyType: drop, store&gt;(poll: &<a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): &<a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;
 </code></pre>
 
 
@@ -292,16 +292,16 @@ If you have a mutable BallotTracker instance AND you have the GUID Create Capabi
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_ballot_by_id">get_ballot_by_id</a>&lt;TallyType: drop + store&gt; (
-  poll: & <a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_ballot_by_id">get_ballot_by_id</a>&lt;TallyType: drop + store&gt; (
+  poll: & <a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
   guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>,
-): &<a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt; {
+): &<a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt; {
 
-  <b>let</b> (found, idx, status_enum, _completed) = <a href="VoteLib.md#0x1_VoteLib_find_anywhere">find_anywhere</a>(poll, guid);
+  <b>let</b> (found, idx, status_enum, _completed) = <a href="VoteLib.md#0x1_Ballot_find_anywhere">find_anywhere</a>(poll, guid);
 
-  <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="VoteLib.md#0x1_VoteLib_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
+  <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="VoteLib.md#0x1_Ballot_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
 
-  <a href="VoteLib.md#0x1_VoteLib_get_ballot">get_ballot</a>&lt;TallyType&gt;(poll, idx, status_enum)
+  <a href="VoteLib.md#0x1_Ballot_get_ballot">get_ballot</a>&lt;TallyType&gt;(poll, idx, status_enum)
 }
 </code></pre>
 
@@ -309,13 +309,13 @@ If you have a mutable BallotTracker instance AND you have the GUID Create Capabi
 
 </details>
 
-<a name="0x1_VoteLib_get_ballot_by_id_mut"></a>
+<a name="0x1_Ballot_get_ballot_by_id_mut"></a>
 
 ## Function `get_ballot_by_id_mut`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_ballot_by_id_mut">get_ballot_by_id_mut</a>&lt;TallyType: drop, store&gt;(poll: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;TallyType&gt;, guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_ballot_by_id_mut">get_ballot_by_id_mut</a>&lt;TallyType: drop, store&gt;(poll: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;
 </code></pre>
 
 
@@ -324,16 +324,16 @@ If you have a mutable BallotTracker instance AND you have the GUID Create Capabi
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_ballot_by_id_mut">get_ballot_by_id_mut</a>&lt;TallyType: drop + store&gt; (
-  poll: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_ballot_by_id_mut">get_ballot_by_id_mut</a>&lt;TallyType: drop + store&gt; (
+  poll: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
   guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>,
-): &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt; {
+): &<b>mut</b> <a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt; {
 
-  <b>let</b> (found, idx, status_enum, _completed) = <a href="VoteLib.md#0x1_VoteLib_find_anywhere">find_anywhere</a>(poll, guid);
+  <b>let</b> (found, idx, status_enum, _completed) = <a href="VoteLib.md#0x1_Ballot_find_anywhere">find_anywhere</a>(poll, guid);
 
-  <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="VoteLib.md#0x1_VoteLib_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
+  <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="VoteLib.md#0x1_Ballot_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
 
-  <a href="VoteLib.md#0x1_VoteLib_get_ballot_mut">get_ballot_mut</a>&lt;TallyType&gt;(poll, idx, status_enum)
+  <a href="VoteLib.md#0x1_Ballot_get_ballot_mut">get_ballot_mut</a>&lt;TallyType&gt;(poll, idx, status_enum)
 }
 </code></pre>
 
@@ -341,14 +341,14 @@ If you have a mutable BallotTracker instance AND you have the GUID Create Capabi
 
 </details>
 
-<a name="0x1_VoteLib_get_ballot"></a>
+<a name="0x1_Ballot_get_ballot"></a>
 
 ## Function `get_ballot`
 
 function to search in the ballots for an existsing veto. Returns and option type with the Ballot id.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_ballot">get_ballot</a>&lt;TallyType: drop, store&gt;(poll: &<a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;TallyType&gt;, idx: u64, status_enum: u8): &<a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_ballot">get_ballot</a>&lt;TallyType: drop, store&gt;(poll: &<a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, idx: u64, status_enum: u8): &<a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;
 </code></pre>
 
 
@@ -357,15 +357,15 @@ function to search in the ballots for an existsing veto. Returns and option type
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_ballot">get_ballot</a>&lt;TallyType: drop + store&gt; (
-  poll: &<a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_ballot">get_ballot</a>&lt;TallyType: drop + store&gt; (
+  poll: &<a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
   idx: u64,
   status_enum: u8
-): &<a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt; {
+): &<a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt; {
 
-  <b>let</b> list = <a href="VoteLib.md#0x1_VoteLib_get_list_ballots_by_enum">get_list_ballots_by_enum</a>&lt;TallyType&gt;(poll, status_enum);
+  <b>let</b> list = <a href="VoteLib.md#0x1_Ballot_get_list_ballots_by_enum">get_list_ballots_by_enum</a>&lt;TallyType&gt;(poll, status_enum);
 
-  <b>assert</b>!(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(list) &gt; idx, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="VoteLib.md#0x1_VoteLib_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
+  <b>assert</b>!(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(list) &gt; idx, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="VoteLib.md#0x1_Ballot_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
 
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(list, idx)
 }
@@ -375,14 +375,14 @@ function to search in the ballots for an existsing veto. Returns and option type
 
 </details>
 
-<a name="0x1_VoteLib_get_ballot_mut"></a>
+<a name="0x1_Ballot_get_ballot_mut"></a>
 
 ## Function `get_ballot_mut`
 
 function to search in the ballots for an existsing veto. Returns and option type with the Ballot id.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_ballot_mut">get_ballot_mut</a>&lt;TallyType: drop, store&gt;(poll: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;TallyType&gt;, idx: u64, status_enum: u8): &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_ballot_mut">get_ballot_mut</a>&lt;TallyType: drop, store&gt;(poll: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, idx: u64, status_enum: u8): &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;
 </code></pre>
 
 
@@ -391,15 +391,15 @@ function to search in the ballots for an existsing veto. Returns and option type
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_ballot_mut">get_ballot_mut</a>&lt;TallyType: drop + store&gt; (
-  poll: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_ballot_mut">get_ballot_mut</a>&lt;TallyType: drop + store&gt; (
+  poll: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
   idx: u64,
   status_enum: u8
-): &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt; {
+): &<b>mut</b> <a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt; {
 
-  <b>let</b> list = <a href="VoteLib.md#0x1_VoteLib_get_list_ballots_by_enum_mut">get_list_ballots_by_enum_mut</a>&lt;TallyType&gt;(poll, status_enum);
+  <b>let</b> list = <a href="VoteLib.md#0x1_Ballot_get_list_ballots_by_enum_mut">get_list_ballots_by_enum_mut</a>&lt;TallyType&gt;(poll, status_enum);
 
-  <b>assert</b>!(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(list) &gt; idx, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="VoteLib.md#0x1_VoteLib_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
+  <b>assert</b>!(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(list) &gt; idx, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="VoteLib.md#0x1_Ballot_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
 
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>(list, idx)
 }
@@ -409,14 +409,14 @@ function to search in the ballots for an existsing veto. Returns and option type
 
 </details>
 
-<a name="0x1_VoteLib_get_type_struct"></a>
+<a name="0x1_Ballot_get_type_struct"></a>
 
 ## Function `get_type_struct`
 
 For fetching the underlying TallyType struct (which is defined in your third party module)
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_type_struct">get_type_struct</a>&lt;TallyType: drop, store&gt;(ballot: &<a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;): &TallyType
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_type_struct">get_type_struct</a>&lt;TallyType: drop, store&gt;(ballot: &<a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;): &TallyType
 </code></pre>
 
 
@@ -425,7 +425,7 @@ For fetching the underlying TallyType struct (which is defined in your third par
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_type_struct">get_type_struct</a>&lt;TallyType: drop + store &gt;(ballot: &<a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt;): &TallyType {
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_type_struct">get_type_struct</a>&lt;TallyType: drop + store &gt;(ballot: &<a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt;): &TallyType {
   <b>return</b> &ballot.tally_type
 }
 </code></pre>
@@ -434,13 +434,13 @@ For fetching the underlying TallyType struct (which is defined in your third par
 
 </details>
 
-<a name="0x1_VoteLib_get_type_struct_mut"></a>
+<a name="0x1_Ballot_get_type_struct_mut"></a>
 
 ## Function `get_type_struct_mut`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_type_struct_mut">get_type_struct_mut</a>&lt;TallyType: drop, store&gt;(ballot: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;): &<b>mut</b> TallyType
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_type_struct_mut">get_type_struct_mut</a>&lt;TallyType: drop, store&gt;(ballot: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;): &<b>mut</b> TallyType
 </code></pre>
 
 
@@ -449,7 +449,7 @@ For fetching the underlying TallyType struct (which is defined in your third par
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_type_struct_mut">get_type_struct_mut</a>&lt;TallyType: drop + store &gt;(ballot: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt;): &<b>mut</b> TallyType {
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_type_struct_mut">get_type_struct_mut</a>&lt;TallyType: drop + store &gt;(ballot: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt;): &<b>mut</b> TallyType {
   <b>return</b> &<b>mut</b> ballot.tally_type
 }
 </code></pre>
@@ -458,7 +458,7 @@ For fetching the underlying TallyType struct (which is defined in your third par
 
 </details>
 
-<a name="0x1_VoteLib_find_anywhere"></a>
+<a name="0x1_Ballot_find_anywhere"></a>
 
 ## Function `find_anywhere`
 
@@ -466,7 +466,7 @@ find the ballot wherever it is: pending, approved, rejected.
 returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bool)
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_find_anywhere">find_anywhere</a>&lt;TallyType: drop, store&gt;(tracker: &<a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;TallyType&gt;, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8, bool)
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_find_anywhere">find_anywhere</a>&lt;TallyType: drop, store&gt;(tracker: &<a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8, bool)
 </code></pre>
 
 
@@ -475,30 +475,30 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_find_anywhere">find_anywhere</a>&lt;TallyType: drop + store&gt; (
-  tracker: &<a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_find_anywhere">find_anywhere</a>&lt;TallyType: drop + store&gt; (
+  tracker: &<a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
   proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>,
 ): (bool, u64, u8, bool) {
 
  // looking in pending
- <b>let</b> (found, idx) = <a href="VoteLib.md#0x1_VoteLib_find_index_of_ballot">find_index_of_ballot</a>(tracker, proposal_guid, <a href="VoteLib.md#0x1_VoteLib_PENDING">PENDING</a>);
+ <b>let</b> (found, idx) = <a href="VoteLib.md#0x1_Ballot_find_index_of_ballot">find_index_of_ballot</a>(tracker, proposal_guid, <a href="VoteLib.md#0x1_Ballot_PENDING">PENDING</a>);
  <b>if</b> (found) {
-  <b>let</b> complete = <a href="VoteLib.md#0x1_VoteLib_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_pending, idx));
-   <b>return</b> (<b>true</b>, idx, <a href="VoteLib.md#0x1_VoteLib_PENDING">PENDING</a>, complete)
+  <b>let</b> complete = <a href="VoteLib.md#0x1_Ballot_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_pending, idx));
+   <b>return</b> (<b>true</b>, idx, <a href="VoteLib.md#0x1_Ballot_PENDING">PENDING</a>, complete)
  };
 
  // looking in approved
-  <b>let</b> (found, idx) = <a href="VoteLib.md#0x1_VoteLib_find_index_of_ballot">find_index_of_ballot</a>(tracker, proposal_guid, <a href="VoteLib.md#0x1_VoteLib_APPROVED">APPROVED</a>);
+  <b>let</b> (found, idx) = <a href="VoteLib.md#0x1_Ballot_find_index_of_ballot">find_index_of_ballot</a>(tracker, proposal_guid, <a href="VoteLib.md#0x1_Ballot_APPROVED">APPROVED</a>);
   <b>if</b> (found) {
-    <b>let</b> complete = <a href="VoteLib.md#0x1_VoteLib_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_approved, idx));
-    <b>return</b> (<b>true</b>, idx, <a href="VoteLib.md#0x1_VoteLib_APPROVED">APPROVED</a>, complete)
+    <b>let</b> complete = <a href="VoteLib.md#0x1_Ballot_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_approved, idx));
+    <b>return</b> (<b>true</b>, idx, <a href="VoteLib.md#0x1_Ballot_APPROVED">APPROVED</a>, complete)
   };
 
  // looking in rejected
-  <b>let</b> (found, idx) = <a href="VoteLib.md#0x1_VoteLib_find_index_of_ballot">find_index_of_ballot</a>(tracker, proposal_guid, <a href="VoteLib.md#0x1_VoteLib_REJECTED">REJECTED</a>);
+  <b>let</b> (found, idx) = <a href="VoteLib.md#0x1_Ballot_find_index_of_ballot">find_index_of_ballot</a>(tracker, proposal_guid, <a href="VoteLib.md#0x1_Ballot_REJECTED">REJECTED</a>);
   <b>if</b> (found) {
-    <b>let</b> complete = <a href="VoteLib.md#0x1_VoteLib_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_rejected, idx));
-    <b>return</b> (<b>true</b>, idx, <a href="VoteLib.md#0x1_VoteLib_REJECTED">REJECTED</a>, complete)
+    <b>let</b> complete = <a href="VoteLib.md#0x1_Ballot_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_rejected, idx));
+    <b>return</b> (<b>true</b>, idx, <a href="VoteLib.md#0x1_Ballot_REJECTED">REJECTED</a>, complete)
   };
 
   (<b>false</b>, 0, 0, <b>false</b>)
@@ -509,14 +509,14 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 
 </details>
 
-<a name="0x1_VoteLib_find_anywhere_by_data"></a>
+<a name="0x1_Ballot_find_anywhere_by_data"></a>
 
 ## Function `find_anywhere_by_data`
 
 returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bool)
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_find_anywhere_by_data">find_anywhere_by_data</a>&lt;TallyType: drop, store&gt;(tracker: &<a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;TallyType&gt;, tally_type: &TallyType): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, u64, u8, bool)
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_find_anywhere_by_data">find_anywhere_by_data</a>&lt;TallyType: drop, store&gt;(tracker: &<a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, tally_type: &TallyType): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, u64, u8, bool)
 </code></pre>
 
 
@@ -525,29 +525,29 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_find_anywhere_by_data">find_anywhere_by_data</a>&lt;TallyType: drop + store&gt; (
-  tracker: &<a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_find_anywhere_by_data">find_anywhere_by_data</a>&lt;TallyType: drop + store&gt; (
+  tracker: &<a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
   tally_type: &TallyType,
 ): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, u64, u8, bool)  {
  // looking in pending
- <b>let</b> (found, guid, idx) = <a href="VoteLib.md#0x1_VoteLib_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, tally_type, <a href="VoteLib.md#0x1_VoteLib_PENDING">PENDING</a>);
+ <b>let</b> (found, guid, idx) = <a href="VoteLib.md#0x1_Ballot_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, tally_type, <a href="VoteLib.md#0x1_Ballot_PENDING">PENDING</a>);
  <b>if</b> (found) {
-  <b>let</b> complete = <a href="VoteLib.md#0x1_VoteLib_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_pending, idx));
-   <b>return</b> (<b>true</b>, guid, idx, <a href="VoteLib.md#0x1_VoteLib_PENDING">PENDING</a>, complete)
+  <b>let</b> complete = <a href="VoteLib.md#0x1_Ballot_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_pending, idx));
+   <b>return</b> (<b>true</b>, guid, idx, <a href="VoteLib.md#0x1_Ballot_PENDING">PENDING</a>, complete)
  };
 
  // looking in approved
-  <b>let</b> (found, guid, idx) = <a href="VoteLib.md#0x1_VoteLib_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, tally_type, <a href="VoteLib.md#0x1_VoteLib_APPROVED">APPROVED</a>);
+  <b>let</b> (found, guid, idx) = <a href="VoteLib.md#0x1_Ballot_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, tally_type, <a href="VoteLib.md#0x1_Ballot_APPROVED">APPROVED</a>);
   <b>if</b> (found) {
-    <b>let</b> complete = <a href="VoteLib.md#0x1_VoteLib_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_approved, idx));
-    <b>return</b> (<b>true</b>, guid, idx, <a href="VoteLib.md#0x1_VoteLib_APPROVED">APPROVED</a>, complete)
+    <b>let</b> complete = <a href="VoteLib.md#0x1_Ballot_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_approved, idx));
+    <b>return</b> (<b>true</b>, guid, idx, <a href="VoteLib.md#0x1_Ballot_APPROVED">APPROVED</a>, complete)
   };
 
  // looking in rejected
-  <b>let</b> (found, guid, idx) = <a href="VoteLib.md#0x1_VoteLib_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, tally_type, <a href="VoteLib.md#0x1_VoteLib_REJECTED">REJECTED</a>);
+  <b>let</b> (found, guid, idx) = <a href="VoteLib.md#0x1_Ballot_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, tally_type, <a href="VoteLib.md#0x1_Ballot_REJECTED">REJECTED</a>);
   <b>if</b> (found) {
-    <b>let</b> complete = <a href="VoteLib.md#0x1_VoteLib_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_rejected, idx));
-    <b>return</b> (<b>true</b>, guid, idx, <a href="VoteLib.md#0x1_VoteLib_REJECTED">REJECTED</a>, complete)
+    <b>let</b> complete = <a href="VoteLib.md#0x1_Ballot_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_rejected, idx));
+    <b>return</b> (<b>true</b>, guid, idx, <a href="VoteLib.md#0x1_Ballot_REJECTED">REJECTED</a>, complete)
   };
 
   (<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_create_id">GUID::create_id</a>(@0x0, 0), 0, 0, <b>false</b>)
@@ -558,13 +558,13 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 
 </details>
 
-<a name="0x1_VoteLib_find_index_of_ballot"></a>
+<a name="0x1_Ballot_find_index_of_ballot"></a>
 
 ## Function `find_index_of_ballot`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_find_index_of_ballot">find_index_of_ballot</a>&lt;TallyType: drop, store&gt;(tracker: &<a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;TallyType&gt;, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, status_enum: u8): (bool, u64)
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_find_index_of_ballot">find_index_of_ballot</a>&lt;TallyType: drop, store&gt;(tracker: &<a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, status_enum: u8): (bool, u64)
 </code></pre>
 
 
@@ -573,13 +573,13 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_find_index_of_ballot">find_index_of_ballot</a>&lt;TallyType: drop + store&gt; (
-  tracker: &<a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_find_index_of_ballot">find_index_of_ballot</a>&lt;TallyType: drop + store&gt; (
+  tracker: &<a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
   proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>,
   status_enum: u8,
 ): (bool, u64) {
 
- <b>let</b> list = <a href="VoteLib.md#0x1_VoteLib_get_list_ballots_by_enum">get_list_ballots_by_enum</a>&lt;TallyType&gt;(tracker, status_enum);
+ <b>let</b> list = <a href="VoteLib.md#0x1_Ballot_get_list_ballots_by_enum">get_list_ballots_by_enum</a>&lt;TallyType&gt;(tracker, status_enum);
 
   <b>let</b> i = 0;
   <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(list)) {
@@ -599,13 +599,13 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 
 </details>
 
-<a name="0x1_VoteLib_find_index_of_ballot_by_data"></a>
+<a name="0x1_Ballot_find_index_of_ballot_by_data"></a>
 
 ## Function `find_index_of_ballot_by_data`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>&lt;TallyType: drop, store&gt;(tracker: &<a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;TallyType&gt;, tally_type: &TallyType, status_enum: u8): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, u64)
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>&lt;TallyType: drop, store&gt;(tracker: &<a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, tally_type: &TallyType, status_enum: u8): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, u64)
 </code></pre>
 
 
@@ -614,13 +614,13 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>&lt;TallyType: drop + store&gt; (
-  tracker: &<a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>&lt;TallyType: drop + store&gt; (
+  tracker: &<a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
   tally_type: &TallyType,
   status_enum: u8,
 ): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, u64) {
 
- <b>let</b> list = <a href="VoteLib.md#0x1_VoteLib_get_list_ballots_by_enum">get_list_ballots_by_enum</a>&lt;TallyType&gt;(tracker, status_enum);
+ <b>let</b> list = <a href="VoteLib.md#0x1_Ballot_get_list_ballots_by_enum">get_list_ballots_by_enum</a>&lt;TallyType&gt;(tracker, status_enum);
 
   <b>let</b> i = 0;
   <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(list)) {
@@ -640,13 +640,13 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 
 </details>
 
-<a name="0x1_VoteLib_get_list_ballots_by_enum"></a>
+<a name="0x1_Ballot_get_list_ballots_by_enum"></a>
 
 ## Function `get_list_ballots_by_enum`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_list_ballots_by_enum">get_list_ballots_by_enum</a>&lt;TallyType: drop, store&gt;(tracker: &<a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;TallyType&gt;, status_enum: u8): &vector&lt;<a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_list_ballots_by_enum">get_list_ballots_by_enum</a>&lt;TallyType: drop, store&gt;(tracker: &<a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, status_enum: u8): &vector&lt;<a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;&gt;
 </code></pre>
 
 
@@ -655,15 +655,15 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_list_ballots_by_enum">get_list_ballots_by_enum</a>&lt;TallyType: drop + store &gt;(tracker: &<a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt;, status_enum: u8): &vector&lt;<a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt;&gt; {
- <b>if</b> (status_enum == <a href="VoteLib.md#0x1_VoteLib_PENDING">PENDING</a>) {
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_list_ballots_by_enum">get_list_ballots_by_enum</a>&lt;TallyType: drop + store &gt;(tracker: &<a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;, status_enum: u8): &vector&lt;<a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt;&gt; {
+ <b>if</b> (status_enum == <a href="VoteLib.md#0x1_Ballot_PENDING">PENDING</a>) {
     &tracker.ballots_pending
-  } <b>else</b> <b>if</b> (status_enum == <a href="VoteLib.md#0x1_VoteLib_APPROVED">APPROVED</a>) {
+  } <b>else</b> <b>if</b> (status_enum == <a href="VoteLib.md#0x1_Ballot_APPROVED">APPROVED</a>) {
     &tracker.ballots_approved
-  } <b>else</b> <b>if</b> (status_enum == <a href="VoteLib.md#0x1_VoteLib_REJECTED">REJECTED</a>) {
+  } <b>else</b> <b>if</b> (status_enum == <a href="VoteLib.md#0x1_Ballot_REJECTED">REJECTED</a>) {
     &tracker.ballots_rejected
   } <b>else</b> {
-    <b>assert</b>!(<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="VoteLib.md#0x1_VoteLib_EBAD_STATUS_ENUM">EBAD_STATUS_ENUM</a>));
+    <b>assert</b>!(<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="VoteLib.md#0x1_Ballot_EBAD_STATUS_ENUM">EBAD_STATUS_ENUM</a>));
     & tracker.ballots_rejected // dummy <b>return</b>
   }
 }
@@ -673,13 +673,13 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 
 </details>
 
-<a name="0x1_VoteLib_get_list_ballots_by_enum_mut"></a>
+<a name="0x1_Ballot_get_list_ballots_by_enum_mut"></a>
 
 ## Function `get_list_ballots_by_enum_mut`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_list_ballots_by_enum_mut">get_list_ballots_by_enum_mut</a>&lt;TallyType: drop, store&gt;(tracker: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;TallyType&gt;, status_enum: u8): &<b>mut</b> vector&lt;<a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_list_ballots_by_enum_mut">get_list_ballots_by_enum_mut</a>&lt;TallyType: drop, store&gt;(tracker: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, status_enum: u8): &<b>mut</b> vector&lt;<a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;&gt;
 </code></pre>
 
 
@@ -688,15 +688,15 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_list_ballots_by_enum_mut">get_list_ballots_by_enum_mut</a>&lt;TallyType: drop + store &gt;(tracker: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt;, status_enum: u8): &<b>mut</b> vector&lt;<a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt;&gt; {
- <b>if</b> (status_enum == <a href="VoteLib.md#0x1_VoteLib_PENDING">PENDING</a>) {
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_list_ballots_by_enum_mut">get_list_ballots_by_enum_mut</a>&lt;TallyType: drop + store &gt;(tracker: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;, status_enum: u8): &<b>mut</b> vector&lt;<a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt;&gt; {
+ <b>if</b> (status_enum == <a href="VoteLib.md#0x1_Ballot_PENDING">PENDING</a>) {
     &<b>mut</b> tracker.ballots_pending
-  } <b>else</b> <b>if</b> (status_enum == <a href="VoteLib.md#0x1_VoteLib_APPROVED">APPROVED</a>) {
+  } <b>else</b> <b>if</b> (status_enum == <a href="VoteLib.md#0x1_Ballot_APPROVED">APPROVED</a>) {
     &<b>mut</b> tracker.ballots_approved
-  } <b>else</b> <b>if</b> (status_enum == <a href="VoteLib.md#0x1_VoteLib_REJECTED">REJECTED</a>) {
+  } <b>else</b> <b>if</b> (status_enum == <a href="VoteLib.md#0x1_Ballot_REJECTED">REJECTED</a>) {
     &<b>mut</b> tracker.ballots_rejected
   } <b>else</b> {
-    <b>assert</b>!(<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="VoteLib.md#0x1_VoteLib_EBAD_STATUS_ENUM">EBAD_STATUS_ENUM</a>));
+    <b>assert</b>!(<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="VoteLib.md#0x1_Ballot_EBAD_STATUS_ENUM">EBAD_STATUS_ENUM</a>));
     &<b>mut</b> tracker.ballots_rejected // dummy <b>return</b>
   }
 }
@@ -706,13 +706,13 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 
 </details>
 
-<a name="0x1_VoteLib_get_ballot_id"></a>
+<a name="0x1_Ballot_get_ballot_id"></a>
 
 ## Function `get_ballot_id`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_ballot_id">get_ballot_id</a>&lt;TallyType: drop, store&gt;(ballot: &<a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_ballot_id">get_ballot_id</a>&lt;TallyType: drop, store&gt;(ballot: &<a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>
 </code></pre>
 
 
@@ -721,7 +721,7 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_get_ballot_id">get_ballot_id</a>&lt;TallyType: drop + store &gt;(ballot: &<a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt;): ID {
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_get_ballot_id">get_ballot_id</a>&lt;TallyType: drop + store &gt;(ballot: &<a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt;): ID {
   <b>return</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_id">GUID::id</a>(&ballot.guid)
 }
 </code></pre>
@@ -730,13 +730,13 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 
 </details>
 
-<a name="0x1_VoteLib_set_ballot_data"></a>
+<a name="0x1_Ballot_set_ballot_data"></a>
 
 ## Function `set_ballot_data`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_set_ballot_data">set_ballot_data</a>&lt;TallyType: drop, store&gt;(ballot: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;, t: TallyType)
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_set_ballot_data">set_ballot_data</a>&lt;TallyType: drop, store&gt;(ballot: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;, t: TallyType)
 </code></pre>
 
 
@@ -745,8 +745,8 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_set_ballot_data">set_ballot_data</a>&lt;TallyType: drop + store &gt;(ballot: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt;, t: TallyType) {
-  // Devs: FYI need <b>to</b> do this <b>internal</b> <b>to</b> the <b>module</b> that owns <a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_set_ballot_data">set_ballot_data</a>&lt;TallyType: drop + store &gt;(ballot: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt;, t: TallyType) {
+  // Devs: FYI need <b>to</b> do this <b>internal</b> <b>to</b> the <b>module</b> that owns <a href="VoteLib.md#0x1_Ballot">Ballot</a>
   // you won't be able <b>to</b> do this from outside the <b>module</b>
   ballot.tally_type = t;
 }
@@ -756,13 +756,13 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 
 </details>
 
-<a name="0x1_VoteLib_complete_ballot"></a>
+<a name="0x1_Ballot_complete_ballot"></a>
 
 ## Function `complete_ballot`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_complete_ballot">complete_ballot</a>&lt;TallyType: drop, store&gt;(ballot: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_complete_ballot">complete_ballot</a>&lt;TallyType: drop, store&gt;(ballot: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;)
 </code></pre>
 
 
@@ -771,8 +771,8 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_complete_ballot">complete_ballot</a>&lt;TallyType: drop + store&gt;(
-  ballot: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt;,
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_complete_ballot">complete_ballot</a>&lt;TallyType: drop + store&gt;(
+  ballot: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt;,
 ) {
   ballot.completed = <b>true</b>;
 }
@@ -782,14 +782,14 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 
 </details>
 
-<a name="0x1_VoteLib_extract_ballot"></a>
+<a name="0x1_Ballot_extract_ballot"></a>
 
 ## Function `extract_ballot`
 
 Pop a ballot off a list and return it. This is owned not mutable.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_extract_ballot">extract_ballot</a>&lt;TallyType: drop, store&gt;(tracker: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;TallyType&gt;, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, from_status_enum: u8): <a href="VoteLib.md#0x1_VoteLib_Ballot">VoteLib::Ballot</a>&lt;TallyType&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_extract_ballot">extract_ballot</a>&lt;TallyType: drop, store&gt;(tracker: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, from_status_enum: u8): <a href="VoteLib.md#0x1_Ballot_Ballot">Ballot::Ballot</a>&lt;TallyType&gt;
 </code></pre>
 
 
@@ -798,14 +798,14 @@ Pop a ballot off a list and return it. This is owned not mutable.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_extract_ballot">extract_ballot</a>&lt;TallyType: drop + store&gt;(
-  tracker: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_extract_ballot">extract_ballot</a>&lt;TallyType: drop + store&gt;(
+  tracker: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
   id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>,
   from_status_enum: u8,
-): <a href="VoteLib.md#0x1_VoteLib_Ballot">Ballot</a>&lt;TallyType&gt;{
-  <b>let</b> (found, idx) = <a href="VoteLib.md#0x1_VoteLib_find_index_of_ballot">find_index_of_ballot</a>(tracker, id, from_status_enum);
-  <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="VoteLib.md#0x1_VoteLib_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
-  <b>let</b> from_list = <a href="VoteLib.md#0x1_VoteLib_get_list_ballots_by_enum_mut">get_list_ballots_by_enum_mut</a>&lt;TallyType&gt;(tracker, from_status_enum);
+): <a href="VoteLib.md#0x1_Ballot">Ballot</a>&lt;TallyType&gt;{
+  <b>let</b> (found, idx) = <a href="VoteLib.md#0x1_Ballot_find_index_of_ballot">find_index_of_ballot</a>(tracker, id, from_status_enum);
+  <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="VoteLib.md#0x1_Ballot_ENO_BALLOT_FOUND">ENO_BALLOT_FOUND</a>));
+  <b>let</b> from_list = <a href="VoteLib.md#0x1_Ballot_get_list_ballots_by_enum_mut">get_list_ballots_by_enum_mut</a>&lt;TallyType&gt;(tracker, from_status_enum);
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(from_list, idx)
 }
 </code></pre>
@@ -814,14 +814,14 @@ Pop a ballot off a list and return it. This is owned not mutable.
 
 </details>
 
-<a name="0x1_VoteLib_move_ballot"></a>
+<a name="0x1_Ballot_move_ballot"></a>
 
 ## Function `move_ballot`
 
 extract a ballot and put on another list.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_move_ballot">move_ballot</a>&lt;TallyType: drop, store&gt;(tracker: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_BallotTracker">VoteLib::BallotTracker</a>&lt;TallyType&gt;, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, from_status_enum: u8, to_status_enum: u8)
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_move_ballot">move_ballot</a>&lt;TallyType: drop, store&gt;(tracker: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, from_status_enum: u8, to_status_enum: u8)
 </code></pre>
 
 
@@ -830,14 +830,14 @@ extract a ballot and put on another list.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_VoteLib_move_ballot">move_ballot</a>&lt;TallyType: drop + store&gt;(
-  tracker: &<b>mut</b> <a href="VoteLib.md#0x1_VoteLib_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
+<pre><code><b>public</b> <b>fun</b> <a href="VoteLib.md#0x1_Ballot_move_ballot">move_ballot</a>&lt;TallyType: drop + store&gt;(
+  tracker: &<b>mut</b> <a href="VoteLib.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
   id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>,
   from_status_enum: u8,
   to_status_enum: u8,
 ) {
-  <b>let</b> b = <a href="VoteLib.md#0x1_VoteLib_extract_ballot">extract_ballot</a>(tracker, id, from_status_enum);
-  <b>let</b> to_list = <a href="VoteLib.md#0x1_VoteLib_get_list_ballots_by_enum_mut">get_list_ballots_by_enum_mut</a>&lt;TallyType&gt;(tracker, to_status_enum);
+  <b>let</b> b = <a href="VoteLib.md#0x1_Ballot_extract_ballot">extract_ballot</a>(tracker, id, from_status_enum);
+  <b>let</b> to_list = <a href="VoteLib.md#0x1_Ballot_get_list_ballots_by_enum_mut">get_list_ballots_by_enum_mut</a>&lt;TallyType&gt;(tracker, to_status_enum);
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(to_list, b);
 }
 </code></pre>

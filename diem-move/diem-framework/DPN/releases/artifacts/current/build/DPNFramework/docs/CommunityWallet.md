@@ -32,7 +32,7 @@ The CommunityWallets will have the following properties enabled by their owners.
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID">0x1::GUID</a>;
-<b>use</b> <a href="MultiSigT.md#0x1_MultiSigT">0x1::MultiSigT</a>;
+<b>use</b> <a href="MultiSig.md#0x1_MultiSig">0x1::MultiSig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
@@ -225,8 +225,8 @@ if it is not qualifying it wont be part of the burn funds matching.
   <a href="CommunityWallet.md#0x1_CommunityWallet_is_init">is_init</a>(addr) &&
   // <b>has</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> instantiated
   <a href="DonorDirected.md#0x1_DonorDirected_is_donor_directed">DonorDirected::is_donor_directed</a>(addr) &&
-  // <b>has</b> MultiSig instantialized
-  MultiSig::is_init(addr) &&
+  // <b>has</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> instantialized
+  <a href="MultiSig.md#0x1_MultiSig_is_init">MultiSig::is_init</a>(addr) &&
   // multisig <b>has</b> minimum requirement of 3 signatures, and minimum list of 5 signers, and a minimum of 3/5 threshold. I.e. OK <b>to</b> have 4/5 signatures.
   <a href="CommunityWallet.md#0x1_CommunityWallet_multisig_thresh">multisig_thresh</a>(addr) &&
   // the multisig authorities are unrelated per <a href="Ancestry.md#0x1_Ancestry">Ancestry</a>
@@ -254,7 +254,7 @@ if it is not qualifying it wont be part of the burn funds matching.
 
 
 <pre><code><b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_multisig_thresh">multisig_thresh</a>(addr: <b>address</b>): bool{
-  <b>let</b> (n, m) = MultiSig::get_n_of_m_cfg(addr);
+  <b>let</b> (n, m) = <a href="MultiSig.md#0x1_MultiSig_get_n_of_m_cfg">MultiSig::get_n_of_m_cfg</a>(addr);
 
   // can't have less than three signatures
   <b>if</b> (n &lt; 3) <b>return</b> <b>false</b>;
@@ -290,7 +290,7 @@ if it is not qualifying it wont be part of the burn funds matching.
 
 
 <pre><code><b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_multisig_common_ancestry">multisig_common_ancestry</a>(addr: <b>address</b>): bool {
-  <b>let</b> list = MultiSig::get_authorities(addr);
+  <b>let</b> list = <a href="MultiSig.md#0x1_MultiSig_get_authorities">MultiSig::get_authorities</a>(addr);
 
   <b>let</b> (fam, _, _) = <a href="Ancestry.md#0x1_Ancestry_any_family_in_list">Ancestry::any_family_in_list</a>(list);
 
@@ -363,12 +363,12 @@ add signer to multisig, and check if they may be related in Ancestry tree
 
 
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_add_signer_community_multisig">add_signer_community_multisig</a>(sig: signer, multisig_address: <b>address</b>, new_signer: <b>address</b>, n_of_m: u64, vote_duration_epochs: u64) {
-  <b>let</b> current_signers = MultiSig::get_authorities(multisig_address);
+  <b>let</b> current_signers = <a href="MultiSig.md#0x1_MultiSig_get_authorities">MultiSig::get_authorities</a>(multisig_address);
   <b>let</b> (fam, _, _) = <a href="Ancestry.md#0x1_Ancestry_is_family_one_in_list">Ancestry::is_family_one_in_list</a>(new_signer, &current_signers);
 
   <b>assert</b>!(!fam, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="CommunityWallet.md#0x1_CommunityWallet_ESIGNERS_SYBIL">ESIGNERS_SYBIL</a>));
 
-  MultiSig::propose_governance(
+  <a href="MultiSig.md#0x1_MultiSig_propose_governance">MultiSig::propose_governance</a>(
     &sig,
     multisig_address,
     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_singleton">Vector::singleton</a>(new_signer),
