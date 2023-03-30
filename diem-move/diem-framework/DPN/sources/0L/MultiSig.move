@@ -64,7 +64,11 @@ module MultiSig {
   /// default setting for a proposal to expire
   const DEFAULT_EPOCHS_EXPIRE: u64 = 14; 
 
-
+  // poor man's enum for the ballot status. Wen enum?
+  // TODO: duplicated from Ballot.move
+  const PENDING: u8  = 1;
+  const APPROVED: u8 = 2;
+  const REJECTED: u8 = 3;
 
   
   /// A MultiSig account is an account which requires multiple votes from Authorities to  send a transaction.
@@ -276,7 +280,7 @@ module MultiSig {
     sig: &signer,
     multisig_address: address,
     proposal_data: Proposal<ProposalData>,
-  ): GUID::ID  acquires MultiSig, Action {
+  ): GUID::ID acquires MultiSig, Action {
     // print(&20001);
     assert_authorized(sig, multisig_address);
 
@@ -288,7 +292,7 @@ module MultiSig {
     // does this proposal already exist in the pending list?
     let (found, guid, _idx, status_enum, _is_complete) = Ballot::find_anywhere_by_data<Proposal<ProposalData>>(&action.vote, &proposal_data);
     
-    if (found && status_enum == 0) {
+    if (found && status_enum == PENDING) {
       // this exact proposal is already pending, so we we will just return the guid of the existing proposal.
       // we'll let the caller decide what to do (we wont vote by default)
       return guid
@@ -310,14 +314,12 @@ module MultiSig {
     // go through all proposals and clean up expired ones.
     lazy_cleanup_expired(action);
 
-
     // does this proposal already exist in the pending list?
     let (found, _ , idx, status_enum, is_complete) = Ballot::find_anywhere_by_data<Proposal<ProposalData>>(&action.vote, proposal);
     
     assert!((found && status_enum == 0 && !is_complete), Errors::invalid_argument(EPROPOSAL_NOT_FOUND));
 
     let b = Ballot::get_ballot_mut(&mut action.vote, idx, status_enum);
-
 
     let t = Ballot::get_type_struct_mut(b);
 

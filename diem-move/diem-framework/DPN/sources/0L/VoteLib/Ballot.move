@@ -27,6 +27,7 @@ address DiemFramework {
     use Std::Vector;
     use Std::GUID::{Self, ID};
     use Std::Errors;
+    // use DiemFramework::Debug::print;
 
     /// No ballot found under that GUID
     const ENO_BALLOT_FOUND: u64 = 300010;
@@ -84,7 +85,7 @@ address DiemFramework {
       };
       let len = Vector::length(&tracker.ballots_pending);
       Vector::push_back(&mut tracker.ballots_pending, b);
-      Vector::borrow_mut(&mut tracker.ballots_pending, len + 1)
+      Vector::borrow_mut(&mut tracker.ballots_pending, len)
     }
 
 
@@ -333,6 +334,6 @@ address DiemFramework {
       let to_list = get_list_ballots_by_enum_mut<TallyType>(tracker, to_status_enum);
       Vector::push_back(to_list, b);
     }
-  }
 
+  }
 }

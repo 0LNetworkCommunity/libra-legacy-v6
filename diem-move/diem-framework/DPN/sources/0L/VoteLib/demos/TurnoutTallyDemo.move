@@ -20,6 +20,7 @@ address DiemFramework {
     use Std::Signer;
     use Std::Vector;
     use DiemFramework::Testnet;
+    use DiemFramework::Debug::print;
 
     struct Vote<D> has key {
       tracker: BallotTracker<D>,
@@ -43,15 +44,20 @@ address DiemFramework {
       });
     }
 
-    public fun propose_ballot_by_owner(sig: &signer) acquires Vote {
+    public fun propose_ballot_by_owner(sig: &signer, voters: u64, duration: u64) acquires Vote {
       assert!(Testnet::is_testnet(), 0);
       let cap = GUID::gen_create_capability(sig);
       let noop = EmptyType {};
 
-      let t = TurnoutTally::new_tally_struct<EmptyType>(noop, 100, 4, 0);
+      let t = TurnoutTally::new_tally_struct<EmptyType>(noop, voters, duration, 0);
+      print(&010);
+      print(&t);
 
       let vote = borrow_global_mut<Vote<TurnoutTally<EmptyType>>>(Signer::address_of(sig));
+      print(&011);
+      print(vote);
       Ballot::propose_ballot<TurnoutTally<EmptyType>>(&mut vote.tracker, &cap, t);
+      print(&12);
     }
 
      public fun vote(sig: &signer, election_addr: address, uid: &GUID::ID, weight: u64, approve_reject: bool) acquires Vote {
