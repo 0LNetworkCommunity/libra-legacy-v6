@@ -46,7 +46,6 @@ script {
   fun main(_dr: signer, b_sig: signer) {
 
     MultiSigPayment::propose_payment(&b_sig, @DaveMultiSig, @Alice, 10, b"send it", Option::none());
-    
     // no change
     let bal = DiemAccount::balance<GAS>(@DaveMultiSig);
     assert!(bal == 1000000, 7357002);
@@ -67,7 +66,7 @@ script {
     MultiSigPayment::propose_payment(&c_sig, @DaveMultiSig, @Alice, 10, b"send it", Option::none());
 
     let bal = DiemAccount::balance<GAS>(@DaveMultiSig);
-    // THERE's no Withdraw Capability added so no changed.
+    // THERE's no Withdraw Capability added so no changes.
     assert!(bal == 1000000, 7357002);
 
   }

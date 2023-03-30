@@ -101,29 +101,38 @@ module MultiSigPayment {
 
 
   public fun propose_payment(sig: &signer, multisig_addr: address, recipient: address, amount: u64, note: vector<u8>, duration_epochs: Option<u64>) {
-
+    print(&10);
     let pay = new_payment(recipient, amount, *&note);
+    print(&11);
     let prop = MultiSig::proposal_constructor(pay, duration_epochs);
-
+    print(&12);
     let guid = MultiSig::propose_new<PaymentType>(sig, multisig_addr, prop);
-    // MultiSig::vote_with_id(sig, guid, multisig_addr);
+    print(&guid);
+    print(&13);
     vote_payment(sig, multisig_addr, &guid);
-
-
-
+    print(&14);
   }
 
   public fun vote_payment(sig: &signer, multisig_address: address, id: &GUID::ID) {
-    
+    print(&50);
     let (passed, data, cap_opt) = MultiSig::vote_with_id<PaymentType>(sig, id, multisig_address);
+    print(&passed);
+    print(&data);
+    print(&cap_opt);
+
+    print(&51);
 
     if (passed && Option::is_some(&cap_opt)) {
       let cap = Option::borrow(&cap_opt);
-
+      print(&5010);
       release_payment(&data, cap);
+      print(&5011);
+
     };
 
+
     MultiSig::maybe_restore_withdraw_cap(sig, multisig_address, cap_opt); // don't need this and can't drop.
+    print(&52);
 
   }
 

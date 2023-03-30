@@ -281,51 +281,50 @@ module MultiSig {
     multisig_address: address,
     proposal_data: Proposal<ProposalData>,
   ): GUID::ID acquires MultiSig, Action {
-    // print(&20001);
+    print(&20);
     assert_authorized(sig, multisig_address);
-
+print(&21);
     let ms = borrow_global_mut<MultiSig>(multisig_address);
     let action = borrow_global_mut<Action<ProposalData>>(multisig_address);
+    print(&22);
     // go through all proposals and clean up expired ones.
     lazy_cleanup_expired(action);
-
+print(&23);
     // does this proposal already exist in the pending list?
-    let (found, guid, _idx, status_enum, _is_complete) = Ballot::find_anywhere_by_data<Proposal<ProposalData>>(&action.vote, &proposal_data);
-    
+    let (found, guid, _idx, status_enum, _is_complete) = search_proposals_for_guid<ProposalData>(&action.vote, &proposal_data);
+    print(&found);
+    print(&status_enum);
+    print(&24);
     if (found && status_enum == PENDING) {
+      print(&2401);
       // this exact proposal is already pending, so we we will just return the guid of the existing proposal.
       // we'll let the caller decide what to do (we wont vote by default)
       return guid
     };
 
+print(&25);
     let ballot = Ballot::propose_ballot(&mut action.vote, &ms.guid_capability, proposal_data);
-
+print(&26);
     let id = Ballot::get_ballot_id(ballot);
-
+print(&27);
     id
   }
 
 
-  public fun vote_with_data<ProposalData: key + store + copy + drop>(sig: &signer, proposal: &Proposal<ProposalData>, multisig_address: address): bool acquires MultiSig, Action {
+  public fun vote_with_data<ProposalData: key + store + copy + drop>(sig: &signer, proposal: &Proposal<ProposalData>, multisig_address: address): (bool, ProposalData, Option<WithdrawCapability>) acquires MultiSig, Action {
     assert_authorized(sig, multisig_address);
 
     let action = borrow_global_mut<Action<ProposalData>>(multisig_address);
-    let ms = borrow_global_mut<MultiSig>(multisig_address);
+    // let ms = borrow_global_mut<MultiSig>(multisig_address);
     // go through all proposals and clean up expired ones.
-    lazy_cleanup_expired(action);
+    // lazy_cleanup_expired(action);
 
     // does this proposal already exist in the pending list?
-    let (found, _ , idx, status_enum, is_complete) = Ballot::find_anywhere_by_data<Proposal<ProposalData>>(&action.vote, proposal);
-    
-    assert!((found && status_enum == 0 && !is_complete), Errors::invalid_argument(EPROPOSAL_NOT_FOUND));
+    let (found, uid, _idx, _status_enum, _is_complete) = search_proposals_for_guid<ProposalData>(&action.vote, proposal);
 
-    let b = Ballot::get_ballot_mut(&mut action.vote, idx, status_enum);
+    assert!(found, Errors::invalid_argument(EPROPOSAL_NOT_FOUND));
 
-    let t = Ballot::get_type_struct_mut(b);
-
-    Vector::push_back(&mut t.votes, Signer::address_of(sig));
-
-    tally(t, *&ms.cfg_default_n_sigs)
+    vote_impl(sig, multisig_address, &uid)
 
   }
 
@@ -345,27 +344,39 @@ module MultiSig {
     multisig_address: address,
     id: &GUID::ID
   ): (bool, ProposalData, Option<WithdrawCapability>) acquires MultiSig, Action {
+
+    print(&60);
     assert_authorized(sig, multisig_address); // belt and suspenders
     let ms = borrow_global_mut<MultiSig>(multisig_address);
     let action = borrow_global_mut<Action<ProposalData>>(multisig_address);
+    print(&61);
     lazy_cleanup_expired(action);
-    
+    print(&62);
 
 
 
     // does this proposal already exist in the pending list?
     let (found, _idx, status_enum, is_complete) = Ballot::find_anywhere<Proposal<ProposalData>>(&action.vote, id);
-    
-    assert!((found && status_enum == 0 && !is_complete), Errors::invalid_argument(EPROPOSAL_NOT_FOUND));
-
+    print(&63);
+    assert!((found && status_enum == PENDING && !is_complete), Errors::invalid_argument(EPROPOSAL_NOT_FOUND));
+    print(&64);
     let b = Ballot::get_ballot_by_id_mut(&mut action.vote, id);
     let t = Ballot::get_type_struct_mut(b);
-
+    print(&65);
     Vector::push_back(&mut t.votes, Signer::address_of(sig));
-
+    print(&66);
     let passed = tally(t, *&ms.cfg_default_n_sigs);
+    print(&67);
 
-    (passed, *&t.proposal_data, Option::none())
+    // get the withdrawal capability
+    let withdraw_cap = if (passed) {
+      let c = Option::extract(&mut ms.withdraw_capability);
+      Option::some(c)
+    } else {
+      Option::none()
+    };
+
+    (passed, *&t.proposal_data, withdraw_cap)
   }
 
 
@@ -386,19 +397,22 @@ module MultiSig {
 
 
   fun find_expired<ProposalData: key + store + copy + drop>(a: & Action<ProposalData>): vector<GUID::ID>{
+    print(&40);
     let epoch = DiemConfig::get_current_epoch();
-    let b_vec = Ballot::get_list_ballots_by_enum(&a.vote, 0);
+    let b_vec = Ballot::get_list_ballots_by_enum(&a.vote, PENDING);
     let id_vec = Vector::empty();
+    print(&41);
     let i = 0;
     while (i < Vector::length(b_vec)) {
-      
+      print(&4101);
       let b = Vector::borrow(b_vec, i);
       let t = Ballot::get_type_struct<Proposal<ProposalData>>(b);
 
       
       if (epoch > t.expiration_epoch) { 
+        print(&4010101);
         let id = Ballot::get_ballot_id(b);
-
+        print(&4010102);
         Vector::push_back(&mut id_vec, id);
 
       };
@@ -409,15 +423,17 @@ module MultiSig {
   }
 
   fun lazy_cleanup_expired<ProposalData: key + store + copy + drop>(a: &mut Action<ProposalData>) {
-
+    print(&30);
     let expired_vec = find_expired(a);
     // let epoch = DiemConfig::get_current_epoch();
 
     // let b_vec = Ballot::get_list_ballots_by_enum(&a.vote, 0);
 
+print(&31);
     let len = Vector::length(&expired_vec);
     let i = 0;
     while (i < len) {
+      print(&3101);
       let id = Vector::borrow(&expired_vec, i);
        Ballot::move_ballot(&mut a.vote, id, 0, 1);
       i = i + 1;
@@ -433,6 +449,81 @@ module MultiSig {
     let m = borrow_global<MultiSig>(multisig_addr);
     Vector::contains(&m.signers, &addr)
   }
+
+
+    /// returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bool)
+    public fun search_proposals_for_guid<ProposalData: drop + store> (
+      tracker: &BallotTracker<Proposal<ProposalData>>,
+      data: &Proposal<ProposalData>,
+    ): (bool, GUID::ID, u64, u8, bool)  {
+     // looking in pending
+
+     let (found, guid, idx) = find_index_of_ballot_by_data(tracker, data, PENDING);
+     if (found) {
+      let b = Ballot::get_ballot_by_id(tracker, &guid);
+      let complete = Ballot::is_completed<Proposal<ProposalData>>(b);
+       return (true, guid, idx, PENDING, complete)
+     };
+
+    let (found, guid, idx) = find_index_of_ballot_by_data(tracker, data, APPROVED);
+     if (found) {
+      let b = Ballot::get_ballot_by_id(tracker, &guid);
+      let complete = Ballot::is_completed<Proposal<ProposalData>>(b);
+       return (true, guid, idx, APPROVED, complete)
+     };
+
+    let (found, guid, idx) = find_index_of_ballot_by_data(tracker, data, REJECTED);
+     if (found) {
+      let b = Ballot::get_ballot_by_id(tracker, &guid);
+      let complete = Ballot::is_completed<Proposal<ProposalData>>(b);
+       return (true, guid, idx, REJECTED, complete)
+     };
+
+      (false, GUID::create_id(@0x0, 0), 0, 0, false)
+    }
+
+    public fun find_index_of_ballot_by_data<ProposalData: drop + store> (
+      tracker: &BallotTracker<Proposal<ProposalData>>,
+      incoming_proposal: &Proposal<ProposalData>,
+      status_enum: u8,
+    ): (bool, GUID::ID, u64) {
+      let Proposal<ProposalData> {
+          proposal_data: incoming_data,
+          expiration_epoch: _,
+          votes: _,
+          approved: _,
+      } = incoming_proposal;
+
+     let list = Ballot::get_list_ballots_by_enum<Proposal<ProposalData>>(tracker, status_enum);
+
+      let i = 0;
+      while (i < Vector::length(list)) {
+        let b = Vector::borrow(list, i);
+        let t = Ballot::get_type_struct<Proposal<ProposalData>>(b);
+
+        // strip the votes and approved fields for comparison
+        let Proposal<ProposalData> {
+            proposal_data: existing_data,
+            expiration_epoch: _,
+            votes: _,
+            approved: _,
+        } = t;
+
+
+
+        // print(d);
+        // print(tally_type);
+        if (existing_data == incoming_data) {
+          print(&8888888888888888);
+          let uid = Ballot::get_ballot_id(b);
+          return (true, uid, i)
+        };
+        i = i + 1;
+      };
+
+      (false, GUID::create_id(@0x0, 0), 0)
+    }
+
 
   ////////  GOVERNANCE  ////////
   // Governance of the multisig happens through an instance of Action<PropGovSigners>. This action has no special privileges, and is just a normal proposal type.

@@ -194,34 +194,39 @@ address DiemFramework {
     }
 
    /// returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bool)
-    public fun find_anywhere_by_data<TallyType: drop + store> (
-      tracker: &BallotTracker<TallyType>,
-      tally_type: &TallyType,
-    ): (bool, GUID::ID, u64, u8, bool)  {
-     // looking in pending
-     let (found, guid, idx) = find_index_of_ballot_by_data(tracker, tally_type, PENDING);
-     if (found) {
-      let complete = is_completed(Vector::borrow(&tracker.ballots_pending, idx));
-       return (true, guid, idx, PENDING, complete)
-     };
+    // public fun find_anywhere_by_data<TallyType: drop + store> (
+    //   tracker: &BallotTracker<TallyType>,
+    //   tally_type: &TallyType,
+    // ): (bool, GUID::ID, u64, u8, bool)  {
+    //  // looking in pending
+    //  let (found, guid, idx) = find_index_of_ballot_by_data(tracker, tally_type, PENDING);
+    //  if (found) {
+    //   let complete = is_completed(Vector::borrow(&tracker.ballots_pending, idx));
+    //    return (true, guid, idx, PENDING, complete)
+    //  };
 
-     // looking in approved
-      let (found, guid, idx) = find_index_of_ballot_by_data(tracker, tally_type, APPROVED);
-      if (found) {
-        let complete = is_completed(Vector::borrow(&tracker.ballots_approved, idx));
-        return (true, guid, idx, APPROVED, complete)
-      };
+    //  // looking in approved
+    //   let (found, guid, idx) = find_index_of_ballot_by_data(tracker, tally_type, APPROVED);
+    //   if (found) {
+    //     let complete = is_completed(Vector::borrow(&tracker.ballots_approved, idx));
+    //     return (true, guid, idx, APPROVED, complete)
+    //   };
 
-     // looking in rejected
-      let (found, guid, idx) = find_index_of_ballot_by_data(tracker, tally_type, REJECTED);
-      if (found) {
-        let complete = is_completed(Vector::borrow(&tracker.ballots_rejected, idx));
-        return (true, guid, idx, REJECTED, complete)
-      };
+    //  // looking in rejected
+    //   let (found, guid, idx) = find_index_of_ballot_by_data(tracker, tally_type, REJECTED);
+    //   if (found) {
+    //     let complete = is_completed(Vector::borrow(&tracker.ballots_rejected, idx));
+    //     return (true, guid, idx, REJECTED, complete)
+    //   };
 
-      (false, GUID::create_id(@0x0, 0), 0, 0, false)
-    }
+    //   (false, GUID::create_id(@0x0, 0), 0, 0, false)
+    // }
 
+    /// find the index in list, if you know the GUID.
+    /// If you need to search for the GUID by data, Ballot cannot do that.
+    /// since you may need to look at specific fields to find duplications
+    /// you'll need to do the search wherever TallyType is defined.
+    /// For example: if we tried to do it here, and there was a field of `voted` addresses, you would never find a duplicate.
     public fun find_index_of_ballot<TallyType: drop + store> (
       tracker: &BallotTracker<TallyType>,
       proposal_guid: &GUID::ID,
@@ -244,26 +249,29 @@ address DiemFramework {
     }
 
 
-    public fun find_index_of_ballot_by_data<TallyType: drop + store> (
-      tracker: &BallotTracker<TallyType>,
-      tally_type: &TallyType,
-      status_enum: u8,
-    ): (bool, GUID::ID, u64) {
+    // public fun find_index_of_ballot_by_data<TallyType: drop + store> (
+    //   tracker: &BallotTracker<TallyType>,
+    //   tally_type: &TallyType,
+    //   status_enum: u8,
+    // ): (bool, GUID::ID, u64) {
 
-     let list = get_list_ballots_by_enum<TallyType>(tracker, status_enum);
+    //  let list = get_list_ballots_by_enum<TallyType>(tracker, status_enum);
 
-      let i = 0;
-      while (i < Vector::length(list)) {
-        let b = Vector::borrow(list, i);
+    //   let i = 0;
+    //   while (i < Vector::length(list)) {
+    //     let b = Vector::borrow(list, i);
+    //     print(&b.tally_type);
+    //     print(tally_type);
+    //     if (&b.tally_type == tally_type) {
+    //       return (true, GUID::id(&b.guid), i)
+    //     };
+    //     i = i + 1;
+    //   };
 
-        if (&b.tally_type == tally_type) {
-          return (true, GUID::id(&b.guid), i)
-        };
-        i = i + 1;
-      };
+    //   (false, GUID::create_id(@0x0, 0), 0)
+    // }
 
-      (false, GUID::create_id(@0x0, 0), 0)
-    }
+
     public fun get_list_ballots_by_enum<TallyType: drop + store >(tracker: &BallotTracker<TallyType>, status_enum: u8): &vector<Ballot<TallyType>> {
      if (status_enum == PENDING) {
         &tracker.ballots_pending

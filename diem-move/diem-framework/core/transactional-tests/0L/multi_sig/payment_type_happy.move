@@ -67,7 +67,7 @@ script {
     MultiSigPayment::propose_payment(&c_sig, @DaveMultiSig, @Alice, 10, b"send it", Option::none());
 
     let bal = DiemAccount::balance<GAS>(@DaveMultiSig);
-    assert!(bal < 1000000, 7357002);
+    assert!(bal < 1000000, 7357003);
 
   }
 }
