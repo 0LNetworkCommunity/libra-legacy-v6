@@ -93,15 +93,15 @@ module MultiSig {
     cfg_default_n_sigs: u64,
     signers: vector<address>,
     withdraw_capability: Option<WithdrawCapability>,
-    counter: u64,
+    // counter: u64,
     guid_capability: GUID::CreateCapability, // this is needed to create GUIDs for the Ballot.
   }
 
   struct Action<ProposalData> has key, store {
     can_withdraw: bool,
-    pending: vector<Proposal<ProposalData>>,
-    approved: vector<Proposal<ProposalData>>,
-    rejected:  vector<Proposal<ProposalData>>,
+    // pending: vector<Proposal<ProposalData>>,
+    // approved: vector<Proposal<ProposalData>>,
+    // rejected:  vector<Proposal<ProposalData>>,
     vote: BallotTracker<Proposal<ProposalData>>,
   }
 
@@ -162,14 +162,13 @@ module MultiSig {
     let multisig_address = Signer::address_of(sig);
     // User footgun. The Signer of this account is bricked, and as such the signer can no longer be an authority.
     assert!(!Vector::contains(m_seed_authorities, &multisig_address), Errors::invalid_argument(ESIGNER_CANT_BE_AUTHORITY));
-    print(&10002);
 
     if (!exists<MultiSig>(multisig_address)) {
         move_to(sig, MultiSig {
         cfg_duration_epochs: DEFAULT_EPOCHS_EXPIRE,
         cfg_default_n_sigs,
         signers: *m_seed_authorities,
-        counter: 0,
+        // counter: 0,
         withdraw_capability: Option::none(),
         guid_capability: GUID::gen_create_capability(sig),
       });
@@ -178,9 +177,9 @@ module MultiSig {
     if (!exists<Action<PropGovSigners>>(multisig_address)) {
       move_to(sig, Action<PropGovSigners> {
         can_withdraw: false,
-        pending: Vector::empty(),
-        approved: Vector::empty(),
-        rejected: Vector::empty(),
+        // pending: Vector::empty(),
+        // approved: Vector::empty(),
+        // rejected: Vector::empty(),
         vote: Ballot::new_tracker<Proposal<PropGovSigners>>(),
       });
     }
@@ -212,7 +211,6 @@ module MultiSig {
     assert!(!exists<Action<ProposalData>>(multisig_address), Errors::invalid_argument(EACTION_ALREADY_EXISTS));
     // make sure the signer's address is not in the list of authorities. 
     // This account's signer will now be useless.
-    print(&10001);
     
 
 
@@ -224,9 +222,9 @@ module MultiSig {
 
     move_to(sig, Action<ProposalData> {
         can_withdraw,
-        pending: Vector::empty(),
-        approved: Vector::empty(),
-        rejected: Vector::empty(),
+        // pending: Vector::empty(),
+        // approved: Vector::empty(),
+        // rejected: Vector::empty(),
         vote: Ballot::new_tracker<Proposal<ProposalData>>(),
       });
   }
@@ -368,13 +366,22 @@ print(&27);
     let passed = tally(t, *&ms.cfg_default_n_sigs);
     print(&67);
 
-    // get the withdrawal capability
-    let withdraw_cap = if (passed) {
+    // get the withdrawal capability, we're not allowed copy, but we can 
+    // extract and fill, and then replace it. See DiemAccount for an example.
+    let withdraw_cap = if (
+      passed &&
+      Option::is_some(&ms.withdraw_capability) &&
+      action.can_withdraw
+    ) {
       let c = Option::extract(&mut ms.withdraw_capability);
       Option::some(c)
     } else {
       Option::none()
     };
+
+    print(&withdraw_cap);
+    print(&68);
+
 
     (passed, *&t.proposal_data, withdraw_cap)
   }
@@ -423,19 +430,15 @@ print(&27);
   }
 
   fun lazy_cleanup_expired<ProposalData: key + store + copy + drop>(a: &mut Action<ProposalData>) {
-    print(&30);
     let expired_vec = find_expired(a);
-    // let epoch = DiemConfig::get_current_epoch();
-
-    // let b_vec = Ballot::get_list_ballots_by_enum(&a.vote, 0);
-
-print(&31);
+    print(&expired_vec);
     let len = Vector::length(&expired_vec);
+    print(&len);
     let i = 0;
     while (i < len) {
-      print(&3101);
       let id = Vector::borrow(&expired_vec, i);
-       Ballot::move_ballot(&mut a.vote, id, 0, 1);
+      // lets check the status just in case.
+       Ballot::move_ballot(&mut a.vote, id, PENDING, REJECTED);
       i = i + 1;
     };
   }
@@ -509,12 +512,7 @@ print(&31);
             approved: _,
         } = t;
 
-
-
-        // print(d);
-        // print(tally_type);
         if (existing_data == incoming_data) {
-          print(&8888888888888888);
           let uid = Ballot::get_ballot_id(b);
           return (true, uid, i)
         };

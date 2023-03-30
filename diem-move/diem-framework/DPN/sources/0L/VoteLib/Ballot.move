@@ -27,7 +27,6 @@ address DiemFramework {
     use Std::Vector;
     use Std::GUID::{Self, ID};
     use Std::Errors;
-    // use DiemFramework::Debug::print;
 
     /// No ballot found under that GUID
     const ENO_BALLOT_FOUND: u64 = 300010;
@@ -193,35 +192,6 @@ address DiemFramework {
       (false, 0, 0, false)
     }
 
-   /// returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bool)
-    // public fun find_anywhere_by_data<TallyType: drop + store> (
-    //   tracker: &BallotTracker<TallyType>,
-    //   tally_type: &TallyType,
-    // ): (bool, GUID::ID, u64, u8, bool)  {
-    //  // looking in pending
-    //  let (found, guid, idx) = find_index_of_ballot_by_data(tracker, tally_type, PENDING);
-    //  if (found) {
-    //   let complete = is_completed(Vector::borrow(&tracker.ballots_pending, idx));
-    //    return (true, guid, idx, PENDING, complete)
-    //  };
-
-    //  // looking in approved
-    //   let (found, guid, idx) = find_index_of_ballot_by_data(tracker, tally_type, APPROVED);
-    //   if (found) {
-    //     let complete = is_completed(Vector::borrow(&tracker.ballots_approved, idx));
-    //     return (true, guid, idx, APPROVED, complete)
-    //   };
-
-    //  // looking in rejected
-    //   let (found, guid, idx) = find_index_of_ballot_by_data(tracker, tally_type, REJECTED);
-    //   if (found) {
-    //     let complete = is_completed(Vector::borrow(&tracker.ballots_rejected, idx));
-    //     return (true, guid, idx, REJECTED, complete)
-    //   };
-
-    //   (false, GUID::create_id(@0x0, 0), 0, 0, false)
-    // }
-
     /// find the index in list, if you know the GUID.
     /// If you need to search for the GUID by data, Ballot cannot do that.
     /// since you may need to look at specific fields to find duplications
@@ -247,30 +217,6 @@ address DiemFramework {
 
       (false, 0)
     }
-
-
-    // public fun find_index_of_ballot_by_data<TallyType: drop + store> (
-    //   tracker: &BallotTracker<TallyType>,
-    //   tally_type: &TallyType,
-    //   status_enum: u8,
-    // ): (bool, GUID::ID, u64) {
-
-    //  let list = get_list_ballots_by_enum<TallyType>(tracker, status_enum);
-
-    //   let i = 0;
-    //   while (i < Vector::length(list)) {
-    //     let b = Vector::borrow(list, i);
-    //     print(&b.tally_type);
-    //     print(tally_type);
-    //     if (&b.tally_type == tally_type) {
-    //       return (true, GUID::id(&b.guid), i)
-    //     };
-    //     i = i + 1;
-    //   };
-
-    //   (false, GUID::create_id(@0x0, 0), 0)
-    // }
-
 
     public fun get_list_ballots_by_enum<TallyType: drop + store >(tracker: &BallotTracker<TallyType>, status_enum: u8): &vector<Ballot<TallyType>> {
      if (status_enum == PENDING) {
@@ -310,8 +256,6 @@ address DiemFramework {
       // you won't be able to do this from outside the module
       ballot.tally_type = t;
     }
-
-
 
     public fun complete_ballot<TallyType: drop + store>(
       ballot: &mut Ballot<TallyType>,

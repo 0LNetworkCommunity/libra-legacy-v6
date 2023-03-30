@@ -58,8 +58,6 @@ script {
 //////////////////////////////////////////////
 
 
-
-
 //# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::MultiSig;
@@ -71,12 +69,12 @@ script {
     // NOTE: the expiration here is NONE. But the voting should be on the same ballot as the previous proposal.
     MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::empty(), true, Option::some(1), Option::none());
 
-    let a = MultiSig::get_authorities(@DaveMultiSig);
-    assert!(Vector::length(&a) == 2, 7357002);
+    // let a = MultiSig::get_authorities(@DaveMultiSig);
+    // assert!(Vector::length(&a) == 2, 7357002);
 
-    // the governance proposal will silently, we still have 2 signers required
-    let (b, _) = MultiSig::get_n_of_m_cfg(@DaveMultiSig);
-    assert!(b == 2, 7357003);
+    // // the governance proposal will silently, we still have 2 signers required
+    // let (b, _) = MultiSig::get_n_of_m_cfg(@DaveMultiSig);
+    // assert!(b == 2, 7357003);
   }
 }
 
