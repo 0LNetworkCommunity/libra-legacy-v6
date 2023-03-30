@@ -9,10 +9,12 @@ use diem_genesis_tool::{
     storage_helper::StorageHelper,
     validator_config::ValidatorConfig,
     validator_operator::ValidatorOperator, verify::Verify,
+    waypoint,
+    ol_node_files
 };
 
 use diem_github_client;
-use diem_types::chain_id::ChainId;
+use diem_types::chain_id::{ChainId, NamedChain};
 use diem_types::network_address::{NetworkAddress, Protocol};
 use dirs;
 use indicatif::{ProgressBar, ProgressIterator};
@@ -26,7 +28,7 @@ use diem_global_constants::{
  OPERATOR_KEY, OWNER_KEY,
 };
 use diem_secure_storage::KVStorage;
-
+use ol::commands::init_cmd;
 use crate::run;
 
 #[test]
@@ -140,6 +142,9 @@ impl GenesisWizard {
                 self.github_token.clone(),
                 false,
             )?;
+
+            // make node files
+            self.make_node_files(&app_config)?;
 
             // reset the safety rules
             reset_safety_data(&self.data_path, &app_config.format_oper_namespace());
@@ -445,21 +450,68 @@ impl GenesisWizard {
     }
 
     fn maybe_backup_db(&self) {
-    // ask to empty the DB
-    if self.data_path.join("db").exists() {
-        println!("We found a /db directory. Can't do genesis with a non-empty db.");
-        if Confirm::new()
-            .with_prompt("Let's move the old /db to /db_bak_<date>?")
-            .interact().unwrap()
-        {
-            let date_str = chrono::Utc::now().format("%Y-%m-%d-%H-%M").to_string();
-            fs::rename(
-                self.data_path.join("db"),
-                self.data_path.join(format!("db_bak_{}", date_str)),
-            ).expect("failed to move db to db_bak");
+        // ask to empty the DB
+        if self.data_path.join("db").exists() {
+            println!("We found a /db directory. Can't do genesis with a non-empty db.");
+            if Confirm::new()
+                .with_prompt("Let's move the old /db to /db_bak_<date>?")
+                .interact().unwrap()
+            {
+                let date_str = chrono::Utc::now().format("%Y-%m-%d-%H-%M").to_string();
+                fs::rename(
+                    self.data_path.join("db"),
+                    self.data_path.join(format!("db_bak_{}", date_str)),
+                ).expect("failed to move db to db_bak");
+            }
         }
     }
-}
+
+    fn make_node_files(&self, app_cfg: &AppCfg) -> anyhow::Result<()> {
+        // create the files necessary to run the node
+        let waypoint = waypoint::extract_waypoint_from_file(
+            &self.data_path.join("genesis.blob")
+        )?;
+        println!("waypoint: {:?}", waypoint);
+        fs::write(self.data_path.join("genesis_waypoint.txt"), waypoint.to_string())?;
+
+
+        init_cmd::update_waypoint(&mut app_cfg.clone(), Option::from(waypoint), None)?;
+
+        // make extract-waypoint && cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/genesis_waypoint.txt)
+        //
+        // 1. cargo run -p diem-genesis-tool ${CARGO_ARGS} -- create-waypoint \
+        // 	--genesis-path ${DATA_PATH}/genesis.blob \
+        // 	--extract \
+        // 	--chain-id ${CHAIN_ID} \
+        // 	--shared-backend ${REMOTE} \
+        // 	| awk -F 'Waypoint: '  '{print $$2}' > ${DATA_PATH}/genesis_waypoint.txt\
+
+        // 2. cargo r -p ol -- init --update-waypoint --waypoint $(shell cat ${DATA_PATH}/genesis_waypoint.txt)
+
+        ol_node_files::onboard_helper_all_files(
+            self.data_path.clone(),
+            NamedChain::MAINNET,
+            Some(self.repo_owner.clone()),
+            Some(self.repo_name.clone()),
+            &app_cfg.format_oper_namespace(),
+            &Some(self.data_path.join("genesis.blob")),
+            &false,
+            None,
+            &None,
+            Some(app_cfg.profile.ip))?;
+
+        // node-files:
+        //     cargo run -p diem-genesis-tool ${CARGO_ARGS} -- files \
+        // --chain-id ${CHAIN_ID} \
+        // --validator-backend ${LOCAL} \
+        // --data-path ${DATA_PATH} \
+        // --namespace ${ACC}-oper \
+        // --genesis-path ${DATA_PATH}/genesis.blob \
+        // --val-ip-address ${IP} \
+
+        // rm -rf ~/.0L/db
+        Ok(())
+    }
 
 }
 

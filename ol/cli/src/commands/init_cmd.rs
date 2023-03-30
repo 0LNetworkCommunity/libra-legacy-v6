@@ -431,7 +431,7 @@ impl config::Override<AppCfg> for InitCmd {
 }
 
 /// helper to update waypoint from a known waypoint or query an upstream node for current waypoint
-fn update_waypoint(
+pub fn update_waypoint(
     app_cfg: &mut AppCfg,
     waypoint_opt: Option<Waypoint>,
     swarm_path: Option<PathBuf>,
