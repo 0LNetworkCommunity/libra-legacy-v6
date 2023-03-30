@@ -35,9 +35,14 @@ By creating a DonorDirected wallet you are providing certain restrictions and gu
 -  [Function `reject`](#0x1_DonorDirected_reject)
 -  [Function `reset_rejection_counter`](#0x1_DonorDirected_reset_rejection_counter)
 -  [Function `maybe_freeze`](#0x1_DonorDirected_maybe_freeze)
--  [Function `get_tx_params`](#0x1_DonorDirected_get_tx_params)
 -  [Function `get_pending_timed_transfer_mut`](#0x1_DonorDirected_get_pending_timed_transfer_mut)
--  [Function `get_index_of_pending`](#0x1_DonorDirected_get_index_of_pending)
+-  [Function `find_by_state_enum`](#0x1_DonorDirected_find_by_state_enum)
+-  [Function `find_anywhere`](#0x1_DonorDirected_find_anywhere)
+-  [Function `get_tx_params`](#0x1_DonorDirected_get_tx_params)
+-  [Function `get_proposal_state`](#0x1_DonorDirected_get_proposal_state)
+-  [Function `is_pending`](#0x1_DonorDirected_is_pending)
+-  [Function `is_approved`](#0x1_DonorDirected_is_approved)
+-  [Function `is_rejected`](#0x1_DonorDirected_is_rejected)
 -  [Function `is_frozen`](#0x1_DonorDirected_is_frozen)
 -  [Function `init_donor_directed`](#0x1_DonorDirected_init_donor_directed)
 -  [Function `finalize_init`](#0x1_DonorDirected_finalize_init)
@@ -275,6 +280,33 @@ the timed transfer will exevute unless the Donors veto the transaction.
 ## Constants
 
 
+<a name="0x1_DonorDirected_APPROVED"></a>
+
+
+
+<pre><code><b>const</b> <a href="DonorDirected.md#0x1_DonorDirected_APPROVED">APPROVED</a>: u8 = 2;
+</code></pre>
+
+
+
+<a name="0x1_DonorDirected_PENDING"></a>
+
+
+
+<pre><code><b>const</b> <a href="DonorDirected.md#0x1_DonorDirected_PENDING">PENDING</a>: u8 = 1;
+</code></pre>
+
+
+
+<a name="0x1_DonorDirected_REJECTED"></a>
+
+
+
+<pre><code><b>const</b> <a href="DonorDirected.md#0x1_DonorDirected_REJECTED">REJECTED</a>: u8 = 3;
+</code></pre>
+
+
+
 <a name="0x1_DonorDirected_ENOT_AUTHORIZED_TO_VOTE"></a>
 
 User is not a donor and cannot vote on this account
@@ -291,6 +323,16 @@ Not initialized as a donor directed account.
 
 
 <pre><code><b>const</b> <a href="DonorDirected.md#0x1_DonorDirected_ENOT_INIT_DONOR_DIRECTED">ENOT_INIT_DONOR_DIRECTED</a>: u64 = 231001;
+</code></pre>
+
+
+
+<a name="0x1_DonorDirected_ENOT_VALID_STATE_ENUM"></a>
+
+No enum for this number
+
+
+<pre><code><b>const</b> <a href="DonorDirected.md#0x1_DonorDirected_ENOT_VALID_STATE_ENUM">ENOT_VALID_STATE_ENUM</a>: u64 = 231012;
 </code></pre>
 
 
@@ -692,9 +734,10 @@ DANGER upstream functions need to check the sender is authorized.
   uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>,
 ) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>, <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
   <b>let</b> multisig_address = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_id_creator_address">GUID::id_creator_address</a>(uid);
-  <b>let</b> veto_approved = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_veto_by_id">DonorDirectedGovernance::veto_by_id</a>(sender, uid);
+  <b>let</b> veto_is_approved = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_veto_by_id">DonorDirectedGovernance::veto_by_id</a>(sender, uid);
+  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_none">Option::is_none</a>(&veto_is_approved)) <b>return</b>;
 
-  <b>if</b> (veto_approved) {
+  <b>if</b> (*<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>(&veto_is_approved)) {
     // <b>if</b> the veto passes, <b>freeze</b> the account
     <a href="DonorDirected.md#0x1_DonorDirected_reject">reject</a>(uid);
 
@@ -820,6 +863,108 @@ DonorDirected wallets get frozen if 3 consecutive attempts to transfer are rejec
 
 </details>
 
+<a name="0x1_DonorDirected_get_pending_timed_transfer_mut"></a>
+
+## Function `get_pending_timed_transfer_mut`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_pending_timed_transfer_mut">get_pending_timed_transfer_mut</a>(state: &<b>mut</b> <a href="DonorDirected.md#0x1_DonorDirected_DonorDirected">DonorDirected::DonorDirected</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): &<b>mut</b> <a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">DonorDirected::TimedTransfer</a>
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_pending_timed_transfer_mut">get_pending_timed_transfer_mut</a>(state: &<b>mut</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): &<b>mut</b> <a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a> {
+  <b>let</b> (found, i) = <a href="DonorDirected.md#0x1_DonorDirected_find_by_state_enum">find_by_state_enum</a>(state, uid, <a href="DonorDirected.md#0x1_DonorDirected_PENDING">PENDING</a>);
+
+  <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DonorDirected.md#0x1_DonorDirected_ENO_PEDNING_TRANSACTION_AT_UID">ENO_PEDNING_TRANSACTION_AT_UID</a>));
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> state.proposed, i)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DonorDirected_find_by_state_enum"></a>
+
+## Function `find_by_state_enum`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_find_by_state_enum">find_by_state_enum</a>(state: &<a href="DonorDirected.md#0x1_DonorDirected_DonorDirected">DonorDirected::DonorDirected</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, state_enum: u8): (bool, u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_find_by_state_enum">find_by_state_enum</a>(state: &<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, state_enum: u8): (bool, u64) {
+  <b>let</b> list = <b>if</b> (state_enum == <a href="DonorDirected.md#0x1_DonorDirected_PENDING">PENDING</a>) { &state.proposed }
+  <b>else</b> <b>if</b> (state_enum == <a href="DonorDirected.md#0x1_DonorDirected_APPROVED">APPROVED</a>) { &state.approved }
+  <b>else</b> <b>if</b> (state_enum == <a href="DonorDirected.md#0x1_DonorDirected_REJECTED">REJECTED</a>) { &state.rejected }
+  <b>else</b> {
+    <b>assert</b>!(<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DonorDirected.md#0x1_DonorDirected_ENOT_VALID_STATE_ENUM">ENOT_VALID_STATE_ENUM</a>));
+    &state.proposed  // dummy
+  };
+
+  <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(list);
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; len) {
+    <b>let</b> t = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(list, i);
+    <b>if</b> (&<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_id">GUID::id</a>(&t.uid) == uid) {
+      <b>return</b> (<b>true</b>, i)
+    };
+
+    i = i + 1;
+  };
+  (<b>false</b>, 0)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DonorDirected_find_anywhere"></a>
+
+## Function `find_anywhere`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_find_anywhere">find_anywhere</a>(state: &<a href="DonorDirected.md#0x1_DonorDirected_DonorDirected">DonorDirected::DonorDirected</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_find_anywhere">find_anywhere</a>(state: &<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8) { // (is_found, index, state)
+  <b>let</b> (found, i) = <a href="DonorDirected.md#0x1_DonorDirected_find_by_state_enum">find_by_state_enum</a>(state, uid, <a href="DonorDirected.md#0x1_DonorDirected_PENDING">PENDING</a>);
+  <b>if</b> (found) <b>return</b> (found, i, <a href="DonorDirected.md#0x1_DonorDirected_PENDING">PENDING</a>);
+
+  <b>let</b> (found, i) = <a href="DonorDirected.md#0x1_DonorDirected_find_by_state_enum">find_by_state_enum</a>(state, uid, <a href="DonorDirected.md#0x1_DonorDirected_APPROVED">APPROVED</a>);
+  <b>if</b> (found) <b>return</b> (found, i, <a href="DonorDirected.md#0x1_DonorDirected_APPROVED">APPROVED</a>);
+
+  <b>let</b> (found, i) = <a href="DonorDirected.md#0x1_DonorDirected_find_by_state_enum">find_by_state_enum</a>(state, uid, <a href="DonorDirected.md#0x1_DonorDirected_REJECTED">REJECTED</a>);
+  <b>if</b> (found) <b>return</b> (found, i, <a href="DonorDirected.md#0x1_DonorDirected_REJECTED">REJECTED</a>);
+
+  (<b>false</b>, 0, 0)
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_DonorDirected_get_tx_params"></a>
 
 ## Function `get_tx_params`
@@ -844,13 +989,13 @@ DonorDirected wallets get frozen if 3 consecutive attempts to transfer are rejec
 
 </details>
 
-<a name="0x1_DonorDirected_get_pending_timed_transfer_mut"></a>
+<a name="0x1_DonorDirected_get_proposal_state"></a>
 
-## Function `get_pending_timed_transfer_mut`
+## Function `get_proposal_state`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_pending_timed_transfer_mut">get_pending_timed_transfer_mut</a>(state: &<b>mut</b> <a href="DonorDirected.md#0x1_DonorDirected_DonorDirected">DonorDirected::DonorDirected</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): &<b>mut</b> <a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">DonorDirected::TimedTransfer</a>
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_proposal_state">get_proposal_state</a>(directed_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8)
 </code></pre>
 
 
@@ -859,11 +1004,9 @@ DonorDirected wallets get frozen if 3 consecutive attempts to transfer are rejec
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_pending_timed_transfer_mut">get_pending_timed_transfer_mut</a>(state: &<b>mut</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): &<b>mut</b> <a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a> {
-  <b>let</b> (found, i) = <a href="DonorDirected.md#0x1_DonorDirected_get_index_of_pending">get_index_of_pending</a>(state, uid);
-
-  <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DonorDirected.md#0x1_DonorDirected_ENO_PEDNING_TRANSACTION_AT_UID">ENO_PEDNING_TRANSACTION_AT_UID</a>));
-  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&<b>mut</b> state.proposed, i)
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_proposal_state">get_proposal_state</a>(directed_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> { // (is_found, index, state)
+  <b>let</b> state = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(directed_address);
+  <a href="DonorDirected.md#0x1_DonorDirected_find_anywhere">find_anywhere</a>(state, uid)
 }
 </code></pre>
 
@@ -871,13 +1014,13 @@ DonorDirected wallets get frozen if 3 consecutive attempts to transfer are rejec
 
 </details>
 
-<a name="0x1_DonorDirected_get_index_of_pending"></a>
+<a name="0x1_DonorDirected_is_pending"></a>
 
-## Function `get_index_of_pending`
+## Function `is_pending`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_index_of_pending">get_index_of_pending</a>(state: &<a href="DonorDirected.md#0x1_DonorDirected_DonorDirected">DonorDirected::DonorDirected</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64)
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_pending">is_pending</a>(directed_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): bool
 </code></pre>
 
 
@@ -886,18 +1029,62 @@ DonorDirected wallets get frozen if 3 consecutive attempts to transfer are rejec
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_index_of_pending">get_index_of_pending</a>(state: &<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64) {
-  <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&state.proposed);
-  <b>let</b> i = 0;
-  <b>while</b> (i &lt; len) {
-    <b>let</b> t = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a>&gt;(&state.proposed, i);
-    <b>if</b> (&<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_id">GUID::id</a>(&t.uid) == uid) {
-      <b>return</b> (<b>true</b>, i)
-    };
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_pending">is_pending</a>(directed_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): bool <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> { // (is_found, index, state)
+  <b>let</b> state = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(directed_address);
+  <b>let</b> (_, _, state) = <a href="DonorDirected.md#0x1_DonorDirected_find_anywhere">find_anywhere</a>(state, uid);
+  state == <a href="DonorDirected.md#0x1_DonorDirected_PENDING">PENDING</a>
+}
+</code></pre>
 
-    i = i + 1;
-  };
-  (<b>false</b>, 0)
+
+
+</details>
+
+<a name="0x1_DonorDirected_is_approved"></a>
+
+## Function `is_approved`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_approved">is_approved</a>(directed_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_approved">is_approved</a>(directed_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): bool <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> { // (is_found, index, state)
+  <b>let</b> state = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(directed_address);
+  <b>let</b> (_, _, state) = <a href="DonorDirected.md#0x1_DonorDirected_find_anywhere">find_anywhere</a>(state, uid);
+  state == <a href="DonorDirected.md#0x1_DonorDirected_APPROVED">APPROVED</a>
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DonorDirected_is_rejected"></a>
+
+## Function `is_rejected`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_rejected">is_rejected</a>(directed_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_rejected">is_rejected</a>(directed_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): bool <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> { // (is_found, index, state)
+  <b>let</b> state = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a>&gt;(directed_address);
+  <b>let</b> (_, _, state) = <a href="DonorDirected.md#0x1_DonorDirected_find_anywhere">find_anywhere</a>(state, uid);
+  state == <a href="DonorDirected.md#0x1_DonorDirected_REJECTED">REJECTED</a>
 }
 </code></pre>
 

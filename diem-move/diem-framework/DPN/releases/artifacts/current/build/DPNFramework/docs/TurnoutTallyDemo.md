@@ -15,6 +15,7 @@
 
 <pre><code><b>use</b> <a href="Ballot.md#0x1_Ballot">0x1::Ballot</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID">0x1::GUID</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="TurnoutTally.md#0x1_TurnoutTally">0x1::TurnoutTally</a>;
@@ -123,7 +124,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_propose_ballot_by_owner">propose_ballot_by_owner</a>(sig: &signer)
+<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_propose_ballot_by_owner">propose_ballot_by_owner</a>(sig: &signer, voters: u64, duration: u64)
 </code></pre>
 
 
@@ -132,14 +133,15 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_propose_ballot_by_owner">propose_ballot_by_owner</a>(sig: &signer) <b>acquires</b> <a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_Vote">Vote</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_propose_ballot_by_owner">propose_ballot_by_owner</a>(sig: &signer, voters: u64, duration: u64) <b>acquires</b> <a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_Vote">Vote</a> {
   <b>assert</b>!(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 0);
   <b>let</b> cap = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_gen_create_capability">GUID::gen_create_capability</a>(sig);
   <b>let</b> noop = <a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_EmptyType">EmptyType</a> {};
 
-  <b>let</b> t = <a href="TurnoutTally.md#0x1_TurnoutTally_new_tally_struct">TurnoutTally::new_tally_struct</a>&lt;<a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_EmptyType">EmptyType</a>&gt;(noop, 100, 4, 0);
+  <b>let</b> t = <a href="TurnoutTally.md#0x1_TurnoutTally_new_tally_struct">TurnoutTally::new_tally_struct</a>&lt;<a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_EmptyType">EmptyType</a>&gt;(noop, voters, duration, 0);
 
   <b>let</b> vote = <b>borrow_global_mut</b>&lt;<a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_Vote">Vote</a>&lt;<a href="TurnoutTally.md#0x1_TurnoutTally">TurnoutTally</a>&lt;<a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_EmptyType">EmptyType</a>&gt;&gt;&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig));
+
   <a href="Ballot.md#0x1_Ballot_propose_ballot">Ballot::propose_ballot</a>&lt;<a href="TurnoutTally.md#0x1_TurnoutTally">TurnoutTally</a>&lt;<a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_EmptyType">EmptyType</a>&gt;&gt;(&<b>mut</b> vote.tracker, &cap, t);
 }
 </code></pre>
@@ -154,7 +156,7 @@
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_vote">vote</a>(sig: &signer, election_addr: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, weight: u64, approve_reject: bool)
+<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_vote">vote</a>(sig: &signer, election_addr: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, weight: u64, approve_reject: bool): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;bool&gt;
 </code></pre>
 
 
@@ -163,12 +165,12 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_vote">vote</a>(sig: &signer, election_addr: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, weight: u64, approve_reject: bool) <b>acquires</b> <a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_Vote">Vote</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_vote">vote</a>(sig: &signer, election_addr: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, weight: u64, approve_reject: bool): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;bool&gt; <b>acquires</b> <a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_Vote">Vote</a> {
  <b>assert</b>!(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 0);
  <b>let</b> vote = <b>borrow_global_mut</b>&lt;<a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_Vote">Vote</a>&lt;<a href="TurnoutTally.md#0x1_TurnoutTally">TurnoutTally</a>&lt;<a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_EmptyType">EmptyType</a>&gt;&gt;&gt;(election_addr);
  <b>let</b> ballot = <a href="Ballot.md#0x1_Ballot_get_ballot_by_id_mut">Ballot::get_ballot_by_id_mut</a>&lt;<a href="TurnoutTally.md#0x1_TurnoutTally">TurnoutTally</a>&lt;<a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_EmptyType">EmptyType</a>&gt;&gt;(&<b>mut</b> vote.tracker, uid);
  <b>let</b> tally = <a href="Ballot.md#0x1_Ballot_get_type_struct_mut">Ballot::get_type_struct_mut</a>&lt;<a href="TurnoutTally.md#0x1_TurnoutTally">TurnoutTally</a>&lt;<a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_EmptyType">EmptyType</a>&gt;&gt;(ballot);
- <a href="TurnoutTally.md#0x1_TurnoutTally_vote">TurnoutTally::vote</a>&lt;<a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_EmptyType">EmptyType</a>&gt;(sig, tally, uid, approve_reject, weight);
+ <a href="TurnoutTally.md#0x1_TurnoutTally_vote">TurnoutTally::vote</a>&lt;<a href="TurnoutTallyDemo.md#0x1_TurnoutTallyDemo_EmptyType">EmptyType</a>&gt;(sig, tally, uid, approve_reject, weight)
 }
 </code></pre>
 

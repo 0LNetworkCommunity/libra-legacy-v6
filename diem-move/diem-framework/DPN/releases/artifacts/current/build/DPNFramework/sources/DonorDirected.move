@@ -38,6 +38,13 @@ module DonorDirected {
     const ENOT_AUTHORIZED_TO_VOTE: u64 = 231010;
     /// Could not find a pending transaction by this GUID
     const ENO_PEDNING_TRANSACTION_AT_UID: u64 = 231011;
+    /// No enum for this number
+    const ENOT_VALID_STATE_ENUM: u64 = 231012;
+
+    // dubplicated with Ballot
+    const PENDING: u8 = 1;
+    const APPROVED: u8 = 2;
+    const REJECTED: u8 = 3;
 
     // root registry for the donor directed accounts
     struct Registry has key {
@@ -234,7 +241,7 @@ module DonorDirected {
       return id
     }
 
-  ///////// PROCESS PAYMENTS /////////
+    ///////// PROCESS PAYMENTS /////////
     public fun process_donor_directed_accounts(
       vm: &signer,
     ) acquires Registry, DonorDirected, Freeze {
@@ -292,9 +299,10 @@ module DonorDirected {
     uid: &GUID::ID,
   ) acquires DonorDirected, Freeze {
     let multisig_address = GUID::id_creator_address(uid);
-    let veto_approved = DonorDirectedGovernance::veto_by_id(sender, uid);
+    let veto_is_approved = DonorDirectedGovernance::veto_by_id(sender, uid);
+    if (Option::is_none(&veto_is_approved)) return;
 
-    if (veto_approved) {
+    if (*Option::borrow(&veto_is_approved)) {
       // if the veto passes, freeze the account
       reject(uid);
       
@@ -357,23 +365,26 @@ module DonorDirected {
       }
     }
 
-    //////// GETTERS ////////
-    public fun get_tx_params(t: &TimedTransfer): (address, u64, vector<u8>, u64) {
-      (t.payee, t.value, *&t.description, t.expire_epoch)
-    }
-
     public fun get_pending_timed_transfer_mut(state: &mut DonorDirected, uid: &GUID::ID): &mut TimedTransfer {
-      let (found, i) = get_index_of_pending(state, uid);
+      let (found, i) = find_by_state_enum(state, uid, PENDING);
 
       assert!(found, Errors::invalid_argument(ENO_PEDNING_TRANSACTION_AT_UID));
       Vector::borrow_mut<TimedTransfer>(&mut state.proposed, i)
     }
 
-    public fun get_index_of_pending(state: &DonorDirected, uid: &GUID::ID): (bool, u64) {
-      let len = Vector::length(&state.proposed);
+    public fun find_by_state_enum(state: &DonorDirected, uid: &GUID::ID, state_enum: u8): (bool, u64) {
+      let list = if (state_enum == PENDING) { &state.proposed }
+      else if (state_enum == APPROVED) { &state.approved }
+      else if (state_enum == REJECTED) { &state.rejected }
+      else { 
+        assert!(false, Errors::invalid_argument(ENOT_VALID_STATE_ENUM));
+        &state.proposed  // dummy
+      };
+
+      let len = Vector::length(list);
       let i = 0;
       while (i < len) {
-        let t = Vector::borrow<TimedTransfer>(&state.proposed, i);
+        let t = Vector::borrow<TimedTransfer>(list, i);
         if (&GUID::id(&t.uid) == uid) {
           return (true, i)
         };
@@ -383,27 +394,48 @@ module DonorDirected {
       (false, 0)
     }
 
-    // public fun get_tx_epoch(uid: u64, multisig_address: address): u64 {
-    //   let (opt, _) = find(uid, PROPOSED, multisig_address);
-    //   if (Option::is_some<TimedTransfer>(&opt)) {
-    //     let t = Option::borrow<TimedTransfer>(&opt);
-    //     return *&t.expire_epoch
-    //   };
-    // }
-    
-    // public fun transfer_is_proposed(uid: u64, multisig_address: address): bool {
-    //   // let (opt, _) = find(uid, PROPOSED, multisig_address);
-    //   // Option::is_some<TimedTransfer>(&opt)
-    //   false
-    // }
+    public fun find_anywhere(state: &DonorDirected, uid: &GUID::ID): (bool, u64, u8) { // (is_found, index, state)
+      let (found, i) = find_by_state_enum(state, uid, PENDING);
+      if (found) return (found, i, PENDING);
 
-    // public fun transfer_is_rejected(uid: u64, multisig_address: address): bool  {
-    //   // let (opt, _) = find(uid, REJECTED, multisig_address);
-    //   // Option::is_some<TimedTransfer>(&opt)
-    //   false
-    // }
+      let (found, i) = find_by_state_enum(state, uid, APPROVED);
+      if (found) return (found, i, APPROVED);
+
+      let (found, i) = find_by_state_enum(state, uid, REJECTED);
+      if (found) return (found, i, REJECTED);
+
+      (false, 0, 0)
+    }
+
+    //////// GETTERS ////////
+    public fun get_tx_params(t: &TimedTransfer): (address, u64, vector<u8>, u64) {
+      (t.payee, t.value, *&t.description, t.expire_epoch)
+    }
 
 
+
+    public fun get_proposal_state(directed_address: address, uid: &GUID::ID): (bool, u64, u8) acquires DonorDirected { // (is_found, index, state) 
+      let state = borrow_global<DonorDirected>(directed_address);
+      find_anywhere(state, uid)
+    }
+
+    public fun is_pending(directed_address: address, uid: &GUID::ID): bool acquires DonorDirected { // (is_found, index, state) 
+      let state = borrow_global<DonorDirected>(directed_address);
+      let (_, _, state) = find_anywhere(state, uid);
+      state == PENDING
+    }
+
+    public fun is_approved(directed_address: address, uid: &GUID::ID): bool acquires DonorDirected { // (is_found, index, state) 
+      let state = borrow_global<DonorDirected>(directed_address);
+      let (_, _, state) = find_anywhere(state, uid);
+      state == APPROVED
+    }
+
+    public fun is_rejected(directed_address: address, uid: &GUID::ID): bool acquires DonorDirected { // (is_found, index, state) 
+      let state = borrow_global<DonorDirected>(directed_address);
+      let (_, _, state) = find_anywhere(state, uid);
+      state == REJECTED
+    }
 
     // getter to check if wallet is frozen
     // used in DiemAccount before attempting a transfer.

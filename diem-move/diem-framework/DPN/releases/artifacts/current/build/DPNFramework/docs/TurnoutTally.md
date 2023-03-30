@@ -10,7 +10,7 @@
 -  [Function `new_tally_struct`](#0x1_TurnoutTally_new_tally_struct)
 -  [Function `update_enrollment`](#0x1_TurnoutTally_update_enrollment)
 -  [Function `vote`](#0x1_TurnoutTally_vote)
--  [Function `is_complete`](#0x1_TurnoutTally_is_complete)
+-  [Function `maybe_complete`](#0x1_TurnoutTally_maybe_complete)
 -  [Function `retract`](#0x1_TurnoutTally_retract)
 -  [Function `extend_deadline`](#0x1_TurnoutTally_extend_deadline)
 -  [Function `maybe_auto_competitive_extend`](#0x1_TurnoutTally_maybe_auto_competitive_extend)
@@ -18,13 +18,14 @@
 -  [Function `maybe_tally`](#0x1_TurnoutTally_maybe_tally)
 -  [Function `get_threshold_from_turnout`](#0x1_TurnoutTally_get_threshold_from_turnout)
 -  [Function `get_tally`](#0x1_TurnoutTally_get_tally)
--  [Function `is_complete_result`](#0x1_TurnoutTally_is_complete_result)
+-  [Function `maybe_complete_result`](#0x1_TurnoutTally_maybe_complete_result)
 
 
 <pre><code><b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID">0x1::GUID</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 <b>use</b> <a href="VoteReceipt.md#0x1_VoteReceipt">0x1::VoteReceipt</a>;
@@ -385,7 +386,7 @@ The threshold curve parameters are wrong. The curve is not decreasing.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="TurnoutTally.md#0x1_TurnoutTally_update_enrollment">update_enrollment</a>&lt;Data: drop + store&gt;(ballot: &<b>mut</b> <a href="TurnoutTally.md#0x1_TurnoutTally">TurnoutTally</a>&lt;Data&gt;, enrollment: vector&lt;<b>address</b>&gt;) {
-  <b>assert</b>!(!<a href="TurnoutTally.md#0x1_TurnoutTally_is_complete">is_complete</a>(ballot), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="TurnoutTally.md#0x1_TurnoutTally_ECOMPLETED">ECOMPLETED</a>));
+  <b>assert</b>!(!<a href="TurnoutTally.md#0x1_TurnoutTally_maybe_complete">maybe_complete</a>(ballot), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="TurnoutTally.md#0x1_TurnoutTally_ECOMPLETED">ECOMPLETED</a>));
   ballot.enrollment = enrollment;
 }
 </code></pre>
@@ -400,7 +401,7 @@ The threshold curve parameters are wrong. The curve is not decreasing.
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTally.md#0x1_TurnoutTally_vote">vote</a>&lt;Data: drop, store&gt;(user: &signer, ballot: &<b>mut</b> <a href="TurnoutTally.md#0x1_TurnoutTally_TurnoutTally">TurnoutTally::TurnoutTally</a>&lt;Data&gt;, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, approve_reject: bool, weight: u64): bool
+<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTally.md#0x1_TurnoutTally_vote">vote</a>&lt;Data: drop, store&gt;(user: &signer, ballot: &<b>mut</b> <a href="TurnoutTally.md#0x1_TurnoutTally_TurnoutTally">TurnoutTally::TurnoutTally</a>&lt;Data&gt;, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, approve_reject: bool, weight: u64): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;bool&gt;
 </code></pre>
 
 
@@ -415,9 +416,9 @@ The threshold curve parameters are wrong. The curve is not decreasing.
   uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>,
   approve_reject: bool,
   weight: u64
-): bool {
+): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;bool&gt; {
   // voting should not be complete
-  <b>assert</b>!(!<a href="TurnoutTally.md#0x1_TurnoutTally_is_complete">is_complete</a>(ballot), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="TurnoutTally.md#0x1_TurnoutTally_ECOMPLETED">ECOMPLETED</a>));
+  <b>assert</b>!(!<a href="TurnoutTally.md#0x1_TurnoutTally_maybe_complete">maybe_complete</a>(ballot), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="TurnoutTally.md#0x1_TurnoutTally_ECOMPLETED">ECOMPLETED</a>));
 
   // check <b>if</b> this person voted already.
   // If the vote is the same directionally (approve, reject), exit early.
@@ -449,7 +450,8 @@ The threshold curve parameters are wrong. The curve is not decreasing.
   // this will handle the case of updating the receipt in case this is a second vote.
   <a href="VoteReceipt.md#0x1_VoteReceipt_make_receipt">VoteReceipt::make_receipt</a>(user, uid, approve_reject, weight);
 
-  ballot.tally_pass // <b>return</b> <b>if</b> it passed, so it can be used in a third party contract handler for lazy evaluation.
+  <b>if</b> (ballot.completed) { <b>return</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_some">Option::some</a>(ballot.tally_pass) };
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_none">Option::none</a>&lt;bool&gt;() // <b>return</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_some">Option::some</a>() <b>if</b> complete, and bool <b>if</b> it passed, so it can be used in a third party contract handler for lazy evaluation.
 }
 </code></pre>
 
@@ -457,13 +459,13 @@ The threshold curve parameters are wrong. The curve is not decreasing.
 
 </details>
 
-<a name="0x1_TurnoutTally_is_complete"></a>
+<a name="0x1_TurnoutTally_maybe_complete"></a>
 
-## Function `is_complete`
+## Function `maybe_complete`
 
 
 
-<pre><code><b>fun</b> <a href="TurnoutTally.md#0x1_TurnoutTally_is_complete">is_complete</a>&lt;Data: drop, store&gt;(ballot: &<b>mut</b> <a href="TurnoutTally.md#0x1_TurnoutTally_TurnoutTally">TurnoutTally::TurnoutTally</a>&lt;Data&gt;): bool
+<pre><code><b>fun</b> <a href="TurnoutTally.md#0x1_TurnoutTally_maybe_complete">maybe_complete</a>&lt;Data: drop, store&gt;(ballot: &<b>mut</b> <a href="TurnoutTally.md#0x1_TurnoutTally_TurnoutTally">TurnoutTally::TurnoutTally</a>&lt;Data&gt;): bool
 </code></pre>
 
 
@@ -472,7 +474,7 @@ The threshold curve parameters are wrong. The curve is not decreasing.
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="TurnoutTally.md#0x1_TurnoutTally_is_complete">is_complete</a>&lt;Data: drop + store&gt;(ballot: &<b>mut</b> <a href="TurnoutTally.md#0x1_TurnoutTally">TurnoutTally</a>&lt;Data&gt;): bool {
+<pre><code><b>fun</b> <a href="TurnoutTally.md#0x1_TurnoutTally_maybe_complete">maybe_complete</a>&lt;Data: drop + store&gt;(ballot: &<b>mut</b> <a href="TurnoutTally.md#0x1_TurnoutTally">TurnoutTally</a>&lt;Data&gt;): bool {
   <b>let</b> epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
   // <b>if</b> completed, exit early
   <b>if</b> (ballot.completed) { <b>return</b> <b>true</b> }; // this should be checked above anyways.
@@ -797,14 +799,14 @@ get current tally
 
 </details>
 
-<a name="0x1_TurnoutTally_is_complete_result"></a>
+<a name="0x1_TurnoutTally_maybe_complete_result"></a>
 
-## Function `is_complete_result`
+## Function `maybe_complete_result`
 
 is it complete and what's the result
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTally.md#0x1_TurnoutTally_is_complete_result">is_complete_result</a>&lt;Data: <b>copy</b>, store&gt;(ballot: &<a href="TurnoutTally.md#0x1_TurnoutTally_TurnoutTally">TurnoutTally::TurnoutTally</a>&lt;Data&gt;): (bool, bool)
+<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTally.md#0x1_TurnoutTally_maybe_complete_result">maybe_complete_result</a>&lt;Data: <b>copy</b>, store&gt;(ballot: &<a href="TurnoutTally.md#0x1_TurnoutTally_TurnoutTally">TurnoutTally::TurnoutTally</a>&lt;Data&gt;): (bool, bool)
 </code></pre>
 
 
@@ -813,7 +815,7 @@ is it complete and what's the result
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTally.md#0x1_TurnoutTally_is_complete_result">is_complete_result</a>&lt;Data: <b>copy</b> + store&gt;(ballot: &<a href="TurnoutTally.md#0x1_TurnoutTally">TurnoutTally</a>&lt;Data&gt;): (bool, bool) {
+<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTally.md#0x1_TurnoutTally_maybe_complete_result">maybe_complete_result</a>&lt;Data: <b>copy</b> + store&gt;(ballot: &<a href="TurnoutTally.md#0x1_TurnoutTally">TurnoutTally</a>&lt;Data&gt;): (bool, bool) {
   (ballot.completed, ballot.tally_pass)
 }
 </code></pre>

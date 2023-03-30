@@ -33,9 +33,7 @@ What you may initially struggle with is the TallyType cannot be modified in this
 -  [Function `get_type_struct`](#0x1_Ballot_get_type_struct)
 -  [Function `get_type_struct_mut`](#0x1_Ballot_get_type_struct_mut)
 -  [Function `find_anywhere`](#0x1_Ballot_find_anywhere)
--  [Function `find_anywhere_by_data`](#0x1_Ballot_find_anywhere_by_data)
 -  [Function `find_index_of_ballot`](#0x1_Ballot_find_index_of_ballot)
--  [Function `find_index_of_ballot_by_data`](#0x1_Ballot_find_index_of_ballot_by_data)
 -  [Function `get_list_ballots_by_enum`](#0x1_Ballot_get_list_ballots_by_enum)
 -  [Function `get_list_ballots_by_enum_mut`](#0x1_Ballot_get_list_ballots_by_enum_mut)
 -  [Function `get_ballot_id`](#0x1_Ballot_get_ballot_id)
@@ -245,7 +243,7 @@ If you have a mutable BallotTracker instance AND you have the GUID Create Capabi
   };
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&tracker.ballots_pending);
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> tracker.ballots_pending, b);
-  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>(&<b>mut</b> tracker.ballots_pending, len + 1)
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>(&<b>mut</b> tracker.ballots_pending, len)
 }
 </code></pre>
 
@@ -509,59 +507,15 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 
 </details>
 
-<a name="0x1_Ballot_find_anywhere_by_data"></a>
-
-## Function `find_anywhere_by_data`
-
-returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bool)
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Ballot.md#0x1_Ballot_find_anywhere_by_data">find_anywhere_by_data</a>&lt;TallyType: drop, store&gt;(tracker: &<a href="Ballot.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, tally_type: &TallyType): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, u64, u8, bool)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Ballot.md#0x1_Ballot_find_anywhere_by_data">find_anywhere_by_data</a>&lt;TallyType: drop + store&gt; (
-  tracker: &<a href="Ballot.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
-  tally_type: &TallyType,
-): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, u64, u8, bool)  {
- // looking in pending
- <b>let</b> (found, guid, idx) = <a href="Ballot.md#0x1_Ballot_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, tally_type, <a href="Ballot.md#0x1_Ballot_PENDING">PENDING</a>);
- <b>if</b> (found) {
-  <b>let</b> complete = <a href="Ballot.md#0x1_Ballot_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_pending, idx));
-   <b>return</b> (<b>true</b>, guid, idx, <a href="Ballot.md#0x1_Ballot_PENDING">PENDING</a>, complete)
- };
-
- // looking in approved
-  <b>let</b> (found, guid, idx) = <a href="Ballot.md#0x1_Ballot_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, tally_type, <a href="Ballot.md#0x1_Ballot_APPROVED">APPROVED</a>);
-  <b>if</b> (found) {
-    <b>let</b> complete = <a href="Ballot.md#0x1_Ballot_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_approved, idx));
-    <b>return</b> (<b>true</b>, guid, idx, <a href="Ballot.md#0x1_Ballot_APPROVED">APPROVED</a>, complete)
-  };
-
- // looking in rejected
-  <b>let</b> (found, guid, idx) = <a href="Ballot.md#0x1_Ballot_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, tally_type, <a href="Ballot.md#0x1_Ballot_REJECTED">REJECTED</a>);
-  <b>if</b> (found) {
-    <b>let</b> complete = <a href="Ballot.md#0x1_Ballot_is_completed">is_completed</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&tracker.ballots_rejected, idx));
-    <b>return</b> (<b>true</b>, guid, idx, <a href="Ballot.md#0x1_Ballot_REJECTED">REJECTED</a>, complete)
-  };
-
-  (<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_create_id">GUID::create_id</a>(@0x0, 0), 0, 0, <b>false</b>)
-}
-</code></pre>
-
-
-
-</details>
-
 <a name="0x1_Ballot_find_index_of_ballot"></a>
 
 ## Function `find_index_of_ballot`
 
+find the index in list, if you know the GUID.
+If you need to search for the GUID by data, Ballot cannot do that.
+since you may need to look at specific fields to find duplications
+you'll need to do the search wherever TallyType is defined.
+For example: if we tried to do it here, and there was a field of <code>voted</code> addresses, you would never find a duplicate.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Ballot.md#0x1_Ballot_find_index_of_ballot">find_index_of_ballot</a>&lt;TallyType: drop, store&gt;(tracker: &<a href="Ballot.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, proposal_guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, status_enum: u8): (bool, u64)
@@ -592,47 +546,6 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
   };
 
   (<b>false</b>, 0)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_Ballot_find_index_of_ballot_by_data"></a>
-
-## Function `find_index_of_ballot_by_data`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Ballot.md#0x1_Ballot_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>&lt;TallyType: drop, store&gt;(tracker: &<a href="Ballot.md#0x1_Ballot_BallotTracker">Ballot::BallotTracker</a>&lt;TallyType&gt;, tally_type: &TallyType, status_enum: u8): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, u64)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Ballot.md#0x1_Ballot_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>&lt;TallyType: drop + store&gt; (
-  tracker: &<a href="Ballot.md#0x1_Ballot_BallotTracker">BallotTracker</a>&lt;TallyType&gt;,
-  tally_type: &TallyType,
-  status_enum: u8,
-): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, u64) {
-
- <b>let</b> list = <a href="Ballot.md#0x1_Ballot_get_list_ballots_by_enum">get_list_ballots_by_enum</a>&lt;TallyType&gt;(tracker, status_enum);
-
-  <b>let</b> i = 0;
-  <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(list)) {
-    <b>let</b> b = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(list, i);
-
-    <b>if</b> (&b.tally_type == tally_type) {
-      <b>return</b> (<b>true</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_id">GUID::id</a>(&b.guid), i)
-    };
-    i = i + 1;
-  };
-
-  (<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_create_id">GUID::create_id</a>(@0x0, 0), 0)
 }
 </code></pre>
 
