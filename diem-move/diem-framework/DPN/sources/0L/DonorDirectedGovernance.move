@@ -16,6 +16,7 @@ module DonorDirectedGovernance {
     use Std::Errors;
     use Std::Signer;
     use Std::GUID;
+    use Std::Option::Option;
     use DiemFramework::Receipts;
     use DiemFramework::TurnoutTally::{Self, TurnoutTally};
     use DiemFramework::Ballot::{Self, BallotTracker};
@@ -92,7 +93,7 @@ module DonorDirectedGovernance {
 
 
     /// private function to vote on a ballot based on a Donor's voting power.
-    fun vote_veto(user: &signer, ballot: &mut TurnoutTally<Veto>, uid: &GUID::ID, multisig_address: address): bool {
+    fun vote_veto(user: &signer, ballot: &mut TurnoutTally<Veto>, uid: &GUID::ID, multisig_address: address): Option<bool> {
       let user_votes = get_user_donations(multisig_address, Signer::address_of(user));
 
       let veto_tx = true; // True means  approve the ballot, meaning: "veto transaction". Rejecting the ballot would mean "approve transaction".
@@ -108,7 +109,7 @@ module DonorDirectedGovernance {
 
     /// should only be called by the DonorDirected.move so that the handlers can be called on "pass" conditions.
 
-    public(friend) fun veto_by_id(user: &signer, proposal_guid: &GUID::ID): bool acquires Governance {
+    public(friend) fun veto_by_id(user: &signer, proposal_guid: &GUID::ID): Option<bool> acquires Governance {
       let directed_account = GUID::id_creator_address(proposal_guid);
       assert_authorized(user, directed_account);
 

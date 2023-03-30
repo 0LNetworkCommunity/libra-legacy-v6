@@ -19,8 +19,8 @@ address DiemFramework {
     use Std::GUID;
     use Std::Signer;
     use Std::Vector;
+    use Std::Option::Option;
     use DiemFramework::Testnet;
-    use DiemFramework::Debug::print;
 
     struct Vote<D> has key {
       tracker: BallotTracker<D>,
@@ -50,22 +50,18 @@ address DiemFramework {
       let noop = EmptyType {};
 
       let t = TurnoutTally::new_tally_struct<EmptyType>(noop, voters, duration, 0);
-      print(&010);
-      print(&t);
 
       let vote = borrow_global_mut<Vote<TurnoutTally<EmptyType>>>(Signer::address_of(sig));
-      print(&011);
-      print(vote);
+
       Ballot::propose_ballot<TurnoutTally<EmptyType>>(&mut vote.tracker, &cap, t);
-      print(&12);
     }
 
-     public fun vote(sig: &signer, election_addr: address, uid: &GUID::ID, weight: u64, approve_reject: bool) acquires Vote {
+     public fun vote(sig: &signer, election_addr: address, uid: &GUID::ID, weight: u64, approve_reject: bool): Option<bool> acquires Vote {
       assert!(Testnet::is_testnet(), 0);
       let vote = borrow_global_mut<Vote<TurnoutTally<EmptyType>>>(election_addr);
       let ballot = Ballot::get_ballot_by_id_mut<TurnoutTally<EmptyType>>(&mut vote.tracker, uid);
       let tally = Ballot::get_type_struct_mut<TurnoutTally<EmptyType>>(ballot);
-      TurnoutTally::vote<EmptyType>(sig, tally, uid, approve_reject, weight);
+      TurnoutTally::vote<EmptyType>(sig, tally, uid, approve_reject, weight)
     }
 
     public fun retract(sig: &signer, uid: &GUID::ID, election_addr: address) acquires Vote {

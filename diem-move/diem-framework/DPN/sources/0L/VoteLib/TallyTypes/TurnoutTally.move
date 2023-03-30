@@ -42,6 +42,7 @@ address DiemFramework {
     use Std::Signer;
     use Std::GUID;
     use Std::Errors;
+    use Std::Option::{Self, Option};
     use DiemFramework::DiemConfig;
     use DiemFramework::VoteReceipt;
 
@@ -148,7 +149,7 @@ address DiemFramework {
     }
 
     public fun update_enrollment<Data: drop + store>(ballot: &mut TurnoutTally<Data>, enrollment: vector<address>) {
-      assert!(!is_complete(ballot), Errors::invalid_state(ECOMPLETED));
+      assert!(!maybe_complete(ballot), Errors::invalid_state(ECOMPLETED));
       ballot.enrollment = enrollment;
     }
 
@@ -163,9 +164,9 @@ address DiemFramework {
       uid: &GUID::ID,
       approve_reject: bool,
       weight: u64
-    ): bool {
+    ): Option<bool> {
       // voting should not be complete
-      assert!(!is_complete(ballot), Errors::invalid_state(ECOMPLETED));
+      assert!(!maybe_complete(ballot), Errors::invalid_state(ECOMPLETED));
 
       // check if this person voted already.
       // If the vote is the same directionally (approve, reject), exit early.
@@ -197,10 +198,11 @@ address DiemFramework {
       // this will handle the case of updating the receipt in case this is a second vote.
       VoteReceipt::make_receipt(user, uid, approve_reject, weight);
 
-      ballot.tally_pass // return if it passed, so it can be used in a third party contract handler for lazy evaluation.
+      if (ballot.completed) { return Option::some(ballot.tally_pass) };
+      Option::none<bool>() // return Option::some() if complete, and bool if it passed, so it can be used in a third party contract handler for lazy evaluation.
     }
 
-    fun is_complete<Data: drop + store>(ballot: &mut TurnoutTally<Data>): bool {
+    fun maybe_complete<Data: drop + store>(ballot: &mut TurnoutTally<Data>): bool {
       let epoch = DiemConfig::get_current_epoch();
       // if completed, exit early
       if (ballot.completed) { return true }; // this should be checked above anyways.
@@ -387,7 +389,7 @@ address DiemFramework {
     }
 
     /// is it complete and what's the result
-    public fun is_complete_result<Data: copy + store>(ballot: &TurnoutTally<Data>): (bool, bool) {
+    public fun maybe_complete_result<Data: copy + store>(ballot: &TurnoutTally<Data>): (bool, bool) {
       (ballot.completed, ballot.tally_pass)
     }
 

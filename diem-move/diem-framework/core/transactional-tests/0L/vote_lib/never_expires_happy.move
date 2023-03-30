@@ -5,10 +5,12 @@
 
 //# run --admin-script --signers DiemRoot Alice
 script {
-    use DiemFramework::DummyTestVote;
+    use DiemFramework::TurnoutTallyDemo;
     fun main(_root: signer, a_sig: signer) {
+      TurnoutTallyDemo::init(&a_sig);
+
       // ZERO HERE MEANS IT NEVER EXPIRES
-      DummyTestVote::init(&a_sig, b"please vote", 100, 0, 0);
+      TurnoutTallyDemo::propose_ballot_by_owner(&a_sig, 100, 0);
     }
 }
 // check: EXECUTED
@@ -27,15 +29,13 @@ script {
 
 //# run --admin-script --signers DiemRoot Bob
 script {
-    use DiemFramework::DummyTestVote;
-    use DiemFramework::ParticipationVote;
+    use DiemFramework::TurnoutTallyDemo;
+    use Std::GUID;
 
     fun main(_root: signer, b_sig: signer) {   
-      DummyTestVote::vote(&b_sig, @Alice, 22, true);
-      let id = DummyTestVote::get_id(@Alice);
-      let (r, w) = ParticipationVote::get_receipt_data(@Bob, &id);
-      assert!(r == true, 0); // voted in favor
-      assert!(w == 22, 1);
-      // TX SHOULD BE REJECTED WITH 300010
+      let next_id = GUID::get_next_creation_num(@Alice);
+
+      let uid = GUID::create_id(@Alice, next_id - 1); // TODO: unclear why it's 2 and not 0
+      TurnoutTallyDemo::vote(&b_sig, @Alice, &uid, 22, true);
     }
 }

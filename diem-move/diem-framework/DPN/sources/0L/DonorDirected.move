@@ -292,9 +292,10 @@ module DonorDirected {
     uid: &GUID::ID,
   ) acquires DonorDirected, Freeze {
     let multisig_address = GUID::id_creator_address(uid);
-    let veto_approved = DonorDirectedGovernance::veto_by_id(sender, uid);
+    let veto_is_approved = DonorDirectedGovernance::veto_by_id(sender, uid);
+    if (Option::is_none(&veto_is_approved)) return;
 
-    if (veto_approved) {
+    if (*Option::borrow(&veto_is_approved)) {
       // if the veto passes, freeze the account
       reject(uid);
       
