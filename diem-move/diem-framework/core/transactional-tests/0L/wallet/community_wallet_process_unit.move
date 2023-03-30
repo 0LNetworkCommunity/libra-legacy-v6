@@ -1,4 +1,4 @@
-//# init --parent-vasps Dummy Alice Dummy2 Bob Dummy3 Carol
+//# init --parent-vasps Dummy Alice Dummy2 Bob Dummy3 Carol Dummy4 Dave
 // Dummy, Dummy2:     validators with 10M GAS
 // Alice, Bob:    non-validators with  1M GAS
 
@@ -8,14 +8,8 @@ script {
     use Std::Vector;
 
     fun main(_dr: signer, sender: signer) {
-      DonorDirected::set_donor_directed(&sender);
-
-      let signers = Vector::empty<address>();
-      Vector::push_back(&mut signers, @Bob);
-      Vector::push_back(&mut signers, @Carol);
-      
-      DonorDirected::make_multisig(&sender, 2, signers);
-
+      DonorDirected::init_donor_directed(&sender, @Bob, @Carol, @Dave, 2);
+      DonorDirected::finalize_init(&sender);
       let list = DonorDirected::get_root_registry();
       assert!(Vector::length(&list) == 1, 7357001);
 
@@ -26,6 +20,8 @@ script {
     }
 }
 // check: EXECUTED
+
+
 
 
 // //# run --admin-script --signers DiemRoot DiemRoot

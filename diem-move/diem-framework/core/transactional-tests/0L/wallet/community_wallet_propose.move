@@ -1,22 +1,30 @@
-//# init --validators Alice Bob
-
-///// Setting up the test fixtures for the transactions below. 
-///// The tags below create validators alice and bob, giving them 1000000 GAS coins.
-
+//# init --parent-vasps Dummy Alice Dummy2 Bob Dummy3 Carol Dummy4 Dave
+// Dummy, Dummy2:     validators with 10M GAS
+// Alice, Bob:    non-validators with  1M GAS
 //# run --admin-script --signers DiemRoot Alice
 script {
-    use DiemFramework::Wallet;
+    use DiemFramework::DonorDirected;
     use Std::Vector;
 
     fun main(_dr: signer, sender: signer) {
-      Wallet::set_comm(&sender);
-      let list = Wallet::get_comm_list();
-
+      DonorDirected::init_donor_directed(&sender, @Bob, @Carol, @Dave, 2);
+      DonorDirected::finalize_init(&sender);
+      let list = DonorDirected::get_root_registry();
       assert!(Vector::length(&list) == 1, 7357001);
-      assert!(Wallet::is_comm(@Alice), 7357002);
 
-      let uid = Wallet::new_timed_transfer(&sender, @Bob, 100, b"thanks bob");
-      assert!(Wallet::transfer_is_proposed(uid), 7357003);
+      assert!(DonorDirected::is_donor_directed(@Alice), 7357002);
+    }
+}
+// check: EXECUTED
+
+//# run --admin-script --signers DiemRoot Bob
+script {
+    use DiemFramework::DonorDirected;
+    use Std::Vector;
+
+    fun main(_dr: signer, sender: signer) {
+      let uid = DonorDirected::new_timed_transfer_multisig(&sender, @Alice, @Bob, 100, b"thanks bob");
+      assert!(DonorDirected::is_pending(@Alice, &uid), 7357003);
     }
 }
 // check: EXECUTED

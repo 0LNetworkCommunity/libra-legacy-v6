@@ -40,6 +40,8 @@ module DonorDirected {
     const ENO_PEDNING_TRANSACTION_AT_UID: u64 = 231011;
     /// No enum for this number
     const ENOT_VALID_STATE_ENUM: u64 = 231012;
+    /// No enum for this number
+    const EMULTISIG_NOT_INIT: u64 = 231013;
 
     // dubplicated with Ballot
     const PENDING: u8 = 1;
@@ -148,7 +150,7 @@ module DonorDirected {
     /// Note, as with any multisig, the new_authorities cannot include the sponsor, since that account will no longer be able to sign transactions.
     public fun make_multisig(sponsor: &signer, cfg_default_n_sigs: u64, new_authorities: vector<address>) {
       MultiSig::init_gov(sponsor, cfg_default_n_sigs, &new_authorities);
-      MultiSig::init_type<TimedTransfer>(sponsor, true); // "true": We make this multisig instance hold the WithdrawCapability. Even though we don't need it for any DiemAccount pay functions, we can use it to make sure the entire pipeline of private functions scheduling a payment are authorized. Belt and suspenders.
+      MultiSig::init_type<DonorDirectedProp>(sponsor, true); // "true": We make this multisig instance hold the WithdrawCapability. Even though we don't need it for any DiemAccount pay functions, we can use it to make sure the entire pipeline of private functions scheduling a payment are authorized. Belt and suspenders.
     }
 
 
@@ -449,34 +451,42 @@ module DonorDirected {
     /// Initialize the DonorDirected wallet with Three Signers
 
     // TODO: this version of Diem, does not allow vector<address> in the script arguments. So we are hard coding this to initialize with three signers. Gross.
-    public(script) fun init_donor_directed(sig: signer, signer_one: address, signer_two: address, signer_three: address, cfg_n_signers: u64) acquires Registry {
+    public fun init_donor_directed(sponsor: &signer, signer_one: address, signer_two: address, signer_three: address, cfg_n_signers: u64) acquires Registry {
       let init_signers = Vector::singleton(signer_one);
       Vector::push_back(&mut init_signers, signer_two);
       Vector::push_back(&mut init_signers, signer_three);
 
-      set_donor_directed(&sig);
-      make_multisig(&sig, cfg_n_signers, init_signers);
+      set_donor_directed(sponsor);
+      make_multisig(sponsor, cfg_n_signers, init_signers);
     }
     
     /// the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.
-    public(script) fun finalize_init(sponsor: signer) {
-      let multisig_address = Signer::address_of(&sponsor);
+    public fun finalize_init(sponsor: &signer) {
+      let multisig_address = Signer::address_of(sponsor);
+      assert!(MultiSig::is_init(multisig_address), Errors::invalid_state(EMULTISIG_NOT_INIT));
+
+      assert!(MultiSig::has_action<DonorDirectedProp>(multisig_address), Errors::invalid_state(EMULTISIG_NOT_INIT));
+
+      assert!(exists<Freeze>(multisig_address), Errors::invalid_state(ENOT_INIT_DONOR_DIRECTED));
+      
+      assert!(exists<DonorDirected>(multisig_address), Errors::invalid_state(ENOT_INIT_DONOR_DIRECTED));
+      
+      MultiSig::finalize_and_brick(sponsor);
       assert!(is_donor_directed(multisig_address), Errors::invalid_state(ENOT_INIT_DONOR_DIRECTED));
-      MultiSig::finalize_and_brick(&sponsor);
     }
 
     /// propose and vote on the liquidation of this wallet
-    public(script) fun propose_liquidation(user: signer, multisig_address: address)  acquires DonorDirected {
-      DonorDirectedGovernance::assert_authorized(&user, multisig_address);
+    public fun propose_liquidation(donor: &signer, multisig_address: address)  acquires DonorDirected {
+      DonorDirectedGovernance::assert_authorized(donor, multisig_address);
       let state = borrow_global<DonorDirected>(multisig_address);
       let epochs_duration = 30;
       DonorDirectedGovernance::propose_liquidate(&state.guid_capability, epochs_duration);
     }
 
     /// propose and vote on the veto of a specific transacation
-    public(script) fun propose_veto(user: signer, multisig_address: address, uid: u64)  acquires DonorDirected {
+    public fun propose_veto(donor: &signer, multisig_address: address, uid: u64)  acquires DonorDirected {
       let guid = GUID::create_id(multisig_address, uid);
-      DonorDirectedGovernance::assert_authorized(&user, multisig_address);
+      DonorDirectedGovernance::assert_authorized(donor, multisig_address);
       let state = borrow_global<DonorDirected>(multisig_address);
       let epochs_duration = 7;
       DonorDirectedGovernance::propose_veto(&state.guid_capability, &guid,  epochs_duration);

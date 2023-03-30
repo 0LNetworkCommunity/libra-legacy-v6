@@ -8,8 +8,8 @@ script {
     use Std::Vector;
 
     fun main(_dr: signer, sender: signer) {
-      DonorDirected::init_donor_directed(sender, @Bob, @Carol, @Dave, 2);
-      DonorDirected::finalize_init(sender);
+      DonorDirected::init_donor_directed(&sender, @Bob, @Carol, @Dave, 2);
+      DonorDirected::finalize_init(&sender);
       let list = DonorDirected::get_root_registry();
       assert!(Vector::length(&list) == 1, 7357001);
 
