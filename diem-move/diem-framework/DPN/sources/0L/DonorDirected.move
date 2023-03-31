@@ -37,6 +37,9 @@ module DonorDirected {
     use DiemFramework::DiemAccount::{Self, WithdrawCapability};
     use DiemFramework::DonorDirectedGovernance;
     use DiemFramework::Ballot;
+    // use DiemFramework::Testnet;
+
+    use DiemFramework::Debug::print;
 
     /// Not initialized as a donor directed account.
     const ENOT_INIT_DONOR_DIRECTED: u64 = 231001;
@@ -52,6 +55,14 @@ module DonorDirected {
     const SCHEDULED: u8 = 1;
     const VETO: u8 = 2;
     const PAID: u8 = 3;
+
+    /// number of epochs to wait before a transaction is executed
+    /// Veto can happen in this time
+    /// at the end of the third epoch from when multisig gets consensus
+    const DEFAULT_PAYMENT_DURATION: u64 = 3; 
+    /// minimum amount of time to evaluate when one donor flags for veto.
+    const DEFAULT_VETO_DURATION: u64 = 7;
+
 
     // root registry for the donor directed accounts
     struct Registry has key {
@@ -225,14 +236,12 @@ module DonorDirected {
       
       let multisig_address = DiemAccount::get_withdraw_cap_address(withdraw_capability);
       let transfers = borrow_global_mut<TxSchedule>(multisig_address);
-      // let uid = GUID::create_with_capability(multisig_address, &transfers.guid_capability);
       
-      // add current epoch + 1
-      let current_epoch = DiemConfig::get_current_epoch();
-
+      let deadline = DiemConfig::get_current_epoch() + DEFAULT_PAYMENT_DURATION;
+      
       let t = TimedTransfer {
         uid: *uid,
-        deadline: current_epoch + 7, // pays automativally at the end of seventh epoch. Unless there is a veto by a Donor. In that case a day is added for every day there is a veto. This deduplicates Vetos.
+        deadline, // pays automatically at the end of seventh epoch. Unless there is a veto by a Donor. In that case a day is added for every day there is a veto. This deduplicates Vetos.
         tx,
         epoch_latest_veto_received: 0,
       };
@@ -247,6 +256,7 @@ module DonorDirected {
     /// needing to intervene.
     public fun process_donor_directed_accounts(
       vm: &signer,
+      epoch: u64,
     ) acquires Registry, TxSchedule, Freeze {
 
       let list = get_root_registry();
@@ -256,23 +266,31 @@ module DonorDirected {
         let multisig_address = Vector::borrow(&list, i);
         if (exists<TxSchedule>(*multisig_address)) {
           let state = borrow_global_mut<TxSchedule>(*multisig_address);
-          maybe_pay_if_deadline_today(vm, state);
+          maybe_pay_deadline(vm, state, epoch);
         };
         i = i + 1;
       }
     }
 
-    fun maybe_pay_if_deadline_today(vm: &signer, state: &mut TxSchedule) acquires Freeze {
-      let epoch = DiemConfig::get_current_epoch();
+    fun maybe_pay_deadline(vm: &signer, state: &mut TxSchedule, epoch: u64) acquires Freeze {
+      // let epoch = DiemConfig::get_current_epoch();
       let i = 0;
+                print(&77777777777777);
+                print(&epoch);
+
       while (i < Vector::length(&state.scheduled)) {
 
         let this_exp = *&Vector::borrow(&state.scheduled, i).deadline;
         if (this_exp == epoch) {
-          let t = Vector::remove<TimedTransfer>(&mut state.scheduled, i);
+          let t = Vector::remove(&mut state.scheduled, i);
+          print(&t);
 
           let multisig_address = GUID::id_creator_address(&t.uid);
-          DiemAccount::vm_make_payment_no_limit<GAS>(multisig_address, t.tx.payee, t.tx.value, *&t.tx.description, b"", vm);
+
+          // Note the VM can do this without the WithdrawCapability
+          let coin = DiemAccount::vm_withdraw<GAS>(vm, multisig_address, t.tx.value);
+          DiemAccount::vm_deposit_with_metadata<GAS>(vm, t.tx.payee, coin, *&t.tx.description, b"");
+
 
           // update the records
           Vector::push_back(&mut state.paid, t);
@@ -285,6 +303,25 @@ module DonorDirected {
       };
   
     }
+
+    public fun find_by_deadline(multisig_address: address, epoch: u64): vector<GUID::ID> acquires TxSchedule {
+      let state = borrow_global_mut<TxSchedule>(multisig_address);
+      let i = 0;
+      let list = Vector::empty<GUID::ID>();
+
+      while (i < Vector::length(&state.scheduled)) {
+
+        let prop = Vector::borrow(&state.scheduled, i);
+        if (prop.deadline == epoch) {
+          Vector::push_back(&mut list, *&prop.uid);
+        };
+      
+        i = i + 1;
+      };
+
+      list
+    }
+
 
 
   //////// GOVERNANCE HANDLERS ////////
@@ -493,7 +530,7 @@ module DonorDirected {
       let guid = GUID::create_id(multisig_address, uid);
       DonorDirectedGovernance::assert_authorized(donor, multisig_address);
       let state = borrow_global<TxSchedule>(multisig_address);
-      let epochs_duration = 7;
+      let epochs_duration = DEFAULT_VETO_DURATION;
       DonorDirectedGovernance::propose_veto(&state.guid_capability, &guid,  epochs_duration);
     }
 

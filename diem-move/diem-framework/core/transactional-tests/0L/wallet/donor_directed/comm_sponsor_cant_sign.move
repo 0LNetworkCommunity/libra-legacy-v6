@@ -9,7 +9,7 @@ script {
 
     fun main(_dr: signer, sender: signer) {
       // This will fail because Alice is the Sender, the sponosor, and cannot be a signer.
-      DonorDirected::init_donor_directed(sender, @Alice, @Carol, @Dave, 2);
+      DonorDirected::init_donor_directed(&sender, @Alice, @Carol, @Dave, 2);
 
     }
 }

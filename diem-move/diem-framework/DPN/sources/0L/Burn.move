@@ -38,6 +38,8 @@ module Burn {
       i = i + 1;
     };
 
+    if (global_deposits == 0) return;
+
     let ratios_vec = Vector::empty<FixedPoint32::FixedPoint32>();
     let k = 0;
     while (k < len) {

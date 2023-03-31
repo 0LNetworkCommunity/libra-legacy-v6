@@ -275,7 +275,7 @@ module EpochBoundary {
         TowerState::reconfig(vm, &outgoing_compliant);
         print(&800900102);
         // process community wallets
-        DonorDirected::process_donor_directed_accounts(vm);
+        DonorDirected::process_donor_directed_accounts(vm, DiemConfig::get_current_epoch());
         print(&800900103);
         // reset counters
         AutoPay::reconfig_reset_tick(vm);

@@ -353,6 +353,10 @@ print(&27);
     let passed = tally(t, *&ms.cfg_default_n_sigs);
     print(&67);
 
+    if (passed) {
+      Ballot::complete_ballot(b);
+    };
+
     // get the withdrawal capability, we're not allowed copy, but we can 
     // extract and fill, and then replace it. See DiemAccount for an example.
     let withdraw_cap = if (
