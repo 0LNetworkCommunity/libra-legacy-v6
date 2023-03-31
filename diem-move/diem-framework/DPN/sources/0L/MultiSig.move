@@ -387,6 +387,7 @@ print(&27);
 
     false
   }
+  
 
 
   fun find_expired<ProposalData: store + drop>(a: & Action<ProposalData>): vector<GUID::ID>{
@@ -524,6 +525,11 @@ print(&27);
 
       (false, GUID::create_id(@0x0, 0), 0)
     }
+
+  public fun get_proposal_status_by_id<ProposalData: drop + store>(multisig_address: address, uid: &GUID::ID): (bool, u64, u8, bool) acquires Action { // found, index, status_enum, is_complete
+    let a = borrow_global<Action<ProposalData>>(multisig_address);
+    Ballot::find_anywhere(&a.vote, uid)
+  }
 
 
   ////////  GOVERNANCE  ////////

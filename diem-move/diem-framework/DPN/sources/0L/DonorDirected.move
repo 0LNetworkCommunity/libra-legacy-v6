@@ -369,13 +369,13 @@ module DonorDirected {
     }
 
     public fun get_pending_timed_transfer_mut(state: &mut TxSchedule, uid: &GUID::ID): &mut TimedTransfer {
-      let (found, i) = find_schedule_status(state, uid, SCHEDULED);
+      let (found, i) = schedule_status(state, uid, SCHEDULED);
 
       assert!(found, Errors::invalid_argument(ENO_PEDNING_TRANSACTION_AT_UID));
       Vector::borrow_mut<TimedTransfer>(&mut state.scheduled, i)
     }
 
-    public fun find_schedule_status(state: &TxSchedule, uid: &GUID::ID, state_enum: u8): (bool, u64) {
+    public fun schedule_status(state: &TxSchedule, uid: &GUID::ID, state_enum: u8): (bool, u64) {
       let list = if (state_enum == SCHEDULED) { &state.scheduled }
       else if (state_enum == VETO) { &state.veto }
       else if (state_enum == PAID) { &state.paid }
@@ -397,14 +397,14 @@ module DonorDirected {
       (false, 0)
     }
 
-    public fun find_anywhere(state: &TxSchedule, uid: &GUID::ID): (bool, u64, u8) { // (is_found, index, state)
-      let (found, i) = find_schedule_status(state, uid, SCHEDULED);
+    public fun find_schedule_by_id(state: &TxSchedule, uid: &GUID::ID): (bool, u64, u8) { // (is_found, index, state)
+      let (found, i) = schedule_status(state, uid, SCHEDULED);
       if (found) return (found, i, SCHEDULED);
 
-      let (found, i) = find_schedule_status(state, uid, VETO);
+      let (found, i) = schedule_status(state, uid, VETO);
       if (found) return (found, i, VETO);
 
-      let (found, i) = find_schedule_status(state, uid, PAID);
+      let (found, i) = schedule_status(state, uid, PAID);
       if (found) return (found, i, PAID);
 
       (false, 0, 0)
@@ -416,33 +416,37 @@ module DonorDirected {
     }
 
 
-
-    public fun get_proposal_state(directed_address: address, uid: &GUID::ID): (bool, u64, u8) acquires TxSchedule { // (is_found, index, state) 
-      let state = borrow_global<TxSchedule>(directed_address);
-      find_anywhere(state, uid)
+    /// Check the status of proposals in the MultiSig Workflow
+    /// NOTE: These are payments that have not yet been scheduled.
+    public fun get_multisig_proposal_state(directed_address: address, uid: &GUID::ID): (bool, u64, u8, bool) { // (is_found, index, state) 
+      
+      MultiSig::get_proposal_status_by_id<Payment>(directed_address, uid)
     }
 
-    public fun is_pending(directed_address: address, uid: &GUID::ID): bool acquires TxSchedule { // (is_found, index, state) 
+    /// Get the status of a SCHEDULED payment which as already passed the multisig stage.
+    public fun get_schedule_state(directed_address: address, uid: &GUID::ID): (bool, u64, u8) acquires TxSchedule { // (is_found, index, state) 
       let state = borrow_global<TxSchedule>(directed_address);
-      let (_, _, state) = find_anywhere(state, uid);
+      find_schedule_by_id(state, uid)
+    }
+
+    public fun is_scheduled(directed_address: address, uid: &GUID::ID): bool acquires TxSchedule { 
+      let (_, _, state) = get_schedule_state(directed_address, uid);
       state == Ballot::get_pending_enum()
     }
 
-    public fun is_approved(directed_address: address, uid: &GUID::ID): bool acquires TxSchedule { // (is_found, index, state) 
-      let state = borrow_global<TxSchedule>(directed_address);
-      let (_, _, state) = find_anywhere(state, uid);
+    public fun is_paid(directed_address: address, uid: &GUID::ID): bool acquires TxSchedule { 
+      let (_, _, state) = get_schedule_state(directed_address, uid);
       state == Ballot::get_approved_enum()
     }
 
-    public fun is_rejected(directed_address: address, uid: &GUID::ID): bool acquires TxSchedule { // (is_found, index, state) 
-      let state = borrow_global<TxSchedule>(directed_address);
-      let (_, _, state) = find_anywhere(state, uid);
+    public fun is_veto(directed_address: address, uid: &GUID::ID): bool acquires TxSchedule { 
+      let (_, _, state) = get_schedule_state(directed_address, uid);
       state == Ballot::get_rejected_enum()
     }
 
     // getter to check if wallet is frozen
     // used in DiemAccount before attempting a transfer.
-    public fun is_frozen(addr: address): bool acquires Freeze{
+    public fun is_account_frozen(addr: address): bool acquires Freeze{
       let f = borrow_global<Freeze>(addr);
       f.is_frozen
     }
