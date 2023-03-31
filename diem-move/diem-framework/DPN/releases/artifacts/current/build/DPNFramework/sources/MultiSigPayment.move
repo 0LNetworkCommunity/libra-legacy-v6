@@ -115,9 +115,9 @@ module MultiSigPayment {
 
   public fun vote_payment(sig: &signer, multisig_address: address, id: &GUID::ID) {
     print(&50);
-    let (passed, data, cap_opt) = MultiSig::vote_with_id<PaymentType>(sig, id, multisig_address);
+    let (passed, cap_opt) = MultiSig::vote_with_id<PaymentType>(sig, id, multisig_address);
     print(&passed);
-    print(&data);
+    // print(&data);
     print(&cap_opt);
 
     print(&51);
@@ -125,6 +125,7 @@ module MultiSigPayment {
     if (passed && Option::is_some(&cap_opt)) {
       let cap = Option::borrow(&cap_opt);
       print(&5010);
+      let data = MultiSig::extract_proposal_data(multisig_address, id);
       release_payment(&data, cap);
       print(&5011);
 

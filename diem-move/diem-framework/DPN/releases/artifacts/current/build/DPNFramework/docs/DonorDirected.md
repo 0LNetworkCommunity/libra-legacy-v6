@@ -21,8 +21,8 @@ By creating a TxSchedule wallet you are providing certain restrictions and guara
 
 -  [Resource `Registry`](#0x1_DonorDirected_Registry)
 -  [Resource `TxSchedule`](#0x1_DonorDirected_TxSchedule)
--  [Resource `Payment`](#0x1_DonorDirected_Payment)
--  [Resource `TimedTransfer`](#0x1_DonorDirected_TimedTransfer)
+-  [Struct `Payment`](#0x1_DonorDirected_Payment)
+-  [Struct `TimedTransfer`](#0x1_DonorDirected_TimedTransfer)
 -  [Resource `Freeze`](#0x1_DonorDirected_Freeze)
 -  [Constants](#@Constants_0)
 -  [Function `init_root_registry`](#0x1_DonorDirected_init_root_registry)
@@ -144,14 +144,14 @@ By creating a TxSchedule wallet you are providing certain restrictions and guara
 
 <a name="0x1_DonorDirected_Payment"></a>
 
-## Resource `Payment`
+## Struct `Payment`
 
 This is the basic payment information.
 This is used initially in a MultiSig, for the managers
 initially to schedule.
 
 
-<pre><code><b>struct</b> <a href="DonorDirected.md#0x1_DonorDirected_Payment">Payment</a> <b>has</b> <b>copy</b>, drop, store, key
+<pre><code><b>struct</b> <a href="DonorDirected.md#0x1_DonorDirected_Payment">Payment</a> <b>has</b> <b>copy</b>, drop, store
 </code></pre>
 
 
@@ -186,11 +186,11 @@ initially to schedule.
 
 <a name="0x1_DonorDirected_TimedTransfer"></a>
 
-## Resource `TimedTransfer`
+## Struct `TimedTransfer`
 
 
 
-<pre><code><b>struct</b> <a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a> <b>has</b> drop, store, key
+<pre><code><b>struct</b> <a href="DonorDirected.md#0x1_DonorDirected_TimedTransfer">TimedTransfer</a> <b>has</b> drop, store
 </code></pre>
 
 
@@ -570,7 +570,9 @@ Returns the GUID of the transfer.
 
   <b>let</b> uid = <a href="MultiSig.md#0x1_MultiSig_propose_new">MultiSig::propose_new</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Payment">Payment</a>&gt;(sender, multisig_address, prop);
 
-  <b>let</b> (passed, tx, withdraw_cap_opt) = <a href="MultiSig.md#0x1_MultiSig_vote_with_id">MultiSig::vote_with_id</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Payment">Payment</a>&gt;(sender, &uid, multisig_address);
+  <b>let</b> (passed, withdraw_cap_opt) = <a href="MultiSig.md#0x1_MultiSig_vote_with_id">MultiSig::vote_with_id</a>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Payment">Payment</a>&gt;(sender, &uid, multisig_address);
+
+  <b>let</b> tx = <a href="MultiSig.md#0x1_MultiSig_extract_proposal_data">MultiSig::extract_proposal_data</a>(multisig_address, &uid);
 
   <b>if</b> (passed && <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&withdraw_cap_opt)) {
     <a href="DonorDirected.md#0x1_DonorDirected_schedule">schedule</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>(&withdraw_cap_opt), tx, &uid);

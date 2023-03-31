@@ -240,9 +240,9 @@ create a payment object, whcih can be send in a proposal.
 
 <pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_vote_payment">vote_payment</a>(sig: &signer, multisig_address: <b>address</b>, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>) {
   print(&50);
-  <b>let</b> (passed, data, cap_opt) = <a href="MultiSig.md#0x1_MultiSig_vote_with_id">MultiSig::vote_with_id</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sig, id, multisig_address);
+  <b>let</b> (passed, cap_opt) = <a href="MultiSig.md#0x1_MultiSig_vote_with_id">MultiSig::vote_with_id</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sig, id, multisig_address);
   print(&passed);
-  print(&data);
+  // print(&data);
   print(&cap_opt);
 
   print(&51);
@@ -250,6 +250,7 @@ create a payment object, whcih can be send in a proposal.
   <b>if</b> (passed && <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&cap_opt)) {
     <b>let</b> cap = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>(&cap_opt);
     print(&5010);
+    <b>let</b> data = <a href="MultiSig.md#0x1_MultiSig_extract_proposal_data">MultiSig::extract_proposal_data</a>(multisig_address, id);
     <a href="MultiSigPayment.md#0x1_MultiSigPayment_release_payment">release_payment</a>(&data, cap);
     print(&5011);
 

@@ -5,9 +5,9 @@
 
 
 
--  [Resource `MultiSig`](#0x1_MultiSig_MultiSig)
+-  [Resource `Governance`](#0x1_MultiSig_Governance)
 -  [Resource `Action`](#0x1_MultiSig_Action)
--  [Resource `Proposal`](#0x1_MultiSig_Proposal)
+-  [Struct `Proposal`](#0x1_MultiSig_Proposal)
 -  [Resource `PropGovSigners`](#0x1_MultiSig_PropGovSigners)
 -  [Constants](#@Constants_0)
 -  [Function `proposal_constructor`](#0x1_MultiSig_proposal_constructor)
@@ -29,6 +29,7 @@
 -  [Function `lazy_cleanup_expired`](#0x1_MultiSig_lazy_cleanup_expired)
 -  [Function `check_expired`](#0x1_MultiSig_check_expired)
 -  [Function `is_authority`](#0x1_MultiSig_is_authority)
+-  [Function `extract_proposal_data`](#0x1_MultiSig_extract_proposal_data)
 -  [Function `search_proposals_for_guid`](#0x1_MultiSig_search_proposals_for_guid)
 -  [Function `find_index_of_ballot_by_data`](#0x1_MultiSig_find_index_of_ballot_by_data)
 -  [Function `propose_governance`](#0x1_MultiSig_propose_governance)
@@ -52,25 +53,25 @@
 
 
 
-<a name="0x1_MultiSig_MultiSig"></a>
+<a name="0x1_MultiSig_Governance"></a>
 
-## Resource `MultiSig`
+## Resource `Governance`
 
-A MultiSig account is an account which requires multiple votes from Authorities to  send a transaction.
+A Governance account is an account which requires multiple votes from Authorities to  send a transaction.
 A multisig can be used to get agreement on different types of Actions, such as a payment transaction where the handler code for the transaction is an a separate contract. See for example MultiSigPayment.
-MultiSig struct holds the metadata for all the instances of Actions on this account.
+Governance struct holds the metadata for all the instances of Actions on this account.
 Every action has the same set of authorities and governance.
 This is intentional, since privilege escalation can happen if each action has a different set of governance, but access to funds and other state.
 If the organization wishes to have Actions with different governance, then a separate Account is necessary.
 DANGER
 The WithdrawCapability can be used to withdraw funds from the account.
 Ordinarily only the signer/owner of this address can use it.
-We are bricking the signer, and as such the withdraw capability is now controlled by the MultiSig logic.
+We are bricking the signer, and as such the withdraw capability is now controlled by the Governance logic.
 Core Devs: This is a major attack vector. The WithdrawCapability should NEVER be returned to a public caller, UNLESS it is within the vote and approve flow.
-Note, the WithdrawCApability is moved to this shared structure, and as such the signer of the account is bricked. The signer who was the original owner of this account ("sponsor") can no longer issue transactions to this account, and as such the WithdrawCapability would be inaccessible. So on initialization we extract the WithdrawCapability into the MultiSig governance struct.
+Note, the WithdrawCApability is moved to this shared structure, and as such the signer of the account is bricked. The signer who was the original owner of this account ("sponsor") can no longer issue transactions to this account, and as such the WithdrawCapability would be inaccessible. So on initialization we extract the WithdrawCapability into the Governance governance struct.
 
 
-<pre><code><b>struct</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> <b>has</b> key
+<pre><code><b>struct</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a> <b>has</b> key
 </code></pre>
 
 
@@ -150,11 +151,11 @@ Note, the WithdrawCApability is moved to this shared structure, and as such the 
 
 <a name="0x1_MultiSig_Proposal"></a>
 
-## Resource `Proposal`
+## Struct `Proposal`
 
 
 
-<pre><code><b>struct</b> <a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt; <b>has</b> drop, store, key
+<pre><code><b>struct</b> <a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt; <b>has</b> drop, store
 </code></pre>
 
 
@@ -236,33 +237,6 @@ Tis is a ProposalData type for governance. This Proposal adds or removes a list 
 <a name="@Constants_0"></a>
 
 ## Constants
-
-
-<a name="0x1_MultiSig_APPROVED"></a>
-
-
-
-<pre><code><b>const</b> <a href="MultiSig.md#0x1_MultiSig_APPROVED">APPROVED</a>: u8 = 2;
-</code></pre>
-
-
-
-<a name="0x1_MultiSig_PENDING"></a>
-
-
-
-<pre><code><b>const</b> <a href="MultiSig.md#0x1_MultiSig_PENDING">PENDING</a>: u8 = 1;
-</code></pre>
-
-
-
-<a name="0x1_MultiSig_REJECTED"></a>
-
-
-
-<pre><code><b>const</b> <a href="MultiSig.md#0x1_MultiSig_REJECTED">REJECTED</a>: u8 = 3;
-</code></pre>
-
 
 
 <a name="0x1_MultiSig_DEFAULT_EPOCHS_EXPIRE"></a>
@@ -376,7 +350,7 @@ Proposal is expired
 
 <a name="0x1_MultiSig_ESIGNER_CANT_BE_AUTHORITY"></a>
 
-The owner of this account can't be an authority, since it will subsequently be bricked. The signer of this account is no longer useful. The account is now controlled by the MultiSig logic.
+The owner of this account can't be an authority, since it will subsequently be bricked. The signer of this account is no longer useful. The account is now controlled by the Governance logic.
 
 
 <pre><code><b>const</b> <a href="MultiSig.md#0x1_MultiSig_ESIGNER_CANT_BE_AUTHORITY">ESIGNER_CANT_BE_AUTHORITY</a>: u64 = 440001;
@@ -390,7 +364,7 @@ The owner of this account can't be an authority, since it will subsequently be b
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_proposal_constructor">proposal_constructor</a>&lt;ProposalData: <b>copy</b>, drop, store&gt;(proposal_data: ProposalData, duration_epochs: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;u64&gt;): <a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;ProposalData&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_proposal_constructor">proposal_constructor</a>&lt;ProposalData: drop, store&gt;(proposal_data: ProposalData, duration_epochs: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;u64&gt;): <a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;ProposalData&gt;
 </code></pre>
 
 
@@ -399,7 +373,7 @@ The owner of this account can't be an authority, since it will subsequently be b
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_proposal_constructor">proposal_constructor</a>&lt;ProposalData: store + <b>copy</b> + drop&gt;(proposal_data: ProposalData, duration_epochs: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt;): <a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt; {
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_proposal_constructor">proposal_constructor</a>&lt;ProposalData: store + drop&gt;(proposal_data: ProposalData, duration_epochs: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt;): <a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt; {
 
   <b>let</b> duration_epochs = <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&duration_epochs)) {
     *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>(&duration_epochs)
@@ -436,11 +410,11 @@ The owner of this account can't be an authority, since it will subsequently be b
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>(sig: &signer, multisig_address: <b>address</b>) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>(sig: &signer, multisig_address: <b>address</b>) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a> {
       // cannot start manipulating contract until it is finalized
   <b>assert</b>!(<a href="MultiSig.md#0x1_MultiSig_is_finalized">is_finalized</a>(multisig_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_FINALIZED_NOT_BRICK">ENOT_FINALIZED_NOT_BRICK</a>));
 
-  <b>assert</b>!(<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>));
+  <b>assert</b>!(<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>));
 
   // check sender is authorized
   <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
@@ -474,8 +448,8 @@ The owner of this account can't be an authority, since it will subsequently be b
   // User footgun. The <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">Signer</a> of this account is bricked, and <b>as</b> such the signer can no longer be an authority.
   <b>assert</b>!(!<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(m_seed_authorities, &multisig_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ESIGNER_CANT_BE_AUTHORITY">ESIGNER_CANT_BE_AUTHORITY</a>));
 
-  <b>if</b> (!<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address)) {
-      <b>move_to</b>(sig, <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
+  <b>if</b> (!<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_address)) {
+      <b>move_to</b>(sig, <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a> {
       cfg_duration_epochs: <a href="MultiSig.md#0x1_MultiSig_DEFAULT_EPOCHS_EXPIRE">DEFAULT_EPOCHS_EXPIRE</a>,
       cfg_default_n_sigs,
       signers: *m_seed_authorities,
@@ -518,7 +492,7 @@ Is the Multisig Governance initialized?
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_is_init">is_init</a>(multisig_address: <b>address</b>): bool {
-  <b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address) &&
+  <b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_address) &&
   <b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt;&gt;(multisig_address)
 }
 </code></pre>
@@ -534,7 +508,7 @@ Is the Multisig Governance initialized?
 Has a multisig struct for a given action been created?
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_has_action">has_action</a>&lt;ProposalData: store, key&gt;(addr: <b>address</b>): bool
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_has_action">has_action</a>&lt;ProposalData: store&gt;(addr: <b>address</b>): bool
 </code></pre>
 
 
@@ -543,7 +517,7 @@ Has a multisig struct for a given action been created?
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_has_action">has_action</a>&lt;ProposalData: key + store&gt;(addr: <b>address</b>):bool {
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_has_action">has_action</a>&lt;ProposalData: store&gt;(addr: <b>address</b>):bool {
   <b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;ProposalData&gt;&gt;(addr)
 }
 </code></pre>
@@ -559,7 +533,7 @@ Has a multisig struct for a given action been created?
 An initial "sponsor" who is the signer of the initialization account calls this function.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_init_type">init_type</a>&lt;ProposalData: drop, store, key&gt;(sig: &signer, can_withdraw: bool)
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_init_type">init_type</a>&lt;ProposalData: drop, store&gt;(sig: &signer, can_withdraw: bool)
 </code></pre>
 
 
@@ -568,10 +542,10 @@ An initial "sponsor" who is the signer of the initialization account calls this 
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_init_type">init_type</a>&lt;ProposalData: key + store + drop &gt;(
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_init_type">init_type</a>&lt;ProposalData: store + drop &gt;(
   sig: &signer,
   can_withdraw: bool,
- ) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
+ ) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a> {
   <b>let</b> multisig_address = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
   // TODO: there is no way of creating a new <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> by multisig. The "signer" would need <b>to</b> be spoofed, which <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> does only in specific and scary situations (e.g. vm_create_account_migration)
 
@@ -618,11 +592,11 @@ An initial "sponsor" who is the signer of the initialization account calls this 
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_extract_withdraw_cap">maybe_extract_withdraw_cap</a>(sig: &signer) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_extract_withdraw_cap">maybe_extract_withdraw_cap</a>(sig: &signer) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a> {
   <b>let</b> multisig_address = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
-  <b>assert</b>!(<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>));
+  <b>assert</b>!(<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_address), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>));
 
-  <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address);
+  <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_address);
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&ms.withdraw_capability)) {
     <b>return</b>
   } <b>else</b> {
@@ -651,11 +625,11 @@ An initial "sponsor" who is the signer of the initialization account calls this 
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">maybe_restore_withdraw_cap</a>(sig: &signer, multisig_addr: <b>address</b>, w: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;WithdrawCapability&gt;) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">maybe_restore_withdraw_cap</a>(sig: &signer, multisig_addr: <b>address</b>, w: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;WithdrawCapability&gt;) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a> {
   <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>(sig, multisig_addr);
-  <b>assert</b>!(<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>));
+  <b>assert</b>!(<b>exists</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_ENOT_AUTHORIZED">ENOT_AUTHORIZED</a>));
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&w)) {
-    <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_addr);
+    <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_addr);
     <b>let</b> cap = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>(&<b>mut</b> w);
     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_fill">Option::fill</a>(&<b>mut</b> ms.withdraw_capability, cap);
   };
@@ -724,7 +698,7 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_propose_new">propose_new</a>&lt;ProposalData: <b>copy</b>, drop, store, key&gt;(sig: &signer, multisig_address: <b>address</b>, proposal_data: <a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;ProposalData&gt;): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_propose_new">propose_new</a>&lt;ProposalData: drop, store&gt;(sig: &signer, multisig_address: <b>address</b>, proposal_data: <a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;ProposalData&gt;): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>
 </code></pre>
 
 
@@ -733,15 +707,15 @@ Once the "sponsor" which is setting up the multisig has created all the multisig
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_propose_new">propose_new</a>&lt;ProposalData: key + store + <b>copy</b> + drop&gt;(
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_propose_new">propose_new</a>&lt;ProposalData: store + drop&gt;(
   sig: &signer,
   multisig_address: <b>address</b>,
   proposal_data: <a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;,
-): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a> <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
+): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a> <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
   print(&20);
   <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>(sig, multisig_address);
 print(&21);
-  <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address);
+  <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_address);
   <b>let</b> action = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;ProposalData&gt;&gt;(multisig_address);
   print(&22);
   // go through all proposals and clean up expired ones.
@@ -778,7 +752,7 @@ print(&27);
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_vote_with_data">vote_with_data</a>&lt;ProposalData: <b>copy</b>, drop, store, key&gt;(sig: &signer, proposal: &<a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;ProposalData&gt;, multisig_address: <b>address</b>): (bool, ProposalData, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_vote_with_data">vote_with_data</a>&lt;ProposalData: drop, store&gt;(sig: &signer, proposal: &<a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;ProposalData&gt;, multisig_address: <b>address</b>): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>&gt;)
 </code></pre>
 
 
@@ -787,11 +761,11 @@ print(&27);
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_vote_with_data">vote_with_data</a>&lt;ProposalData: key + store + <b>copy</b> + drop&gt;(sig: &signer, proposal: &<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;, multisig_address: <b>address</b>): (bool, ProposalData, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;WithdrawCapability&gt;) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_vote_with_data">vote_with_data</a>&lt;ProposalData: store + drop&gt;(sig: &signer, proposal: &<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;, multisig_address: <b>address</b>): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;WithdrawCapability&gt;) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
   <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>(sig, multisig_address);
 
   <b>let</b> action = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;ProposalData&gt;&gt;(multisig_address);
-  // <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address);
+  // <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_address);
   // go through all proposals and clean up expired ones.
   // <a href="MultiSig.md#0x1_MultiSig_lazy_cleanup_expired">lazy_cleanup_expired</a>(action);
 
@@ -800,7 +774,7 @@ print(&27);
 
   <b>assert</b>!(found, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_EPROPOSAL_NOT_FOUND">EPROPOSAL_NOT_FOUND</a>));
 
-  <a href="MultiSig.md#0x1_MultiSig_vote_impl">vote_impl</a>(sig, multisig_address, &uid)
+  <a href="MultiSig.md#0x1_MultiSig_vote_impl">vote_impl</a>&lt;ProposalData&gt;(sig, multisig_address, &uid)
 
 }
 </code></pre>
@@ -816,7 +790,7 @@ print(&27);
 helper function to vote with ID only
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_vote_with_id">vote_with_id</a>&lt;ProposalData: <b>copy</b>, drop, store, key&gt;(sig: &signer, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, multisig_address: <b>address</b>): (bool, ProposalData, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_vote_with_id">vote_with_id</a>&lt;ProposalData: drop, store&gt;(sig: &signer, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, multisig_address: <b>address</b>): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>&gt;)
 </code></pre>
 
 
@@ -825,11 +799,11 @@ helper function to vote with ID only
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_vote_with_id">vote_with_id</a>&lt;ProposalData: key + store + <b>copy</b> + drop&gt;(sig: &signer, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, multisig_address: <b>address</b>): (bool, ProposalData, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;WithdrawCapability&gt;) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_vote_with_id">vote_with_id</a>&lt;ProposalData: store + drop&gt;(sig: &signer, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, multisig_address: <b>address</b>): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;WithdrawCapability&gt;) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
   <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>(sig, multisig_address);
 
   // <b>let</b> action = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;ProposalData&gt;&gt;(multisig_address);
-  <a href="MultiSig.md#0x1_MultiSig_vote_impl">vote_impl</a>(sig, multisig_address, id)
+  <a href="MultiSig.md#0x1_MultiSig_vote_impl">vote_impl</a>&lt;ProposalData&gt;(sig, multisig_address, id)
 
 }
 </code></pre>
@@ -844,7 +818,7 @@ helper function to vote with ID only
 
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_vote_impl">vote_impl</a>&lt;ProposalData: <b>copy</b>, drop, store, key&gt;(sig: &signer, multisig_address: <b>address</b>, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, ProposalData, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>&gt;)
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_vote_impl">vote_impl</a>&lt;ProposalData: drop, store&gt;(sig: &signer, multisig_address: <b>address</b>, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>&gt;)
 </code></pre>
 
 
@@ -853,27 +827,25 @@ helper function to vote with ID only
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_vote_impl">vote_impl</a>&lt;ProposalData: key + store + <b>copy</b> + drop&gt;(
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_vote_impl">vote_impl</a>&lt;ProposalData: store + drop&gt;(
   sig: &signer,
-  // ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>,
+  // ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>,
   multisig_address: <b>address</b>,
   id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>
-): (bool, ProposalData, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;WithdrawCapability&gt;) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
+): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;WithdrawCapability&gt;) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
 
   print(&60);
   <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>(sig, multisig_address); // belt and suspenders
-  <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address);
+  <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_address);
   <b>let</b> action = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;ProposalData&gt;&gt;(multisig_address);
   print(&61);
   <a href="MultiSig.md#0x1_MultiSig_lazy_cleanup_expired">lazy_cleanup_expired</a>(action);
   print(&62);
 
-
-
   // does this proposal already exist in the pending list?
   <b>let</b> (found, _idx, status_enum, is_complete) = <a href="Ballot.md#0x1_Ballot_find_anywhere">Ballot::find_anywhere</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(&action.vote, id);
   print(&63);
-  <b>assert</b>!((found && status_enum == <a href="MultiSig.md#0x1_MultiSig_PENDING">PENDING</a> && !is_complete), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_EPROPOSAL_NOT_FOUND">EPROPOSAL_NOT_FOUND</a>));
+  <b>assert</b>!((found && status_enum == <a href="Ballot.md#0x1_Ballot_get_pending_enum">Ballot::get_pending_enum</a>() && !is_complete), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="MultiSig.md#0x1_MultiSig_EPROPOSAL_NOT_FOUND">EPROPOSAL_NOT_FOUND</a>));
   print(&64);
   <b>let</b> b = <a href="Ballot.md#0x1_Ballot_get_ballot_by_id_mut">Ballot::get_ballot_by_id_mut</a>(&<b>mut</b> action.vote, id);
   <b>let</b> t = <a href="Ballot.md#0x1_Ballot_get_type_struct_mut">Ballot::get_type_struct_mut</a>(b);
@@ -899,8 +871,7 @@ helper function to vote with ID only
   print(&withdraw_cap);
   print(&68);
 
-
-  (passed, *&t.proposal_data, withdraw_cap)
+  (passed, withdraw_cap)
 }
 </code></pre>
 
@@ -914,7 +885,7 @@ helper function to vote with ID only
 
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_tally">tally</a>&lt;ProposalData: drop, store, key&gt;(prop: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;ProposalData&gt;, n: u64): bool
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_tally">tally</a>&lt;ProposalData: drop, store&gt;(prop: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;ProposalData&gt;, n: u64): bool
 </code></pre>
 
 
@@ -923,7 +894,7 @@ helper function to vote with ID only
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_tally">tally</a>&lt;ProposalData: key + store + drop&gt;(prop: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;, n: u64): bool {
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_tally">tally</a>&lt;ProposalData: store + drop&gt;(prop: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;, n: u64): bool {
   print(&40001);
 
   print(&prop.votes);
@@ -949,7 +920,7 @@ helper function to vote with ID only
 
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_find_expired">find_expired</a>&lt;ProposalData: <b>copy</b>, drop, store, key&gt;(a: &<a href="MultiSig.md#0x1_MultiSig_Action">MultiSig::Action</a>&lt;ProposalData&gt;): vector&lt;<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>&gt;
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_find_expired">find_expired</a>&lt;ProposalData: drop, store&gt;(a: &<a href="MultiSig.md#0x1_MultiSig_Action">MultiSig::Action</a>&lt;ProposalData&gt;): vector&lt;<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>&gt;
 </code></pre>
 
 
@@ -958,10 +929,10 @@ helper function to vote with ID only
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_find_expired">find_expired</a>&lt;ProposalData: key + store + <b>copy</b> + drop&gt;(a: & <a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;ProposalData&gt;): vector&lt;<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>&gt;{
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_find_expired">find_expired</a>&lt;ProposalData: store + drop&gt;(a: & <a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;ProposalData&gt;): vector&lt;<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>&gt;{
   print(&40);
   <b>let</b> epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
-  <b>let</b> b_vec = <a href="Ballot.md#0x1_Ballot_get_list_ballots_by_enum">Ballot::get_list_ballots_by_enum</a>(&a.vote, <a href="MultiSig.md#0x1_MultiSig_PENDING">PENDING</a>);
+  <b>let</b> b_vec = <a href="Ballot.md#0x1_Ballot_get_list_ballots_by_enum">Ballot::get_list_ballots_by_enum</a>(&a.vote, <a href="Ballot.md#0x1_Ballot_get_pending_enum">Ballot::get_pending_enum</a>());
   <b>let</b> id_vec = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>();
   print(&41);
   <b>let</b> i = 0;
@@ -995,7 +966,7 @@ helper function to vote with ID only
 
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_lazy_cleanup_expired">lazy_cleanup_expired</a>&lt;ProposalData: <b>copy</b>, drop, store, key&gt;(a: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_Action">MultiSig::Action</a>&lt;ProposalData&gt;)
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_lazy_cleanup_expired">lazy_cleanup_expired</a>&lt;ProposalData: drop, store&gt;(a: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_Action">MultiSig::Action</a>&lt;ProposalData&gt;)
 </code></pre>
 
 
@@ -1004,7 +975,7 @@ helper function to vote with ID only
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_lazy_cleanup_expired">lazy_cleanup_expired</a>&lt;ProposalData: key + store + <b>copy</b> + drop&gt;(a: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;ProposalData&gt;) {
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_lazy_cleanup_expired">lazy_cleanup_expired</a>&lt;ProposalData: store + drop&gt;(a: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;ProposalData&gt;) {
   <b>let</b> expired_vec = <a href="MultiSig.md#0x1_MultiSig_find_expired">find_expired</a>(a);
   print(&expired_vec);
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&expired_vec);
@@ -1013,7 +984,7 @@ helper function to vote with ID only
   <b>while</b> (i &lt; len) {
     <b>let</b> id = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&expired_vec, i);
     // lets check the status just in case.
-     <a href="Ballot.md#0x1_Ballot_move_ballot">Ballot::move_ballot</a>(&<b>mut</b> a.vote, id, <a href="MultiSig.md#0x1_MultiSig_PENDING">PENDING</a>, <a href="MultiSig.md#0x1_MultiSig_REJECTED">REJECTED</a>);
+     <a href="Ballot.md#0x1_Ballot_move_ballot">Ballot::move_ballot</a>(&<b>mut</b> a.vote, id, <a href="Ballot.md#0x1_Ballot_get_pending_enum">Ballot::get_pending_enum</a>(), <a href="Ballot.md#0x1_Ballot_get_rejected_enum">Ballot::get_rejected_enum</a>());
     i = i + 1;
   };
 }
@@ -1029,7 +1000,7 @@ helper function to vote with ID only
 
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_check_expired">check_expired</a>&lt;ProposalData: store, key&gt;(prop: &<a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;ProposalData&gt;): bool
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_check_expired">check_expired</a>&lt;ProposalData: store&gt;(prop: &<a href="MultiSig.md#0x1_MultiSig_Proposal">MultiSig::Proposal</a>&lt;ProposalData&gt;): bool
 </code></pre>
 
 
@@ -1038,7 +1009,7 @@ helper function to vote with ID only
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_check_expired">check_expired</a>&lt;ProposalData: key + store&gt;(prop: &<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;): bool {
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_check_expired">check_expired</a>&lt;ProposalData: store&gt;(prop: &<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;): bool {
   <b>let</b> epoch_now = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
   epoch_now &gt; prop.expiration_epoch
 }
@@ -1063,9 +1034,46 @@ helper function to vote with ID only
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_is_authority">is_authority</a>(multisig_addr: <b>address</b>, addr: <b>address</b>): bool <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
-  <b>let</b> m = <b>borrow_global</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_addr);
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_is_authority">is_authority</a>(multisig_addr: <b>address</b>, addr: <b>address</b>): bool <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a> {
+  <b>let</b> m = <b>borrow_global</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_addr);
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&m.signers, &addr)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MultiSig_extract_proposal_data"></a>
+
+## Function `extract_proposal_data`
+
+This function is used to copy the data from the proposal that is in the multisig.
+Note that this is the only way to get the data out of the multisig, and it is the only function to use the <code><b>copy</b></code> trait. If you have a workflow that needs copying, then the data struct for the action payload will need to use the <code><b>copy</b></code> trait.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_extract_proposal_data">extract_proposal_data</a>&lt;ProposalData: <b>copy</b>, drop, store&gt;(multisig_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): ProposalData
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_extract_proposal_data">extract_proposal_data</a>&lt;ProposalData: store + <b>copy</b> + drop&gt;(multisig_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): ProposalData <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
+  <b>let</b> a = <b>borrow_global</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;ProposalData&gt;&gt;(multisig_address);
+  <b>let</b> b = <a href="Ballot.md#0x1_Ballot_get_ballot_by_id">Ballot::get_ballot_by_id</a>(&a.vote, uid);
+  <b>let</b> t = <a href="Ballot.md#0x1_Ballot_get_type_struct">Ballot::get_type_struct</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(b);
+
+  <b>let</b> <a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt; {
+      proposal_data: existing_data,
+      expiration_epoch: _,
+      votes: _,
+      approved: _,
+  } = t;
+
+  *existing_data
 }
 </code></pre>
 
@@ -1095,25 +1103,25 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 ): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, u64, u8, bool)  {
  // looking in pending
 
- <b>let</b> (found, guid, idx) = <a href="MultiSig.md#0x1_MultiSig_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, data, <a href="MultiSig.md#0x1_MultiSig_PENDING">PENDING</a>);
+ <b>let</b> (found, guid, idx) = <a href="MultiSig.md#0x1_MultiSig_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, data, <a href="Ballot.md#0x1_Ballot_get_pending_enum">Ballot::get_pending_enum</a>());
  <b>if</b> (found) {
   <b>let</b> b = <a href="Ballot.md#0x1_Ballot_get_ballot_by_id">Ballot::get_ballot_by_id</a>(tracker, &guid);
   <b>let</b> complete = <a href="Ballot.md#0x1_Ballot_is_completed">Ballot::is_completed</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(b);
-   <b>return</b> (<b>true</b>, guid, idx, <a href="MultiSig.md#0x1_MultiSig_PENDING">PENDING</a>, complete)
+   <b>return</b> (<b>true</b>, guid, idx, <a href="Ballot.md#0x1_Ballot_get_pending_enum">Ballot::get_pending_enum</a>(), complete)
  };
 
-<b>let</b> (found, guid, idx) = <a href="MultiSig.md#0x1_MultiSig_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, data, <a href="MultiSig.md#0x1_MultiSig_APPROVED">APPROVED</a>);
+<b>let</b> (found, guid, idx) = <a href="MultiSig.md#0x1_MultiSig_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, data, <a href="Ballot.md#0x1_Ballot_get_approved_enum">Ballot::get_approved_enum</a>());
  <b>if</b> (found) {
   <b>let</b> b = <a href="Ballot.md#0x1_Ballot_get_ballot_by_id">Ballot::get_ballot_by_id</a>(tracker, &guid);
   <b>let</b> complete = <a href="Ballot.md#0x1_Ballot_is_completed">Ballot::is_completed</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(b);
-   <b>return</b> (<b>true</b>, guid, idx, <a href="MultiSig.md#0x1_MultiSig_APPROVED">APPROVED</a>, complete)
+   <b>return</b> (<b>true</b>, guid, idx, <a href="Ballot.md#0x1_Ballot_get_approved_enum">Ballot::get_approved_enum</a>(), complete)
  };
 
-<b>let</b> (found, guid, idx) = <a href="MultiSig.md#0x1_MultiSig_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, data, <a href="MultiSig.md#0x1_MultiSig_REJECTED">REJECTED</a>);
+<b>let</b> (found, guid, idx) = <a href="MultiSig.md#0x1_MultiSig_find_index_of_ballot_by_data">find_index_of_ballot_by_data</a>(tracker, data, <a href="Ballot.md#0x1_Ballot_get_rejected_enum">Ballot::get_rejected_enum</a>());
  <b>if</b> (found) {
   <b>let</b> b = <a href="Ballot.md#0x1_Ballot_get_ballot_by_id">Ballot::get_ballot_by_id</a>(tracker, &guid);
   <b>let</b> complete = <a href="Ballot.md#0x1_Ballot_is_completed">Ballot::is_completed</a>&lt;<a href="MultiSig.md#0x1_MultiSig_Proposal">Proposal</a>&lt;ProposalData&gt;&gt;(b);
-   <b>return</b> (<b>true</b>, guid, idx, <a href="MultiSig.md#0x1_MultiSig_REJECTED">REJECTED</a>, complete)
+   <b>return</b> (<b>true</b>, guid, idx, <a href="Ballot.md#0x1_Ballot_get_rejected_enum">Ballot::get_rejected_enum</a>(), complete)
  };
 
   (<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_create_id">GUID::create_id</a>(@0x0, 0), 0, 0, <b>false</b>)
@@ -1196,7 +1204,7 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_propose_governance">propose_governance</a>(sig: &signer, multisig_address: <b>address</b>, addresses: vector&lt;<b>address</b>&gt;, add_remove: bool, n_of_m: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt;, duration_epochs: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt; ): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a> <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_propose_governance">propose_governance</a>(sig: &signer, multisig_address: <b>address</b>, addresses: vector&lt;<b>address</b>&gt;, add_remove: bool, n_of_m: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt;, duration_epochs: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt; ): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a> <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
   <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>(sig, multisig_address); // Duplicated <b>with</b> propose(), belt and suspenders
   <b>let</b> data = <a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a> {
     addresses,
@@ -1231,20 +1239,20 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_vote_governance">vote_governance</a>(sig: &signer, multisig_address: <b>address</b>, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_vote_governance">vote_governance</a>(sig: &signer, multisig_address: <b>address</b>, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>, <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> {
   <a href="MultiSig.md#0x1_MultiSig_assert_authorized">assert_authorized</a>(sig, multisig_address);
 
 
-  <b>let</b> (passed, data, cap_opt) = {
-    // <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address);
+  <b>let</b> (passed, cap_opt) = {
+    // <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_address);
     // <b>let</b> action = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt;&gt;(multisig_address);
     <a href="MultiSig.md#0x1_MultiSig_vote_impl">vote_impl</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt;(sig, multisig_address, id)
   };
   <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">maybe_restore_withdraw_cap</a>(sig, multisig_address, cap_opt); // don't need this and can't drop.
 
   <b>if</b> (passed) {
-    <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address);
-
+    <b>let</b> ms = <b>borrow_global_mut</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_address);
+    <b>let</b> data = <a href="MultiSig.md#0x1_MultiSig_extract_proposal_data">extract_proposal_data</a>&lt;<a href="MultiSig.md#0x1_MultiSig_PropGovSigners">PropGovSigners</a>&gt;(multisig_address, id);
     <a href="MultiSig.md#0x1_MultiSig_maybe_update_authorities">maybe_update_authorities</a>(ms, data.add_remove, &data.addresses);
     <a href="MultiSig.md#0x1_MultiSig_maybe_update_threshold">maybe_update_threshold</a>(ms, &data.n_of_m);
   }
@@ -1262,7 +1270,7 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
 Updates the authorities of the multisig. This is a helper function for governance.
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_update_authorities">maybe_update_authorities</a>(ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_MultiSig">MultiSig::MultiSig</a>, add_remove: bool, addresses: &vector&lt;<b>address</b>&gt;)
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_update_authorities">maybe_update_authorities</a>(ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_Governance">MultiSig::Governance</a>, add_remove: bool, addresses: &vector&lt;<b>address</b>&gt;)
 </code></pre>
 
 
@@ -1271,7 +1279,7 @@ Updates the authorities of the multisig. This is a helper function for governanc
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_update_authorities">maybe_update_authorities</a>(ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>, add_remove: bool, addresses: &vector&lt;<b>address</b>&gt;) {
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_update_authorities">maybe_update_authorities</a>(ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>, add_remove: bool, addresses: &vector&lt;<b>address</b>&gt;) {
 
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>(addresses)) {
       // The <b>address</b> field may be empty <b>if</b> the multisig is only changing the threshold
@@ -1306,7 +1314,7 @@ Updates the authorities of the multisig. This is a helper function for governanc
 
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_update_threshold">maybe_update_threshold</a>(ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_MultiSig">MultiSig::MultiSig</a>, n_of_m_opt: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;u64&gt;)
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_update_threshold">maybe_update_threshold</a>(ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_Governance">MultiSig::Governance</a>, n_of_m_opt: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;u64&gt;)
 </code></pre>
 
 
@@ -1315,7 +1323,7 @@ Updates the authorities of the multisig. This is a helper function for governanc
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_update_threshold">maybe_update_threshold</a>(ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a>, n_of_m_opt: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt;) {
+<pre><code><b>fun</b> <a href="MultiSig.md#0x1_MultiSig_maybe_update_threshold">maybe_update_threshold</a>(ms: &<b>mut</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>, n_of_m_opt: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt;) {
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(n_of_m_opt)) {
     ms.cfg_default_n_sigs = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>(n_of_m_opt);
   };
@@ -1341,8 +1349,8 @@ Updates the authorities of the multisig. This is a helper function for governanc
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_get_authorities">get_authorities</a>(multisig_address: <b>address</b>): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
-  <b>let</b> m = <b>borrow_global</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address);
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_get_authorities">get_authorities</a>(multisig_address: <b>address</b>): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a> {
+  <b>let</b> m = <b>borrow_global</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_address);
   *&m.signers
 }
 </code></pre>
@@ -1366,8 +1374,8 @@ Updates the authorities of the multisig. This is a helper function for governanc
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_get_n_of_m_cfg">get_n_of_m_cfg</a>(multisig_address: <b>address</b>): (u64, u64) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> {
-  <b>let</b> m = <b>borrow_global</b>&lt;<a href="MultiSig.md#0x1_MultiSig">MultiSig</a>&gt;(multisig_address);
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_get_n_of_m_cfg">get_n_of_m_cfg</a>(multisig_address: <b>address</b>): (u64, u64) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a> {
+  <b>let</b> m = <b>borrow_global</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Governance">Governance</a>&gt;(multisig_address);
   (*&m.cfg_default_n_sigs, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&m.signers))
 }
 </code></pre>

@@ -20,10 +20,12 @@ script {
 //# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::DonorDirected;
-    use Std::Vector;
+    // use Std::Vector;
+    use DiemFramework::Debug::print;
 
     fun main(_dr: signer, sender: signer) {
-      let uid = DonorDirected::new_timed_transfer_multisig(&sender, @Alice, @Bob, 100, b"thanks bob");
+      let uid = DonorDirected::propose_payment(&sender, @Alice, @Bob, 100, b"thanks bob");
+      print
       assert!(DonorDirected::is_pending(@Alice, &uid), 7357003);
     }
 }
