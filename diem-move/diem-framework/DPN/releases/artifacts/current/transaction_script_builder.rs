@@ -2165,9 +2165,6 @@ pub enum ScriptFunctionCall {
         world: u64,
     },
 
-    /// the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.
-    FinalizeInit {},
-
     /// # Summary
     /// Shifts the window held by the CRSN resource published under `account`
     /// by `shift_amount`. This will expire all unused slots in the CRSN at the
@@ -2252,14 +2249,6 @@ pub enum ScriptFunctionCall {
         signer_three: AccountAddress,
         signer_four: AccountAddress,
         signer_five: AccountAddress,
-    },
-
-    /// Initialize the DonorDirected wallet with Three Signers
-    InitDonorDirected {
-        signer_one: AccountAddress,
-        signer_two: AccountAddress,
-        signer_three: AccountAddress,
-        cfg_n_signers: u64,
     },
 
     InitVouch {},
@@ -2529,17 +2518,6 @@ pub enum ScriptFunctionCall {
     Preburn {
         token: TypeTag,
         amount: u64,
-    },
-
-    /// propose and vote on the liquidation of this wallet
-    ProposeLiquidation {
-        multisig_address: AccountAddress,
-    },
-
-    /// propose and vote on the veto of a specific transacation
-    ProposeVeto {
-        multisig_address: AccountAddress,
-        uid: u64,
     },
 
     /// # Summary
@@ -3851,7 +3829,6 @@ impl ScriptFunctionCall {
             ),
             CreateVaspDomains {} => encode_create_vasp_domains_script_function(),
             DemoE2e { world } => encode_demo_e2e_script_function(world),
-            FinalizeInit {} => encode_finalize_init_script_function(),
             ForceExpire { shift_amount } => encode_force_expire_script_function(shift_amount),
             FreezeAccount {
                 sliding_nonce,
@@ -3869,17 +3846,6 @@ impl ScriptFunctionCall {
                 signer_three,
                 signer_four,
                 signer_five,
-            ),
-            InitDonorDirected {
-                signer_one,
-                signer_two,
-                signer_three,
-                cfg_n_signers,
-            } => encode_init_donor_directed_script_function(
-                signer_one,
-                signer_two,
-                signer_three,
-                cfg_n_signers,
             ),
             InitVouch {} => encode_init_vouch_script_function(),
             InitializeDiemConsensusConfig { sliding_nonce } => {
@@ -3940,13 +3906,6 @@ impl ScriptFunctionCall {
                 metadata_signature,
             ),
             Preburn { token, amount } => encode_preburn_script_function(token, amount),
-            ProposeLiquidation { multisig_address } => {
-                encode_propose_liquidation_script_function(multisig_address)
-            }
-            ProposeVeto {
-                multisig_address,
-                uid,
-            } => encode_propose_veto_script_function(multisig_address, uid),
             PublishSharedEd25519PublicKey { public_key } => {
                 encode_publish_shared_ed25519_public_key_script_function(public_key)
             }
@@ -5181,19 +5140,6 @@ pub fn encode_demo_e2e_script_function(world: u64) -> TransactionPayload {
     ))
 }
 
-/// the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.
-pub fn encode_finalize_init_script_function() -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("DonorDirected").to_owned(),
-        ),
-        ident_str!("finalize_init").to_owned(),
-        vec![],
-        vec![],
-    ))
-}
-
 /// # Summary
 /// Shifts the window held by the CRSN resource published under `account`
 /// by `shift_amount`. This will expire all unused slots in the CRSN at the
@@ -5313,29 +5259,6 @@ pub fn encode_init_community_multisig_script_function(
             bcs::to_bytes(&signer_three).unwrap(),
             bcs::to_bytes(&signer_four).unwrap(),
             bcs::to_bytes(&signer_five).unwrap(),
-        ],
-    ))
-}
-
-/// Initialize the DonorDirected wallet with Three Signers
-pub fn encode_init_donor_directed_script_function(
-    signer_one: AccountAddress,
-    signer_two: AccountAddress,
-    signer_three: AccountAddress,
-    cfg_n_signers: u64,
-) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("DonorDirected").to_owned(),
-        ),
-        ident_str!("init_donor_directed").to_owned(),
-        vec![],
-        vec![
-            bcs::to_bytes(&signer_one).unwrap(),
-            bcs::to_bytes(&signer_two).unwrap(),
-            bcs::to_bytes(&signer_three).unwrap(),
-            bcs::to_bytes(&cfg_n_signers).unwrap(),
         ],
     ))
 }
@@ -5779,40 +5702,6 @@ pub fn encode_preburn_script_function(token: TypeTag, amount: u64) -> Transactio
         ident_str!("preburn").to_owned(),
         vec![token],
         vec![bcs::to_bytes(&amount).unwrap()],
-    ))
-}
-
-/// propose and vote on the liquidation of this wallet
-pub fn encode_propose_liquidation_script_function(
-    multisig_address: AccountAddress,
-) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("DonorDirected").to_owned(),
-        ),
-        ident_str!("propose_liquidation").to_owned(),
-        vec![],
-        vec![bcs::to_bytes(&multisig_address).unwrap()],
-    ))
-}
-
-/// propose and vote on the veto of a specific transacation
-pub fn encode_propose_veto_script_function(
-    multisig_address: AccountAddress,
-    uid: u64,
-) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("DonorDirected").to_owned(),
-        ),
-        ident_str!("propose_veto").to_owned(),
-        vec![],
-        vec![
-            bcs::to_bytes(&multisig_address).unwrap(),
-            bcs::to_bytes(&uid).unwrap(),
-        ],
     ))
 }
 
@@ -9028,16 +8917,6 @@ fn decode_demo_e2e_script_function(payload: &TransactionPayload) -> Option<Scrip
     }
 }
 
-fn decode_finalize_init_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(_script) = payload {
-        Some(ScriptFunctionCall::FinalizeInit {})
-    } else {
-        None
-    }
-}
-
 fn decode_force_expire_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::ForceExpire {
@@ -9071,21 +8950,6 @@ fn decode_init_community_multisig_script_function(
             signer_three: bcs::from_bytes(script.args().get(2)?).ok()?,
             signer_four: bcs::from_bytes(script.args().get(3)?).ok()?,
             signer_five: bcs::from_bytes(script.args().get(4)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
-fn decode_init_donor_directed_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::InitDonorDirected {
-            signer_one: bcs::from_bytes(script.args().get(0)?).ok()?,
-            signer_two: bcs::from_bytes(script.args().get(1)?).ok()?,
-            signer_three: bcs::from_bytes(script.args().get(2)?).ok()?,
-            cfg_n_signers: bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
@@ -9281,29 +9145,6 @@ fn decode_preburn_script_function(payload: &TransactionPayload) -> Option<Script
         Some(ScriptFunctionCall::Preburn {
             token: script.ty_args().get(0)?.clone(),
             amount: bcs::from_bytes(script.args().get(0)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
-fn decode_propose_liquidation_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::ProposeLiquidation {
-            multisig_address: bcs::from_bytes(script.args().get(0)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
-fn decode_propose_veto_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::ProposeVeto {
-            multisig_address: bcs::from_bytes(script.args().get(0)?).ok()?,
-            uid: bcs::from_bytes(script.args().get(1)?).ok()?,
         })
     } else {
         None
@@ -10192,10 +10033,6 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_demo_e2e_script_function),
         );
         map.insert(
-            "DonorDirectedfinalize_init".to_string(),
-            Box::new(decode_finalize_init_script_function),
-        );
-        map.insert(
             "AccountAdministrationScriptsforce_expire".to_string(),
             Box::new(decode_force_expire_script_function),
         );
@@ -10206,10 +10043,6 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "CommunityWalletinit_community_multisig".to_string(),
             Box::new(decode_init_community_multisig_script_function),
-        );
-        map.insert(
-            "DonorDirectedinit_donor_directed".to_string(),
-            Box::new(decode_init_donor_directed_script_function),
         );
         map.insert(
             "VouchScriptsinit_vouch".to_string(),
@@ -10274,14 +10107,6 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "TreasuryComplianceScriptspreburn".to_string(),
             Box::new(decode_preburn_script_function),
-        );
-        map.insert(
-            "DonorDirectedpropose_liquidation".to_string(),
-            Box::new(decode_propose_liquidation_script_function),
-        );
-        map.insert(
-            "DonorDirectedpropose_veto".to_string(),
-            Box::new(decode_propose_veto_script_function),
         );
         map.insert(
             "AccountAdministrationScriptspublish_shared_ed25519_public_key".to_string(),

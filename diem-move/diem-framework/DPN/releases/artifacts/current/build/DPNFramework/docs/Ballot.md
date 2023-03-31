@@ -23,6 +23,9 @@ What you may initially struggle with is the TallyType cannot be modified in this
 -  [Struct `Ballot`](#0x1_Ballot_Ballot)
 -  [Struct `BallotTracker`](#0x1_Ballot_BallotTracker)
 -  [Constants](#@Constants_0)
+-  [Function `get_pending_enum`](#0x1_Ballot_get_pending_enum)
+-  [Function `get_approved_enum`](#0x1_Ballot_get_approved_enum)
+-  [Function `get_rejected_enum`](#0x1_Ballot_get_rejected_enum)
 -  [Function `new_tracker`](#0x1_Ballot_new_tracker)
 -  [Function `propose_ballot`](#0x1_Ballot_propose_ballot)
 -  [Function `is_completed`](#0x1_Ballot_is_completed)
@@ -179,6 +182,78 @@ No ballot found under that GUID
 </code></pre>
 
 
+
+<a name="0x1_Ballot_get_pending_enum"></a>
+
+## Function `get_pending_enum`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Ballot.md#0x1_Ballot_get_pending_enum">get_pending_enum</a>(): u8
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Ballot.md#0x1_Ballot_get_pending_enum">get_pending_enum</a>(): u8 {
+  <a href="Ballot.md#0x1_Ballot_PENDING">PENDING</a>
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Ballot_get_approved_enum"></a>
+
+## Function `get_approved_enum`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Ballot.md#0x1_Ballot_get_approved_enum">get_approved_enum</a>(): u8
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Ballot.md#0x1_Ballot_get_approved_enum">get_approved_enum</a>(): u8 {
+  <a href="Ballot.md#0x1_Ballot_APPROVED">APPROVED</a>
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Ballot_get_rejected_enum"></a>
+
+## Function `get_rejected_enum`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Ballot.md#0x1_Ballot_get_rejected_enum">get_rejected_enum</a>(): u8
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Ballot.md#0x1_Ballot_get_rejected_enum">get_rejected_enum</a>(): u8 {
+  <a href="Ballot.md#0x1_Ballot_REJECTED">REJECTED</a>
+}
+</code></pre>
+
+
+
+</details>
 
 <a name="0x1_Ballot_new_tracker"></a>
 

@@ -38,6 +38,16 @@ address DiemFramework {
     const PENDING: u8  = 1;
     const APPROVED: u8 = 2;
     const REJECTED: u8 = 3;
+    
+    public fun get_pending_enum(): u8 {
+      PENDING
+    }
+    public fun get_approved_enum(): u8 {
+      APPROVED
+    }
+    public fun get_rejected_enum(): u8 {
+      REJECTED
+    }
 
 
     struct Ballot<TallyType> has store, drop { // ballots cannot be stored in global storage and cannot be copied

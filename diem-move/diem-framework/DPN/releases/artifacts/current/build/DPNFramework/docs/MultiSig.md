@@ -752,7 +752,7 @@ print(&23);
   print(&found);
   print(&status_enum);
   print(&24);
-  <b>if</b> (found && status_enum == <a href="MultiSig.md#0x1_MultiSig_PENDING">PENDING</a>) {
+  <b>if</b> (found && status_enum == <a href="Ballot.md#0x1_Ballot_get_pending_enum">Ballot::get_pending_enum</a>()) {
     print(&2401);
     // this exact proposal is already pending, so we we will just <b>return</b> the guid of the existing proposal.
     // we'll <b>let</b> the caller decide what <b>to</b> do (we wont vote by default)

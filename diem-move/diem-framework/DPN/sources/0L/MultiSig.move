@@ -69,6 +69,7 @@ module MultiSig {
   const PENDING: u8  = 1;
   const APPROVED: u8 = 2;
   const REJECTED: u8 = 3;
+  
 
   
   /// A MultiSig account is an account which requires multiple votes from Authorities to  send a transaction.
@@ -293,7 +294,7 @@ print(&23);
     print(&found);
     print(&status_enum);
     print(&24);
-    if (found && status_enum == PENDING) {
+    if (found && status_enum == Ballot::get_pending_enum()) {
       print(&2401);
       // this exact proposal is already pending, so we we will just return the guid of the existing proposal.
       // we'll let the caller decide what to do (we wont vote by default)

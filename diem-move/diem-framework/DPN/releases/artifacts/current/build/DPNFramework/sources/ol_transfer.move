@@ -51,7 +51,7 @@ module TransferScripts {
         // checking in CommunityWallet module
         assert!(DiemAccount::is_slow(destination), 30002);
 
-        let _uid = DonorDirected::new_timed_transfer_multisig(&sender, multisig_address, destination, value, memo);
+        let _uid = DonorDirected::propose_payment(&sender, multisig_address, destination, value, memo);
         // assert!(DonorDirected::transfer_is_proposed(uid, multisig_address), 30003);
     }
 }
