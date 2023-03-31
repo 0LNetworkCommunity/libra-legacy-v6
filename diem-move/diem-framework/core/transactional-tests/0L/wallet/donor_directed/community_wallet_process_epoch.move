@@ -55,8 +55,8 @@ script {
       // Now it's scheduled since we got over the threshold
       assert!(DonorDirected::is_scheduled(@Alice, &uid), 7357003);
 
-      // in testnet the veto window duration is 1 epoch from current epoch
-      let list = DonorDirected::find_by_deadline(@Alice, 2);
+      // the default timed payment is 3 epochs, we are in epoch 1
+      let list = DonorDirected::find_by_deadline(@Alice, 4);
       assert!(Vector::contains(&list, &uid), 7357008);
       // print(&list);
 

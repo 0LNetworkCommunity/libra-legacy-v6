@@ -53,8 +53,8 @@ script {
       // Now it's scheduled since we got over the threshold
       assert!(DonorDirected::is_scheduled(@Alice, &uid), 7357003);
 
-      // in testnet the veto window duration is 1 epoch from current epoch
-      let list = DonorDirected::find_by_deadline(@Alice, 2);
+      // the default timed payment is 3 epochs, we are in epoch 1
+      let list = DonorDirected::find_by_deadline(@Alice, 4);
       assert!(Vector::contains(&list, &uid), 7357008);
       // print(&list);
     }
@@ -75,8 +75,8 @@ script {
       print(&bob_balance_pre);
       assert!(bob_balance_pre == 10000000, 7357004);
 
-      // process epoch 2 accounts
-      DonorDirected::process_donor_directed_accounts(&vm, 2);
+      // process epoch 4 accounts
+      DonorDirected::process_donor_directed_accounts(&vm, 4);
 
       let bob_balance = DiemAccount::balance<GAS>(@Bob);
       print(&bob_balance);

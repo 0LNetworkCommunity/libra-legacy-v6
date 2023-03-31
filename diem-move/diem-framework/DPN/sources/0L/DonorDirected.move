@@ -152,8 +152,9 @@ module DonorDirected {
           veto: Vector::empty(),
           paid: Vector::empty(),
           guid_capability,
-        })
-
+        });
+      
+      DonorDirectedGovernance::init_donor_governance(sig);
     }
 
 
@@ -500,6 +501,10 @@ module DonorDirected {
 
       set_donor_directed(sponsor);
       make_multisig(sponsor, cfg_n_signers, init_signers);
+
+      // if not tracking cumulative donations, then don't use previous balance.
+      // start again.
+      DiemAccount::init_cumulative_deposits(sponsor, 0);
     }
     
     /// the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.
@@ -528,10 +533,14 @@ module DonorDirected {
     /// propose and vote on the veto of a specific transacation
     public fun propose_veto(donor: &signer, multisig_address: address, uid: u64)  acquires TxSchedule {
       let guid = GUID::create_id(multisig_address, uid);
+      print(&01);
       DonorDirectedGovernance::assert_authorized(donor, multisig_address);
+      print(&02);
       let state = borrow_global<TxSchedule>(multisig_address);
+      print(&03);
       let epochs_duration = DEFAULT_VETO_DURATION;
       DonorDirectedGovernance::propose_veto(&state.guid_capability, &guid,  epochs_duration);
+      print(&04);
     }
 
 
