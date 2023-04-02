@@ -2,22 +2,20 @@
 // Alice, Jim:     validators with 10M GAS
 // Bob, Carol: non-validators with  1M GAS
 
-// Bob, the slow wallet
+// Bob, the recipient wallet
 // Carol, the community wallet
 
-// Community wallets cannot use the slow wallet transfer scripts
 
 //# run --admin-script --signers DiemRoot Bob
 script {
   use DiemFramework::DiemAccount;
   use Std::Vector;
 
-  fun main(_dr: signer, bob: signer) {
+  fun main(_dr: signer, _bob: signer) {
     // Genesis creates 6 validators by default which are already slow wallets,
-    // adding Bob
-    DiemAccount::set_slow(&bob);
     let list = DiemAccount::get_slow_list();
-    assert!(Vector::length<address>(&list) == 7, 735701);
+    //verify bob is not in the slow list
+    assert!(Vector::length<address>(&list) == 6, 735701);
   }
 }
 
