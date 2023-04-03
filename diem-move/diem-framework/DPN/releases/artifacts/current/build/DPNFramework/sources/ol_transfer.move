@@ -42,8 +42,8 @@ module TransferScripts {
         // unscaled_value. This script converts it to the Move internal scale
         // by multiplying by COIN_SCALING_FACTOR.
         let value = unscaled_value * Globals::get_coin_scaling_factor();
-        let sender_addr = Signer::address_of(&sender);
-        assert!(CommunityWallet::is_comm(sender_addr), 30001);
+        // let sender_addr = Signer::address_of(&sender);
+        // assert!(CommunityWallet::is_comm(sender_addr), 30001);
 
         // confirm the destination account has a slow wallet
         // TODO: this check only happens in this script since there's 
