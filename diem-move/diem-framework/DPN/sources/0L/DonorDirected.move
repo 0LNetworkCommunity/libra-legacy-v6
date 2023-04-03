@@ -127,15 +127,8 @@ module DonorDirected {
 
     // 3. Once the MultiSig is initialized, the account needs to be bricked, before the MultiSig can be used.
 
-    public fun set_donor_directed(sig: &signer) acquires Registry {
+    public fun set_donor_directed(sig: &signer) {
       if (!exists<Registry>(@VMReserved)) return;
-
-      let addr = Signer::address_of(sig);
-      let list = get_root_registry();
-      if (!Vector::contains<address>(&list, &addr)) {
-        let s = borrow_global_mut<Registry>(@VMReserved);
-        Vector::push_back(&mut s.list, addr);
-      };
 
       move_to<Freeze>(
         sig, 
@@ -156,6 +149,19 @@ module DonorDirected {
       
       DonorDirectedGovernance::init_donor_governance(sig);
     }
+
+    // add to root registry
+    fun add_to_registry(sig: &signer) acquires Registry {
+      if (!exists<Registry>(@VMReserved)) return;
+
+      let addr = Signer::address_of(sig);
+      let list = get_root_registry();
+      if (!Vector::contains<address>(&list, &addr)) {
+        let s = borrow_global_mut<Registry>(@VMReserved);
+        Vector::push_back(&mut s.list, addr);
+      };
+    }
+
 
 
     /// Like any MultiSig instance, a sponsor which is the original owner of the account, needs to initialize the account.
@@ -494,7 +500,7 @@ module DonorDirected {
     /// Initialize the TxSchedule wallet with Three Signers
 
     // TODO: this version of Diem, does not allow vector<address> in the script arguments. So we are hard coding this to initialize with three signers. Gross.
-    public fun init_donor_directed(sponsor: &signer, signer_one: address, signer_two: address, signer_three: address, cfg_n_signers: u64) acquires Registry {
+    public fun init_donor_directed(sponsor: &signer, signer_one: address, signer_two: address, signer_three: address, cfg_n_signers: u64) {
       let init_signers = Vector::singleton(signer_one);
       Vector::push_back(&mut init_signers, signer_two);
       Vector::push_back(&mut init_signers, signer_three);
@@ -508,7 +514,7 @@ module DonorDirected {
     }
     
     /// the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.
-    public fun finalize_init(sponsor: &signer) {
+    public fun finalize_init(sponsor: &signer) acquires Registry {
       let multisig_address = Signer::address_of(sponsor);
       assert!(MultiSig::is_init(multisig_address), Errors::invalid_state(EMULTISIG_NOT_INIT));
 
@@ -520,6 +526,9 @@ module DonorDirected {
       
       MultiSig::finalize_and_brick(sponsor);
       assert!(is_donor_directed(multisig_address), Errors::invalid_state(ENOT_INIT_DONOR_DIRECTED));
+
+      // only add to registry if INIT is successful.
+      add_to_registry(sponsor);
     }
 
     /// propose and vote on the liquidation of this wallet

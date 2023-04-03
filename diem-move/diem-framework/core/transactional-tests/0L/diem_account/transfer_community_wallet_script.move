@@ -3,20 +3,16 @@
 // Community, the community wallet
 // Dave, the slow wallet
 
-// Community wallets cannot use the slow wallet transfer scripts
+// Community wallets have specific tx script to send to slow wallet
 
 //# run --admin-script --signers DiemRoot Dave
 script {
   use DiemFramework::DiemAccount;
   use Std::Vector;
-  // use DiemFramework::Debug::print;
 
   fun main(_dr: signer, sender: signer) {
-    // Genesis creates 6 validators by default which are already slow wallets,
-    // adding Bob
     DiemAccount::set_slow(&sender);
     let list = DiemAccount::get_slow_list();
-    // print(&list);
     assert!(Vector::length<address>(&list) == 4, 735701);
   }
 }
