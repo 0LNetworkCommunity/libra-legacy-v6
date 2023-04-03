@@ -1606,14 +1606,6 @@ module DiemFramework::Diem {
     // Helper functions
     ///////////////////////////////////////////////////////////////////////////
 
-    //////// 0L ///////
-    public fun total_supply<T>(): u128 acquires CurrencyInfo {
-      let gas_info = borrow_global<CurrencyInfo<T>>(@CurrencyInfo);
-      gas_info.total_value
-
-    }
-
-
     /// Asserts that `CoinType` is a registered currency.
     public fun assert_is_currency<CoinType>() {
         assert!(is_currency<CoinType>(), Errors::not_published(ECURRENCY_INFO));

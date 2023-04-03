@@ -10,14 +10,10 @@
 //# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::Burn;
-  use DiemFramework::Diem;
-  use DiemFramework::GAS::GAS;
-  use DiemFramework::Debug::print;
+
 
     fun main(_dr: signer, sender: signer) {
     Burn::set_send_community(&sender, true);
-    let total_supply_before = Diem::total_supply<GAS>();
-    print(&total_supply_before);
   }
 }
 
@@ -28,10 +24,6 @@ script {
     use Std::Vector;
     use DiemFramework::DiemAccount;
 
-    use DiemFramework::Diem;
-    use DiemFramework::GAS::GAS;
-    use DiemFramework::Debug::print;
-
     fun main(_dr: signer, sponsor: signer) {
       DonorDirected::init_donor_directed(&sponsor, @Alice, @Bob, @Dave, 2);
       DonorDirected::finalize_init(&sponsor);
@@ -39,9 +31,6 @@ script {
       assert!(Vector::length(&list) == 1, 7357001);
 
       assert!(DiemAccount::is_init_cumu_tracking(@CommunityA), 7357002);
-
-      let total_supply_before = Diem::total_supply<GAS>();
-      print(&total_supply_before);
 
     }
 }
@@ -72,11 +61,7 @@ script {
   use DiemFramework::Burn;
   use Std::Vector;
   use Std::FixedPoint32;
-  // use DiemFramework::Debug::print;
 
-    use DiemFramework::Diem;
-    // use DiemFramework::GAS::GAS;
-    use DiemFramework::Debug::print;
 
   fun main(vm: signer, _:signer) {
     // send to community wallet CommunityA
@@ -107,10 +92,8 @@ script {
     let pct_b = FixedPoint32::multiply_u64(100, b_mult);
     // print(&pct_b);
     // ratio for communityB
-    assert!(pct_b == 89, 7357009); // todo
+    assert!(pct_b == 89, 7357009);
 
-    let total_supply_before = Diem::total_supply<GAS>();
-    print(&total_supply_before);
   }
 }
 // check: EXECUTED
@@ -125,7 +108,7 @@ script {
 
   fun main(vm: signer, _:signer) {
     // we assume the ratios are calculated correctly see burn_ratios.move
-    let total_supply_before = Diem::total_supply<GAS>();
+    let total_supply_before = Diem::market_cap<GAS>();
 
     let bal_A_before = DiemAccount::balance<GAS>(@CommunityA);
     let bal_B_before = DiemAccount::balance<GAS>(@CommunityB);
@@ -151,7 +134,7 @@ script {
     let bal_b = DiemAccount::balance<GAS>(@CommunityB);
     assert!(bal_b > bal_B_before, 7357012);
 
-    let total_supply_after = Diem::total_supply<GAS>();
+    let total_supply_after = Diem::market_cap<GAS>();
 
     assert!(total_supply_after == total_supply_before, 7357013);
 

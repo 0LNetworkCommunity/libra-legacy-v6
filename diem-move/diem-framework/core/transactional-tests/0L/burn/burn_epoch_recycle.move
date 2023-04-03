@@ -7,6 +7,16 @@
 // Tests that Alice burns the cost-to-exist on every epoch, 
 // (is NOT sending to community index)
 
+//////// SETS community send, recycles burns.
+
+//# run --admin-script --signers DiemRoot Alice
+script {
+  use DiemFramework::Burn;
+    fun main(_dr: signer, sender: signer) {
+    Burn::set_send_community(&sender, true);
+  }
+}
+
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Mock;
@@ -17,6 +27,9 @@ script {
         Mock::mock_case_1(&vm, @Alice, start_height, end_height);
     }
 }
+
+
+
 
 //# run --admin-script --signers DiemRoot CommunityA
 script {
@@ -79,26 +92,22 @@ script {
 
     // alice balance should increase because of subsidy
     let alice_old_balance = 9000000;
-    let new = DiemAccount::balance<GAS>(@Alice);
+    let alice_new = DiemAccount::balance<GAS>(@Alice);
 
-    assert!(new > alice_old_balance, 7357004);
-    let subsidy = new - alice_old_balance;
-    print(&new);
+    assert!(alice_new > alice_old_balance, 7357004);
+    let subsidy = alice_new - alice_old_balance;
+    print(&alice_new);
     print(&subsidy);
 
-    // should not change CommunityA's balance, since Alice did not opt to seend to community index.
+    // CommunityA should get MORE than just what was donated
+    // since the matching donations from Alice's rewards worked.
     let bal = DiemAccount::balance<GAS>(@CommunityA);
-    assert!(bal == 11000000, 7357005);
+    assert!(bal > 11000000, 7357005);
 
     let cap_at_start = 65000000;
 
-    let burn = (new_cap as u64) - cap_at_start;
-    print(&burn);
-
-    // despite new minting of coins from validator reward
-    // the new cap should not be greater than the old cap + subsidy, because there was a burn.
-    assert!(new_cap < 331000000, 7357006);
-
+    // there was minting, so the market cap should increase
+    assert!(new_cap > cap_at_start, 7357006);
 
   }
 }

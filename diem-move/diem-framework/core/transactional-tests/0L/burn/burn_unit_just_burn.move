@@ -61,7 +61,7 @@ script {
 
   fun main(vm: signer, _:signer) {
     // we assume the ratios are calculated correctly see burn_ratios.move
-    let total_supply_before = Diem::total_supply<GAS>();
+    let total_supply_before = Diem::market_cap<GAS>();
     // print(&total_supply_before);
 
     let bal_A_before = DiemAccount::balance<GAS>(@CommunityA);
@@ -86,7 +86,7 @@ script {
     let bal_b = DiemAccount::balance<GAS>(@CommunityB);
     assert!(bal_b == bal_B_before, 7357009);
 
-    let total_supply_after = Diem::total_supply<GAS>();
+    let total_supply_after = Diem::market_cap<GAS>();
 
     assert!(total_supply_after < total_supply_before, 7357010);
 
