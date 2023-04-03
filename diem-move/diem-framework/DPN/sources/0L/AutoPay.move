@@ -16,7 +16,6 @@ address DiemFramework {
     use Std::FixedPoint32;
     use DiemFramework::DiemConfig;
     use Std::Errors;
-    // use DiemFramework::CommunityWallet;
     use DiemFramework::Roles;
 
     /// Attempted to send funds to an account that does not exist
@@ -263,7 +262,7 @@ address DiemFramework {
           // in remaining cases, payment is simple amount given, not a percentage
           payment.amt
         };
-        
+
         if (amount != 0 && amount <= account_bal) {
            DiemAccount::vm_pay_from<GAS>(
                 *account_addr, payment.payee, amount, b"autopay", b"", vm
