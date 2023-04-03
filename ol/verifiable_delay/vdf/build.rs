@@ -71,7 +71,7 @@ fn mod_exponentiation(base: usize, exponent: usize, modulus: usize) -> usize {
 
 macro_rules! const_fmt {
     () => {
-        "#[allow(warnings)]\nconst {}: [{}; {}] = {:#?};\n\n";
+        "#[allow(warnings)]\nconst {}: [{}; {}] = {:#?};\n\n"
     };
 }
 

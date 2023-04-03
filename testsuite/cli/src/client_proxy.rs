@@ -8,7 +8,10 @@ use crate::{
 };
 use anyhow::{bail, ensure, format_err, Error, Result};
 use compiler::Compiler;
-use diem_client::{WaitForTransactionError, views::{self, WaypointView}};
+use diem_client::{
+    views::{self, WaypointView},
+    WaitForTransactionError,
+};
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey, Ed25519Signature},
     test_utils::KeyPair,
@@ -59,7 +62,7 @@ use std::{
 };
 
 //////// 0L ////////
-use ol_types::{block::VDFProof, account::ValConfigs};
+use ol_types::{account::ValConfigs, block::VDFProof};
 
 const CLIENT_WALLET_MNEMONIC_FILE: &str = "client.mnemonic";
 const GAS_UNIT_PRICE: u64 = 0;
@@ -454,7 +457,8 @@ impl ClientProxy {
         file.read_to_string(&mut json_string)
             .unwrap_or_else(|err| panic!("Error while reading file: [{}]", err));
 
-        let block: VDFProof = serde_json::from_str(&json_string).expect("could not parse json file");
+        let block: VDFProof =
+            serde_json::from_str(&json_string).expect("could not parse json file");
 
         let (sender_address, _) = self
             .get_account_address_from_parameter(space_delim_strings[1])
@@ -625,7 +629,8 @@ impl ClientProxy {
         file.read_to_string(&mut json_string)
             .unwrap_or_else(|err| panic!("Error while reading file: [{}]", err));
 
-        let val_configs: ValConfigs = serde_json::from_str(&json_string).expect("could not parse json file");
+        let val_configs: ValConfigs =
+            serde_json::from_str(&json_string).expect("could not parse json file");
 
         let (sender_address, _) = self
             .get_account_address_from_parameter(space_delim_strings[1])
@@ -645,7 +650,10 @@ impl ClientProxy {
             block.difficulty(),
             block.security(),
             val_configs.ow_human_name.to_string().as_bytes().to_vec(),
-            val_configs.op_address.parse().expect("could not parse address in op_address"),
+            val_configs
+                .op_address
+                .parse()
+                .expect("could not parse address in op_address"),
             val_configs.op_auth_key_prefix,
             val_configs.op_consensus_pubkey,
             val_configs.op_validator_network_addresses,
@@ -841,12 +849,9 @@ impl ClientProxy {
 
     //////// 0L ////////
     /// Query waypoint
-    pub fn query_waypoint(
-        &mut self,
-    ) -> Result<Option<WaypointView>> {
+    pub fn query_waypoint(&mut self) -> Result<Option<WaypointView>> {
         self.client.get_waypoint_state()
     }
-
 
     /// Get the latest sequence number from validator for the account specified.
     pub fn get_sequence_number(&mut self, space_delim_strings: &[&str]) -> Result<u64> {
@@ -1885,7 +1890,8 @@ impl ClientProxy {
         let account_vec: Vec<u8> = hex::decode(data.parse::<String>()?)?;
         ensure!(
             account_vec.len() == AccountAddress::LENGTH,
-            "The address {:?} is of invalid length. Addresses must be 16-bytes long"
+            "The address {:?} is of invalid length. Addresses must be 16-bytes long",
+            account_vec
         );
         let account = AccountAddress::try_from(&account_vec[..]).map_err(|error| {
             format_err!(
@@ -1901,7 +1907,8 @@ impl ClientProxy {
         let bytes_vec: Vec<u8> = hex::decode(data.parse::<String>()?)?;
         ensure!(
             bytes_vec.len() == AuthenticationKey::LENGTH,
-            "The authentication key string {:?} is of invalid length. Authentication keys must be 32-bytes long"
+            "The authentication key string {:?} is of invalid length. Authentication keys must be 32-bytes long",
+            bytes_vec
         );
 
         let auth_key = AuthenticationKey::try_from(&bytes_vec[..]).map_err(|error| {
