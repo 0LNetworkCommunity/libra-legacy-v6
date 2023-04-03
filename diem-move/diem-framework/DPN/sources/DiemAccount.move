@@ -1440,6 +1440,49 @@ module DiemFramework::DiemAccount {
 
         restore_withdraw_capability(cap);
     }
+
+    // respects slow wallet limits
+    public fun vm_pay_from<Token: store>(
+        payer: address,
+        payee: address,
+        amount: u64,
+        metadata: vector<u8>,
+        metadata_signature: vector<u8>,
+        vm: &signer,
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWallet {
+        /////// 0L /////////
+        if (Signer::address_of(vm) != @DiemRoot) return;
+
+        // check amount if it is a slow wallet
+        if (is_slow(payer)) {
+          if (amount > unlocked_amount(payer)) return;
+        };
+
+        // checks first that the slow limits are respected.
+        vm_make_payment_no_limit<Token>(
+            payer,
+            payee,
+            amount,
+            metadata,
+            metadata_signature,
+            vm
+        );
+        /////// 0L /////////
+        // in case of slow wallet update the tracker
+        if (is_slow(payer))
+          {decrease_unlocked_tracker(payer, amount);};
+
+        // if a payee is a slow wallet and is receiving funds from ordinary
+        // or another slow wallet's unlocked funds, it counts toward unlocked coins.
+        // the exceptional case is community wallets, which funds don't count toward unlocks. However, the community wallet payment uses a different function: vm_make_payment_no_limit
+        if (is_slow(*&payee)){
+          increase_unlocked_tracker(*&payee, amount);
+        };
+
+
+        maybe_update_deposit(payer, payee, amount);        
+    }
+
     
     //////// 0L ////////
     /// VM can burn from an account's balance for administrative purposes (e.g. at epoch boundaries)
@@ -1528,8 +1571,8 @@ module DiemFramework::DiemAccount {
 
 
         maybe_update_deposit(*&cap.account_address, payee, amount);        
-
     }
+
 
     /// Withdraw `amount` Diem<Token> from the address embedded in `WithdrawCapability` and
     /// deposits it into the `payee`'s account balance.

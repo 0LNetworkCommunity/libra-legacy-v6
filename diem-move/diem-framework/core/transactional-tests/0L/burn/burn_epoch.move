@@ -29,7 +29,6 @@ script {
       DonorDirected::finalize_init(&sponsor);
       let list = DonorDirected::get_root_registry();
       assert!(Vector::length(&list) == 1, 7357001);
-
       assert!(DiemAccount::is_init_cumu_tracking(@CommunityA), 7357002);
 
     }

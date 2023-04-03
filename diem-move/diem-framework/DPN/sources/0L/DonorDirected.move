@@ -282,8 +282,6 @@ module DonorDirected {
     fun maybe_pay_deadline(vm: &signer, state: &mut TxSchedule, epoch: u64) acquires Freeze {
       // let epoch = DiemConfig::get_current_epoch();
       let i = 0;
-                print(&77777777777777);
-                print(&epoch);
 
       while (i < Vector::length(&state.scheduled)) {
 
