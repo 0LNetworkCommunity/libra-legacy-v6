@@ -149,10 +149,10 @@ module Burn {
     };
 
     // prevent under-burn due to issues with index.
-    let diff = value - value_sent;
-    if (diff > 0) {
-      burn(vm, payer, diff)
-    };    
+    // let diff = value - value_sent;
+    // if (diff > 0) {
+    //   burn(vm, payer, diff)
+    // };    
   }
 
   public fun set_send_community(sender: &signer, community: bool) acquires BurnPreference {
