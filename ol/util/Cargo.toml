@@ -9,4 +9,4 @@ diem-global-constants = { path = "../../config/global-constants" }
 dirs = "2.0.2"
 regex = "1"
 chrono = "0.4"
-fs_extra = "1"
+fs_extra = "1.3.0"
