@@ -32,7 +32,7 @@ storage-service-types = { path = "../storage-service/types" }
 storage-service-server = { path = "../storage-service/server" }
 
 [dev-dependencies]
-claim = "0.5.0"
+claims = "0.7.1"
 maplit = "1.0.2"
 tokio = { version = "1.8.1", features = ["rt", "macros"], default-features = false }
 

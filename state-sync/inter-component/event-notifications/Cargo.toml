@@ -27,7 +27,7 @@ storage-interface = { path = "../../../storage/storage-interface" }
 
 [dev-dependencies]
 bcs = "0.1.2"
-claim = "0.5.0"
+claims = "0.7.1"
 
 diem-crypto = { path = "../../../crates/diem-crypto" }
 diem-temppath = { path = "../../../crates/diem-temppath" }

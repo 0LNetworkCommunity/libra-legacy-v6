@@ -33,7 +33,7 @@ network = { path = "../../../network" }
 short-hex-str = { path = "../../../crates/short-hex-str" }
 
 [dev-dependencies]
-claim = "0.5.0"
+claims = "0.7.1"
 rand = "0.8.3"
 tokio = { version = "1.8.1", features = ["full"] }
 
