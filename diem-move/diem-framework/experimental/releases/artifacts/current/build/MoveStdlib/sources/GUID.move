@@ -109,4 +109,11 @@ module Std::GUID {
             borrow_global<Generator>(addr).counter
         }
     }
+
+
+    //////// 0L ////////
+
+    public fun get_capability_address(&cap: &CreateCapability): address {
+        *&cap.addr
+    }
 }

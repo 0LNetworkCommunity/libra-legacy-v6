@@ -1,37 +1,40 @@
-//# init --validators Alice Bob Carol
+//# init --validators Alice Bob Dave CommunityA CommunityB
 
-//# run --admin-script --signers DiemRoot Bob
+// We will set up two community wallets A and B.
+// The deposit tracker should tell us the proportion that
+// has been donoated to each.
+
+//# run --admin-script --signers DiemRoot CommunityA
 script {
-    use DiemFramework::Wallet;
+    use DiemFramework::DonorDirected;
     use Std::Vector;
-    use DiemFramework::GAS::GAS;
-    use Std::Signer;
     use DiemFramework::DiemAccount;
 
-    fun main(_dr: signer, sender: signer) {
-      Wallet::set_comm(&sender);
-      let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
-      DiemAccount::init_cumulative_deposits(&sender, bal);
-      let list = Wallet::get_comm_list();
+    fun main(_dr: signer, sponsor: signer) {
+      DonorDirected::init_donor_directed(&sponsor, @Alice, @Bob, @Dave, 2);
+      DonorDirected::finalize_init(&sponsor);
+      let list = DonorDirected::get_root_registry();
       assert!(Vector::length(&list) == 1, 7357001);
+
+      assert!(DiemAccount::is_init_cumu_tracking(@CommunityA), 7357002);
+
     }
 }
 // check: EXECUTED
 
-//# run --admin-script --signers DiemRoot Carol
+//# run --admin-script --signers DiemRoot CommunityB
 script {
-    use DiemFramework::Wallet;
+    use DiemFramework::DonorDirected;
     use Std::Vector;
-    use DiemFramework::GAS::GAS;
-    use Std::Signer;
     use DiemFramework::DiemAccount;
 
-    fun main(_dr: signer, sender: signer) {
-      Wallet::set_comm(&sender);
-      let bal = DiemAccount::balance<GAS>(Signer::address_of(&sender));
-      DiemAccount::init_cumulative_deposits(&sender, bal);
-      let list = Wallet::get_comm_list();
-      assert!(Vector::length(&list) == 2, 7357002);
+    fun main(_dr: signer, sponsor: signer) {
+      DonorDirected::init_donor_directed(&sponsor, @Alice, @Bob, @Dave, 2);
+      DonorDirected::finalize_init(&sponsor);
+      let list = DonorDirected::get_root_registry();
+      assert!(Vector::length(&list) == 2, 7357003);
+      assert!(DiemAccount::is_init_cumu_tracking(@CommunityB), 7357004);
+
     }
 }
 // check: EXECUTED
@@ -39,21 +42,24 @@ script {
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
+  use DiemFramework::Debug::print;
   use DiemFramework::GAS::GAS;
   
   fun main(vm: signer, _account: signer) {
     // bobs_indexed amount changes
-    let index_before = DiemAccount::get_index_cumu_deposits(@Bob);
-    let index_carol_before = DiemAccount::get_index_cumu_deposits(@Carol);
+    let index_A_before = DiemAccount::get_index_cumu_deposits(@CommunityA);
+    let index_B_before = DiemAccount::get_index_cumu_deposits(@CommunityB);
+    print(&index_A_before);
+    // print(&index_B_before);
 
-    // send to community wallet Bob
-    DiemAccount::vm_make_payment_no_limit<GAS>( @Alice, @Bob, 100000, x"", x"", &vm);
-    let index_after = DiemAccount::get_index_cumu_deposits(@Bob);
-    assert!(index_after > index_before, 735701);
+    // send to community wallet CommunityA
+    DiemAccount::vm_make_payment_no_limit<GAS>( @Alice, @CommunityA, 100000, x"", x"", &vm);
+    let index_A_after = DiemAccount::get_index_cumu_deposits(@CommunityA);
+    print(&index_A_after);
+    assert!(index_A_after > index_A_before, 735705);
 
-    // carol's amount DOES NOT change
-    // send to community wallet Bob
-    let carol_after = DiemAccount::get_index_cumu_deposits(@Carol);
-    assert!(index_carol_before == carol_after, 735702)
+    // CommunityB's amount DOES NOT change
+    let index_B_after = DiemAccount::get_index_cumu_deposits(@CommunityB);
+    assert!(index_B_before == index_B_after, 735706)
   }
 }

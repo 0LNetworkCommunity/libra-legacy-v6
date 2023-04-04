@@ -34,6 +34,9 @@ module CoreFramework::Account {
 
     const MAX_U64: u128 = 18446744073709551615;
 
+    /////// 0L ////////
+    const BRICK_AUTH: vector<u8> = b"brick_brick_brick_brick_brick!!!";
+
     /// Account already existed
     const EACCOUNT: u64 = 0;
     /// Sequence number exceeded the maximum value for a u64
@@ -51,6 +54,10 @@ module CoreFramework::Account {
     const PROLOGUE_EACCOUNT_DNE: u64 = 1004;
     const PROLOGUE_EBAD_CHAIN_ID: u64 = 1005;
     const PROLOGUE_ESEQUENCE_NUMBER_TOO_BIG: u64 = 1006;
+
+    //////// 0L ////////
+    const PROLOGUE_EACCOUNT_IS_BRICK: u64 = 1007;
+
 
     native fun create_signer(addr: address): signer;
 
@@ -179,6 +186,16 @@ module CoreFramework::Account {
         assert!(ChainId::get() == chain_id, Errors::invalid_argument(PROLOGUE_EBAD_CHAIN_ID));
         assert!(exists<Account>(transaction_sender), Errors::invalid_argument(PROLOGUE_EACCOUNT_DNE));
         let sender_account = borrow_global<Account>(transaction_sender);
+
+        //////// 0L ////////
+        // 0L has the concept of self-locked accounts. These accounts continue to exist, but the original signer gave up authority over the account.
+        // For example in multisig implementations.
+        // In the prologue we check if this is the case to be doubly sure the user cannot send transactions from this account.
+        assert!(*&sender_account.authentication_key != BRICK_AUTH, 
+          Errors::invalid_argument(PROLOGUE_EACCOUNT_IS_BRICK)
+        );
+
+
         assert!(
             Hash::sha3_256(txn_public_key) == *&sender_account.authentication_key,
             Errors::invalid_argument(PROLOGUE_EINVALID_ACCOUNT_AUTH_KEY),

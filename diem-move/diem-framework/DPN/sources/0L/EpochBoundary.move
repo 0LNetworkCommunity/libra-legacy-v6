@@ -32,6 +32,8 @@ module EpochBoundary {
     use DiemFramework::Cases;
     use DiemFramework::Jail;
     use DiemFramework::Vouch;
+    use DiemFramework::MultiSigPayment;
+    use DiemFramework::DonorDirected;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -67,8 +69,13 @@ module EpochBoundary {
           proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
           print(&800900);
         };
-        reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
+
+        root_service_billing(vm);
         print(&801000);
+
+        reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
+        print(&801100);
+
     }
 
     // process fullnode subsidy
@@ -268,7 +275,7 @@ module EpochBoundary {
         TowerState::reconfig(vm, &outgoing_compliant);
         print(&800900102);
         // process community wallets
-        DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
+        DonorDirected::process_donor_directed_accounts(vm, DiemConfig::get_current_epoch());
         print(&800900103);
         // reset counters
         AutoPay::reconfig_reset_tick(vm);
@@ -290,7 +297,7 @@ module EpochBoundary {
     ) {
         print(&800800100);
         CoreAddresses::assert_vm(vm);
-        DiemAccount::migrate_cumu_deposits(vm); // may need to populate data on a migration.
+        // DiemAccount::migrate_cumu_deposits(vm); // may need to populate data on a migration.
         print(&800800101);
         Burn::reset_ratios(vm);
         print(&800800102);
@@ -325,6 +332,10 @@ module EpochBoundary {
           i = i + 1;
         };
         print(&800800107);
+    }
+
+    fun root_service_billing(vm: &signer) {
+      MultiSigPayment::root_security_fee_billing(vm);
     }
 }
 }

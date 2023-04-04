@@ -8,6 +8,7 @@ address DiemFramework {
   module Ancestry {
     use Std::Signer;
     use Std::Vector;
+    use Std::Option::{Self, Option};
     use DiemFramework::Debug::print;
     use DiemFramework::CoreAddresses;
 
@@ -74,6 +75,8 @@ address DiemFramework {
       
     }
 
+    // checks if two addresses have an intersecting permission tree
+    // will return true, and the common ancestor at the intersection.
     public fun is_family(left: address, right: address): (bool, address) acquires Ancestry {
       let is_family = false;
       let common_ancestor = @0x0;
@@ -112,6 +115,36 @@ address DiemFramework {
       // };
       print(&100360);
       (is_family, common_ancestor)
+    }
+
+    public fun is_family_one_in_list(left: address, list: &vector<address>):(bool, Option<address>, Option<address>) acquires Ancestry {
+      let k = 0;
+      while (k < Vector::length(list)) {
+        let right = Vector::borrow(list, k);
+        let (fam, _) = is_family(left, *right);
+        if (fam) { 
+          return (true, Option::some(left), Option::some(*right))
+        };
+        k = k + 1;
+      };
+
+      (false, Option::none(), Option::none())
+    }
+
+    public fun any_family_in_list(addr_vec: vector<address>):(bool, Option<address>, Option<address>) acquires Ancestry  {
+      let i = 0;
+      while (Vector::length(&addr_vec) > 1) {
+        let left = Vector::pop_back(&mut addr_vec);
+
+        let (fam, left_opt, right_opt) = is_family_one_in_list(left, &addr_vec);
+        if (fam) {
+          return (fam, left_opt, right_opt)
+        };
+
+        i = i + 1;
+      };
+
+      (false, Option::none(), Option::none())
     }
 
     // admin migration. Needs the signer object for both VM and child to prevent changes.

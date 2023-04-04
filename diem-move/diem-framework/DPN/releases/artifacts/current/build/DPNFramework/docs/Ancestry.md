@@ -10,11 +10,14 @@
 -  [Function `set_tree`](#0x1_Ancestry_set_tree)
 -  [Function `get_tree`](#0x1_Ancestry_get_tree)
 -  [Function `is_family`](#0x1_Ancestry_is_family)
+-  [Function `is_family_one_in_list`](#0x1_Ancestry_is_family_one_in_list)
+-  [Function `any_family_in_list`](#0x1_Ancestry_any_family_in_list)
 -  [Function `migrate`](#0x1_Ancestry_migrate)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
@@ -215,6 +218,76 @@
   // };
   print(&100360);
   (is_family, common_ancestor)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Ancestry_is_family_one_in_list"></a>
+
+## Function `is_family_one_in_list`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Ancestry.md#0x1_Ancestry_is_family_one_in_list">is_family_one_in_list</a>(left: <b>address</b>, list: &vector&lt;<b>address</b>&gt;): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<b>address</b>&gt;, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<b>address</b>&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Ancestry.md#0x1_Ancestry_is_family_one_in_list">is_family_one_in_list</a>(left: <b>address</b>, list: &vector&lt;<b>address</b>&gt;):(bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;<b>address</b>&gt;, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;<b>address</b>&gt;) <b>acquires</b> <a href="Ancestry.md#0x1_Ancestry">Ancestry</a> {
+  <b>let</b> k = 0;
+  <b>while</b> (k &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(list)) {
+    <b>let</b> right = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(list, k);
+    <b>let</b> (fam, _) = <a href="Ancestry.md#0x1_Ancestry_is_family">is_family</a>(left, *right);
+    <b>if</b> (fam) {
+      <b>return</b> (<b>true</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_some">Option::some</a>(left), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_some">Option::some</a>(*right))
+    };
+    k = k + 1;
+  };
+
+  (<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_none">Option::none</a>(), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_none">Option::none</a>())
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Ancestry_any_family_in_list"></a>
+
+## Function `any_family_in_list`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Ancestry.md#0x1_Ancestry_any_family_in_list">any_family_in_list</a>(addr_vec: vector&lt;<b>address</b>&gt;): (bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<b>address</b>&gt;, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;<b>address</b>&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Ancestry.md#0x1_Ancestry_any_family_in_list">any_family_in_list</a>(addr_vec: vector&lt;<b>address</b>&gt;):(bool, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;<b>address</b>&gt;, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;<b>address</b>&gt;) <b>acquires</b> <a href="Ancestry.md#0x1_Ancestry">Ancestry</a>  {
+  <b>let</b> i = 0;
+  <b>while</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&addr_vec) &gt; 1) {
+    <b>let</b> left = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_pop_back">Vector::pop_back</a>(&<b>mut</b> addr_vec);
+
+    <b>let</b> (fam, left_opt, right_opt) = <a href="Ancestry.md#0x1_Ancestry_is_family_one_in_list">is_family_one_in_list</a>(left, &addr_vec);
+    <b>if</b> (fam) {
+      <b>return</b> (fam, left_opt, right_opt)
+    };
+
+    i = i + 1;
+  };
+
+  (<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_none">Option::none</a>(), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_none">Option::none</a>())
 }
 </code></pre>
 

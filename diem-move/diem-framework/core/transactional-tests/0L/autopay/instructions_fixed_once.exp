@@ -1,6 +1,6 @@
 processed 9 tasks
 
-task 3 'block'. lines 49-49:
+task 3 'block'. lines 53-53:
 Events:
 {
     key:     010000000000000010ada1ba839f77cfc5266ab28e1fa52f
@@ -21,7 +21,7 @@ Events:
     data:    "170000000000000006505ccd81e562b524d8f656abd92a1500c005d90100000000"
 }
 
-task 5 'block'. lines 74-79:
+task 5 'block'. lines 78-83:
 Events:
 {
     key:     0c0000000000000000000000000000000000000000000000
@@ -36,7 +36,7 @@ Events:
     data:    "0200000000000000"
 }
 
-task 6 'block'. lines 80-85:
+task 6 'block'. lines 84-89:
 Events:
 {
     key:     0c0000000000000000000000000000000000000000000000
@@ -45,7 +45,7 @@ Events:
     data:    "420000000000000006505ccd81e562b524d8f656abd92a150000cf7b0500000000"
 }
 
-task 7 'block'. lines 86-86:
+task 7 'block'. lines 90-90:
 Events:
 {
     key:     0c0000000000000000000000000000000000000000000000

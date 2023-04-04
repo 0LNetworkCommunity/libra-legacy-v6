@@ -13,6 +13,7 @@ Module which manages freezing of accounts.
 -  [Constants](#@Constants_0)
 -  [Function `initialize`](#0x1_AccountFreezing_initialize)
 -  [Function `create`](#0x1_AccountFreezing_create)
+-  [Function `self_freeze_account`](#0x1_AccountFreezing_self_freeze_account)
 -  [Function `freeze_account`](#0x1_AccountFreezing_freeze_account)
 -  [Function `unfreeze_account`](#0x1_AccountFreezing_unfreeze_account)
 -  [Function `account_is_frozen`](#0x1_AccountFreezing_account_is_frozen)
@@ -300,6 +301,44 @@ The <code><a href="AccountFreezing.md#0x1_AccountFreezing_FreezingBit">FreezingB
 <b>modifies</b> <b>global</b>&lt;<a href="AccountFreezing.md#0x1_AccountFreezing_FreezingBit">FreezingBit</a>&gt;(addr);
 <b>aborts_if</b> <b>exists</b>&lt;<a href="AccountFreezing.md#0x1_AccountFreezing_FreezingBit">FreezingBit</a>&gt;(addr) <b>with</b> Errors::ALREADY_PUBLISHED;
 <b>ensures</b> <a href="AccountFreezing.md#0x1_AccountFreezing_spec_account_is_not_frozen">spec_account_is_not_frozen</a>(addr);
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_AccountFreezing_self_freeze_account"></a>
+
+## Function `self_freeze_account`
+
+Freeze my account
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AccountFreezing.md#0x1_AccountFreezing_self_freeze_account">self_freeze_account</a>(account: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="AccountFreezing.md#0x1_AccountFreezing_self_freeze_account">self_freeze_account</a>(
+    account: &signer,
+)
+<b>acquires</b> <a href="AccountFreezing.md#0x1_AccountFreezing_FreezingBit">FreezingBit</a>, <a href="AccountFreezing.md#0x1_AccountFreezing_FreezeEventsHolder">FreezeEventsHolder</a> {
+    <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
+    <b>let</b> frozen_address = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
+    <b>borrow_global_mut</b>&lt;<a href="AccountFreezing.md#0x1_AccountFreezing_FreezingBit">FreezingBit</a>&gt;(frozen_address).is_frozen = <b>true</b>;
+
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Event.md#0x1_Event_emit_event">Event::emit_event</a>&lt;<a href="AccountFreezing.md#0x1_AccountFreezing_FreezeAccountEvent">FreezeAccountEvent</a>&gt;(
+        &<b>mut</b> <b>borrow_global_mut</b>&lt;<a href="AccountFreezing.md#0x1_AccountFreezing_FreezeEventsHolder">FreezeEventsHolder</a>&gt;(@DiemRoot).freeze_event_handle,
+        <a href="AccountFreezing.md#0x1_AccountFreezing_FreezeAccountEvent">FreezeAccountEvent</a> {
+            initiator_address: frozen_address,
+            frozen_address
+        },
+    );
+}
 </code></pre>
 
 

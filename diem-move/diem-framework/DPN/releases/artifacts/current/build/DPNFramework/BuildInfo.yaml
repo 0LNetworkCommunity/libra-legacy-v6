@@ -47,6 +47,12 @@ compiled_package_info:
       name: BCS
     : Std
     ? address: "00000000000000000000000000000001"
+      name: Ballot
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: BinaryTally
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: BitVector
     : Std
     ? address: "00000000000000000000000000000001"
@@ -66,6 +72,9 @@ compiled_package_info:
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: ChainId
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: CommunityWallet
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: CoreAddresses
@@ -117,6 +126,12 @@ compiled_package_info:
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: DiemVersion
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DonorDirected
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: DonorDirectedGovernance
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: DualAttestation
@@ -177,6 +192,12 @@ compiled_package_info:
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: Mock
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: MultiSig
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: MultiSigPayment
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: NetworkIdentity
@@ -263,6 +284,15 @@ compiled_package_info:
       name: TreasuryComplianceScripts
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: TurnkeyBinaryPoll
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: TurnoutTally
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: TurnoutTallyDemo
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Upgrade
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -296,13 +326,13 @@ compiled_package_info:
       name: VectorHelper
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: VoteReceipt
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Vouch
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: VouchScripts
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
-      name: Wallet
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: WalletScripts
@@ -316,7 +346,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: D38221DF89B01EE8625F117F721CF161438C44A5D125072BCD2CB904C10AFCB5
+  source_digest: E73442AD7A1B65175ABE2ACCB60D6A59204FBFD1C63E20E767E29AAC56BD3285
   build_flags:
     dev_mode: false
     test_mode: false

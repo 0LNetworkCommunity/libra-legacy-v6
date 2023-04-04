@@ -37,7 +37,8 @@ This module enables automatic payments from accounts to community wallets at epo
 -  [Function `find`](#0x1_AutoPay_find)
 
 
-<pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<pre><code><b>use</b> <a href="CommunityWallet.md#0x1_CommunityWallet">0x1::CommunityWallet</a>;
+<b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
@@ -46,7 +47,6 @@ This module enables automatic payments from accounts to community wallets at epo
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
-<b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
 </code></pre>
 
 
@@ -650,7 +650,7 @@ Attempt to use a UID that is already taken
 ): bool {
   // check payees are community wallets, only community wallets are allowed
   // <b>to</b> receive autopay (bypassing account limits)
-  <b>if</b> (!<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(payment.payee)) { <b>return</b> <b>false</b> }; // do nothing but don't delete instruction };
+  <b>if</b> (!<a href="CommunityWallet.md#0x1_CommunityWallet_is_comm">CommunityWallet::is_comm</a>(payment.payee)) { <b>return</b> <b>false</b> }; // do nothing but don't delete instruction };
 
   <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
   <b>let</b> epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
@@ -815,7 +815,7 @@ Attempt to use a UID that is already taken
 
   // TODO: This check already <b>exists</b> at the time of execution.
   <b>if</b> (<b>borrow_global</b>&lt;<a href="AutoPay.md#0x1_AutoPay_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(@DiemRoot).enabled) {
-    <b>assert</b>!(<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(payee), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay_PAYEE_NOT_COMMUNITY_WALLET">PAYEE_NOT_COMMUNITY_WALLET</a>));
+    <b>assert</b>!(<a href="CommunityWallet.md#0x1_CommunityWallet_is_comm">CommunityWallet::is_comm</a>(payee), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay_PAYEE_NOT_COMMUNITY_WALLET">PAYEE_NOT_COMMUNITY_WALLET</a>));
   };
 
   <b>let</b> payments = &<b>mut</b> <b>borrow_global_mut</b>&lt;<a href="AutoPay.md#0x1_AutoPay_UserAutoPay">UserAutoPay</a>&gt;(addr).payments;
