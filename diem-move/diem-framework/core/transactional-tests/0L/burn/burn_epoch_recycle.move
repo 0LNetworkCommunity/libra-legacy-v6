@@ -68,6 +68,7 @@ script {
   fun main(vm: signer, _account: signer) {
     // let bal = DiemAccount::balance<GAS>(@Alice);
     // print(&bal);
+    
 
     // send to community wallet Bob
     DiemAccount::vm_make_payment_no_limit<GAS>(@Alice, @CommunityA, 1000000, x"", x"", &vm);

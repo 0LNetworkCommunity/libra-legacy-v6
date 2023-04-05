@@ -104,12 +104,12 @@ script {
   use DiemFramework::GAS::GAS;
   use DiemFramework::Burn;
   use DiemFramework::Diem;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
   fun main(vm: signer, _:signer) {
     // we assume the ratios are calculated correctly see burn_ratios.move
     let total_supply_before = Diem::market_cap<GAS>();
-    print(&total_supply_before);
+    // print(&total_supply_before);
 
     let bal_A_before = DiemAccount::balance<GAS>(@CommunityA);
     let bal_B_before = DiemAccount::balance<GAS>(@CommunityB);
@@ -134,7 +134,7 @@ script {
     assert!(bal_b > bal_B_before, 7357012);
 
     let total_supply_after = Diem::market_cap<GAS>();
-    print(&total_supply_after);
+    // print(&total_supply_after);
 
     // there's a minor decimal issue
     let superman_3_decimal = 2;
