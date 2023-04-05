@@ -9,7 +9,6 @@ module Burn {
   use DiemFramework::TransactionFee;
   use Std::Signer;
   use DiemFramework::Diem::{Self, Diem};
-  // use DiemFramework::Debug::print;
 
   struct BurnPreference has key {
     send_community: bool
@@ -22,39 +21,33 @@ module Burn {
   }
 
 
-      public fun epoch_burn_fees(
-        vm: &signer,
-    )  acquires BurnPreference, DepositInfo {
-        CoreAddresses::assert_vm(vm);
-        // extract fees
-        let coins = TransactionFee::vm_withdraw_all_coins<GAS>(vm);
+  public fun epoch_burn_fees(
+      vm: &signer,
+  )  acquires BurnPreference, DepositInfo {
+      CoreAddresses::assert_vm(vm);
+      // extract fees
+      let coins = TransactionFee::vm_withdraw_all_coins<GAS>(vm);
 
-        // let fees = borrow_global_mut<TransactionFee<GAS>>(@TreasuryCompliance); // TODO: this is same as VM address
-        // let coin = Diem::withdraw_all(&mut fees.balance);
+      // get the list of fee makers
+      // let state = borrow_global<EpochFeeMakerRegistry>(@VMReserved);
+      let fee_makers = TransactionFee::get_fee_makers();
+      let len = Vector::length(&fee_makers);
 
-        // either the user is burning or recyling the coin
-        // Burn::maybe_recycle_user_fees(vm, coin);
+      // for every user in the list burn their fees per Burn.move preferences
+      let i = 0;
+      while (i < len) {
+          let user = Vector::borrow(&fee_makers, i);
+          let amount = TransactionFee::get_epoch_fees_made(*user);
+          let user_share = Diem::withdraw(&mut coins, amount);
+          burn_or_recycle_user_fees(vm, *user, user_share);
 
-        // get the list of fee makers
-        // let state = borrow_global<EpochFeeMakerRegistry>(@VMReserved);
-        let fee_makers = TransactionFee::get_fee_makers();
-        let len = Vector::length(&fee_makers);
+          i = i + 1;
+      };
 
-        // for every user in the list burn their fees per Burn.move preferences
-        let i = 0;
-        while (i < len) {
-            let user = Vector::borrow(&fee_makers, i);
-            let amount = TransactionFee::get_epoch_fees_made(*user);
-            let user_share = Diem::withdraw(&mut coins, amount);
-            burn_or_recycle_user_fees(vm, *user, user_share);
-
-            i = i + 1;
-        };
-
-      // Superman 3 decimal errors. https://www.youtube.com/watch?v=N7JBXGkBoFc
-      // anything that is remaining should be burned
-      Diem::vm_burn_this_coin(vm, coins); 
-    }
+    // Superman 3 decimal errors. https://www.youtube.com/watch?v=N7JBXGkBoFc
+    // anything that is remaining should be burned
+    Diem::vm_burn_this_coin(vm, coins); 
+  }
 
 
   public fun reset_ratios(vm: &signer) acquires DepositInfo {

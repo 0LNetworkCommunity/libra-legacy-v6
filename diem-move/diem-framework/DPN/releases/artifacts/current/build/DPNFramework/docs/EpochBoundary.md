@@ -107,11 +107,6 @@
     <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>()); // todo
     // print(&801000);
 
-    // <b>if</b> (!<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()) {
-    //   proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
-    //   // print(&800900);
-    // };
-
     <a href="EpochBoundary.md#0x1_EpochBoundary_root_service_billing">root_service_billing</a>(vm);
     // print(&801000);
 
@@ -211,10 +206,8 @@
     };
 
     // after everyone is paid from the chain's Fee account
-    // we can burn the remainder.
+    // we can burn the excess fees from the epoch
 
-    // TODO: implament what happens <b>to</b> the matching donation algo
-    // depending on the validator's preferences.
     <a href="Burn.md#0x1_Burn_epoch_burn_fees">Burn::epoch_burn_fees</a>(vm);
 }
 </code></pre>
@@ -248,14 +241,11 @@
 
           // <b>if</b> they are compliant, remove the consecutive fail, otherwise jail
           // V6 Note: audit functions are now all contained in
-          // <a href="ProofOfFee.md#0x1_ProofOfFee">ProofOfFee</a>.<b>move</b> and exludes at auction time.
-
-          // Audit::val_audit_passing(addr) &&
+          // <a href="ProofOfFee.md#0x1_ProofOfFee">ProofOfFee</a>.<b>move</b> and exludes validators at auction time.
 
           <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(outgoing_compliant_set, &addr)
         ) {
           // print(&902);
-            // len_proven_nodes = len_proven_nodes + 1;
             // also reset the jail counter for any successful unjails
             <a href="Jail.md#0x1_Jail_remove_consecutive_fail">Jail::remove_consecutive_fail</a>(vm, addr);
         } <b>else</b> {

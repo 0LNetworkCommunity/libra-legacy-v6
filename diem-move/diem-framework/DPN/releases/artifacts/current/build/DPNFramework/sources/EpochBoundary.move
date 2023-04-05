@@ -20,21 +20,15 @@ module EpochBoundary {
     use DiemFramework::AutoPay;
     use DiemFramework::Epoch;
     use DiemFramework::DiemConfig;
-    // use DiemFramework::Audit;
     use DiemFramework::DiemAccount;
     use DiemFramework::Burn;
-    use DiemFramework::FullnodeSubsidy;
-    // use DiemFramework::ValidatorUniverse;
-    // use DiemFramework::Debug::print;
-    // use DiemFramework::Testnet;
-    // use DiemFramework::StagingNet;    
+    use DiemFramework::FullnodeSubsidy; 
     use DiemFramework::RecoveryMode;
-    // use DiemFramework::Cases;
     use DiemFramework::Jail;
     use DiemFramework::TransactionFee;
-    // use DiemFramework::Vouch;
     use DiemFramework::MultiSigPayment;
     use DiemFramework::DonorDirected;
+
     //// V6 ////
     // THIS IS TEMPORARY
     // depends on the future "musical chairs" algo.
@@ -84,11 +78,6 @@ module EpochBoundary {
         // Update all slow wallet limits
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock()); // todo
         // print(&801000);
-
-        // if (!RecoveryMode::is_recovery()) {
-        //   proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
-        //   // print(&800900);
-        // };
 
         root_service_billing(vm);
         // print(&801000);
@@ -150,10 +139,8 @@ module EpochBoundary {
         };
 
         // after everyone is paid from the chain's Fee account
-        // we can burn the remainder.
+        // we can burn the excess fees from the epoch
 
-        // TODO: implament what happens to the matching donation algo
-        // depending on the validator's preferences.
         Burn::epoch_burn_fees(vm);
     }
 
@@ -167,14 +154,11 @@ module EpochBoundary {
               
               // if they are compliant, remove the consecutive fail, otherwise jail
               // V6 Note: audit functions are now all contained in
-              // ProofOfFee.move and exludes at auction time.
-
-              // Audit::val_audit_passing(addr) &&
+              // ProofOfFee.move and exludes validators at auction time.
 
               Vector::contains(outgoing_compliant_set, &addr)
             ) {
               // print(&902);
-                // len_proven_nodes = len_proven_nodes + 1;
                 // also reset the jail counter for any successful unjails
                 Jail::remove_consecutive_fail(vm, addr);
             } else {

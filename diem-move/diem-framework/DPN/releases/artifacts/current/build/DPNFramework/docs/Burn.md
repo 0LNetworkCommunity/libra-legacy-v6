@@ -112,37 +112,31 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_epoch_burn_fees">epoch_burn_fees</a>(
-  vm: &signer,
+    vm: &signer,
 )  <b>acquires</b> <a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a>, <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
-  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-  // extract fees
-  <b>let</b> coins = <a href="TransactionFee.md#0x1_TransactionFee_vm_withdraw_all_coins">TransactionFee::vm_withdraw_all_coins</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm);
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+    // extract fees
+    <b>let</b> coins = <a href="TransactionFee.md#0x1_TransactionFee_vm_withdraw_all_coins">TransactionFee::vm_withdraw_all_coins</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm);
 
-  // <b>let</b> fees = <b>borrow_global_mut</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(@TreasuryCompliance); // TODO: this is same <b>as</b> VM <b>address</b>
-  // <b>let</b> coin = <a href="Diem.md#0x1_Diem_withdraw_all">Diem::withdraw_all</a>(&<b>mut</b> fees.balance);
+    // get the list of fee makers
+    // <b>let</b> state = <b>borrow_global</b>&lt;EpochFeeMakerRegistry&gt;(@VMReserved);
+    <b>let</b> fee_makers = <a href="TransactionFee.md#0x1_TransactionFee_get_fee_makers">TransactionFee::get_fee_makers</a>();
+    <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&fee_makers);
 
-  // either the user is burning or recyling the coin
-  // Burn::maybe_recycle_user_fees(vm, coin);
+    // for every user in the list burn their fees per <a href="Burn.md#0x1_Burn">Burn</a>.<b>move</b> preferences
+    <b>let</b> i = 0;
+    <b>while</b> (i &lt; len) {
+        <b>let</b> user = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&fee_makers, i);
+        <b>let</b> amount = <a href="TransactionFee.md#0x1_TransactionFee_get_epoch_fees_made">TransactionFee::get_epoch_fees_made</a>(*user);
+        <b>let</b> user_share = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(&<b>mut</b> coins, amount);
+        <a href="Burn.md#0x1_Burn_burn_or_recycle_user_fees">burn_or_recycle_user_fees</a>(vm, *user, user_share);
 
-  // get the list of fee makers
-  // <b>let</b> state = <b>borrow_global</b>&lt;EpochFeeMakerRegistry&gt;(@VMReserved);
-  <b>let</b> fee_makers = <a href="TransactionFee.md#0x1_TransactionFee_get_fee_makers">TransactionFee::get_fee_makers</a>();
-  <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&fee_makers);
+        i = i + 1;
+    };
 
-  // for every user in the list burn their fees per <a href="Burn.md#0x1_Burn">Burn</a>.<b>move</b> preferences
-  <b>let</b> i = 0;
-  <b>while</b> (i &lt; len) {
-      <b>let</b> user = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&fee_makers, i);
-      <b>let</b> amount = <a href="TransactionFee.md#0x1_TransactionFee_get_epoch_fees_made">TransactionFee::get_epoch_fees_made</a>(*user);
-      <b>let</b> user_share = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(&<b>mut</b> coins, amount);
-      <a href="Burn.md#0x1_Burn_burn_or_recycle_user_fees">burn_or_recycle_user_fees</a>(vm, *user, user_share);
-
-      i = i + 1;
-  };
-
-// Superman 3 decimal errors. https://www.youtube.com/watch?v=N7JBXGkBoFc
-// anything that is remaining should be burned
-<a href="Diem.md#0x1_Diem_vm_burn_this_coin">Diem::vm_burn_this_coin</a>(vm, coins);
+  // Superman 3 decimal errors. https://www.youtube.com/watch?v=N7JBXGkBoFc
+  // anything that is remaining should be burned
+  <a href="Diem.md#0x1_Diem_vm_burn_this_coin">Diem::vm_burn_this_coin</a>(vm, coins);
 }
 </code></pre>
 
