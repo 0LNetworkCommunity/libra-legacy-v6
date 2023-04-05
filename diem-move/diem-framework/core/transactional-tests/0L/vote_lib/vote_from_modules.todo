@@ -1,0 +1,51 @@
+//# init --validators Alice
+
+// TODO: issue with publishing this module
+
+//# publish --override-signer DiemRoot
+module Alice::LetsVote {
+    use DiemFramework::ParticipationVote::{Self, Ballot};
+    use Std::GUID;
+
+    struct Vote has key {
+      ballot: Ballot,
+    }
+
+    // initialize this data on the address of the election contract
+    public fun init(sig: &signer): GUID::ID {
+      let ballot = ParticipationVote::new(sig, b"please vote");
+      let id = ParticipationVote::get_ballot_id(&ballot);
+      move_to(sig, Vote { ballot });
+      id
+    }
+
+    public fun vote(sig: &signer, election_addr: address) acquires Vote {
+      let weight = 10;
+
+      let vote = borrow_global_mut<Vote>(election_addr);
+      ParticipationVote::vote(&mut vote.ballot, sig, true, weight);
+    }
+}
+
+
+//# run --admin-script --signers DiemRoot Alice
+script {
+    
+    // use DiemFramework::AnotherModule;
+    use DiemFramework::ParticipationVote;
+    use DiemFramework::Debug::print;
+    use Alice::LetsVote;
+    use Std::Signer;
+    fun main(root: signer, alice: signer) {
+        // LetsVote::do_it();
+        
+        let id = LetsVote::init(&root);
+        LetsVote::vote(&alice, Signer::address_of(&root));
+        print(&id);
+        let (r, p) = ParticipationVote::get_receipt_data(@Alice, &id);
+        print(&r);
+        print(&p);
+
+    }
+}
+// check: EXECUTED

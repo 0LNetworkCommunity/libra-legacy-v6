@@ -34,10 +34,12 @@ module DiemFramework::Genesis {
     // use DiemFramework::FullnodeSubsidy;
     use DiemFramework::Epoch;
     use DiemFramework::TowerState;
-    use DiemFramework::Wallet;
+    use DiemFramework::DonorDirected;
     use DiemFramework::Migrations;  
     // use DiemFramework::Testnet;
     use DiemFramework::ProofOfFee;
+    use DiemFramework::MultiSigPayment;
+    // use DiemFramework::Testnet; 
 
     /// Initializes the Diem framework.
     fun initialize(
@@ -156,7 +158,7 @@ module DiemFramework::Genesis {
         Oracle::initialize(dr_account);
         TowerState::init_miner_list_and_stats(dr_account);
         TowerState::init_difficulty(dr_account);
-        Wallet::init(dr_account);
+        DonorDirected::init_root_registry(dr_account);
         DiemAccount::vm_init_slow(dr_account);
         Migrations::init(dr_account);
 
@@ -165,6 +167,9 @@ module DiemFramework::Genesis {
         // See also discussion at function specification.
         DiemTimestamp::set_time_has_started(dr_account);
         Epoch::initialize(dr_account); /////// 0L /////////
+        
+        // Initialize Root Security metered services
+        MultiSigPayment::root_init(dr_account); //////// 0L ////////
 
         ProofOfFee::init_genesis_baseline_reward(dr_account);
         // if this is tesnet, fund the root account so the smoketests can run. They use PaymentScripts functions to test many things.

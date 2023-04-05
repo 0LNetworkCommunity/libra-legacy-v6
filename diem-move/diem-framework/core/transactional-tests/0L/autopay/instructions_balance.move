@@ -1,30 +1,32 @@
-//# init --parent-vasps Bob Alice Sally Jim
-// Bob, Sally:     validators with 10M GAS
-// Alice, Jim: non-validators with  1M GAS
+//# init --parent-vasps Bob Alice Dave CommunityA
 
-// Test runs various autopay instruction types to ensure they are being
-// executed as expected
+// Alice is non-slow wallet. She got some funds from Bob, enough to 
+// make payments on autopay. She has no account limits.
 
-//# run --admin-script --signers DiemRoot Jim
+//# run --admin-script --signers DiemRoot CommunityA
 script {
-    use DiemFramework::Wallet;
+    use DiemFramework::DonorDirected;
+    use Std::Vector;
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
-    use Std::Vector;
 
-  fun main(dr: signer, sender: signer) {
-      Wallet::set_comm(&sender);
-      let list = Wallet::get_comm_list();
+    fun main(dr: signer, sponsor: signer) {
+      DonorDirected::init_donor_directed(&sponsor, @Alice, @Bob, @Dave, 2);
+      DonorDirected::finalize_init(&sponsor);
+      let list = DonorDirected::get_root_registry();
       assert!(Vector::length(&list) == 1, 7357001);
+      assert!(DiemAccount::is_init_cumu_tracking(@CommunityA), 7357002);
 
-      // Alice to have 10M
+      // Alice is a non-slow wallet, bob sends funds
 			DiemAccount::vm_make_payment_no_limit<GAS>(
-			  @Bob, @Alice, 9000000, x"", x"", &dr
-			);      
+			  @Bob, @Alice, 1000000, x"", x"", &dr
+			);
+
     }
 }
+// check: EXECUTED
 
-// alice commits to paying jim 5% of her worth per epoch
+// alice commits to paying CommunityA 5% of her worth per epoch
 //# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::AutoPay;
@@ -40,7 +42,7 @@ script {
       sender,
       1, // UID
       0, // percent of balance type
-      @Jim,
+      @CommunityA,
       2, // until epoch two
       500 // 5 percent
     );
@@ -49,67 +51,35 @@ script {
       Signer::address_of(sender), 1
     );
     assert!(type == 0, 735701);
-    assert!(payee == @Jim, 735702);
+    assert!(payee == @CommunityA, 735702);
     assert!(end_epoch == 2, 735703);
     assert!(percentage == 500, 735704);
   }
 }
-
-///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs /////
-///// i.e. 1 second after 1/2 epoch   /////
-///////////////////////////////////////////////////
-//# block --proposer Bob --time 31000000 --round 23
-
-// Weird. This next block needs to be added here otherwise
-// the prologue above does not run.
-///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs /////
-///// i.e. 1 second after 1/2 epoch   /////
-///////////////////////////////////////////////////
-//# block --proposer Bob --time 32000000 --round 24
-
-//# run --admin-script --signers DiemRoot DiemRoot
+//# run --admin-script --signers DiemRoot CommunityA
 script {
-  use DiemFramework::DiemAccount;
-  use DiemFramework::GAS::GAS;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::GAS::GAS;
+    use DiemFramework::AutoPay;
+    // use DiemFramework::Debug::print;
 
-  fun main() {
-    let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 9500001, 735705);
-  }
+    fun main(dr: signer, _sponsor: signer) {
+      let starting_balance_alice = DiemAccount::balance<GAS>(@Alice);
+      let starting_balance_comm = DiemAccount::balance<GAS>(@CommunityA);
+
+      AutoPay::process_autopay(&dr);
+
+
+      let ending_balance_alice = DiemAccount::balance<GAS>(@Alice);
+      let ending_balance_comm = DiemAccount::balance<GAS>(@CommunityA);
+
+      // print(&ending_balance_alice);
+      
+      assert!(starting_balance_alice > ending_balance_alice, 735706);
+      assert!(ending_balance_comm > starting_balance_comm, 735707);
+
+      assert!(ending_balance_alice == 1900001, 735708);
+
+    }
 }
 // check: EXECUTED
-
-///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs /////
-///// i.e. 1 second after 1/2 epoch   /////
-///////////////////////////////////////////////////
-//# block --proposer Bob --time 61000000 --round 65
-
-///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs /////
-///// i.e. 1 second after 1/2 epoch   /////
-///////////////////////////////////////////////////
-//# block --proposer Bob --time 92000000 --round 66
-
-///////////////////////////////////////////////////
-///// Trigger Autopay Tick at 31 secs /////
-///// i.e. 1 second after 1/2 epoch   /////
-///////////////////////////////////////////////////
-//# block --proposer Bob --time 93000000 --round 67
-
-//# run --admin-script --signers DiemRoot DiemRoot
-script {
-  use DiemFramework::DiemAccount;
-  use DiemFramework::GAS::GAS;
-
-  fun main() {
-    let ending_balance = DiemAccount::balance<GAS>(@Alice);
-    assert!(ending_balance == 9025001, 735711);
-
-    // check balance of recipients
-    let ending_balance = DiemAccount::balance<GAS>(@Jim);
-    assert!(ending_balance == 1974999, 735712);
-  }
-}

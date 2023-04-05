@@ -7,7 +7,7 @@
 address DiemFramework {
   /// # Summary
   /// This module enables automatic payments from accounts to community wallets at epoch boundaries.
-  module AutoPay { // renamed to preventhalting from state corruption
+  module AutoPay {
     use Std::Vector;
     use Std::Option::{Self,Option};
     use Std::Signer;
@@ -16,7 +16,7 @@ address DiemFramework {
     use Std::FixedPoint32;
     use DiemFramework::DiemConfig;
     use Std::Errors;
-    use DiemFramework::Wallet;
+    use DiemFramework::CommunityWallet;
     use DiemFramework::Roles;
 
     /// Attempted to send funds to an account that does not exist
@@ -233,7 +233,7 @@ address DiemFramework {
     ): bool {
       // check payees are community wallets, only community wallets are allowed
       // to receive autopay (bypassing account limits)
-      if (!Wallet::is_comm(payment.payee)) { return false }; // do nothing but don't delete instruction };
+      if (!CommunityWallet::is_comm(payment.payee)) { return false }; // do nothing but don't delete instruction };
 
       Roles::assert_diem_root(vm);
       let epoch = DiemConfig::get_current_epoch();
@@ -349,7 +349,7 @@ address DiemFramework {
 
       // TODO: This check already exists at the time of execution.
       if (borrow_global<AccountLimitsEnable>(@DiemRoot).enabled) {
-        assert!(Wallet::is_comm(payee), Errors::invalid_argument(PAYEE_NOT_COMMUNITY_WALLET));
+        assert!(CommunityWallet::is_comm(payee), Errors::invalid_argument(PAYEE_NOT_COMMUNITY_WALLET));
       };
 
       let payments = &mut borrow_global_mut<UserAutoPay>(addr).payments;

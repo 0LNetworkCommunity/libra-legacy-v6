@@ -12,6 +12,7 @@
 -  [Function `process_jail`](#0x1_EpochBoundary_process_jail)
 -  [Function `propose_new_set`](#0x1_EpochBoundary_propose_new_set)
 -  [Function `reset_counters`](#0x1_EpochBoundary_reset_counters)
+-  [Function `root_service_billing`](#0x1_EpochBoundary_root_service_billing)
 
 
 <pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
@@ -20,11 +21,13 @@
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
+<b>use</b> <a href="DonorDirected.md#0x1_DonorDirected">0x1::DonorDirected</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
+<b>use</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment">0x1::MultiSigPayment</a>;
 <b>use</b> <a href="ProofOfFee.md#0x1_ProofOfFee">0x1::ProofOfFee</a>;
 <b>use</b> <a href="RecoveryMode.md#0x1_RecoveryMode">0x1::RecoveryMode</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
@@ -102,6 +105,14 @@
 
     // Update all slow wallet limits
     <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>()); // todo
+    print(&801000);
+
+    // <b>if</b> (!<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()) {
+    //   proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
+    //   print(&800900);
+    // };
+
+    <a href="EpochBoundary.md#0x1_EpochBoundary_root_service_billing">root_service_billing</a>(vm);
     print(&801000);
 
     <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, outgoing_compliant_set, height_now);
@@ -362,7 +373,7 @@
     print(&800900102);
 
     // process community wallets
-    <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">DiemAccount::process_community_wallets</a>(vm, <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
+    <a href="DonorDirected.md#0x1_DonorDirected_process_donor_directed_accounts">DonorDirected::process_donor_directed_accounts</a>(vm, <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
     print(&800900103);
 
     <a href="AutoPay.md#0x1_AutoPay_reconfig_reset_tick">AutoPay::reconfig_reset_tick</a>(vm);
@@ -381,6 +392,30 @@
     // Reconfigure the network
     <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
     print(&800900108);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_root_service_billing"></a>
+
+## Function `root_service_billing`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_root_service_billing">root_service_billing</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_root_service_billing">root_service_billing</a>(vm: &signer) {
+  <a href="MultiSigPayment.md#0x1_MultiSigPayment_root_security_fee_billing">MultiSigPayment::root_security_fee_billing</a>(vm);
 }
 </code></pre>
 

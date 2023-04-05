@@ -77,6 +77,27 @@ module DiemFramework::AccountFreezing {
         ensures spec_account_is_not_frozen(addr);
     }
 
+    //////// 0L ////////
+    /// Freeze my account
+    public fun self_freeze_account(
+        account: &signer,
+    )
+    acquires FreezingBit, FreezeEventsHolder {
+        DiemTimestamp::assert_operating();
+        let frozen_address = Signer::address_of(account);
+        borrow_global_mut<FreezingBit>(frozen_address).is_frozen = true;
+
+        Event::emit_event<FreezeAccountEvent>(
+            &mut borrow_global_mut<FreezeEventsHolder>(@DiemRoot).freeze_event_handle,
+            FreezeAccountEvent {
+                initiator_address: frozen_address,
+                frozen_address
+            },
+        );
+    }
+
+
+
     /// Freeze the account at `addr`.
     public fun freeze_account(
         account: &signer,

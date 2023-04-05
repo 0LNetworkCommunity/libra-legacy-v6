@@ -1,7 +1,7 @@
 address DiemFramework {
 module WalletScripts {
 
-    use DiemFramework::Wallet;
+    use DiemFramework::DonorDirected;
     use DiemFramework::DiemAccount;
 
     public(script) fun set_wallet_type(sender: signer, type_of: u8) {
@@ -10,7 +10,7 @@ module WalletScripts {
       };
 
       if (type_of == 1) {
-          Wallet::set_comm(&sender);
+          DonorDirected::set_donor_directed(&sender);
       };
     }
 }

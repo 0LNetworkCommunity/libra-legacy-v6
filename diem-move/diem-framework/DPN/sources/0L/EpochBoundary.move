@@ -32,7 +32,9 @@ module EpochBoundary {
     // use DiemFramework::Cases;
     use DiemFramework::Jail;
     use DiemFramework::TransactionFee;
-
+    use DiemFramework::Vouch;
+    use DiemFramework::MultiSigPayment;
+    use DiemFramework::DonorDirected;
     //// V6 ////
     // THIS IS TEMPORARY
     // depends on the future "musical chairs" algo.
@@ -40,6 +42,7 @@ module EpochBoundary {
 
     // TODO: this will depend on an adjustment algo.
     // const MOCK_BASELINE_CONSENSUS_FEES: u64 = 1000000;
+
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
@@ -80,6 +83,14 @@ module EpochBoundary {
 
         // Update all slow wallet limits
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock()); // todo
+        print(&801000);
+
+        if (!RecoveryMode::is_recovery()) {
+          proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
+          print(&800900);
+        };
+
+        root_service_billing(vm);
         print(&801000);
 
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
@@ -241,7 +252,7 @@ module EpochBoundary {
         print(&800900102);
 
         // process community wallets
-        DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
+        DonorDirected::process_donor_directed_accounts(vm, DiemConfig::get_current_epoch());
         print(&800900103);
 
         AutoPay::reconfig_reset_tick(vm);
@@ -260,6 +271,10 @@ module EpochBoundary {
         // Reconfigure the network
         DiemSystem::bulk_update_validators(vm, proposed_set);
         print(&800900108);
+    }
+
+    fun root_service_billing(vm: &signer) {
+      MultiSigPayment::root_security_fee_billing(vm);
     }
 }
 }

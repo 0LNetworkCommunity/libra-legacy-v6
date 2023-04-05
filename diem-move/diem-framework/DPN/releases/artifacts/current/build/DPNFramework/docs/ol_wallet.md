@@ -9,7 +9,7 @@
 
 
 <pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
-<b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
+<b>use</b> <a href="DonorDirected.md#0x1_DonorDirected">0x1::DonorDirected</a>;
 </code></pre>
 
 
@@ -35,7 +35,7 @@
   };
 
   <b>if</b> (type_of == 1) {
-      <a href="Wallet.md#0x1_Wallet_set_comm">Wallet::set_comm</a>(&sender);
+      <a href="DonorDirected.md#0x1_DonorDirected_set_donor_directed">DonorDirected::set_donor_directed</a>(&sender);
   };
 }
 </code></pre>
