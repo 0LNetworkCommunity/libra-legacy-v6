@@ -10,15 +10,11 @@ address DiemFramework{
     /// Validators who are no longer compliant may be kicked out of the validator 
     /// set and/or jailed. To be compliant, validators must be BOTH validating and mining. 
     module Cases{
-        // use DiemFramework::TowerState;
         use DiemFramework::Stats;
         use DiemFramework::Roles;
 
         const VALIDATOR_COMPLIANT: u64 = 1;
-        // const VALIDATOR_HALF_COMPLIANT: u64 = 2;
-        // const VALIDATOR_NOT_COMPLIANT: u64 = 3;
         const VALIDATOR_DOUBLY_NOT_COMPLIANT: u64 = 4;
-
         const INVALID_DATA: u64 = 0;
 
         // Determine the consensus case for the validator.
@@ -46,19 +42,8 @@ address DiemFramework{
                 // compliant: in next set, gets paid, weight increments
                 VALIDATOR_COMPLIANT
             }
-            // V6: Simplify compliance cases by removing mining.
+            // NOTE: 0L: V6: Removed code to simplify compliance cases by removing mining.
 
-            // } 
-            // else if (signs && !mines) {
-            //     // half compliant: not in next set, does not get paid, weight 
-            //     // does not increment.
-            //     VALIDATOR_HALF_COMPLIANT
-            // }
-            // else if (!signs && mines) {
-            //     // not compliant: jailed, not in next set, does not get paid, 
-            //     // weight increments.
-            //     VALIDATOR_NOT_COMPLIANT
-            // }
             else {
                 // not compliant: jailed, not in next set, does not get paid, 
                 // weight does not increment.

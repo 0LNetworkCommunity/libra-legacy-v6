@@ -181,7 +181,7 @@ impl ValidatorBuilder {
         }
     }
 
-    pub fn randomize_first_validator_ports(mut self, value: bool) -> Self {
+    pub fn set_random_first_validator_ports(mut self, value: bool) -> Self {
         self.randomize_first_validator_ports = value;
         self
     }
