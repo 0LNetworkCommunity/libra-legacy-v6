@@ -7,7 +7,7 @@
 address DiemFramework {
   /// # Summary
   /// This module enables automatic payments from accounts to community wallets at epoch boundaries.
-  module AutoPay { // renamed to preventhalting from state corruption
+  module AutoPay {
     use Std::Vector;
     use Std::Option::{Self,Option};
     use Std::Signer;
@@ -16,7 +16,6 @@ address DiemFramework {
     use Std::FixedPoint32;
     use DiemFramework::DiemConfig;
     use Std::Errors;
-    use DiemFramework::Wallet;
     use DiemFramework::Roles;
 
     /// Attempted to send funds to an account that does not exist
@@ -51,8 +50,8 @@ address DiemFramework {
     const INVALID_PERCENTAGE: u64 = 010022;
     /// Attempt to use a UID that is already taken 
     const UID_TAKEN: u64 = 010023;
-    /// Attempt to make a payment to a non-community-wallet 
-    const PAYEE_NOT_COMMUNITY_WALLET: u64 = 010024;
+    // /// Attempt to make a payment to a non-community-wallet 
+    // const PAYEE_NOT_COMMUNITY_WALLET: u64 = 010024;
 
     // triggered once per epoch
     struct Tick has key {
@@ -202,7 +201,6 @@ address DiemFramework {
       let bal_change_since_last_run = if (pre_run_bal > my_autopay_state.prev_bal) {
         pre_run_bal - my_autopay_state.prev_bal
       } else { 0 };
-
       // go through the pledges 
       while (payments_idx < payments_len) {
         let payment = Vector::borrow_mut<Payment>(payments, payments_idx);
@@ -231,10 +229,6 @@ address DiemFramework {
       payment: &mut Payment,
       bal_change_since_last_run: u64,      
     ): bool {
-      // check payees are community wallets, only community wallets are allowed
-      // to receive autopay (bypassing account limits)
-      if (!Wallet::is_comm(payment.payee)) { return false }; // do nothing but don't delete instruction };
-
       Roles::assert_diem_root(vm);
       let epoch = DiemConfig::get_current_epoch();
       let account_bal = DiemAccount::balance<GAS>(*account_addr);
@@ -268,9 +262,9 @@ address DiemFramework {
           // in remaining cases, payment is simple amount given, not a percentage
           payment.amt
         };
-        
+
         if (amount != 0 && amount <= account_bal) {
-           DiemAccount::vm_make_payment_no_limit<GAS>(
+           DiemAccount::vm_pay_from<GAS>(
                 *account_addr, payment.payee, amount, b"autopay", b"", vm
               );
         };
@@ -341,16 +335,16 @@ address DiemFramework {
       payee: address,
       end_epoch: u64,
       amt: u64
-    ) acquires UserAutoPay, AccountLimitsEnable {
+    ) acquires UserAutoPay {
       let addr = Signer::address_of(sender);
       // Confirm that no payment exists with the same uid
       let index = find(addr, uid);
       assert!(Option::is_none<u64>(&index), Errors::invalid_argument(UID_TAKEN));
 
-      // TODO: This check already exists at the time of execution.
-      if (borrow_global<AccountLimitsEnable>(@DiemRoot).enabled) {
-        assert!(Wallet::is_comm(payee), Errors::invalid_argument(PAYEE_NOT_COMMUNITY_WALLET));
-      };
+      // // TODO: This check already exists at the time of execution.
+      // if (borrow_global<AccountLimitsEnable>(@DiemRoot).enabled) {
+      //   assert!(CommunityWallet::is_comm(payee), Errors::invalid_argument(PAYEE_NOT_COMMUNITY_WALLET));
+      // };
 
       let payments = &mut borrow_global_mut<UserAutoPay>(addr).payments;
       assert!(

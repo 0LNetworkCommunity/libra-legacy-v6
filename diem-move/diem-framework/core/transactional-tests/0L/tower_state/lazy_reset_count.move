@@ -10,11 +10,11 @@ script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;
     use DiemFramework::DiemConfig;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     // SIMULATES A MINER ONBOARDING PROOF (proof_0.json)
     fun main(_dr: signer, sender: signer) {
-      print(&DiemConfig::get_current_epoch());
+      // print(&DiemConfig::get_current_epoch());
 
         TowerState::init_miner_state(
             &sender,
@@ -53,12 +53,12 @@ script {
 script {
     use DiemFramework::DiemConfig;
     use DiemFramework::TowerState;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
     fun main() {
-      print(&DiemConfig::get_current_epoch());
-      print(&TowerState::get_count_in_epoch(@Alice));
+      // print(&DiemConfig::get_current_epoch());
+      // print(&TowerState::get_count_in_epoch(@Alice));
       
       // the latest epoch mining cannot be the current epoch.
       assert!(TowerState::get_miner_latest_epoch(@Alice) != DiemConfig::get_current_epoch(), 735701);
@@ -85,12 +85,12 @@ script {
 script {
     use DiemFramework::DiemConfig;
     use DiemFramework::TowerState;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
     fun main() {
-      print(&DiemConfig::get_current_epoch());
-      print(&TowerState::get_count_in_epoch(@Alice));
+      // print(&DiemConfig::get_current_epoch());
+      // print(&TowerState::get_count_in_epoch(@Alice));
     
       // the latest epoch mining cannot be the current epoch.
       assert!(TowerState::get_miner_latest_epoch(@Alice) != DiemConfig::get_current_epoch(), 735704);
@@ -111,13 +111,13 @@ script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;
     use DiemFramework::DiemConfig;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     // SIMULATES THE SECOND PROOF OF THE MINER (proof_1.json)
     fun main(_dr: signer, sender: signer) {
       let before = TowerState::get_tower_height(@Alice);
 
-        print(&before);
+        // print(&before);
         // assert!(TowerState::test_helper_get_height(@Alice) == 0, 10008001);
         
         let proof = TowerState::create_proof_blob(
@@ -130,7 +130,7 @@ script {
 
         let after = TowerState::get_tower_height(@Alice);
 
-        print(&after);
+        // print(&after);
 
       // the cumulative tower height has increased
         assert!(after > before , 735707);

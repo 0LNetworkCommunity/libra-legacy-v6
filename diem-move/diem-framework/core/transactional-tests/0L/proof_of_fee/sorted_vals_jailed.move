@@ -8,7 +8,7 @@ script {
   use Std::Vector;
   use DiemFramework::Jail;
   
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
   fun main(vm: signer, _eve_sig: signer) {
     
@@ -22,7 +22,7 @@ script {
     // dropeed one
     assert!(len < Vector::length(&val_universe), 1000);
 
-    print(&len);
+    // print(&len);
     assert!(len == 4, 1001);
 
   }

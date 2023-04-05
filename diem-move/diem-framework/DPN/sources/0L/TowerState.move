@@ -598,24 +598,22 @@ module TowerState {
     // We want to see where it breaks.
     // the first use case is to change the VDF difficulty parameter by tiny margins, in order to make it difficult to stockpile VDFs in a previous epoch, but not change the security properties.
     // the goal is to push all the RNG work to all the tower miners in the network, and minimize compute on the Move side
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     public fun toy_rng(seed: u64, iters: u64): u64 acquires TowerList, TowerProofHistory {
       // Get the list of all miners L
       // Pick a tower miner  (M) from the seed position 1/(N) of the list of miners.
+
       let l = get_miner_list();
       // the length will keep incrementing through the epoch. The last miner can know what the starting position will be. There could be a race to be the last validator to augment the set and bias the initial shuffle.
       let len = Vector::length(&l);
       if (len == 0) return 0;
-      print(&5555);
 
       // start n with the seed index
       let n = seed;
 
       let i = 0;
       while (i < iters) {
-        print(&6666);
-        print(&i);
         // make sure we get an n smaller than list of validators
         // abort if loops too much
         let k = 0;
@@ -624,29 +622,27 @@ module TowerState {
           n = n / len;
           k = k + 1;
         };
-        print(&n);
-        print(&len);
         // double check
         if (len <= n) return 0;
 
-        print(&666602);
+        // print(&666602);
         let miner_addr = Vector::borrow<address>(&l, n);
   
-        print(&666603);
+        // print(&666603);
         let vec = if (exists<TowerProofHistory>(*miner_addr)) {
           *&borrow_global<TowerProofHistory>(*miner_addr).previous_proof_hash
         } else { return 0 };
 
-        print(&vec);
+        // print(&vec);
 
-        print(&666604);
+        // print(&666604);
         // take the last bit (B) from their last proof hash.
 
         n = (Vector::pop_back(&mut vec) as u64);
-        print(&666605);
+        // print(&666605);
         i = i + 1;
       };
-      print(&8888);
+      // print(&8888);
 
       n
     }

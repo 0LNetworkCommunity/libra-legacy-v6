@@ -9,6 +9,8 @@
 address DiemFramework {
 
 module Receipts {
+  friend DiemFramework::DiemAccount;
+
   use Std::Vector;
   use DiemFramework::DiemTimestamp;
   use Std::Signer;
@@ -36,10 +38,21 @@ module Receipts {
         )
       }; 
     }
-    
-  public fun write_receipt(sender: &signer, payer: address, destination: address, value: u64):(u64, u64, u64) acquires UserReceipts {
+
+    public fun is_init(addr: address):bool {
+      exists<UserReceipts>(addr)
+    }
+
+  public fun write_receipt_vm(sender: &signer, payer: address, destination: address, value: u64):(u64, u64, u64) acquires UserReceipts {
       // TODO: make a function for user to write own receipt.
       CoreAddresses::assert_vm(sender);
+      write_receipt(payer, destination, value)
+  }
+    
+  /// Restricted to DiemAccount, we need to write receipts for certain users, like to DonorDirected Accounts.
+  /// Core Devs: Danger: only DiemAccount can use this.
+  public(friend) fun write_receipt(payer: address, destination: address, value: u64):(u64, u64, u64) acquires UserReceipts {
+      // TODO: make a function for user to write own receipt.
       if (!exists<UserReceipts>(payer)) {
         return (0, 0, 0)
       };

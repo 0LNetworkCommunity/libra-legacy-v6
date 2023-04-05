@@ -8,7 +8,7 @@ script {
   use DiemFramework::TestFixtures;
   use Std::Vector;
   
-  // use DiemFramework::Debug::print;
+  // // use DiemFramework::Debug::print;
 
   fun main(vm: signer, eve_sig: signer) {
     
@@ -36,7 +36,7 @@ script {
 //   use DiemFramework::TestFixtures;
 //   use Std::Vector;
   
-//   use DiemFramework::Debug::print;
+//   // use DiemFramework::Debug::print;
 
 //   fun main(vm: signer, _eve_sig: signer) {
     
@@ -47,7 +47,7 @@ script {
 //     let sorted = ProofOfFee::get_sorted_vals();
 //     let len = Vector::length(&sorted);
 
-//     print(&len);
+//     // print(&len);
 //     assert!(len == 4, 1000);
 
 

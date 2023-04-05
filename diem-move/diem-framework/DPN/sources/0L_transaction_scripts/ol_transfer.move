@@ -5,7 +5,8 @@ module TransferScripts {
     use DiemFramework::GAS::GAS;
     use DiemFramework::Globals;
     use Std::Signer;
-    use DiemFramework::Wallet;
+    // use DiemFramework::CommunityWallet;
+    use DiemFramework::DonorDirected;
 
     public(script) fun balance_transfer(
         sender: signer,
@@ -31,6 +32,7 @@ module TransferScripts {
 
     public(script) fun community_transfer(
         sender: signer,
+        multisig_address: address,
         destination: address,
         unscaled_value: u64,
         memo: vector<u8>,
@@ -40,17 +42,17 @@ module TransferScripts {
         // unscaled_value. This script converts it to the Move internal scale
         // by multiplying by COIN_SCALING_FACTOR.
         let value = unscaled_value * Globals::get_coin_scaling_factor();
-        let sender_addr = Signer::address_of(&sender);
-        assert!(Wallet::is_comm(sender_addr), 30001);
+        // let sender_addr = Signer::address_of(&sender);
+        // assert!(CommunityWallet::is_comm(sender_addr), 30001);
 
         // confirm the destination account has a slow wallet
         // TODO: this check only happens in this script since there's 
-        // a circular dependecy issue with DiemAccount and Wallet which impedes
-        // checking in Wallet module
+        // a circular dependecy issue with DiemAccount and CommunityWallet which impedes
+        // checking in CommunityWallet module
         assert!(DiemAccount::is_slow(destination), 30002);
 
-        let uid = Wallet::new_timed_transfer(&sender, destination, value, memo);
-        assert!(Wallet::transfer_is_proposed(uid), 30003);
+        let _uid = DonorDirected::propose_payment(&sender, multisig_address, destination, value, memo);
+        // assert!(DonorDirected::transfer_is_proposed(uid, multisig_address), 30003);
     }
 }
 }

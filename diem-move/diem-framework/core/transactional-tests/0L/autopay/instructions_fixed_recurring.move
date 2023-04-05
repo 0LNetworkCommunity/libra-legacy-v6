@@ -1,23 +1,27 @@
-//# init --parent-vasps Bob Alice Sally Carol
-// Bob, Sally:       validators with 10M GAS
-// Alice, Carol: non-validators with  1M GAS
+//# init --parent-vasps Bob Alice Dave CommunityA
+// Bob, Dave:       validators with 10M GAS
+// Alice, CommunityA: non-validators with  1M GAS
 
 // test runs various autopay instruction types to ensure they are being executed as expected
 
-//# run --admin-script --signers DiemRoot Carol
+//# run --admin-script --signers DiemRoot CommunityA
 script {
-  use DiemFramework::Wallet;
-  use Std::Vector;
+    use DiemFramework::DonorDirected;
+    use Std::Vector;
+    use DiemFramework::DiemAccount;
 
-  fun main(_dr: signer, sender: signer) {
-    Wallet::set_comm(&sender);
-    let list = Wallet::get_comm_list();
-    assert!(Vector::length(&list) == 1, 7357001);
-  }
+    fun main(_dr: signer, sponsor: signer) {
+      DonorDirected::init_donor_directed(&sponsor, @Alice, @Bob, @Dave, 2);
+      DonorDirected::finalize_init(&sponsor);
+      let list = DonorDirected::get_root_registry();
+      assert!(Vector::length(&list) == 1, 7357001);
+      assert!(DiemAccount::is_init_cumu_tracking(@CommunityA), 7357002);
+
+    }
 }
 // check: EXECUTED
 
-// Alice commits to paying carol 200 GAS per epoch
+// Alice commits to paying CommunityA 200 GAS per epoch
 //# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::AutoPay;
@@ -28,13 +32,13 @@ script {
     AutoPay::enable_autopay(sender);
     assert!(AutoPay::is_enabled(Signer::address_of(sender)), 0);
     
-    AutoPay::create_instruction(sender, 1, 2, @Carol, 2, 200);
+    AutoPay::create_instruction(sender, 1, 2, @CommunityA, 2, 200);
 
     let (type, payee, end_epoch, percentage) = AutoPay::query_instruction(
       Signer::address_of(sender), 1
     );
     assert!(type == 2, 1);
-    assert!(payee == @Carol, 1);
+    assert!(payee == @CommunityA, 1);
     assert!(end_epoch == 2, 1);
     assert!(percentage == 200, 1);
   }
@@ -87,7 +91,7 @@ script {
     assert!(ending_balance == 999800, 7357003);
 
     // check balance of recipients
-    let ending_balance = DiemAccount::balance<GAS>(@Carol);
+    let ending_balance = DiemAccount::balance<GAS>(@CommunityA);
     assert!(ending_balance == 1000200, 7357004);
   }
 }

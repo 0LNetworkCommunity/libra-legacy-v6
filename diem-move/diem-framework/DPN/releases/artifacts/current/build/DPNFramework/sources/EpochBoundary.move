@@ -20,20 +20,14 @@ module EpochBoundary {
     use DiemFramework::AutoPay;
     use DiemFramework::Epoch;
     use DiemFramework::DiemConfig;
-    // use DiemFramework::Audit;
     use DiemFramework::DiemAccount;
-    // use DiemFramework::Burn;
-    use DiemFramework::FullnodeSubsidy;
-    // use DiemFramework::ValidatorUniverse;
-    use DiemFramework::Debug::print;
-    // use DiemFramework::Testnet;
-    // use DiemFramework::StagingNet;    
+    use DiemFramework::Burn;
+    use DiemFramework::FullnodeSubsidy; 
     use DiemFramework::RecoveryMode;
-    // use DiemFramework::Cases;
     use DiemFramework::Jail;
     use DiemFramework::TransactionFee;
-    use DiemFramework::MusicalChairs;
-
+    use DiemFramework::MultiSigPayment;
+    use DiemFramework::DonorDirected;
 
     //// V6 ////
     // THIS IS TEMPORARY
@@ -43,49 +37,53 @@ module EpochBoundary {
     // TODO: this will depend on an adjustment algo.
     // const MOCK_BASELINE_CONSENSUS_FEES: u64 = 1000000;
 
+
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
         CoreAddresses::assert_vm(vm);
         
         let height_start = Epoch::get_timer_height_start();
-        print(&800100);        
+        // print(&800100);        
         
-        let (outgoing_compliant_set, new_set_size) = 
-            MusicalChairs::stop_the_music(vm, height_start, height_now);
+        let (outgoing_compliant_set, _) = 
+            DiemSystem::get_fee_ratio(vm, height_start, height_now);
         
-        print(&800200);
+        // print(&800200);
 
         // NOTE: This is "nominal" because it doesn't check
         // let compliant_nodes_count = Vector::length(&outgoing_compliant_set);
-        print(&800300);
+        // print(&800300);
 
         // TODO: subsidy units are fixed
         // let (subsidy_units, nominal_subsidy_per) = 
         //     Subsidy::calculate_subsidy(vm, compliant_nodes_count);
-        print(&800400);
+        // print(&800400);
 
         let (reward, _, _) = ProofOfFee::get_consensus_reward();
         process_fullnodes(vm, reward);
         
-        print(&800500);
+        // print(&800500);
         
         process_validators(vm, reward, &outgoing_compliant_set);
-        print(&800600);
+        // print(&800600);
 
         // process the non performing nodes: jail
         process_jail(vm, &outgoing_compliant_set);
 
 
-        let proposed_set = propose_new_set(vm, &outgoing_compliant_set, new_set_size);
+        let proposed_set = propose_new_set(vm, &outgoing_compliant_set);
 
 
         // Update all slow wallet limits
         DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock()); // todo
-        print(&801000);
+        // print(&801000);
+
+        root_service_billing(vm);
+        // print(&801000);
 
         reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
-        print(&801100);
+        // print(&801100);
 
     }
 
@@ -141,11 +139,9 @@ module EpochBoundary {
         };
 
         // after everyone is paid from the chain's Fee account
-        // we can burn the remainder.
+        // we can burn the excess fees from the epoch
 
-        // TODO: implamente what happens to the matching donation algo
-        // depending on the validator's preferences.
-        TransactionFee::ol_burn_fees(vm);
+        Burn::epoch_burn_fees(vm);
     }
 
     fun process_jail(vm: &signer, outgoing_compliant_set: &vector<address>) {
@@ -158,26 +154,23 @@ module EpochBoundary {
               
               // if they are compliant, remove the consecutive fail, otherwise jail
               // V6 Note: audit functions are now all contained in
-              // ProofOfFee.move and exludes at auction time.
-
-              // Audit::val_audit_passing(addr) &&
+              // ProofOfFee.move and exludes validators at auction time.
 
               Vector::contains(outgoing_compliant_set, &addr)
             ) {
-              print(&902);
-                // len_proven_nodes = len_proven_nodes + 1;
+              // print(&902);
                 // also reset the jail counter for any successful unjails
                 Jail::remove_consecutive_fail(vm, addr);
             } else {
-              print(&903);
+              // print(&903);
               Jail::jail(vm, addr);
             };
             i = i+ 1;
         };
-        print(&904);
+        // print(&904);
     }
 
-    fun propose_new_set(vm: &signer, outgoing_compliant_set: &vector<address>, new_set_size: u64): vector<address> 
+    fun propose_new_set(vm: &signer, outgoing_compliant_set: &vector<address>): vector<address> 
     {
         let proposed_set = Vector::empty<address>();
 
@@ -193,13 +186,13 @@ module EpochBoundary {
             // pick the validators based on proof of fee.
             // false because we want the default behavior of the function: filtered by audit
             let sorted_bids = ProofOfFee::get_sorted_vals(false);
-            let (auction_winners, price) = ProofOfFee::fill_seats_and_get_price(vm, new_set_size, &sorted_bids, outgoing_compliant_set);
+            let (auction_winners, price) = ProofOfFee::fill_seats_and_get_price(vm, MOCK_VAL_SIZE, &sorted_bids, outgoing_compliant_set);
             // TODO: Don't use copy above, do a borrow.
-            print(&800700);
+            // print(&800700);
 
             // charge the validators for the proof of fee in advance of the epoch
             DiemAccount::vm_multi_pay_fee(vm, &auction_winners, price, &b"proof of fee");
-            print(&800800);
+            // print(&800800);
 
             proposed_set = auction_winners
         };
@@ -232,36 +225,43 @@ module EpochBoundary {
         outgoing_compliant: vector<address>,
         height_now: u64
     ) {
-        print(&800900100);
+        // print(&800900100);
 
         // Reset Stats
         Stats::reconfig(vm, &proposed_set);
-        print(&800900101);
+        // print(&800900101);
 
         // Migrate TowerState list from elegible.
         TowerState::reconfig(vm, &outgoing_compliant);
-        print(&800900102);
+        // print(&800900102);
 
         // process community wallets
-        DiemAccount::process_community_wallets(vm, DiemConfig::get_current_epoch());
-        print(&800900103);
+        DonorDirected::process_donor_directed_accounts(vm, DiemConfig::get_current_epoch());
+        // print(&800900103);
 
         AutoPay::reconfig_reset_tick(vm);
-        print(&800900104);
+        // print(&800900104);
 
         Epoch::reset_timer(vm, height_now);
-        print(&800900105);
+        // print(&800900105);
 
         RecoveryMode::maybe_remove_debug_at_epoch(vm);
-        print(&800900106);
+        // print(&800900106);
+
+        TransactionFee::epoch_reset_fee_maker(vm);
+
 
         // trigger the thermostat if the reward needs to be adjusted
         ProofOfFee::reward_thermostat(vm);
-        print(&800900107);
+        // print(&800900107);
         // Reconfig should be the last event.
         // Reconfigure the network
         DiemSystem::bulk_update_validators(vm, proposed_set);
-        print(&800900108);
+        // print(&800900108);
+    }
+
+    fun root_service_billing(vm: &signer) {
+      MultiSigPayment::root_security_fee_billing(vm);
     }
 }
 }

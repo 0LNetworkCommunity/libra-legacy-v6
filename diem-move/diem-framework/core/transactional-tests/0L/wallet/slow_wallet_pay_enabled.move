@@ -39,11 +39,11 @@ script {
 script {
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     fun main() {
-        print(&777);
-        print(&DiemAccount::unlocked_amount(@Alice));
+        // print(&777);
+        // print(&DiemAccount::unlocked_amount(@Alice));
         assert!(DiemAccount::unlocked_amount(@Alice) == 1000000000, 735703);
         assert!(DiemAccount::balance<GAS>(@Bob) == 1000000, 735704);
     }

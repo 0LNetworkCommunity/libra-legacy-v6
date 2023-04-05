@@ -103,7 +103,7 @@ address DiemFramework {
       let voucher = Signer::address_of(sender);
 
       let buddies = Vouch::buddies_in_set(addr);
-      // print(&buddies);
+      // // print(&buddies);
       let (is_found, _idx) = Vector::index_of(&buddies, &voucher);
       assert!(is_found, 100103);
 

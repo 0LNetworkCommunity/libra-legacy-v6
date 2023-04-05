@@ -19,7 +19,7 @@ address DiemFramework {
     use Std::Vector;
     use DiemFramework::Jail;
     use DiemFramework::DiemAccount;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
     use DiemFramework::Vouch;
     use Std::FixedPoint32;
     use DiemFramework::Testnet;
@@ -97,7 +97,7 @@ address DiemFramework {
     public fun get_sorted_vals(unfiltered: bool): vector<address> acquires ProofOfFeeAuction, ConsensusReward {
       let eligible_validators = ValidatorUniverse::get_eligible_validators();
       let length = Vector::length<address>(&eligible_validators);
-      print(&length);
+      // print(&length);
       // Vector to store each address's node_weight
       let weights = Vector::empty<u64>();
       let filtered_vals = Vector::empty<address>();
@@ -106,9 +106,9 @@ address DiemFramework {
         // TODO: Ensure that this address is an active validator
 
         let cur_address = *Vector::borrow<address>(&eligible_validators, k);
-        let (bid, expire) = current_bid(cur_address);
-        print(&bid);
-        print(&expire);
+        let (bid, _expire) = current_bid(cur_address);
+        // print(&bid);
+        // print(&expire);
         if (!unfiltered && !audit_qualification(&cur_address)) { 
           k = k + 1;
           continue
@@ -118,37 +118,37 @@ address DiemFramework {
         k = k + 1;
       };
 
-      print(&weights);
+      // print(&weights);
 
       // Sorting the accounts vector based on value (weights).
       // Bubble sort algorithm
       let len_filtered = Vector::length<address>(&filtered_vals);
-      print(&len_filtered);
-      print(&Vector::length(&weights));
+      // print(&len_filtered);
+      // print(&Vector::length(&weights));
       if (len_filtered < 2) return filtered_vals;
       let i = 0;
       while (i < len_filtered){
         let j = 0;
         while(j < len_filtered-i-1){
-          print(&8888801);
+          // print(&8888801);
 
           let value_j = *(Vector::borrow<u64>(&weights, j));
-          print(&8888802);
+          // print(&8888802);
           let value_jp1 = *(Vector::borrow<u64>(&weights, j+1));
           if(value_j > value_jp1){
-            print(&8888803);
+            // print(&8888803);
             Vector::swap<u64>(&mut weights, j, j+1);
-            print(&8888804);
+            // print(&8888804);
             Vector::swap<address>(&mut filtered_vals, j, j+1);
           };
           j = j + 1;
-          print(&8888805);
+          // print(&8888805);
         };
         i = i + 1;
-        print(&8888806);
+        // print(&8888806);
       };
 
-      print(&filtered_vals);
+      // print(&filtered_vals);
       // Reverse to have sorted order - high to low.
       Vector::reverse<address>(&mut filtered_vals);
 
@@ -203,7 +203,7 @@ address DiemFramework {
     ): (vector<address>, u64) acquires ProofOfFeeAuction, ConsensusReward {
       if (Signer::address_of(vm) != @VMReserved) return (Vector::empty<address>(), 0);
       
-      print(sorted_vals_by_bid);
+      //print(sorted_vals_by_bid);
 
       // let (baseline_reward, _, _) = get_consensus_reward();
 
@@ -219,11 +219,10 @@ address DiemFramework {
       // declared size, because we will have to fill with more unproven nodes.
       let one_third_of_max = proven_len/2;
       let safe_set_size = proven_len + one_third_of_max;
-      print(&77777777);
-      print(&set_size);
-      print(&proven_len);
-      print(&one_third_of_max);
-      print(&safe_set_size);
+      // print(&77777777);
+      // print(&proven_len);
+      // print(&one_third_of_max);
+      // print(&safe_set_size);
 
       let (set_size, max_unproven) = if (safe_set_size < set_size) {
         (safe_set_size, safe_set_size/3)
@@ -237,11 +236,11 @@ address DiemFramework {
         // happy case, unproven bidders are a smaller minority
         (set_size, set_size/3)
       };
-      print(&set_size);
-      print(&max_unproven);
+      // print(&set_size);
+      // print(&max_unproven);
 
 
-      print(&8006010201);
+      // print(&8006010201);
 
       // Now we can seat the validators based on the algo above:
       // 1. seat the proven nodes of previous epoch
@@ -255,7 +254,7 @@ address DiemFramework {
         (Vector::length(&seats_to_fill) < set_size) &&
         (i < Vector::length(sorted_vals_by_bid))
       ) {
-        // print(&i);
+        // // print(&i);
         let val = Vector::borrow(sorted_vals_by_bid, i);
 
         // // belt and suspenders, we get_sorted_vals(true) should filter ineligible validators
@@ -267,30 +266,30 @@ address DiemFramework {
 
         // check if a proven node
         if (Vector::contains(proven_nodes, val)) {
-          print(&8006010205);
-          // print(&01);
+          // print(&8006010205);
+          // // print(&01);
           Vector::push_back(&mut seats_to_fill, *val);
         } else {
-          print(&8006010206);
-          print(&max_unproven);
-          print(&num_unproven_added);
-          // print(&02);
+          // print(&8006010206);
+          // print(&max_unproven);
+          // print(&num_unproven_added);
+          // // print(&02);
           // for unproven nodes, push it to list if we haven't hit limit
           if (num_unproven_added < max_unproven ) {
             // TODO: check jail reputation
-            // print(&03);
+            // // print(&03);
             Vector::push_back(&mut seats_to_fill, *val);
-            // print(&04);
-            print(&8006010207);
+            // // print(&04);
+            // print(&8006010207);
             num_unproven_added = num_unproven_added + 1;
           };
         };
         // don't advance if we havent filled
         i = i + 1;
       };
-      // print(&05);
-      print(&8006010208);
-      print(&seats_to_fill);
+      // // print(&05);
+      // print(&8006010208);
+      // print(&seats_to_fill);
 
       
 
@@ -300,7 +299,7 @@ address DiemFramework {
       // we failed to seat anyone.
       // let EpochBoundary deal with this.
       if (Vector::is_empty(&seats_to_fill)) {
-        print(&8006010209);
+        // print(&8006010209);
 
         return (seats_to_fill, 0)
       };
@@ -310,7 +309,7 @@ address DiemFramework {
 
       let (lowest_bid_pct, _) = current_bid(*lowest_bidder);
       
-      print(&lowest_bid_pct);
+      // print(&lowest_bid_pct);
 
       // update the clearing price
       let cr = borrow_global_mut<ConsensusReward>(@VMReserved);
@@ -331,40 +330,40 @@ address DiemFramework {
         // is a slow wallet
         if (!DiemAccount::is_slow(*val)) return false;
 
-        print(&8006010203);
+        // print(&8006010203);
         // we can't seat validators that were just jailed
         // NOTE: epoch reconfigure needs to reset the jail
         // before calling the proof of fee.
         if (Jail::is_jailed(*val)) return false;
-        print(&8006010204);
+        // print(&8006010204);
         // we can't seat validators who don't have minimum viable vouches
         if (!Vouch::unrelated_buddies_above_thresh(*val)) return false;
 
-        print(&80060102041);
+        // print(&80060102041);
 
         let (bid, expire) = current_bid(*val);
-        print(val);
-        print(&bid);
-        print(&expire);
+        //print(val);
+        // print(&bid);
+        // print(&expire);
 
         // Skip if the bid expired. belt and suspenders, this should have been checked in the sorting above.
         // TODO: make this it's own function so it can be publicly callable, it's useful generally, and for debugging.
-        print(&DiemConfig::get_current_epoch());
+        // print(&DiemConfig::get_current_epoch());
         if (DiemConfig::get_current_epoch() > expire) return false;
 
         // skip the user if they don't have sufficient UNLOCKED funds
         // or if the bid expired.
-        print(&80060102042);
+        // print(&80060102042);
         let unlocked_coins = DiemAccount::unlocked_amount(*val);
-        print(&unlocked_coins);
+        // print(&unlocked_coins);
 
         let (baseline_reward, _, _) = get_consensus_reward();
         let coin_required = FixedPoint32::multiply_u64(baseline_reward, FixedPoint32::create_from_rational(bid, 1000));
 
-        print(&coin_required);
+        // print(&coin_required);
         if (unlocked_coins < coin_required) return false;
         
-        print(&80060102043);
+        // print(&80060102043);
         true
     }
     // Adjust the reward at the end of the epoch
@@ -388,16 +387,16 @@ address DiemFramework {
 
       let cr = borrow_global_mut<ConsensusReward>(@VMReserved);
 
-      print(&8006010551);
+      // print(&8006010551);
       let len = Vector::length<u64>(&cr.median_history);
       let i = 0;
 
       let epochs_above = 0;
       let epochs_below = 0;
       while (i < 16 && i < len) { // max ten days, but may have less in history, filling set should truncate the history at 15 epochs.
-      print(&8006010552);
+      // print(&8006010552);
         let avg_bid = *Vector::borrow<u64>(&cr.median_history, i);
-        print(&8006010553);
+        // print(&8006010553);
         if (avg_bid > bid_upper_bound) {
           epochs_above = epochs_above + 1;
         } else if (avg_bid < bid_lower_bound) {
@@ -407,11 +406,11 @@ address DiemFramework {
         i = i + 1;
       };
 
-      print(&8006010554);
+      // print(&8006010554);
       if (cr.value > 0) {
-        print(&8006010555);
-        print(&epochs_above);
-        print(&epochs_below);
+        // print(&8006010555);
+        // print(&epochs_above);
+        // print(&epochs_below);
 
 
         // TODO: this is an initial implementation, we need to
@@ -420,7 +419,7 @@ address DiemFramework {
         if (epochs_above > epochs_below) {
 
           // if (epochs_above > short_window) {
-          print(&8006010556);
+          // print(&8006010556);
           // check for zeros.
           // TODO: put a better safety check here
 
@@ -430,19 +429,19 @@ address DiemFramework {
           // implicit bond is very high on validators. E.g.
           // at 1% median bid, the implicit bond is 100x the reward.
           // We need to DECREASE the reward
-          print(&8006010558);
+          // print(&8006010558);
 
           if (epochs_above > long_window) {
 
             // decrease the reward by 10%
-            print(&8006010559);
+            // print(&8006010559);
             
 
             cr.value = cr.value - (cr.value / 10);
             return // return early since we can't increase and decrease simultaneously
           } else if (epochs_above > short_window) {
             // decrease the reward by 5%
-            print(&80060105510);
+            // print(&80060105510);
             cr.value = cr.value - (cr.value / 20);
             
 
@@ -459,15 +458,15 @@ address DiemFramework {
           // At a 25% bid (potential loss), the profit is thus 75% of the value, which means the implicit bond is 25/75, or 1/3 of the bond, the risk favors the validator. This means among other things, that an attacker can pay for the cost of the attack with the profits. See paper, for more details.
 
           // we need to INCREASE the reward, so that the bond is more meaningful.
-          print(&80060105511);
+          // print(&80060105511);
 
           if (epochs_below > long_window) {
-            print(&80060105513);
+            // print(&80060105513);
 
             // increase the reward by 10%
             cr.value = cr.value + (cr.value / 10);
           } else if (epochs_below > short_window) {
-            print(&80060105512);
+            // print(&80060105512);
 
             // increase the reward by 5%
             cr.value = cr.value + (cr.value / 20);
@@ -483,16 +482,16 @@ address DiemFramework {
         return
       };
 
-      print(&99901);
+      // print(&99901);
       let median_bid = get_median(seats_to_fill);
       // push to history
       let cr = borrow_global_mut<ConsensusReward>(@VMReserved);
       cr.median_win_bid = median_bid;
       if (Vector::length(&cr.median_history) < 10) {
-        print(&99902);
+        // print(&99902);
         Vector::push_back(&mut cr.median_history, median_bid);
       } else {
-        print(&99903);
+        // print(&99903);
         Vector::remove(&mut cr.median_history, 0);
         Vector::push_back(&mut cr.median_history, median_bid);
       };
