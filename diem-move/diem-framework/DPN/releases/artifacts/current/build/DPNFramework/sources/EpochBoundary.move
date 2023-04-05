@@ -140,7 +140,7 @@ module EpochBoundary {
 
         // after everyone is paid from the chain's Fee account
         // we can burn the excess fees from the epoch
-
+        Burn::reset_ratios(vm);
         Burn::epoch_burn_fees(vm);
     }
 

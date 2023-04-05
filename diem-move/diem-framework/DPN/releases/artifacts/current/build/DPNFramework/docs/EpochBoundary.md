@@ -23,6 +23,7 @@
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="DonorDirected.md#0x1_DonorDirected">0x1::DonorDirected</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
@@ -206,7 +207,7 @@
 
     // after everyone is paid from the chain's Fee account
     // we can burn the excess fees from the epoch
-
+    <a href="Burn.md#0x1_Burn_reset_ratios">Burn::reset_ratios</a>(vm);
     <a href="Burn.md#0x1_Burn_epoch_burn_fees">Burn::epoch_burn_fees</a>(vm);
 }
 </code></pre>

@@ -123,8 +123,8 @@ script {
 script {  
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
-    use DiemFramework::Subsidy;
-    use DiemFramework::Globals;
+    // use DiemFramework::Subsidy;
+    // use DiemFramework::Globals;
     // use DiemFramework::Debug::print;
     // use DiemFramework::TowerState;
 

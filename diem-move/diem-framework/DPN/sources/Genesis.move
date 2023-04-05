@@ -39,7 +39,7 @@ module DiemFramework::Genesis {
     // use DiemFramework::Testnet;
     use DiemFramework::ProofOfFee;
     use DiemFramework::MultiSigPayment;
-    // use DiemFramework::Testnet; 
+    use DiemFramework::MusicalChairs; 
 
     /// Initializes the Diem framework.
     fun initialize(

@@ -16,7 +16,8 @@
 -  [Function `pay_fee`](#0x1_TransactionFee_pay_fee)
 -  [Function `pay_fee_and_track`](#0x1_TransactionFee_pay_fee_and_track)
 -  [Function `burn_fees`](#0x1_TransactionFee_burn_fees)
--  [Function `ol_burn_fees`](#0x1_TransactionFee_ol_burn_fees)
+    -  [Specification of the case where burn type is XDX.](#@Specification_of_the_case_where_burn_type_is_XDX._1)
+    -  [Specification of the case where burn type is not XDX.](#@Specification_of_the_case_where_burn_type_is_not_XDX._2)
 -  [Function `get_amount_to_distribute`](#0x1_TransactionFee_get_amount_to_distribute)
 -  [Function `vm_withdraw_all_coins`](#0x1_TransactionFee_vm_withdraw_all_coins)
 -  [Function `get_transaction_fees_coins_amount`](#0x1_TransactionFee_get_transaction_fees_coins_amount)
@@ -488,34 +489,58 @@ All the fees is burnt so the balance becomes 0.
 </code></pre>
 
 
-
-</details>
-
-<a name="0x1_TransactionFee_ol_burn_fees"></a>
-
-## Function `ol_burn_fees`
+STUB: To be filled in at a later date once the makeup of the XDX has been determined.
 
 
+<a name="@Specification_of_the_case_where_burn_type_is_XDX._1"></a>
 
-<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_ol_burn_fees">ol_burn_fees</a>(vm: &signer)
+### Specification of the case where burn type is XDX.
+
+
+
+<a name="0x1_TransactionFee_BurnFeesXDX"></a>
+
+
+<pre><code><b>schema</b> <a href="TransactionFee.md#0x1_TransactionFee_BurnFeesXDX">BurnFeesXDX</a> {
+    dr_account: signer;
+    <b>aborts_if</b> <b>true</b> <b>with</b> Errors::INVALID_STATE;
+}
 </code></pre>
 
 
 
-<details>
-<summary>Implementation</summary>
+<a name="@Specification_of_the_case_where_burn_type_is_not_XDX._2"></a>
+
+### Specification of the case where burn type is not XDX.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_ol_burn_fees">ol_burn_fees</a>(
-    vm: &signer,
-) <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a> {
-    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @VMReserved) {
-        <b>return</b>
-    };
-    // extract fees
-    <b>let</b> fees = <b>borrow_global_mut</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(@TreasuryCompliance); // TODO: this is same <b>as</b> VM <b>address</b>
-    <b>let</b> coin = <a href="Diem.md#0x1_Diem_withdraw_all">Diem::withdraw_all</a>(&<b>mut</b> fees.balance);
-    <a href="Diem.md#0x1_Diem_vm_burn_this_coin">Diem::vm_burn_this_coin</a>(vm, coin);
+
+<a name="0x1_TransactionFee_BurnFeesNotXDX"></a>
+
+
+<pre><code><b>schema</b> <a href="TransactionFee.md#0x1_TransactionFee_BurnFeesNotXDX">BurnFeesNotXDX</a>&lt;CoinType&gt; {
+    dr_account: signer;
+}
+</code></pre>
+
+
+Must abort if the account does not have BurnCapability [[H3]][PERMISSION].
+
+
+<pre><code><b>schema</b> <a href="TransactionFee.md#0x1_TransactionFee_BurnFeesNotXDX">BurnFeesNotXDX</a>&lt;CoinType&gt; {
+    <b>include</b> <a href="Diem.md#0x1_Diem_AbortsIfNoBurnCapability">Diem::AbortsIfNoBurnCapability</a>&lt;CoinType&gt;{account: dr_account};
+    <b>let</b> fees = <a href="TransactionFee.md#0x1_TransactionFee_spec_transaction_fee">spec_transaction_fee</a>&lt;CoinType&gt;();
+    <b>include</b> <a href="Diem.md#0x1_Diem_BurnNowAbortsIf">Diem::BurnNowAbortsIf</a>&lt;CoinType&gt;{coin: fees.balance, preburn: fees.preburn};
+}
+</code></pre>
+
+
+dr_account retrieves BurnCapability [[H3]][PERMISSION].
+BurnCapability is not transferrable [[J3]][PERMISSION].
+
+
+<pre><code><b>schema</b> <a href="TransactionFee.md#0x1_TransactionFee_BurnFeesNotXDX">BurnFeesNotXDX</a>&lt;CoinType&gt; {
+    <b>ensures</b> <b>exists</b>&lt;<a href="Diem.md#0x1_Diem_BurnCapability">Diem::BurnCapability</a>&lt;CoinType&gt;&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(dr_account));
 }
 </code></pre>
 
@@ -844,7 +869,7 @@ PRIVATE function
 
 
 
-<a name="@Initialization_2"></a>
+<a name="@Initialization_4"></a>
 
 ### Initialization
 
@@ -857,7 +882,7 @@ If time has started ticking, then <code><a href="TransactionFee.md#0x1_Transacti
 
 
 
-<a name="@Helper_Function_3"></a>
+<a name="@Helper_Function_5"></a>
 
 ### Helper Function
 

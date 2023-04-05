@@ -197,6 +197,9 @@ compiled_package_info:
       name: MultiSigPayment
     : DiemFramework
     ? address: "00000000000000000000000000000001"
+      name: MusicalChairs
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: NetworkIdentity
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -346,7 +349,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: 110A62F23F4C530726F3CD908ED8A7393D8E6E9D5B8E6F2543C536D0C02458CB
+  source_digest: A5D2C6F20AC5E12BA8A8A6167D118FDC4F0404D311CE72F0BC9928353DC69318
   build_flags:
     dev_mode: false
     test_mode: false

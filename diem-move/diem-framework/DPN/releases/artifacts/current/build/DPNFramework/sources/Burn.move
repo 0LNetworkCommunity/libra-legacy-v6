@@ -25,12 +25,13 @@ module Burn {
       vm: &signer,
   )  acquires BurnPreference, DepositInfo {
       CoreAddresses::assert_vm(vm);
+
       // extract fees
       let coins = TransactionFee::vm_withdraw_all_coins<GAS>(vm);
 
       // get the list of fee makers
-      // let state = borrow_global<EpochFeeMakerRegistry>(@VMReserved);
       let fee_makers = TransactionFee::get_fee_makers();
+      
       let len = Vector::length(&fee_makers);
 
       // for every user in the list burn their fees per Burn.move preferences
@@ -44,6 +45,7 @@ module Burn {
           i = i + 1;
       };
 
+    // Transaction fee account should be empty at the end of the epoch
     // Superman 3 decimal errors. https://www.youtube.com/watch?v=N7JBXGkBoFc
     // anything that is remaining should be burned
     Diem::vm_burn_this_coin(vm, coins); 
@@ -77,7 +79,6 @@ module Burn {
       let cumu = *Vector::borrow(&deposit_vec, k);
 
       let ratio = FixedPoint32::create_from_rational(cumu, global_deposits);
-      // print(&ratio);
 
       Vector::push_back(&mut ratios_vec, ratio);
       k = k + 1;
@@ -111,17 +112,12 @@ module Burn {
 
     let d = borrow_global<DepositInfo>(@VMReserved);
     let _contains = Vector::contains(&d.addr, &payee);
-    // print(&contains);
     let (is_found, i) = Vector::index_of(&d.addr, &payee);
     if (is_found) {
-      // print(&is_found);
       let len = Vector::length(&d.ratio);
-      // print(&i);
-      // print(&len);
       if (i + 1 > len) return 0;
       let ratio = *Vector::borrow(&d.ratio, i);
       if (FixedPoint32::is_zero(copy ratio)) return 0;
-      // print(&ratio);
       return FixedPoint32::multiply_u64(value, ratio)
     };
 
@@ -132,7 +128,6 @@ module Burn {
     vm: &signer, payer: address, user_share: Diem<GAS>
   ) acquires DepositInfo, BurnPreference {
     CoreAddresses::assert_vm(vm);
-
     if (exists<BurnPreference>(payer)) {
       if (borrow_global<BurnPreference>(payer).send_community) {
         recycle(vm, payer, &mut user_share);
@@ -148,21 +143,19 @@ module Burn {
     let list = get_address_list();
     let len = Vector::length<address>(&list);
 
+
     let total_coin_value_to_recycle = Diem::value(coin);
-    // print(&list);
-    
+
     // There could be errors in the array, and underpayment happen.
     let value_sent = 0;
 
     let i = 0;
     while (i < len) {
-      let payee = *Vector::borrow<address>(&list, i);
-      // print(&payee);
-      let amount_to_payee = get_payee_value(payee, total_coin_value_to_recycle);
-      // print(&val);
 
+      let payee = *Vector::borrow<address>(&list, i);
+      let amount_to_payee = get_payee_value(payee, total_coin_value_to_recycle);
       let to_deposit = Diem::withdraw(coin, amount_to_payee);
-      
+
       DiemAccount::vm_deposit_with_metadata<GAS>(
           vm,
           payer,
