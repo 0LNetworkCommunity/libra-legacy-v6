@@ -3920,6 +3920,7 @@ Creating an account at address 0x0 will abort as it is a reserved address for th
 
     // Publish <a href="AccountFreezing.md#0x1_AccountFreezing_FreezingBit">AccountFreezing::FreezingBit</a> (initially not frozen)
     <a href="AccountFreezing.md#0x1_AccountFreezing_create">AccountFreezing::create</a>(new_account);
+    <a href="TransactionFee.md#0x1_TransactionFee_initialize_fee_maker">TransactionFee::initialize_fee_maker</a>(new_account);
     // The <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a> is published during <a href="Genesis.md#0x1_Genesis">Genesis</a>, so it should
     // always exist.  This is a sanity check.
     <b>assert</b>!(

@@ -40,7 +40,6 @@ script {
         // make the nodes compliant
         Mock::all_good_validators(&vm);
 
-
         // mock some vals vouching for Alice, including Eve.
         let v = Vector::singleton<address>(@Bob);
         Vector::push_back(&mut v, @Eve);
@@ -60,6 +59,7 @@ script {
         let c = Vouch::buddies_in_set(@Alice);
         // print(&c);
         let len = Vector::length(&c);
+        // print(&len);
         assert!(len == 1, 735702);
 
         // Important: Alice should not be dropped in the new 

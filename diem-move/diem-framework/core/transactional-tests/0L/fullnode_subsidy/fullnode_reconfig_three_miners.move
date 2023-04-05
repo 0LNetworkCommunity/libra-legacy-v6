@@ -123,8 +123,8 @@ script {
 script {  
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
-    use DiemFramework::Subsidy;
-    use DiemFramework::Globals;
+    // use DiemFramework::Subsidy;
+    // use DiemFramework::Globals;
     // use DiemFramework::Debug::print;
     // use DiemFramework::TowerState;
 
@@ -136,13 +136,7 @@ script {
         // print(&TowerState::get_count_above_thresh_in_epoch(@Bob)); // doesn't reset until the user sends a transaction
 
         // we expect that Bob and Carol would split the reward that one validator would get.
-        let expected_subsidy = Subsidy::subsidy_curve(
-          Globals::get_subsidy_ceiling_gas(),
-          1, // alice is the only validator (but below 4 the reward is
-             // the same in testnet: 296000000)
-          Globals::get_max_validators_per_set(),
-        );
-
+        let expected_subsidy = 1000000;
         let starting_balance = 0;
 
         // print(&expected_subsidy);

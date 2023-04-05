@@ -207,7 +207,7 @@
 
     // after everyone is paid from the chain's Fee account
     // we can burn the excess fees from the epoch
-
+    <a href="Burn.md#0x1_Burn_reset_ratios">Burn::reset_ratios</a>(vm);
     <a href="Burn.md#0x1_Burn_epoch_burn_fees">Burn::epoch_burn_fees</a>(vm);
 }
 </code></pre>

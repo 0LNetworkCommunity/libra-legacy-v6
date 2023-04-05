@@ -770,6 +770,7 @@ module DiemFramework::DiemSystem {
     }
 
     /////// 0L /////////
+    // V6 deprecated we no longer have variable rewards
     //get_compliant_val_votes
     //Function code:02
     public fun get_fee_ratio(vm: &signer, height_start: u64, height_end: u64) : (vector<address>, vector<FixedPoint32::FixedPoint32>) {
