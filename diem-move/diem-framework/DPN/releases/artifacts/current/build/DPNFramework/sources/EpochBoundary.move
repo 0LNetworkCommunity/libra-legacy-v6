@@ -140,7 +140,7 @@ module EpochBoundary {
 
         // after everyone is paid from the chain's Fee account
         // we can burn the excess fees from the epoch
-
+        Burn::reset_ratios(vm);
         Burn::epoch_burn_fees(vm);
     }
 
@@ -218,7 +218,7 @@ module EpochBoundary {
         // set with at least 66% liveliness. 
         proposed_set
     }
-
+    
     fun reset_counters(
         vm: &signer,
         proposed_set: vector<address>,

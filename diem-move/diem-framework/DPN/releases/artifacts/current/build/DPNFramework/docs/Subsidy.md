@@ -129,7 +129,7 @@
   // <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a> which actually checks the cases.
 
   // <b>let</b> network_density = <a href="Stats.md#0x1_Stats_network_density">Stats::network_density</a>(vm, height_start, height_end);
-  <b>let</b> max_node_count = <a href="Globals.md#0x1_Globals_get_max_validators_per_set">Globals::get_max_validators_per_set</a>();
+  <b>let</b> max_node_count = <a href="Globals.md#0x1_Globals_get_val_set_at_genesis">Globals::get_val_set_at_genesis</a>();
   <b>let</b> guaranteed_minimum = <a href="Subsidy.md#0x1_Subsidy_subsidy_curve">subsidy_curve</a>(
     subsidy_ceiling_gas,
     network_density,

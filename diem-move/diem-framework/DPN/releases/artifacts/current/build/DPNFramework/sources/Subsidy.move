@@ -84,7 +84,7 @@ address DiemFramework {
       // DiemSystem::get_fee_ratio which actually checks the cases.
 
       // let network_density = Stats::network_density(vm, height_start, height_end);
-      let max_node_count = Globals::get_max_validators_per_set();
+      let max_node_count = Globals::get_val_set_at_genesis();
       let guaranteed_minimum = subsidy_curve(
         subsidy_ceiling_gas,
         network_density,
