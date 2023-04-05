@@ -27,7 +27,7 @@ script {
     
     // The desired validator set is exaclty the size of the elegible validators, who all have placed bids.
     // the performant validators are the same as the bidding validators.
-    let (seats, p) = ProofOfFee::fill_seats_and_get_price(&vm, len, &sorted, &sorted);
+    let (seats, _p) = ProofOfFee::fill_seats_and_get_price(&vm, len, &sorted, &sorted);
     // print(&seats);
     // print(&p);
 

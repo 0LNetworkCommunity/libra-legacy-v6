@@ -30,7 +30,7 @@ script {
 
     fun main(){
       // RecoveryMode::test_init_recovery(&vm, Vector::empty<address>(), 2);
-      // assert!(RecoveryMode::is_recovery(), 7357001);
+      assert!(RecoveryMode::is_recovery(), 7357001);
       // print(&RecoveryMode::is_recovery());
     }
 }

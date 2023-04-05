@@ -12,7 +12,7 @@ script {
         TowerState::test_danger_destroy_tower_counter(&vm);
         
         // should not find anything
-        // print(&TowerState::test_get_liftime_proofs());
+        assert!(TowerState::test_get_liftime_proofs() > 0, 7357001);
     }
 }
 // check: EXECUTION_FAILURE

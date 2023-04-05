@@ -55,7 +55,7 @@ script {
     // Vector::push_back(&mut proven_vals, @Frank);
 
 
-    let (seats, p) = ProofOfFee::fill_seats_and_get_price(
+    let (seats,_p) = ProofOfFee::fill_seats_and_get_price(
       &vm,
       set_size,
       &sorted,

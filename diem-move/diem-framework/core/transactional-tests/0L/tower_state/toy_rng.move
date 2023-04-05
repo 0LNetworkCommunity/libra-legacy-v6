@@ -18,7 +18,7 @@ script {
         assert!(a==116, 735702);
 
         // get the 0th miner's last proof hash
-        let a = TowerState::toy_rng(0, 1);
+        let _a = TowerState::toy_rng(0, 1);
         // print(&a);
     }
 }

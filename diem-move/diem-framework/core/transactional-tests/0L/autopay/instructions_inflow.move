@@ -108,6 +108,7 @@ script {
     assert!(Diem::value<GAS>(&coin) == 10000, 1);
     DiemAccount::vm_deposit_with_metadata<GAS>(
         &vm,
+        @VMReserved,
         @Alice,
         coin,
         x"", x""

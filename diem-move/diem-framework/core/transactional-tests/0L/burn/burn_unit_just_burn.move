@@ -57,7 +57,7 @@ script {
   use DiemFramework::Burn;
   use DiemFramework::Diem;
   // use Std::FixedPoint32;
-  // // use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
   fun main(vm: signer, _:signer) {
     // we assume the ratios are calculated correctly see burn_ratios.move
@@ -67,15 +67,12 @@ script {
     let bal_A_before = DiemAccount::balance<GAS>(@CommunityA);
     let bal_B_before = DiemAccount::balance<GAS>(@CommunityB);
 
-    // up to here Alice has 9_300_000 
-    Burn::epoch_start_burn(&vm, @Alice, 100000);
-    // alice burns 100_000, and now has 9_200_000
+    let c = DiemAccount::vm_withdraw<GAS>(&vm, @Alice, 1000000);
+    Burn::burn_or_recycle_user_fees(&vm, @Alice, c);
 
     let bal_alice = DiemAccount::balance<GAS>(@Alice);
-    // // print(&bal_alice);
-    assert!(
-      (bal_alice >= 9900000 && bal_alice < 10000000), 7357007
-    ); // rounding issues
+    // print(&bal_alice);
+    assert!(bal_alice == 9000000, 7357007); // rounding issues
     
     // unchanged balance
     let bal_a = DiemAccount::balance<GAS>(@CommunityA);

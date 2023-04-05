@@ -13,6 +13,7 @@ script {
         assert!(Diem::market_cap<GAS>() == old_market_cap + 1000, 2);
         DiemAccount::vm_deposit_with_metadata<GAS>(
             &vm,
+            @VMReserved,
             @Alice,
             coin,
             x"", x""

@@ -17,7 +17,7 @@ script {
         let amount = MakeWhole::query_make_whole_payment(addr);
         assert!(amount == expected_amount, 7357001);
 
-        let claimed = MakeWhole::claim_make_whole_payment(&sig);
+        let _claimed = MakeWhole::claim_make_whole_payment(&sig);
         let current = DiemAccount::balance<GAS>(addr);
         // print(&current);
         // print(&initial);

@@ -48,6 +48,7 @@ module Burn {
           i = i + 1;
       };
 
+    // Transaction fee account should be empty at the end of the epoch
     // Superman 3 decimal errors. https://www.youtube.com/watch?v=N7JBXGkBoFc
     // anything that is remaining should be burned
     Diem::vm_burn_this_coin(vm, coins); 

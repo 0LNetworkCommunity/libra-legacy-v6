@@ -126,7 +126,7 @@ script {
     use DiemFramework::Subsidy;
     use DiemFramework::Globals;
     // use DiemFramework::Debug::print;
-    use DiemFramework::TowerState;
+    // use DiemFramework::TowerState;
 
     fun main(_vm: signer, _: signer) {
         // We are in a new epoch.

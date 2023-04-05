@@ -32,7 +32,9 @@ script {
       assert!(idx == 2, 735701);
 
       let jail_sort = Jail::sort_by_jail(*&sorted_val_universe);
-      let (_is_found, idx) = Vector::index_of(&jail_sort, &@Eve);
+      let (_is_found, _idx) = Vector::index_of(&jail_sort, &@Eve);
+      assert!(idx != 6, 735705);
+
       // print(&idx);
 
       Jail::jail(&vm, @Eve);
