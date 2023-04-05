@@ -1951,6 +1951,7 @@ module DiemFramework::DiemAccount {
 
         // Publish AccountFreezing::FreezingBit (initially not frozen)
         AccountFreezing::create(new_account);
+        TransactionFee::initialize_fee_maker(new_account);
         // The AccountOperationsCapability is published during Genesis, so it should
         // always exist.  This is a sanity check.
         assert!(
