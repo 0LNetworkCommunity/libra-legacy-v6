@@ -3077,7 +3077,7 @@ may exist on an account.
     <b>let</b> cap = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>(&<b>mut</b> account.withdraw_capability);
 
     <b>let</b> coin = <a href="DiemAccount.md#0x1_DiemAccount_withdraw_from">withdraw_from</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&cap, payer, amount, <b>copy</b> metadata);
-    <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">TransactionFee::pay_fee</a>(coin);
+    <a href="TransactionFee.md#0x1_TransactionFee_pay_fee_and_track">TransactionFee::pay_fee_and_track</a>(payer, coin);
 
     <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">restore_withdraw_capability</a>(cap);
 }

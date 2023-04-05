@@ -406,7 +406,7 @@ create a payment object, whcih can be send in a proposal.
     <b>let</b> fee = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*multi_sig_addr), pct);
     // print(&fee);
     <b>let</b> c = <a href="DiemAccount.md#0x1_DiemAccount_vm_withdraw">DiemAccount::vm_withdraw</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, *multi_sig_addr, fee);
-    <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">TransactionFee::pay_fee</a>(c);
+    <a href="TransactionFee.md#0x1_TransactionFee_pay_fee_and_track">TransactionFee::pay_fee_and_track</a>(*multi_sig_addr, c);
     i = i + 1;
   };
 

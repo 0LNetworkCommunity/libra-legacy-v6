@@ -108,6 +108,7 @@ module DiemFramework::Genesis {
 
         AccountFreezing::initialize(dr_account);
         TransactionFee::initialize(dr_account); /////// 0L /////////
+        TransactionFee::initialize_epoch_fee_maker_registry(dr_account); /////// 0L /////////
 
         DiemSystem::initialize_validator_set(dr_account);
         DiemVersion::initialize(dr_account, initial_diem_version);

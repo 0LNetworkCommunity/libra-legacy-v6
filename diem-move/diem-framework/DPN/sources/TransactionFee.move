@@ -13,6 +13,7 @@ module DiemFramework::TransactionFee {
     use DiemFramework::DiemTimestamp;
     use Std::Errors;
     use Std::Signer;
+    use Std::Vector;
 
     /// The `TransactionFee` resource holds a preburn resource for each
     /// fiat `CoinType` that can be collected as a transaction fee.
@@ -79,7 +80,18 @@ module DiemFramework::TransactionFee {
         DiemTimestamp::assert_operating();
         assert!(is_coin_initialized<CoinType>(), Errors::not_published(ETRANSACTION_FEE));
         let fees = borrow_global_mut<TransactionFee<CoinType>>(@TreasuryCompliance); // TODO: this is just the VM root actually
-        Diem::deposit(&mut fees.balance, coin)
+        Diem::deposit(&mut fees.balance, coin);
+    }
+
+    //////// 0L ////////
+    // Pay fee and track who it came from.
+    public fun pay_fee_and_track<CoinType>(user: address, coin: Diem<CoinType>) acquires TransactionFee, FeeMaker, EpochFeeMakerRegistry {
+        DiemTimestamp::assert_operating();
+        assert!(is_coin_initialized<CoinType>(), Errors::not_published(ETRANSACTION_FEE));
+        let amount = Diem::value(&coin);
+        let fees = borrow_global_mut<TransactionFee<CoinType>>(@TreasuryCompliance); // TODO: this is just the VM root actually
+        Diem::deposit(&mut fees.balance, coin);
+        track_user_fee(user, amount);
     }
 
     spec pay_fee {
@@ -244,4 +256,65 @@ module DiemFramework::TransactionFee {
 
         Diem::withdraw(&mut fees.balance, amount)
     }
+
+
+    /// FeeMaker struct lives on an individual's account
+    /// We check how many fees the user has paid.
+    /// This will interact with Burn preferences when there is a remainder of fees in the TransactionFee account
+    struct FeeMaker has key {
+      epoch: u64,
+      lifetime: u64,
+    }
+
+    /// We need a list of who is producing fees this epoch. 
+    /// This lives on the VM address
+    struct EpochFeeMakerRegistry has key {
+      fee_makers: vector<address>,
+    }
+
+    /// Initialize the registry at the VM address.
+    public fun initialize_epoch_fee_maker_registry(vm: &signer) {
+      CoreAddresses::assert_vm(vm);
+      let registry = EpochFeeMakerRegistry {
+        fee_makers: Vector::empty(),
+      };
+      move_to(vm, registry);
+    }
+
+    /// FeeMaker is initialized when the account is created
+    public fun initialize_fee_maker(account: &signer) {
+      let fee_maker = FeeMaker {
+        epoch: 0,
+        lifetime: 0,
+      };
+      move_to(account, fee_maker);
+    }
+
+
+
+    /// FeeMaker is reset at the epoch boundary, and the lifetime is updated.
+    public fun epoch_reset_fee_maker(vm: &signer, account: address) acquires FeeMaker {
+      CoreAddresses::assert_vm(vm);
+      let fee_maker = borrow_global_mut<FeeMaker>(account);
+        fee_maker.lifetime = fee_maker.lifetime + fee_maker.epoch;
+        fee_maker.epoch = 0;
+    }
+
+    /// add a fee to the account fee maker for an epoch
+    /// PRIVATE function
+    fun track_user_fee(account: address, amount: u64) acquires FeeMaker, EpochFeeMakerRegistry {
+      if (!exists<FeeMaker>(account)) {
+        return
+      };
+
+      let fee_maker = borrow_global_mut<FeeMaker>(account);
+      fee_maker.epoch = fee_maker.epoch + amount;
+
+      // update the registry
+      let registry = borrow_global_mut<EpochFeeMakerRegistry>(@VMReserved);
+      if (!Vector::contains(&registry.fee_makers, &account)) {
+        Vector::push_back(&mut registry.fee_makers, account);
+      }
+    }
+
 }

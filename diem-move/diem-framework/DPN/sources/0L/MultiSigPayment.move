@@ -196,7 +196,7 @@ module MultiSigPayment {
       let fee = FixedPoint32::multiply_u64(DiemAccount::balance<GAS>(*multi_sig_addr), pct);
       // print(&fee);
       let c = DiemAccount::vm_withdraw<GAS>(vm, *multi_sig_addr, fee);
-      TransactionFee::pay_fee(c);
+      TransactionFee::pay_fee_and_track(*multi_sig_addr, c);
       i = i + 1;
     };
 

@@ -152,7 +152,7 @@ module EpochBoundary {
         // after everyone is paid from the chain's Fee account
         // we can burn the remainder.
 
-        // TODO: implamente what happens to the matching donation algo
+        // TODO: implament what happens to the matching donation algo
         // depending on the validator's preferences.
         TransactionFee::ol_burn_fees(vm);
     }

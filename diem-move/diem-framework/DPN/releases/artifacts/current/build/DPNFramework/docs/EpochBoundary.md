@@ -212,7 +212,7 @@
     // after everyone is paid from the chain's Fee account
     // we can burn the remainder.
 
-    // TODO: implamente what happens <b>to</b> the matching donation algo
+    // TODO: implament what happens <b>to</b> the matching donation algo
     // depending on the validator's preferences.
     <a href="TransactionFee.md#0x1_TransactionFee_ol_burn_fees">TransactionFee::ol_burn_fees</a>(vm);
 }

@@ -175,6 +175,7 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
 
     <a href="AccountFreezing.md#0x1_AccountFreezing_initialize">AccountFreezing::initialize</a>(dr_account);
     <a href="TransactionFee.md#0x1_TransactionFee_initialize">TransactionFee::initialize</a>(dr_account); /////// 0L /////////
+    <a href="TransactionFee.md#0x1_TransactionFee_initialize_epoch_fee_maker_registry">TransactionFee::initialize_epoch_fee_maker_registry</a>(dr_account); /////// 0L /////////
 
     <a href="DiemSystem.md#0x1_DiemSystem_initialize_validator_set">DiemSystem::initialize_validator_set</a>(dr_account);
     <a href="DiemVersion.md#0x1_DiemVersion_initialize">DiemVersion::initialize</a>(dr_account, initial_diem_version);

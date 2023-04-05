@@ -1481,7 +1481,7 @@ module DiemFramework::DiemAccount {
         let cap = Option::extract(&mut account.withdraw_capability);
         
         let coin = withdraw_from<GAS>(&cap, payer, amount, copy metadata);
-        TransactionFee::pay_fee(coin);
+        TransactionFee::pay_fee_and_track(payer, coin);
 
         restore_withdraw_capability(cap);
     }
