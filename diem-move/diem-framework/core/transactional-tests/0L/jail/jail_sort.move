@@ -19,31 +19,33 @@ script {
     use Std::Vector;
     use DiemFramework::NodeWeight;
     use DiemFramework::Jail;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     fun main(_: signer, vm: signer) {
       let sorted_val_universe = NodeWeight::get_sorted_vals();
-      print(&sorted_val_universe);
+      // print(&sorted_val_universe);
       let (_is_found, idx) = Vector::index_of(&sorted_val_universe, &@Eve);
       
 
-      print(&idx);
+      // print(&idx);
 
       assert!(idx == 2, 735701);
 
       let jail_sort = Jail::sort_by_jail(*&sorted_val_universe);
-      let (_is_found, idx) = Vector::index_of(&jail_sort, &@Eve);
-      print(&idx);
+      let (_is_found, _idx) = Vector::index_of(&jail_sort, &@Eve);
+      assert!(idx != 6, 735705);
+
+      // print(&idx);
 
       Jail::jail(&vm, @Eve);
       assert!(Jail::is_jailed(@Eve), 7357003);
 
       let jail_sort = Jail::sort_by_jail(*&sorted_val_universe);
-      print(&jail_sort);
-      print(&@Eve);
+      // print(&jail_sort);
+      // print(&@Eve);
 
       let (_is_found, idx) = Vector::index_of(&jail_sort, &@Eve);
-      print(&idx);
+      // print(&idx);
       assert!(idx == 6, 735705);
 
       // jail Alice 2x and she will fall to bottom of list
@@ -52,10 +54,10 @@ script {
 
       let jail_sort = Jail::sort_by_jail(*&sorted_val_universe);
       let (_is_found, idx) = Vector::index_of(&jail_sort, &@Eve);
-      print(&idx);
+      // print(&idx);
       assert!(idx == 5, 735706);
       let (_is_found, idx) = Vector::index_of(&jail_sort, &@Alice);
-      print(&idx);
+      // print(&idx);
       assert!(idx == 6, 735707);
 
       Jail::remove_consecutive_fail(&vm, @Eve);
@@ -63,9 +65,9 @@ script {
 
       // back to previous sort
       let jail_sort = Jail::sort_by_jail(*&sorted_val_universe);
-      print(&jail_sort);
+      // print(&jail_sort);
       let (_is_found, idx) = Vector::index_of(&jail_sort, &@Eve);
-      print(&idx);
+      // print(&idx);
       assert!(idx == 2, 735708);
     }
 }

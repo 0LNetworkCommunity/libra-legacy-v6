@@ -16,7 +16,6 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
@@ -67,7 +66,7 @@
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="Ancestry.md#0x1_Ancestry_init">init</a>(new_account_sig: &signer, onboarder_sig: &signer ) <b>acquires</b> <a href="Ancestry.md#0x1_Ancestry">Ancestry</a>{
-    print(&100100);
+    // print(&100100);
     <b>let</b> parent = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(onboarder_sig);
     <a href="Ancestry.md#0x1_Ancestry_set_tree">set_tree</a>(new_account_sig, parent);
 }
@@ -94,7 +93,7 @@
 
 <pre><code><b>fun</b> <a href="Ancestry.md#0x1_Ancestry_set_tree">set_tree</a>(new_account_sig: &signer, parent: <b>address</b> ) <b>acquires</b> <a href="Ancestry.md#0x1_Ancestry">Ancestry</a> {
   <b>let</b> child = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(new_account_sig);
-    print(&100200);
+    // print(&100200);
   <b>let</b> new_tree = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
 
   // get the parent's ancestry <b>if</b> initialized.
@@ -103,31 +102,31 @@
   <b>if</b> (<b>exists</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(parent)) {
     <b>let</b> parent_state = <b>borrow_global_mut</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(parent);
     <b>let</b> parent_tree = *&parent_state.tree;
-    print(&100210);
+    // print(&100210);
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&parent_tree) &gt; 0) {
       <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_append">Vector::append</a>(&<b>mut</b> new_tree, parent_tree);
     };
-    print(&100220);
+    // print(&100220);
   };
 
   // add the parent <b>to</b> the tree
   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> new_tree, parent);
-    print(&100230);
+    // print(&100230);
 
   <b>if</b> (!<b>exists</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(child)) {
     <b>move_to</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(new_account_sig, <a href="Ancestry.md#0x1_Ancestry">Ancestry</a> {
       tree: new_tree,
     });
-    print(&100240);
+    // print(&100240);
 
   } <b>else</b> {
     // this is only for migration cases.
     <b>let</b> child_ancestry = <b>borrow_global_mut</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(child);
     child_ancestry.tree = new_tree;
-    print(&100250);
+    // print(&100250);
 
   };
-  print(&100260);
+  // print(&100260);
 
 }
 </code></pre>
@@ -183,40 +182,40 @@
 <pre><code><b>public</b> <b>fun</b> <a href="Ancestry.md#0x1_Ancestry_is_family">is_family</a>(left: <b>address</b>, right: <b>address</b>): (bool, <b>address</b>) <b>acquires</b> <a href="Ancestry.md#0x1_Ancestry">Ancestry</a> {
   <b>let</b> is_family = <b>false</b>;
   <b>let</b> common_ancestor = @0x0;
-  print(&100300);
-  print(&<b>exists</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(left));
-  print(&<b>exists</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(right));
+  // // print(&100300);
+  // // print(&<b>exists</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(left));
+  // // print(&<b>exists</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(right));
 
   // <b>if</b> (<b>exists</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(left) && <b>exists</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(right)) {
     // <b>if</b> tree is empty it will still work.
-    print(&100310);
+    // // print(&100310);
     <b>let</b> left_tree = <a href="Ancestry.md#0x1_Ancestry_get_tree">get_tree</a>(left);
-    print(&100311);
+    // // print(&100311);
     <b>let</b> right_tree = <a href="Ancestry.md#0x1_Ancestry_get_tree">get_tree</a>(right);
 
-    print(&100320);
+    // // print(&100320);
 
     // check for direct relationship.
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&left_tree, &right)) <b>return</b> (<b>true</b>, right);
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&right_tree, &left)) <b>return</b> (<b>true</b>, left);
 
-    print(&100330);
+    // // print(&100330);
     <b>let</b> i = 0;
     // check every <b>address</b> on the list <b>if</b> there are overlaps.
     <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&left_tree)) {
-      print(&100341);
+      // // print(&100341);
       <b>let</b> family_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&left_tree, i);
       <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&right_tree, family_addr)) {
         is_family = <b>true</b>;
         common_ancestor = *family_addr;
-        print(&100342);
+        // // print(&100342);
         <b>break</b>
       };
       i = i + 1;
     };
-    print(&100350);
+    // // print(&100350);
   // };
-  print(&100360);
+  // // print(&100360);
   (is_family, common_ancestor)
 }
 </code></pre>
@@ -322,13 +321,13 @@
     <b>move_to</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(child_sig, <a href="Ancestry.md#0x1_Ancestry">Ancestry</a> {
       tree: migrate_tree,
     });
-    print(&100240);
+    // print(&100240);
 
   } <b>else</b> {
     // this is only for migration cases.
     <b>let</b> child_ancestry = <b>borrow_global_mut</b>&lt;<a href="Ancestry.md#0x1_Ancestry">Ancestry</a>&gt;(child);
     child_ancestry.tree = migrate_tree;
-    print(&100250);
+    // print(&100250);
 
   };
 }

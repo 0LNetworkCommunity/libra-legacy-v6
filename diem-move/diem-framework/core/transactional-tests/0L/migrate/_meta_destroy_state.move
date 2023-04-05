@@ -6,13 +6,13 @@
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::TowerState;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
     fun main(vm: signer, _: signer) {
         // destroy the struct
         TowerState::test_danger_destroy_tower_counter(&vm);
         
         // should not find anything
-        print(&TowerState::test_get_liftime_proofs());
+        assert!(TowerState::test_get_liftime_proofs() > 0, 7357001);
     }
 }
 // check: EXECUTION_FAILURE

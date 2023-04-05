@@ -22,7 +22,7 @@ script {
     use DiemFramework::VoteReceipt;
 
     use Std::GUID;
-    // use DiemFramework::Debug::print;
+    // // use DiemFramework::Debug::print;
 
     fun main(_root: signer, b_sig: signer) { 
       let next_id = GUID::get_next_creation_num(@Alice);
@@ -30,7 +30,7 @@ script {
       let uid = GUID::create_id(@Alice, next_id - 1); // TODO: unclear why it's 2 and not 0
       TurnoutTallyDemo::vote(&b_sig, @Alice, &uid, 22, true);
       // let id = TurnoutTallyDemo::get_id(@Alice);
-      // print(&id);
+      // // print(&id);
       let (r, w) = VoteReceipt::get_receipt_data(@Bob, &uid);
       assert!(r == true, 0); // voted in favor
       assert!(w == 22, 1);

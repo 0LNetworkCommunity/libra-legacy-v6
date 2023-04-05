@@ -11,6 +11,8 @@ module DiemFramework::DiemAccount {
     friend DiemFramework::MakeWhole;
     friend DiemFramework::MigrateJail;
     friend DiemFramework::Genesis;
+    friend DiemFramework::TestFixtures; // Todo: remove
+    friend DiemFramework::Mock;
 
     use DiemFramework::AccountFreezing;
     use DiemFramework::CoreAddresses;
@@ -52,7 +54,7 @@ module DiemFramework::DiemAccount {
     // use DiemFramework::DonorDirected;
     use DiemFramework::Ancestry;
     use DiemFramework::Vouch;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
     use DiemFramework::Jail;
     use DiemFramework::Testnet;
 
@@ -162,6 +164,7 @@ module DiemFramework::DiemAccount {
         /// Role of the created account
         role_id: u64
     }
+
 
     const MAX_U64: u128 = 18446744073709551615;
 
@@ -298,7 +301,7 @@ module DiemFramework::DiemAccount {
     public fun process_escrow<Token: store>(
         account: &signer
     ) acquires EscrowList, AutopayEscrow, Balance, AccountOperationsCapability {
-// print(&01000);
+// // print(&01000);
         Roles::assert_diem_root(account);
 
         let account_list = &borrow_global<EscrowList<Token>>(
@@ -306,9 +309,9 @@ module DiemFramework::DiemAccount {
         ).accounts;
         let account_len = Vector::length<EscrowSettings>(account_list);
         let account_idx = 0;
-// print(&010100);
+// // print(&010100);
         while (account_idx < account_len) {
-// print(&010110);
+// // print(&010110);
             let EscrowSettings {account: account_addr, share: percentage} 
                 = Vector::borrow<EscrowSettings>(account_list, account_idx);
 
@@ -325,21 +328,21 @@ module DiemFramework::DiemAccount {
                 limit_room , 
                 FixedPoint32::create_from_rational(*percentage, 100)
             );
-// print(&010120);
+// // print(&010120);
             let amount_sent: u64 = 0;
 
             let payment_list = &mut borrow_global_mut<AutopayEscrow<Token>>(*account_addr).list;
             let num_payments = FIFO::len<Escrow<Token>>(payment_list);
-// print(&010130);
+// // print(&010130);
             // Pay out escrow until limit is reached
             while (limit_room > 0 && num_payments > 0) {
-// print(&010131);
+// // print(&010131);
                 let Escrow<Token> {to_account, escrow} = FIFO::pop<Escrow<Token>>(payment_list);
                 let recipient_coins = borrow_global_mut<Balance<Token>>(to_account);
                 let payment_size = Diem::value<Token>(&escrow);
-// print(&010132);
+// // print(&010132);
                 if (payment_size > limit_room) {
-// print(&010133);
+// // print(&010133);
                     let (coin1, coin2) = Diem::split<Token>(escrow, limit_room);
                     Diem::deposit<Token>(&mut recipient_coins.coin, coin2);
                     let new_escrow = Escrow {
@@ -349,20 +352,20 @@ module DiemFramework::DiemAccount {
                     FIFO::push_LIFO<Escrow<Token>>(payment_list, new_escrow);
                     amount_sent = amount_sent + limit_room;
                     limit_room = 0;
-// print(&010134);
+// // print(&010134);
                 } else {
-// print(&01015);
+// // print(&01015);
                     // This entire escrow is being paid out
                     Diem::deposit<Token>(&mut recipient_coins.coin, escrow);
                     limit_room = limit_room - payment_size;
                     amount_sent = amount_sent + payment_size;
                     num_payments = num_payments - 1;
-// print(&010136);
+// // print(&010136);
                 }
             };
             //update account limits
             if (amount_sent > 0) { 
-// print(&010140);
+// // print(&010140);
                 _ = AccountLimits::update_withdrawal_limits<Token>(
                     amount_sent,
                     *account_addr,
@@ -370,10 +373,10 @@ module DiemFramework::DiemAccount {
                         @DiemRoot
                     ).limits_cap
                 );
-// print(&010141);
+// // print(&010141);
             };
 
-// print(&010150);
+// // print(&010150);
             account_idx = account_idx + 1;
         }
     }
@@ -689,6 +692,8 @@ module DiemFramework::DiemAccount {
         Ancestry::init(sender, &new_signer);
         Vouch::init(&new_signer);
         Vouch::vouch_for(sender, new_account_address);
+        // ProofOfFee::init(&new_signer); // proof of fee causes circular depency if called on account creation.
+        // creation script should call proof of fee after.
         set_slow(&new_signer);
 
         new_account_address
@@ -915,7 +920,7 @@ module DiemFramework::DiemAccount {
         );
         //////// 0L ////////
         // if the account wants to be tracked add tracking
-        maybe_update_deposit(payee, deposit_value);        
+        maybe_update_deposit(payer, payee, deposit_value);        
     }
     spec deposit {
         pragma opaque;
@@ -1435,9 +1440,94 @@ module DiemFramework::DiemAccount {
             false // 0L todo diem-1.4.1 - new patch, needs review        
         );
         
+        Receipts::write_receipt_vm(vm, payer, payee, amount);
 
         restore_withdraw_capability(cap);
     }
+
+    /// VM authorized to withdraw a coin if it is to pay a network fee
+    /// e.g. transaction fees, validator PoF auction, etc. 
+    /// the amount can be above the transaction limit that
+    /// may exist on an account.
+    public fun vm_pay_user_fee(
+        vm: &signer,
+        payer : address,
+        amount: u64,
+        metadata: vector<u8>,        
+    ) acquires DiemAccount, Balance, AccountOperationsCapability { //////// 0L ////////
+        if (Signer::address_of(vm) != @DiemRoot) return;
+        // don't try to send a 0 balance, will halt.
+        if (amount < 1) return;
+        // Check there is a payer
+        if (!exists_at(payer)) return; 
+        // Check payer's balance is initialized (sanity).
+        if (!exists<Balance<GAS>>(payer)) return; 
+
+        // Check the payer is in possession of withdraw token.
+        if (delegated_withdraw_capability(payer)) return; 
+
+        // VM should not force an account below 1GAS, since the account may not recover.
+        if (balance<GAS>(payer) < BOOTSTRAP_COIN_VALUE) return;
+
+        // prevent halting on low balance.
+        // charge the remaining balance if the amount is greater than balance.
+        // User does not accumulate a debt.
+        if (balance<GAS>(payer) < amount) { 
+          amount = balance<GAS>(payer);
+        };
+
+        // VM can extract the withdraw token.
+        let account = borrow_global_mut<DiemAccount>(payer);
+        let cap = Option::extract(&mut account.withdraw_capability);
+        
+        let coin = withdraw_from<GAS>(&cap, payer, amount, copy metadata);
+        TransactionFee::pay_fee_and_track(payer, coin);
+
+        restore_withdraw_capability(cap);
+    }
+
+    // respects slow wallet limits
+    public fun vm_pay_from<Token: store>(
+        payer: address,
+        payee: address,
+        amount: u64,
+        metadata: vector<u8>,
+        metadata_signature: vector<u8>,
+        vm: &signer,
+    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWallet {
+        /////// 0L /////////
+        if (Signer::address_of(vm) != @DiemRoot) return;
+
+        // check amount if it is a slow wallet
+        if (is_slow(payer)) {
+          if (amount > unlocked_amount(payer)) return;
+        };
+
+        // checks first that the slow limits are respected.
+        vm_make_payment_no_limit<Token>(
+            payer,
+            payee,
+            amount,
+            metadata,
+            metadata_signature,
+            vm
+        );
+        /////// 0L /////////
+        // in case of slow wallet update the tracker
+        if (is_slow(payer))
+          {decrease_unlocked_tracker(payer, amount);};
+
+        // if a payee is a slow wallet and is receiving funds from ordinary
+        // or another slow wallet's unlocked funds, it counts toward unlocked coins.
+        // the exceptional case is community wallets, which funds don't count toward unlocks. However, the community wallet payment uses a different function: vm_make_payment_no_limit
+        if (is_slow(*&payee)){
+          increase_unlocked_tracker(*&payee, amount);
+        };
+
+
+        maybe_update_deposit(payer, payee, amount);        
+    }
+
     
     //////// 0L ////////
     /// VM can burn from an account's balance for administrative purposes (e.g. at epoch boundaries)
@@ -1456,9 +1546,9 @@ module DiemFramework::DiemAccount {
         
         // TODO: review this in 5.1
         // VM should not force an account below 1GAS, since the account may not recover.
-        print(&7777777900002);
+        // print(&7777777900002);
         if (balance<GAS>(addr) < BOOTSTRAP_COIN_VALUE) return;
-        print(&7777777900003);
+        // print(&7777777900003);
 
         // prevent halting on low balance.
         // burn the remaining balance if the amount is greater than balance
@@ -1467,7 +1557,7 @@ module DiemFramework::DiemAccount {
           amount = balance<GAS>(addr);
         };
 
-        print(&amount);
+        // print(&amount);
         // Check the payer is in possession of withdraw token.
         if (delegated_withdraw_capability(addr)) return; 
 
@@ -1475,7 +1565,7 @@ module DiemFramework::DiemAccount {
         let account = borrow_global_mut<DiemAccount>(addr);
         let cap = Option::extract(&mut account.withdraw_capability);
         let coin = withdraw_from<Token>(&cap, addr, amount, copy metadata);
-        print(&coin);
+        // print(&coin);
         Diem::vm_burn_this_coin<Token>(vm, coin);
         restore_withdraw_capability(cap);
     }
@@ -1520,9 +1610,14 @@ module DiemFramework::DiemAccount {
         // if a payee is a slow wallet and is receiving funds from ordinary
         // or another slow wallet's unlocked funds, it counts toward unlocked coins.
         // the exceptional case is community wallets, which funds don't count toward unlocks. However, the community wallet payment uses a different function: vm_make_payment_no_limit
-        if (is_slow(*&payee))
-          {increase_unlocked_tracker(*&payee, amount);}
+        if (is_slow(*&payee)){
+          increase_unlocked_tracker(*&payee, amount);
+        };
+
+
+        maybe_update_deposit(*&cap.account_address, payee, amount);        
     }
+
 
     /// Withdraw `amount` Diem<Token> from the address embedded in `WithdrawCapability` and
     /// deposits it into the `payee`'s account balance.
@@ -2191,16 +2286,16 @@ module DiemFramework::DiemAccount {
         Testnet::is_testnet();
         CoreAddresses::assert_diem_root(creator_account);
         let new_account = create_signer(new_account_address);
-        print(&400001);
+        // print(&400001);
         // Roles::new_parent_vasp_role(creator_account, &new_account);
         // VASP::publish_parent_vasp_credential(&new_account, creator_account);
         // DualAttestation::publish_credential(&new_account, creator_account, human_name);
         // VASPDomain::publish_vasp_domains(&new_account);
         Roles::new_user_role_with_proof(&new_account);
         make_account(&new_account, auth_key_prefix);
-        print(&400002);
+        // print(&400002);
         add_currencies_for_account<Token>(&new_account, add_all_currencies);
-        print(&400003);
+        // print(&400003);
 
         // testnet_root_fund_account
         // spec {
@@ -2230,16 +2325,16 @@ module DiemFramework::DiemAccount {
         Testnet::is_testnet();
         CoreAddresses::assert_diem_root(creator_account);
         let new_account = create_signer(new_account_address);
-        print(&400001);
+        // print(&400001);
         // Roles::new_parent_vasp_role(creator_account, &new_account);
         // VASP::publish_parent_vasp_credential(&new_account, creator_account);
         // DualAttestation::publish_credential(&new_account, creator_account, human_name);
         // VASPDomain::publish_vasp_domains(&new_account);
         Roles::new_user_role_with_proof(&new_account);
         make_account(&new_account, auth_key_prefix);
-        print(&400002);
+        // print(&400002);
         add_currencies_for_account<Token>(&new_account, add_all_currencies);
-        print(&400003);
+        // print(&400003);
 
         // testnet_root_fund_account
         // spec {
@@ -2989,7 +3084,8 @@ module DiemFramework::DiemAccount {
             );
 
             // NB: `withdraw_from_balance` is not used as limits do not apply to this transaction fee
-            TransactionFee::pay_fee(Diem::withdraw(coin, transaction_fee_amount))
+            //////// 0L ////////
+            TransactionFee::pay_fee_and_track(sender, Diem::withdraw(coin, transaction_fee_amount))
         }
     }
     spec epilogue_common {
@@ -3106,16 +3202,16 @@ module DiemFramework::DiemAccount {
         Roles::new_validator_role(dr_account, &new_account);
         ValidatorConfig::publish(&new_account, dr_account, human_name);
         make_account(&new_account, auth_key_prefix);
-        /////// 0L /////////
-        add_currencies_for_account<GAS>(&new_account, false);
 
+        add_currencies_for_account<GAS>(&new_account, false);
         let new_account = create_signer(new_account_address);
         set_slow(&new_account);
 
-        /////// 0L /////////
+        // NOTE: issues with testnet
         Jail::init(&new_account);
-        // ValidatorUniverse::add_self(&new_account);
-        // Vouch::init(&new_account);
+        // TODO: why does this fail?
+        // assert!(ValidatorConfig::is_valid(new_account_address), 07171717171);
+
     }
     spec create_validator_account {
         pragma disable_invariants_in_body;
@@ -3462,12 +3558,14 @@ module DiemFramework::DiemAccount {
     // with the attached `metadata`
     public fun vm_deposit_with_metadata<Token: store>(
         vm: &signer,
+        payer: address,
         payee: address,
         to_deposit: Diem<Token>,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
     ) acquires DiemAccount, Balance, CumulativeDeposits { //////// 0L ////////
         CoreAddresses::assert_diem_root(vm);
+        let amount = Diem::value(&to_deposit);
         deposit(
             @DiemRoot,
             payee,
@@ -3476,6 +3574,9 @@ module DiemFramework::DiemAccount {
             metadata_signature,
             false // 0L todo diem-1.4.1 - new patch, needs review
         );
+
+        // track if the payee is tracking receipts for governance.
+        Receipts::write_receipt_vm(vm, payer, payee, amount);
     }
 
     // for billing. TODO: merge with other implementation on separate branch.
@@ -3509,6 +3610,22 @@ module DiemFramework::DiemAccount {
     }
 
     //////// 0L ////////
+    // Blockchain Fee helpers
+    // used for example in making all upcoming validators pay PoF fee in advance.
+    public fun vm_multi_pay_fee(vm: &signer, vals: &vector<address>, fee: u64, metadata: &vector<u8>) acquires DiemAccount, AccountOperationsCapability, Balance {
+      if (Signer::address_of(vm) != @VMReserved) {
+        return
+      };
+
+      let i = 0u64;
+      while (i < Vector::length(vals)) {
+        let val = Vector::borrow(vals, i);
+        vm_pay_user_fee(vm, *val, fee, *metadata);
+        i = i + 1;
+      };
+    }
+
+    //////// 0L ////////
     // init struct for storing cumulative deposits, for community wallets
     public fun init_cumulative_deposits(sender: &signer, starting_balance: u64) {
       let addr = Signer::address_of(sender);
@@ -3521,7 +3638,7 @@ module DiemFramework::DiemAccount {
       };
     }
 
-    fun maybe_update_deposit(payee: address, deposit_value: u64) acquires CumulativeDeposits {
+    fun maybe_update_deposit(payer: address, payee: address, deposit_value: u64) acquires CumulativeDeposits {
         // update cumulative deposits if the account has the struct.
         if (exists<CumulativeDeposits>(payee)) {
           let epoch = DiemConfig::get_current_epoch();
@@ -3529,7 +3646,13 @@ module DiemFramework::DiemAccount {
           let cumu = borrow_global_mut<CumulativeDeposits>(payee);
           cumu.value = cumu.value + deposit_value;
           cumu.index = cumu.index + index;
+
+          // also write the receipt to the payee's account.
+          Receipts::write_receipt(payer, payee, deposit_value);
+
         };
+
+
     }
 
     /// adjust the points of the deposits favoring more recent deposits.
@@ -3556,7 +3679,7 @@ module DiemFramework::DiemAccount {
       borrow_global<CumulativeDeposits>(addr).index
     }
 
-    public fun is_init(addr: address): bool {
+    public fun is_init_cumu_tracking(addr: address): bool {
       exists<CumulativeDeposits>(addr)
     }
 

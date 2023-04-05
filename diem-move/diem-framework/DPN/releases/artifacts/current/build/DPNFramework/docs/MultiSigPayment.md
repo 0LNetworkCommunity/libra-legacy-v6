@@ -20,7 +20,6 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
@@ -206,16 +205,16 @@ create a payment object, whcih can be send in a proposal.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_propose_payment">propose_payment</a>(sig: &signer, multisig_addr: <b>address</b>, recipient: <b>address</b>, amount: u64, note: vector&lt;u8&gt;, duration_epochs: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;u64&gt;) {
-  print(&10);
+  // print(&10);
   <b>let</b> pay = <a href="MultiSigPayment.md#0x1_MultiSigPayment_new_payment">new_payment</a>(recipient, amount, *&note);
-  print(&11);
+  // print(&11);
   <b>let</b> prop = <a href="MultiSig.md#0x1_MultiSig_proposal_constructor">MultiSig::proposal_constructor</a>(pay, duration_epochs);
-  print(&12);
+  // print(&12);
   <b>let</b> guid = <a href="MultiSig.md#0x1_MultiSig_propose_new">MultiSig::propose_new</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sig, multisig_addr, prop);
-  print(&guid);
-  print(&13);
+  // print(&guid);
+  // print(&13);
   <a href="MultiSigPayment.md#0x1_MultiSigPayment_vote_payment">vote_payment</a>(sig, multisig_addr, &guid);
-  print(&14);
+  // print(&14);
 }
 </code></pre>
 
@@ -239,26 +238,26 @@ create a payment object, whcih can be send in a proposal.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_vote_payment">vote_payment</a>(sig: &signer, multisig_address: <b>address</b>, id: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>) {
-  print(&50);
+  // print(&50);
   <b>let</b> (passed, cap_opt) = <a href="MultiSig.md#0x1_MultiSig_vote_with_id">MultiSig::vote_with_id</a>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>&gt;(sig, id, multisig_address);
-  print(&passed);
-  // print(&data);
-  print(&cap_opt);
+  // print(&passed);
+  // // print(&data);
+  // print(&cap_opt);
 
-  print(&51);
+  // print(&51);
 
   <b>if</b> (passed && <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&cap_opt)) {
     <b>let</b> cap = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>(&cap_opt);
-    print(&5010);
+    // print(&5010);
     <b>let</b> data = <a href="MultiSig.md#0x1_MultiSig_extract_proposal_data">MultiSig::extract_proposal_data</a>(multisig_address, id);
     <a href="MultiSigPayment.md#0x1_MultiSigPayment_release_payment">release_payment</a>(&data, cap);
-    print(&5011);
+    // print(&5011);
 
   };
 
 
   <a href="MultiSig.md#0x1_MultiSig_maybe_restore_withdraw_cap">MultiSig::maybe_restore_withdraw_cap</a>(sig, multisig_address, cap_opt); // don't need this and can't drop.
-  print(&52);
+  // print(&52);
 
 }
 </code></pre>
@@ -307,7 +306,7 @@ create a payment object, whcih can be send in a proposal.
 
 
 <pre><code><b>fun</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment_release_payment">release_payment</a>(p: &<a href="MultiSigPayment.md#0x1_MultiSigPayment_PaymentType">PaymentType</a>, cap: &WithdrawCapability) {
-  print(&90001);
+  // print(&90001);
   <a href="DiemAccount.md#0x1_DiemAccount_pay_from">DiemAccount::pay_from</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
     cap,
     p.destination,
@@ -399,15 +398,15 @@ create a payment object, whcih can be send in a proposal.
   <b>let</b> reg = <b>borrow_global</b>&lt;<a href="MultiSigPayment.md#0x1_MultiSigPayment_RootMultiSigRegistry">RootMultiSigRegistry</a>&gt;(@VMReserved);
   <b>let</b> i = 0;
   <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&reg.list)) {
-    print(&7777777790001);
+    // print(&7777777790001);
     <b>let</b> multi_sig_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&reg.list, i);
 
     <b>let</b> pct = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(reg.fee, <a href="MultiSigPayment.md#0x1_MultiSigPayment_PERCENT_SCALE">PERCENT_SCALE</a>);
-    print(&pct);
+    // print(&pct);
     <b>let</b> fee = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*multi_sig_addr), pct);
-    print(&fee);
+    // print(&fee);
     <b>let</b> c = <a href="DiemAccount.md#0x1_DiemAccount_vm_withdraw">DiemAccount::vm_withdraw</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, *multi_sig_addr, fee);
-    <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">TransactionFee::pay_fee</a>(c);
+    <a href="TransactionFee.md#0x1_TransactionFee_pay_fee_and_track">TransactionFee::pay_fee_and_track</a>(*multi_sig_addr, c);
     i = i + 1;
   };
 

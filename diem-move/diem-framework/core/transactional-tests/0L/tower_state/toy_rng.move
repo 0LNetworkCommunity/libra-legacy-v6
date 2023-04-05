@@ -7,7 +7,7 @@
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::TowerState;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     fun main() {
         let a = TowerState::toy_rng(1, 1);
@@ -18,8 +18,8 @@ script {
         assert!(a==116, 735702);
 
         // get the 0th miner's last proof hash
-        let a = TowerState::toy_rng(0, 1);
-        print(&a);
+        let _a = TowerState::toy_rng(0, 1);
+        // print(&a);
     }
 }
 

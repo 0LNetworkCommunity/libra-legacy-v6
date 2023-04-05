@@ -1,8 +1,8 @@
 //# init --validators Alice Bob Carol Dave
 
-// This test is to check if validators are present after the first epoch.
-// Here EPOCH-LENGTH = 15 Blocks.
-// NOTE: This test will fail in test-net and Production, only for Debug - due to epoch length.
+// Scenario: failover
+// This test checks that we get at least 4 validators.
+// If less qualified, give us the previous set.
 
 //# block --proposer Alice --time 1 --round 0
 
@@ -37,7 +37,7 @@ script {
 
     fun main(vm: signer, _dr: signer) {
         let voters = Vector::empty<address>();
-        Vector::push_back<address>(&mut voters, @Alice);
+        // Vector::push_back<address>(&mut voters, @Alice);
         Vector::push_back<address>(&mut voters, @Bob);
         Vector::push_back<address>(&mut voters, @Carol);
         Vector::push_back<address>(&mut voters, @Dave);

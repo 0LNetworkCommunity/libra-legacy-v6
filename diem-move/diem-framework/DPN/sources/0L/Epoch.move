@@ -66,15 +66,15 @@ module Epoch {
   }
 
   /// Accessor Function, returns the time (in seconds) of the start of the current epoch
-  public fun get_timer_seconds_start(vm: &signer):u64 acquires Timer {
-      Roles::assert_diem_root(vm);
+  public fun get_timer_seconds_start():u64 acquires Timer {
+      // Roles::assert_diem_root(vm);
       let time = borrow_global<Timer>(@DiemRoot);
       time.seconds_start
   }
 
   /// Accessor Function, returns the block height of the start of the current epoch
-  public fun get_timer_height_start(vm: &signer):u64 acquires Timer {
-      Roles::assert_diem_root(vm);
+  public fun get_timer_height_start():u64 acquires Timer {
+      // Roles::assert_diem_root(vm);
       let time = borrow_global<Timer>(@DiemRoot);
       time.height_start
   }

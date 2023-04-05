@@ -25,7 +25,7 @@ script {
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
-  // use DiemFramework::Debug::print;
+  // // use DiemFramework::Debug::print;
   fun main() {
     // need to remove testnet for this test, since testnet does not ratelimit account creation.
     

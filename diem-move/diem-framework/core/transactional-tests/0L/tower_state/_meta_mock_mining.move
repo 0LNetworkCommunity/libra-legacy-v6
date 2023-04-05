@@ -7,31 +7,31 @@
 //# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::TowerState;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     fun main(_dr: signer, sender: signer) {
         // TowerState::init_miner_state(sender);
         TowerState::test_helper_mock_mining(&sender, 5);
         // assert!(TowerState::get_count_in_epoch(@Alice) == 5, 73570001);
         // assert!(TowerState::get_epochs_compliant(@Alice) == 1, 73570002);
-        print(&TowerState::get_epochs_compliant(@Alice) );
+        // print(&TowerState::get_epochs_compliant(@Alice) );
 
         // alice, a validator, has one fullnode proof from genesis
         // NOTE: this causes an off-by-one issue in counting fullnode proofs
         // for genesis cases ONLY. So we don't handle it.
-        print(&TowerState::get_fullnode_proofs_in_epoch());
+        // print(&TowerState::get_fullnode_proofs_in_epoch());
         assert!(TowerState::get_fullnode_proofs_in_epoch() == 1, 735701);
 
         // No fullnodes submitted proofs above threshold
-        print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
+        // print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
         assert!(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 0, 735702);
 
         // Total count of proofs is forced with the mock_mining
 
-        print(&TowerState::get_count_in_epoch(@Alice));
+        // print(&TowerState::get_count_in_epoch(@Alice));
         assert!(TowerState::get_count_in_epoch(@Alice) == 5, 735703);
 
-        print(&TowerState::get_count_above_thresh_in_epoch(@Alice));
+        // print(&TowerState::get_count_above_thresh_in_epoch(@Alice));
         assert!(TowerState::get_count_above_thresh_in_epoch(@Alice) == 3, 735704);
     }
 }
@@ -56,7 +56,7 @@ script {
 //# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::TowerState;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
     use DiemFramework::TestFixtures;
 
     fun main(_dr: signer, sender: signer) {
@@ -72,38 +72,38 @@ script {
         // alice, a validator, has one fullnode proof from genesis
         // NOTE: this causes an off-by-one issue in counting fullnode 
         // proofs for genesis cases ONLY so we don't handle it.
-        print(&TowerState::get_fullnode_proofs_in_epoch());
+        // print(&TowerState::get_fullnode_proofs_in_epoch());
         assert!(TowerState::get_fullnode_proofs_in_epoch() == 1, 735701);
 
         // No fullnodes submitted proofs above threshold
-        print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
+        // print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
         assert!(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 0, 735702);
 
         // Total count of proofs will be 1 from genesis + 5 mocked
 
-        print(&TowerState::get_count_in_epoch(@Bob));
+        // print(&TowerState::get_count_in_epoch(@Bob));
         assert!(TowerState::get_count_in_epoch(@Bob) == 1, 735703);
 
-        print(&TowerState::get_count_above_thresh_in_epoch(@Bob));
+        // print(&TowerState::get_count_above_thresh_in_epoch(@Bob));
         assert!(TowerState::get_count_above_thresh_in_epoch(@Bob) == 0, 735703);
 
         // Total count of proofs is forced with the mock_mining
         TowerState::test_helper_mock_mining(&sender, 5);
         assert!(TowerState::get_count_in_epoch(@Bob) == 5, 73570001);
 
-        print(&TowerState::get_fullnode_proofs_in_epoch());
+        // print(&TowerState::get_fullnode_proofs_in_epoch());
         assert!(TowerState::get_fullnode_proofs_in_epoch() == 6, 735701);
 
         // No fullnodes submitted proofs above threshold (in testnet 2 proofs 
         // are necessary before the third is counted as above thresh)
-        print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
+        // print(&TowerState::get_fullnode_proofs_in_epoch_above_thresh());
         assert!(TowerState::get_fullnode_proofs_in_epoch_above_thresh() == 4, 735702);
 
         // Total count of proofs is forced with the mock_mining
-        print(&TowerState::get_count_in_epoch(@Bob));
+        // print(&TowerState::get_count_in_epoch(@Bob));
         assert!(TowerState::get_count_in_epoch(@Bob) == 5, 735703);
 
-        print(&TowerState::get_count_above_thresh_in_epoch(@Bob));
+        // print(&TowerState::get_count_above_thresh_in_epoch(@Bob));
         assert!(TowerState::get_count_above_thresh_in_epoch(@Bob) == 3, 735703);
     }
 }

@@ -37,7 +37,7 @@ script {
   use DiemFramework::MultiSigPayment;
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
   fun main(_dr: signer, b_sig: signer) {
 
@@ -47,7 +47,7 @@ script {
     
     // no change since proposal is pending
     let bal = DiemAccount::balance<GAS>(@DaveMultiSig);
-    print(&bal);
+    // print(&bal);
     assert!(bal == 1000000, 7357002);
 
   }

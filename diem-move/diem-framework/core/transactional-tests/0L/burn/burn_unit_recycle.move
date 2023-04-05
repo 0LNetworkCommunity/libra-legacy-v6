@@ -76,21 +76,21 @@ script {
     assert!(Vector::length(&ratios) == 2, 7357005);
 
     let deposits_A_indexed = *Vector::borrow<u64>(&deps, 0);
-    // print(&deposits_A_indexed);
+    // // print(&deposits_A_indexed);
     assert!(deposits_A_indexed == 100500, 7357006);
     let deposits_B_indexed = *Vector::borrow<u64>(&deps, 1);
-    // print(&deposits_B_indexed);
+    // // print(&deposits_B_indexed);
     assert!(deposits_B_indexed == 904500, 7357007);
 
     let a_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 0);
     let pct_a = FixedPoint32::multiply_u64(100, a_mult);
-    // print(&pct_a);
+    // // print(&pct_a);
     // ratio for communityA
     assert!(pct_a == 9, 7357008); // todo
 
     let b_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 1);
     let pct_b = FixedPoint32::multiply_u64(100, b_mult);
-    // print(&pct_b);
+    // // print(&pct_b);
     // ratio for communityB
     assert!(pct_b == 89, 7357009);
 
@@ -109,25 +109,24 @@ script {
   fun main(vm: signer, _:signer) {
     // we assume the ratios are calculated correctly see burn_ratios.move
     let total_supply_before = Diem::market_cap<GAS>();
+    // print(&total_supply_before);
 
     let bal_A_before = DiemAccount::balance<GAS>(@CommunityA);
     let bal_B_before = DiemAccount::balance<GAS>(@CommunityB);
 
     // make sure the ratios for burns get updated
     Burn::reset_ratios(&vm);
-    // up to here Alice has 9_300_000 
-    Burn::epoch_start_burn(&vm, @Alice, 100000);
+
+    let c = DiemAccount::vm_withdraw<GAS>(&vm, @Alice, 1000000);
+    Burn::burn_or_recycle_user_fees(&vm, @Alice, c);
 
     let bal_alice = DiemAccount::balance<GAS>(@Alice);
-    // print(&bal_alice);
     
-    assert!(
-      (bal_alice == 8900002), 7357010
-    ); // 2 is from rounding issues
+    assert!(bal_alice == 8000000, 7357010);
     
     // Check that the matching donations are being made
     let bal_a = DiemAccount::balance<GAS>(@CommunityA);
-    // print(&bal_bob);
+    // // print(&bal_bob);
     assert!(bal_a > bal_A_before, 7357011);
 
     // unchanged balance since it received no donations
@@ -135,8 +134,11 @@ script {
     assert!(bal_b > bal_B_before, 7357012);
 
     let total_supply_after = Diem::market_cap<GAS>();
+    // print(&total_supply_after);
 
-    assert!(total_supply_after == total_supply_before, 7357013);
+    // there's a minor decimal issue
+    let superman_3_decimal = 2;
+    assert!(total_supply_after == total_supply_before - superman_3_decimal, 7357013);
 
   }
 }

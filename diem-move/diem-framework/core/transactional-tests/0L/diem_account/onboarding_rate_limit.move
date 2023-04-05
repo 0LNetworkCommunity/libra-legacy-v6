@@ -13,7 +13,7 @@ script {
   use DiemFramework::Roles;
   use DiemFramework::TowerState;
   use DiemFramework::Testnet;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
   fun main(dr: signer, sender: signer) {
     let sender_addr = Signer::address_of(&sender);
@@ -47,7 +47,7 @@ script {
     assert!(ValidatorConfig::is_valid(parsed_address), 7357003);
 
     // Check that the Onboarder Alice, was able to deposit funds to the net validator account
-    print(&DiemAccount::balance<GAS>(parsed_address));
+    // print(&DiemAccount::balance<GAS>(parsed_address));
     assert!(DiemAccount::balance<GAS>(parsed_address) == 1000000, 7357004);
 
     Testnet::remove_testnet(&dr); // testnet would make this always true

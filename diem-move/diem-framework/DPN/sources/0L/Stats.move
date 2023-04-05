@@ -189,12 +189,12 @@ module Stats{
     } else {
       // debugging rescue mission. Remove after network stabilizes Apr 2022.
       // something bad happened and we can't find this node in our list.
-      // print(&666);
-      // print(&node_addr);
+      // // print(&666);
+      // // print(&node_addr);
     };
     // update total vote count anyways even if we can't find this person.
     stats.current.total_votes = stats.current.total_votes + 1;
-    // print(&stats.current);
+    // // print(&stats.current);
   }
 
   //Permissions: Public, VM only.
@@ -232,15 +232,6 @@ module Stats{
     *&borrow_global<ValStats>(@DiemRoot).history
   }
 
-  /// TEST HELPERS
-  //Function: 15
-  public fun test_helper_inc_vote_addr(vm: &signer, node_addr: address) acquires ValStats {
-    let sender = Signer::address_of(vm);
-    assert!(sender == @DiemRoot, Errors::requires_role(190015));
-    assert!(Testnet::is_testnet(), Errors::invalid_state(190015));
-
-    inc_vote(vm, node_addr);
-  }
 
   // TODO: this code is duplicated with NodeWeight, opportunity to make sorting in to a module.
   public fun get_sorted_vals_by_props(account: &signer, n: u64): vector<address> acquires ValStats {
@@ -295,5 +286,31 @@ module Stats{
 
       return eligible_validators
     }
+
+
+  /// TEST HELPERS
+  //Function: 15
+  public fun test_helper_inc_vote_addr(vm: &signer, node_addr: address) acquires ValStats {
+    let sender = Signer::address_of(vm);
+    assert!(sender == @DiemRoot, Errors::requires_role(190015));
+    assert!(Testnet::is_testnet(), Errors::invalid_state(190015));
+
+    inc_vote(vm, node_addr);
+  }
+
+
+
+  public fun test_helper_remove_votes(vm: &signer, node_addr: address) acquires ValStats {
+    Testnet::assert_testnet(vm);
+
+    let stats = borrow_global_mut<ValStats>(@VMReserved);
+    let (is_true, i) = Vector::index_of<address>(&mut stats.current.addr, &node_addr);
+    if (is_true) {
+      let votes = *Vector::borrow<u64>(&mut stats.current.vote_count, i);
+      Vector::push_back(&mut stats.current.vote_count, 0);
+      Vector::swap_remove(&mut stats.current.vote_count, i);
+      stats.current.total_votes = stats.current.total_votes - votes;
+    }
+  }
 }
 }

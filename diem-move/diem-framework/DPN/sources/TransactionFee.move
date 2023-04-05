@@ -4,6 +4,8 @@
 // File Prefix for errors: 2000
 ///////////////////////////////////////////////////////////////////////////
 module DiemFramework::TransactionFee {
+    friend DiemFramework::Burn;
+
     // use DiemFramework::XUS::XUS; /////// 0L /////////
     use DiemFramework::GAS::GAS; /////// 0L /////////
     use DiemFramework::CoreAddresses;    
@@ -13,6 +15,8 @@ module DiemFramework::TransactionFee {
     use DiemFramework::DiemTimestamp;
     use Std::Errors;
     use Std::Signer;
+    use Std::Vector;
+    // use DiemFramework::Burn;
 
     /// The `TransactionFee` resource holds a preburn resource for each
     /// fiat `CoinType` that can be collected as a transaction fee.
@@ -78,8 +82,19 @@ module DiemFramework::TransactionFee {
     public fun pay_fee<CoinType>(coin: Diem<CoinType>) acquires TransactionFee {
         DiemTimestamp::assert_operating();
         assert!(is_coin_initialized<CoinType>(), Errors::not_published(ETRANSACTION_FEE));
-        let fees = borrow_global_mut<TransactionFee<CoinType>>(@TreasuryCompliance);
-        Diem::deposit(&mut fees.balance, coin)
+        let fees = borrow_global_mut<TransactionFee<CoinType>>(@TreasuryCompliance); // TODO: this is just the VM root actually
+        Diem::deposit(&mut fees.balance, coin);
+    }
+
+    //////// 0L ////////
+    // Pay fee and track who it came from.
+    public fun pay_fee_and_track<CoinType>(user: address, coin: Diem<CoinType>) acquires TransactionFee, FeeMaker, EpochFeeMakerRegistry {
+        DiemTimestamp::assert_operating();
+        assert!(is_coin_initialized<CoinType>(), Errors::not_published(ETRANSACTION_FEE));
+        let amount = Diem::value(&coin);
+        let fees = borrow_global_mut<TransactionFee<CoinType>>(@TreasuryCompliance); // TODO: this is just the VM root actually
+        Diem::deposit(&mut fees.balance, coin);
+        track_user_fee(user, amount);
     }
 
     spec pay_fee {
@@ -143,6 +158,45 @@ module DiemFramework::TransactionFee {
         /// All the fees is burnt so the balance becomes 0.
         ensures spec_transaction_fee<CoinType>().balance.value == 0;
     }
+
+    //////// 0L ////////
+    // modified the above function to burn fees
+    // this is used to clear the Fee account of the VM after each epoch
+    // in the event that there are more funds that necessary
+    // to pay validators their agreed rate.
+
+    // public fun ol_burn_fees(
+    //     vm: &signer,
+    // ) acquires TransactionFee, EpochFeeMakerRegistry, FeeMaker {
+    //     if (Signer::address_of(vm) != @VMReserved) {
+    //         return
+    //     };
+    //     // extract fees
+    //     // let fees = borrow_global_mut<TransactionFee<GAS>>(@TreasuryCompliance); // TODO: this is same as VM address
+    //     // let coin = Diem::withdraw_all(&mut fees.balance);
+
+    //     // either the user is burning or recyling the coin
+    //     // Burn::epoch_start_burn(vm, coin);
+
+    //     // get the list of fee makers
+    //     let state = borrow_global<EpochFeeMakerRegistry>(@VMReserved);
+    //     let fee_makers = &state.fee_makers;
+    //     let len = Vector::length(fee_makers);
+
+    //     // for every user in the list burn their fees per Burn.move preferences
+    //     let i = 0;
+    //     while (i < len) {
+    //         let user = Vector::borrow(fee_makers, i);
+    //         let amount = borrow_global<FeeMaker>(*user).epoch;
+    //         // Burn::epoch_start_burn(vm, user, amount);
+    //         i = i + 1;
+    //     }
+
+
+
+    //     // Diem::vm_burn_this_coin(vm, coin);
+    // }
+
     /// STUB: To be filled in at a later date once the makeup of the XDX has been determined.
     ///
     /// # Specification of the case where burn type is XDX.
@@ -195,7 +249,8 @@ module DiemFramework::TransactionFee {
     }
 
     /////// 0L /////////
-    public fun get_transaction_fees_coins<Token: store>(
+    /// only to be used by VM through the Burn.move module
+    public(friend) fun vm_withdraw_all_coins<Token: store>(
         dr_account: &signer
     ): Diem<Token> acquires TransactionFee {
         // Can only be invoked by DiemVM privilege.
@@ -211,6 +266,7 @@ module DiemFramework::TransactionFee {
     }
 
     /////// 0L /////////
+    // TODO deprecate this
     public fun get_transaction_fees_coins_amount<Token: store>(
         dr_account: &signer, amount: u64
     ): Diem<Token>  acquires TransactionFee {
@@ -225,4 +281,93 @@ module DiemFramework::TransactionFee {
 
         Diem::withdraw(&mut fees.balance, amount)
     }
+
+    /// FeeMaker struct lives on an individual's account
+    /// We check how many fees the user has paid.
+    /// This will interact with Burn preferences when there is a remainder of fees in the TransactionFee account
+    struct FeeMaker has key {
+      epoch: u64,
+      lifetime: u64,
+    }
+
+    /// We need a list of who is producing fees this epoch. 
+    /// This lives on the VM address
+    struct EpochFeeMakerRegistry has key {
+      fee_makers: vector<address>,
+    }
+
+    /// Initialize the registry at the VM address.
+    public fun initialize_epoch_fee_maker_registry(vm: &signer) {
+      CoreAddresses::assert_vm(vm);
+      let registry = EpochFeeMakerRegistry {
+        fee_makers: Vector::empty(),
+      };
+      move_to(vm, registry);
+    }
+
+    /// FeeMaker is initialized when the account is created
+    public fun initialize_fee_maker(account: &signer) {
+      let fee_maker = FeeMaker {
+        epoch: 0,
+        lifetime: 0,
+      };
+      move_to(account, fee_maker);
+    }
+
+    public fun epoch_reset_fee_maker(vm: &signer) acquires EpochFeeMakerRegistry, FeeMaker {
+      CoreAddresses::assert_vm(vm);
+      let registry = borrow_global_mut<EpochFeeMakerRegistry>(@VMReserved);
+      let fee_makers = &registry.fee_makers;
+
+      let i = 0;
+      while (i < Vector::length(fee_makers)) {
+        let account = *Vector::borrow(fee_makers, i);
+        reset_one_fee_maker(vm, account);
+        i = i + 1;
+      };
+      registry.fee_makers = Vector::empty();
+    }
+
+    /// FeeMaker is reset at the epoch boundary, and the lifetime is updated.
+    fun reset_one_fee_maker(vm: &signer, account: address) acquires FeeMaker {
+      CoreAddresses::assert_vm(vm);
+      let fee_maker = borrow_global_mut<FeeMaker>(account);
+        fee_maker.lifetime = fee_maker.lifetime + fee_maker.epoch;
+        fee_maker.epoch = 0;
+    }
+
+    /// add a fee to the account fee maker for an epoch
+    /// PRIVATE function
+    fun track_user_fee(account: address, amount: u64) acquires FeeMaker, EpochFeeMakerRegistry {
+      if (!exists<FeeMaker>(account)) {
+        return
+      };
+
+      let fee_maker = borrow_global_mut<FeeMaker>(account);
+      fee_maker.epoch = fee_maker.epoch + amount;
+
+      // update the registry
+      let registry = borrow_global_mut<EpochFeeMakerRegistry>(@VMReserved);
+      if (!Vector::contains(&registry.fee_makers, &account)) {
+        Vector::push_back(&mut registry.fee_makers, account);
+      }
+    }
+
+    //////// GETTERS ///////
+    
+    // get list of fee makers
+    public fun get_fee_makers(): vector<address> acquires EpochFeeMakerRegistry {
+      let registry = borrow_global<EpochFeeMakerRegistry>(@VMReserved);
+      *&registry.fee_makers
+    }
+
+    // get the fees made by the user in the epoch
+    public fun get_epoch_fees_made(account: address): u64 acquires FeeMaker {
+      if (!exists<FeeMaker>(account)) {
+        return 0
+      };
+      let fee_maker = borrow_global<FeeMaker>(account);
+      fee_maker.epoch
+    }
+
 }

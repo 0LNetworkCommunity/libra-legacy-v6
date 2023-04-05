@@ -61,6 +61,7 @@ Called by root in genesis to initialize the GAS coin
   <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
     vm,
     user_addr,
+    user_addr,
     minted_coins,
     b"genesis migration",
     b""
