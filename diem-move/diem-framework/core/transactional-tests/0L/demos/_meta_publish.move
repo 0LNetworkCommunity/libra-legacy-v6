@@ -2,11 +2,11 @@
 
 //# publish
 module Alice::M {
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
     use Std::ASCII;
 
     public fun do_it() {
-        print(&ASCII::string(b"hello"));
+        // print(&ASCII::string(b"hello"));
     }
 }
 

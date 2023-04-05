@@ -99,11 +99,11 @@ script {
     use DiemFramework::DiemSystem;
     use DiemFramework::ValidatorUniverse;
     use Std::Vector;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     fun main() {
         // Tests on initial size of validators
-        print(&DiemSystem::validator_set_size());
+        // print(&DiemSystem::validator_set_size());
         assert!(DiemSystem::validator_set_size() == 7, 7357000200301);
         assert!(DiemSystem::is_validator(@Alice) == true, 7357000200302);
         assert!(

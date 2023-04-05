@@ -26,13 +26,13 @@ script {
 script {
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     fun main(_dr: signer, account: signer) {
 
-        print(&DiemAccount::balance<GAS>(@Alice));
-        print(&DiemAccount::unlocked_amount(@Alice));
-        print(&DiemAccount::balance<GAS>(@Bob));
+        // print(&DiemAccount::balance<GAS>(@Alice));
+        // print(&DiemAccount::unlocked_amount(@Alice));
+        // print(&DiemAccount::balance<GAS>(@Bob));
 
         assert!(DiemAccount::balance<GAS>(@Alice) == 1000000, 735701);
         assert!(DiemAccount::unlocked_amount(@Alice) == 10, 735702);

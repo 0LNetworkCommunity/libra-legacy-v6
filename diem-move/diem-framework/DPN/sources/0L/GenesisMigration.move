@@ -13,7 +13,7 @@ module GenesisMigration {
   use DiemFramework::GAS::GAS;
   use DiemFramework::ValidatorUniverse;
   use DiemFramework::ValidatorOperatorConfig;
-  // use DiemFramework::Debug::print;
+  // // use DiemFramework::Debug::print;
 
 
     /// Called by root in genesis to initialize the GAS coin 

@@ -6,7 +6,7 @@ module Mock {
   use Std::Vector;
   use DiemFramework::Stats;
   use DiemFramework::Cases;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
   use DiemFramework::Testnet;
   use DiemFramework::ValidatorUniverse;
   use DiemFramework::DiemAccount;
@@ -35,8 +35,8 @@ module Mock {
           i = i + 1;
       };
       
-      print(&addr);
-      print(&Cases::get_case(vm, addr, start_height, end_height));
+      // print(&addr);
+      // print(&Cases::get_case(vm, addr, start_height, end_height));
       // TODO: careful that the range of heights is within the test
       assert!(Cases::get_case(vm, addr, start_height, end_height) == 1, 777703);
     }
@@ -86,7 +86,7 @@ module Mock {
           Stats::process_set_votes(vm, &voters);
           i = i + 1;
       };
-      print(&Cases::get_case(vm, addr, start_height, end_height) );
+      // print(&Cases::get_case(vm, addr, start_height, end_height) );
       // TODO: careful that the range of heights is within the test
       assert!(Cases::get_case(vm, addr, start_height, end_height) == 4, 777706);
 

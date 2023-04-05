@@ -7,7 +7,7 @@ script {
   use DiemFramework::TestFixtures;
   use Std::Vector;
   
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
   fun main(vm: signer, _eve_sig: signer) {
     
@@ -18,7 +18,7 @@ script {
     let len = Vector::length(&sorted);
     assert!(len == Vector::length(&val_universe), 1000);
 
-    print(&len);
+    // print(&len);
     assert!(len == 5, 1001);
 
   }

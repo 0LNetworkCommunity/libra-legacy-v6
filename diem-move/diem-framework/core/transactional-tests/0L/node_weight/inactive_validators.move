@@ -22,7 +22,7 @@ script {
     use DiemFramework::NodeWeight;
     use DiemFramework::ValidatorUniverse;
     use DiemFramework::TowerState;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
     
 
     fun main(vm: signer, _: signer) {
@@ -44,7 +44,7 @@ script {
         // NOTE: there's a known issue when many validators have the same
         // weight, the nodes included will be those LAST included in the validator universe.
         let top_n_is_under = NodeWeight::top_n_accounts(vm, 3);
-        print(&top_n_is_under);
+        // print(&top_n_is_under);
         assert!(Vector::length<address>(&top_n_is_under) == 3, 7357140102021000);
 
         // Check BOB is NOT in that list.

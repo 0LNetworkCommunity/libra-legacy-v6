@@ -24,7 +24,7 @@ module MultiSig {
   use DiemFramework::DiemAccount::{Self, WithdrawCapability};
   use DiemFramework::Ballot::{Self, BallotTracker};
   use DiemFramework::DiemConfig;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
 
   const EGOV_NOT_INITIALIZED: u64 = 440000;
@@ -268,32 +268,32 @@ module MultiSig {
     multisig_address: address,
     proposal_data: Proposal<ProposalData>,
   ): GUID::ID acquires Governance, Action {
-    print(&20);
+    // print(&20);
     assert_authorized(sig, multisig_address);
-print(&21);
+// print(&21);
     let ms = borrow_global_mut<Governance>(multisig_address);
     let action = borrow_global_mut<Action<ProposalData>>(multisig_address);
-    print(&22);
+    // print(&22);
     // go through all proposals and clean up expired ones.
     lazy_cleanup_expired(action);
-print(&23);
+// print(&23);
     // does this proposal already exist in the pending list?
     let (found, guid, _idx, status_enum, _is_complete) = search_proposals_for_guid<ProposalData>(&action.vote, &proposal_data);
-    print(&found);
-    print(&status_enum);
-    print(&24);
+    // print(&found);
+    // print(&status_enum);
+    // print(&24);
     if (found && status_enum == Ballot::get_pending_enum()) {
-      print(&2401);
+      // print(&2401);
       // this exact proposal is already pending, so we we will just return the guid of the existing proposal.
       // we'll let the caller decide what to do (we wont vote by default)
       return guid
     };
 
-print(&25);
+// print(&25);
     let ballot = Ballot::propose_ballot(&mut action.vote, &ms.guid_capability, proposal_data);
-print(&26);
+// print(&26);
     let id = Ballot::get_ballot_id(ballot);
-print(&27);
+// print(&27);
     id
   }
 
@@ -332,26 +332,26 @@ print(&27);
     id: &GUID::ID
   ): (bool, Option<WithdrawCapability>) acquires Governance, Action {
 
-    print(&60);
+    // print(&60);
     assert_authorized(sig, multisig_address); // belt and suspenders
     let ms = borrow_global_mut<Governance>(multisig_address);
     let action = borrow_global_mut<Action<ProposalData>>(multisig_address);
-    print(&61);
+    // print(&61);
     lazy_cleanup_expired(action);
-    print(&62);
+    // print(&62);
 
     // does this proposal already exist in the pending list?
     let (found, _idx, status_enum, is_complete) = Ballot::find_anywhere<Proposal<ProposalData>>(&action.vote, id);
-    print(&63);
+    // print(&63);
     assert!((found && status_enum == Ballot::get_pending_enum() && !is_complete), Errors::invalid_argument(EPROPOSAL_NOT_FOUND));
-    print(&64);
+    // print(&64);
     let b = Ballot::get_ballot_by_id_mut(&mut action.vote, id);
     let t = Ballot::get_type_struct_mut(b);
-    print(&65);
+    // print(&65);
     Vector::push_back(&mut t.votes, Signer::address_of(sig));
-    print(&66);
+    // print(&66);
     let passed = tally(t, *&ms.cfg_default_n_sigs);
-    print(&67);
+    // print(&67);
 
     if (passed) {
       Ballot::complete_ballot(b);
@@ -370,21 +370,21 @@ print(&27);
       Option::none()
     };
 
-    print(&withdraw_cap);
-    print(&68);
+    // print(&withdraw_cap);
+    // print(&68);
 
     (passed, withdraw_cap)
   }
 
 
   fun tally<ProposalData: store + drop>(prop: &mut Proposal<ProposalData>, n: u64): bool {
-    print(&40001);
+    // print(&40001);
 
-    print(&prop.votes);
+    // print(&prop.votes);
 
     if (Vector::length(&prop.votes) >= n) {
       prop.approved = true;
-      print(&40002);
+      // print(&40002);
 
       return true
     };
@@ -395,22 +395,22 @@ print(&27);
 
 
   fun find_expired<ProposalData: store + drop>(a: & Action<ProposalData>): vector<GUID::ID>{
-    print(&40);
+    // print(&40);
     let epoch = DiemConfig::get_current_epoch();
     let b_vec = Ballot::get_list_ballots_by_enum(&a.vote, Ballot::get_pending_enum());
     let id_vec = Vector::empty();
-    print(&41);
+    // print(&41);
     let i = 0;
     while (i < Vector::length(b_vec)) {
-      print(&4101);
+      // print(&4101);
       let b = Vector::borrow(b_vec, i);
       let t = Ballot::get_type_struct<Proposal<ProposalData>>(b);
 
       
       if (epoch > t.expiration_epoch) { 
-        print(&4010101);
+        // print(&4010101);
         let id = Ballot::get_ballot_id(b);
-        print(&4010102);
+        // print(&4010102);
         Vector::push_back(&mut id_vec, id);
 
       };
@@ -422,9 +422,9 @@ print(&27);
 
   fun lazy_cleanup_expired<ProposalData: store + drop>(a: &mut Action<ProposalData>) {
     let expired_vec = find_expired(a);
-    print(&expired_vec);
+    // print(&expired_vec);
     let len = Vector::length(&expired_vec);
-    print(&len);
+    // print(&len);
     let i = 0;
     while (i < len) {
       let id = Vector::borrow(&expired_vec, i);

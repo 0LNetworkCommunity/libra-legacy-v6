@@ -91,7 +91,7 @@ script {
   use DiemFramework::TowerState;
   use DiemFramework::Testnet;
   use DiemFramework::Cases;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
   fun main(vm: signer, _: signer) {
       // need to remove testnet for this test, since testnet does not ratelimit account creation.
@@ -105,7 +105,7 @@ script {
 
       EpochBoundary::reconfigure(&vm, 100);
       let new_account_bal = DiemAccount::balance<GAS>(eve);
-      print(&new_account_bal);
+      // print(&new_account_bal);
 
       // we expect 1 gas (1,000,000 microgas) from bob's transfer
       assert!(old_account_bal == 1000000, 7357003);

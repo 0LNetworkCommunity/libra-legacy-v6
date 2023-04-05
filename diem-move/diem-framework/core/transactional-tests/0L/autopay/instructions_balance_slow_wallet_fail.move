@@ -57,7 +57,7 @@ script {
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
     use DiemFramework::AutoPay;
-    // use DiemFramework::Debug::print;
+    // // use DiemFramework::Debug::print;
 
     fun main(dr: signer, _sponsor: signer) {
       let starting_balance_alice = DiemAccount::balance<GAS>(@Alice);

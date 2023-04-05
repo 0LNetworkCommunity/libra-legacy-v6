@@ -30,7 +30,7 @@ script {
     use DiemFramework::Vouch;
     use Std::Vector;
     use DiemFramework::EpochBoundary;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
     use DiemFramework::ProofOfFee;
     use DiemFramework::DiemSystem;
 
@@ -58,7 +58,7 @@ script {
         EpochBoundary::reconfigure(&vm, 15);
 
         let c = Vouch::buddies_in_set(@Alice);
-        print(&c);
+        // print(&c);
         let len = Vector::length(&c);
         assert!(len == 1, 735702);
 

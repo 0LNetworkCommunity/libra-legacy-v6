@@ -7,7 +7,7 @@ module Burn {
   use DiemFramework::CoreAddresses;
   use DiemFramework::GAS::GAS;
   use Std::Signer;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
   struct BurnPreference has key {
     send_community: bool
@@ -38,13 +38,15 @@ module Burn {
       i = i + 1;
     };
 
+    if (global_deposits == 0) return;
+
     let ratios_vec = Vector::empty<FixedPoint32::FixedPoint32>();
     let k = 0;
     while (k < len) {
       let cumu = *Vector::borrow(&deposit_vec, k);
 
       let ratio = FixedPoint32::create_from_rational(cumu, global_deposits);
-      print(&ratio);
+      // print(&ratio);
 
       Vector::push_back(&mut ratios_vec, ratio);
       k = k + 1;
@@ -77,18 +79,18 @@ module Burn {
       return 0;
 
     let d = borrow_global<DepositInfo>(@VMReserved);
-    let contains = Vector::contains(&d.addr, &payee);
-    print(&contains);
+    let _contains = Vector::contains(&d.addr, &payee);
+    // print(&contains);
     let (is_found, i) = Vector::index_of(&d.addr, &payee);
     if (is_found) {
-      print(&is_found);
+      // print(&is_found);
       let len = Vector::length(&d.ratio);
-      print(&i);
-      print(&len);
+      // print(&i);
+      // print(&len);
       if (i + 1 > len) return 0;
       let ratio = *Vector::borrow(&d.ratio, i);
       if (FixedPoint32::is_zero(copy ratio)) return 0;
-      print(&ratio);
+      // print(&ratio);
       return FixedPoint32::multiply_u64(value, ratio)
     };
 
@@ -102,7 +104,7 @@ module Burn {
 
     if (exists<BurnPreference>(payer)) {
       if (borrow_global<BurnPreference>(payer).send_community) {
-        return send(vm, payer, value)
+        return recycle(vm, payer, value)
       } else {
         return burn(vm, payer, value)
       }
@@ -121,10 +123,10 @@ module Burn {
   }
 
 
-  fun send(vm: &signer, payer: address, value: u64) acquires DepositInfo {
+  fun recycle(vm: &signer, payer: address, value: u64) acquires DepositInfo {
     let list = get_address_list();
     let len = Vector::length<address>(&list);
-    print(&list);
+    // print(&list);
     
     // There could be errors in the array, and underpayment happen.
     let value_sent = 0;
@@ -132,15 +134,15 @@ module Burn {
     let i = 0;
     while (i < len) {
       let payee = *Vector::borrow<address>(&list, i);
-      print(&payee);
+      // print(&payee);
       let val = get_value(payee, value);
-      print(&val);
+      // print(&val);
       
       DiemAccount::vm_make_payment_no_limit<GAS>(
           payer,
           payee,
           val,
-          b"epoch start send",
+          b"recycle",
           b"",
           vm,
       );
@@ -148,11 +150,9 @@ module Burn {
       i = i + 1;
     };
 
-    // prevent under-burn due to issues with index.
-    // let diff = value - value_sent;
-    // if (diff > 0) {
-    //   burn(vm, payer, diff)
-    // };    
+    // NOTE: there may be underpayment due to 
+    // Superman 3 decimal errors. https://www.youtube.com/watch?v=N7JBXGkBoFc
+    // Explicitly let the user keep these, so that total supply is unchanged.
   }
 
   public fun set_send_community(sender: &signer, community: bool) acquires BurnPreference {

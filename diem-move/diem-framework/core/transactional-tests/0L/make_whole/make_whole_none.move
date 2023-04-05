@@ -8,7 +8,7 @@ script {
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
     use Std::Signer;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     fun main(_vm: signer, sig: signer) {
         let addr = Signer::address_of(&sig);
@@ -19,10 +19,10 @@ script {
 
         let claimed = MakeWhole::claim_make_whole_payment(&sig);
         let current = DiemAccount::balance<GAS>(addr);
-        print(&current);
-        print(&initial);
-        print(&amount);
-        print(&claimed);
+        // print(&current);
+        // print(&initial);
+        // print(&amount);
+        // print(&claimed);
 
         assert!(current - initial == expected_amount, 7357002);
     }

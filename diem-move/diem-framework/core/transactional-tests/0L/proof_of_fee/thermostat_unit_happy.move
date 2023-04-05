@@ -6,7 +6,7 @@
 //# run --admin-script --signers DiemRoot Alice
 script {
   use DiemFramework::ProofOfFee;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
   use Std::Vector;
 
   fun main(vm: signer, _a_sig: signer) {
@@ -18,7 +18,7 @@ script {
     while (i < 10) {
       let factor = i * 10;
       let value = start_value + factor;
-      print(&value);
+      // print(&value);
       Vector::push_back(&mut median_history, value);
       i = i + 1;
     };

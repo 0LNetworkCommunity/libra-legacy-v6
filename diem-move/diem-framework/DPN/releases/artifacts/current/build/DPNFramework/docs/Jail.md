@@ -212,7 +212,7 @@
   <b>let</b> voucher = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
 
   <b>let</b> buddies = <a href="Vouch.md#0x1_Vouch_buddies_in_set">Vouch::buddies_in_set</a>(addr);
-  // print(&buddies);
+  // // print(&buddies);
   <b>let</b> (is_found, _idx) = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&buddies, &voucher);
   <b>assert</b>!(is_found, 100103);
 

@@ -189,12 +189,12 @@ module Stats{
     } else {
       // debugging rescue mission. Remove after network stabilizes Apr 2022.
       // something bad happened and we can't find this node in our list.
-      // print(&666);
-      // print(&node_addr);
+      // // print(&666);
+      // // print(&node_addr);
     };
     // update total vote count anyways even if we can't find this person.
     stats.current.total_votes = stats.current.total_votes + 1;
-    // print(&stats.current);
+    // // print(&stats.current);
   }
 
   //Permissions: Public, VM only.

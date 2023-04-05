@@ -479,12 +479,12 @@
   } <b>else</b> {
     // debugging rescue mission. Remove after network stabilizes Apr 2022.
     // something bad happened and we can't find this node in our list.
-    // print(&666);
-    // print(&node_addr);
+    // // print(&666);
+    // // print(&node_addr);
   };
   // <b>update</b> total vote count anyways even <b>if</b> we can't find this person.
   stats.current.total_votes = stats.current.total_votes + 1;
-  // print(&stats.current);
+  // // print(&stats.current);
 }
 </code></pre>
 

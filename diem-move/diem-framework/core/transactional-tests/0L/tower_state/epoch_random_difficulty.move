@@ -25,11 +25,11 @@ script {
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::TowerState;
-    // use DiemFramework::Debug::print;
+    // // use DiemFramework::Debug::print;
 
     fun main() {
         let (diff, sec) = TowerState::get_difficulty();
-        // print(&diff);
+        // // print(&diff);
         // check the state started with the testnet defaults
         assert!(diff==332, 735703);
         assert!(sec==512, 735704);

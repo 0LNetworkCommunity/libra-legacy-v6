@@ -14,7 +14,7 @@ script {
   use DiemFramework::TestFixtures;
   use Std::Vector;
 
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
   fun main(vm: signer, _a_sig: signer) {
     
@@ -28,8 +28,8 @@ script {
     // The desired validator set is exaclty the size of the elegible validators, who all have placed bids.
     // the performant validators are the same as the bidding validators.
     let (seats, p) = ProofOfFee::fill_seats_and_get_price(&vm, len, &sorted, &sorted);
-    print(&seats);
-    print(&p);
+    // print(&seats);
+    // print(&p);
 
     assert!(Vector::contains(&seats, &@Alice), 1000);
 
@@ -37,7 +37,7 @@ script {
     let (reward, clear_price, median_bid) = ProofOfFee::get_consensus_reward();
     assert!(reward == 1000000, 1001);
     assert!(clear_price == 1, 1002);
-    print(&median_bid);
+    // print(&median_bid);
     assert!(median_bid == 3, 1003);
 
 

@@ -10,7 +10,7 @@ script {
   use DiemFramework::Testnet;
   use DiemFramework::DiemAccount;
 
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
   fun main(vm: signer, a_sig: signer) {
     // let's remove testnet settings. Globals thresholds
@@ -22,7 +22,7 @@ script {
     
     // has minimum viable vouches
     // bob and carol at genesis are automatically vouching for each other.
-    // print(&Vouch::unrelated_buddies(@Alice));
+    // // print(&Vouch::unrelated_buddies(@Alice));
     assert!(Vouch::unrelated_buddies_above_thresh(@Alice), 1004);
 
     // has a bid which has not expired
@@ -38,7 +38,7 @@ script {
     let coin = DiemAccount::unlocked_amount(@Alice);
     let (r, _, _) = ProofOfFee::get_consensus_reward();
     let bid_cost = (bid * r) / 1000;
-    print(&bid_cost);
+    // print(&bid_cost);
     assert!(coin > bid_cost, 1005);
 
     // should pass audit.

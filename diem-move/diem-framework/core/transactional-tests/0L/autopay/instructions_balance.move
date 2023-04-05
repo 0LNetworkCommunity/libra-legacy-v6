@@ -61,7 +61,7 @@ script {
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
     use DiemFramework::AutoPay;
-    // use DiemFramework::Debug::print;
+    // // use DiemFramework::Debug::print;
 
     fun main(dr: signer, _sponsor: signer) {
       let starting_balance_alice = DiemAccount::balance<GAS>(@Alice);
@@ -73,7 +73,7 @@ script {
       let ending_balance_alice = DiemAccount::balance<GAS>(@Alice);
       let ending_balance_comm = DiemAccount::balance<GAS>(@CommunityA);
 
-      // print(&ending_balance_alice);
+      // // print(&ending_balance_alice);
       
       assert!(starting_balance_alice > ending_balance_alice, 735706);
       assert!(ending_balance_comm > starting_balance_comm, 735707);

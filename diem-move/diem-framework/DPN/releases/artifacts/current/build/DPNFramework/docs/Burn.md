@@ -12,13 +12,12 @@
 -  [Function `get_value`](#0x1_Burn_get_value)
 -  [Function `epoch_start_burn`](#0x1_Burn_epoch_start_burn)
 -  [Function `burn`](#0x1_Burn_burn)
--  [Function `send`](#0x1_Burn_send)
+-  [Function `recycle`](#0x1_Burn_recycle)
 -  [Function `set_send_community`](#0x1_Burn_set_send_community)
 -  [Function `get_ratios`](#0x1_Burn_get_ratios)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DonorDirected.md#0x1_DonorDirected">0x1::DonorDirected</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
@@ -129,13 +128,15 @@
     i = i + 1;
   };
 
+  <b>if</b> (global_deposits == 0) <b>return</b>;
+
   <b>let</b> ratios_vec = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;();
   <b>let</b> k = 0;
   <b>while</b> (k &lt; len) {
     <b>let</b> cumu = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&deposit_vec, k);
 
     <b>let</b> ratio = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(cumu, global_deposits);
-    print(&ratio);
+    // print(&ratio);
 
     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> ratios_vec, ratio);
     k = k + 1;
@@ -207,18 +208,18 @@
     <b>return</b> 0;
 
   <b>let</b> d = <b>borrow_global</b>&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(@VMReserved);
-  <b>let</b> contains = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&d.addr, &payee);
-  print(&contains);
+  <b>let</b> _contains = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&d.addr, &payee);
+  // print(&contains);
   <b>let</b> (is_found, i) = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&d.addr, &payee);
   <b>if</b> (is_found) {
-    print(&is_found);
+    // print(&is_found);
     <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&d.ratio);
-    print(&i);
-    print(&len);
+    // print(&i);
+    // print(&len);
     <b>if</b> (i + 1 &gt; len) <b>return</b> 0;
     <b>let</b> ratio = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&d.ratio, i);
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_is_zero">FixedPoint32::is_zero</a>(<b>copy</b> ratio)) <b>return</b> 0;
-    print(&ratio);
+    // print(&ratio);
     <b>return</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(value, ratio)
   };
 
@@ -252,7 +253,7 @@
 
   <b>if</b> (<b>exists</b>&lt;<a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a>&gt;(payer)) {
     <b>if</b> (<b>borrow_global</b>&lt;<a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a>&gt;(payer).send_community) {
-      <b>return</b> <a href="Burn.md#0x1_Burn_send">send</a>(vm, payer, value)
+      <b>return</b> <a href="Burn.md#0x1_Burn_recycle">recycle</a>(vm, payer, value)
     } <b>else</b> {
       <b>return</b> <a href="Burn.md#0x1_Burn_burn">burn</a>(vm, payer, value)
     }
@@ -295,13 +296,13 @@
 
 </details>
 
-<a name="0x1_Burn_send"></a>
+<a name="0x1_Burn_recycle"></a>
 
-## Function `send`
+## Function `recycle`
 
 
 
-<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_send">send</a>(vm: &signer, payer: <b>address</b>, value: u64)
+<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_recycle">recycle</a>(vm: &signer, payer: <b>address</b>, value: u64)
 </code></pre>
 
 
@@ -310,10 +311,10 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_send">send</a>(vm: &signer, payer: <b>address</b>, value: u64) <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
+<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_recycle">recycle</a>(vm: &signer, payer: <b>address</b>, value: u64) <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
   <b>let</b> list = <a href="Burn.md#0x1_Burn_get_address_list">get_address_list</a>();
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&list);
-  print(&list);
+  // print(&list);
 
   // There could be errors in the array, and underpayment happen.
   <b>let</b> value_sent = 0;
@@ -321,15 +322,15 @@
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
     <b>let</b> payee = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<b>address</b>&gt;(&list, i);
-    print(&payee);
+    // print(&payee);
     <b>let</b> val = <a href="Burn.md#0x1_Burn_get_value">get_value</a>(payee, value);
-    print(&val);
+    // print(&val);
 
     <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
         payer,
         payee,
         val,
-        b"epoch start send",
+        b"recycle",
         b"",
         vm,
     );
@@ -337,11 +338,9 @@
     i = i + 1;
   };
 
-  // prevent under-burn due <b>to</b> issues <b>with</b> index.
-  <b>let</b> diff = value - value_sent;
-  <b>if</b> (diff &gt; 0) {
-    <a href="Burn.md#0x1_Burn_burn">burn</a>(vm, payer, diff)
-  };
+  // NOTE: there may be underpayment due <b>to</b>
+  // Superman 3 decimal errors. https://www.youtube.com/watch?v=N7JBXGkBoFc
+  // Explicitly <b>let</b> the user keep these, so that total supply is unchanged.
 }
 </code></pre>
 

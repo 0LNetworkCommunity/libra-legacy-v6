@@ -17,7 +17,7 @@ script {
   use DiemFramework::TestFixtures;
   use Std::Vector;
   
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
   fun main(vm: signer, _eve_sig: signer) {
     
@@ -26,7 +26,7 @@ script {
     let sorted = ProofOfFee::get_sorted_vals(false);
     let len = Vector::length(&sorted);
 
-    print(&len);
+    // print(&len);
     // all validators are ready and have qualifying bids.
     assert!(len == 5, 1000);
     
@@ -41,8 +41,8 @@ script {
       &sorted,
       &sorted
     );
-    print(&seats);
-    print(&p);
+    // print(&seats);
+    // print(&p);
 
     assert!(!Vector::contains(&seats, &@Alice), 1001);
     assert!(!Vector::contains(&seats, &@Bob), 1002);
@@ -52,11 +52,11 @@ script {
     // filling the seat updated the computation of the consensu reward.
     // Median bids and clearing prices will be different than the happy path test.
     let (reward, clear_price, median_bid) = ProofOfFee::get_consensus_reward();
-    print(&reward);
+    // print(&reward);
     assert!(reward == 1000000, 1004);
-    print(&clear_price);
+    // print(&clear_price);
     assert!(clear_price == 3, 1005);
-    print(&median_bid);
+    // print(&median_bid);
     assert!(median_bid == 5, 1006);
   }
 }

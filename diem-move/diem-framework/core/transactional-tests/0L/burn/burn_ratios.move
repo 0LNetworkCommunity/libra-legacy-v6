@@ -46,7 +46,7 @@ script {
   use DiemFramework::Burn;
   use Std::Vector;
   use Std::FixedPoint32;
-  // use DiemFramework::Debug::print;
+  // // use DiemFramework::Debug::print;
 
   fun main(vm: signer, _:signer) {
     // send to community wallet CommunityA
@@ -61,21 +61,21 @@ script {
     assert!(Vector::length(&ratios) == 2, 7357005);
 
     let deposits_A_indexed = *Vector::borrow<u64>(&deps, 0);
-    // print(&deposits_A_indexed);
+    // // print(&deposits_A_indexed);
     assert!(deposits_A_indexed == 100500, 7357006);
     let deposits_B_indexed = *Vector::borrow<u64>(&deps, 1);
-    // print(&deposits_B_indexed);
+    // // print(&deposits_B_indexed);
     assert!(deposits_B_indexed == 904500, 7357007);
 
     let a_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 0);
     let pct_a = FixedPoint32::multiply_u64(100, a_mult);
-    // print(&pct_a);
+    // // print(&pct_a);
     // ratio for communityA
     assert!(pct_a == 9, 7357008); // todo
 
     let b_mult = *Vector::borrow<FixedPoint32::FixedPoint32>(&ratios, 1);
     let pct_b = FixedPoint32::multiply_u64(100, b_mult);
-    // print(&pct_b);
+    // // print(&pct_b);
     // ratio for communityB
     assert!(pct_b == 89, 7357009); // todo
   }

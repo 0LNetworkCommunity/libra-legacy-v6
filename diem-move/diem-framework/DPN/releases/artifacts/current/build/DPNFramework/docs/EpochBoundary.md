@@ -17,7 +17,6 @@
 
 <pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
@@ -72,29 +71,29 @@
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
     <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>();
-    print(&800100);
+    // print(&800100);
 
     <b>let</b> (outgoing_compliant_set, _) =
         <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a>(vm, height_start, height_now);
 
-    print(&800200);
+    // print(&800200);
 
     // NOTE: This is "nominal" because it doesn't check
     // <b>let</b> compliant_nodes_count = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&outgoing_compliant_set);
-    print(&800300);
+    // print(&800300);
 
     // TODO: subsidy units are fixed
     // <b>let</b> (subsidy_units, nominal_subsidy_per) =
     //     <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
-    print(&800400);
+    // print(&800400);
 
     <b>let</b> (reward, _, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">ProofOfFee::get_consensus_reward</a>();
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, reward);
 
-    print(&800500);
+    // print(&800500);
 
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(vm, reward, &outgoing_compliant_set);
-    print(&800600);
+    // print(&800600);
 
     // process the non performing nodes: jail
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_jail">process_jail</a>(vm, &outgoing_compliant_set);
@@ -105,18 +104,18 @@
 
     // Update all slow wallet limits
     <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>()); // todo
-    print(&801000);
+    // print(&801000);
 
     // <b>if</b> (!<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()) {
     //   proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
-    //   print(&800900);
+    //   // print(&800900);
     // };
 
     <a href="EpochBoundary.md#0x1_EpochBoundary_root_service_billing">root_service_billing</a>(vm);
-    print(&801000);
+    // print(&801000);
 
     <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, outgoing_compliant_set, height_now);
-    print(&801100);
+    // print(&801100);
 
 }
 </code></pre>
@@ -254,17 +253,17 @@
 
           <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(outgoing_compliant_set, &addr)
         ) {
-          print(&902);
+          // print(&902);
             // len_proven_nodes = len_proven_nodes + 1;
             // also reset the jail counter for any successful unjails
             <a href="Jail.md#0x1_Jail_remove_consecutive_fail">Jail::remove_consecutive_fail</a>(vm, addr);
         } <b>else</b> {
-          print(&903);
+          // print(&903);
           <a href="Jail.md#0x1_Jail_jail">Jail::jail</a>(vm, addr);
         };
         i = i+ 1;
     };
-    print(&904);
+    // print(&904);
 }
 </code></pre>
 
@@ -305,11 +304,11 @@
         <b>let</b> sorted_bids = <a href="ProofOfFee.md#0x1_ProofOfFee_get_sorted_vals">ProofOfFee::get_sorted_vals</a>(<b>false</b>);
         <b>let</b> (auction_winners, price) = <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">ProofOfFee::fill_seats_and_get_price</a>(vm, <a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_VAL_SIZE">MOCK_VAL_SIZE</a>, &sorted_bids, outgoing_compliant_set);
         // TODO: Don't <b>use</b> <b>copy</b> above, do a borrow.
-        print(&800700);
+        // print(&800700);
 
         // charge the validators for the proof of fee in advance of the epoch
         <a href="DiemAccount.md#0x1_DiemAccount_vm_multi_pay_fee">DiemAccount::vm_multi_pay_fee</a>(vm, &auction_winners, price, &b"proof of fee");
-        print(&800800);
+        // print(&800800);
 
         proposed_set = auction_winners
     };
@@ -362,36 +361,36 @@
     outgoing_compliant: vector&lt;<b>address</b>&gt;,
     height_now: u64
 ) {
-    print(&800900100);
+    // print(&800900100);
 
     // Reset <a href="Stats.md#0x1_Stats">Stats</a>
     <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
-    print(&800900101);
+    // print(&800900101);
 
     // Migrate <a href="TowerState.md#0x1_TowerState">TowerState</a> list from elegible.
     <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &outgoing_compliant);
-    print(&800900102);
+    // print(&800900102);
 
     // process community wallets
     <a href="DonorDirected.md#0x1_DonorDirected_process_donor_directed_accounts">DonorDirected::process_donor_directed_accounts</a>(vm, <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
-    print(&800900103);
+    // print(&800900103);
 
     <a href="AutoPay.md#0x1_AutoPay_reconfig_reset_tick">AutoPay::reconfig_reset_tick</a>(vm);
-    print(&800900104);
+    // print(&800900104);
 
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, height_now);
-    print(&800900105);
+    // print(&800900105);
 
     <a href="RecoveryMode.md#0x1_RecoveryMode_maybe_remove_debug_at_epoch">RecoveryMode::maybe_remove_debug_at_epoch</a>(vm);
-    print(&800900106);
+    // print(&800900106);
 
     // trigger the thermostat <b>if</b> the reward needs <b>to</b> be adjusted
     <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">ProofOfFee::reward_thermostat</a>(vm);
-    print(&800900107);
+    // print(&800900107);
     // Reconfig should be the last event.
     // Reconfigure the network
     <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
-    print(&800900108);
+    // print(&800900108);
 }
 </code></pre>
 

@@ -57,12 +57,12 @@ script {
   use DiemFramework::Burn;
   use DiemFramework::Diem;
   // use Std::FixedPoint32;
-  // use DiemFramework::Debug::print;
+  // // use DiemFramework::Debug::print;
 
   fun main(vm: signer, _:signer) {
     // we assume the ratios are calculated correctly see burn_ratios.move
     let total_supply_before = Diem::market_cap<GAS>();
-    // print(&total_supply_before);
+    // // print(&total_supply_before);
 
     let bal_A_before = DiemAccount::balance<GAS>(@CommunityA);
     let bal_B_before = DiemAccount::balance<GAS>(@CommunityB);
@@ -72,14 +72,14 @@ script {
     // alice burns 100_000, and now has 9_200_000
 
     let bal_alice = DiemAccount::balance<GAS>(@Alice);
-    // print(&bal_alice);
+    // // print(&bal_alice);
     assert!(
       (bal_alice >= 9900000 && bal_alice < 10000000), 7357007
     ); // rounding issues
     
     // unchanged balance
     let bal_a = DiemAccount::balance<GAS>(@CommunityA);
-    // print(&bal_bob);
+    // // print(&bal_bob);
     assert!(bal_a == bal_A_before, 7357008);
 
     // unchanged balance
@@ -110,14 +110,14 @@ script {
 //   use DiemFramework::DiemAccount;
 //   use DiemFramework::GAS::GAS;
 //   use DiemFramework::Burn;
-//   use DiemFramework::Debug::print;
+//   // use DiemFramework::Debug::print;
 
 //   fun main(vm: signer, _:signer) {
 //     let bal_alice = DiemAccount::balance<GAS>(@Alice);
-//     print(&bal_alice);
+//     // print(&bal_alice);
 
 //     let bal_bob_old = DiemAccount::balance<GAS>(@Bob);
-//     print(&bal_bob_old);
+//     // print(&bal_bob_old);
 //     let bal_carol_old = DiemAccount::balance<GAS>(@Carol);
 
 //     // this time alice changed burn settings, and is resending to community.
@@ -125,7 +125,7 @@ script {
     
 
 //     let bal_alice = DiemAccount::balance<GAS>(@Alice);
-//     print(&bal_alice);
+//     // print(&bal_alice);
 //     assert!(bal_alice == 9100000, 7357010); // rounding issues
 
 //     // balances are greater than before.

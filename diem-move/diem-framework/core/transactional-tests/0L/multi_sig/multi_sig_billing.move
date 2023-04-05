@@ -41,11 +41,11 @@ script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
   // use DiemFramework::MultiSig;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
   // use Std::Vector;
   fun main(_dr: signer, _d_sig: signer) {
     let bal = DiemAccount::balance<GAS>(@DaveMultiSig);
-    print(&bal);
+    // print(&bal);
     assert!(bal != 1000000, 7357001);
   }
 }
