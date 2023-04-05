@@ -16,6 +16,7 @@
 
 
 <pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
+<b>use</b> <a href="Burn.md#0x1_Burn">0x1::Burn</a>;
 <b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
@@ -214,7 +215,7 @@
 
     // TODO: implament what happens <b>to</b> the matching donation algo
     // depending on the validator's preferences.
-    <a href="TransactionFee.md#0x1_TransactionFee_ol_burn_fees">TransactionFee::ol_burn_fees</a>(vm);
+    <a href="Burn.md#0x1_Burn_epoch_burn_fees">Burn::epoch_burn_fees</a>(vm);
 }
 </code></pre>
 
@@ -383,6 +384,9 @@
 
     <a href="RecoveryMode.md#0x1_RecoveryMode_maybe_remove_debug_at_epoch">RecoveryMode::maybe_remove_debug_at_epoch</a>(vm);
     // print(&800900106);
+
+    <a href="TransactionFee.md#0x1_TransactionFee_epoch_reset_fee_maker">TransactionFee::epoch_reset_fee_maker</a>(vm);
+
 
     // trigger the thermostat <b>if</b> the reward needs <b>to</b> be adjusted
     <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">ProofOfFee::reward_thermostat</a>(vm);

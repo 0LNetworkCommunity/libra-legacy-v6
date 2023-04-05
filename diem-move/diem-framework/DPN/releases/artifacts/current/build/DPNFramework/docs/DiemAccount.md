@@ -6135,7 +6135,8 @@ based on the conditions checked in the prologue, should never fail.
         );
 
         // NB: `withdraw_from_balance` is not used <b>as</b> limits do not <b>apply</b> <b>to</b> this transaction fee
-        <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">TransactionFee::pay_fee</a>(<a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(coin, transaction_fee_amount))
+        //////// 0L ////////
+        <a href="TransactionFee.md#0x1_TransactionFee_pay_fee_and_track">TransactionFee::pay_fee_and_track</a>(sender, <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(coin, transaction_fee_amount))
     }
 }
 </code></pre>
@@ -6539,7 +6540,7 @@ Create a Validator Operator account
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">vm_deposit_with_metadata</a>&lt;Token: store&gt;(vm: &signer, payee: <b>address</b>, to_deposit: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">vm_deposit_with_metadata</a>&lt;Token: store&gt;(vm: &signer, payer: <b>address</b>, payee: <b>address</b>, to_deposit: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;)
 </code></pre>
 
 
@@ -6550,12 +6551,14 @@ Create a Validator Operator account
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">vm_deposit_with_metadata</a>&lt;Token: store&gt;(
     vm: &signer,
+    payer: <b>address</b>,
     payee: <b>address</b>,
     to_deposit: <a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&gt;,
     metadata: vector&lt;u8&gt;,
     metadata_signature: vector&lt;u8&gt;
 ) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> { //////// 0L ////////
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+    <b>let</b> amount = <a href="Diem.md#0x1_Diem_value">Diem::value</a>(&to_deposit);
     <a href="DiemAccount.md#0x1_DiemAccount_deposit">deposit</a>(
         @DiemRoot,
         payee,
@@ -6564,6 +6567,9 @@ Create a Validator Operator account
         metadata_signature,
         <b>false</b> // 0L todo diem-1.4.1 - new patch, needs review
     );
+
+    // track <b>if</b> the payee is tracking receipts for governance.
+    <a href="Receipts.md#0x1_Receipts_write_receipt_vm">Receipts::write_receipt_vm</a>(vm, payer, payee, amount);
 }
 </code></pre>
 

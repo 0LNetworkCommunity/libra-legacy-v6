@@ -22,7 +22,7 @@ module EpochBoundary {
     use DiemFramework::DiemConfig;
     // use DiemFramework::Audit;
     use DiemFramework::DiemAccount;
-    // use DiemFramework::Burn;
+    use DiemFramework::Burn;
     use DiemFramework::FullnodeSubsidy;
     // use DiemFramework::ValidatorUniverse;
     // use DiemFramework::Debug::print;
@@ -154,7 +154,7 @@ module EpochBoundary {
 
         // TODO: implament what happens to the matching donation algo
         // depending on the validator's preferences.
-        TransactionFee::ol_burn_fees(vm);
+        Burn::epoch_burn_fees(vm);
     }
 
     fun process_jail(vm: &signer, outgoing_compliant_set: &vector<address>) {
@@ -263,6 +263,9 @@ module EpochBoundary {
 
         RecoveryMode::maybe_remove_debug_at_epoch(vm);
         // print(&800900106);
+
+        TransactionFee::epoch_reset_fee_maker(vm);
+
 
         // trigger the thermostat if the reward needs to be adjusted
         ProofOfFee::reward_thermostat(vm);

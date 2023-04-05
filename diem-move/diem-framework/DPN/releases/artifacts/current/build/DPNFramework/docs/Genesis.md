@@ -249,6 +249,7 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
       <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>(
         dr_account,
         @DiemRoot,
+        @DiemRoot,
         coin,
         x"",
         x"",

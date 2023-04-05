@@ -753,7 +753,7 @@ needing to intervene.
 
       // Note the VM can do this without the WithdrawCapability
       <b>let</b> coin = <a href="DiemAccount.md#0x1_DiemAccount_vm_withdraw">DiemAccount::vm_withdraw</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, multisig_address, t.tx.value);
-      <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, t.tx.payee, coin, *&t.tx.description, b"");
+      <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, multisig_address, t.tx.payee, coin, *&t.tx.description, b"");
 
 
       // <b>update</b> the records

@@ -7,22 +7,24 @@
 
 -  [Resource `BurnPreference`](#0x1_Burn_BurnPreference)
 -  [Resource `DepositInfo`](#0x1_Burn_DepositInfo)
+-  [Function `epoch_burn_fees`](#0x1_Burn_epoch_burn_fees)
 -  [Function `reset_ratios`](#0x1_Burn_reset_ratios)
 -  [Function `get_address_list`](#0x1_Burn_get_address_list)
--  [Function `get_value`](#0x1_Burn_get_value)
--  [Function `epoch_start_burn`](#0x1_Burn_epoch_start_burn)
--  [Function `burn`](#0x1_Burn_burn)
+-  [Function `get_payee_value`](#0x1_Burn_get_payee_value)
+-  [Function `burn_or_recycle_user_fees`](#0x1_Burn_burn_or_recycle_user_fees)
 -  [Function `recycle`](#0x1_Burn_recycle)
 -  [Function `set_send_community`](#0x1_Burn_set_send_community)
 -  [Function `get_ratios`](#0x1_Burn_get_ratios)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DonorDirected.md#0x1_DonorDirected">0x1::DonorDirected</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
@@ -90,6 +92,60 @@
 
 </dd>
 </dl>
+
+
+</details>
+
+<a name="0x1_Burn_epoch_burn_fees"></a>
+
+## Function `epoch_burn_fees`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_epoch_burn_fees">epoch_burn_fees</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_epoch_burn_fees">epoch_burn_fees</a>(
+  vm: &signer,
+)  <b>acquires</b> <a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a>, <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  // extract fees
+  <b>let</b> coins = <a href="TransactionFee.md#0x1_TransactionFee_vm_withdraw_all_coins">TransactionFee::vm_withdraw_all_coins</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm);
+
+  // <b>let</b> fees = <b>borrow_global_mut</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(@TreasuryCompliance); // TODO: this is same <b>as</b> VM <b>address</b>
+  // <b>let</b> coin = <a href="Diem.md#0x1_Diem_withdraw_all">Diem::withdraw_all</a>(&<b>mut</b> fees.balance);
+
+  // either the user is burning or recyling the coin
+  // Burn::maybe_recycle_user_fees(vm, coin);
+
+  // get the list of fee makers
+  // <b>let</b> state = <b>borrow_global</b>&lt;EpochFeeMakerRegistry&gt;(@VMReserved);
+  <b>let</b> fee_makers = <a href="TransactionFee.md#0x1_TransactionFee_get_fee_makers">TransactionFee::get_fee_makers</a>();
+  <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&fee_makers);
+
+  // for every user in the list burn their fees per <a href="Burn.md#0x1_Burn">Burn</a>.<b>move</b> preferences
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; len) {
+      <b>let</b> user = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&fee_makers, i);
+      <b>let</b> amount = <a href="TransactionFee.md#0x1_TransactionFee_get_epoch_fees_made">TransactionFee::get_epoch_fees_made</a>(*user);
+      <b>let</b> user_share = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(&<b>mut</b> coins, amount);
+      <a href="Burn.md#0x1_Burn_burn_or_recycle_user_fees">burn_or_recycle_user_fees</a>(vm, *user, user_share);
+
+      i = i + 1;
+  };
+
+// Superman 3 decimal errors. https://www.youtube.com/watch?v=N7JBXGkBoFc
+// anything that is remaining should be burned
+<a href="Diem.md#0x1_Diem_vm_burn_this_coin">Diem::vm_burn_this_coin</a>(vm, coins);
+}
+</code></pre>
+
 
 
 </details>
@@ -188,13 +244,13 @@
 
 </details>
 
-<a name="0x1_Burn_get_value"></a>
+<a name="0x1_Burn_get_payee_value"></a>
 
-## Function `get_value`
+## Function `get_payee_value`
 
 
 
-<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_get_value">get_value</a>(payee: <b>address</b>, value: u64): u64
+<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_get_payee_value">get_payee_value</a>(payee: <b>address</b>, value: u64): u64
 </code></pre>
 
 
@@ -203,7 +259,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_get_value">get_value</a>(payee: <b>address</b>, value: u64): u64 <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
+<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_get_payee_value">get_payee_value</a>(payee: <b>address</b>, value: u64): u64 <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
   <b>if</b> (!<b>exists</b>&lt;<a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>&gt;(@VMReserved))
     <b>return</b> 0;
 
@@ -231,13 +287,13 @@
 
 </details>
 
-<a name="0x1_Burn_epoch_start_burn"></a>
+<a name="0x1_Burn_burn_or_recycle_user_fees"></a>
 
-## Function `epoch_start_burn`
+## Function `burn_or_recycle_user_fees`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_epoch_start_burn">epoch_start_burn</a>(vm: &signer, payer: <b>address</b>, value: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_burn_or_recycle_user_fees">burn_or_recycle_user_fees</a>(vm: &signer, payer: <b>address</b>, user_share: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;)
 </code></pre>
 
 
@@ -246,49 +302,19 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_epoch_start_burn">epoch_start_burn</a>(
-  vm: &signer, payer: <b>address</b>, value: u64
+<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_burn_or_recycle_user_fees">burn_or_recycle_user_fees</a>(
+  vm: &signer, payer: <b>address</b>, user_share: <a href="Diem.md#0x1_Diem">Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;
 ) <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a>, <a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
 
   <b>if</b> (<b>exists</b>&lt;<a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a>&gt;(payer)) {
     <b>if</b> (<b>borrow_global</b>&lt;<a href="Burn.md#0x1_Burn_BurnPreference">BurnPreference</a>&gt;(payer).send_community) {
-      <b>return</b> <a href="Burn.md#0x1_Burn_recycle">recycle</a>(vm, payer, value)
-    } <b>else</b> {
-      <b>return</b> <a href="Burn.md#0x1_Burn_burn">burn</a>(vm, payer, value)
+      <a href="Burn.md#0x1_Burn_recycle">recycle</a>(vm, payer, &<b>mut</b> user_share);
     }
-  } <b>else</b> {
-    <a href="Burn.md#0x1_Burn_burn">burn</a>(vm, payer, value);
   };
-}
-</code></pre>
 
-
-
-</details>
-
-<a name="0x1_Burn_burn"></a>
-
-## Function `burn`
-
-
-
-<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_burn">burn</a>(vm: &signer, addr: <b>address</b>, value: u64)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_burn">burn</a>(vm: &signer, addr: <b>address</b>, value: u64) {
-    <a href="DiemAccount.md#0x1_DiemAccount_vm_burn_from_balance">DiemAccount::vm_burn_from_balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
-      addr,
-      value,
-      b"burn",
-      vm,
-    );
+  // Superman 3
+  <a href="Diem.md#0x1_Diem_vm_burn_this_coin">Diem::vm_burn_this_coin</a>(vm, user_share);
 }
 </code></pre>
 
@@ -302,7 +328,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_recycle">recycle</a>(vm: &signer, payer: <b>address</b>, value: u64)
+<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_recycle">recycle</a>(vm: &signer, payer: <b>address</b>, coin: &<b>mut</b> <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;)
 </code></pre>
 
 
@@ -311,9 +337,11 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_recycle">recycle</a>(vm: &signer, payer: <b>address</b>, value: u64) <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
+<pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_recycle">recycle</a>(vm: &signer, payer: <b>address</b>, coin: &<b>mut</b> <a href="Diem.md#0x1_Diem">Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;) <b>acquires</b> <a href="Burn.md#0x1_Burn_DepositInfo">DepositInfo</a> {
   <b>let</b> list = <a href="Burn.md#0x1_Burn_get_address_list">get_address_list</a>();
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&list);
+
+  <b>let</b> total_coin_value_to_recycle = <a href="Diem.md#0x1_Diem_value">Diem::value</a>(coin);
   // print(&list);
 
   // There could be errors in the array, and underpayment happen.
@@ -323,24 +351,22 @@
   <b>while</b> (i &lt; len) {
     <b>let</b> payee = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<b>address</b>&gt;(&list, i);
     // print(&payee);
-    <b>let</b> val = <a href="Burn.md#0x1_Burn_get_value">get_value</a>(payee, value);
+    <b>let</b> amount_to_payee = <a href="Burn.md#0x1_Burn_get_payee_value">get_payee_value</a>(payee, total_coin_value_to_recycle);
     // print(&val);
 
-    <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+    <b>let</b> to_deposit = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(coin, amount_to_payee);
+
+    <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+        vm,
         payer,
         payee,
-        val,
+        to_deposit,
         b"recycle",
         b"",
-        vm,
     );
-    value_sent = value_sent + val;
+    value_sent = value_sent + amount_to_payee;
     i = i + 1;
   };
-
-  // NOTE: there may be underpayment due <b>to</b>
-  // Superman 3 decimal errors. https://www.youtube.com/watch?v=N7JBXGkBoFc
-  // Explicitly <b>let</b> the user keep these, so that total supply is unchanged.
 }
 </code></pre>
 

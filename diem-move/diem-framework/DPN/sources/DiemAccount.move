@@ -3084,7 +3084,8 @@ module DiemFramework::DiemAccount {
             );
 
             // NB: `withdraw_from_balance` is not used as limits do not apply to this transaction fee
-            TransactionFee::pay_fee(Diem::withdraw(coin, transaction_fee_amount))
+            //////// 0L ////////
+            TransactionFee::pay_fee_and_track(sender, Diem::withdraw(coin, transaction_fee_amount))
         }
     }
     spec epilogue_common {
@@ -3557,12 +3558,14 @@ module DiemFramework::DiemAccount {
     // with the attached `metadata`
     public fun vm_deposit_with_metadata<Token: store>(
         vm: &signer,
+        payer: address,
         payee: address,
         to_deposit: Diem<Token>,
         metadata: vector<u8>,
         metadata_signature: vector<u8>
     ) acquires DiemAccount, Balance, CumulativeDeposits { //////// 0L ////////
         CoreAddresses::assert_diem_root(vm);
+        let amount = Diem::value(&to_deposit);
         deposit(
             @DiemRoot,
             payee,
@@ -3571,6 +3574,9 @@ module DiemFramework::DiemAccount {
             metadata_signature,
             false // 0L todo diem-1.4.1 - new patch, needs review
         );
+
+        // track if the payee is tracking receipts for governance.
+        Receipts::write_receipt_vm(vm, payer, payee, amount);
     }
 
     // for billing. TODO: merge with other implementation on separate branch.

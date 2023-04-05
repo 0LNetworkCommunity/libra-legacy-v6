@@ -182,6 +182,7 @@ module DiemFramework::Genesis {
           DiemAccount::vm_deposit_with_metadata(
             dr_account,
             @DiemRoot,
+            @DiemRoot,
             coin,
             x"",
             x"",

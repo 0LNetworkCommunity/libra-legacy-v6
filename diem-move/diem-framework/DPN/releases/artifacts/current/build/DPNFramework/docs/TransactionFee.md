@@ -16,17 +16,21 @@
 -  [Function `pay_fee`](#0x1_TransactionFee_pay_fee)
 -  [Function `pay_fee_and_track`](#0x1_TransactionFee_pay_fee_and_track)
 -  [Function `burn_fees`](#0x1_TransactionFee_burn_fees)
--  [Function `ol_burn_fees`](#0x1_TransactionFee_ol_burn_fees)
+    -  [Specification of the case where burn type is XDX.](#@Specification_of_the_case_where_burn_type_is_XDX._1)
+    -  [Specification of the case where burn type is not XDX.](#@Specification_of_the_case_where_burn_type_is_not_XDX._2)
 -  [Function `get_amount_to_distribute`](#0x1_TransactionFee_get_amount_to_distribute)
--  [Function `get_transaction_fees_coins`](#0x1_TransactionFee_get_transaction_fees_coins)
+-  [Function `vm_withdraw_all_coins`](#0x1_TransactionFee_vm_withdraw_all_coins)
 -  [Function `get_transaction_fees_coins_amount`](#0x1_TransactionFee_get_transaction_fees_coins_amount)
 -  [Function `initialize_epoch_fee_maker_registry`](#0x1_TransactionFee_initialize_epoch_fee_maker_registry)
 -  [Function `initialize_fee_maker`](#0x1_TransactionFee_initialize_fee_maker)
 -  [Function `epoch_reset_fee_maker`](#0x1_TransactionFee_epoch_reset_fee_maker)
+-  [Function `reset_one_fee_maker`](#0x1_TransactionFee_reset_one_fee_maker)
 -  [Function `track_user_fee`](#0x1_TransactionFee_track_user_fee)
--  [Module Specification](#@Module_Specification_1)
-    -  [Initialization](#@Initialization_2)
-    -  [Helper Function](#@Helper_Function_3)
+-  [Function `get_fee_makers`](#0x1_TransactionFee_get_fee_makers)
+-  [Function `get_epoch_fees_made`](#0x1_TransactionFee_get_epoch_fees_made)
+-  [Module Specification](#@Module_Specification_3)
+    -  [Initialization](#@Initialization_4)
+    -  [Helper Function](#@Helper_Function_5)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -35,7 +39,6 @@
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
-<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 <b>use</b> <a href="XDX.md#0x1_XDX">0x1::XDX</a>;
 </code></pre>
@@ -486,34 +489,58 @@ All the fees is burnt so the balance becomes 0.
 </code></pre>
 
 
-
-</details>
-
-<a name="0x1_TransactionFee_ol_burn_fees"></a>
-
-## Function `ol_burn_fees`
+STUB: To be filled in at a later date once the makeup of the XDX has been determined.
 
 
+<a name="@Specification_of_the_case_where_burn_type_is_XDX._1"></a>
 
-<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_ol_burn_fees">ol_burn_fees</a>(vm: &signer)
+### Specification of the case where burn type is XDX.
+
+
+
+<a name="0x1_TransactionFee_BurnFeesXDX"></a>
+
+
+<pre><code><b>schema</b> <a href="TransactionFee.md#0x1_TransactionFee_BurnFeesXDX">BurnFeesXDX</a> {
+    dr_account: signer;
+    <b>aborts_if</b> <b>true</b> <b>with</b> Errors::INVALID_STATE;
+}
 </code></pre>
 
 
 
-<details>
-<summary>Implementation</summary>
+<a name="@Specification_of_the_case_where_burn_type_is_not_XDX._2"></a>
+
+### Specification of the case where burn type is not XDX.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_ol_burn_fees">ol_burn_fees</a>(
-    vm: &signer,
-) <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a> {
-    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @VMReserved) {
-        <b>return</b>
-    };
-    // extract fees
-    <b>let</b> fees = <b>borrow_global_mut</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(@TreasuryCompliance); // TODO: this is same <b>as</b> VM <b>address</b>
-    <b>let</b> coin = <a href="Diem.md#0x1_Diem_withdraw_all">Diem::withdraw_all</a>(&<b>mut</b> fees.balance);
-    <a href="Diem.md#0x1_Diem_vm_burn_this_coin">Diem::vm_burn_this_coin</a>(vm, coin);
+
+<a name="0x1_TransactionFee_BurnFeesNotXDX"></a>
+
+
+<pre><code><b>schema</b> <a href="TransactionFee.md#0x1_TransactionFee_BurnFeesNotXDX">BurnFeesNotXDX</a>&lt;CoinType&gt; {
+    dr_account: signer;
+}
+</code></pre>
+
+
+Must abort if the account does not have BurnCapability [[H3]][PERMISSION].
+
+
+<pre><code><b>schema</b> <a href="TransactionFee.md#0x1_TransactionFee_BurnFeesNotXDX">BurnFeesNotXDX</a>&lt;CoinType&gt; {
+    <b>include</b> <a href="Diem.md#0x1_Diem_AbortsIfNoBurnCapability">Diem::AbortsIfNoBurnCapability</a>&lt;CoinType&gt;{account: dr_account};
+    <b>let</b> fees = <a href="TransactionFee.md#0x1_TransactionFee_spec_transaction_fee">spec_transaction_fee</a>&lt;CoinType&gt;();
+    <b>include</b> <a href="Diem.md#0x1_Diem_BurnNowAbortsIf">Diem::BurnNowAbortsIf</a>&lt;CoinType&gt;{coin: fees.balance, preburn: fees.preburn};
+}
+</code></pre>
+
+
+dr_account retrieves BurnCapability [[H3]][PERMISSION].
+BurnCapability is not transferrable [[J3]][PERMISSION].
+
+
+<pre><code><b>schema</b> <a href="TransactionFee.md#0x1_TransactionFee_BurnFeesNotXDX">BurnFeesNotXDX</a>&lt;CoinType&gt; {
+    <b>ensures</b> <b>exists</b>&lt;<a href="Diem.md#0x1_Diem_BurnCapability">Diem::BurnCapability</a>&lt;CoinType&gt;&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(dr_account));
 }
 </code></pre>
 
@@ -555,13 +582,14 @@ All the fees is burnt so the balance becomes 0.
 
 </details>
 
-<a name="0x1_TransactionFee_get_transaction_fees_coins"></a>
+<a name="0x1_TransactionFee_vm_withdraw_all_coins"></a>
 
-## Function `get_transaction_fees_coins`
+## Function `vm_withdraw_all_coins`
+
+only to be used by VM through the Burn.move module
 
 
-
-<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins">get_transaction_fees_coins</a>&lt;Token: store&gt;(dr_account: &signer): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_vm_withdraw_all_coins">vm_withdraw_all_coins</a>&lt;Token: store&gt;(dr_account: &signer): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;
 </code></pre>
 
 
@@ -570,7 +598,7 @@ All the fees is burnt so the balance becomes 0.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins">get_transaction_fees_coins</a>&lt;Token: store&gt;(
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_vm_withdraw_all_coins">vm_withdraw_all_coins</a>&lt;Token: store&gt;(
     dr_account: &signer
 ): <a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&gt; <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a> {
     // Can only be invoked by DiemVM privilege.
@@ -687,10 +715,9 @@ FeeMaker is initialized when the account is created
 
 ## Function `epoch_reset_fee_maker`
 
-FeeMaker is reset at the epoch boundary, and the lifetime is updated.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_epoch_reset_fee_maker">epoch_reset_fee_maker</a>(vm: &signer, account: <b>address</b>)
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_epoch_reset_fee_maker">epoch_reset_fee_maker</a>(vm: &signer)
 </code></pre>
 
 
@@ -699,7 +726,42 @@ FeeMaker is reset at the epoch boundary, and the lifetime is updated.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_epoch_reset_fee_maker">epoch_reset_fee_maker</a>(vm: &signer, account: <b>address</b>) <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_epoch_reset_fee_maker">epoch_reset_fee_maker</a>(vm: &signer) <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee_EpochFeeMakerRegistry">EpochFeeMakerRegistry</a>, <a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>let</b> registry = <b>borrow_global_mut</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee_EpochFeeMakerRegistry">EpochFeeMakerRegistry</a>&gt;(@VMReserved);
+  <b>let</b> fee_makers = &registry.fee_makers;
+
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(fee_makers)) {
+    <b>let</b> account = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(fee_makers, i);
+    <a href="TransactionFee.md#0x1_TransactionFee_reset_one_fee_maker">reset_one_fee_maker</a>(vm, account);
+    i = i + 1;
+  };
+  registry.fee_makers = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>();
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TransactionFee_reset_one_fee_maker"></a>
+
+## Function `reset_one_fee_maker`
+
+FeeMaker is reset at the epoch boundary, and the lifetime is updated.
+
+
+<pre><code><b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_reset_one_fee_maker">reset_one_fee_maker</a>(vm: &signer, account: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_reset_one_fee_maker">reset_one_fee_maker</a>(vm: &signer, account: <b>address</b>) <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a> {
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
   <b>let</b> fee_maker = <b>borrow_global_mut</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a>&gt;(account);
     fee_maker.lifetime = fee_maker.lifetime + fee_maker.epoch;
@@ -748,13 +810,66 @@ PRIVATE function
 
 </details>
 
-<a name="@Module_Specification_1"></a>
+<a name="0x1_TransactionFee_get_fee_makers"></a>
+
+## Function `get_fee_makers`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_fee_makers">get_fee_makers</a>(): vector&lt;<b>address</b>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_fee_makers">get_fee_makers</a>(): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee_EpochFeeMakerRegistry">EpochFeeMakerRegistry</a> {
+  <b>let</b> registry = <b>borrow_global</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee_EpochFeeMakerRegistry">EpochFeeMakerRegistry</a>&gt;(@VMReserved);
+  *&registry.fee_makers
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TransactionFee_get_epoch_fees_made"></a>
+
+## Function `get_epoch_fees_made`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_epoch_fees_made">get_epoch_fees_made</a>(account: <b>address</b>): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_epoch_fees_made">get_epoch_fees_made</a>(account: <b>address</b>): u64 <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a> {
+  <b>if</b> (!<b>exists</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a>&gt;(account)) {
+    <b>return</b> 0
+  };
+  <b>let</b> fee_maker = <b>borrow_global</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a>&gt;(account);
+  fee_maker.epoch
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="@Module_Specification_3"></a>
 
 ## Module Specification
 
 
 
-<a name="@Initialization_2"></a>
+<a name="@Initialization_4"></a>
 
 ### Initialization
 
@@ -767,7 +882,7 @@ If time has started ticking, then <code><a href="TransactionFee.md#0x1_Transacti
 
 
 
-<a name="@Helper_Function_3"></a>
+<a name="@Helper_Function_5"></a>
 
 ### Helper Function
 

@@ -44,6 +44,7 @@ module GenesisMigration {
       DiemAccount::vm_deposit_with_metadata<GAS>(
         vm,
         user_addr,
+        user_addr,
         minted_coins,
         b"genesis migration",
         b""

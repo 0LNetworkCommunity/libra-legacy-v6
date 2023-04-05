@@ -294,7 +294,7 @@ module DonorDirected {
 
           // Note the VM can do this without the WithdrawCapability
           let coin = DiemAccount::vm_withdraw<GAS>(vm, multisig_address, t.tx.value);
-          DiemAccount::vm_deposit_with_metadata<GAS>(vm, t.tx.payee, coin, *&t.tx.description, b"");
+          DiemAccount::vm_deposit_with_metadata<GAS>(vm, multisig_address, t.tx.payee, coin, *&t.tx.description, b"");
 
 
           // update the records
