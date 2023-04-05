@@ -598,7 +598,7 @@ module TowerState {
     // We want to see where it breaks.
     // the first use case is to change the VDF difficulty parameter by tiny margins, in order to make it difficult to stockpile VDFs in a previous epoch, but not change the security properties.
     // the goal is to push all the RNG work to all the tower miners in the network, and minimize compute on the Move side
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     public fun toy_rng(seed: u64, iters: u64): u64 acquires TowerList, TowerProofHistory {
       // Get the list of all miners L
@@ -625,24 +625,24 @@ module TowerState {
         // double check
         if (len <= n) return 0;
 
-        print(&666602);
+        // print(&666602);
         let miner_addr = Vector::borrow<address>(&l, n);
   
-        print(&666603);
+        // print(&666603);
         let vec = if (exists<TowerProofHistory>(*miner_addr)) {
           *&borrow_global<TowerProofHistory>(*miner_addr).previous_proof_hash
         } else { return 0 };
 
-        print(&vec);
+        // print(&vec);
 
-        print(&666604);
+        // print(&666604);
         // take the last bit (B) from their last proof hash.
 
         n = (Vector::pop_back(&mut vec) as u64);
-        print(&666605);
+        // print(&666605);
         i = i + 1;
       };
-      print(&8888);
+      // print(&8888);
 
       n
     }

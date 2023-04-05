@@ -5,7 +5,7 @@ module TransferScripts {
     use DiemFramework::GAS::GAS;
     use DiemFramework::Globals;
     use Std::Signer;
-    use DiemFramework::CommunityWallet;
+    // use DiemFramework::CommunityWallet;
     use DiemFramework::DonorDirected;
 
     public(script) fun balance_transfer(

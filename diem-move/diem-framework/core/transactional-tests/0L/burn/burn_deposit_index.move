@@ -42,20 +42,20 @@ script {
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
   use DiemFramework::DiemAccount;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
   use DiemFramework::GAS::GAS;
   
   fun main(vm: signer, _account: signer) {
     // bobs_indexed amount changes
     let index_A_before = DiemAccount::get_index_cumu_deposits(@CommunityA);
     let index_B_before = DiemAccount::get_index_cumu_deposits(@CommunityB);
-    print(&index_A_before);
-    // print(&index_B_before);
+    // print(&index_A_before);
+    // // print(&index_B_before);
 
     // send to community wallet CommunityA
     DiemAccount::vm_make_payment_no_limit<GAS>( @Alice, @CommunityA, 100000, x"", x"", &vm);
     let index_A_after = DiemAccount::get_index_cumu_deposits(@CommunityA);
-    print(&index_A_after);
+    // print(&index_A_after);
     assert!(index_A_after > index_A_before, 735705);
 
     // CommunityB's amount DOES NOT change

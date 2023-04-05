@@ -1,4 +1,0 @@
-processed 2 tasks
-
-task 1 'run'. lines 6-42:
-Error: Transaction discarded. VMStatus: status ABORTED of type Execution with sub status 200202

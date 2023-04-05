@@ -13,8 +13,7 @@
 -  [Function `get_curve_state`](#0x1_DemoBonding_get_curve_state)
 
 
-<pre><code><b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
-<b>use</b> <a href="Decimal.md#0x1_Decimal">0x1::Decimal</a>;
+<pre><code><b>use</b> <a href="Decimal.md#0x1_Decimal">0x1::Decimal</a>;
 </code></pre>
 
 
@@ -148,30 +147,30 @@
 <pre><code><b>public</b> <b>fun</b> <a href="DemoBonding.md#0x1_DemoBonding_deposit_calc">deposit_calc</a>(add_to_reserve: u128, reserve: u128, supply: u128): u128 {
 
   <b>let</b> one = <a href="Decimal.md#0x1_Decimal_new">Decimal::new</a>(<b>true</b>, 1, 0);
-  print(&one);
+  // print(&one);
 
   <b>let</b> add_dec = <a href="Decimal.md#0x1_Decimal_new">Decimal::new</a>(<b>true</b>, add_to_reserve, 0);
-  print(&add_dec);
+  // print(&add_dec);
 
   <b>let</b> reserve_dec = <a href="Decimal.md#0x1_Decimal_new">Decimal::new</a>(<b>true</b>, reserve, 0);
-  print(&reserve_dec);
+  // print(&reserve_dec);
 
   <b>let</b> supply_dec = <a href="Decimal.md#0x1_Decimal_new">Decimal::new</a>(<b>true</b>, supply, 0);
-  print(&supply_dec);
+  // print(&supply_dec);
 
   // formula:
   // supply * sqrt(one+(add_to_reserve/reserve))
 
   <b>let</b> a = <a href="Decimal.md#0x1_Decimal_div">Decimal::div</a>(&add_dec, &reserve_dec);
-  print(&a);
+  // print(&a);
   <b>let</b> b = <a href="Decimal.md#0x1_Decimal_add">Decimal::add</a>(&one, &a);
-  print(&b);
+  // print(&b);
   <b>let</b> c = <a href="Decimal.md#0x1_Decimal_sqrt">Decimal::sqrt</a>(&b);
-  print(&c);
+  // print(&c);
   <b>let</b> d = <a href="Decimal.md#0x1_Decimal_mul">Decimal::mul</a>(&supply_dec, &c);
-  print(&d);
+  // print(&d);
   <b>let</b> int = <a href="Decimal.md#0x1_Decimal_borrow_int">Decimal::borrow_int</a>(&<a href="Decimal.md#0x1_Decimal_trunc">Decimal::trunc</a>(&d));
-  print(int);
+  //print(int);
 
   <b>return</b> *int
 }
@@ -201,14 +200,14 @@
   <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="DemoBonding.md#0x1_DemoBonding_CurveState">CurveState</a>&gt;(service_addr);
 
   <b>let</b> post_supply = <a href="DemoBonding.md#0x1_DemoBonding_deposit_calc">deposit_calc</a>(deposit, state.reserve, state.supply_issued);
-  print(&post_supply);
+  // print(&post_supply);
   <b>assert</b>!(post_supply &gt; state.supply_issued, 73570003);
   <b>let</b> mint = post_supply - state.supply_issued;
-  print(&mint);
+  // print(&mint);
   // <b>update</b> the new curve state
   state.reserve = state.reserve + deposit;
   state.supply_issued = state.supply_issued + mint;
-  // print(&state);
+  // // print(&state);
   mint
 }
 </code></pre>

@@ -41,7 +41,7 @@ script {
     use Std::Vector;
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
-    // use DiemFramework::Debug::print;
+    // // use DiemFramework::Debug::print;
     
     fun main(_dr: signer, sender: signer) {
       let uid = DonorDirected::propose_payment(&sender, @Alice, @Bob, 100, b"thanks bob");
@@ -58,10 +58,10 @@ script {
       // the default timed payment is 3 epochs, we are in epoch 1
       let list = DonorDirected::find_by_deadline(@Alice, 4);
       assert!(Vector::contains(&list, &uid), 7357008);
-      // print(&list);
+      // // print(&list);
 
       let bob_balance_pre = DiemAccount::balance<GAS>(@Bob);
-      // print(&bob_balance_pre);
+      // // print(&bob_balance_pre);
       assert!(bob_balance_pre == 10000000, 7357004);
     }
 }
@@ -106,7 +106,7 @@ script {
     use DiemFramework::GAS::GAS;
     // use DiemFramework::DonorDirected;
     // use Std::Vector;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     fun main(_vm: signer, _: signer) {
       // EpochBoundary::reconfigure(&vm);
@@ -116,7 +116,7 @@ script {
       // DonorDirected::process_donor_directed_accounts(&vm, 2);
 
       let bob_balance = DiemAccount::balance<GAS>(@Bob);
-      print(&bob_balance);
+      // print(&bob_balance);
       // assert!(bob_balance > bob_balance_pre, 7357005);
       assert!(bob_balance == 10000100, 7357006);
 

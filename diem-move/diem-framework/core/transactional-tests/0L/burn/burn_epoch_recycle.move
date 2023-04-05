@@ -17,11 +17,21 @@ script {
   }
 }
 
+
+
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::Mock;
+    use DiemFramework::DiemAccount;
+    use DiemFramework::TransactionFee;
+    use DiemFramework::GAS::GAS;
+
 
     fun main(vm: signer, _: signer) {
+        // simulate alice making a fee
+        let c = DiemAccount::vm_withdraw<GAS>(&vm, @Alice, 2000000);
+        TransactionFee::pay_fee_and_track(@Alice, c);
+
         let start_height = 0;
         let end_height = 100;
         Mock::mock_case_1(&vm, @Alice, start_height, end_height);
@@ -53,18 +63,19 @@ script {
 script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
   fun main(vm: signer, _account: signer) {
-    let bal = DiemAccount::balance<GAS>(@Alice);
-    print(&bal);
+    // let bal = DiemAccount::balance<GAS>(@Alice);
+    // print(&bal);
+    
 
     // send to community wallet Bob
     DiemAccount::vm_make_payment_no_limit<GAS>(@Alice, @CommunityA, 1000000, x"", x"", &vm);
 
     let bal = DiemAccount::balance<GAS>(@Alice);
-    print(&bal);
-    assert!(bal == 9000000, 7357003);
+    // print(&bal);
+    assert!(bal == 7000000, 7357003);
   }
 }
 
@@ -82,26 +93,36 @@ script {
   use DiemFramework::DiemAccount;
   use DiemFramework::GAS::GAS;
   use DiemFramework::Diem;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
+  use DiemFramework::Burn;
+  use Std::Vector;
 
   fun main() {
+
+    // dBurn::reset_ratios(&vm);
+    let (addr, deps , ratios) = Burn::get_ratios();
+    assert!(Vector::length(&addr) == 1, 7357003);
+    assert!(Vector::length(&deps) == 1, 7357004);
+    assert!(Vector::length(&ratios) == 1, 7357005);
+
     let new_cap = Diem::market_cap<GAS>();
     // no change to market cap
     // assert!(new_cap == 65000000, 7357004);
-    print(&new_cap);
+    // print(&new_cap);
 
     // alice balance should increase because of subsidy
-    let alice_old_balance = 9000000;
+    let alice_old_balance = 7000000;
     let alice_new = DiemAccount::balance<GAS>(@Alice);
 
     assert!(alice_new > alice_old_balance, 7357004);
-    let subsidy = alice_new - alice_old_balance;
-    print(&alice_new);
-    print(&subsidy);
+    // let subsidy = alice_new - alice_old_balance;
+    // print(&alice_new);
+    // print(&subsidy);
 
     // CommunityA should get MORE than just what was donated
     // since the matching donations from Alice's rewards worked.
     let bal = DiemAccount::balance<GAS>(@CommunityA);
+    // print(&bal);
     assert!(bal > 11000000, 7357005);
 
     let cap_at_start = 65000000;

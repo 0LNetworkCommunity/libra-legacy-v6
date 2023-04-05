@@ -8,7 +8,7 @@
 script {
   use DiemFramework::Vouch;
   // use Std::Signer;
-  // use DiemFramework::Debug::print;
+  // // use DiemFramework::Debug::print;
   fun main(_dr: signer, alice: signer) {
     Vouch::init(&alice);
     assert!(Vouch::is_init(@Alice), 7347001);

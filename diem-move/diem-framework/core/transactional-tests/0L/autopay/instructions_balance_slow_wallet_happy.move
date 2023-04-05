@@ -58,13 +58,13 @@ script {
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
     use DiemFramework::AutoPay;
-    // use DiemFramework::Debug::print;
+    // // use DiemFramework::Debug::print;
 
     fun main(dr: signer, _sponsor: signer) {
       let starting_balance_alice = DiemAccount::balance<GAS>(@Alice);
       let starting_balance_comm = DiemAccount::balance<GAS>(@CommunityA);
 
-      // print(&starting_balance);
+      // // print(&starting_balance);
       // make sure there's enough in the unlocked slow wallet to pay.
       DiemAccount::slow_wallet_epoch_drip(&dr,1000000);
       // assert!(ending_balance == 10000000, 735705);
@@ -74,7 +74,7 @@ script {
       let ending_balance_alice = DiemAccount::balance<GAS>(@Alice);
       let ending_balance_comm = DiemAccount::balance<GAS>(@CommunityA);
 
-      // print(&ending_balance);
+      // // print(&ending_balance);
       
       assert!(starting_balance_alice > ending_balance_alice, 735706);
       assert!(ending_balance_comm > starting_balance_comm, 735707);

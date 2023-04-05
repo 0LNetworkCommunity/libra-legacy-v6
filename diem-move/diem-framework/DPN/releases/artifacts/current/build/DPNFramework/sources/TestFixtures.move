@@ -7,6 +7,10 @@
 address DiemFramework {
 module TestFixtures{
   use DiemFramework::Testnet;
+  use DiemFramework::ValidatorUniverse;
+  use DiemFramework::DiemAccount;
+  use DiemFramework::ProofOfFee;
+  use Std::Vector;
     public fun easy_difficulty(): u64 {
       100
     }
@@ -89,5 +93,36 @@ module TestFixtures{
       assert!(Testnet::is_testnet(), 130102014010);
       x"00105f2013b1de8c7b6ba93501c6136dbbc16ebb728f12199222f9878f68515b7cfff6d75658cd87a0e39449c613290b5820fdb255758c57e5675a4d7dcc473f1341"
     }
+
+    //////// PROOF OF FEE ////////
+    public fun pof_default(vm: &signer): (vector<address>, vector<u64>, vector<u64>){
+
+      Testnet::assert_testnet(vm);
+      let vals = ValidatorUniverse::get_eligible_validators();
+
+      let bids = Vector::empty<u64>();
+      let expiry = Vector::empty<u64>();
+      let i = 0;
+      let prev = 0;
+      let fib = 1;
+      while (i < Vector::length(&vals)) {
+
+        Vector::push_back(&mut expiry, 1000);
+        let b = prev + fib;
+        Vector::push_back(&mut bids, b);
+
+        let a = Vector::borrow(&vals, i);
+        let sig = DiemAccount::scary_create_signer_for_migrations(vm, *a);
+        // initialize and set.
+        ProofOfFee::set_bid(&sig, b, 1000);
+        prev = fib;
+        fib = b;
+        i = i + 1;
+      };
+      DiemAccount::slow_wallet_epoch_drip(vm, 100000); // unlock some coins for the validators
+
+      (vals, bids, expiry)
+    }
+
   }
 }

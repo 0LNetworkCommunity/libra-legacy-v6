@@ -24,22 +24,22 @@ script {
     }
 }
 
-//# run --admin-script --signers DiemRoot DiemRoot
+//# run --admin-script --signers DiemRoot Eve
 script {
     use DiemFramework::Mock;
     use DiemFramework::Vouch;
     use Std::Vector;
     use DiemFramework::EpochBoundary;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
+    use DiemFramework::ProofOfFee;
+    use DiemFramework::DiemSystem;
 
-    fun main(vm: signer, _: signer) {
-        Mock::mock_case_1(&vm, @Alice, 0, 15);
-        Mock::mock_case_1(&vm, @Bob, 0, 15);
-        Mock::mock_case_1(&vm, @Carol, 0, 15);
-        Mock::mock_case_1(&vm, @Dave, 0, 15);
-        // EVE will be the case 4
-        Mock::mock_case_1(&vm, @Frank, 0, 15);
-        Mock::mock_case_1(&vm, @Gertie, 0, 15);
+    fun main(vm: signer, eve_sig: signer) {
+        // give the nodes bids
+        Mock::pof_default(&vm);
+        // make the nodes compliant
+        Mock::all_good_validators(&vm);
+
 
         // mock some vals vouching for Alice, including Eve.
         let v = Vector::singleton<address>(@Bob);
@@ -47,18 +47,24 @@ script {
 
         Vouch::vm_migrate(&vm, @Alice, v);
 
-        // let b = Vouch::get_buddies(@Alice);
         let c = Vouch::buddies_in_set(@Alice);
 
         let len = Vector::length(&c);
         assert!(len == 2, 735701);
 
+        // invalidate eve so she doesn't join next epoch.
+        ProofOfFee::set_bid(&eve_sig, 0, 0);
         // mock the epoch boundary
         EpochBoundary::reconfigure(&vm, 15);
 
         let c = Vouch::buddies_in_set(@Alice);
-        print(&c);
+        // print(&c);
         let len = Vector::length(&c);
         assert!(len == 1, 735702);
+
+        // Important: Alice should not be dropped in the new 
+        // epoch even though her voucher dropped off
+        assert!(DiemSystem::is_validator(@Alice), 735703);
+        assert!(!DiemSystem::is_validator(@Eve), 735704);
     }
 }

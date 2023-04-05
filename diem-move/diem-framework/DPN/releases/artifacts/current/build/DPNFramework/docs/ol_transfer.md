@@ -9,8 +9,7 @@
 -  [Function `community_transfer`](#0x1_TransferScripts_community_transfer)
 
 
-<pre><code><b>use</b> <a href="CommunityWallet.md#0x1_CommunityWallet">0x1::CommunityWallet</a>;
-<b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DonorDirected.md#0x1_DonorDirected">0x1::DonorDirected</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID">0x1::GUID</a>;
@@ -89,8 +88,8 @@
     // unscaled_value. This <b>script</b> converts it <b>to</b> the Move <b>internal</b> scale
     // by multiplying by COIN_SCALING_FACTOR.
     <b>let</b> value = unscaled_value * <a href="Globals.md#0x1_Globals_get_coin_scaling_factor">Globals::get_coin_scaling_factor</a>();
-    <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&sender);
-    <b>assert</b>!(<a href="CommunityWallet.md#0x1_CommunityWallet_is_comm">CommunityWallet::is_comm</a>(sender_addr), 30001);
+    // <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(&sender);
+    // <b>assert</b>!(<a href="CommunityWallet.md#0x1_CommunityWallet_is_comm">CommunityWallet::is_comm</a>(sender_addr), 30001);
 
     // confirm the destination account <b>has</b> a slow wallet
     // TODO: this check only happens in this <b>script</b> since there's

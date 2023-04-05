@@ -22,8 +22,9 @@
 -  [Function `get_total_votes`](#0x1_Stats_get_total_votes)
 -  [Function `get_total_props`](#0x1_Stats_get_total_props)
 -  [Function `get_history`](#0x1_Stats_get_history)
--  [Function `test_helper_inc_vote_addr`](#0x1_Stats_test_helper_inc_vote_addr)
 -  [Function `get_sorted_vals_by_props`](#0x1_Stats_get_sorted_vals_by_props)
+-  [Function `test_helper_inc_vote_addr`](#0x1_Stats_test_helper_inc_vote_addr)
+-  [Function `test_helper_remove_votes`](#0x1_Stats_test_helper_remove_votes)
 
 
 <pre><code><b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
@@ -478,12 +479,12 @@
   } <b>else</b> {
     // debugging rescue mission. Remove after network stabilizes Apr 2022.
     // something bad happened and we can't find this node in our list.
-    // print(&666);
-    // print(&node_addr);
+    // // print(&666);
+    // // print(&node_addr);
   };
   // <b>update</b> total vote count anyways even <b>if</b> we can't find this person.
   stats.current.total_votes = stats.current.total_votes + 1;
-  // print(&stats.current);
+  // // print(&stats.current);
 }
 </code></pre>
 
@@ -601,35 +602,6 @@
 
 </details>
 
-<a name="0x1_Stats_test_helper_inc_vote_addr"></a>
-
-## Function `test_helper_inc_vote_addr`
-
-TEST HELPERS
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_test_helper_inc_vote_addr">test_helper_inc_vote_addr</a>(vm: &signer, node_addr: <b>address</b>)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_test_helper_inc_vote_addr">test_helper_inc_vote_addr</a>(vm: &signer, node_addr: <b>address</b>) <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
-  <b>let</b> sender = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
-  <b>assert</b>!(sender == @DiemRoot, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190015));
-  <b>assert</b>!(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(190015));
-
-  <a href="Stats.md#0x1_Stats_inc_vote">inc_vote</a>(vm, node_addr);
-}
-</code></pre>
-
-
-
-</details>
-
 <a name="0x1_Stats_get_sorted_vals_by_props"></a>
 
 ## Function `get_sorted_vals_by_props`
@@ -697,6 +669,68 @@ TEST HELPERS
 
     <b>return</b> eligible_validators
   }
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Stats_test_helper_inc_vote_addr"></a>
+
+## Function `test_helper_inc_vote_addr`
+
+TEST HELPERS
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_test_helper_inc_vote_addr">test_helper_inc_vote_addr</a>(vm: &signer, node_addr: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_test_helper_inc_vote_addr">test_helper_inc_vote_addr</a>(vm: &signer, node_addr: <b>address</b>) <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
+  <b>let</b> sender = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm);
+  <b>assert</b>!(sender == @DiemRoot, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_requires_role">Errors::requires_role</a>(190015));
+  <b>assert</b>!(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(190015));
+
+  <a href="Stats.md#0x1_Stats_inc_vote">inc_vote</a>(vm, node_addr);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Stats_test_helper_remove_votes"></a>
+
+## Function `test_helper_remove_votes`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_test_helper_remove_votes">test_helper_remove_votes</a>(vm: &signer, node_addr: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Stats.md#0x1_Stats_test_helper_remove_votes">test_helper_remove_votes</a>(vm: &signer, node_addr: <b>address</b>) <b>acquires</b> <a href="Stats.md#0x1_Stats_ValStats">ValStats</a> {
+  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
+
+  <b>let</b> stats = <b>borrow_global_mut</b>&lt;<a href="Stats.md#0x1_Stats_ValStats">ValStats</a>&gt;(@VMReserved);
+  <b>let</b> (is_true, i) = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>&lt;<b>address</b>&gt;(&<b>mut</b> stats.current.addr, &node_addr);
+  <b>if</b> (is_true) {
+    <b>let</b> votes = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;u64&gt;(&<b>mut</b> stats.current.vote_count, i);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> stats.current.vote_count, 0);
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> stats.current.vote_count, i);
+    stats.current.total_votes = stats.current.total_votes - votes;
+  }
+}
 </code></pre>
 
 

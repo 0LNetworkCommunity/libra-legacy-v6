@@ -73,7 +73,6 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
@@ -1373,24 +1372,24 @@ Reset the tower counter at the end of epoch.
     // double check
     <b>if</b> (len &lt;= n) <b>return</b> 0;
 
-    print(&666602);
+    // print(&666602);
     <b>let</b> miner_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<b>address</b>&gt;(&l, n);
 
-    print(&666603);
+    // print(&666603);
     <b>let</b> vec = <b>if</b> (<b>exists</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(*miner_addr)) {
       *&<b>borrow_global</b>&lt;<a href="TowerState.md#0x1_TowerState_TowerProofHistory">TowerProofHistory</a>&gt;(*miner_addr).previous_proof_hash
     } <b>else</b> { <b>return</b> 0 };
 
-    print(&vec);
+    // print(&vec);
 
-    print(&666604);
+    // print(&666604);
     // take the last bit (B) from their last proof hash.
 
     n = (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_pop_back">Vector::pop_back</a>(&<b>mut</b> vec) <b>as</b> u64);
-    print(&666605);
+    // print(&666605);
     i = i + 1;
   };
-  print(&8888);
+  // print(&8888);
 
   n
 }

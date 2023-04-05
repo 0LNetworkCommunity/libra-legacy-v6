@@ -7,6 +7,8 @@
 
 -  [Resource `UserReceipts`](#0x1_Receipts_UserReceipts)
 -  [Function `init`](#0x1_Receipts_init)
+-  [Function `is_init`](#0x1_Receipts_is_init)
+-  [Function `write_receipt_vm`](#0x1_Receipts_write_receipt_vm)
 -  [Function `write_receipt`](#0x1_Receipts_write_receipt)
 -  [Function `read_receipt`](#0x1_Receipts_read_receipt)
 
@@ -99,13 +101,13 @@
 
 </details>
 
-<a name="0x1_Receipts_write_receipt"></a>
+<a name="0x1_Receipts_is_init"></a>
 
-## Function `write_receipt`
+## Function `is_init`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_write_receipt">write_receipt</a>(sender: &signer, payer: <b>address</b>, destination: <b>address</b>, value: u64): (u64, u64, u64)
+<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_is_init">is_init</a>(addr: <b>address</b>): bool
 </code></pre>
 
 
@@ -114,9 +116,60 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_write_receipt">write_receipt</a>(sender: &signer, payer: <b>address</b>, destination: <b>address</b>, value: u64):(u64, u64, u64) <b>acquires</b> <a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_is_init">is_init</a>(addr: <b>address</b>):bool {
+  <b>exists</b>&lt;<a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(addr)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Receipts_write_receipt_vm"></a>
+
+## Function `write_receipt_vm`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_write_receipt_vm">write_receipt_vm</a>(sender: &signer, payer: <b>address</b>, destination: <b>address</b>, value: u64): (u64, u64, u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Receipts.md#0x1_Receipts_write_receipt_vm">write_receipt_vm</a>(sender: &signer, payer: <b>address</b>, destination: <b>address</b>, value: u64):(u64, u64, u64) <b>acquires</b> <a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a> {
     // TODO: make a function for user <b>to</b> write own receipt.
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(sender);
+    <a href="Receipts.md#0x1_Receipts_write_receipt">write_receipt</a>(payer, destination, value)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Receipts_write_receipt"></a>
+
+## Function `write_receipt`
+
+Restricted to DiemAccount, we need to write receipts for certain users, like to DonorDirected Accounts.
+Core Devs: Danger: only DiemAccount can use this.
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="Receipts.md#0x1_Receipts_write_receipt">write_receipt</a>(payer: <b>address</b>, destination: <b>address</b>, value: u64): (u64, u64, u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="Receipts.md#0x1_Receipts_write_receipt">write_receipt</a>(payer: <b>address</b>, destination: <b>address</b>, value: u64):(u64, u64, u64) <b>acquires</b> <a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a> {
+    // TODO: make a function for user <b>to</b> write own receipt.
     <b>if</b> (!<b>exists</b>&lt;<a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(payer)) {
       <b>return</b> (0, 0, 0)
     };
