@@ -9,6 +9,7 @@ module Burn {
   use DiemFramework::TransactionFee;
   use Std::Signer;
   use DiemFramework::Diem::{Self, Diem};
+  use DiemFramework::Debug::print;
 
   struct BurnPreference has key {
     send_community: bool
@@ -25,12 +26,15 @@ module Burn {
       vm: &signer,
   )  acquires BurnPreference, DepositInfo {
       CoreAddresses::assert_vm(vm);
+      print(&50);
       // extract fees
       let coins = TransactionFee::vm_withdraw_all_coins<GAS>(vm);
 
       // get the list of fee makers
       // let state = borrow_global<EpochFeeMakerRegistry>(@VMReserved);
       let fee_makers = TransactionFee::get_fee_makers();
+      print(&fee_makers);
+      
       let len = Vector::length(&fee_makers);
 
       // for every user in the list burn their fees per Burn.move preferences
@@ -133,8 +137,11 @@ module Burn {
   ) acquires DepositInfo, BurnPreference {
     CoreAddresses::assert_vm(vm);
 
+    print(&5050);
     if (exists<BurnPreference>(payer)) {
+      print(&5051);
       if (borrow_global<BurnPreference>(payer).send_community) {
+        print(&5052);
         recycle(vm, payer, &mut user_share);
       }
     };
