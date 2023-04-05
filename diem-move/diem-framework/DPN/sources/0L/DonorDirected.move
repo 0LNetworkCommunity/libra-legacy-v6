@@ -39,7 +39,7 @@ module DonorDirected {
     use DiemFramework::Ballot;
     // use DiemFramework::Testnet;
 
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     /// Not initialized as a donor directed account.
     const ENOT_INIT_DONOR_DIRECTED: u64 = 231001;
@@ -288,13 +288,13 @@ module DonorDirected {
         let this_exp = *&Vector::borrow(&state.scheduled, i).deadline;
         if (this_exp == epoch) {
           let t = Vector::remove(&mut state.scheduled, i);
-          print(&t);
+          // print(&t);
 
           let multisig_address = GUID::id_creator_address(&t.uid);
 
           // Note the VM can do this without the WithdrawCapability
           let coin = DiemAccount::vm_withdraw<GAS>(vm, multisig_address, t.tx.value);
-          DiemAccount::vm_deposit_with_metadata<GAS>(vm, t.tx.payee, coin, *&t.tx.description, b"");
+          DiemAccount::vm_deposit_with_metadata<GAS>(vm, multisig_address, t.tx.payee, coin, *&t.tx.description, b"");
 
 
           // update the records
@@ -540,14 +540,14 @@ module DonorDirected {
     /// propose and vote on the veto of a specific transacation
     public fun propose_veto(donor: &signer, multisig_address: address, uid: u64)  acquires TxSchedule {
       let guid = GUID::create_id(multisig_address, uid);
-      print(&01);
+      // print(&01);
       DonorDirectedGovernance::assert_authorized(donor, multisig_address);
-      print(&02);
+      // print(&02);
       let state = borrow_global<TxSchedule>(multisig_address);
-      print(&03);
+      // print(&03);
       let epochs_duration = DEFAULT_VETO_DURATION;
       DonorDirectedGovernance::propose_veto(&state.guid_capability, &guid,  epochs_duration);
-      print(&04);
+      // print(&04);
     }
 
 

@@ -37,6 +37,9 @@ module DonorDirected {
     use DiemFramework::DiemAccount::{Self, WithdrawCapability};
     use DiemFramework::DonorDirectedGovernance;
     use DiemFramework::Ballot;
+    // use DiemFramework::Testnet;
+
+    // use DiemFramework::Debug::print;
 
     /// Not initialized as a donor directed account.
     const ENOT_INIT_DONOR_DIRECTED: u64 = 231001;
@@ -52,6 +55,14 @@ module DonorDirected {
     const SCHEDULED: u8 = 1;
     const VETO: u8 = 2;
     const PAID: u8 = 3;
+
+    /// number of epochs to wait before a transaction is executed
+    /// Veto can happen in this time
+    /// at the end of the third epoch from when multisig gets consensus
+    const DEFAULT_PAYMENT_DURATION: u64 = 3; 
+    /// minimum amount of time to evaluate when one donor flags for veto.
+    const DEFAULT_VETO_DURATION: u64 = 7;
+
 
     // root registry for the donor directed accounts
     struct Registry has key {
@@ -116,15 +127,8 @@ module DonorDirected {
 
     // 3. Once the MultiSig is initialized, the account needs to be bricked, before the MultiSig can be used.
 
-    public fun set_donor_directed(sig: &signer) acquires Registry {
+    public fun set_donor_directed(sig: &signer) {
       if (!exists<Registry>(@VMReserved)) return;
-
-      let addr = Signer::address_of(sig);
-      let list = get_root_registry();
-      if (!Vector::contains<address>(&list, &addr)) {
-        let s = borrow_global_mut<Registry>(@VMReserved);
-        Vector::push_back(&mut s.list, addr);
-      };
 
       move_to<Freeze>(
         sig, 
@@ -141,9 +145,23 @@ module DonorDirected {
           veto: Vector::empty(),
           paid: Vector::empty(),
           guid_capability,
-        })
-
+        });
+      
+      DonorDirectedGovernance::init_donor_governance(sig);
     }
+
+    // add to root registry
+    fun add_to_registry(sig: &signer) acquires Registry {
+      if (!exists<Registry>(@VMReserved)) return;
+
+      let addr = Signer::address_of(sig);
+      let list = get_root_registry();
+      if (!Vector::contains<address>(&list, &addr)) {
+        let s = borrow_global_mut<Registry>(@VMReserved);
+        Vector::push_back(&mut s.list, addr);
+      };
+    }
+
 
 
     /// Like any MultiSig instance, a sponsor which is the original owner of the account, needs to initialize the account.
@@ -225,14 +243,12 @@ module DonorDirected {
       
       let multisig_address = DiemAccount::get_withdraw_cap_address(withdraw_capability);
       let transfers = borrow_global_mut<TxSchedule>(multisig_address);
-      // let uid = GUID::create_with_capability(multisig_address, &transfers.guid_capability);
       
-      // add current epoch + 1
-      let current_epoch = DiemConfig::get_current_epoch();
-
+      let deadline = DiemConfig::get_current_epoch() + DEFAULT_PAYMENT_DURATION;
+      
       let t = TimedTransfer {
         uid: *uid,
-        deadline: current_epoch + 7, // pays automativally at the end of seventh epoch. Unless there is a veto by a Donor. In that case a day is added for every day there is a veto. This deduplicates Vetos.
+        deadline, // pays automatically at the end of seventh epoch. Unless there is a veto by a Donor. In that case a day is added for every day there is a veto. This deduplicates Vetos.
         tx,
         epoch_latest_veto_received: 0,
       };
@@ -247,6 +263,7 @@ module DonorDirected {
     /// needing to intervene.
     public fun process_donor_directed_accounts(
       vm: &signer,
+      epoch: u64,
     ) acquires Registry, TxSchedule, Freeze {
 
       let list = get_root_registry();
@@ -256,23 +273,29 @@ module DonorDirected {
         let multisig_address = Vector::borrow(&list, i);
         if (exists<TxSchedule>(*multisig_address)) {
           let state = borrow_global_mut<TxSchedule>(*multisig_address);
-          maybe_pay_if_deadline_today(vm, state);
+          maybe_pay_deadline(vm, state, epoch);
         };
         i = i + 1;
       }
     }
 
-    fun maybe_pay_if_deadline_today(vm: &signer, state: &mut TxSchedule) acquires Freeze {
-      let epoch = DiemConfig::get_current_epoch();
+    fun maybe_pay_deadline(vm: &signer, state: &mut TxSchedule, epoch: u64) acquires Freeze {
+      // let epoch = DiemConfig::get_current_epoch();
       let i = 0;
+
       while (i < Vector::length(&state.scheduled)) {
 
         let this_exp = *&Vector::borrow(&state.scheduled, i).deadline;
         if (this_exp == epoch) {
-          let t = Vector::remove<TimedTransfer>(&mut state.scheduled, i);
+          let t = Vector::remove(&mut state.scheduled, i);
+          // print(&t);
 
           let multisig_address = GUID::id_creator_address(&t.uid);
-          DiemAccount::vm_make_payment_no_limit<GAS>(multisig_address, t.tx.payee, t.tx.value, *&t.tx.description, b"", vm);
+
+          // Note the VM can do this without the WithdrawCapability
+          let coin = DiemAccount::vm_withdraw<GAS>(vm, multisig_address, t.tx.value);
+          DiemAccount::vm_deposit_with_metadata<GAS>(vm, multisig_address, t.tx.payee, coin, *&t.tx.description, b"");
+
 
           // update the records
           Vector::push_back(&mut state.paid, t);
@@ -285,6 +308,25 @@ module DonorDirected {
       };
   
     }
+
+    public fun find_by_deadline(multisig_address: address, epoch: u64): vector<GUID::ID> acquires TxSchedule {
+      let state = borrow_global_mut<TxSchedule>(multisig_address);
+      let i = 0;
+      let list = Vector::empty<GUID::ID>();
+
+      while (i < Vector::length(&state.scheduled)) {
+
+        let prop = Vector::borrow(&state.scheduled, i);
+        if (prop.deadline == epoch) {
+          Vector::push_back(&mut list, *&prop.uid);
+        };
+      
+        i = i + 1;
+      };
+
+      list
+    }
+
 
 
   //////// GOVERNANCE HANDLERS ////////
@@ -369,13 +411,13 @@ module DonorDirected {
     }
 
     public fun get_pending_timed_transfer_mut(state: &mut TxSchedule, uid: &GUID::ID): &mut TimedTransfer {
-      let (found, i) = find_schedule_status(state, uid, SCHEDULED);
+      let (found, i) = schedule_status(state, uid, SCHEDULED);
 
       assert!(found, Errors::invalid_argument(ENO_PEDNING_TRANSACTION_AT_UID));
       Vector::borrow_mut<TimedTransfer>(&mut state.scheduled, i)
     }
 
-    public fun find_schedule_status(state: &TxSchedule, uid: &GUID::ID, state_enum: u8): (bool, u64) {
+    public fun schedule_status(state: &TxSchedule, uid: &GUID::ID, state_enum: u8): (bool, u64) {
       let list = if (state_enum == SCHEDULED) { &state.scheduled }
       else if (state_enum == VETO) { &state.veto }
       else if (state_enum == PAID) { &state.paid }
@@ -397,14 +439,14 @@ module DonorDirected {
       (false, 0)
     }
 
-    public fun find_anywhere(state: &TxSchedule, uid: &GUID::ID): (bool, u64, u8) { // (is_found, index, state)
-      let (found, i) = find_schedule_status(state, uid, SCHEDULED);
+    public fun find_schedule_by_id(state: &TxSchedule, uid: &GUID::ID): (bool, u64, u8) { // (is_found, index, state)
+      let (found, i) = schedule_status(state, uid, SCHEDULED);
       if (found) return (found, i, SCHEDULED);
 
-      let (found, i) = find_schedule_status(state, uid, VETO);
+      let (found, i) = schedule_status(state, uid, VETO);
       if (found) return (found, i, VETO);
 
-      let (found, i) = find_schedule_status(state, uid, PAID);
+      let (found, i) = schedule_status(state, uid, PAID);
       if (found) return (found, i, PAID);
 
       (false, 0, 0)
@@ -416,33 +458,37 @@ module DonorDirected {
     }
 
 
-
-    public fun get_proposal_state(directed_address: address, uid: &GUID::ID): (bool, u64, u8) acquires TxSchedule { // (is_found, index, state) 
-      let state = borrow_global<TxSchedule>(directed_address);
-      find_anywhere(state, uid)
+    /// Check the status of proposals in the MultiSig Workflow
+    /// NOTE: These are payments that have not yet been scheduled.
+    public fun get_multisig_proposal_state(directed_address: address, uid: &GUID::ID): (bool, u64, u8, bool) { // (is_found, index, state) 
+      
+      MultiSig::get_proposal_status_by_id<Payment>(directed_address, uid)
     }
 
-    public fun is_pending(directed_address: address, uid: &GUID::ID): bool acquires TxSchedule { // (is_found, index, state) 
+    /// Get the status of a SCHEDULED payment which as already passed the multisig stage.
+    public fun get_schedule_state(directed_address: address, uid: &GUID::ID): (bool, u64, u8) acquires TxSchedule { // (is_found, index, state) 
       let state = borrow_global<TxSchedule>(directed_address);
-      let (_, _, state) = find_anywhere(state, uid);
+      find_schedule_by_id(state, uid)
+    }
+
+    public fun is_scheduled(directed_address: address, uid: &GUID::ID): bool acquires TxSchedule { 
+      let (_, _, state) = get_schedule_state(directed_address, uid);
       state == Ballot::get_pending_enum()
     }
 
-    public fun is_approved(directed_address: address, uid: &GUID::ID): bool acquires TxSchedule { // (is_found, index, state) 
-      let state = borrow_global<TxSchedule>(directed_address);
-      let (_, _, state) = find_anywhere(state, uid);
+    public fun is_paid(directed_address: address, uid: &GUID::ID): bool acquires TxSchedule { 
+      let (_, _, state) = get_schedule_state(directed_address, uid);
       state == Ballot::get_approved_enum()
     }
 
-    public fun is_rejected(directed_address: address, uid: &GUID::ID): bool acquires TxSchedule { // (is_found, index, state) 
-      let state = borrow_global<TxSchedule>(directed_address);
-      let (_, _, state) = find_anywhere(state, uid);
+    public fun is_veto(directed_address: address, uid: &GUID::ID): bool acquires TxSchedule { 
+      let (_, _, state) = get_schedule_state(directed_address, uid);
       state == Ballot::get_rejected_enum()
     }
 
     // getter to check if wallet is frozen
     // used in DiemAccount before attempting a transfer.
-    public fun is_frozen(addr: address): bool acquires Freeze{
+    public fun is_account_frozen(addr: address): bool acquires Freeze{
       let f = borrow_global<Freeze>(addr);
       f.is_frozen
     }
@@ -452,17 +498,21 @@ module DonorDirected {
     /// Initialize the TxSchedule wallet with Three Signers
 
     // TODO: this version of Diem, does not allow vector<address> in the script arguments. So we are hard coding this to initialize with three signers. Gross.
-    public fun init_donor_directed(sponsor: &signer, signer_one: address, signer_two: address, signer_three: address, cfg_n_signers: u64) acquires Registry {
+    public fun init_donor_directed(sponsor: &signer, signer_one: address, signer_two: address, signer_three: address, cfg_n_signers: u64) {
       let init_signers = Vector::singleton(signer_one);
       Vector::push_back(&mut init_signers, signer_two);
       Vector::push_back(&mut init_signers, signer_three);
 
       set_donor_directed(sponsor);
       make_multisig(sponsor, cfg_n_signers, init_signers);
+
+      // if not tracking cumulative donations, then don't use previous balance.
+      // start again.
+      DiemAccount::init_cumulative_deposits(sponsor, 0);
     }
     
     /// the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.
-    public fun finalize_init(sponsor: &signer) {
+    public fun finalize_init(sponsor: &signer) acquires Registry {
       let multisig_address = Signer::address_of(sponsor);
       assert!(MultiSig::is_init(multisig_address), Errors::invalid_state(EMULTISIG_NOT_INIT));
 
@@ -474,6 +524,9 @@ module DonorDirected {
       
       MultiSig::finalize_and_brick(sponsor);
       assert!(is_donor_directed(multisig_address), Errors::invalid_state(ENOT_INIT_DONOR_DIRECTED));
+
+      // only add to registry if INIT is successful.
+      add_to_registry(sponsor);
     }
 
     /// propose and vote on the liquidation of this wallet
@@ -487,10 +540,14 @@ module DonorDirected {
     /// propose and vote on the veto of a specific transacation
     public fun propose_veto(donor: &signer, multisig_address: address, uid: u64)  acquires TxSchedule {
       let guid = GUID::create_id(multisig_address, uid);
+      // print(&01);
       DonorDirectedGovernance::assert_authorized(donor, multisig_address);
+      // print(&02);
       let state = borrow_global<TxSchedule>(multisig_address);
-      let epochs_duration = 7;
+      // print(&03);
+      let epochs_duration = DEFAULT_VETO_DURATION;
       DonorDirectedGovernance::propose_veto(&state.guid_capability, &guid,  epochs_duration);
+      // print(&04);
     }
 
 

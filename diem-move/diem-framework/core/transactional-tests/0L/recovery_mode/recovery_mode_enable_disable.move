@@ -26,12 +26,12 @@ script {
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::RecoveryMode;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     fun main(){
       // RecoveryMode::test_init_recovery(&vm, Vector::empty<address>(), 2);
-      // assert!(RecoveryMode::is_recovery(), 7357001);
-      print(&RecoveryMode::is_recovery());
+      assert!(RecoveryMode::is_recovery(), 7357001);
+      // print(&RecoveryMode::is_recovery());
     }
 }
 
@@ -46,11 +46,11 @@ script {
 //# run --admin-script --signers DiemRoot DiemRoot
 script {
     use DiemFramework::RecoveryMode;
-    // use DiemFramework::Debug::print;
+    // // use DiemFramework::Debug::print;
 
     fun main(){
       // RecoveryMode::test_init_recovery(&vm, Vector::empty<address>(), 2);
       assert!(!RecoveryMode::is_recovery(), 7357002);
-      // print(&RecoveryMode::is_recovery());
+      // // print(&RecoveryMode::is_recovery());
     }
 }

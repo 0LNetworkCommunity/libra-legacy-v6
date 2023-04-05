@@ -50,7 +50,7 @@ module MultiSigPayment {
   use Std::Signer;
   use Std::GUID;
   use DiemFramework::DiemAccount::{Self, WithdrawCapability};
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
   use DiemFramework::GAS::GAS;
   use DiemFramework::MultiSig;
   use DiemFramework::CoreAddresses;
@@ -101,39 +101,39 @@ module MultiSigPayment {
 
 
   public fun propose_payment(sig: &signer, multisig_addr: address, recipient: address, amount: u64, note: vector<u8>, duration_epochs: Option<u64>) {
-    print(&10);
+    // print(&10);
     let pay = new_payment(recipient, amount, *&note);
-    print(&11);
+    // print(&11);
     let prop = MultiSig::proposal_constructor(pay, duration_epochs);
-    print(&12);
+    // print(&12);
     let guid = MultiSig::propose_new<PaymentType>(sig, multisig_addr, prop);
-    print(&guid);
-    print(&13);
+    // print(&guid);
+    // print(&13);
     vote_payment(sig, multisig_addr, &guid);
-    print(&14);
+    // print(&14);
   }
 
   public fun vote_payment(sig: &signer, multisig_address: address, id: &GUID::ID) {
-    print(&50);
+    // print(&50);
     let (passed, cap_opt) = MultiSig::vote_with_id<PaymentType>(sig, id, multisig_address);
-    print(&passed);
-    // print(&data);
-    print(&cap_opt);
+    // print(&passed);
+    // // print(&data);
+    // print(&cap_opt);
 
-    print(&51);
+    // print(&51);
 
     if (passed && Option::is_some(&cap_opt)) {
       let cap = Option::borrow(&cap_opt);
-      print(&5010);
+      // print(&5010);
       let data = MultiSig::extract_proposal_data(multisig_address, id);
       release_payment(&data, cap);
-      print(&5011);
+      // print(&5011);
 
     };
 
 
     MultiSig::maybe_restore_withdraw_cap(sig, multisig_address, cap_opt); // don't need this and can't drop.
-    print(&52);
+    // print(&52);
 
   }
 
@@ -148,7 +148,7 @@ module MultiSigPayment {
   // Withdrawal capabilities are "hot potato" data. Meaning, they cannot ever be dropped and need to be moved to a final resting place, or returned to the struct that was housing it. That is what happens at the end of release_payment, it is only borrowed, and never leaves the data structure.
 
   fun release_payment(p: &PaymentType, cap: &WithdrawCapability) {
-    print(&90001);
+    // print(&90001);
     DiemAccount::pay_from<GAS>(
       cap,
       p.destination,
@@ -188,15 +188,15 @@ module MultiSigPayment {
     let reg = borrow_global<RootMultiSigRegistry>(@VMReserved);
     let i = 0;
     while (i < Vector::length(&reg.list)) {
-      print(&7777777790001);
+      // print(&7777777790001);
       let multi_sig_addr = Vector::borrow(&reg.list, i);
 
       let pct = FixedPoint32::create_from_rational(reg.fee, PERCENT_SCALE);
-      print(&pct);
+      // print(&pct);
       let fee = FixedPoint32::multiply_u64(DiemAccount::balance<GAS>(*multi_sig_addr), pct);
-      print(&fee);
+      // print(&fee);
       let c = DiemAccount::vm_withdraw<GAS>(vm, *multi_sig_addr, fee);
-      TransactionFee::pay_fee(c);
+      TransactionFee::pay_fee_and_track(*multi_sig_addr, c);
       i = i + 1;
     };
 

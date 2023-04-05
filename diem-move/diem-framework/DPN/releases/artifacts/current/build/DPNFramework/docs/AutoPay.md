@@ -37,8 +37,7 @@ This module enables automatic payments from accounts to community wallets at epo
 -  [Function `find`](#0x1_AutoPay_find)
 
 
-<pre><code><b>use</b> <a href="CommunityWallet.md#0x1_CommunityWallet">0x1::CommunityWallet</a>;
-<b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
@@ -352,16 +351,6 @@ Maximum value for the Payment type selection
 
 
 
-<a name="0x1_AutoPay_PAYEE_NOT_COMMUNITY_WALLET"></a>
-
-Attempt to make a payment to a non-community-wallet
-
-
-<pre><code><b>const</b> <a href="AutoPay.md#0x1_AutoPay_PAYEE_NOT_COMMUNITY_WALLET">PAYEE_NOT_COMMUNITY_WALLET</a>: u64 = 10024;
-</code></pre>
-
-
-
 <a name="0x1_AutoPay_PERCENT_OF_BALANCE"></a>
 
 send percent of balance at end of epoch payment type
@@ -601,7 +590,6 @@ Attempt to use a UID that is already taken
   <b>let</b> bal_change_since_last_run = <b>if</b> (pre_run_bal &gt; my_autopay_state.prev_bal) {
     pre_run_bal - my_autopay_state.prev_bal
   } <b>else</b> { 0 };
-
   // go through the pledges
   <b>while</b> (payments_idx &lt; payments_len) {
     <b>let</b> payment = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>&lt;<a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>&gt;(payments, payments_idx);
@@ -648,10 +636,6 @@ Attempt to use a UID that is already taken
   payment: &<b>mut</b> <a href="AutoPay.md#0x1_AutoPay_Payment">Payment</a>,
   bal_change_since_last_run: u64,
 ): bool {
-  // check payees are community wallets, only community wallets are allowed
-  // <b>to</b> receive autopay (bypassing account limits)
-  <b>if</b> (!<a href="CommunityWallet.md#0x1_CommunityWallet_is_comm">CommunityWallet::is_comm</a>(payment.payee)) { <b>return</b> <b>false</b> }; // do nothing but don't delete instruction };
-
   <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(vm);
   <b>let</b> epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
   <b>let</b> account_bal = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*account_addr);
@@ -687,7 +671,7 @@ Attempt to use a UID that is already taken
     };
 
     <b>if</b> (amount != 0 && amount &lt;= account_bal) {
-       <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
+       <a href="DiemAccount.md#0x1_DiemAccount_vm_pay_from">DiemAccount::vm_pay_from</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(
             *account_addr, payment.payee, amount, b"autopay", b"", vm
           );
     };
@@ -807,16 +791,16 @@ Attempt to use a UID that is already taken
   payee: <b>address</b>,
   end_epoch: u64,
   amt: u64
-) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_UserAutoPay">UserAutoPay</a>, <a href="AutoPay.md#0x1_AutoPay_AccountLimitsEnable">AccountLimitsEnable</a> {
+) <b>acquires</b> <a href="AutoPay.md#0x1_AutoPay_UserAutoPay">UserAutoPay</a> {
   <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   // Confirm that no payment <b>exists</b> <b>with</b> the same uid
   <b>let</b> index = <a href="AutoPay.md#0x1_AutoPay_find">find</a>(addr, uid);
   <b>assert</b>!(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_none">Option::is_none</a>&lt;u64&gt;(&index), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay_UID_TAKEN">UID_TAKEN</a>));
 
-  // TODO: This check already <b>exists</b> at the time of execution.
-  <b>if</b> (<b>borrow_global</b>&lt;<a href="AutoPay.md#0x1_AutoPay_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(@DiemRoot).enabled) {
-    <b>assert</b>!(<a href="CommunityWallet.md#0x1_CommunityWallet_is_comm">CommunityWallet::is_comm</a>(payee), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="AutoPay.md#0x1_AutoPay_PAYEE_NOT_COMMUNITY_WALLET">PAYEE_NOT_COMMUNITY_WALLET</a>));
-  };
+  // // TODO: This check already <b>exists</b> at the time of execution.
+  // <b>if</b> (<b>borrow_global</b>&lt;<a href="AutoPay.md#0x1_AutoPay_AccountLimitsEnable">AccountLimitsEnable</a>&gt;(@DiemRoot).enabled) {
+  //   <b>assert</b>!(<a href="CommunityWallet.md#0x1_CommunityWallet_is_comm">CommunityWallet::is_comm</a>(payee), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(PAYEE_NOT_COMMUNITY_WALLET));
+  // };
 
   <b>let</b> payments = &<b>mut</b> <b>borrow_global_mut</b>&lt;<a href="AutoPay.md#0x1_AutoPay_UserAutoPay">UserAutoPay</a>&gt;(addr).payments;
   <b>assert</b>!(

@@ -1,6 +1,7 @@
 //# init --validators Alice Bob Carol Dave Eve Frank
 
-// Test that both cases 3 and 4 are jailed.
+// Scenario: Check that validators that are not signing are being jailed
+// V6:  Validators increasing towers has no effect.
 
 //# block --proposer Alice --time 1 --round 0
 
@@ -50,7 +51,7 @@ script {
         };
 
         assert!(Cases::get_case(vm, @Alice, 0, 15) == 1, 7357008003003);
-        assert!(Cases::get_case(vm, @Eve, 0, 15) == 3, 7357008003004);
+        assert!(Cases::get_case(vm, @Eve, 0, 15) == 4, 7357008003004);
         assert!(Cases::get_case(vm, @Frank, 0, 15) == 4, 7357008003005);
 
         let jailed = DiemSystem::get_jailed_set(vm, 0, 15);

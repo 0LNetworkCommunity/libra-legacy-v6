@@ -8,7 +8,7 @@
 script {
     use DiemFramework::TowerState;
     use DiemFramework::TestFixtures;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
     use Std::Vector;
 
     fun main(_dr: signer, sender: signer) {
@@ -20,11 +20,11 @@ script {
             TestFixtures::security(),
         );
 
-        print(&TowerState::get_epochs_compliant(@Alice));
+        // print(&TowerState::get_epochs_compliant(@Alice));
         assert!(TowerState::get_tower_height(@Alice) == 0, 735701);
         assert!(TowerState::get_epochs_compliant(@Alice) == 0, 735702);
         assert!(TowerState::get_count_in_epoch(@Alice) == 1, 735703);
-        print(&TowerState::get_miner_list());
+        // print(&TowerState::get_miner_list());
         assert!(Vector::length<address>(&TowerState::get_miner_list()) == 2, 735704); 
             // includes the dummy validator from genesis
     }

@@ -2,7 +2,7 @@
 address DiemFramework {
 module DemoBonding {
   use DiemFramework::Decimal;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
   struct CurveState has key {
     is_deprecated: bool,
@@ -51,30 +51,30 @@ module DemoBonding {
   public fun deposit_calc(add_to_reserve: u128, reserve: u128, supply: u128): u128 {
 
     let one = Decimal::new(true, 1, 0);
-    print(&one);
+    // print(&one);
 
     let add_dec = Decimal::new(true, add_to_reserve, 0);
-    print(&add_dec);
+    // print(&add_dec);
 
     let reserve_dec = Decimal::new(true, reserve, 0);
-    print(&reserve_dec);
+    // print(&reserve_dec);
 
     let supply_dec = Decimal::new(true, supply, 0);
-    print(&supply_dec);
+    // print(&supply_dec);
 
     // formula: 
     // supply * sqrt(one+(add_to_reserve/reserve))
 
     let a = Decimal::div(&add_dec, &reserve_dec);
-    print(&a);
+    // print(&a);
     let b = Decimal::add(&one, &a);
-    print(&b);
+    // print(&b);
     let c = Decimal::sqrt(&b);
-    print(&c);
+    // print(&c);
     let d = Decimal::mul(&supply_dec, &c);
-    print(&d);
+    // print(&d);
     let int = Decimal::borrow_int(&Decimal::trunc(&d));
-    print(int);
+    //print(int);
 
     return *int
   }
@@ -95,14 +95,14 @@ module DemoBonding {
     let state = borrow_global_mut<CurveState>(service_addr);
 
     let post_supply = deposit_calc(deposit, state.reserve, state.supply_issued);
-    print(&post_supply);
+    // print(&post_supply);
     assert!(post_supply > state.supply_issued, 73570003);
     let mint = post_supply - state.supply_issued;
-    print(&mint);
+    // print(&mint);
     // update the new curve state
     state.reserve = state.reserve + deposit;
     state.supply_issued = state.supply_issued + mint;
-    // print(&state);
+    // // print(&state);
     mint
   }
 

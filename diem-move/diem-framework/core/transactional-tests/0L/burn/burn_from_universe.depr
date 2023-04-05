@@ -1,0 +1,45 @@
+//# init --validators Alice Bob
+// V6 I don't know what this is testing
+
+//# run --admin-script --signers DiemRoot DiemRoot
+script {
+
+    use DiemFramework::Mock;
+
+    fun main(vm: signer, _: signer) {
+        Mock::pof_default(&vm);
+        Mock::mock_case_4(&vm, @Alice, 0, 15);
+    }
+}
+
+///////////////////////////////////////////
+// Trigger reconfiguration at 61 seconds //
+//# block --proposer Alice --time 61000000 --round 15
+
+////// TEST RECONFIGURATION IS HAPPENING /////
+// check: NewEpochEvent
+//////////////////////////////////////////////
+
+//# run --admin-script --signers DiemRoot DiemRoot
+script {
+  use DiemFramework::DiemAccount;
+  use DiemFramework::GAS::GAS;
+  use DiemFramework::Diem;
+  use DiemFramework::Debug::print;
+
+  fun main() {
+    let new_cap = Diem::market_cap<GAS>();
+    // let val_plus_oper_start = 10000000u128 + 1000000u128; //10M + 1M
+    // let burn = 148000000u128; // 50% of validator subsidy
+    // let subsidy = 0u128;
+    print(&3333333);
+    print(&new_cap);
+
+    // assert!(new_cap == (val_plus_oper_start + subsidy - burn), 7357002);
+
+    // should not change bob's balance, since Alice did not opt to seend to community index.
+    let bal = DiemAccount::balance<GAS>(@Alice);
+    print(&bal);
+    // assert!(bal == (10000000 - (burn as u64)), 7357003);
+  }
+}

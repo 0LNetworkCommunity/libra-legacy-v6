@@ -6,18 +6,28 @@
 
 
 -  [Resource `TransactionFee`](#0x1_TransactionFee_TransactionFee)
+-  [Resource `FeeMaker`](#0x1_TransactionFee_FeeMaker)
+-  [Resource `EpochFeeMakerRegistry`](#0x1_TransactionFee_EpochFeeMakerRegistry)
 -  [Constants](#@Constants_0)
 -  [Function `initialize`](#0x1_TransactionFee_initialize)
 -  [Function `is_coin_initialized`](#0x1_TransactionFee_is_coin_initialized)
 -  [Function `is_initialized`](#0x1_TransactionFee_is_initialized)
 -  [Function `add_txn_fee_currency`](#0x1_TransactionFee_add_txn_fee_currency)
 -  [Function `pay_fee`](#0x1_TransactionFee_pay_fee)
+-  [Function `pay_fee_and_track`](#0x1_TransactionFee_pay_fee_and_track)
 -  [Function `burn_fees`](#0x1_TransactionFee_burn_fees)
     -  [Specification of the case where burn type is XDX.](#@Specification_of_the_case_where_burn_type_is_XDX._1)
     -  [Specification of the case where burn type is not XDX.](#@Specification_of_the_case_where_burn_type_is_not_XDX._2)
 -  [Function `get_amount_to_distribute`](#0x1_TransactionFee_get_amount_to_distribute)
--  [Function `get_transaction_fees_coins`](#0x1_TransactionFee_get_transaction_fees_coins)
+-  [Function `vm_withdraw_all_coins`](#0x1_TransactionFee_vm_withdraw_all_coins)
 -  [Function `get_transaction_fees_coins_amount`](#0x1_TransactionFee_get_transaction_fees_coins_amount)
+-  [Function `initialize_epoch_fee_maker_registry`](#0x1_TransactionFee_initialize_epoch_fee_maker_registry)
+-  [Function `initialize_fee_maker`](#0x1_TransactionFee_initialize_fee_maker)
+-  [Function `epoch_reset_fee_maker`](#0x1_TransactionFee_epoch_reset_fee_maker)
+-  [Function `reset_one_fee_maker`](#0x1_TransactionFee_reset_one_fee_maker)
+-  [Function `track_user_fee`](#0x1_TransactionFee_track_user_fee)
+-  [Function `get_fee_makers`](#0x1_TransactionFee_get_fee_makers)
+-  [Function `get_epoch_fees_made`](#0x1_TransactionFee_get_epoch_fees_made)
 -  [Module Specification](#@Module_Specification_3)
     -  [Initialization](#@Initialization_4)
     -  [Helper Function](#@Helper_Function_5)
@@ -29,6 +39,7 @@
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="Roles.md#0x1_Roles">0x1::Roles</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 <b>use</b> <a href="XDX.md#0x1_XDX">0x1::XDX</a>;
 </code></pre>
 
@@ -60,6 +71,71 @@ fiat <code>CoinType</code> that can be collected as a transaction fee.
 </dd>
 <dt>
 <code>preburn: <a href="Diem.md#0x1_Diem_Preburn">Diem::Preburn</a>&lt;CoinType&gt;</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a name="0x1_TransactionFee_FeeMaker"></a>
+
+## Resource `FeeMaker`
+
+FeeMaker struct lives on an individual's account
+We check how many fees the user has paid.
+This will interact with Burn preferences when there is a remainder of fees in the TransactionFee account
+
+
+<pre><code><b>struct</b> <a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a> <b>has</b> key
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>epoch: u64</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>lifetime: u64</code>
+</dt>
+<dd>
+
+</dd>
+</dl>
+
+
+</details>
+
+<a name="0x1_TransactionFee_EpochFeeMakerRegistry"></a>
+
+## Resource `EpochFeeMakerRegistry`
+
+We need a list of who is producing fees this epoch.
+This lives on the VM address
+
+
+<pre><code><b>struct</b> <a href="TransactionFee.md#0x1_TransactionFee_EpochFeeMakerRegistry">EpochFeeMakerRegistry</a> <b>has</b> key
+</code></pre>
+
+
+
+<details>
+<summary>Fields</summary>
+
+
+<dl>
+<dt>
+<code>fee_makers: vector&lt;<b>address</b>&gt;</code>
 </dt>
 <dd>
 
@@ -250,8 +326,8 @@ Deposit <code>coin</code> into the transaction fees bucket
 <pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">pay_fee</a>&lt;CoinType&gt;(coin: <a href="Diem.md#0x1_Diem">Diem</a>&lt;CoinType&gt;) <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a> {
     <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
     <b>assert</b>!(<a href="TransactionFee.md#0x1_TransactionFee_is_coin_initialized">is_coin_initialized</a>&lt;CoinType&gt;(), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="TransactionFee.md#0x1_TransactionFee_ETRANSACTION_FEE">ETRANSACTION_FEE</a>));
-    <b>let</b> fees = <b>borrow_global_mut</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a>&lt;CoinType&gt;&gt;(@TreasuryCompliance);
-    <a href="Diem.md#0x1_Diem_deposit">Diem::deposit</a>(&<b>mut</b> fees.balance, coin)
+    <b>let</b> fees = <b>borrow_global_mut</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a>&lt;CoinType&gt;&gt;(@TreasuryCompliance); // TODO: this is just the VM root actually
+    <a href="Diem.md#0x1_Diem_deposit">Diem::deposit</a>(&<b>mut</b> fees.balance, coin);
 }
 </code></pre>
 
@@ -294,6 +370,35 @@ Deposit <code>coin</code> into the transaction fees bucket
     <b>let</b> fees = <a href="TransactionFee.md#0x1_TransactionFee_spec_transaction_fee">spec_transaction_fee</a>&lt;CoinType&gt;().balance;
     <b>let</b> <b>post</b> post_fees = <a href="TransactionFee.md#0x1_TransactionFee_spec_transaction_fee">spec_transaction_fee</a>&lt;CoinType&gt;().balance;
     <b>ensures</b> post_fees.value == fees.value + coin.value;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TransactionFee_pay_fee_and_track"></a>
+
+## Function `pay_fee_and_track`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_pay_fee_and_track">pay_fee_and_track</a>&lt;CoinType&gt;(user: <b>address</b>, coin: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;CoinType&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_pay_fee_and_track">pay_fee_and_track</a>&lt;CoinType&gt;(user: <b>address</b>, coin: <a href="Diem.md#0x1_Diem">Diem</a>&lt;CoinType&gt;) <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a>, <a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a>, <a href="TransactionFee.md#0x1_TransactionFee_EpochFeeMakerRegistry">EpochFeeMakerRegistry</a> {
+    <a href="DiemTimestamp.md#0x1_DiemTimestamp_assert_operating">DiemTimestamp::assert_operating</a>();
+    <b>assert</b>!(<a href="TransactionFee.md#0x1_TransactionFee_is_coin_initialized">is_coin_initialized</a>&lt;CoinType&gt;(), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="TransactionFee.md#0x1_TransactionFee_ETRANSACTION_FEE">ETRANSACTION_FEE</a>));
+    <b>let</b> amount = <a href="Diem.md#0x1_Diem_value">Diem::value</a>(&coin);
+    <b>let</b> fees = <b>borrow_global_mut</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a>&lt;CoinType&gt;&gt;(@TreasuryCompliance); // TODO: this is just the VM root actually
+    <a href="Diem.md#0x1_Diem_deposit">Diem::deposit</a>(&<b>mut</b> fees.balance, coin);
+    <a href="TransactionFee.md#0x1_TransactionFee_track_user_fee">track_user_fee</a>(user, amount);
 }
 </code></pre>
 
@@ -477,13 +582,14 @@ BurnCapability is not transferrable [[J3]][PERMISSION].
 
 </details>
 
-<a name="0x1_TransactionFee_get_transaction_fees_coins"></a>
+<a name="0x1_TransactionFee_vm_withdraw_all_coins"></a>
 
-## Function `get_transaction_fees_coins`
+## Function `vm_withdraw_all_coins`
+
+only to be used by VM through the Burn.move module
 
 
-
-<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins">get_transaction_fees_coins</a>&lt;Token: store&gt;(dr_account: &signer): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_vm_withdraw_all_coins">vm_withdraw_all_coins</a>&lt;Token: store&gt;(dr_account: &signer): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;
 </code></pre>
 
 
@@ -492,7 +598,7 @@ BurnCapability is not transferrable [[J3]][PERMISSION].
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins">get_transaction_fees_coins</a>&lt;Token: store&gt;(
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_vm_withdraw_all_coins">vm_withdraw_all_coins</a>&lt;Token: store&gt;(
     dr_account: &signer
 ): <a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&gt; <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a> {
     // Can only be invoked by DiemVM privilege.
@@ -540,6 +646,216 @@ BurnCapability is not transferrable [[J3]][PERMISSION].
     );
 
     <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(&<b>mut</b> fees.balance, amount)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TransactionFee_initialize_epoch_fee_maker_registry"></a>
+
+## Function `initialize_epoch_fee_maker_registry`
+
+Initialize the registry at the VM address.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_initialize_epoch_fee_maker_registry">initialize_epoch_fee_maker_registry</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_initialize_epoch_fee_maker_registry">initialize_epoch_fee_maker_registry</a>(vm: &signer) {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>let</b> registry = <a href="TransactionFee.md#0x1_TransactionFee_EpochFeeMakerRegistry">EpochFeeMakerRegistry</a> {
+    fee_makers: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+  };
+  <b>move_to</b>(vm, registry);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TransactionFee_initialize_fee_maker"></a>
+
+## Function `initialize_fee_maker`
+
+FeeMaker is initialized when the account is created
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_initialize_fee_maker">initialize_fee_maker</a>(account: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_initialize_fee_maker">initialize_fee_maker</a>(account: &signer) {
+  <b>let</b> fee_maker = <a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a> {
+    epoch: 0,
+    lifetime: 0,
+  };
+  <b>move_to</b>(account, fee_maker);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TransactionFee_epoch_reset_fee_maker"></a>
+
+## Function `epoch_reset_fee_maker`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_epoch_reset_fee_maker">epoch_reset_fee_maker</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_epoch_reset_fee_maker">epoch_reset_fee_maker</a>(vm: &signer) <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee_EpochFeeMakerRegistry">EpochFeeMakerRegistry</a>, <a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>let</b> registry = <b>borrow_global_mut</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee_EpochFeeMakerRegistry">EpochFeeMakerRegistry</a>&gt;(@VMReserved);
+  <b>let</b> fee_makers = &registry.fee_makers;
+
+  <b>let</b> i = 0;
+  <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(fee_makers)) {
+    <b>let</b> account = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(fee_makers, i);
+    <a href="TransactionFee.md#0x1_TransactionFee_reset_one_fee_maker">reset_one_fee_maker</a>(vm, account);
+    i = i + 1;
+  };
+  registry.fee_makers = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>();
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TransactionFee_reset_one_fee_maker"></a>
+
+## Function `reset_one_fee_maker`
+
+FeeMaker is reset at the epoch boundary, and the lifetime is updated.
+
+
+<pre><code><b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_reset_one_fee_maker">reset_one_fee_maker</a>(vm: &signer, account: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_reset_one_fee_maker">reset_one_fee_maker</a>(vm: &signer, account: <b>address</b>) <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>let</b> fee_maker = <b>borrow_global_mut</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a>&gt;(account);
+    fee_maker.lifetime = fee_maker.lifetime + fee_maker.epoch;
+    fee_maker.epoch = 0;
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TransactionFee_track_user_fee"></a>
+
+## Function `track_user_fee`
+
+add a fee to the account fee maker for an epoch
+PRIVATE function
+
+
+<pre><code><b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_track_user_fee">track_user_fee</a>(account: <b>address</b>, amount: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_track_user_fee">track_user_fee</a>(account: <b>address</b>, amount: u64) <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a>, <a href="TransactionFee.md#0x1_TransactionFee_EpochFeeMakerRegistry">EpochFeeMakerRegistry</a> {
+  <b>if</b> (!<b>exists</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a>&gt;(account)) {
+    <b>return</b>
+  };
+
+  <b>let</b> fee_maker = <b>borrow_global_mut</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a>&gt;(account);
+  fee_maker.epoch = fee_maker.epoch + amount;
+
+  // <b>update</b> the registry
+  <b>let</b> registry = <b>borrow_global_mut</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee_EpochFeeMakerRegistry">EpochFeeMakerRegistry</a>&gt;(@VMReserved);
+  <b>if</b> (!<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&registry.fee_makers, &account)) {
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> registry.fee_makers, account);
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TransactionFee_get_fee_makers"></a>
+
+## Function `get_fee_makers`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_fee_makers">get_fee_makers</a>(): vector&lt;<b>address</b>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_fee_makers">get_fee_makers</a>(): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee_EpochFeeMakerRegistry">EpochFeeMakerRegistry</a> {
+  <b>let</b> registry = <b>borrow_global</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee_EpochFeeMakerRegistry">EpochFeeMakerRegistry</a>&gt;(@VMReserved);
+  *&registry.fee_makers
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TransactionFee_get_epoch_fees_made"></a>
+
+## Function `get_epoch_fees_made`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_epoch_fees_made">get_epoch_fees_made</a>(account: <b>address</b>): u64
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_epoch_fees_made">get_epoch_fees_made</a>(account: <b>address</b>): u64 <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a> {
+  <b>if</b> (!<b>exists</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a>&gt;(account)) {
+    <b>return</b> 0
+  };
+  <b>let</b> fee_maker = <b>borrow_global</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee_FeeMaker">FeeMaker</a>&gt;(account);
+  fee_maker.epoch
 }
 </code></pre>
 
