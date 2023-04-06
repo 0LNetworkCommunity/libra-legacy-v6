@@ -56,6 +56,7 @@ exact-versions = true
 platforms = [
     "x86_64-unknown-linux-gnu",
     "x86_64-apple-darwin",
+    "x86_64-pc-windows-gnu",
 ]
 
 # Ideally we'd have powerpc-unknown-linux-gnu here as well, but unification causes openssl-sys to be included,
@@ -79,11 +80,11 @@ third-party = [
     # Exclude the fail crate because the failpoints feature should only be enabled
     # for certain builds.
     { name = "fail" },
-    { name = "move-binary-format", git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" },
-    { name = "move-core-types", git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" },
-    { name = "move-stdlib", git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" },
-    { name = "move-vm-runtime", git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" },
-    { name = "move-vm-types", git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" },
+    { name = "move-binary-format", git = "https://github.com/0LNetworkCommunity/move-0L", branch = "v6" },
+    { name = "move-core-types", git = "https://github.com/0LNetworkCommunity/move-0L", branch = "v6" },
+    { name = "move-stdlib", git = "https://github.com/0LNetworkCommunity/move-0L", branch = "v6" },
+    { name = "move-vm-runtime", git = "https://github.com/0LNetworkCommunity/move-0L", branch = "v6" },
+    { name = "move-vm-types", git = "https://github.com/0LNetworkCommunity/move-0L", branch = "v6" },
 ]
 
 # This follows the same syntax as CargoOptionsSummary in guppy.
