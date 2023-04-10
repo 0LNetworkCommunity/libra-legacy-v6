@@ -13,6 +13,11 @@ module DiemFramework::DiemAccount {
     friend DiemFramework::Genesis;
     friend DiemFramework::TestFixtures; // Todo: remove
     friend DiemFramework::Mock;
+    friend DiemFramework::PledgeAccounts;
+    friend DiemFramework::Subsidy;
+    friend DiemFramework::Burn;
+    friend DiemFramework::DonorDirected;
+
 
     use DiemFramework::AccountFreezing;
     use DiemFramework::CoreAddresses;
@@ -1406,12 +1411,13 @@ module DiemFramework::DiemAccount {
         // don't try to send a 0 balance, will halt.
         if (amount < 1) return;
 
-        // Check payee can receive funds in this currency.
-        if (!exists<Balance<Token>>(payee)) return; 
-        // assert!(exists<Balance<Token>>(payee), Errors::not_published(EROLE_CANT_STORE_BALANCE));
-
         // Check there is a payer
         if (!exists_at(payer)) return; 
+
+        // Check payee can receive funds in this currency.
+        if (!exists<Balance<Token>>(payee)) return; 
+
+
         // assert!(exists_at(payer), Errors::not_published(EACCOUNT));
 
         // Check the payer is in possession of withdraw token.
@@ -1772,6 +1778,73 @@ module DiemFramework::DiemAccount {
             false // 0L todo diem-1.4.1 - new patch, needs review
         );
     }
+
+    ///////// 0L ////////
+    // public function to be used in PledgeAccounts.
+    // WARN: this function bypasses account unlock limits.
+    // It's to be used on system pledge accounts. Infra Escrow
+    public(friend) fun genesis_infra_escrow_withdrawal_no_limit<Token: store>(
+        vm: &signer,
+        payer_addr: address,
+        value: u64, 
+    ): Diem<Token> acquires Balance { //////// 0L ////////
+        CoreAddresses::assert_diem_root(vm);
+        let account_balance = borrow_global_mut<Balance<Token>>(payer_addr);
+        let balance_coin = &mut account_balance.coin;
+
+        // Doubly check balance exists.
+        assert!(
+            Diem::value(balance_coin) > value,
+            Errors::limit_exceeded(EINSUFFICIENT_BALANCE)
+        );
+
+        Diem::withdraw(balance_coin, value)
+    }
+
+
+  //////// 0L ////////
+  // For genesis: the VM and user can sign, and withdraw above the
+  // slow wallet limit.
+  public fun vm_genesis_simple_withdrawal(vm: &signer, payer_sig: &signer, amount: u64): Diem::Diem<GAS> acquires Balance {
+        CoreAddresses::assert_vm(vm);
+        let payer_addr = Signer::address_of(payer_sig);
+
+        let account_balance = borrow_global_mut<Balance<GAS>>(payer_addr);
+        let balance_coin = &mut account_balance.coin;
+        Diem::withdraw(balance_coin, amount)
+  }
+
+    public fun simple_withdrawal(payer_sig: &signer, amount: u64): Diem::Diem<GAS> acquires Balance, SlowWallet {
+        let payer_addr = Signer::address_of(payer_sig);
+
+        // check amount if it is a slow wallet
+        if (is_slow(payer_addr)) {
+          assert!(
+                amount < unlocked_amount(payer_addr),
+                Errors::limit_exceeded(EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT)
+            );
+          
+          // remove available unlocks.
+          decrease_unlocked_tracker(payer_addr, amount);
+        };
+
+        let account_balance = borrow_global_mut<Balance<GAS>>(payer_addr);
+        let balance_coin = &mut account_balance.coin;
+        Diem::withdraw(balance_coin, amount)
+  }
+
+  // The vm_pay_* functions above don't return a coin, so they can't be used in genesis for some operations, e.g. not in PledgeAccounts.
+  // can override the Slow Wallet unlock amounts.
+  // For now safety feature, needs signatures of both users, so can only be done by vm.
+  public fun vm_simple_withdrawal(vm: &signer, payer_sig: &signer, amount: u64): Diem::Diem<GAS> acquires Balance {
+        CoreAddresses::assert_diem_root(vm);
+        let payer_addr = Signer::address_of(payer_sig);
+
+
+        let account_balance = borrow_global_mut<Balance<GAS>>(payer_addr);
+        let balance_coin = &mut account_balance.coin;
+        Diem::withdraw(balance_coin, amount)
+  }
 
     //////// 0L ////////
     public fun genesis_fund_operator(
@@ -2454,8 +2527,8 @@ module DiemFramework::DiemAccount {
     /// 0L change, return zero if it doesn't hold balance. 
     /// In case the VM calls this on a bad account it won't halt
     public fun balance<Token>(addr: address): u64 acquires Balance {
-        // if (!exists<Balance<Token>>(addr)) { return 0 }; // todo //////// 0L //////// 
-        assert!(exists<Balance<Token>>(addr), Errors::not_published(EPAYER_DOESNT_HOLD_CURRENCY));
+        if (!exists<Balance<Token>>(addr)) { return 0 }; //////// 0L //////// 
+        // assert!(exists<Balance<Token>>(addr), Errors::not_published(EPAYER_DOESNT_HOLD_CURRENCY));
         balance_for(borrow_global<Balance<Token>>(addr))
     }
     spec balance {
@@ -3208,12 +3281,15 @@ module DiemFramework::DiemAccount {
         let new_account = create_signer(new_account_address);
         set_slow(&new_account);
 
-        // NOTE: issues with testnet
+        
         Jail::init(&new_account);
+
+        // NOTE: issues with testnet
         // TODO: why does this fail?
         // assert!(ValidatorConfig::is_valid(new_account_address), 07171717171);
 
     }
+
     spec create_validator_account {
         pragma disable_invariants_in_body;
         include CreateValidatorAccountAbortsIf;
@@ -3606,8 +3682,8 @@ module DiemFramework::DiemAccount {
     struct CumulativeDeposits has key {
         /// Store the cumulative deposits made to this account.
         /// not all accounts will have this enabled.
-        value: u64,
-        index: u64, 
+        value: u64, // the cumulative deposits with no adjustments.
+        index: u64, // The index is a time-weighted cumulative sum of the deposits made to this account. This favors most recent donations.
     }
 
     //////// 0L ////////
@@ -3621,6 +3697,7 @@ module DiemFramework::DiemAccount {
       let i = 0u64;
       while (i < Vector::length(vals)) {
         let val = Vector::borrow(vals, i);
+
         vm_pay_user_fee(vm, *val, fee, *metadata);
         i = i + 1;
       };
@@ -3628,8 +3705,15 @@ module DiemFramework::DiemAccount {
 
     //////// 0L ////////
     // init struct for storing cumulative deposits, for community wallets
-    public fun init_cumulative_deposits(sender: &signer, starting_balance: u64) {
+    // TODO: set true or false, that the account gets current balance or 
+    // starts at zero.
+    public(friend) fun init_cumulative_deposits(sender: &signer, use_starting_balance: bool) acquires Balance {
       let addr = Signer::address_of(sender);
+
+      let starting_balance = if (use_starting_balance) {
+        balance<GAS>(addr) 
+      } else { 0 };
+      
 
       if (!exists<CumulativeDeposits>(addr)) {
         move_to<CumulativeDeposits>(sender, CumulativeDeposits {
@@ -3639,10 +3723,16 @@ module DiemFramework::DiemAccount {
       };
     }
 
+    public fun vm_migrate_cumulative_deposits(vm: &signer, sender: &signer, use_starting_balance: bool) acquires Balance {
+      CoreAddresses::assert_diem_root(vm);
+      init_cumulative_deposits(sender, use_starting_balance);
+    }
+
     fun maybe_update_deposit(payer: address, payee: address, deposit_value: u64) acquires CumulativeDeposits {
         // update cumulative deposits if the account has the struct.
         if (exists<CumulativeDeposits>(payee)) {
           let epoch = DiemConfig::get_current_epoch();
+          // adjusted for the time-weighted index.
           let index = deposit_index_curve(epoch, deposit_value);
           let cumu = borrow_global_mut<CumulativeDeposits>(payee);
           cumu.value = cumu.value + deposit_value;
@@ -3837,5 +3927,15 @@ module DiemFramework::DiemAccount {
         };
 
         let _ = borrow_global_mut<SlowWallet>(addr);
-    }     
+    }
+
+    // there's an issue with testing burn ratios, where the community wallet  
+    // accounts are initialized with deposits (as vals etc), but we need 
+    // those accounts reset.
+    public fun test_reset_cumu_deposits(vm: &signer, add: address) acquires CumulativeDeposits {
+      Testnet::assert_testnet(vm);
+      let cm = borrow_global_mut<CumulativeDeposits>(add);
+      cm.value = 0;
+      cm.index = 0;
+    }
 }

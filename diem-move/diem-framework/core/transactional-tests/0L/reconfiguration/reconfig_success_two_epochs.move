@@ -3,7 +3,7 @@
 // This test is to check if two epochs succesfully happen with all 
 // validators being CASE 1.
 
-//# run --admin-script --signers DiemRoot DiemRoot
+//# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::Mock;
     use DiemFramework::DiemSystem;
@@ -15,6 +15,10 @@ script {
         Mock::all_good_validators(&vm);
         // all validators bid
         Mock::pof_default(&vm);
+
+
+        // need to also mock network fees being paid.
+        Mock::mock_network_fees(&vm, 4000000);
     }
 }
 // check: EXECUTED

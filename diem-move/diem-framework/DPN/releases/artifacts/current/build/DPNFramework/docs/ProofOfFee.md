@@ -10,6 +10,7 @@
 -  [Constants](#@Constants_0)
 -  [Function `init_genesis_baseline_reward`](#0x1_ProofOfFee_init_genesis_baseline_reward)
 -  [Function `init`](#0x1_ProofOfFee_init)
+-  [Function `epoch_boundary`](#0x1_ProofOfFee_epoch_boundary)
 -  [Function `get_sorted_vals`](#0x1_ProofOfFee_get_sorted_vals)
 -  [Function `fill_seats_and_get_price`](#0x1_ProofOfFee_fill_seats_and_get_price)
 -  [Function `audit_qualification`](#0x1_ProofOfFee_audit_qualification)
@@ -30,7 +31,8 @@
 -  [Function `test_mock_reward`](#0x1_ProofOfFee_test_mock_reward)
 
 
-<pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
+<b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
@@ -237,6 +239,39 @@
       }
     );
   }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_ProofOfFee_epoch_boundary"></a>
+
+## Function `epoch_boundary`
+
+consolidates all the logic for the epoch boundary
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_epoch_boundary">epoch_boundary</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;, n_musical_chairs: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_epoch_boundary">epoch_boundary</a>(
+  vm: &signer,
+  outgoing_compliant_set: &vector&lt;<b>address</b>&gt;,
+  n_musical_chairs: u64
+) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>, <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+    <b>let</b> sorted_bids = <a href="ProofOfFee.md#0x1_ProofOfFee_get_sorted_vals">get_sorted_vals</a>(<b>false</b>);
+    <b>let</b> (auction_winners, price) = <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">fill_seats_and_get_price</a>(vm, n_musical_chairs, &sorted_bids, outgoing_compliant_set);
+
+    <a href="DiemAccount.md#0x1_DiemAccount_vm_multi_pay_fee">DiemAccount::vm_multi_pay_fee</a>(vm, &auction_winners, price, &b"proof of fee");
 }
 </code></pre>
 

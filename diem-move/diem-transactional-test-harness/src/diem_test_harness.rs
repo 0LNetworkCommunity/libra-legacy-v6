@@ -8,6 +8,7 @@ use diem_crypto::{
     PrivateKey, ValidCryptoMaterialStringExt,
 };
 use diem_keygen::KeyGen;
+use diem_logger::prelude::*;
 use diem_state_view::StateView;
 use diem_types::{
     access_path::AccessPath,
@@ -870,7 +871,7 @@ impl<'a> MoveTestAdapter<'a> for DiemTestAdapter<'a> {
             /////// 0L /////////
             let mut rng: rand::rngs::StdRng = rand::SeedableRng::from_seed([1u8; 32]);
 
-            println!("======== diem_test_harness::init validators");
+            info!("======== diem_test_harness::init validators");
             if let Some(validators) = init_args.validators {
                 for validator_name in validators {
                     if named_address_mapping.contains_key(validator_name.as_str()) {
@@ -902,8 +903,8 @@ impl<'a> MoveTestAdapter<'a> for DiemTestAdapter<'a> {
                     private_key_mapping
                         .insert(validator_name.clone(), validator_private_key.clone());
 
-                    println!("validator_name: {:?}", &validator_name);
-                    println!("validator_account_addr: {:?}", &validator_account_addr);
+                    info!("validator_name: {:?}", &validator_name);
+                    info!("validator_account_addr: {:?}", &validator_account_addr);
                     // Note: validator accounts are created at a later time.
                     // This is because we need to fetch the sequence number of DiemRoot, which is
                     // only available after the DiemTestAdapter has been fully initialized.

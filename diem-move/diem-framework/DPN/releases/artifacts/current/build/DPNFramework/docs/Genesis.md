@@ -33,6 +33,7 @@ when executing from a fresh state.
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
+<b>use</b> <a href="InfraEscrow.md#0x1_InfraEscrow">0x1::InfraEscrow</a>;
 <b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
 <b>use</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment">0x1::MultiSigPayment</a>;
 <b>use</b> <a href="MusicalChairs.md#0x1_MusicalChairs">0x1::MusicalChairs</a>;
@@ -231,6 +232,7 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
     <a href="DiemAccount.md#0x1_DiemAccount_vm_init_slow">DiemAccount::vm_init_slow</a>(dr_account);
     <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(dr_account);
     <a href="MusicalChairs.md#0x1_MusicalChairs_initialize">MusicalChairs::initialize</a>(dr_account);
+    <a href="InfraEscrow.md#0x1_InfraEscrow_initialize_infra_pledge">InfraEscrow::initialize_infra_pledge</a>(dr_account);
 
     // After we have called this function, all invariants which are guarded by
     // `<a href="DiemTimestamp.md#0x1_DiemTimestamp_is_operating">DiemTimestamp::is_operating</a>() ==&gt; ...` will become active and a verification condition.

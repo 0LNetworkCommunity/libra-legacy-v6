@@ -2759,6 +2759,7 @@ dependencies = [
  "diem-crypto",
  "diem-framework",
  "diem-keygen",
+ "diem-logger 0.1.0",
  "diem-state-view",
  "diem-transaction-builder",
  "diem-types",

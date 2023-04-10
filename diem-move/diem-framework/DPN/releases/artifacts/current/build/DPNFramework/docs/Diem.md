@@ -40,6 +40,7 @@ minting and burning of coins.
 -  [Function `burn_with_capability`](#0x1_Diem_burn_with_capability)
 -  [Function `burn_with_resource_cap`](#0x1_Diem_burn_with_resource_cap)
 -  [Function `vm_burn_this_coin`](#0x1_Diem_vm_burn_this_coin)
+-  [Function `friend_burn_this_coin`](#0x1_Diem_friend_burn_this_coin)
 -  [Function `cancel_burn_with_capability`](#0x1_Diem_cancel_burn_with_capability)
 -  [Function `burn_now`](#0x1_Diem_burn_now)
 -  [Function `remove_burn_capability`](#0x1_Diem_remove_burn_capability)
@@ -2362,6 +2363,53 @@ Calls to this function will fail if the preburn <code>to_burn</code> area for <c
     coin: <a href="Diem.md#0x1_Diem">Diem</a>&lt;CoinType&gt;,
 ) <b>acquires</b> <a href="Diem.md#0x1_Diem_CurrencyInfo">CurrencyInfo</a> {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+    <b>let</b> currency_code = <a href="Diem.md#0x1_Diem_currency_code">currency_code</a>&lt;CoinType&gt;();
+    <b>let</b> value = coin.value;
+
+    // <b>update</b> the market cap
+    <a href="Diem.md#0x1_Diem_assert_is_currency">assert_is_currency</a>&lt;CoinType&gt;();
+    <b>let</b> info = <b>borrow_global_mut</b>&lt;<a href="Diem.md#0x1_Diem_CurrencyInfo">CurrencyInfo</a>&lt;CoinType&gt;&gt;(@<a href="Diem.md#0x1_Diem_CurrencyInfo">CurrencyInfo</a>);
+    <b>assert</b>!(info.total_value &gt;= (value <b>as</b> u128), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="Diem.md#0x1_Diem_ECURRENCY_INFO">ECURRENCY_INFO</a>));
+    info.total_value = info.total_value - (value <b>as</b> u128);
+
+    // zero and destroy
+    coin.value = 0;
+    <a href="Diem.md#0x1_Diem_destroy_zero">destroy_zero</a>(coin);
+
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Event.md#0x1_Event_emit_event">Event::emit_event</a>(
+        &<b>mut</b> info.burn_events,
+        <a href="Diem.md#0x1_Diem_BurnEvent">BurnEvent</a> {
+            amount: value,
+            currency_code,
+            preburn_address: @BurnAddress,
+        }
+    );
+    // TODO: formal verfication specs
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Diem_friend_burn_this_coin"></a>
+
+## Function `friend_burn_this_coin`
+
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="Diem.md#0x1_Diem_friend_burn_this_coin">friend_burn_this_coin</a>&lt;CoinType: store&gt;(coin: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;CoinType&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="Diem.md#0x1_Diem_friend_burn_this_coin">friend_burn_this_coin</a>&lt;CoinType: store&gt;(
+    coin: <a href="Diem.md#0x1_Diem">Diem</a>&lt;CoinType&gt;,
+) <b>acquires</b> <a href="Diem.md#0x1_Diem_CurrencyInfo">CurrencyInfo</a> {
     <b>let</b> currency_code = <a href="Diem.md#0x1_Diem_currency_code">currency_code</a>&lt;CoinType&gt;();
     <b>let</b> value = coin.value;
 

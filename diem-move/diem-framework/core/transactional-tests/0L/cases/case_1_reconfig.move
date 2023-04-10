@@ -34,6 +34,9 @@ script {
     use DiemFramework::DiemSystem;
     fun main(_vm: signer, _: signer) {
       assert!(DiemSystem::is_validator(@Alice), 10001);
-      
+      assert!(DiemSystem::is_validator(@Bob), 10002);
+      assert!(DiemSystem::is_validator(@Carol), 10003);
+      assert!(DiemSystem::is_validator(@Dave), 10004);
+      assert!(DiemSystem::is_validator(@Eve), 10005);
     }
 }
