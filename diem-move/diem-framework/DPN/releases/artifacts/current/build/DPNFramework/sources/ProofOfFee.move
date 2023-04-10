@@ -13,17 +13,16 @@ address DiemFramework {
   module ProofOfFee {
     use Std::Errors;
     use DiemFramework::DiemConfig;
-    // use DiemFramework::ValidatorConfig;
     use Std::Signer;
     use DiemFramework::ValidatorUniverse;
     use Std::Vector;
     use DiemFramework::Jail;
     use DiemFramework::DiemAccount;
-    // use DiemFramework::Debug::print;
     use DiemFramework::Vouch;
     use Std::FixedPoint32;
     use DiemFramework::Testnet;
     use DiemFramework::ValidatorConfig;
+    use DiemFramework::CoreAddresses;
 
     const ENOT_AN_ACTIVE_VALIDATOR: u64 = 190001;
     const EBID_ABOVE_MAX_PCT: u64 = 190002;
@@ -82,6 +81,21 @@ address DiemFramework {
       }
     }
 
+    /// consolidates all the logic for the epoch boundary
+    // includes getting the sorted bids
+    // filling the seats (determined by MusicalChairs), and getting a price.
+    // and finally charging the validators for their bid (everyone pays the lowest)
+    public fun epoch_boundary(
+      vm: &signer,
+      outgoing_compliant_set: &vector<address>,
+      n_musical_chairs: u64
+    ) acquires ProofOfFeeAuction, ConsensusReward {
+        CoreAddresses::assert_vm(vm);
+        let sorted_bids = get_sorted_vals(false);
+        let (auction_winners, price) = fill_seats_and_get_price(vm, n_musical_chairs, &sorted_bids, outgoing_compliant_set);
+
+        DiemAccount::vm_multi_pay_fee(vm, &auction_winners, price, &b"proof of fee");
+    }
 
 
 

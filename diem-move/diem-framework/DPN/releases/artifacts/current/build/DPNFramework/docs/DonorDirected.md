@@ -1265,7 +1265,7 @@ Initialize the TxSchedule wallet with Three Signers
 
   // <b>if</b> not tracking cumulative donations, then don't <b>use</b> previous balance.
   // start again.
-  <a href="DiemAccount.md#0x1_DiemAccount_init_cumulative_deposits">DiemAccount::init_cumulative_deposits</a>(sponsor, 0);
+  <a href="DiemAccount.md#0x1_DiemAccount_init_cumulative_deposits">DiemAccount::init_cumulative_deposits</a>(sponsor, <b>false</b>);
 }
 </code></pre>
 

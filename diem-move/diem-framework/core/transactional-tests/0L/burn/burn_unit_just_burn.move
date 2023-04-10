@@ -71,15 +71,15 @@ script {
     Burn::burn_or_recycle_user_fees(&vm, @Alice, c);
 
     let bal_alice = DiemAccount::balance<GAS>(@Alice);
-    // print(&bal_alice);
+    // // print(&bal_alice);
     assert!(bal_alice == 9000000, 7357007); // rounding issues
     
-    // unchanged balance
+    // // unchanged balance
     let bal_a = DiemAccount::balance<GAS>(@CommunityA);
-    // // print(&bal_bob);
+    // // // print(&bal_bob);
     assert!(bal_a == bal_A_before, 7357008);
 
-    // unchanged balance
+    // // unchanged balance
     let bal_b = DiemAccount::balance<GAS>(@CommunityB);
     assert!(bal_b == bal_B_before, 7357009);
 
@@ -87,51 +87,10 @@ script {
 
     assert!(total_supply_after < total_supply_before, 7357010);
 
+    let (burn, rec) = Burn::get_lifetime_tracker();
+    assert!(burn == 1000000, 7357011);
+    assert!(rec == 0, 7357012);
+
   }
 }
 // check: EXECUTED
-
-
-// //# run --admin-script --signers DiemRoot Alice
-// script {
-//   use DiemFramework::Burn;
-
-//     fun main(_dr: signer, sender: signer) {
-//     Burn::set_send_community(&sender, true);
-//   }
-// }
-// //////// SETS community send
-
-// //# run --admin-script --signers DiemRoot DiemRoot
-// script {
-//   use DiemFramework::DiemAccount;
-//   use DiemFramework::GAS::GAS;
-//   use DiemFramework::Burn;
-//   // use DiemFramework::Debug::print;
-
-//   fun main(vm: signer, _:signer) {
-//     let bal_alice = DiemAccount::balance<GAS>(@Alice);
-//     // print(&bal_alice);
-
-//     let bal_bob_old = DiemAccount::balance<GAS>(@Bob);
-//     // print(&bal_bob_old);
-//     let bal_carol_old = DiemAccount::balance<GAS>(@Carol);
-
-//     // this time alice changed burn settings, and is resending to community.
-//     Burn::epoch_start_burn(&vm, @Alice, 100000);
-    
-
-//     let bal_alice = DiemAccount::balance<GAS>(@Alice);
-//     // print(&bal_alice);
-//     assert!(bal_alice == 9100000, 7357010); // rounding issues
-
-//     // balances are greater than before.
-//     let bal_bob = DiemAccount::balance<GAS>(@Bob);
-//     assert!(bal_bob > bal_bob_old, 7357011);
-
-//     // balances are greater than before.
-//     let bal_carol = DiemAccount::balance<GAS>(@Carol);
-//     assert!(bal_carol > bal_carol_old, 7357012);
-//   }
-// }
-// // check: EXECUTED

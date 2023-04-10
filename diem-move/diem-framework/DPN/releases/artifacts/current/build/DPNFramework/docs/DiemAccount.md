@@ -57,6 +57,10 @@ before and after every transaction.
 -  [Function `pay_from`](#0x1_DiemAccount_pay_from)
 -  [Function `pay_by_signers`](#0x1_DiemAccount_pay_by_signers)
 -  [Function `onboarding_gas_transfer`](#0x1_DiemAccount_onboarding_gas_transfer)
+-  [Function `genesis_infra_escrow_withdrawal_no_limit`](#0x1_DiemAccount_genesis_infra_escrow_withdrawal_no_limit)
+-  [Function `vm_genesis_simple_withdrawal`](#0x1_DiemAccount_vm_genesis_simple_withdrawal)
+-  [Function `simple_withdrawal`](#0x1_DiemAccount_simple_withdrawal)
+-  [Function `vm_simple_withdrawal`](#0x1_DiemAccount_vm_simple_withdrawal)
 -  [Function `genesis_fund_operator`](#0x1_DiemAccount_genesis_fund_operator)
 -  [Function `rotate_authentication_key`](#0x1_DiemAccount_rotate_authentication_key)
     -  [Access Control](#@Access_Control_2)
@@ -103,6 +107,7 @@ before and after every transaction.
 -  [Function `vm_migrate_slow_wallet`](#0x1_DiemAccount_vm_migrate_slow_wallet)
 -  [Function `vm_multi_pay_fee`](#0x1_DiemAccount_vm_multi_pay_fee)
 -  [Function `init_cumulative_deposits`](#0x1_DiemAccount_init_cumulative_deposits)
+-  [Function `vm_migrate_cumulative_deposits`](#0x1_DiemAccount_vm_migrate_cumulative_deposits)
 -  [Function `maybe_update_deposit`](#0x1_DiemAccount_maybe_update_deposit)
 -  [Function `deposit_index_curve`](#0x1_DiemAccount_deposit_index_curve)
 -  [Function `get_cumulative_deposits`](#0x1_DiemAccount_get_cumulative_deposits)
@@ -120,6 +125,7 @@ before and after every transaction.
 -  [Function `is_a_brick`](#0x1_DiemAccount_is_a_brick)
 -  [Function `test_helper_create_signer`](#0x1_DiemAccount_test_helper_create_signer)
 -  [Function `test_remove_slow`](#0x1_DiemAccount_test_remove_slow)
+-  [Function `test_reset_cumu_deposits`](#0x1_DiemAccount_test_reset_cumu_deposits)
 -  [Module Specification](#@Module_Specification_4)
     -  [Access Control](#@Access_Control_5)
         -  [Key Rotation Capability](#@Key_Rotation_Capability_6)
@@ -2982,12 +2988,13 @@ NOTE: Slow wallets who receive funds from here, will be LOCKED, does not unlock 
     // don't try <b>to</b> send a 0 balance, will halt.
     <b>if</b> (amount &lt; 1) <b>return</b>;
 
-    // Check payee can receive funds in this currency.
-    <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee)) <b>return</b>;
-    // <b>assert</b>!(<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EROLE_CANT_STORE_BALANCE">EROLE_CANT_STORE_BALANCE</a>));
-
     // Check there is a payer
     <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payer)) <b>return</b>;
+
+    // Check payee can receive funds in this currency.
+    <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee)) <b>return</b>;
+
+
     // <b>assert</b>!(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payer), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT">EACCOUNT</a>));
 
     // Check the payer is in possession of withdraw token.
@@ -3498,6 +3505,142 @@ As <code>payee</code> is also signer of the transaction, no metadata signature i
         b"",
         <b>false</b> // 0L todo diem-1.4.1 - new patch, needs review
     );
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_genesis_infra_escrow_withdrawal_no_limit"></a>
+
+## Function `genesis_infra_escrow_withdrawal_no_limit`
+
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_genesis_infra_escrow_withdrawal_no_limit">genesis_infra_escrow_withdrawal_no_limit</a>&lt;Token: store&gt;(vm: &signer, payer_addr: <b>address</b>, value: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_genesis_infra_escrow_withdrawal_no_limit">genesis_infra_escrow_withdrawal_no_limit</a>&lt;Token: store&gt;(
+    vm: &signer,
+    payer_addr: <b>address</b>,
+    value: u64,
+): <a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&gt; <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> { //////// 0L ////////
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+    <b>let</b> account_balance = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payer_addr);
+    <b>let</b> balance_coin = &<b>mut</b> account_balance.coin;
+
+    // Doubly check balance <b>exists</b>.
+    <b>assert</b>!(
+        <a href="Diem.md#0x1_Diem_value">Diem::value</a>(balance_coin) &gt; value,
+        <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EINSUFFICIENT_BALANCE">EINSUFFICIENT_BALANCE</a>)
+    );
+
+    <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(balance_coin, value)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_vm_genesis_simple_withdrawal"></a>
+
+## Function `vm_genesis_simple_withdrawal`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_genesis_simple_withdrawal">vm_genesis_simple_withdrawal</a>(vm: &signer, payer_sig: &signer, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_genesis_simple_withdrawal">vm_genesis_simple_withdrawal</a>(vm: &signer, payer_sig: &signer, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt; <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> {
+      <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+      <b>let</b> payer_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(payer_sig);
+
+      <b>let</b> account_balance = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(payer_addr);
+      <b>let</b> balance_coin = &<b>mut</b> account_balance.coin;
+      <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(balance_coin, amount)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_simple_withdrawal"></a>
+
+## Function `simple_withdrawal`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_simple_withdrawal">simple_withdrawal</a>(payer_sig: &signer, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_simple_withdrawal">simple_withdrawal</a>(payer_sig: &signer, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt; <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
+    <b>let</b> payer_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(payer_sig);
+
+    // check amount <b>if</b> it is a slow wallet
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(payer_addr)) {
+      <b>assert</b>!(
+            amount &lt; <a href="DiemAccount.md#0x1_DiemAccount_unlocked_amount">unlocked_amount</a>(payer_addr),
+            <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT">EWITHDRAWAL_SLOW_WAL_EXCEEDS_UNLOCKED_LIMIT</a>)
+        );
+
+      // remove available unlocks.
+      <a href="DiemAccount.md#0x1_DiemAccount_decrease_unlocked_tracker">decrease_unlocked_tracker</a>(payer_addr, amount);
+    };
+
+    <b>let</b> account_balance = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(payer_addr);
+    <b>let</b> balance_coin = &<b>mut</b> account_balance.coin;
+    <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(balance_coin, amount)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_vm_simple_withdrawal"></a>
+
+## Function `vm_simple_withdrawal`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_simple_withdrawal">vm_simple_withdrawal</a>(vm: &signer, payer_sig: &signer, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_simple_withdrawal">vm_simple_withdrawal</a>(vm: &signer, payer_sig: &signer, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt; <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> {
+      <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+      <b>let</b> payer_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(payer_sig);
+
+
+      <b>let</b> account_balance = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(payer_addr);
+      <b>let</b> balance_coin = &<b>mut</b> account_balance.coin;
+      <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(balance_coin, amount)
 }
 </code></pre>
 
@@ -4795,8 +4938,8 @@ In case the VM calls this on a bad account it won't halt
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;Token&gt;(addr: <b>address</b>): u64 <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> {
-    // <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(addr)) { <b>return</b> 0 }; // todo //////// 0L ////////
-    <b>assert</b>!(<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EPAYER_DOESNT_HOLD_CURRENCY">EPAYER_DOESNT_HOLD_CURRENCY</a>));
+    <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(addr)) { <b>return</b> 0 }; //////// 0L ////////
+    // <b>assert</b>!(<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(addr), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EPAYER_DOESNT_HOLD_CURRENCY">EPAYER_DOESNT_HOLD_CURRENCY</a>));
     <a href="DiemAccount.md#0x1_DiemAccount_balance_for">balance_for</a>(<b>borrow_global</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(addr))
 }
 </code></pre>
@@ -6398,8 +6541,10 @@ Create a Validator account
     <b>let</b> new_account = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_account);
 
-    // NOTE: issues <b>with</b> testnet
+
     <a href="Jail.md#0x1_Jail_init">Jail::init</a>(&new_account);
+
+    // NOTE: issues <b>with</b> testnet
     // TODO: why does this fail?
     // <b>assert</b>!(<a href="ValidatorConfig.md#0x1_ValidatorConfig_is_valid">ValidatorConfig::is_valid</a>(new_account_address), 07171717171);
 
@@ -6658,6 +6803,7 @@ Create a Validator Operator account
   <b>let</b> i = 0u64;
   <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(vals)) {
     <b>let</b> val = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(vals, i);
+
     <a href="DiemAccount.md#0x1_DiemAccount_vm_pay_user_fee">vm_pay_user_fee</a>(vm, *val, fee, *metadata);
     i = i + 1;
   };
@@ -6674,7 +6820,7 @@ Create a Validator Operator account
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_init_cumulative_deposits">init_cumulative_deposits</a>(sender: &signer, starting_balance: u64)
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_init_cumulative_deposits">init_cumulative_deposits</a>(sender: &signer, use_starting_balance: bool)
 </code></pre>
 
 
@@ -6683,8 +6829,13 @@ Create a Validator Operator account
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_init_cumulative_deposits">init_cumulative_deposits</a>(sender: &signer, starting_balance: u64) {
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_init_cumulative_deposits">init_cumulative_deposits</a>(sender: &signer, use_starting_balance: bool) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> {
   <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+
+  <b>let</b> starting_balance = <b>if</b> (use_starting_balance) {
+    <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr)
+  } <b>else</b> { 0 };
+
 
   <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(addr)) {
     <b>move_to</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(sender, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> {
@@ -6692,6 +6843,31 @@ Create a Validator Operator account
       index: starting_balance,
     })
   };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_vm_migrate_cumulative_deposits"></a>
+
+## Function `vm_migrate_cumulative_deposits`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_migrate_cumulative_deposits">vm_migrate_cumulative_deposits</a>(vm: &signer, sender: &signer, use_starting_balance: bool)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_migrate_cumulative_deposits">vm_migrate_cumulative_deposits</a>(vm: &signer, sender: &signer, use_starting_balance: bool) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+  <a href="DiemAccount.md#0x1_DiemAccount_init_cumulative_deposits">init_cumulative_deposits</a>(sender, use_starting_balance);
 }
 </code></pre>
 
@@ -6718,6 +6894,7 @@ Create a Validator Operator account
     // <b>update</b> cumulative deposits <b>if</b> the account <b>has</b> the <b>struct</b>.
     <b>if</b> (<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(payee)) {
       <b>let</b> epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
+      // adjusted for the time-weighted index.
       <b>let</b> index = <a href="DiemAccount.md#0x1_DiemAccount_deposit_index_curve">deposit_index_curve</a>(epoch, deposit_value);
       <b>let</b> cumu = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(payee);
       cumu.value = cumu.value + deposit_value;
@@ -7186,6 +7363,33 @@ should only by called by testnet, once a slow wallet, always a slow wallet.
     };
 
     <b>let</b> _ = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a>&gt;(addr);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_test_reset_cumu_deposits"></a>
+
+## Function `test_reset_cumu_deposits`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_test_reset_cumu_deposits">test_reset_cumu_deposits</a>(vm: &signer, add: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_test_reset_cumu_deposits">test_reset_cumu_deposits</a>(vm: &signer, add: <b>address</b>) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> {
+  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
+  <b>let</b> cm = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(add);
+  cm.value = 0;
+  cm.index = 0;
 }
 </code></pre>
 

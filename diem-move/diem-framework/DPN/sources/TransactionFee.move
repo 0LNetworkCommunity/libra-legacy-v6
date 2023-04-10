@@ -234,10 +234,11 @@ module DiemFramework::TransactionFee {
     }
 
     /////// 0L /////////
-    public fun get_amount_to_distribute(dr_account: &signer): u64 acquires TransactionFee {
+    // TODO: rename this.
+    public fun get_fees_collected(): u64 acquires TransactionFee {
         // Can only be invoked by DiemVM privilege.
         // Allowed association to invoke for testing purposes.
-        CoreAddresses::assert_diem_root(dr_account);
+        // CoreAddresses::assert_diem_root(dr_account);
         // TODO: Return TransactionFee gracefully if there ino 0xFEE balance
         // DiemAccount::balance<Token>(0xFEE);
         let fees = borrow_global<TransactionFee<GAS>>(
@@ -263,12 +264,13 @@ module DiemFramework::TransactionFee {
         );
 
         Diem::withdraw_all(&mut fees.balance)
+        
     }
 
     /////// 0L /////////
     // TODO deprecate this
     public fun get_transaction_fees_coins_amount<Token: store>(
-        dr_account: &signer, amount: u64
+        dr_account: &signer, withdraw: u64
     ): Diem<Token>  acquires TransactionFee {
         // Can only be invoked by DiemVM privilege.
         // Allowed association to invoke for testing purposes.
@@ -279,7 +281,13 @@ module DiemFramework::TransactionFee {
             @DiemRoot
         );
 
-        Diem::withdraw(&mut fees.balance, amount)
+        let amount_collected = Diem::value(&fees.balance);
+        if ((amount_collected > withdraw) && (withdraw > 0)) {
+          Diem::withdraw(&mut fees.balance, withdraw)
+        } else {
+           Diem::withdraw_all(&mut fees.balance)
+        }
+
     }
 
     /// FeeMaker struct lives on an individual's account

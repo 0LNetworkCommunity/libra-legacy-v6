@@ -5,10 +5,15 @@
 //# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::DiemAccount;
+    // use DiemFramework::Debug::print;
 
     fun main(_: signer, account: signer) {
+        assert!(DiemAccount::unlocked_amount(@Alice) == 1000000, 735702);
+
         // before epoch change, need to mock alice's end-user address as a slow wallet
         DiemAccount::set_slow(&account);
+        assert!(DiemAccount::unlocked_amount(@Alice) == 0, 735702);
+
     }
 }
 

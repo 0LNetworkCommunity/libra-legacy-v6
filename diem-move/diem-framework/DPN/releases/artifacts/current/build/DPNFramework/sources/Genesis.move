@@ -40,6 +40,7 @@ module DiemFramework::Genesis {
     use DiemFramework::ProofOfFee;
     use DiemFramework::MultiSigPayment;
     use DiemFramework::MusicalChairs; 
+    use DiemFramework::InfraEscrow;
 
     /// Initializes the Diem framework.
     fun initialize(
@@ -163,6 +164,7 @@ module DiemFramework::Genesis {
         DiemAccount::vm_init_slow(dr_account);
         Migrations::init(dr_account);
         MusicalChairs::initialize(dr_account);
+        InfraEscrow::initialize_infra_pledge(dr_account);
 
         // After we have called this function, all invariants which are guarded by
         // `DiemTimestamp::is_operating() ==> ...` will become active and a verification condition.
