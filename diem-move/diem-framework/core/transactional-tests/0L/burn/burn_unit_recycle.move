@@ -3,8 +3,6 @@
 // Check that the burn preferences for each user are being registered
 // and check that the burn ratio is being calculated correctly.
 
-
-
 //////// SETS community send, recycles burns.
 
 //# run --admin-script --signers DiemRoot Alice
@@ -117,7 +115,8 @@ script {
     // make sure the ratios for burns get updated
     Burn::reset_ratios(&vm);
 
-    let c = DiemAccount::vm_withdraw<GAS>(&vm, @Alice, 1000000);
+    let amount_to_recycle = 1000000;
+    let c = DiemAccount::vm_withdraw<GAS>(&vm, @Alice, amount_to_recycle);
     Burn::burn_or_recycle_user_fees(&vm, @Alice, c);
 
     let bal_alice = DiemAccount::balance<GAS>(@Alice);
@@ -136,9 +135,16 @@ script {
     let total_supply_after = Diem::market_cap<GAS>();
     // print(&total_supply_after);
 
-    // there's a minor decimal issue
-    let superman_3_decimal = 2;
-    assert!(total_supply_after == total_supply_before - superman_3_decimal, 7357013);
+    // The supply should be unchanged.
+    assert!(total_supply_after == total_supply_before, 7357013);
+
+    let (burn, rec) = Burn::get_lifetime_tracker();
+
+    // There's a decimal rounding issue that we handle.
+    let superman_three = 2;
+    assert!(burn == 0, 7357011);
+    assert!(rec == 999998, 7357012);
+    assert!(amount_to_recycle - superman_three == rec, 7357013);
 
   }
 }

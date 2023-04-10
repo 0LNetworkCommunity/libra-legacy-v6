@@ -10,7 +10,7 @@
 script {
     use DiemFramework::Mock;
     use DiemFramework::MusicalChairs;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
     use Std::FixedPoint32;
     use Std::Vector;
 
@@ -24,10 +24,10 @@ script {
       assert!(FixedPoint32::create_from_rational(4, 5) == bad_ratio, 1003);
 
 
-      let (outgoing_compliant_set, new_set_size) = MusicalChairs::stop_the_music(&dr, 0, 15);
+      let (_outgoing_compliant_set, _new_set_size) = MusicalChairs::stop_the_music(&dr, 0, 15);
 
-      print(&outgoing_compliant_set);
-      print(&new_set_size);
+      //print(&outgoing_compliant_set);
+      //print(&new_set_size);
       assert!(MusicalChairs::get_current_seats() == 1, 1004)
     }
 }

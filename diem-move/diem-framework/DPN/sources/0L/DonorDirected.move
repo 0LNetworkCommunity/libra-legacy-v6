@@ -508,7 +508,7 @@ module DonorDirected {
 
       // if not tracking cumulative donations, then don't use previous balance.
       // start again.
-      DiemAccount::init_cumulative_deposits(sponsor, 0);
+      DiemAccount::init_cumulative_deposits(sponsor, false);
     }
     
     /// the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.

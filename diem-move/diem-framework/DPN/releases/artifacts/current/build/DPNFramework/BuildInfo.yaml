@@ -176,6 +176,9 @@ compiled_package_info:
       name: Hash
     : Std
     ? address: "00000000000000000000000000000001"
+      name: InfraEscrow
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Jail
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -222,6 +225,9 @@ compiled_package_info:
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: PersistenceDemo
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: PledgeAccounts
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: ProofOfFee
@@ -349,7 +355,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: A5D2C6F20AC5E12BA8A8A6167D118FDC4F0404D311CE72F0BC9928353DC69318
+  source_digest: ECC16E7A8F8163AD85D322E46B00F8C8A88B77DC055718153B470A1786841924
   build_flags:
     dev_mode: false
     test_mode: false

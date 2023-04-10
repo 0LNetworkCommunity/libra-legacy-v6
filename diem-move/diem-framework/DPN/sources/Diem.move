@@ -16,6 +16,8 @@ module DiemFramework::Diem {
     friend DiemFramework::DesignatedDealer;
     friend DiemFramework::XDX;
     friend DiemFramework::TransactionFee;
+    friend DiemFramework::PledgeAccounts;
+    friend DiemFramework::Subsidy;
 
     //////// 0L ////////
     // Info: All "tc_account"s are replaced by "dr_account"
@@ -1008,6 +1010,35 @@ module DiemFramework::Diem {
         coin: Diem<CoinType>,
     ) acquires CurrencyInfo {
         CoreAddresses::assert_vm(vm);
+        let currency_code = currency_code<CoinType>();
+        let value = coin.value;
+
+        // update the market cap
+        assert_is_currency<CoinType>();
+        let info = borrow_global_mut<CurrencyInfo<CoinType>>(@CurrencyInfo);
+        assert!(info.total_value >= (value as u128), Errors::limit_exceeded(ECURRENCY_INFO));
+        info.total_value = info.total_value - (value as u128);
+
+        // zero and destroy
+        coin.value = 0;
+        destroy_zero(coin);
+
+        Event::emit_event(
+            &mut info.burn_events,
+            BurnEvent {
+                amount: value,
+                currency_code,
+                preburn_address: @BurnAddress,
+            }
+        );
+        // TODO: formal verfication specs
+    }
+
+    //////// 0L ////////
+    // EXPERIMENTAL any contract that is a friend can burn a coin.
+    public(friend) fun friend_burn_this_coin<CoinType: store>(
+        coin: Diem<CoinType>,
+    ) acquires CurrencyInfo {
         let currency_code = currency_code<CoinType>();
         let value = coin.value;
 
