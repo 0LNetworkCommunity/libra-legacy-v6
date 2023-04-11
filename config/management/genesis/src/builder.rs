@@ -16,7 +16,8 @@ use diem_types::{
         authenticator::AuthenticationKey, ScriptFunction, Transaction, TransactionPayload,
     },
 };
-use vm_genesis::{GenesisMiningProof, Validator};
+use ol_types::genesis_proof::GenesisMiningProof;
+use vm_genesis::Validator;
 pub struct GenesisBuilder<S> {
     storage: S,
 }
@@ -47,7 +48,6 @@ impl<S: KVStorage> GenesisBuilder<S> {
             .with_namespace(constants::COMMON_NS)
             .get::<String>(constants::LAYOUT)?
             .value;
-        dbg!(&raw_layout);
         Layout::parse(&raw_layout).map_err(Into::into)
     }
 

@@ -18,7 +18,7 @@ use std::path::PathBuf;
 /// take an archive file path and parse into a writeset
 pub async fn db_backup_into_recovery_struct(
     archive_path: &PathBuf,
-    is_legacy: bool,
+    // is_legacy: bool,
 ) -> Result<Vec<LegacyRecovery>, Error> {
     let manifest_json = archive_path.join("state.manifest");
 
@@ -26,15 +26,8 @@ pub async fn db_backup_into_recovery_struct(
         .unwrap_or_else(|_| panic!("cannot find snapshot file: {:?}", &manifest_json));
 
     let account_blobs = accounts_from_snapshot_backup(backup, archive_path).await?;
-    let r = if is_legacy {
-        println!("Parsing account state from legacy, Libra structs");
-        todo!();
-    } else {
-        println!("Parsing account state from Diem structs");
-        accounts_into_recovery(&account_blobs)?
-    };
 
-    Ok(r)
+    Ok(accounts_into_recovery(&account_blobs)?)
 }
 
 /// Tokio async parsing of state snapshot into blob

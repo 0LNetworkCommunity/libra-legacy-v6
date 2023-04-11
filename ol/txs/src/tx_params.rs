@@ -13,14 +13,14 @@ use diem_crypto::{
 };
 use diem_global_constants::OPERATOR_KEY;
 use diem_secure_storage::{CryptoStorage, Namespaced, OnDiskStorage, Storage};
-use diem_types::{account_address::AccountAddress, chain_id::NamedChain, waypoint::Waypoint};
+use diem_types::{account_address::AccountAddress, chain_id::{NamedChain, MODE_0L}, waypoint::Waypoint};
 use diem_types::{chain_id::ChainId, transaction::authenticator::AuthenticationKey};
 use diem_wallet::WalletLibrary;
 use ol::node::client::find_a_remote_jsonrpc;
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::{
     self,
-    config::{TxCost, TxType, IS_TEST},
+    config::{TxCost, TxType},
     fixtures,
 };
 
@@ -112,7 +112,7 @@ impl TxParams {
         };
 
         let mut account_address: Option<AccountAddress> = None;
-        if *IS_TEST == false {
+        if !MODE_0L.is_test() {
             println!("OPTIONAL: If you have changed your account's authkey \
                 then input the old address below, enter to skip.");
             let mut input = String::new();

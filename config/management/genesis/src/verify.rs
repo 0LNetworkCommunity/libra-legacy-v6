@@ -47,12 +47,20 @@ pub struct Verify {
 }
 
 impl Verify {
+      pub fn new(validator_backend: &ValidatorBackend, genesis_path: PathBuf) -> Self {
+        Self {
+            config: ConfigPath { config: None },
+            backend: validator_backend.to_owned(),
+            genesis_path: Some(genesis_path),
+        }
+    }
     pub fn execute(self) -> Result<String, Error> {
         let config = self
             .config
             .load()?
             .override_validator_backend(&self.backend.validator_backend)?;
-        let validator_storage = config.validator_backend();
+        //////// 0L ////////
+        let validator_storage = config.operator_backend()?;
 
         verify_genesis(validator_storage, self.genesis_path.as_deref())
     }

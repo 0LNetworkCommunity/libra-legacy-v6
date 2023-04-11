@@ -1,6 +1,6 @@
 //! `restore-cmd` subcommand
 
-use crate::mgmt;
+use crate::{mgmt, application::app_config};
 use abscissa_core::{Command, Options, Runnable};
 
 /// `restore-cmd` subcommand
@@ -39,6 +39,7 @@ impl Runnable for RestoreCmd {
             self.epoch,
             self.version,
             self.latest_version,
+            &app_config().clone(),
         ) {
             Ok(_) => {
                 println!("SUCCESS")

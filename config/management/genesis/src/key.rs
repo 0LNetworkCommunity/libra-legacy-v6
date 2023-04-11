@@ -7,24 +7,24 @@ use diem_global_constants::{GENESIS_WAYPOINT, OPERATOR_ACCOUNT, OWNER_ACCOUNT, W
 use diem_management::{
     config::ConfigPath,
     error::Error,
-    secure_backend::{SecureBackend, SharedBackend},
+    secure_backend::{SharedBackend, ValidatorBackend},
 };
-use std::{convert::TryFrom, path::PathBuf, str::FromStr};
+use std::{ path::PathBuf, str::FromStr};
 use diem_secure_storage::{
     CryptoStorage, OnDiskStorage, KVStorage
 };
 use diem_types::{waypoint::Waypoint, account_address::AccountAddress};
 use structopt::StructOpt;
 
-diem_management::secure_backend!(
-    ValidatorBackend,
-    validator_backend,
-    "validator configuration",
-    "path-to-key"
-);
+// diem_management::secure_backend!(
+//     ValidatorBackend,
+//     validator_backend,
+//     "validator configuration",
+//     "path-to-key"
+// );
 
 #[derive(Debug, StructOpt)]
-struct Key {
+pub struct Key {
     #[structopt(flatten)]
     config: ConfigPath,
     #[structopt(flatten)]
@@ -36,6 +36,44 @@ struct Key {
 }
 
 impl Key {
+    pub fn new(validator_backend: &ValidatorBackend, shared_backend: &SharedBackend) -> Self {
+        Self {
+            config: ConfigPath { config: None },
+            shared_backend: shared_backend.to_owned(),
+            validator_backend: validator_backend.to_owned(),
+            path_to_key: None,
+        }
+    }
+  pub fn shared_backend(namespace: String, github_org: String, repo_name: String, data_path: PathBuf) -> anyhow::Result<SharedBackend> {
+
+  // BLACK MAGIC with MACROS 
+  // ... AND STRING FORMATTING 
+  // I curse your first born.
+
+  let storage_cfg = format!(
+      "backend=github;repository_owner={github_org};repository={repo_name};token={data_path}/github_token.txt;namespace={namespace}",
+      namespace = namespace,
+      github_org = github_org,
+      repo_name = repo_name,
+      data_path = data_path.to_str().unwrap(),
+    );
+
+    Ok(SharedBackend::from_str(storage_cfg.as_str())?)
+
+  }
+
+  pub fn validator_backend(namespace: String, data_path: PathBuf) -> anyhow::Result<ValidatorBackend> {
+
+    let storage_cfg = format!(
+      "backend=disk;path={data_path}key_store.json;namespace={namespace}",
+        namespace = namespace,
+        data_path = data_path.to_str().unwrap(),
+      );
+
+    Ok(ValidatorBackend::from_str(storage_cfg.as_str())?)
+
+  }
+
     fn submit_key(
         &self,
         key_name: &'static str,
@@ -81,7 +119,7 @@ pub fn set_operator_key(path: &PathBuf, namespace: &str) {
 }
 
 //////// 0L /////////
-pub fn set_owner_key(path: &PathBuf, namespace: &str, account: AccountAddress) {
+pub fn set_owner_address(path: &PathBuf, namespace: &str, account: AccountAddress) {
     let mut storage = diem_secure_storage::Storage::OnDiskStorage(
         OnDiskStorage::new(path.join("key_store.json").to_owned())
     );
@@ -136,7 +174,7 @@ impl DiemRootKey {
 #[derive(Debug, StructOpt)]
 pub struct OperatorKey {
     #[structopt(flatten)]
-    key: Key,
+    pub key: Key, ///////// 0L ////////
 }
 
 impl OperatorKey {
@@ -151,7 +189,7 @@ impl OperatorKey {
 #[derive(Debug, StructOpt)]
 pub struct OwnerKey {
     #[structopt(flatten)]
-    key: Key,
+    pub key: Key, //////// 0L ////////
 }
 
 impl OwnerKey {

@@ -38,6 +38,8 @@ serde = { version = "1.0.116", features = ["rc"], default-features = false }
 ol-types = {path = "../../ol/types"}
 
 diem-logger = { path = "../../crates/diem-logger" }
+indicatif = "0.17.3"
+
 
 [dev-dependencies]
 proptest = "1.0.0"

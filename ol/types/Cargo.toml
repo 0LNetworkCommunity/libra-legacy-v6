@@ -30,3 +30,9 @@ sha2 = "0.9.1"
 num-format = "0.4.0"
 glob = "0.3"
 rand = "0.8.4"
+indicatif = "0.17.3"
+console = "0.15.5"
+
+diem-state-view = { path = "../../storage/state-view" }
+diem-vm = { path = "../../diem-move/diem-vm" }
+move-binary-format = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }

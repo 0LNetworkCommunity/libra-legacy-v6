@@ -48,7 +48,7 @@ pub fn test_config(persist: bool) -> (NodeConfig, Ed25519PrivateKey) {
         .backend;
     let storage: Storage = std::convert::TryFrom::try_from(backend).unwrap();
 
-    // Now we are configuring this node as a "test" node. This means we place a number of keys into the config file itself. (As opposed the securre-storage.json).
+    // Now we are configuring this node as a "test" node. This means we place a number of keys into the config file itself. (As opposed the secure-storage.json).
     // NOTE: 0L: unclear why this needs to happen for our purposes. (e.g. starting a node with a specific genesis).
 
     let mut test = diem_config::config::TestConfig::new_with_temp_dir(Some(path));
