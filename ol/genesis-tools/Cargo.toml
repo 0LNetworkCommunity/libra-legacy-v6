@@ -44,8 +44,15 @@ diem-config = { path = "../../config" }
 diem-secure-storage = { path = "../../secure/storage/", version = "0.1.0" }
 diem-vm = { path = "../../diem-move/diem-vm", version = "0.1.0" }
 diem-framework-releases = { path = "../../diem-move/diem-framework/DPN/releases" }
-
 ol-smoke-tests = { path = "../smoke-tests/"}
+diem-management = { path = "../../config/management" }
+diem-global-constants = { path = "../../config/global-constants" }
+indicatif = "0.17.3"
+dialoguer = "0.8.0"
+dirs = "4.0.0"
+onboard = { path = "../onboard" }
+diem-github-client = { path = "../../secure/storage/github" }
+chrono = "0.4.23"
 
 [dev-dependencies]
 tokio-test = "*"

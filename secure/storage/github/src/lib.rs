@@ -302,14 +302,9 @@ impl Client {
     ///////// 0L ////////
     pub fn get_authenticated_user(&self) -> Result<String, Error> {
 
-        // let head = format!("{}:master", pull_username);
-        // let json = json!({"head": &head, "base": "master", "title": pull_username});
         let api_path = "https://api.github.com/user";
 
-        dbg!(api_path);
-
         let resp = self.upgrade_request(ureq::get(api_path)).call();
-        
         #[derive(Deserialize)]
         struct Test {
           login: String
@@ -322,9 +317,6 @@ impl Client {
             },
             _ => Err(resp.into()),
         }
-
-      // dbg!(&resp.into_json());
-      // Ok(())
     }
 
     // https://api.github.com/user    

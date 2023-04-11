@@ -7,13 +7,13 @@ use ol_genesis_tools::{
 };
 use ol_types::legacy_recovery::LegacyRecovery;
 use std::fs;
-use support::path_utils::json_path;
+use support::{path_utils::json_path, test_vals};
 
 #[test]
 // test that a genesis blob created from struct, will actually contain the data
 fn test_parse_json_for_one_validator_and_save_blob() {
 
-  let genesis_vals = vec!["ADCB1D42A46292AE89E938BD982F2867".parse().unwrap()];
+    let genesis_vals = test_vals::get_test_valset(4);
 
     let json = json_path().parent().unwrap().join("single_json_entry.json");
 
@@ -23,10 +23,11 @@ fn test_parse_json_for_one_validator_and_save_blob() {
     // dbg!(&mock_val);
 
     let temp_genesis_blob_path = json_path().parent().unwrap().join("fork_genesis.blob");
+    dbg!(&temp_genesis_blob_path);
 
     make_recovery_genesis_from_vec_legacy_recovery(
       &user_accounts,
-      genesis_vals.clone(),
+      &genesis_vals,
       temp_genesis_blob_path.clone(), 
       true,
     )
@@ -45,7 +46,8 @@ fn test_parse_json_for_one_validator_and_save_blob() {
         Err(_e) => assert!(false, "error comparison"),
     }
 
-    match compare::check_val_set(genesis_vals, temp_genesis_blob_path.clone()){
+    let vals_list = genesis_vals.into_iter().map(|v| v.address).collect();
+    match compare::check_val_set(vals_list, temp_genesis_blob_path.clone()){
         Ok(_) => {},
         Err(_) => {
           assert!(false, "validator set not correct");

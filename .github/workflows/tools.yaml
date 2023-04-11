@@ -23,20 +23,20 @@ jobs:
 
         
       - name: tower tests
-        run: cd ol/tower && NODE_ENV=test cargo test
+        run: cd ol/tower && MODE_0L=test cargo test
         continue-on-error: true
       - name: types tests
-        run: cd ol/types && NODE_ENV=test cargo test
+        run: cd ol/types && MODE_0L=test cargo test
         continue-on-error: true
       - name: txs tests
-        run: cd ol/txs && NODE_ENV=test cargo test
+        run: cd ol/txs && MODE_0L=test cargo test
         continue-on-error: true
       - name: keys tests
-        run: cd ol/keys && NODE_ENV=test cargo test
+        run: cd ol/keys && MODE_0L=test cargo test
         continue-on-error: true
       - name: cli tests
-        run: cd ol/cli && NODE_ENV=test cargo test
+        run: cd ol/cli && MODE_0L=test cargo test
         continue-on-error: true
       - name: genesis tests
-        run: cd ol/genesis-tools && NODE_ENV=test cargo test
+        run: cd ol/genesis-tools && MODE_0L=test cargo test
         continue-on-error: true

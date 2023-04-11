@@ -15,7 +15,7 @@ async fn snapshot_to_json() {
     let backup = snapshot_path();
     assert!(backup.exists());
 
-    let recovery = db_backup_into_recovery_struct(&backup, false)
+    let recovery = db_backup_into_recovery_struct(&backup)
         .await
         .expect("could not export backup into json file");
 

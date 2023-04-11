@@ -25,3 +25,6 @@ pub mod rpc_playlist;
 pub mod validator_config;
 pub mod wallet;
 pub mod legacy_recovery;
+pub mod cli_progress;
+pub use cli_progress::OLProgress;
+
