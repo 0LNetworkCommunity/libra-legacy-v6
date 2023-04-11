@@ -300,29 +300,16 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
     })
     .collect();
 
-
-
     let mut total_balance_restored = 0u64;
     for user in filtered_data.iter()
     .progress_with_style(OLProgress::bar())
-    .with_message("Migrating user data") {      
-
+    .with_message("Migrating user data") {    
         let args = vec![
             // both the VM and the user signatures need to be mocked.
             MoveValue::Signer(account_config::diem_root_address()),
-            // MoveValue::Signer(user.account.unwrap_or_else(bail!("Account address is missing"))),
             MoveValue::Address(user.account.expect("Account address is missing")),
-            // MoveValue::Address(user.account_address.unwrap_or_else(bail!("Account address is missing"))),
             MoveValue::vector_u8(user.auth_key.expect("no authkey found").prefix().to_vec()),
-            // vector_u8(user.role.expect("no role found")),
             MoveValue::U64(user.balance.as_ref().expect("no balance").coin()),
-
-            // MoveValue::vector_u8(user.sequence_number.to_vec()),
-            // MoveValue::vector_u8(user.delegated_key_rotation_capability.to_vec()),
-            // MoveValue::vector_u8(user.delegated_withdrawal_capability.to_vec()),
-            // MoveValue::vector_u8(user.received_minters.to_vec()),
-            // MoveValue::vector_u8(user.sent_events.to_vec()),
-            // MoveValue::vector_u8(user.received_events.to_vec()),
         ];
 
         total_balance_restored = total_balance_restored + user.balance.as_ref().expect("no balance").coin();
@@ -335,6 +322,7 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
           serialize_values(&args)
         )
     }
+
     Ok(total_balance_restored)
 }
 
