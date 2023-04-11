@@ -38,6 +38,8 @@ module Burn {
       i = i + 1;
     };
 
+    if (global_deposits == 0) return;
+
     let ratios_vec = Vector::empty<FixedPoint32::FixedPoint32>();
     let k = 0;
     while (k < len) {
@@ -148,11 +150,9 @@ module Burn {
       i = i + 1;
     };
 
-    // prevent under-burn due to issues with index.
-    // let diff = value - value_sent;
-    // if (diff > 0) {
-    //   burn(vm, payer, diff)
-    // };    
+    // NOTE: there may be underpayment due to 
+    // Superman 3 decimal errors. https://www.youtube.com/watch?v=N7JBXGkBoFc
+    // Explicitly let the user keep these, so that total supply is unchanged.
   }
 
   public fun set_send_community(sender: &signer, community: bool) acquires BurnPreference {

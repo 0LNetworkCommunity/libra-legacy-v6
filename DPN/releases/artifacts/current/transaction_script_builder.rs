@@ -1518,6 +1518,14 @@ pub enum ScriptFunctionCall {
         recovery_address: AccountAddress,
     },
 
+    /// add signer to multisig, and check if they may be related in Ancestry tree
+    AddSignerCommunityMultisig {
+        multisig_address: AccountAddress,
+        new_signer: AccountAddress,
+        n_of_m: u64,
+        vote_duration_epochs: u64,
+    },
+
     /// # Summary
     /// Adds a validator account to the validator set, and triggers a
     /// reconfiguration of the system to admit the account to the validator set for the system. This
@@ -1776,6 +1784,7 @@ pub enum ScriptFunctionCall {
     ClaimMakeWhole {},
 
     CommunityTransfer {
+        multisig_address: AccountAddress,
         destination: AccountAddress,
         unscaled_value: u64,
         memo: Bytes,
@@ -2230,6 +2239,16 @@ pub enum ScriptFunctionCall {
     FreezeAccount {
         sliding_nonce: u64,
         to_freeze_account: AccountAddress,
+    },
+
+    /// Helper to initialize the PaymentMultisig, but also while confirming that the signers are not related family
+    /// These transactions can be sent directly to DonorDirected, but this is a helper to make it easier to initialize the multisig with the acestry requirements.
+    InitCommunityMultisig {
+        signer_one: AccountAddress,
+        signer_two: AccountAddress,
+        signer_three: AccountAddress,
+        signer_four: AccountAddress,
+        signer_five: AccountAddress,
     },
 
     InitVouch {},
@@ -3635,6 +3654,17 @@ impl ScriptFunctionCall {
             AddRecoveryRotationCapability { recovery_address } => {
                 encode_add_recovery_rotation_capability_script_function(recovery_address)
             }
+            AddSignerCommunityMultisig {
+                multisig_address,
+                new_signer,
+                n_of_m,
+                vote_duration_epochs,
+            } => encode_add_signer_community_multisig_script_function(
+                multisig_address,
+                new_signer,
+                n_of_m,
+                vote_duration_epochs,
+            ),
             AddValidatorAndReconfigure {
                 sliding_nonce,
                 validator_name,
@@ -3681,10 +3711,16 @@ impl ScriptFunctionCall {
             } => encode_cancel_burn_with_amount_script_function(token, preburn_address, amount),
             ClaimMakeWhole {} => encode_claim_make_whole_script_function(),
             CommunityTransfer {
+                multisig_address,
                 destination,
                 unscaled_value,
                 memo,
-            } => encode_community_transfer_script_function(destination, unscaled_value, memo),
+            } => encode_community_transfer_script_function(
+                multisig_address,
+                destination,
+                unscaled_value,
+                memo,
+            ),
             CreateAccUser {
                 challenge,
                 solution,
@@ -3798,6 +3834,19 @@ impl ScriptFunctionCall {
                 sliding_nonce,
                 to_freeze_account,
             } => encode_freeze_account_script_function(sliding_nonce, to_freeze_account),
+            InitCommunityMultisig {
+                signer_one,
+                signer_two,
+                signer_three,
+                signer_four,
+                signer_five,
+            } => encode_init_community_multisig_script_function(
+                signer_one,
+                signer_two,
+                signer_three,
+                signer_four,
+                signer_five,
+            ),
             InitVouch {} => encode_init_vouch_script_function(),
             InitializeDiemConsensusConfig { sliding_nonce } => {
                 encode_initialize_diem_consensus_config_script_function(sliding_nonce)
@@ -4134,6 +4183,29 @@ pub fn encode_add_recovery_rotation_capability_script_function(
         ident_str!("add_recovery_rotation_capability").to_owned(),
         vec![],
         vec![bcs::to_bytes(&recovery_address).unwrap()],
+    ))
+}
+
+/// add signer to multisig, and check if they may be related in Ancestry tree
+pub fn encode_add_signer_community_multisig_script_function(
+    multisig_address: AccountAddress,
+    new_signer: AccountAddress,
+    n_of_m: u64,
+    vote_duration_epochs: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("CommunityWallet").to_owned(),
+        ),
+        ident_str!("add_signer_community_multisig").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&multisig_address).unwrap(),
+            bcs::to_bytes(&new_signer).unwrap(),
+            bcs::to_bytes(&n_of_m).unwrap(),
+            bcs::to_bytes(&vote_duration_epochs).unwrap(),
+        ],
     ))
 }
 
@@ -4516,6 +4588,7 @@ pub fn encode_claim_make_whole_script_function() -> TransactionPayload {
 }
 
 pub fn encode_community_transfer_script_function(
+    multisig_address: AccountAddress,
     destination: AccountAddress,
     unscaled_value: u64,
     memo: Vec<u8>,
@@ -4528,6 +4601,7 @@ pub fn encode_community_transfer_script_function(
         ident_str!("community_transfer").to_owned(),
         vec![],
         vec![
+            bcs::to_bytes(&multisig_address).unwrap(),
             bcs::to_bytes(&destination).unwrap(),
             bcs::to_bytes(&unscaled_value).unwrap(),
             bcs::to_bytes(&memo).unwrap(),
@@ -5159,6 +5233,32 @@ pub fn encode_freeze_account_script_function(
         vec![
             bcs::to_bytes(&sliding_nonce).unwrap(),
             bcs::to_bytes(&to_freeze_account).unwrap(),
+        ],
+    ))
+}
+
+/// Helper to initialize the PaymentMultisig, but also while confirming that the signers are not related family
+/// These transactions can be sent directly to DonorDirected, but this is a helper to make it easier to initialize the multisig with the acestry requirements.
+pub fn encode_init_community_multisig_script_function(
+    signer_one: AccountAddress,
+    signer_two: AccountAddress,
+    signer_three: AccountAddress,
+    signer_four: AccountAddress,
+    signer_five: AccountAddress,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("CommunityWallet").to_owned(),
+        ),
+        ident_str!("init_community_multisig").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&signer_one).unwrap(),
+            bcs::to_bytes(&signer_two).unwrap(),
+            bcs::to_bytes(&signer_three).unwrap(),
+            bcs::to_bytes(&signer_four).unwrap(),
+            bcs::to_bytes(&signer_five).unwrap(),
         ],
     ))
 }
@@ -8499,6 +8599,21 @@ fn decode_add_recovery_rotation_capability_script_function(
     }
 }
 
+fn decode_add_signer_community_multisig_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::AddSignerCommunityMultisig {
+            multisig_address: bcs::from_bytes(script.args().get(0)?).ok()?,
+            new_signer: bcs::from_bytes(script.args().get(1)?).ok()?,
+            n_of_m: bcs::from_bytes(script.args().get(2)?).ok()?,
+            vote_duration_epochs: bcs::from_bytes(script.args().get(3)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_add_validator_and_reconfigure_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -8631,9 +8746,10 @@ fn decode_community_transfer_script_function(
 ) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(script) = payload {
         Some(ScriptFunctionCall::CommunityTransfer {
-            destination: bcs::from_bytes(script.args().get(0)?).ok()?,
-            unscaled_value: bcs::from_bytes(script.args().get(1)?).ok()?,
-            memo: bcs::from_bytes(script.args().get(2)?).ok()?,
+            multisig_address: bcs::from_bytes(script.args().get(0)?).ok()?,
+            destination: bcs::from_bytes(script.args().get(1)?).ok()?,
+            unscaled_value: bcs::from_bytes(script.args().get(2)?).ok()?,
+            memo: bcs::from_bytes(script.args().get(3)?).ok()?,
         })
     } else {
         None
@@ -8818,6 +8934,22 @@ fn decode_freeze_account_script_function(
         Some(ScriptFunctionCall::FreezeAccount {
             sliding_nonce: bcs::from_bytes(script.args().get(0)?).ok()?,
             to_freeze_account: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_init_community_multisig_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::InitCommunityMultisig {
+            signer_one: bcs::from_bytes(script.args().get(0)?).ok()?,
+            signer_two: bcs::from_bytes(script.args().get(1)?).ok()?,
+            signer_three: bcs::from_bytes(script.args().get(2)?).ok()?,
+            signer_four: bcs::from_bytes(script.args().get(3)?).ok()?,
+            signer_five: bcs::from_bytes(script.args().get(4)?).ok()?,
         })
     } else {
         None
@@ -9809,6 +9941,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_add_recovery_rotation_capability_script_function),
         );
         map.insert(
+            "CommunityWalletadd_signer_community_multisig".to_string(),
+            Box::new(decode_add_signer_community_multisig_script_function),
+        );
+        map.insert(
             "ValidatorAdministrationScriptsadd_validator_and_reconfigure".to_string(),
             Box::new(decode_add_validator_and_reconfigure_script_function),
         );
@@ -9903,6 +10039,10 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "TreasuryComplianceScriptsfreeze_account".to_string(),
             Box::new(decode_freeze_account_script_function),
+        );
+        map.insert(
+            "CommunityWalletinit_community_multisig".to_string(),
+            Box::new(decode_init_community_multisig_script_function),
         );
         map.insert(
             "VouchScriptsinit_vouch".to_string(),

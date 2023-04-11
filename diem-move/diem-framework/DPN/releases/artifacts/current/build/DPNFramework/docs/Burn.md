@@ -129,6 +129,8 @@
     i = i + 1;
   };
 
+  <b>if</b> (global_deposits == 0) <b>return</b>;
+
   <b>let</b> ratios_vec = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;();
   <b>let</b> k = 0;
   <b>while</b> (k &lt; len) {
@@ -337,11 +339,9 @@
     i = i + 1;
   };
 
-  // prevent under-burn due <b>to</b> issues <b>with</b> index.
-  <b>let</b> diff = value - value_sent;
-  <b>if</b> (diff &gt; 0) {
-    <a href="Burn.md#0x1_Burn_burn">burn</a>(vm, payer, diff)
-  };
+  // NOTE: there may be underpayment due <b>to</b>
+  // Superman 3 decimal errors. https://www.youtube.com/watch?v=N7JBXGkBoFc
+  // Explicitly <b>let</b> the user keep these, so that total supply is unchanged.
 }
 </code></pre>
 

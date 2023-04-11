@@ -32,6 +32,7 @@
 -  [Function `extract_proposal_data`](#0x1_MultiSig_extract_proposal_data)
 -  [Function `search_proposals_for_guid`](#0x1_MultiSig_search_proposals_for_guid)
 -  [Function `find_index_of_ballot_by_data`](#0x1_MultiSig_find_index_of_ballot_by_data)
+-  [Function `get_proposal_status_by_id`](#0x1_MultiSig_get_proposal_status_by_id)
 -  [Function `propose_governance`](#0x1_MultiSig_propose_governance)
 -  [Function `vote_governance`](#0x1_MultiSig_vote_governance)
 -  [Function `maybe_update_authorities`](#0x1_MultiSig_maybe_update_authorities)
@@ -855,6 +856,10 @@ helper function to vote with ID only
   <b>let</b> passed = <a href="MultiSig.md#0x1_MultiSig_tally">tally</a>(t, *&ms.cfg_default_n_sigs);
   print(&67);
 
+  <b>if</b> (passed) {
+    <a href="Ballot.md#0x1_Ballot_complete_ballot">Ballot::complete_ballot</a>(b);
+  };
+
   // get the withdrawal capability, we're not allowed <b>copy</b>, but we can
   // extract and fill, and then replace it. See <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> for an example.
   <b>let</b> withdraw_cap = <b>if</b> (
@@ -1182,6 +1187,31 @@ returns a tuple of (is_found: bool, index: u64, status_enum: u8, is_complete: bo
   };
 
   (<b>false</b>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_create_id">GUID::create_id</a>(@0x0, 0), 0)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MultiSig_get_proposal_status_by_id"></a>
+
+## Function `get_proposal_status_by_id`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_get_proposal_status_by_id">get_proposal_status_by_id</a>&lt;ProposalData: drop, store&gt;(multisig_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8, bool)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="MultiSig.md#0x1_MultiSig_get_proposal_status_by_id">get_proposal_status_by_id</a>&lt;ProposalData: drop + store&gt;(multisig_address: <b>address</b>, uid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>): (bool, u64, u8, bool) <b>acquires</b> <a href="MultiSig.md#0x1_MultiSig_Action">Action</a> { // found, index, status_enum, is_complete
+  <b>let</b> a = <b>borrow_global</b>&lt;<a href="MultiSig.md#0x1_MultiSig_Action">Action</a>&lt;ProposalData&gt;&gt;(multisig_address);
+  <a href="Ballot.md#0x1_Ballot_find_anywhere">Ballot::find_anywhere</a>(&a.vote, uid)
 }
 </code></pre>
 
