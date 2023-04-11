@@ -43,6 +43,7 @@ address DiemFramework{
     public fun epoch_boundary_collection(vm: &signer, amount: u64) {
         CoreAddresses::assert_diem_root(vm);
         let opt = PledgeAccounts::withdraw_from_all_pledge_accounts(vm, amount);
+        // print(&opt);
         if (Option::is_none(&opt)) {
           Option::destroy_none(opt);
           return

@@ -213,6 +213,7 @@ address DiemFramework{
 
             let amount_available = *&borrow_global<BeneficiaryPolicy>(Signer::address_of(sig_beneficiary)).amount_available;
             // print(&amount_available);
+            // print(&amount);
 
             if (amount_available < 1) {
               return Option::none<Diem::Diem<GAS>>()
@@ -230,6 +231,8 @@ address DiemFramework{
 
                 // DANGER: this is a private function that changes balances.
                 let c = withdraw_pct_from_one_pledge_account(&address_of_beneficiary, &pledge_account, &pct_withdraw);
+
+                
 
                 // GROSS: dealing with options in Move.
                 // TODO: find a better way.
@@ -320,7 +323,7 @@ address DiemFramework{
 
               let amount_withdraw = FixedPoint32::multiply_u64(pledge_account.amount, *pct);
 
-              // print(&66);
+              // print(&amount_withdraw);
               // print(&pledge_account.amount);
               if (
                 pledge_account.amount > 0 &&

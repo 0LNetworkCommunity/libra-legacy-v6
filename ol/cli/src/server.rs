@@ -1,7 +1,7 @@
 //! `server`  web monitor http server
+use diem_types::chain_id::MODE_0L;
 // use futures::StreamExt;
 use futures::StreamExt;
-use ol_types::config::IS_PROD;
 use reqwest;
 use serde_json::json;
 use serde_json::Error;
@@ -64,7 +64,7 @@ pub async fn start_server(mut node: Node, _run_checks: bool) {
     });
 
     let node_home = cfg.clone().workspace.node_home.clone();
-    let web_files = if *IS_PROD {
+    let web_files = if MODE_0L.is_prod() {
         node_home.join("web-monitor/")
     // for using `npm run dev`
     } else {

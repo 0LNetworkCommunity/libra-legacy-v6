@@ -8,6 +8,8 @@
 -  [Resource `BurnPreference`](#0x1_Burn_BurnPreference)
 -  [Resource `BurnState`](#0x1_Burn_BurnState)
 -  [Function `epoch_burn_fees`](#0x1_Burn_epoch_burn_fees)
+-  [Function `initialize`](#0x1_Burn_initialize)
+-  [Function `vm_migration`](#0x1_Burn_vm_migration)
 -  [Function `reset_ratios`](#0x1_Burn_reset_ratios)
 -  [Function `get_address_list`](#0x1_Burn_get_address_list)
 -  [Function `get_payee_value`](#0x1_Burn_get_payee_value)
@@ -185,6 +187,80 @@ produced, and then do a weighted burn/recycle.
 
 </details>
 
+<a name="0x1_Burn_initialize"></a>
+
+## Function `initialize`
+
+initialize, usually for testnet.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_initialize">initialize</a>(vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_initialize">initialize</a>(vm: &signer) {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+
+  <b>move_to</b>&lt;<a href="Burn.md#0x1_Burn_BurnState">BurnState</a>&gt;(vm, <a href="Burn.md#0x1_Burn_BurnState">BurnState</a> {
+      addr: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+      deposits: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+      ratio: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>(),
+      lifetime_burned: 0,
+      lifetime_recycled: 0,
+    })
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Burn_vm_migration"></a>
+
+## Function `vm_migration`
+
+Migration script for hard forks
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_vm_migration">vm_migration</a>(vm: &signer, addr_list: vector&lt;<b>address</b>&gt;, deposit_vec: vector&lt;u64&gt;, ratios_vec: vector&lt;<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;, lifetime_burned: u64, lifetime_recycled: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="Burn.md#0x1_Burn_vm_migration">vm_migration</a>(vm: &signer,
+  addr_list: vector&lt;<b>address</b>&gt;,
+  deposit_vec: vector&lt;u64&gt;,
+  ratios_vec: vector&lt;<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;,
+  lifetime_burned: u64, // these get reset on final supply V6. Future upgrades need <b>to</b> decide what <b>to</b> do <b>with</b> this
+  lifetime_recycled: u64,
+) {
+
+  // TODO: <b>assert</b> genesis when timesetamp is working again.
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+
+  <b>move_to</b>&lt;<a href="Burn.md#0x1_Burn_BurnState">BurnState</a>&gt;(vm, <a href="Burn.md#0x1_Burn_BurnState">BurnState</a> {
+      addr: addr_list,
+      deposits: deposit_vec,
+      ratio: ratios_vec,
+      lifetime_burned,
+      lifetime_recycled,
+    })
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_Burn_reset_ratios"></a>
 
 ## Function `reset_ratios`
@@ -237,7 +313,7 @@ produced, and then do a weighted burn/recycle.
     d.addr = list;
     d.deposits = deposit_vec;
     d.ratio = ratios_vec;
-  } <b>else</b> {
+  } <b>else</b> { // hot migration
     <b>move_to</b>&lt;<a href="Burn.md#0x1_Burn_BurnState">BurnState</a>&gt;(vm, <a href="Burn.md#0x1_Burn_BurnState">BurnState</a> {
       addr: list,
       deposits: deposit_vec,
@@ -377,10 +453,7 @@ produced, and then do a weighted burn/recycle.
 
 <pre><code><b>fun</b> <a href="Burn.md#0x1_Burn_recycle">recycle</a>(vm: &signer, payer: <b>address</b>, coin: &<b>mut</b> <a href="Diem.md#0x1_Diem">Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;) <b>acquires</b> <a href="Burn.md#0x1_Burn_BurnState">BurnState</a> {
   <b>let</b> list = { <a href="Burn.md#0x1_Burn_get_address_list">get_address_list</a>() }; // NOTE devs, the added scope drops the borrow which is used below.
-
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&list);
-
-
   <b>let</b> total_coin_value_to_recycle = <a href="Diem.md#0x1_Diem_value">Diem::value</a>(coin);
 
   // There could be errors in the array, and underpayment happen.
@@ -404,6 +477,17 @@ produced, and then do a weighted burn/recycle.
     );
     value_sent = value_sent + amount_to_payee;
     i = i + 1;
+  };
+
+  // <b>if</b> there is anything remaining it's a superman 3 issue
+  // so we send it back <b>to</b> the transaction fee account
+  // makes it easier <b>to</b> track since we know no burns should be happening.
+  // which is what would happen <b>if</b> the coin didn't get emptied here
+  <b>let</b> remainder_amount = <a href="Diem.md#0x1_Diem_value">Diem::value</a>(coin);
+  <b>if</b> (remainder_amount &gt; 0) {
+    <b>let</b> last_coin = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(coin, remainder_amount);
+    // <b>use</b> pay_fee which doesn't track the sender, so we're not double counting the receipts, even though it's a small amount.
+    <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">TransactionFee::pay_fee</a>(last_coin);
   };
 
   // <b>update</b> the root state tracker

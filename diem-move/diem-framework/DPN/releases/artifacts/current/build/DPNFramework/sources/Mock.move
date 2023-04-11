@@ -17,6 +17,8 @@ module Mock {
   use DiemFramework::GAS::GAS;
 
   public fun mock_case_1(vm: &signer, addr: address, start_height: u64, end_height: u64){
+      Testnet::assert_testnet(vm);
+
       // can only apply this to a validator
       // assert!(DiemSystem::is_validator(addr) == true, 777701);
       // mock mining for the address
@@ -76,6 +78,8 @@ module Mock {
 
     // did not do enough mining, but did validate.
     public fun mock_case_4(vm: &signer, addr: address, start_height: u64, end_height: u64){
+      Testnet::assert_testnet(vm);
+
 
       let voters = Vector::singleton<address>(addr);
 
@@ -117,25 +121,8 @@ module Mock {
       Testnet::assert_testnet(vm);
       let vals = ValidatorUniverse::get_eligible_validators();
 
-      let bids = Vector::empty<u64>();
-      let expiry = Vector::empty<u64>();
-      let i = 0;
-      let prev = 0;
-      let fib = 1;
-      while (i < Vector::length(&vals)) {
+      let (bids, expiry) = mock_bids(vm, &vals);
 
-        Vector::push_back(&mut expiry, 1000);
-        let b = prev + fib;
-        Vector::push_back(&mut bids, b);
-
-        let a = Vector::borrow(&vals, i);
-        let sig = DiemAccount::scary_create_signer_for_migrations(vm, *a);
-        // initialize and set.
-        ProofOfFee::set_bid(&sig, b, 1000);
-        prev = fib;
-        fib = b;
-        i = i + 1;
-      };
       DiemAccount::slow_wallet_epoch_drip(vm, 100000); // unlock some coins for the validators
 
       // make all validators pay auction fee
@@ -143,6 +130,33 @@ module Mock {
       DiemAccount::vm_multi_pay_fee(vm, &vals, 1, &b"proof of fee");
 
       (vals, bids, expiry)
+    }
+
+    public fun mock_bids(vm: &signer, vals: &vector<address>): (vector<u64>, vector<u64>) {
+      Testnet::assert_testnet(vm);
+
+      let bids = Vector::empty<u64>();
+      let expiry = Vector::empty<u64>();
+      let i = 0;
+      let prev = 0;
+      let fib = 1;
+      while (i < Vector::length(vals)) {
+
+        Vector::push_back(&mut expiry, 1000);
+        let b = prev + fib;
+        Vector::push_back(&mut bids, b);
+
+        let a = Vector::borrow(vals, i);
+        let sig = DiemAccount::scary_create_signer_for_migrations(vm, *a);
+        // initialize and set.
+        ProofOfFee::set_bid(&sig, b, 1000);
+        prev = fib;
+        fib = b;
+        i = i + 1;
+      };
+
+      (bids, expiry)
+
     }
 
     // function to deposit into network fee account

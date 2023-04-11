@@ -1,6 +1,7 @@
 //! genesis mining proof type
 
-use crate::{account::ValConfigs, config::IS_PROD, fixtures};
+use crate::{account::ValConfigs, fixtures};
+use diem_types::chain_id::MODE_0L;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -19,9 +20,9 @@ pub struct GenesisMiningProof {
 impl Default for GenesisMiningProof {
     fn default() -> GenesisMiningProof {
         // These use "alice" fixtures from ../fixtures/vdf_proofs/ and used elsewhere in the project, in both easy(stage) and hard(Prod) mode.
-        let env = if *IS_PROD { "prod" } else { "test" };
+        // let env = if MODE_0L.is_prot { "prod" } else { "test" };
 
-        let block = fixtures::get_persona_block_zero("alice", env);
+        let block = fixtures::get_persona_block_zero("alice", MODE_0L.clone());
         return GenesisMiningProof {
             preimage: hex::encode(block.preimage),
             proof: hex::encode(block.proof),

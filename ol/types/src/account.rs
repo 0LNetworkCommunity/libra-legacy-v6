@@ -1,5 +1,5 @@
 //! Formatters for libra account creation
-use crate::{block::VDFProof, config::IS_TEST};
+use crate::block::VDFProof;
 use dialoguer::Confirm;
 use diem_config::network_id::NetworkId;
 use diem_crypto::x25519::PublicKey;
@@ -7,7 +7,7 @@ use diem_global_constants::{DEFAULT_PUB_PORT, DEFAULT_VAL_PORT, DEFAULT_VFN_PORT
 use diem_types::{
     account_address::AccountAddress,
     network_address::{NetworkAddress},
-    transaction::{SignedTransaction, TransactionPayload},
+    transaction::{SignedTransaction, TransactionPayload}, chain_id::MODE_0L,
 };
 
 use crate::pay_instruction::PayInstruction;
@@ -217,7 +217,7 @@ impl ValConfigs {
             .enumerate()
             .for_each(|(i, instr)| {
                 println!("{}", instr.text_instruction());
-                if !*IS_TEST {  
+                if !MODE_0L.is_test() {  
                   match Confirm::new().with_prompt("").interact().unwrap() {
                     true => {},
                     _ =>  {

@@ -453,7 +453,7 @@ impl Network {
     }
 
     pub fn get_chain_name(&self) -> NamedChain {
-      self.chain_id.unwrap_or(NamedChain::TESTING)
+      self.chain_id.unwrap_or(NamedChain::TESTNET)
     }
 }
 
@@ -464,7 +464,7 @@ impl Default for Network {
             Url::from_str("http://127.0.0.1:8080").unwrap(),
             Url::from_str("http://127.0.0.1:8080").unwrap(),
             None,
-            Some(NamedChain::TESTING), //////// 0L ////////
+            Some(NamedChain::TESTNET), //////// 0L ////////
         )
     }
 }

@@ -79,6 +79,39 @@ module Burn {
     Diem::vm_burn_this_coin(vm, coins); 
   }
 
+  /// initialize, usually for testnet.
+  public fun initialize(vm: &signer) {
+    CoreAddresses::assert_vm(vm);
+
+    move_to<BurnState>(vm, BurnState {
+        addr: Vector::empty(),
+        deposits: Vector::empty(),
+        ratio: Vector::empty(),
+        lifetime_burned: 0,
+        lifetime_recycled: 0,
+      })
+  }
+
+  /// Migration script for hard forks
+  public fun vm_migration(vm: &signer, 
+    addr_list: vector<address>,
+    deposit_vec: vector<u64>,
+    ratios_vec: vector<FixedPoint32::FixedPoint32>,
+    lifetime_burned: u64, // these get reset on final supply V6. Future upgrades need to decide what to do with this
+    lifetime_recycled: u64,
+  ) {
+
+    // TODO: assert genesis when timesetamp is working again.
+    CoreAddresses::assert_vm(vm);
+
+    move_to<BurnState>(vm, BurnState {
+        addr: addr_list,
+        deposits: deposit_vec,
+        ratio: ratios_vec,
+        lifetime_burned,
+        lifetime_recycled,
+      })
+  }
 
   public fun reset_ratios(vm: &signer) acquires BurnState {
     CoreAddresses::assert_diem_root(vm);
@@ -117,7 +150,7 @@ module Burn {
       d.addr = list;
       d.deposits = deposit_vec;
       d.ratio = ratios_vec;
-    } else {
+    } else { // hot migration
       move_to<BurnState>(vm, BurnState {
         addr: list,
         deposits: deposit_vec,
@@ -179,10 +212,7 @@ module Burn {
 
   fun recycle(vm: &signer, payer: address, coin: &mut Diem<GAS>) acquires BurnState {
     let list = { get_address_list() }; // NOTE devs, the added scope drops the borrow which is used below.
-
     let len = Vector::length<address>(&list);
-
-
     let total_coin_value_to_recycle = Diem::value(coin);
 
     // There could be errors in the array, and underpayment happen.
@@ -206,6 +236,17 @@ module Burn {
       );
       value_sent = value_sent + amount_to_payee;      
       i = i + 1;
+    };
+
+    // if there is anything remaining it's a superman 3 issue
+    // so we send it back to the transaction fee account
+    // makes it easier to track since we know no burns should be happening.
+    // which is what would happen if the coin didn't get emptied here
+    let remainder_amount = Diem::value(coin);
+    if (remainder_amount > 0) {
+      let last_coin = Diem::withdraw(coin, remainder_amount);
+      // use pay_fee which doesn't track the sender, so we're not double counting the receipts, even though it's a small amount.
+      TransactionFee::pay_fee(last_coin);
     };
 
     // update the root state tracker
