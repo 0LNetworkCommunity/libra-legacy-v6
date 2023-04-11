@@ -95,7 +95,7 @@ impl Config {
 
     pub fn override_shared_backend(
         mut self,
-        shared_backend: &Option<crate::secure_backend::SecureBackend>,
+        shared_backend: &Option<crate::secure_backend::MGMTSecureBackend>,
     ) -> Result<Self, Error> {
         if let Some(backend) = &shared_backend {
             self.shared_backend = std::convert::TryInto::try_into(backend.clone())?;
@@ -105,7 +105,7 @@ impl Config {
 
     pub fn override_validator_backend(
         mut self,
-        validator_backend: &Option<crate::secure_backend::SecureBackend>,
+        validator_backend: &Option<crate::secure_backend::MGMTSecureBackend>,
     ) -> Result<Self, Error> {
         if let Some(backend) = &validator_backend {
             self.validator_backend = std::convert::TryInto::try_into(backend.clone())?;
@@ -166,7 +166,7 @@ impl Config {
 pub struct ConfigPath {
     /// Path to a diem-management configuration file
     #[structopt(long)]
-    config: Option<PathBuf>,
+    pub config: Option<PathBuf>,
 }
 
 impl ConfigPath {

@@ -245,6 +245,7 @@ impl Client {
 
     ///////// 0L ////////
     pub fn fork_genesis_repo(&self, genesis_repo_owner: &str, genesis_repo_name: &str) -> Result<(), Error> {
+        dbg!(&genesis_repo_owner);
         let json = json!({});
 
         let api_path = format!("https://api.github.com/repos/{}/{}/forks", genesis_repo_owner, genesis_repo_name);
@@ -282,8 +283,7 @@ impl Client {
     
     ///////// 0L ////////
     pub fn make_genesis_pull_request(&self, genesis_repo_owner: &str, genesis_repo_name: &str, pull_username: &str) -> Result<(), Error> {
-        // TODO: optionally fetch from token.
-        // let pull_username = self.get_authenticated_user().expect("could not get username associated with this gitub token");
+
         let head = format!("{}:master", pull_username);
         let json = json!({"head": &head, "base": "master", "title": pull_username});
         let api_path = format!("https://api.github.com/repos/{}/{}/pulls", genesis_repo_owner, genesis_repo_name);
@@ -302,11 +302,7 @@ impl Client {
     ///////// 0L ////////
     pub fn get_authenticated_user(&self) -> Result<String, Error> {
 
-        // let head = format!("{}:master", pull_username);
-        // let json = json!({"head": &head, "base": "master", "title": pull_username});
         let api_path = "https://api.github.com/user";
-
-        dbg!(api_path);
 
         let resp = self.upgrade_request(ureq::get(api_path)).call();
         

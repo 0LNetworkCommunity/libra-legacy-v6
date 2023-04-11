@@ -28,20 +28,20 @@ const RESPONSE_TIMEOUT_MS: u64 = 10_000;
 ///
 /// Example: backend=vault;server=http://127.0.0.1:8080;token=/path/to/token
 #[derive(Clone, Debug)]
-pub struct SecureBackend {
+pub struct MGMTSecureBackend {
     pub backend: String,
     pub parameters: HashMap<String, String>,
 }
 
-impl FromStr for SecureBackend {
+impl FromStr for MGMTSecureBackend {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        SecureBackend::try_from(s)
+        MGMTSecureBackend::try_from(s)
     }
 }
 
-impl TryFrom<&str> for SecureBackend {
+impl TryFrom<&str> for MGMTSecureBackend {
     type Error = Error;
 
     fn try_from(s: &str) -> Result<Self, Error> {
@@ -64,7 +64,7 @@ impl TryFrom<&str> for SecureBackend {
     }
 }
 
-impl TryInto<config::SecureBackend> for SecureBackend {
+impl TryInto<config::SecureBackend> for MGMTSecureBackend {
     type Error = Error;
 
     fn try_into(mut self) -> Result<config::SecureBackend, Error> {
@@ -161,14 +161,14 @@ pair: "k0=v0;k1=v1;...".  The current supported formats are:
     OnDisk: "backend=disk;path=LOCAL_PATH"
                 "#)
             )]
-            pub $field_name: Option<SecureBackend>,
+            pub $field_name: Option<MGMTSecureBackend>,
         }
 
         impl FromStr for $struct_name {
             type Err = Error;
 
             fn from_str(s: &str) -> Result<Self, Self::Err> {
-                let secure_backend = SecureBackend::try_from(s)?;
+                let secure_backend = MGMTSecureBackend::try_from(s)?;
                 let $field_name = $struct_name {
                     $field_name: Some(secure_backend),
                 };
@@ -188,7 +188,7 @@ secure_backend!(SharedBackend, shared_backend, "shared information");
 
 //////// 0L ////////
 pub fn storage(s: &str) -> Result<config::SecureBackend, Error> {
-    let management_backend: SecureBackend = s.try_into()?;
+    let management_backend: MGMTSecureBackend = s.try_into()?;
     management_backend.try_into()
 }
 
@@ -274,7 +274,7 @@ mod tests {
     }
 
     fn storage(s: &str) -> Result<config::SecureBackend, Error> {
-        let management_backend: SecureBackend = s.try_into()?;
+        let management_backend: MGMTSecureBackend = s.try_into()?;
         management_backend.try_into()
     }
 }

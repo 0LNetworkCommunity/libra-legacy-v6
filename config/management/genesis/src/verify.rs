@@ -47,6 +47,13 @@ pub struct Verify {
 }
 
 impl Verify {
+      pub fn new(validator_backend: &ValidatorBackend, genesis_path: PathBuf) -> Self {
+        Self {
+            config: ConfigPath { config: None },
+            backend: validator_backend.to_owned(),
+            genesis_path: Some(genesis_path),
+        }
+    }
     pub fn execute(self) -> Result<String, Error> {
         let config = self
             .config

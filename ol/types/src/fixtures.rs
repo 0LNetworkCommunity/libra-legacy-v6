@@ -67,6 +67,17 @@ pub fn get_test_genesis_blob() -> PathBuf {
         .join("swarm_genesis.blob")
 }
 
+  /// get genesis blob for tests
+  pub fn get_test_snapshot() -> PathBuf {
+      let path = env!("CARGO_MANIFEST_DIR");
+      Path::new(path)
+          .parent()
+          .unwrap()
+          .join("fixtures/rescue/state_backup")
+          .join("state_ver_76353076.a0ff")
+  }
+
+
 /// get configs from toml
 pub fn get_persona_toml_configs(persona: &str) -> AppCfg {
     let path = env!("CARGO_MANIFEST_DIR");

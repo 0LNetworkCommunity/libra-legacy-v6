@@ -17,7 +17,6 @@ pub async fn make_recovery_genesis_from_db_backup(
     genesis_blob_path: PathBuf,
     archive_path: PathBuf,
     append: bool,
-    _is_legacy: bool,
     genesis_vals: &[Validator],
 ) -> Result<Transaction, Error> {
     // get the legacy data from archive
@@ -51,7 +50,6 @@ pub fn make_recovery_genesis_from_vec_legacy_recovery(
     // Otherwise, we might need to just collect the validator accounts
     // for debugging or other test purposes.
     // let expected_len_all_users = recovery.len() as u64;
-
     let recovery_changeset = encode_recovery_genesis_changeset(
       &all_validator_configs.vals,
       &all_validator_configs.opers,
@@ -60,9 +58,7 @@ pub fn make_recovery_genesis_from_vec_legacy_recovery(
       append_user_accounts,
       recovery, // TODO: turn this into an option type
     )?;
-
     let gen_tx = Transaction::GenesisTransaction(WriteSetPayload::Direct(recovery_changeset));
-
     save_genesis(&gen_tx, genesis_blob_path)?;
     Ok(gen_tx)
 }
@@ -87,7 +83,8 @@ pub fn make_recovery_genesis_from_vec_legacy_recovery(
 
 /// save the genesis blob
 pub fn save_genesis(gen_tx: &Transaction, output_path: PathBuf) -> Result<(), Error> {
-    let mut file = File::create(output_path)?;
+    let file_path = output_path.join("genesis").with_extension("blob");
+    let mut file = File::create(file_path)?;
     let bytes = bcs::to_bytes(&gen_tx)?;
     file.write_all(&bytes)?;
     Ok(())

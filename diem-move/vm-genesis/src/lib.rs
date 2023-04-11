@@ -251,7 +251,7 @@ pub fn encode_recovery_genesis_changeset(
     OLProgress::complete(&format!("Migrate legacy validator configs [{}]",  val_assignments.len()));
 
     // Recover the user balances and data
-    // NOTE: this includes the balances of legacy validators.
+    // NOTE: 0L: this includes the balances of legacy validators.
     if append_users  {
       migrate_end_users(&mut session, legacy_data)?;
       OLProgress::complete(&format!("Migrated User Data [{}]", legacy_data.len()));
@@ -650,35 +650,7 @@ fn create_and_initialize_owners_operators(
     }
 }
 
-// //////// 0L ///////
-// // Validator/owner state to recover in genesis recovery mode
-// #[derive(Debug, Clone, PartialEq, PartialOrd)]
-// pub struct ValStateRecover {
-//     ///
-//     pub val_account: AccountAddress,
-//     ///
-//     pub operator_delegated_account: AccountAddress,
-//     ///
-//     pub val_auth_key: AuthenticationKey,
-// }
-
-// //////// 0L ///////
-// /// Operator state to recover in genesis recovery mode
-// #[derive(Debug, Clone, PartialEq)]
-// pub struct OperRecover {
-//     ///
-//     pub operator_account: AccountAddress,
-//     ///
-//     pub operator_auth_key: AuthenticationKey,
-//     ///
-//     pub validator_to_represent: AccountAddress,
-//     ///
-//     pub operator_consensus_pubkey: Vec<u8>,
-//     ///
-//     pub validator_network_addresses: Vec<u8>,
-//     ///
-//     pub fullnode_network_addresses: Vec<u8>,
-// }
+//  NOTE: 0L: moved ValStateRecover and OperStateRecover types to ol/types
 
 //////// 0L ////////
 /// TODO: recovery mode is WIP.
@@ -791,23 +763,7 @@ fn recovery_owners_operators(
         );
     }
 
-    // println!("4 ======== Add owner to validator set");
-    // // Add each validator to the validator set
-    // for i in val_set {
-    //     // let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
-    //     // let owner_address = staged_owner_auth_key.derived_address();
-    //     // // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
-    //     exec_function(
-    //         session,
-    //         "DiemSystem",
-    //         "add_validator",
-    //         vec![],
-    //         serialize_values(&vec![
-    //             MoveValue::Signer(diem_root_address),
-    //             MoveValue::Address(*i),
-    //         ]),
-    //     );
-    // }
+    // NOTE: 0L: removed code which adds validators to validator set, since this is handled in the Move migration logic.
 }
 
 /// Publish the standard library.
@@ -870,18 +826,7 @@ fn verify_genesis_write_set(events: &[ContractEvent]) {
         CreateAccountEvent::event_key(),
     );
 
-    //////// 0L ////////
-    // // (3) The first non-account creation event should be the new epoch event
-    // let new_epoch_events: Vec<&ContractEvent> = events
-    //     .iter()
-    //     .filter(|e| e.key() == &NewEpochEvent::event_key())
-    //     .collect();
-    // assert!(
-    //     new_epoch_events.len() == 1,
-    //     "There should only be one NewEpochEvent"
-    // );
-    // // (4) This should be the first new_epoch_event
-    // assert_eq!(new_epoch_events[0].sequence_number(), 0,);
+    // NOTE: 0L: We don't need this check anymore. We are running account creations at the genesis.
 }
 
 /// An enum specifying whether the compiled stdlib/scripts should be used or freshly built versions
@@ -1073,28 +1018,7 @@ fn fund_operators(
         );
     }
 
-    // Old (diem 1.3.0 patch) - to remove after review
-    //
-    // // Add each validator to the validator set
-    // for (owner_key, _owner_name, _op_assignment, _genesis_proof, operator_account) in
-    //     operator_assignments
-    // {
-    //     let diem_root_address = account_config::diem_root_address();
-
-    //     // give the operator balance to be able to send txs for owner, e.g. tower-builder
-    //     exec_function(
-    //         session,
-    //         // log_context,
-    //         "DiemAccount",
-    //         "genesis_fund_operator",
-    //         vec![],
-    //         serialize_values(&vec![
-    //             MoveValue::Signer(diem_root_address),
-    //             MoveValue::Signer(owner_address),
-    //             MoveValue::Address(*operator_account),
-    //         ]),
-    //     );
-    // }
+    // NOTE: 0L: we do not need to fund operators in v6 at genesis. Operators are no longer mining with Tower.
 }
 
 //////// 0L ////////

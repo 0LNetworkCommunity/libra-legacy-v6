@@ -73,7 +73,8 @@ impl Genesis {
     //////// 0L ////////
     pub fn just_the_vals(shared_backend: Storage) -> Result<Vec<Validator>, Error>{
         
-      let g = GenesisBuilder::new(shared_backend);      
+      let g = GenesisBuilder::new(shared_backend);
+      
       g.validators()
         .map_err(|e| Error::UnexpectedError(e.to_string()))
     }

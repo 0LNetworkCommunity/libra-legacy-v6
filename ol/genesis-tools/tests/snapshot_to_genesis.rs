@@ -13,7 +13,6 @@ async fn test_read_db_backup_and_save_blob() {
     make_recovery_genesis_from_db_backup(
       output_path.clone(), 
       db_backup_path, 
-      true, 
       false,
       &genesis_vals,
     )

@@ -12,8 +12,8 @@ pub mod waypoint;  //////// 0L /////////
 pub mod layout;
 mod move_modules;
 pub mod validator_builder;
-mod validator_config;
-mod validator_operator;
+pub mod validator_config;
+pub mod validator_operator; //////// 0L ///////// make public
 pub mod verify; //////// 0L ///////// make public
 
 //////// 0L ////////

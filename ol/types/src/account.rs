@@ -154,7 +154,7 @@ impl ValConfigs {
 
         file.write(&buf.as_bytes())?;
 
-        println!("account manifest created, file saved to: {:?}", json_path);
+        println!("account profile file created, file saved to: {:?}", json_path);
         Ok(())
     }
 
