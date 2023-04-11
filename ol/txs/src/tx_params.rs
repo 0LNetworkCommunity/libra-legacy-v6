@@ -20,7 +20,7 @@ use ol::node::client::find_a_remote_jsonrpc;
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::{
     self,
-    config::{TxCost, TxType},
+    config::{TxCost, TxType, IS_TEST},
     fixtures,
 };
 
@@ -111,30 +111,32 @@ impl TxParams {
             }
         };
 
-        println!("OPTIONAL: If you have changed your account's authkey \
-            then input the old address below, enter to skip.");
         let mut account_address: Option<AccountAddress> = None;
-        let mut input = String::new();
-        loop {
-            match io::stdin().read_line(&mut input) {
-                Ok(_) => {
-                    if let Some('\n') = input.chars().next_back() {
-                        input.pop();
+        if *IS_TEST == false {
+            println!("OPTIONAL: If you have changed your account's authkey \
+                then input the old address below, enter to skip.");
+            let mut input = String::new();
+            loop {
+                match io::stdin().read_line(&mut input) {
+                    Ok(_) => {
+                        if let Some('\n') = input.chars().next_back() {
+                            input.pop();
+                        }
+                        if let Some('\r') = input.chars().next_back() {
+                            input.pop();
+                        }
+                        if input.len() == 0 {
+                            break;
+                        }
+                        if let Ok(address) = AccountAddress::from_hex_literal(&format!("0x{}", input)) {
+                            account_address = Some(address);
+                            break;
+                        };
+                        println!("Invalid address. Try again!");
+                        input.clear();
                     }
-                    if let Some('\r') = input.chars().next_back() {
-                        input.pop();
-                    }
-                    if input.len() == 0 {
-                        break;
-                    }
-                    if let Ok(address) = AccountAddress::from_hex_literal(&format!("0x{}", input)) {
-                        account_address = Some(address);
-                        break;
-                    };
-                    println!("Invalid address. Try again!");
-                    input.clear();
+                    Err(error) => println!("{}", error)
                 }
-                Err(error) => println!("{}", error)
             }
         }
         if let Some(address) = account_address {
