@@ -2,12 +2,38 @@
 // SPDX-License-Identifier: Apache-2.0
 use anyhow::{ensure, format_err, Error, Result};
 use serde::{de::Visitor, Deserialize, Deserializer, Serialize};
-use std::{convert::TryFrom, fmt, str::FromStr};
+use std::{convert::TryFrom, fmt, str::FromStr, env};
+use once_cell::sync::Lazy;
+
+///////// 0L ////////
+/// 
+/// for getting chain config from environment variables
+/// in 0L abscissa apss this will override the 0L.toml file
+/// in vm-genesis this will set the chain configs
+pub const ENV_VAR_MODE_0L: &str = "MODE_0L";
+
+pub static MODE_0L: Lazy<NamedChain> = Lazy::new(|| {
+  let st = env::var(ENV_VAR_MODE_0L)
+    .unwrap_or("MAINNET".to_string());
+  NamedChain::str_to_named(st.to_uppercase().as_str())
+    .unwrap_or(NamedChain::MAINNET)
+});
+
 
 /// A registry of named chain IDs
 /// Its main purpose is to improve human readability of reserved chain IDs in config files and CLI
 /// When signing transactions for such chains, the numerical chain ID should still be used
 /// (e.g. MAINNET has numeric chain ID 1, TESTNET has chain ID 2, etc)
+
+//////// 0L ////////
+/// Node environment modes for compiling, starting, and mining: Mainnet/prod, Testnet, Stage, and Ci
+/// See detailed chain defaults in: Globals.Move.
+/// MAINNET/prod: is the default. Oracle "tower" mining is difficult. Epochs last one day.
+/// Testnet: means a test chain will be started with a Testnet flag: epochs are shorter, difficulty is lower.
+/// Stage Has all settings of Prod, but a short 20min epoch.
+/// Ci: means that "test" env configs apply, and that any 0L CLIs 
+/// can be run without user input: e.g. `onboard --val`
+
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, Serialize, PartialEq)] ///////// 0L ////////
 pub enum NamedChain {
@@ -18,33 +44,31 @@ pub enum NamedChain {
     // Even though these CHAIN IDs do not correspond to MAINNET, changing them should be avoided since they
     // can break test environments for various organisations.
     TESTNET = 2,
-    DEVNET = 3,
-    TESTING = 4,
-    PREMAINNET = 5,
-    EXPERIMENTAL = 7, //////// 0L ////////    
+    STAGE = 3,
+    //////// 0L //////// 
+    // deprecating unused chain names to simplify environment setting
+    // TESTNET = 4,
+    // PREMAINNET = 5,
+    // STAGE = 6,
+    // EXPERIMENTAL = 7, deprecated  
+    CI = 4,
 }
+
 
 impl NamedChain {
     pub fn str_to_named(s: &str) -> Result<Self> { //////// 0L ////////
-      let n = match s {
+      let s = s.to_string().to_uppercase();
+      let n = match s.as_str() {
           "MAINNET" => NamedChain::MAINNET,
           "TESTNET" => NamedChain::TESTNET,
-          "DEVNET" => NamedChain::DEVNET,
-          "TESTING" => NamedChain::TESTING,
-          "PREMAINNET" => NamedChain::PREMAINNET,
-          "EXPERIMENTAL" => NamedChain::EXPERIMENTAL, //////// 0L ////////
-          "Mainnet" => NamedChain::MAINNET, // Backwards compatibility.
-          "Testnet" => NamedChain::TESTNET,
-          "Devnet" => NamedChain::DEVNET,
-          "Testing" => NamedChain::TESTING,
-          "Premainet" => NamedChain::PREMAINNET,
-          "Experimental" => NamedChain::EXPERIMENTAL, //////// 0L ////////
+          "STAGE" => NamedChain::STAGE,
+          "CI" => NamedChain::CI,
           "1" => NamedChain::MAINNET,
           "2" => NamedChain::TESTNET,
-          "3" => NamedChain::DEVNET,
-          "4" => NamedChain::TESTING,
-          "5" => NamedChain::PREMAINNET,
-          "7" => NamedChain::EXPERIMENTAL, //////// 0L ////////         
+          "3" => NamedChain::STAGE,
+          "4" => NamedChain::CI,  
+          "PROD" => NamedChain::MAINNET, // graceful transition
+          "TEST" => NamedChain::TESTNET, // graceful transition
           _ => {
               return Err(format_err!("Not a reserved chain: {:?}", s));
           }
@@ -65,12 +89,22 @@ impl NamedChain {
         match chain_id.id() {
             1 => Ok(NamedChain::MAINNET),
             2 => Ok(NamedChain::TESTNET),
-            3 => Ok(NamedChain::DEVNET),
-            4 => Ok(NamedChain::TESTING),
-            5 => Ok(NamedChain::PREMAINNET),
-            7 => Ok(NamedChain::EXPERIMENTAL), //////// 0L ////////            
+            3 => Ok(NamedChain::STAGE),
+            4 => Ok(NamedChain::CI),         
             _ => Err(String::from("Not a named chain")),
         }
+    }
+
+    pub fn is_prod(&self) -> bool {
+        *self == NamedChain::MAINNET
+    }
+
+    pub fn is_test(&self) -> bool {
+        *self == NamedChain::TESTNET
+    }
+
+    pub fn is_ci(&self) -> bool {
+        *self == NamedChain::CI
     }
 }
 
@@ -154,12 +188,10 @@ impl fmt::Display for NamedChain {
             f,
             "{}",
             match self {
-                NamedChain::DEVNET => "DEVNET",
-                NamedChain::TESTNET => "TESTNET",
                 NamedChain::MAINNET => "MAINNET",
-                NamedChain::TESTING => "TESTING",
-                NamedChain::PREMAINNET => "PREMAINNET",
-                NamedChain::EXPERIMENTAL => "EXPERIMENTAL", //////// 0L ////////
+                NamedChain::TESTNET => "TESTNET",
+                NamedChain::STAGE => "STAGE",
+                NamedChain::CI => "CI",
             }
         )
     }
@@ -195,7 +227,7 @@ impl ChainId {
     }
 
     pub fn test() -> Self {
-        ChainId::new(NamedChain::TESTING.id())
+        ChainId::new(NamedChain::TESTNET.id())
     }
 }
 
@@ -209,7 +241,18 @@ mod test {
         assert!(ChainId::from_str("0").is_err());
         assert!(ChainId::from_str("256").is_err());
         assert!(ChainId::from_str("255255").is_err());
-        assert_eq!(ChainId::from_str("TESTING").unwrap(), ChainId::test());
+        assert_eq!(ChainId::from_str("TESTNET").unwrap(), ChainId::test());
         assert_eq!(ChainId::from_str("255").unwrap(), ChainId::new(255));
     }
+}
+
+#[test] fn read_env() {
+    env::set_var(ENV_VAR_MODE_0L, "test");
+    assert!(MODE_0L.clone() == NamedChain::TESTNET);
+}
+
+
+#[test] fn read_env_sad() { // somehow can't set twice in test, even when removing env var
+    env::set_var(ENV_VAR_MODE_0L, "woot");
+    assert!(MODE_0L.clone() == NamedChain::MAINNET);
 }

@@ -4,11 +4,10 @@ use anyhow::{bail, Error};
 use diem_config::config::NodeConfig;
 use diem_global_constants::{CONFIG_FILE, NODE_HOME};
 use diem_types::{
-    account_address::AccountAddress, chain_id::NamedChain,
+    account_address::AccountAddress, chain_id::{NamedChain, MODE_0L},
     transaction::authenticator::AuthenticationKey, waypoint::Waypoint,
 };
 use dirs;
-use once_cell::sync::Lazy;
 use reqwest::{blocking::Client, Url};
 use serde::{Deserialize, Serialize};
 use serde_json::{self, json};
@@ -24,27 +23,27 @@ use crate::dialogue::{what_home, what_ip, what_statement, what_vfn_ip};
 
 const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f787d38db2d623ae2";
 
-/// Check if we are in prod mode
-pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
-    match std::env::var("NODE_ENV") {
-        Ok(val) => {
-            match val.as_str() {
-                "prod" => true,
-                // if anything else is set by user is false
-                _ => false,
-            }
-        }
-        // default to prod if nothig is set
-        _ => true,
-    }
-});
+// /// Check if we are in prod mode
+// pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
+//     match std::env::var("NODE_ENV") {
+//         Ok(val) => {
+//             match val.as_str() {
+//                 "prod" => true,
+//                 // if anything else is set by user is false
+//                 _ => false,
+//             }
+//         }
+//         // default to prod if nothig is set
+//         _ => true,
+//     }
+// });
 
-// TODO: this is duplicated in ol/keys/wallet due to dependency cycle. Move to Global constants?
-/// check this is CI environment
-pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
-    // assume default if NODE_ENV=prod and TEST=y.
-    std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string()
-});
+// // TODO: this is duplicated in ol/keys/wallet due to dependency cycle. Move to Global constants?
+// /// check this is CI environment
+// pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
+//     // assume default if NODE_ENV=prod and TEST=y.
+//     std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string()
+// });
 
 /// MinerApp Configuration
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -206,7 +205,7 @@ impl AppCfg {
         }
 
         // skip questionnaire if CI
-        if *IS_TEST {
+        if MODE_0L.is_test() {
             default_config.save_file()?;
 
             return Ok(default_config);

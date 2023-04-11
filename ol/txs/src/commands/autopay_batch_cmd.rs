@@ -13,12 +13,12 @@ use abscissa_core::{Command, Options, Runnable};
 use anyhow::Error;
 use dialoguer::Confirm;
 use diem_transaction_builder::stdlib as transaction_builder;
-use diem_types::account_address::AccountAddress;
+use diem_types::{account_address::AccountAddress, chain_id::MODE_0L};
 use diem_types::transaction::{SignedTransaction, TransactionPayload};
 use ol::node::node::Node;
 use ol_types::{
     autopay::AutoPayResource,
-    config::{TxType, IS_TEST},
+    config::TxType,
     pay_instruction::PayInstruction,
 };
 use std::{path::PathBuf, process::exit};
@@ -103,7 +103,7 @@ pub fn process_instructions(instructions: Vec<PayInstruction>) -> Vec<Transactio
 
       println!("{}", i.text_instruction());
       // accept if CI mode.
-      if *IS_TEST { return Some(i) }
+      if MODE_0L.is_test() { return Some(i) }
 
       // check the user wants to do this.
       match Confirm::new().with_prompt("").interact().unwrap() {

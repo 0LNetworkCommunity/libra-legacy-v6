@@ -228,7 +228,7 @@ fn bad_writesets() {
                 vec![],
             )))
             .sequence_number(test_env.dr_sequence_number)
-            .chain_id(ChainId::new(NamedChain::DEVNET.id()))
+            .chain_id(ChainId::new(NamedChain::STAGE.id()))
             .sign();
         assert_prologue_parity!(
             executor.verify_transaction(writeset_txn.clone()).status(),

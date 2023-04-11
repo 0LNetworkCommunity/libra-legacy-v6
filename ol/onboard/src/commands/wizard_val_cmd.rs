@@ -6,13 +6,13 @@ use super::genesis_files_cmd;
 use crate::prelude::app_config;
 use abscissa_core::{status_info, status_ok, Command, Options, Runnable};
 use diem_genesis_tool::ol_node_files;
-use diem_types::chain_id::NamedChain;
+use diem_types::chain_id::{NamedChain, MODE_0L};
 use diem_types::{transaction::SignedTransaction, waypoint::Waypoint};
 use diem_wallet::WalletLibrary;
 use ol::{commands::init_cmd, config::AppCfg};
 use ol_keys::{scheme::KeyScheme, wallet};
 use ol_types::block::VDFProof;
-use ol_types::config::{bootstrap_waypoint_from_upstream, IS_TEST};
+use ol_types::config::bootstrap_waypoint_from_upstream;
 use ol_types::fixtures;
 use ol_types::{account::ValConfigs, config::TxType, pay_instruction::PayInstruction};
 use reqwest::Url;
@@ -250,7 +250,7 @@ pub fn get_autopay_batch(
         exit(1);
     });
 
-    let tx_expiration_sec = if *IS_TEST {
+    let tx_expiration_sec = if MODE_0L.is_test() {
         // creating fixtures here, so give it near infinite expiry
         100 * 360 * 24 * 60 * 60
     } else {

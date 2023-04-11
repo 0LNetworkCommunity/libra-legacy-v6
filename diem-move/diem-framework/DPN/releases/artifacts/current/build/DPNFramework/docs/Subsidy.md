@@ -48,7 +48,8 @@
   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&genesis_validators);
   // ten coins for validator, sufficient for first epoch of transactions,
   // and an extra which the validator will send <b>to</b> operator.
-  <b>let</b> subsidy = 12500000;
+  // Validator should have 10_000_000 at the end after the Operator <b>has</b> been bootsrapped, and the <a href="InfraEscrow.md#0x1_InfraEscrow">InfraEscrow</a> started.
+  <b>let</b> subsidy = 13500000;
   <b>let</b> i = 0;
   <b>while</b> (i &lt; len) {
     <b>let</b> node_address = *(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<b>address</b>&gt;(&genesis_validators, i));

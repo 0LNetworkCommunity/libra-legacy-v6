@@ -5,7 +5,7 @@ use crate::{
     prelude::app_config,
 };
 use anyhow::Error;
-use ol_types::config::IS_PROD;
+use diem_types::chain_id::MODE_0L;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, fs::{self, File}, process::{Command, Stdio, exit}};
 const BINARY_NODE: &str = "diem-node";
@@ -74,7 +74,7 @@ impl Node {
         let node_home = conf.workspace.node_home.to_str().unwrap();
         let config_file_name = format!("{}validator.node.yaml", node_home);
 
-        let child = if *IS_PROD {
+        let child = if MODE_0L.is_prod() {
             let args = vec!["--config", &config_file_name];
             if verbose {
                 println!("Starting '{}' with args: {:?}", NODE, args.join(" "));
@@ -121,7 +121,7 @@ impl Node {
             return;
         }
 
-        let child = if *IS_PROD {
+        let child = if MODE_0L.is_prod() {
             // start as operator, so that mnemonic is not needed.
             let args = vec!["-o", "start"];
             // if use_backup { args.push("--backup-url"); };
@@ -172,7 +172,7 @@ impl Node {
             return;
         }
 
-        let child = if *IS_PROD {
+        let child = if MODE_0L.is_prod() {
             if _verbose {
                 println!("Starting `ol serve`");
             }
@@ -225,7 +225,7 @@ impl Node {
         if verbose {
             args.push("-s");
         }
-        let child = if *IS_PROD {
+        let child = if MODE_0L.is_prod() {
             println!("Starting `ol pilot`");
             spawn_process(
                 "ol",

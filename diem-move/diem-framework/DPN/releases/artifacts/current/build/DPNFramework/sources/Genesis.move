@@ -36,7 +36,7 @@ module DiemFramework::Genesis {
     use DiemFramework::TowerState;
     use DiemFramework::DonorDirected;
     use DiemFramework::Migrations;  
-    // use DiemFramework::Testnet;
+    use DiemFramework::Burn;
     use DiemFramework::ProofOfFee;
     use DiemFramework::MultiSigPayment;
     use DiemFramework::MusicalChairs; 
@@ -165,6 +165,7 @@ module DiemFramework::Genesis {
         Migrations::init(dr_account);
         MusicalChairs::initialize(dr_account);
         InfraEscrow::initialize_infra_pledge(dr_account);
+        Burn::initialize(dr_account);
 
         // After we have called this function, all invariants which are guarded by
         // `DiemTimestamp::is_operating() ==> ...` will become active and a verification condition.

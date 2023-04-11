@@ -179,7 +179,7 @@ impl TxParams {
         let tx_cost = config.tx_configs.get_cost(tx_type);
 
         let chain_id = if is_swarm {
-            ChainId::new(NamedChain::TESTING.id())
+            ChainId::new(NamedChain::TESTNET.id())
         } else {
             // main net id
             ChainId::new(config.chain_info.chain_id.id())
@@ -236,7 +236,7 @@ impl TxParams {
                 user_tx_timeout: 5_000,
             },
 
-            chain_id: ChainId::new(NamedChain::TESTING.id()),
+            chain_id: ChainId::new(NamedChain::TESTNET.id()),
             is_operator,
         };
 
@@ -301,7 +301,7 @@ impl TxParams {
         };
 
         let chain_id = if is_swarm {
-            ChainId::new(NamedChain::TESTING.id())
+            ChainId::new(NamedChain::TESTNET.id())
         } else {
             // main net id
             ChainId::new(config.chain_info.chain_id.id())

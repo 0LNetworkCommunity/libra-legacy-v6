@@ -1,7 +1,6 @@
 //! Key generation
-use diem_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey};
+use diem_types::{account_address::AccountAddress, transaction::authenticator::AuthenticationKey, chain_id::MODE_0L};
 use diem_wallet::{Mnemonic, WalletLibrary};
-use once_cell::sync::Lazy;
 use std::{env, process::exit};
 
 /// Genereates keys from WalletLibrary, updates a MinerConfig
@@ -68,7 +67,7 @@ pub fn get_account_from_prompt() -> (AuthenticationKey, AccountAddress, WalletLi
 
     let test_env_mnem = env::var("MNEM");
     // if we are in debugging or CI mode
-    let mnem = match *IS_TEST && test_env_mnem.is_ok() {
+    let mnem = match MODE_0L.is_ci() && test_env_mnem.is_ok() {
         true => {
             println!("Debugging mode, using mnemonic from env variable, $MNEM");
             test_env_mnem.unwrap().trim().to_string()
@@ -141,10 +140,3 @@ fn fixture_wallet() {
     // expect the same address for alice
     assert!(&acc.to_string() == "4C613C2F4B1E67CA8D98A542EE3F59F5");
 }
-
-// TODO: this is duplicated with ol/types/config because of a dependency cycle. Move to Global constants?
-/// check this is CI environment
-pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
-    // assume default if NODE_ENV=prod and TEST=y.
-    std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string()
-});

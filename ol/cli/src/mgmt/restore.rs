@@ -6,6 +6,7 @@ use anyhow::{anyhow, bail, Error};
 use diem_global_constants::WAYPOINT;
 use diem_secure_storage::KVStorage;
 use diem_secure_storage::{self, Namespaced, OnDiskStorage};
+use diem_types::chain_id::MODE_0L;
 use diem_types::waypoint::Waypoint;
 use glob::glob;
 use once_cell::sync::Lazy;
@@ -26,25 +27,10 @@ use std::{
 const GITHUB_ORG: &str = "0LNetworkCommunity";
 /// Check if we are in testnet mode
 pub static GITHUB_REPO: Lazy<&str> = Lazy::new(|| {
-    if *IS_DEVNET {
-        "dev-epoch-archive"
+    if MODE_0L.is_prod() {
+      "epoch-archive" 
     } else {
-        "epoch-archive"
-    }
-});
-
-/// Are we restoring devnet database
-pub static IS_DEVNET: Lazy<bool> = Lazy::new(|| {
-    match env::var("TEST") {
-        Ok(val) => {
-            match val.as_str() {
-                "y" => true,
-                // if anything else is set by user is false
-                _ => false,
-            }
-        }
-        // default to prod if nothig is set
-        _ => false,
+      "dev-epoch-archive"
     }
 });
 
@@ -265,9 +251,11 @@ impl Backup {
 
         Ok(waypoint)
     }
+
+    /// TODO: Do we need this in V6?
     /// Creates a fullnode yaml file with restore waypoint.
     pub fn create_fullnode_yaml(&self) -> Result<(), Error> {
-        let yaml = if *IS_DEVNET {
+        let yaml = if MODE_0L.is_test() {
             devnet_yaml(
                 &self.home_path.to_str().expect("no home path provided"),
                 &self.waypoint.expect("no waypoint provided").to_string(),
