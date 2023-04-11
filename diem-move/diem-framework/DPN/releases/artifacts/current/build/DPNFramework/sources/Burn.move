@@ -1,6 +1,6 @@
 address DiemFramework {
 module Burn {
-  use DiemFramework::Wallet;
+  use DiemFramework::DonorDirected;
   use Std::FixedPoint32;
   use Std::Vector;
   use DiemFramework::DiemAccount;
@@ -21,7 +21,7 @@ module Burn {
 
   public fun reset_ratios(vm: &signer) acquires DepositInfo {
     CoreAddresses::assert_diem_root(vm);
-    let list = Wallet::get_comm_list();
+    let list = DonorDirected::get_root_registry();
 
     let len = Vector::length(&list);
     let i = 0;
@@ -149,10 +149,10 @@ module Burn {
     };
 
     // prevent under-burn due to issues with index.
-    let diff = value - value_sent;
-    if (diff > 0) {
-      burn(vm, payer, diff)
-    };    
+    // let diff = value - value_sent;
+    // if (diff > 0) {
+    //   burn(vm, payer, diff)
+    // };    
   }
 
   public fun set_send_community(sender: &signer, community: bool) acquires BurnPreference {

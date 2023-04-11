@@ -49,7 +49,7 @@ before and after every transaction.
 -  [Function `preburn`](#0x1_DiemAccount_preburn)
 -  [Function `extract_withdraw_capability`](#0x1_DiemAccount_extract_withdraw_capability)
 -  [Function `restore_withdraw_capability`](#0x1_DiemAccount_restore_withdraw_capability)
--  [Function `process_community_wallets`](#0x1_DiemAccount_process_community_wallets)
+-  [Function `get_withdraw_cap_address`](#0x1_DiemAccount_get_withdraw_cap_address)
 -  [Function `vm_make_payment_no_limit`](#0x1_DiemAccount_vm_make_payment_no_limit)
 -  [Function `vm_burn_from_balance`](#0x1_DiemAccount_vm_burn_from_balance)
 -  [Function `pay_from`](#0x1_DiemAccount_pay_from)
@@ -97,6 +97,7 @@ before and after every transaction.
 -  [Function `create_validator_account`](#0x1_DiemAccount_create_validator_account)
 -  [Function `create_validator_operator_account`](#0x1_DiemAccount_create_validator_operator_account)
 -  [Function `vm_deposit_with_metadata`](#0x1_DiemAccount_vm_deposit_with_metadata)
+-  [Function `vm_withdraw`](#0x1_DiemAccount_vm_withdraw)
 -  [Function `vm_migrate_slow_wallet`](#0x1_DiemAccount_vm_migrate_slow_wallet)
 -  [Function `init_cumulative_deposits`](#0x1_DiemAccount_init_cumulative_deposits)
 -  [Function `maybe_update_deposit`](#0x1_DiemAccount_maybe_update_deposit)
@@ -104,7 +105,6 @@ before and after every transaction.
 -  [Function `get_cumulative_deposits`](#0x1_DiemAccount_get_cumulative_deposits)
 -  [Function `get_index_cumu_deposits`](#0x1_DiemAccount_get_index_cumu_deposits)
 -  [Function `is_init`](#0x1_DiemAccount_is_init)
--  [Function `migrate_cumu_deposits`](#0x1_DiemAccount_migrate_cumu_deposits)
 -  [Function `vm_init_slow`](#0x1_DiemAccount_vm_init_slow)
 -  [Function `set_slow`](#0x1_DiemAccount_set_slow)
 -  [Function `slow_wallet_epoch_drip`](#0x1_DiemAccount_slow_wallet_epoch_drip)
@@ -113,6 +113,8 @@ before and after every transaction.
 -  [Function `is_slow`](#0x1_DiemAccount_is_slow)
 -  [Function `unlocked_amount`](#0x1_DiemAccount_unlocked_amount)
 -  [Function `get_slow_list`](#0x1_DiemAccount_get_slow_list)
+-  [Function `brick_this`](#0x1_DiemAccount_brick_this)
+-  [Function `is_a_brick`](#0x1_DiemAccount_is_a_brick)
 -  [Function `test_helper_create_signer`](#0x1_DiemAccount_test_helper_create_signer)
 -  [Function `test_remove_slow`](#0x1_DiemAccount_test_remove_slow)
 -  [Module Specification](#@Module_Specification_4)
@@ -166,7 +168,6 @@ before and after every transaction.
 <b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 <b>use</b> <a href="Vouch.md#0x1_Vouch">0x1::Vouch</a>;
-<b>use</b> <a href="Wallet.md#0x1_Wallet">0x1::Wallet</a>;
 </code></pre>
 
 
@@ -786,6 +787,15 @@ Separate struct to track cumulative deposits
 
 
 <pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>: u64 = 1000000;
+</code></pre>
+
+
+
+<a name="0x1_DiemAccount_BRICK_AUTH"></a>
+
+
+
+<pre><code><b>const</b> <a href="DiemAccount.md#0x1_DiemAccount_BRICK_AUTH">BRICK_AUTH</a>: vector&lt;u8&gt; = [98, 114, 105, 99, 107, 95, 98, 114, 105, 99, 107, 95, 98, 114, 105, 99, 107, 95, 98, 114, 105, 99, 107, 95, 98, 114, 105, 99, 107, 33, 33, 33];
 </code></pre>
 
 
@@ -2808,11 +2818,11 @@ Return a unique capability granting permission to withdraw from the sender's acc
 
     /////// 0L /////////
     // Community wallets have own transfer mechanism.
-    <b>let</b> community_wallets = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
-    <b>assert</b>!(
-        !<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&community_wallets, &sender_addr),
-        <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)
-    );
+    // <b>let</b> community_wallets = DonorDirected::get_comm_list();
+    // <b>assert</b>!(
+    //     !<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&community_wallets, &sender_addr),
+    //     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET">EWITHDRAWAL_NOT_FOR_COMMUNITY_WALLET</a>)
+    // );
     <b>assert</b>!(
         !<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(sender_addr),
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="DiemAccount.md#0x1_DiemAccount_EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED">EWITHDRAW_CAPABILITY_ALREADY_EXTRACTED</a>)
@@ -2913,13 +2923,14 @@ Return the withdraw capability to the account it originally came from
 
 </details>
 
-<a name="0x1_DiemAccount_process_community_wallets"></a>
+<a name="0x1_DiemAccount_get_withdraw_cap_address"></a>
 
-## Function `process_community_wallets`
+## Function `get_withdraw_cap_address`
+
+getter for the withdraw capability's account_address
 
 
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">process_community_wallets</a>(vm: &signer, epoch: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_get_withdraw_cap_address">get_withdraw_cap_address</a>(cap: &<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">DiemAccount::WithdrawCapability</a>): <b>address</b>
 </code></pre>
 
 
@@ -2928,43 +2939,8 @@ Return the withdraw capability to the account it originally came from
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_process_community_wallets">process_community_wallets</a>(
-    vm: &signer, epoch: u64
-) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> { //////// 0L ////////
-    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @DiemRoot) <b>return</b>;
-
-    print(&990100);
-    // Migrate on the fly <b>if</b> state doesn't exist on upgrade.
-    <b>if</b> (!<a href="Wallet.md#0x1_Wallet_is_init_comm">Wallet::is_init_comm</a>()) {
-        <a href="Wallet.md#0x1_Wallet_init">Wallet::init</a>(vm);
-        <b>return</b>
-    };
-    print(&990200);
-    <b>let</b> all = <a href="Wallet.md#0x1_Wallet_list_transfers">Wallet::list_transfers</a>(0);
-    print(&all);
-
-    <b>let</b> v = <a href="Wallet.md#0x1_Wallet_list_tx_by_epoch">Wallet::list_tx_by_epoch</a>(epoch);
-    <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="Wallet.md#0x1_Wallet_TimedTransfer">Wallet::TimedTransfer</a>&gt;(&v);
-    print(&len);
-    <b>let</b> i = 0;
-    <b>while</b> (i &lt; len) {
-        print(&990201);
-        <b>let</b> t: <a href="Wallet.md#0x1_Wallet_TimedTransfer">Wallet::TimedTransfer</a> = *<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&v, i);
-        // TODO: Is this the best way <b>to</b> access a <b>struct</b> property from
-        // outside a <b>module</b>?
-        <b>let</b> (payer, payee, value, description) = <a href="Wallet.md#0x1_Wallet_get_tx_args">Wallet::get_tx_args</a>(*&t);
-        <b>if</b> (<a href="Wallet.md#0x1_Wallet_is_frozen">Wallet::is_frozen</a>(payer)) {
-          i = i + 1;
-          <b>continue</b>
-        };
-        print(&990202);
-        <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(payer, payee, value, description, b"", vm);
-        print(&990203);
-        <a href="Wallet.md#0x1_Wallet_mark_processed">Wallet::mark_processed</a>(vm, t);
-        <a href="Wallet.md#0x1_Wallet_reset_rejection_counter">Wallet::reset_rejection_counter</a>(vm, payer);
-        print(&990204);
-        i = i + 1;
-    };
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_get_withdraw_cap_address">get_withdraw_cap_address</a>(cap: &<a href="DiemAccount.md#0x1_DiemAccount_WithdrawCapability">WithdrawCapability</a>): <b>address</b> {
+    cap.account_address
 }
 </code></pre>
 
@@ -2978,6 +2954,7 @@ Return the withdraw capability to the account it originally came from
 
 This function bypasses transaction limits.
 vm_make_payment on the other hand considers payment limits.
+NOTE: Slow wallets who receive funds from here, will be LOCKED, does not unlock automatically.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">vm_make_payment_no_limit</a>&lt;Token: store&gt;(payer: <b>address</b>, payee: <b>address</b>, amount: u64, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;, vm: &signer)
@@ -3076,7 +3053,9 @@ VM can burn from an account's balance for administrative purposes (e.g. at epoch
 
     // TODO: review this in 5.1
     // VM should not force an account below 1GAS, since the account may not recover.
+    print(&7777777900002);
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr) &lt; <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>) <b>return</b>;
+    print(&7777777900003);
 
     // prevent halting on low balance.
     // burn the remaining balance <b>if</b> the amount is greater than balance
@@ -3085,6 +3064,7 @@ VM can burn from an account's balance for administrative purposes (e.g. at epoch
       amount = <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr);
     };
 
+    print(&amount);
     // Check the payer is in possession of withdraw token.
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(addr)) <b>return</b>;
 
@@ -3092,6 +3072,7 @@ VM can burn from an account's balance for administrative purposes (e.g. at epoch
     <b>let</b> account = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(addr);
     <b>let</b> cap = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>(&<b>mut</b> account.withdraw_capability);
     <b>let</b> coin = <a href="DiemAccount.md#0x1_DiemAccount_withdraw_from">withdraw_from</a>&lt;Token&gt;(&cap, addr, amount, <b>copy</b> metadata);
+    print(&coin);
     <a href="Diem.md#0x1_Diem_vm_burn_this_coin">Diem::vm_burn_this_coin</a>&lt;Token&gt;(vm, coin);
     <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">restore_withdraw_capability</a>(cap);
 }
@@ -3148,13 +3129,13 @@ attestation protocol
     /////// 0L /////////
     // in case of slow wallet <b>update</b> the tracker
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&cap.account_address))
-      <a href="DiemAccount.md#0x1_DiemAccount_decrease_unlocked_tracker">decrease_unlocked_tracker</a>(*&cap.account_address, amount);
+      {<a href="DiemAccount.md#0x1_DiemAccount_decrease_unlocked_tracker">decrease_unlocked_tracker</a>(*&cap.account_address, amount);};
 
     // <b>if</b> a payee is a slow wallet and is receiving funds from ordinary
     // or another slow wallet's unlocked funds, it counts toward unlocked coins.
-    // the exceptional case is community wallets, which funds don't count toward unlocks.
-    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee) && !<a href="Wallet.md#0x1_Wallet_is_comm">Wallet::is_comm</a>(*&cap.account_address))
-      <a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(*&payee, amount);
+    // the exceptional case is community wallets, which funds don't count toward unlocks. However, the community wallet payment uses a different function: vm_make_payment_no_limit
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee))
+      {<a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(*&payee, amount);}
 }
 </code></pre>
 
@@ -6460,6 +6441,37 @@ Create a Validator Operator account
 
 </details>
 
+<a name="0x1_DiemAccount_vm_withdraw"></a>
+
+## Function `vm_withdraw`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_withdraw">vm_withdraw</a>&lt;Token&gt;(vm: &signer, payer: <b>address</b>, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_withdraw">vm_withdraw</a>&lt;Token&gt;(
+    vm: &signer,
+    payer: <b>address</b>,
+    amount: u64,
+):  <a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&gt; <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> { //////// 0L ////////
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+    <b>let</b> balance_struct = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payer);
+    <b>let</b> coin = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>&lt;Token&gt;(&<b>mut</b> balance_struct.coin, amount);
+    coin
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_DiemAccount_vm_migrate_slow_wallet"></a>
 
 ## Function `vm_migrate_slow_wallet`
@@ -6648,41 +6660,6 @@ inflation by x% per day from the start of network.
 
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_is_init">is_init</a>(addr: <b>address</b>): bool {
   <b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(addr)
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_DiemAccount_migrate_cumu_deposits"></a>
-
-## Function `migrate_cumu_deposits`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_migrate_cumu_deposits">migrate_cumu_deposits</a>(vm: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_migrate_cumu_deposits">migrate_cumu_deposits</a>(vm: &signer) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a> {
-  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
-  <b>let</b> list = <a href="Wallet.md#0x1_Wallet_get_comm_list">Wallet::get_comm_list</a>();
-  <b>let</b> i = 0;
-  <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<b>address</b>&gt;(&list)) {
-    <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&list, i);
-    <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(*addr)) {
-      <b>let</b> sig = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(*addr);
-      <b>let</b> current_bal = <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*addr);
-      <a href="DiemAccount.md#0x1_DiemAccount_init_cumulative_deposits">init_cumulative_deposits</a>(&sig, current_bal);
-    };
-    i = i + 1;
-  }
 }
 </code></pre>
 
@@ -6915,6 +6892,62 @@ inflation by x% per day from the start of network.
   } <b>else</b> {
     <b>return</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;()
   }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_brick_this"></a>
+
+## Function `brick_this`
+
+Convenience function to brick the account.
+it is also checked in the prologue.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_brick_this">brick_this</a>(sig: &signer, are_you_sure: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_brick_this">brick_this</a>(sig: &signer, are_you_sure: vector&lt;u8&gt;) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> {
+  // This guy will have a bad day <b>if</b> he didn't mean <b>to</b> do this.
+  <b>if</b> (are_you_sure == b"yes I know what I'm doing") {
+    <b>let</b> cap = <a href="DiemAccount.md#0x1_DiemAccount_extract_key_rotation_capability">extract_key_rotation_capability</a>(sig);
+    <a href="DiemAccount.md#0x1_DiemAccount_rotate_authentication_key">rotate_authentication_key</a>(&cap, <a href="DiemAccount.md#0x1_DiemAccount_BRICK_AUTH">BRICK_AUTH</a>);
+    <a href="DiemAccount.md#0x1_DiemAccount_restore_key_rotation_capability">restore_key_rotation_capability</a>(cap);
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_is_a_brick"></a>
+
+## Function `is_a_brick`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_is_a_brick">is_a_brick</a>(addr: <b>address</b>): bool
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_is_a_brick">is_a_brick</a>(addr: <b>address</b>):bool <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> {
+  <b>let</b> a = <b>borrow_global</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(addr);
+  *&a.authentication_key == <a href="DiemAccount.md#0x1_DiemAccount_BRICK_AUTH">BRICK_AUTH</a>
 }
 </code></pre>
 

@@ -1,0 +1,16 @@
+processed 5 tasks
+
+task 3 'block'. lines 54-58:
+Events:
+{
+    key:     0c0000000000000000000000000000000000000000000000
+    seq_num: 0
+    type:    0x1::DiemBlock::NewBlockEvent
+    data:    "0f0000000000000006505ccd81e562b524d8f656abd92a150040c9a20300000000"
+}
+{
+    key:     040000000000000000000000000000000000000000000000
+    seq_num: 1
+    type:    0x1::DiemConfig::NewEpochEvent
+    data:    "0200000000000000"
+}
