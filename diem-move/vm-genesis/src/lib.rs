@@ -233,9 +233,9 @@ pub fn encode_recovery_genesis_changeset(
     diem_logger::info!("OK create_and_initialize_root_accounts =============== ");
 
     info!("OK create_and_initialize_main_accounts =============== ");
-    let genesis_env = get_env();
-    diem_logger::info!("Initializing with env: {}", genesis_env);
-    if genesis_env != "prod" {
+    
+    diem_logger::info!("Initializing with env: {:?}", MODE_0L.clone());
+    if MODE_0L.clone() != NamedChain::MAINNET {
         initialize_testnet(&mut session);
     }
 

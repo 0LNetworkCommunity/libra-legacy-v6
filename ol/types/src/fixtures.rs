@@ -97,7 +97,7 @@ pub fn get_persona_block_zero(persona: &str, env: NamedChain) -> VDFProof {
         env.to_string(), persona
     ));
 
-    let s = fs::read_to_string(&buf).expect("could not find block file");
+    let s = fs::read_to_string(&buf).expect(&format!("could not find fixture proof_0.json from file: {:?}", &buf));
     serde_json::from_str(&s).expect(&format!("could not parse block from file: {:?}", &buf))
 }
 

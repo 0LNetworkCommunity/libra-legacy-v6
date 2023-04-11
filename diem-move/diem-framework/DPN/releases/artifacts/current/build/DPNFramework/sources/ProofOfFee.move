@@ -23,6 +23,7 @@ address DiemFramework {
     use DiemFramework::Testnet;
     use DiemFramework::ValidatorConfig;
     use DiemFramework::CoreAddresses;
+    // use DiemFramework::Debug::print;
 
     const ENOT_AN_ACTIVE_VALIDATOR: u64 = 190001;
     const EBID_ABOVE_MAX_PCT: u64 = 190002;
@@ -89,12 +90,16 @@ address DiemFramework {
       vm: &signer,
       outgoing_compliant_set: &vector<address>,
       n_musical_chairs: u64
-    ) acquires ProofOfFeeAuction, ConsensusReward {
+    ): vector<address> acquires ProofOfFeeAuction, ConsensusReward {
         CoreAddresses::assert_vm(vm);
         let sorted_bids = get_sorted_vals(false);
+
         let (auction_winners, price) = fill_seats_and_get_price(vm, n_musical_chairs, &sorted_bids, outgoing_compliant_set);
+        // print(&price);
 
         DiemAccount::vm_multi_pay_fee(vm, &auction_winners, price, &b"proof of fee");
+
+        auction_winners
     }
 
 
@@ -216,10 +221,6 @@ address DiemFramework {
       proven_nodes: &vector<address>
     ): (vector<address>, u64) acquires ProofOfFeeAuction, ConsensusReward {
       if (Signer::address_of(vm) != @VMReserved) return (Vector::empty<address>(), 0);
-      
-      //print(sorted_vals_by_bid);
-
-      // let (baseline_reward, _, _) = get_consensus_reward();
 
       let seats_to_fill = Vector::empty<address>();
       
@@ -233,28 +234,13 @@ address DiemFramework {
       // declared size, because we will have to fill with more unproven nodes.
       let one_third_of_max = proven_len/2;
       let safe_set_size = proven_len + one_third_of_max;
-      // print(&77777777);
-      // print(&proven_len);
-      // print(&one_third_of_max);
-      // print(&safe_set_size);
 
       let (set_size, max_unproven) = if (safe_set_size < set_size) {
         (safe_set_size, safe_set_size/3)
-        // if (safe_set_size < 5) { // safety. mostly for test scenarios given rounding issues
-        //   (safe_set_size, 1)
-        // } else {
-          
-        // }
-        
       } else {
         // happy case, unproven bidders are a smaller minority
         (set_size, set_size/3)
       };
-      // print(&set_size);
-      // print(&max_unproven);
-
-
-      // print(&8006010201);
 
       // Now we can seat the validators based on the algo above:
       // 1. seat the proven nodes of previous epoch
@@ -268,44 +254,20 @@ address DiemFramework {
         (Vector::length(&seats_to_fill) < set_size) &&
         (i < Vector::length(sorted_vals_by_bid))
       ) {
-        // // print(&i);
         let val = Vector::borrow(sorted_vals_by_bid, i);
-
-        // // belt and suspenders, we get_sorted_vals(true) should filter ineligible validators
-        // if (!audit_qualification(val, baseline_reward)) { 
-        //   i = i + 1;
-        //   continue
-        // };
-
-
         // check if a proven node
         if (Vector::contains(proven_nodes, val)) {
-          // print(&8006010205);
-          // // print(&01);
           Vector::push_back(&mut seats_to_fill, *val);
         } else {
-          // print(&8006010206);
-          // print(&max_unproven);
-          // print(&num_unproven_added);
-          // // print(&02);
           // for unproven nodes, push it to list if we haven't hit limit
           if (num_unproven_added < max_unproven ) {
             // TODO: check jail reputation
-            // // print(&03);
             Vector::push_back(&mut seats_to_fill, *val);
-            // // print(&04);
-            // print(&8006010207);
             num_unproven_added = num_unproven_added + 1;
           };
         };
-        // don't advance if we havent filled
         i = i + 1;
       };
-      // // print(&05);
-      // print(&8006010208);
-      // print(&seats_to_fill);
-
-      
 
       // Set history
       set_history(vm, &seats_to_fill);

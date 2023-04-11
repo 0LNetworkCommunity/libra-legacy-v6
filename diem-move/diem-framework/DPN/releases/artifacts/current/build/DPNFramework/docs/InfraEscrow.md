@@ -12,7 +12,6 @@
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
-<b>use</b> <a href="Debug.md#0x1_Debug">0x1::Debug</a>;
 <b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
@@ -100,7 +99,7 @@ Collects funds from pledge and places temporarily in network account (Transactio
 <pre><code><b>public</b> <b>fun</b> <a href="InfraEscrow.md#0x1_InfraEscrow_epoch_boundary_collection">epoch_boundary_collection</a>(vm: &signer, amount: u64) {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
     <b>let</b> opt = <a href="PledgeAccounts.md#0x1_PledgeAccounts_withdraw_from_all_pledge_accounts">PledgeAccounts::withdraw_from_all_pledge_accounts</a>(vm, amount);
-    print(&opt);
+    // print(&opt);
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_none">Option::is_none</a>(&opt)) {
       <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_destroy_none">Option::destroy_none</a>(opt);
       <b>return</b>

@@ -13,12 +13,10 @@ use once_cell::sync::Lazy;
 pub const ENV_VAR_MODE_0L: &str = "MODE_0L";
 
 pub static MODE_0L: Lazy<NamedChain> = Lazy::new(|| {
-   let st = env::var(ENV_VAR_MODE_0L)
-          .unwrap_or("MAINNET".to_string());
-    match NamedChain::str_to_named(st.as_str()){
-        Ok(s) => s,
-        _ => NamedChain::MAINNET,
-    }
+  let st = env::var(ENV_VAR_MODE_0L)
+    .unwrap_or("MAINNET".to_string());
+  NamedChain::str_to_named(st.to_uppercase().as_str())
+    .unwrap_or(NamedChain::MAINNET)
 });
 
 

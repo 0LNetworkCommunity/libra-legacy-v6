@@ -481,6 +481,7 @@
 
     <b>let</b> amount_available = *&<b>borrow_global</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig_beneficiary)).amount_available;
     // print(&amount_available);
+    // print(&amount);
 
     <b>if</b> (amount_available &lt; 1) {
       <b>return</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_none">Option::none</a>&lt;<a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;()
@@ -498,6 +499,8 @@
 
         // DANGER: this is a private function that changes balances.
         <b>let</b> c = <a href="PledgeAccounts.md#0x1_PledgeAccounts_withdraw_pct_from_one_pledge_account">withdraw_pct_from_one_pledge_account</a>(&address_of_beneficiary, &pledge_account, &pct_withdraw);
+
+
 
         // GROSS: dealing <b>with</b> options in Move.
         // TODO: find a better way.
@@ -617,7 +620,7 @@
 
       <b>let</b> amount_withdraw = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(pledge_account.amount, *pct);
 
-      // print(&66);
+      // print(&amount_withdraw);
       // print(&pledge_account.amount);
       <b>if</b> (
         pledge_account.amount &gt; 0 &&

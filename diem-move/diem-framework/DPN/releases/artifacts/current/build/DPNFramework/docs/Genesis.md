@@ -17,6 +17,7 @@ when executing from a fresh state.
 
 <pre><code><b>use</b> <a href="AccountFreezing.md#0x1_AccountFreezing">0x1::AccountFreezing</a>;
 <b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
+<b>use</b> <a href="Burn.md#0x1_Burn">0x1::Burn</a>;
 <b>use</b> <a href="ChainId.md#0x1_ChainId">0x1::ChainId</a>;
 <b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
@@ -233,6 +234,7 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
     <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(dr_account);
     <a href="MusicalChairs.md#0x1_MusicalChairs_initialize">MusicalChairs::initialize</a>(dr_account);
     <a href="InfraEscrow.md#0x1_InfraEscrow_initialize_infra_pledge">InfraEscrow::initialize_infra_pledge</a>(dr_account);
+    <a href="Burn.md#0x1_Burn_initialize">Burn::initialize</a>(dr_account);
 
     // After we have called this function, all invariants which are guarded by
     // `<a href="DiemTimestamp.md#0x1_DiemTimestamp_is_operating">DiemTimestamp::is_operating</a>() ==&gt; ...` will become active and a verification condition.

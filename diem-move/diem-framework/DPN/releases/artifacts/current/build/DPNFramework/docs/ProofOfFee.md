@@ -253,7 +253,7 @@
 consolidates all the logic for the epoch boundary
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_epoch_boundary">epoch_boundary</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;, n_musical_chairs: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="ProofOfFee.md#0x1_ProofOfFee_epoch_boundary">epoch_boundary</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;, n_musical_chairs: u64): vector&lt;<b>address</b>&gt;
 </code></pre>
 
 
@@ -266,12 +266,16 @@ consolidates all the logic for the epoch boundary
   vm: &signer,
   outgoing_compliant_set: &vector&lt;<b>address</b>&gt;,
   n_musical_chairs: u64
-) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>, <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
+): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>, <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
     <b>let</b> sorted_bids = <a href="ProofOfFee.md#0x1_ProofOfFee_get_sorted_vals">get_sorted_vals</a>(<b>false</b>);
+
     <b>let</b> (auction_winners, price) = <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">fill_seats_and_get_price</a>(vm, n_musical_chairs, &sorted_bids, outgoing_compliant_set);
+    // print(&price);
 
     <a href="DiemAccount.md#0x1_DiemAccount_vm_multi_pay_fee">DiemAccount::vm_multi_pay_fee</a>(vm, &auction_winners, price, &b"proof of fee");
+
+    auction_winners
 }
 </code></pre>
 
@@ -383,10 +387,6 @@ consolidates all the logic for the epoch boundary
 ): (vector&lt;<b>address</b>&gt;, u64) <b>acquires</b> <a href="ProofOfFee.md#0x1_ProofOfFee_ProofOfFeeAuction">ProofOfFeeAuction</a>, <a href="ProofOfFee.md#0x1_ProofOfFee_ConsensusReward">ConsensusReward</a> {
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @VMReserved) <b>return</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;(), 0);
 
-  //print(sorted_vals_by_bid);
-
-  // <b>let</b> (baseline_reward, _, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">get_consensus_reward</a>();
-
   <b>let</b> seats_to_fill = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
 
   // check the max size of the validator set.
@@ -399,28 +399,13 @@ consolidates all the logic for the epoch boundary
   // declared size, because we will have <b>to</b> fill <b>with</b> more unproven nodes.
   <b>let</b> one_third_of_max = proven_len/2;
   <b>let</b> safe_set_size = proven_len + one_third_of_max;
-  // print(&77777777);
-  // print(&proven_len);
-  // print(&one_third_of_max);
-  // print(&safe_set_size);
 
   <b>let</b> (set_size, max_unproven) = <b>if</b> (safe_set_size &lt; set_size) {
     (safe_set_size, safe_set_size/3)
-    // <b>if</b> (safe_set_size &lt; 5) { // safety. mostly for test scenarios given rounding issues
-    //   (safe_set_size, 1)
-    // } <b>else</b> {
-
-    // }
-
   } <b>else</b> {
     // happy case, unproven bidders are a smaller minority
     (set_size, set_size/3)
   };
-  // print(&set_size);
-  // print(&max_unproven);
-
-
-  // print(&8006010201);
 
   // Now we can seat the validators based on the algo above:
   // 1. seat the proven nodes of previous epoch
@@ -434,44 +419,20 @@ consolidates all the logic for the epoch boundary
     (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&seats_to_fill) &lt; set_size) &&
     (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(sorted_vals_by_bid))
   ) {
-    // // print(&i);
     <b>let</b> val = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(sorted_vals_by_bid, i);
-
-    // // belt and suspenders, we <a href="ProofOfFee.md#0x1_ProofOfFee_get_sorted_vals">get_sorted_vals</a>(<b>true</b>) should filter ineligible validators
-    // <b>if</b> (!<a href="ProofOfFee.md#0x1_ProofOfFee_audit_qualification">audit_qualification</a>(val, baseline_reward)) {
-    //   i = i + 1;
-    //   <b>continue</b>
-    // };
-
-
     // check <b>if</b> a proven node
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(proven_nodes, val)) {
-      // print(&8006010205);
-      // // print(&01);
       <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> seats_to_fill, *val);
     } <b>else</b> {
-      // print(&8006010206);
-      // print(&max_unproven);
-      // print(&num_unproven_added);
-      // // print(&02);
       // for unproven nodes, push it <b>to</b> list <b>if</b> we haven't hit limit
       <b>if</b> (num_unproven_added &lt; max_unproven ) {
         // TODO: check jail reputation
-        // // print(&03);
         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> seats_to_fill, *val);
-        // // print(&04);
-        // print(&8006010207);
         num_unproven_added = num_unproven_added + 1;
       };
     };
-    // don't advance <b>if</b> we havent filled
     i = i + 1;
   };
-  // // print(&05);
-  // print(&8006010208);
-  // print(&seats_to_fill);
-
-
 
   // Set history
   <a href="ProofOfFee.md#0x1_ProofOfFee_set_history">set_history</a>(vm, &seats_to_fill);
