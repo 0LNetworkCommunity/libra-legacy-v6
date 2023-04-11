@@ -11,7 +11,7 @@ address DiemFramework {
 module EpochBoundary {
     use DiemFramework::CoreAddresses;
     use DiemFramework::Subsidy;
-    use DiemFramework::NodeWeight;
+    use DiemFramework::ProofOfFee;
     use DiemFramework::DiemSystem;
     use DiemFramework::TowerState;
     use DiemFramework::Globals;
@@ -20,65 +20,118 @@ module EpochBoundary {
     use DiemFramework::AutoPay;
     use DiemFramework::Epoch;
     use DiemFramework::DiemConfig;
-    use DiemFramework::Audit;
     use DiemFramework::DiemAccount;
     use DiemFramework::Burn;
-    use DiemFramework::FullnodeSubsidy;
-    use DiemFramework::ValidatorUniverse;
-    use DiemFramework::Debug::print;
-    use DiemFramework::Testnet;
-    use DiemFramework::StagingNet;    
+    use DiemFramework::FullnodeSubsidy; 
     use DiemFramework::RecoveryMode;
-    use DiemFramework::Cases;
     use DiemFramework::Jail;
-    use DiemFramework::Vouch;
+    use DiemFramework::TransactionFee;
     use DiemFramework::MultiSigPayment;
     use DiemFramework::DonorDirected;
+    use DiemFramework::MusicalChairs;
+    use DiemFramework::InfraEscrow;
+    use DiemFramework::Testnet;
+    // use DiemFramework::Debug::print;
+
+
+    //// V6 ////
+    // THIS IS TEMPORARY
+    // depends on the future "musical chairs" algo.
+    const MOCK_VAL_SIZE: u64 = 21;
+
+    // TODO: this will depend on an adjustment algo.
+    // const MOCK_BASELINE_CONSENSUS_FEES: u64 = 1000000;
 
     // This function is called by block-prologue once after n blocks.
     // Function code: 01. Prefix: 180001
     public fun reconfigure(vm: &signer, height_now: u64) {
         CoreAddresses::assert_vm(vm);
-        let height_start = Epoch::get_timer_height_start(vm);
-        print(&800100);        
-        let (outgoing_compliant_set, _) = 
-            DiemSystem::get_fee_ratio(vm, height_start, height_now);
-        print(&800200);
+        ///////// SETTLE ACCOUNTS OF PREVIOUS EPOCH /////////
+        let (outgoing_compliant_set, new_set_size) = epilogue_settle_accounts(vm, height_now);
 
-        // NOTE: This is "nominal" because it doesn't check
-        let compliant_nodes_count = Vector::length(&outgoing_compliant_set);
-        print(&800300);
+        ///////// PREPARE NEXT EPOCH /////////
+        let proposed_set = prologue_prepare_and_fund_coming_epoch(vm, &outgoing_compliant_set, new_set_size);
 
-        let (subsidy_units, nominal_subsidy_per) = 
-            Subsidy::calculate_subsidy(vm, compliant_nodes_count);
+        // reset the counter on several services
+        reset_counters(vm, &proposed_set, &outgoing_compliant_set, height_now);
+        // print(&8001000);
 
-        print(&800400);
-
-        process_fullnodes(vm, nominal_subsidy_per);
-        print(&800500);
-        process_validators(vm, subsidy_units, *&outgoing_compliant_set);
-        print(&800600);
-
-        let proposed_set = propose_new_set(vm, height_start, height_now);
-        print(&800700);
-        // Update all slow wallet limits
-        DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock()); // todo
-        print(&800800);
-
-        if (!RecoveryMode::is_recovery()) {
-          proof_of_burn(vm,nominal_subsidy_per, &proposed_set);
-          print(&800900);
-        };
-
-        root_service_billing(vm);
-        print(&801000);
-
-        reset_counters(vm, proposed_set, outgoing_compliant_set, height_now);
-        print(&801100);
-
+        // Reconfig should be the last event.
+        // Reconfigure the network
+        DiemSystem::bulk_update_validators(vm, proposed_set);
     }
 
-    // process fullnode subsidy
+    /// This is the epoch's EPILOGUE, what runs at the close of an epoch.
+    /// We are basically evaluating performance and settling accounts. The out puts of the epoch closing is which validators were performant, what should the new set size be (based on Musical Chairs).
+
+    /// Release funds for slow wallets
+    /// Pay validators
+    /// Pay Oracles
+
+    fun epilogue_settle_accounts(vm: &signer, height_now: u64): (vector<address>, u64) { // (outgoing_compliant_set, new_set_size)
+        CoreAddresses::assert_vm(vm);
+              // Update all slow wallet limits before we need to pay people
+        DiemAccount::slow_wallet_epoch_drip(vm, Globals::get_unlock()); // todo
+        // print(&800100);
+
+        // Check compliance of nodes
+        let height_start = Epoch::get_timer_height_start();
+        // print(&800200);
+        let (outgoing_compliant_set, new_set_size) = 
+            MusicalChairs::stop_the_music(vm, height_start, height_now);
+        
+        // print(&800300);
+
+        // get the total fees produced before we start spending them.
+        let total_fees = TransactionFee::get_fees_collected();
+        // Get the consensus reward established at the beginning of the epoch
+        // so we know what to pay people
+        let (reward, _, _) = ProofOfFee::get_consensus_reward();   
+
+        // process the oracles first (previously the identiy reward)
+        process_fullnodes(vm, reward);
+        // print(&800400);
+        
+        // print(&800500);
+        
+        process_validators(vm, reward, &outgoing_compliant_set);
+        // print(&800600);
+
+        // process the non performing nodes: jail
+        process_jail(vm, &outgoing_compliant_set);
+        // print(&800600);
+        // EVERYONE SHOULD BE PAID UP AT THIS POINT
+        // after everyone is paid from the chain's Fee account
+        // we can burn the remainder.
+
+        process_burn(vm, total_fees);
+
+        (outgoing_compliant_set, new_set_size)
+    }
+
+    /// This is the epoch's PROLOGUE, what runs at the beginning of an epoch.
+    fun prologue_prepare_and_fund_coming_epoch(vm: &signer, outgoing_compliant_set: &vector<address>, new_set_size: u64): vector<address> {
+      CoreAddresses::assert_vm(vm);
+        // Propose the next validator set, and collect the bids from proof of fee winners.
+
+        let proposed_set = propose_new_set(vm, outgoing_compliant_set, new_set_size);
+
+        // collect fees for Root Security services
+        root_service_billing(vm);
+
+        // Now we need to collect coins from infrastructure escrow, to temporarily fund the network fee address for the next set.
+
+        // trigger the thermostat if the reward needs to be adjusted
+        ProofOfFee::reward_thermostat(vm);
+        let (reward_budget, _, _) = ProofOfFee::get_consensus_reward();   
+
+        // fund the network fee address with the reward budget
+        InfraEscrow::epoch_boundary_collection(vm, reward_budget * Vector::length(&proposed_set));
+
+        proposed_set
+    }
+
+    /// process Oracle subsidy
     fun process_fullnodes(vm: &signer, nominal_subsidy_per_node: u64) {
         // Fullnode subsidy
         // loop through validators and pay full node subsidies.
@@ -104,11 +157,7 @@ module EpochBoundary {
 
               let miner_subsidy = count * proof_price;
 
-              // don't pay while we are in recovery mode, since that creates
-              // a frontrunning opportunity
-              // if (!RecoveryMode::is_recovery()){ 
                 FullnodeSubsidy::distribute_fullnode_subsidy(vm, addr, miner_subsidy);
-              // }
             };
 
             k = k + 1;
@@ -116,136 +165,84 @@ module EpochBoundary {
     }
 
     fun process_validators(
-        vm: &signer, subsidy_units: u64, outgoing_compliant_set: vector<address>
+        vm: &signer,
+        subsidy_units: u64,
+        outgoing_compliant_set: &vector<address>,
     ) {
         // Process outgoing validators:
         // Distribute Transaction fees and subsidy payments to all outgoing validators
-        
-        if (Vector::is_empty<address>(&outgoing_compliant_set)) return;
+
+        if (Vector::is_empty<address>(outgoing_compliant_set)) return;
 
         // don't pay while we are in recovery mode, since that creates
         // a frontrunning opportunity
         if (subsidy_units > 0 && !RecoveryMode::is_recovery()) {
-            Subsidy::process_subsidy(vm, subsidy_units, &outgoing_compliant_set);
+            Subsidy::process_fees(vm, outgoing_compliant_set);
         };
 
-        Subsidy::process_fees(vm, &outgoing_compliant_set);
     }
 
-    fun propose_new_set(vm: &signer, height_start: u64, height_now: u64): vector<address> 
-    {
-        // Propose upcoming validator set:
-        // Get validators we know to be in consensus correctly: Case1 and Case2
-        // Only expand the amount of seats so that the new set has a max of 25%
-        // unproven nodes. I.e. nodes that were not in the previous epoch and
-        // we have stats on.
+    fun process_burn(vm: &signer, fees_collected: u64) {
+        // after everyone is paid from the chain's Fee account
+        // we can burn the excess fees from the epoch
+        Burn::reset_ratios(vm);
 
-        // in emergency admin roles set the validator set
-        // there may be a recovery set to be used.
-        // if there is no rescue mission validators, just do usual procedure.
-        
-        if (RecoveryMode::is_recovery()) {
-          let recovery_vals = RecoveryMode::get_debug_vals();
-          if (Vector::length(&recovery_vals) > 0) return recovery_vals;
-        };
+        Burn::epoch_burn_fees(vm, fees_collected);
+    }
 
-        // Process all the jail terms of the previous validator set
-        let previous_set = DiemSystem::get_val_set_addr();
-
-        // Take advantage of this loop to get the expected size of
-        // the validator set that the new set doesn't have
-        // 25% of nodes that we don't know their current performance.
-        let len_proven_nodes = 0;
-
+    fun process_jail(vm: &signer, outgoing_compliant_set: &vector<address>) {
+        let all_previous_vals = DiemSystem::get_val_set_addr();
         let i = 0;
-        while (i < Vector::length<address>(&previous_set)) {
-            let addr = *Vector::borrow(&previous_set, i);
-            let case = Cases::get_case(vm, addr, height_start, height_now);
+        while (i < Vector::length<address>(&all_previous_vals)) {
+            let addr = *Vector::borrow(&all_previous_vals, i);
 
             if (
-              // we care about nodes that are performing consensus correctly, case 1 and 2.
-              case < 3 &&
-              Audit::val_audit_passing(addr)
+              
+              // if they are compliant, remove the consecutive fail, otherwise jail
+              // V6 Note: audit functions are now all contained in
+              // ProofOfFee.move and exludes validators at auction time.
+
+              Vector::contains(outgoing_compliant_set, &addr)
             ) {
-                len_proven_nodes = len_proven_nodes + 1;
+              // print(&902);
                 // also reset the jail counter for any successful unjails
                 Jail::remove_consecutive_fail(vm, addr);
             } else {
-              
+              // print(&903);
               Jail::jail(vm, addr);
             };
             i = i+ 1;
         };
+        // print(&904);
+    }
 
-        // let len_proven_nodes = Vector::length(&proven_nodes);
-        let max_unproven_nodes = len_proven_nodes / 6;
-        print(&len_proven_nodes);
-        print(&max_unproven_nodes);
-        // start from the proven nodes
-
-        // get all validators by consensus weight
-        let sorted_val_universe = NodeWeight::get_sorted_vals();
-
-        // sort by jail index, prioritizes nodes joining that aren't
-        // currently struggling to stay in the validator set.
-        let top_accounts = Jail::sort_by_jail(sorted_val_universe);
-        print(&top_accounts);
-
-        // loop through all accounts, sorted by jail status, and then by consensus power
+    fun propose_new_set(vm: &signer, outgoing_compliant_set: &vector<address>, n_musical_chairs: u64): vector<address> 
+    {
         let proposed_set = Vector::empty<address>();
 
-        let i = 0;
-        while (
-          // can't be more than index of accounts
-          i < Vector::length(&top_accounts) &&
-          // the new proposed set can only only expand by 15%
-          Vector::length(&proposed_set) < (len_proven_nodes + max_unproven_nodes) &&
-          // Validator set can only be as big as the maximum set size
-          Vector::length(&proposed_set) < Globals::get_max_validators_per_set()
-        ) {
-            let addr = *Vector::borrow(&top_accounts, i);
-            let mined_last_epoch = TowerState::node_above_thresh(addr);
-            let case = Cases::get_case(vm, addr, height_start, height_now);
-            print(&44444444);
-            print(&addr);
-            print(&case);
-            print(&Jail::is_jailed(addr));
-            print(&Audit::val_audit_passing(addr));
-            print(&Vouch::unrelated_buddies_above_thresh(addr));
+        // If we are in recovery mode, we use the recovery set.
+        if (RecoveryMode::is_recovery()) {
+            let recovery_vals = RecoveryMode::get_debug_vals();
+            if (Vector::length(&recovery_vals) > 0) {
+              proposed_set = recovery_vals
+            }
+        } else { // Default case: Proof of Fee
+            //// V6 ////
+            // CONSENSUS CRITICAL
+            // pick the validators based on proof of fee.
+            // false because we want the default behavior of the function: filtered by audit
 
-            if (
-                // ignore proven nodes already on list
-                !Vector::contains<address>(&proposed_set, &addr) &&
-                // jail the current validators which did not perform.
-                !Jail::is_jailed(addr) &&
-                // if they are not a current case 1 or 2, then they are
-                // rejoining and need to have mining proofs.
-                // case 2 get grace
-                (case < 3 || mined_last_epoch) &&
-                // do the remaining configuration checks, incl vouching
-                Audit::val_audit_passing(addr) &&
-                // when being onboarded or being un-jailed check if the vouches
-                // are sufficient. I.e. don't do this check if the validator
-                // has proven themselves in the previous round. If your
-                // vouchers fall out of the set, you may also fall out,
-                // and this chain reaction would cause instability in the network.
-                Vouch::unrelated_buddies_above_thresh(addr)
-              ) {
-                print(&99990901);
-                Vector::push_back(&mut proposed_set, addr);
-            };
-            i = i + 1;
+
+            proposed_set = ProofOfFee::epoch_boundary(vm, outgoing_compliant_set, n_musical_chairs);
         };
-
-        print(&proposed_set);
 
         //////// Failover Rules ////////
         // If the cardinality of validator_set in the next epoch is less than 4, 
-        // if we are failing to qualify anyone. Pick top 1/2 of validator set
+        // if we are failing to qualify anyone. Pick top 1/2 of outgoing compliant validator set
         // by proposals. They are probably online.
         if (Vector::length<address>(&proposed_set) <= 3) 
             proposed_set = 
-              Stats::get_sorted_vals_by_props(vm, Vector::length<address>(&top_accounts) / 2);
+              Stats::get_sorted_vals_by_props(vm, Vector::length<address>(outgoing_compliant_set) / 2);
 
         // If still failing...in extreme case if we cannot qualify anyone.
         // Don't change the validator set. we keep the same validator set. 
@@ -260,82 +257,63 @@ module EpochBoundary {
         // set with at least 66% liveliness. 
         proposed_set
     }
-
+    
     fun reset_counters(
         vm: &signer,
-        proposed_set: vector<address>,
-        outgoing_compliant: vector<address>,
+        proposed_set: &vector<address>,
+        outgoing_compliant: &vector<address>,
         height_now: u64
     ) {
-        print(&800900100);
+        // print(&800900100);
+
         // Reset Stats
-        Stats::reconfig(vm, &proposed_set);
-        print(&800900101);
+        Stats::reconfig(vm, proposed_set);
+        // print(&800900101);
+
         // Migrate TowerState list from elegible.
-        TowerState::reconfig(vm, &outgoing_compliant);
-        print(&800900102);
+        TowerState::reconfig(vm, outgoing_compliant);
+        // print(&800900102);
+
         // process community wallets
         DonorDirected::process_donor_directed_accounts(vm, DiemConfig::get_current_epoch());
-        print(&800900103);
-        // reset counters
+        // print(&800900103);
+
         AutoPay::reconfig_reset_tick(vm);
-        print(&800900104);
+        // print(&800900104);
+
         Epoch::reset_timer(vm, height_now);
-        print(&800900105);
+        // print(&800900105);
+
         RecoveryMode::maybe_remove_debug_at_epoch(vm);
-        // Reconfig should be the last event.
-        // Reconfigure the network
-        print(&800900106);
-        DiemSystem::bulk_update_validators(vm, proposed_set);
-        print(&800900107);    
-    }
+        // print(&800900106);
 
-    // NOTE: this was previously in propose_new_set since it used the same loop.
-    // copied implementation from Teams proposal.
-    fun proof_of_burn(
-      vm: &signer, nominal_subsidy_per: u64, proposed_set: &vector<address>
-    ) {
-        print(&800800100);
-        CoreAddresses::assert_vm(vm);
-        // DiemAccount::migrate_cumu_deposits(vm); // may need to populate data on a migration.
-        print(&800800101);
-        Burn::reset_ratios(vm);
-        print(&800800102);
-        // 50% of the current per validator reward
-        let burn_value = nominal_subsidy_per / 2;
-        print(&800800103);
-        let vals_to_burn = if (
-          !Testnet::is_testnet() &&
-          !StagingNet::is_staging_net() &&
-          DiemConfig::get_current_epoch() > 290 && 
-            // bump up to epoch 290 so people can discuss.
-          // only implement this burn at a steady state with 90/100 validator
-          // positions full. Will make the burn amount much smaller over time.
-          Vector::length<address>(proposed_set) > 90
-        ) {
-          print(&800800104);
-          &ValidatorUniverse::get_eligible_validators()
-        } else {
-          print(&800800105);
-          proposed_set
-        };
-        print(&800800106);
-        print(vals_to_burn);
-        let i = 0;
-        while (i < Vector::length<address>(vals_to_burn)) {
-          let addr = *Vector::borrow(vals_to_burn, i);
-          print(&addr);
-          print(&burn_value);
+        TransactionFee::epoch_reset_fee_maker(vm);
 
 
-          Burn::epoch_start_burn(vm, addr, burn_value);
-          i = i + 1;
-        };
-        print(&800800107);
+
+        // print(&800900107);
+
+        // print(&800900108);
     }
 
     fun root_service_billing(vm: &signer) {
       MultiSigPayment::root_security_fee_billing(vm);
     }
+
+
+    //////// TEST HELPERS ////////
+
+    public fun test_settle(vm: &signer, height_now: u64) { 
+      CoreAddresses::assert_vm(vm);
+      Testnet::assert_testnet(vm);
+      epilogue_settle_accounts(vm, height_now);
+    }
+
+    public fun test_prepare(vm: &signer, outgoing: &vector<address>, set_size: u64) { 
+      CoreAddresses::assert_vm(vm);
+      Testnet::assert_testnet(vm);
+      prologue_prepare_and_fund_coming_epoch(vm, outgoing, set_size);
+    }
+
 }
 }

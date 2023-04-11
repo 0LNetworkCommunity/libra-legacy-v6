@@ -22,9 +22,14 @@
 -  [Function `eve_0_easy_sol`](#0x1_TestFixtures_eve_0_easy_sol)
 -  [Function `eve_1_easy_chal`](#0x1_TestFixtures_eve_1_easy_chal)
 -  [Function `eve_1_easy_sol`](#0x1_TestFixtures_eve_1_easy_sol)
+-  [Function `pof_default`](#0x1_TestFixtures_pof_default)
 
 
-<pre><code><b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
+<pre><code><b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
+<b>use</b> <a href="ProofOfFee.md#0x1_ProofOfFee">0x1::ProofOfFee</a>;
+<b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
+<b>use</b> <a href="ValidatorUniverse.md#0x1_ValidatorUniverse">0x1::ValidatorUniverse</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
 
@@ -444,6 +449,55 @@
 <pre><code><b>public</b> <b>fun</b> <a href="TestFixtures.md#0x1_TestFixtures_eve_1_easy_sol">eve_1_easy_sol</a>(): vector&lt;u8&gt; {
   <b>assert</b>!(<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>(), 130102014010);
   x"00105f2013b1de8c7b6ba93501c6136dbbc16ebb728f12199222f9878f68515b7cfff6d75658cd87a0e39449c613290b5820fdb255758c57e5675a4d7dcc473f1341"
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TestFixtures_pof_default"></a>
+
+## Function `pof_default`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TestFixtures.md#0x1_TestFixtures_pof_default">pof_default</a>(vm: &signer): (vector&lt;<b>address</b>&gt;, vector&lt;u64&gt;, vector&lt;u64&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TestFixtures.md#0x1_TestFixtures_pof_default">pof_default</a>(vm: &signer): (vector&lt;<b>address</b>&gt;, vector&lt;u64&gt;, vector&lt;u64&gt;){
+
+  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
+  <b>let</b> vals = <a href="ValidatorUniverse.md#0x1_ValidatorUniverse_get_eligible_validators">ValidatorUniverse::get_eligible_validators</a>();
+
+  <b>let</b> bids = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;();
+  <b>let</b> expiry = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;();
+  <b>let</b> i = 0;
+  <b>let</b> prev = 0;
+  <b>let</b> fib = 1;
+  <b>while</b> (i &lt; <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&vals)) {
+
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> expiry, 1000);
+    <b>let</b> b = prev + fib;
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> bids, b);
+
+    <b>let</b> a = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&vals, i);
+    <b>let</b> sig = <a href="DiemAccount.md#0x1_DiemAccount_scary_create_signer_for_migrations">DiemAccount::scary_create_signer_for_migrations</a>(vm, *a);
+    // initialize and set.
+    <a href="ProofOfFee.md#0x1_ProofOfFee_set_bid">ProofOfFee::set_bid</a>(&sig, b, 1000);
+    prev = fib;
+    fib = b;
+    i = i + 1;
+  };
+  <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, 100000); // unlock some coins for the validators
+
+  (vals, bids, expiry)
 }
 </code></pre>
 

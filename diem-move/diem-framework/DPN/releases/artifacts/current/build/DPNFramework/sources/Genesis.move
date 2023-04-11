@@ -36,8 +36,11 @@ module DiemFramework::Genesis {
     use DiemFramework::TowerState;
     use DiemFramework::DonorDirected;
     use DiemFramework::Migrations;  
+    // use DiemFramework::Testnet;
+    use DiemFramework::ProofOfFee;
     use DiemFramework::MultiSigPayment;
-    // use DiemFramework::Testnet; 
+    use DiemFramework::MusicalChairs; 
+    use DiemFramework::InfraEscrow;
 
     /// Initializes the Diem framework.
     fun initialize(
@@ -106,6 +109,7 @@ module DiemFramework::Genesis {
 
         AccountFreezing::initialize(dr_account);
         TransactionFee::initialize(dr_account); /////// 0L /////////
+        TransactionFee::initialize_epoch_fee_maker_registry(dr_account); /////// 0L /////////
 
         DiemSystem::initialize_validator_set(dr_account);
         DiemVersion::initialize(dr_account, initial_diem_version);
@@ -159,6 +163,8 @@ module DiemFramework::Genesis {
         DonorDirected::init_root_registry(dr_account);
         DiemAccount::vm_init_slow(dr_account);
         Migrations::init(dr_account);
+        MusicalChairs::initialize(dr_account);
+        InfraEscrow::initialize_infra_pledge(dr_account);
 
         // After we have called this function, all invariants which are guarded by
         // `DiemTimestamp::is_operating() ==> ...` will become active and a verification condition.
@@ -169,7 +175,7 @@ module DiemFramework::Genesis {
         // Initialize Root Security metered services
         MultiSigPayment::root_init(dr_account); //////// 0L ////////
 
-        
+        ProofOfFee::init_genesis_baseline_reward(dr_account);
         // if this is tesnet, fund the root account so the smoketests can run. They use PaymentScripts functions to test many things.
         // TODO(0L): make this only tun in testsnet. Though we need to make smoketest always initialize in test mode.
         // if (Testnet::is_testnet()) {
@@ -178,6 +184,7 @@ module DiemFramework::Genesis {
           let coin = Diem::mint<GAS::GAS>(dr_account, val);
           DiemAccount::vm_deposit_with_metadata(
             dr_account,
+            @DiemRoot,
             @DiemRoot,
             coin,
             x"",

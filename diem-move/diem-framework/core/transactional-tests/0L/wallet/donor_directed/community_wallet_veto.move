@@ -82,24 +82,24 @@ script {
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
     use DiemFramework::Receipts;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
     
     fun main(_dr: signer, sender: signer) {
       // Receipts::init(&sender);
-      let a = Receipts::is_init(@Carol);
-      print(&a);
+      let _a = Receipts::is_init(@Carol);
+      // print(&a);
 
-      let b = DiemAccount::is_init_cumu_tracking(@Alice);
-      print(&b);
+      let _b = DiemAccount::is_init_cumu_tracking(@Alice);
+      // print(&b);
 
       let cap = DiemAccount::extract_withdraw_capability(&sender);
       DiemAccount::pay_from<GAS>(&cap, @Alice, 1000, b"thanks alice", b"");
       DiemAccount::restore_withdraw_capability(cap);
 
-      let (a, b, c) = Receipts::read_receipt(@Carol, @Alice);
-      print(&a);
-      print(&b);
-      print(&c);
+      let (_a, _b, _c) = Receipts::read_receipt(@Carol, @Alice);
+      // print(&a);
+      // print(&b);
+      // print(&c);
 
     }
 }
@@ -110,11 +110,12 @@ script {
     use DiemFramework::DonorDirected;
     use DiemFramework::DonorDirectedGovernance;
     use Std::Signer;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
     
     fun main(_dr: signer, sender: signer) {
       let a = DonorDirectedGovernance::check_is_donor(@Alice, Signer::address_of(&sender));
-      print(&a);
+      assert!(a, 7357009);
+      // print(&a);
       DonorDirected::propose_veto(&sender, @Alice, 2);
     }
 }

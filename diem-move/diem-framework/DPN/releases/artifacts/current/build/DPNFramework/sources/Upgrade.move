@@ -55,7 +55,7 @@ module Upgrade {
         // unless the prologue gives it to us.
         // The upgrade reconfigure happens on round 2, so we'll increment the
         // new start by 2 from previous.        
-        let new_epoch_height = Epoch::get_timer_height_start(vm) + 2; 
+        let new_epoch_height = Epoch::get_timer_height_start() + 2; 
         Epoch::reset_timer(vm, new_epoch_height);
 
         // TODO: check if this has any impact.

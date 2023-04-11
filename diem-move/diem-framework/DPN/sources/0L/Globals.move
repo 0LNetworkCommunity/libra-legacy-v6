@@ -18,7 +18,7 @@ module Globals {
     /// Global constants determining validator settings & requirements 
     /// Some constants need to be changed based on environment; dev, testing, prod.
     /// epoch_length: The length of an epoch in seconds (~1 day for prod.) 
-    /// max_validators_per_set: The maximum number of validators that can participate 
+    /// val_set_at_genesis: The maximum number of validators that can participate 
     /// subsidy_ceiling_gas: TODO I don't really know what this is
     /// vdf_difficulty: The difficulty required for VDF proofs submitting by miners 
     /// epoch_mining_thres_lower: The number of proofs that must be submitted each 
@@ -26,7 +26,7 @@ module Globals {
     struct GlobalConstants has drop {
       // For validator set.
       epoch_length: u64,
-      max_validators_per_set: u64,
+      val_set_at_genesis: u64,
       subsidy_ceiling_gas: u64,
       vdf_difficulty_baseline: u64,
       vdf_security_baseline: u64,
@@ -35,7 +35,7 @@ module Globals {
       epoch_slow_wallet_unlock: u64,
       min_blocks_per_epoch: u64,
       vouch_threshold: u64,
-      signing_threshold_pct: u64,      
+      signing_threshold_pct: u64,  
     }
 
     const COIN_SCALING_FACTOR: u64 = 1000000;
@@ -46,8 +46,8 @@ module Globals {
     }
 
     /// Get max validator per epoch
-    public fun get_max_validators_per_set(): u64 {
-       get_constants().max_validators_per_set
+    public fun get_val_set_at_genesis(): u64 {
+       get_constants().val_set_at_genesis
     }
 
     /// Get the epoch length
@@ -111,7 +111,7 @@ module Globals {
       if (Testnet::is_testnet()) {
         return GlobalConstants {
           epoch_length: 60, // seconds
-          max_validators_per_set: 100,
+          val_set_at_genesis: 10,
           subsidy_ceiling_gas: 296 * COIN_SCALING_FACTOR,
           vdf_difficulty_baseline: 100,
           vdf_security_baseline: 512,
@@ -129,7 +129,7 @@ module Globals {
       if (StagingNet::is_staging_net()) {
         return GlobalConstants {
           epoch_length: 60 * 40, // 40 mins, enough for a hard miner proof.
-          max_validators_per_set: 100,
+          val_set_at_genesis: 100,
           subsidy_ceiling_gas: 8640000 * COIN_SCALING_FACTOR,
           vdf_difficulty_baseline: 120000000,
           vdf_security_baseline: 512,
@@ -144,7 +144,7 @@ module Globals {
       } else {
         return GlobalConstants {
           epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 vdf_proofs/sec
-          max_validators_per_set: 100, // max expected for BFT limits.
+          val_set_at_genesis: 100, // max expected for BFT limits.
           // See DiemVMConfig for gas constants:
           // Target max gas units per transaction 100000000
           // target max block time: 2 secs

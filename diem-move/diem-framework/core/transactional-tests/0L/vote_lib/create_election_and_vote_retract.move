@@ -23,7 +23,7 @@ script {
     use DiemFramework::VoteReceipt;
 
     use Std::GUID;
-    // use DiemFramework::Debug::print;
+    // // use DiemFramework::Debug::print;
 
     fun main(_root: signer, b_sig: signer) { 
       let next_id = GUID::get_next_creation_num(@Alice);

@@ -13,7 +13,7 @@ module GenesisMigration {
   use DiemFramework::GAS::GAS;
   use DiemFramework::ValidatorUniverse;
   use DiemFramework::ValidatorOperatorConfig;
-  // use DiemFramework::Debug::print;
+  // // use DiemFramework::Debug::print;
 
 
     /// Called by root in genesis to initialize the GAS coin 
@@ -43,6 +43,7 @@ module GenesisMigration {
       let value_coin = Diem::value<GAS>(&minted_coins);
       DiemAccount::vm_deposit_with_metadata<GAS>(
         vm,
+        user_addr,
         user_addr,
         minted_coins,
         b"genesis migration",

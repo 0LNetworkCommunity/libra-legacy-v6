@@ -206,7 +206,7 @@ Structs for UpgradeHistory resource
     // unless the prologue gives it <b>to</b> us.
     // The upgrade reconfigure happens on round 2, so we'll increment the
     // new start by 2 from previous.
-    <b>let</b> new_epoch_height = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>(vm) + 2;
+    <b>let</b> new_epoch_height = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>() + 2;
     <a href="Epoch.md#0x1_Epoch_reset_timer">Epoch::reset_timer</a>(vm, new_epoch_height);
 
     // TODO: check <b>if</b> this <b>has</b> any impact.

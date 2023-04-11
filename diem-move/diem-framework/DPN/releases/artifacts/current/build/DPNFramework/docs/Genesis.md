@@ -33,10 +33,13 @@ when executing from a fresh state.
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
+<b>use</b> <a href="InfraEscrow.md#0x1_InfraEscrow">0x1::InfraEscrow</a>;
 <b>use</b> <a href="Migrations.md#0x1_Migrations">0x1::Migrations</a>;
 <b>use</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment">0x1::MultiSigPayment</a>;
+<b>use</b> <a href="MusicalChairs.md#0x1_MusicalChairs">0x1::MusicalChairs</a>;
 <b>use</b> <a href="Oracle.md#0x1_Oracle">0x1::Oracle</a>;
 <b>use</b> <a href="ParallelExecutionConfig.md#0x1_ParallelExecutionConfig">0x1::ParallelExecutionConfig</a>;
+<b>use</b> <a href="ProofOfFee.md#0x1_ProofOfFee">0x1::ProofOfFee</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
@@ -174,6 +177,7 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
 
     <a href="AccountFreezing.md#0x1_AccountFreezing_initialize">AccountFreezing::initialize</a>(dr_account);
     <a href="TransactionFee.md#0x1_TransactionFee_initialize">TransactionFee::initialize</a>(dr_account); /////// 0L /////////
+    <a href="TransactionFee.md#0x1_TransactionFee_initialize_epoch_fee_maker_registry">TransactionFee::initialize_epoch_fee_maker_registry</a>(dr_account); /////// 0L /////////
 
     <a href="DiemSystem.md#0x1_DiemSystem_initialize_validator_set">DiemSystem::initialize_validator_set</a>(dr_account);
     <a href="DiemVersion.md#0x1_DiemVersion_initialize">DiemVersion::initialize</a>(dr_account, initial_diem_version);
@@ -227,6 +231,8 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
     <a href="DonorDirected.md#0x1_DonorDirected_init_root_registry">DonorDirected::init_root_registry</a>(dr_account);
     <a href="DiemAccount.md#0x1_DiemAccount_vm_init_slow">DiemAccount::vm_init_slow</a>(dr_account);
     <a href="Migrations.md#0x1_Migrations_init">Migrations::init</a>(dr_account);
+    <a href="MusicalChairs.md#0x1_MusicalChairs_initialize">MusicalChairs::initialize</a>(dr_account);
+    <a href="InfraEscrow.md#0x1_InfraEscrow_initialize_infra_pledge">InfraEscrow::initialize_infra_pledge</a>(dr_account);
 
     // After we have called this function, all invariants which are guarded by
     // `<a href="DiemTimestamp.md#0x1_DiemTimestamp_is_operating">DiemTimestamp::is_operating</a>() ==&gt; ...` will become active and a verification condition.
@@ -237,7 +243,7 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
     // Initialize Root Security metered services
     <a href="MultiSigPayment.md#0x1_MultiSigPayment_root_init">MultiSigPayment::root_init</a>(dr_account); //////// 0L ////////
 
-
+    <a href="ProofOfFee.md#0x1_ProofOfFee_init_genesis_baseline_reward">ProofOfFee::init_genesis_baseline_reward</a>(dr_account);
     // <b>if</b> this is tesnet, fund the root account so the smoketests can run. They <b>use</b> <a href="PaymentScripts.md#0x1_PaymentScripts">PaymentScripts</a> functions <b>to</b> test many things.
     // TODO(0L): make this only tun in testsnet. Though we need <b>to</b> make smoketest always initialize in test mode.
     // <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
@@ -246,6 +252,7 @@ Initializes the Diem Framework. Internal so it can be used by both genesis code,
       <b>let</b> coin = <a href="Diem.md#0x1_Diem_mint">Diem::mint</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;(dr_account, val);
       <a href="DiemAccount.md#0x1_DiemAccount_vm_deposit_with_metadata">DiemAccount::vm_deposit_with_metadata</a>(
         dr_account,
+        @DiemRoot,
         @DiemRoot,
         coin,
         x"",

@@ -15,7 +15,7 @@ This module provides global variables and constants that have no specific owner
 -  [Struct `GlobalConstants`](#0x1_Globals_GlobalConstants)
 -  [Constants](#@Constants_1)
 -  [Function `get_epoch_length`](#0x1_Globals_get_epoch_length)
--  [Function `get_max_validators_per_set`](#0x1_Globals_get_max_validators_per_set)
+-  [Function `get_val_set_at_genesis`](#0x1_Globals_get_val_set_at_genesis)
 -  [Function `get_coin_scaling_factor`](#0x1_Globals_get_coin_scaling_factor)
 -  [Function `get_subsidy_ceiling_gas`](#0x1_Globals_get_subsidy_ceiling_gas)
 -  [Function `get_vdf_difficulty_baseline`](#0x1_Globals_get_vdf_difficulty_baseline)
@@ -45,7 +45,7 @@ This module provides global variables and constants that have no specific owner
 Global constants determining validator settings & requirements
 Some constants need to be changed based on environment; dev, testing, prod.
 epoch_length: The length of an epoch in seconds (~1 day for prod.)
-max_validators_per_set: The maximum number of validators that can participate
+val_set_at_genesis: The maximum number of validators that can participate
 subsidy_ceiling_gas: TODO I don't really know what this is
 vdf_difficulty: The difficulty required for VDF proofs submitting by miners
 epoch_mining_thres_lower: The number of proofs that must be submitted each
@@ -69,7 +69,7 @@ epoch by a miner to remain compliant
 
 </dd>
 <dt>
-<code>max_validators_per_set: u64</code>
+<code>val_set_at_genesis: u64</code>
 </dt>
 <dd>
 
@@ -172,14 +172,14 @@ Get the epoch length
 
 </details>
 
-<a name="0x1_Globals_get_max_validators_per_set"></a>
+<a name="0x1_Globals_get_val_set_at_genesis"></a>
 
-## Function `get_max_validators_per_set`
+## Function `get_val_set_at_genesis`
 
 Get max validator per epoch
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_max_validators_per_set">get_max_validators_per_set</a>(): u64
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_val_set_at_genesis">get_val_set_at_genesis</a>(): u64
 </code></pre>
 
 
@@ -188,8 +188,8 @@ Get max validator per epoch
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_max_validators_per_set">get_max_validators_per_set</a>(): u64 {
-   <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>().max_validators_per_set
+<pre><code><b>public</b> <b>fun</b> <a href="Globals.md#0x1_Globals_get_val_set_at_genesis">get_val_set_at_genesis</a>(): u64 {
+   <a href="Globals.md#0x1_Globals_get_constants">get_constants</a>().val_set_at_genesis
 }
 </code></pre>
 
@@ -473,7 +473,7 @@ Get the constants for the current network
   <b>if</b> (<a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>()) {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
       epoch_length: 60, // seconds
-      max_validators_per_set: 100,
+      val_set_at_genesis: 10,
       subsidy_ceiling_gas: 296 * <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>,
       vdf_difficulty_baseline: 100,
       vdf_security_baseline: 512,
@@ -491,7 +491,7 @@ Get the constants for the current network
   <b>if</b> (<a href="Testnet.md#0x1_StagingNet_is_staging_net">StagingNet::is_staging_net</a>()) {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
       epoch_length: 60 * 40, // 40 mins, enough for a hard miner proof.
-      max_validators_per_set: 100,
+      val_set_at_genesis: 100,
       subsidy_ceiling_gas: 8640000 * <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>,
       vdf_difficulty_baseline: 120000000,
       vdf_security_baseline: 512,
@@ -506,7 +506,7 @@ Get the constants for the current network
   } <b>else</b> {
     <b>return</b> <a href="Globals.md#0x1_Globals_GlobalConstants">GlobalConstants</a> {
       epoch_length: 60 * 60 * 24, // approx 24 hours at 1.4 vdf_proofs/sec
-      max_validators_per_set: 100, // max expected for BFT limits.
+      val_set_at_genesis: 100, // max expected for BFT limits.
       // See <a href="DiemVMConfig.md#0x1_DiemVMConfig">DiemVMConfig</a> for gas constants:
       // Target max gas units per transaction 100000000
       // target max block time: 2 secs

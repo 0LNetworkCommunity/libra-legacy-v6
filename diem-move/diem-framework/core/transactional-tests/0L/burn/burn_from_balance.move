@@ -5,13 +5,13 @@ script {
   use DiemFramework::GAS::GAS;
   use DiemFramework::Diem;
   use DiemFramework::DiemAccount;
-  use DiemFramework::Debug::print;
+  // use DiemFramework::Debug::print;
 
   fun main(vm: signer, _: signer) {
     let cap = Diem::market_cap<GAS>();
-    print(&cap);
+    // print(&cap);
     let prev_bal = DiemAccount::balance<GAS>(@Alice);
-    print(&prev_bal);
+    // print(&prev_bal);
 
     // assert!(cap == bal, 735701);
 
@@ -23,9 +23,9 @@ script {
         &vm,
     );
     let cap_later = Diem::market_cap<GAS>();
-    print(&cap_later);
+    // print(&cap_later);
     let bal = DiemAccount::balance<GAS>(@Alice);
-    print(&bal);
+    // print(&bal);
     assert!(bal == (prev_bal - burn_amount), 735702);
     assert!(cap_later == (cap - (burn_amount as u128)), 735703);
   }

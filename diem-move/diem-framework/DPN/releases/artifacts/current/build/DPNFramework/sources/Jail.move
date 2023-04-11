@@ -19,7 +19,7 @@
 address DiemFramework {
   module Jail {
     use DiemFramework::CoreAddresses;
-    use DiemFramework::TowerState;
+    // use DiemFramework::TowerState;
     use Std::Signer;
     use Std::Vector;
     use DiemFramework::Vouch;
@@ -79,26 +79,36 @@ address DiemFramework {
       }
     }
 
-    public fun self_unjail(sender: &signer) acquires Jail {
-      // only a validator can un-jail themselves.
-      let self = Signer::address_of(sender);
+    //////// V6 //////
+    // V6 NOTE: there's no practical or explicit hurdle that the validator
+    // needs to overcome now that we have deprecated Towers.
+    // So absent some other check that is objective, we could
+    // lean on the Vouch network.
+    // There was a plan elsewhere discussed to make a
+    // voucher be the only one that can unjail a validator.
+    // We can promote that idea in V6. Seems like it fits 
+    // well with POF.
 
-      // check the node has been mining before unjailing.
-      assert!(TowerState::node_above_thresh(self), 100104);
-      unjail(self);
-    }    
+    // public fun self_unjail(sender: &signer) acquires Jail {
+    //   // only a validator can un-jail themselves.
+    //   let self = Signer::address_of(sender);
+
+    //   // check the node has been mining before unjailing.
+    //   assert!(TowerState::node_above_thresh(self), 100104);
+    //   unjail(self);
+    // }    
 
     public fun vouch_unjail(sender: &signer, addr: address) acquires Jail {
       // only a validator can un-jail themselves.
       let voucher = Signer::address_of(sender);
 
       let buddies = Vouch::buddies_in_set(addr);
-      // print(&buddies);
+      // // print(&buddies);
       let (is_found, _idx) = Vector::index_of(&buddies, &voucher);
       assert!(is_found, 100103);
 
-      // check the node has been mining before unjailing.
-      assert!(TowerState::node_above_thresh(addr), 100104);
+      // // check the node has been mining before unjailing.
+      // assert!(TowerState::node_above_thresh(addr), 100104);
       unjail(addr);
     }
 

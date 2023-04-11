@@ -13,19 +13,19 @@ script {
   use DiemFramework::ValidatorConfig;
   use DiemFramework::TestFixtures;
   use DiemFramework::VDF;
-  use DiemFramework::TowerState;
+  use DiemFramework::Vouch;
+  use Std::Vector;
 
-  fun main(_: signer, sender: signer) {
+  fun main(vm: signer, sender: signer) {
     // Scenario: Alice, an existing validator, is sending a transaction for Eve, 
     // with a challenge and proof from eve's block_0
     let challenge = TestFixtures::eve_0_easy_chal();
     let solution = TestFixtures::eve_0_easy_sol();
     // // Parse key and check
-    let (eve_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
-    assert!(eve_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
+    let (new_addr, _auth_key) = VDF::extract_address_from_challenge(&challenge);
+    assert!(new_addr == @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 401);
 
-    let epochs_since_creation = 10;
-    TowerState::test_helper_set_rate_limit(&sender, epochs_since_creation);
+    // let epochs_since_creation = 10;
 
     DiemAccount::create_validator_account_with_proof(
         &sender,
@@ -42,65 +42,19 @@ script {
         b"192.168.0.1", // fullnode_network_addresses: vector<u8>,
         x"1ee7", // human_name: vector<u8>,
     );
-    assert!(ValidatorConfig::is_valid(eve_addr), 7357130101031000);
+    assert!(ValidatorConfig::is_valid(new_addr), 7357130101031000);
+
+    let vouchers = Vector::singleton<address>(@Alice);
+    Vector::push_back(&mut vouchers, @Bob);
+    Vector::push_back(&mut vouchers, @Carol);
+    Vector::push_back(&mut vouchers, @Dave);
+
+    Vouch::vm_migrate(&vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, vouchers);        
 
   }
 }
 
-//# run --admin-script --signers DiemRoot DiemRoot
-script {
-    use DiemFramework::DiemSystem;
-    use DiemFramework::EpochBoundary;
-    use DiemFramework::TowerState;
-    use DiemFramework::Mock;
 
-    fun main(vm: signer, _: signer) {
-        let vm = &vm;
-        // Tests on initial size of validators
-        assert!(DiemSystem::validator_set_size() == 6, 7357000180101);
-        assert!(DiemSystem::is_validator(@Alice) == true, 7357000180102);
-        assert!(DiemSystem::is_validator(@Bob) == true, 7357000180103);
-        assert!(
-            DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B) == false, 
-            7357000180104
-        );
-        assert!(TowerState::is_init(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B), 7357000180105);
-
-        Mock::mock_case_1(vm, @Alice, 0, 15);
-        Mock::mock_case_1(vm, @Bob, 0, 15);
-        Mock::mock_case_1(vm, @Carol, 0, 15);
-        Mock::mock_case_1(vm, @Dave, 0, 15);
-        Mock::mock_case_1(vm, @Eve, 0, 15);
-        Mock::mock_case_1(vm, @Frank, 0, 15);
-
-        EpochBoundary::reconfigure(vm, 15); // reconfigure at height 15
-        assert!(DiemSystem::validator_set_size() == 6, 7357000180106);
-    }
-}
-
-// Epoch 2 began
-// The new node is in validatorUniverse but not in validator set
-
-//# run --admin-script --signers DiemRoot DiemRoot
-script {
-    use DiemFramework::DiemSystem;
-    use DiemFramework::ValidatorUniverse;
-    use Std::Vector;
-
-    fun main() {
-        // Tests on initial size of validators
-        // New validator is not in this set.
-        assert!(DiemSystem::validator_set_size() == 6, 7357000180101);
-        assert!(DiemSystem::is_validator(@Alice) == true, 7357000180102);
-        assert!(
-            !DiemSystem::is_validator(@0x3DC18D1CF61FAAC6AC70E3A63F062E4B),
-            7357000180103
-        );
-        let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators());
-        // Is in validator universe
-        assert!(len == 7, 7357000180104);
-      }
-}
 
 // The new node starts mining and submiting proofs in the epoch 2
 //
@@ -108,11 +62,9 @@ script {
 script {
     use DiemFramework::DiemSystem;
     use DiemFramework::EpochBoundary;
-    use DiemFramework::TowerState;
     use DiemFramework::Mock;
     use Std::Vector;
     use DiemFramework::ValidatorUniverse;
-    use DiemFramework::Vouch;
 
     fun main(vm: signer, _: signer) {
         let vm = &vm;
@@ -125,25 +77,16 @@ script {
             7357000180204
         );
 
-        Mock::mock_case_1(vm, @Alice, 0, 15);
-        Mock::mock_case_1(vm, @Bob, 0, 15);
-        Mock::mock_case_1(vm, @Carol, 0, 15);
-        Mock::mock_case_1(vm, @Dave, 0, 15);
-        Mock::mock_case_1(vm, @Eve, 0, 15);
-        Mock::mock_case_1(vm, @Frank, 0, 15);
-
-        let list = Vector::singleton<address>(@Alice);
-        Vector::push_back(&mut list, @Bob);
-        Vector::push_back(&mut list, @Carol);
-        Vector::push_back(&mut list, @Dave);
-
-        Vouch::vm_migrate(vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, list);        
-
-        TowerState::test_helper_mock_mining_vm(vm, @0x3DC18D1CF61FAAC6AC70E3A63F062E4B, 20);
 
         let len = Vector::length<address>(&ValidatorUniverse::get_eligible_validators());
         assert!(len == 7 , 7357000180206);
 
+        
+        // all validators ar compliant
+        Mock::all_good_validators(vm);
+        // all place bids
+        Mock::pof_default(vm);
+        // trigger epoch
         EpochBoundary::reconfigure(vm, 15); // reconfigure at height 15
     }
 }
@@ -156,11 +99,11 @@ script {
     use DiemFramework::DiemSystem;
     use DiemFramework::ValidatorUniverse;
     use Std::Vector;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     fun main() {
         // Tests on initial size of validators
-        print(&DiemSystem::validator_set_size());
+        // print(&DiemSystem::validator_set_size());
         assert!(DiemSystem::validator_set_size() == 7, 7357000200301);
         assert!(DiemSystem::is_validator(@Alice) == true, 7357000200302);
         assert!(

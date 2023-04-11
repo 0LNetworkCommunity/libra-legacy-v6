@@ -32,9 +32,6 @@ compiled_package_info:
       name: Ancestry
     : DiemFramework
     ? address: "00000000000000000000000000000001"
-      name: Audit
-    : DiemFramework
-    ? address: "00000000000000000000000000000001"
       name: Authenticator
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -179,6 +176,9 @@ compiled_package_info:
       name: Hash
     : Std
     ? address: "00000000000000000000000000000001"
+      name: InfraEscrow
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
       name: Jail
     : DiemFramework
     ? address: "00000000000000000000000000000001"
@@ -198,6 +198,9 @@ compiled_package_info:
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: MultiSigPayment
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: MusicalChairs
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: NetworkIdentity
@@ -222,6 +225,12 @@ compiled_package_info:
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: PersistenceDemo
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: PledgeAccounts
+    : DiemFramework
+    ? address: "00000000000000000000000000000001"
+      name: ProofOfFee
     : DiemFramework
     ? address: "00000000000000000000000000000001"
       name: Receipts
@@ -346,7 +355,7 @@ compiled_package_info:
     ? address: "00000000000000000000000000000001"
       name: XUS
     : DiemFramework
-  source_digest: E73442AD7A1B65175ABE2ACCB60D6A59204FBFD1C63E20E767E29AAC56BD3285
+  source_digest: ECC16E7A8F8163AD85D322E46B00F8C8A88B77DC055718153B470A1786841924
   build_flags:
     dev_mode: false
     test_mode: false

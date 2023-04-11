@@ -10,7 +10,6 @@
 -  [Function `is_jailed`](#0x1_Jail_is_jailed)
 -  [Function `jail`](#0x1_Jail_jail)
 -  [Function `remove_consecutive_fail`](#0x1_Jail_remove_consecutive_fail)
--  [Function `self_unjail`](#0x1_Jail_self_unjail)
 -  [Function `vouch_unjail`](#0x1_Jail_vouch_unjail)
 -  [Function `unjail`](#0x1_Jail_unjail)
 -  [Function `sort_by_jail`](#0x1_Jail_sort_by_jail)
@@ -22,7 +21,6 @@
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
-<b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 <b>use</b> <a href="Vouch.md#0x1_Vouch">0x1::Vouch</a>;
 </code></pre>
@@ -194,35 +192,6 @@
 
 </details>
 
-<a name="0x1_Jail_self_unjail"></a>
-
-## Function `self_unjail`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Jail.md#0x1_Jail_self_unjail">self_unjail</a>(sender: &signer)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="Jail.md#0x1_Jail_self_unjail">self_unjail</a>(sender: &signer) <b>acquires</b> <a href="Jail.md#0x1_Jail">Jail</a> {
-  // only a validator can un-jail themselves.
-  <b>let</b> self = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
-
-  // check the node <b>has</b> been mining before unjailing.
-  <b>assert</b>!(<a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(self), 100104);
-  <a href="Jail.md#0x1_Jail_unjail">unjail</a>(self);
-}
-</code></pre>
-
-
-
-</details>
-
 <a name="0x1_Jail_vouch_unjail"></a>
 
 ## Function `vouch_unjail`
@@ -243,12 +212,12 @@
   <b>let</b> voucher = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
 
   <b>let</b> buddies = <a href="Vouch.md#0x1_Vouch_buddies_in_set">Vouch::buddies_in_set</a>(addr);
-  // print(&buddies);
+  // // print(&buddies);
   <b>let</b> (is_found, _idx) = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_index_of">Vector::index_of</a>(&buddies, &voucher);
   <b>assert</b>!(is_found, 100103);
 
-  // check the node <b>has</b> been mining before unjailing.
-  <b>assert</b>!(<a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr), 100104);
+  // // check the node <b>has</b> been mining before unjailing.
+  // <b>assert</b>!(<a href="TowerState.md#0x1_TowerState_node_above_thresh">TowerState::node_above_thresh</a>(addr), 100104);
   <a href="Jail.md#0x1_Jail_unjail">unjail</a>(addr);
 }
 </code></pre>
