@@ -361,6 +361,32 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
 }
 
 
+fn migrate_root_state(session: &mut Session<StateViewCache<GenesisStateView>>, legacy_data: &[LegacyRecovery]) {
+
+  let filtered_data: Option<&LegacyRecovery> = legacy_data
+  .iter()
+  .find(|&d| {
+        // d.account.is_some() &&
+        d.account == Some(AccountAddress::ZERO)
+    });
+  if let Some(rec) = filtered_data{
+    if let Some(comm_w) = &rec.comm_wallet {
+          let args = vec![
+              // both the VM and the user signatures need to be mocked.
+              MoveValue::Signer(account_config::diem_root_address()),
+              MoveValue::vector_address(comm_w.list.clone()),
+          ];
+          exec_function(
+            session,
+            "DonorDirected",
+            "migrate_root_registry",
+            vec![],
+            serialize_values(&args)
+          );
+        }
+
+  }
+}
 
 fn exec_function(
     session: &mut Session<StateViewCache<GenesisStateView>>,
