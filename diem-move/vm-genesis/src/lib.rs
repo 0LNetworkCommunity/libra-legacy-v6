@@ -257,6 +257,7 @@ pub fn encode_recovery_genesis_changeset(
     recovery_owners_operators(&mut session, val_assignments, operator_recovers);
     OLProgress::complete(&format!("Migrate legacy validator configs [{}]",  val_assignments.len()));
 
+    migrate_root_state(&mut session, legacy_data);
     // Recover the user balances and data
     // NOTE: 0L: this includes the balances of legacy validators.
     if append_users  {
