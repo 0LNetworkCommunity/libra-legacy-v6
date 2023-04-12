@@ -498,11 +498,11 @@ address DiemFramework{
           save_pledge(account, @VMReserved, coin);
         }
 
-        ////////// TX SCRIPTS ////////// 
+        ////////// TX  ////////// 
 
-        public(script) fun user_pledge_tx(user_sig: signer, beneficiary: address, amount: u64)  acquires BeneficiaryPolicy, MyPledges {
-          let coin = DiemAccount::simple_withdrawal(&user_sig, amount);
-          save_pledge(&user_sig, beneficiary, coin);
+        public fun user_pledge(user_sig: &signer, beneficiary: address, amount: u64) acquires BeneficiaryPolicy, MyPledges {
+          let coin = DiemAccount::simple_withdrawal(user_sig, amount);
+          save_pledge(user_sig, beneficiary, coin);
         }
 
 

@@ -1790,13 +1790,6 @@ pub enum ScriptFunctionCall {
         memo: Bytes,
     },
 
-    CreateAccUser {
-        challenge: Bytes,
-        solution: Bytes,
-        difficulty: u64,
-        security: u64,
-    },
-
     CreateAccVal {
         challenge: Bytes,
         solution: Bytes,
@@ -3360,15 +3353,6 @@ pub enum ScriptFunctionCall {
         allow_minting: bool,
     },
 
-    UserPledgeInfra {
-        amount: u64,
-    },
-
-    UserPledgeTx {
-        beneficiary: AccountAddress,
-        amount: u64,
-    },
-
     ValAddSelf {},
 
     VouchFor {
@@ -3737,12 +3721,6 @@ impl ScriptFunctionCall {
                 unscaled_value,
                 memo,
             ),
-            CreateAccUser {
-                challenge,
-                solution,
-                difficulty,
-                security,
-            } => encode_create_acc_user_script_function(challenge, solution, difficulty, security),
             CreateAccVal {
                 challenge,
                 solution,
@@ -4088,11 +4066,6 @@ impl ScriptFunctionCall {
                 currency,
                 allow_minting,
             } => encode_update_minting_ability_script_function(currency, allow_minting),
-            UserPledgeInfra { amount } => encode_user_pledge_infra_script_function(amount),
-            UserPledgeTx {
-                beneficiary,
-                amount,
-            } => encode_user_pledge_tx_script_function(beneficiary, amount),
             ValAddSelf {} => encode_val_add_self_script_function(),
             VouchFor { val } => encode_vouch_for_script_function(val),
             VoucherUnjail { addr } => encode_voucher_unjail_script_function(addr),
@@ -4630,28 +4603,6 @@ pub fn encode_community_transfer_script_function(
             bcs::to_bytes(&destination).unwrap(),
             bcs::to_bytes(&unscaled_value).unwrap(),
             bcs::to_bytes(&memo).unwrap(),
-        ],
-    ))
-}
-
-pub fn encode_create_acc_user_script_function(
-    challenge: Vec<u8>,
-    solution: Vec<u8>,
-    difficulty: u64,
-    security: u64,
-) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountScripts").to_owned(),
-        ),
-        ident_str!("create_acc_user").to_owned(),
-        vec![],
-        vec![
-            bcs::to_bytes(&challenge).unwrap(),
-            bcs::to_bytes(&solution).unwrap(),
-            bcs::to_bytes(&difficulty).unwrap(),
-            bcs::to_bytes(&security).unwrap(),
         ],
     ))
 }
@@ -6913,36 +6864,6 @@ pub fn encode_update_minting_ability_script_function(
     ))
 }
 
-pub fn encode_user_pledge_infra_script_function(amount: u64) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("InfraEscrow").to_owned(),
-        ),
-        ident_str!("user_pledge_infra").to_owned(),
-        vec![],
-        vec![bcs::to_bytes(&amount).unwrap()],
-    ))
-}
-
-pub fn encode_user_pledge_tx_script_function(
-    beneficiary: AccountAddress,
-    amount: u64,
-) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("PledgeAccounts").to_owned(),
-        ),
-        ident_str!("user_pledge_tx").to_owned(),
-        vec![],
-        vec![
-            bcs::to_bytes(&beneficiary).unwrap(),
-            bcs::to_bytes(&amount).unwrap(),
-        ],
-    ))
-}
-
 pub fn encode_val_add_self_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
@@ -8838,21 +8759,6 @@ fn decode_community_transfer_script_function(
     }
 }
 
-fn decode_create_acc_user_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::CreateAccUser {
-            challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
-            solution: bcs::from_bytes(script.args().get(1)?).ok()?,
-            difficulty: bcs::from_bytes(script.args().get(2)?).ok()?,
-            security: bcs::from_bytes(script.args().get(3)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
 fn decode_create_acc_val_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9602,31 +9508,6 @@ fn decode_update_minting_ability_script_function(
     }
 }
 
-fn decode_user_pledge_infra_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::UserPledgeInfra {
-            amount: bcs::from_bytes(script.args().get(0)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
-fn decode_user_pledge_tx_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::UserPledgeTx {
-            beneficiary: bcs::from_bytes(script.args().get(0)?).ok()?,
-            amount: bcs::from_bytes(script.args().get(1)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
 fn decode_val_add_self_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
         Some(ScriptFunctionCall::ValAddSelf {})
@@ -10119,10 +10000,6 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_community_transfer_script_function),
         );
         map.insert(
-            "AccountScriptscreate_acc_user".to_string(),
-            Box::new(decode_create_acc_user_script_function),
-        );
-        map.insert(
             "AccountScriptscreate_acc_val".to_string(),
             Box::new(decode_create_acc_val_script_function),
         );
@@ -10350,14 +10227,6 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "TreasuryComplianceScriptsupdate_minting_ability".to_string(),
             Box::new(decode_update_minting_ability_script_function),
-        );
-        map.insert(
-            "InfraEscrowuser_pledge_infra".to_string(),
-            Box::new(decode_user_pledge_infra_script_function),
-        );
-        map.insert(
-            "PledgeAccountsuser_pledge_tx".to_string(),
-            Box::new(decode_user_pledge_tx_script_function),
         );
         map.insert(
             "ValidatorScriptsval_add_self".to_string(),

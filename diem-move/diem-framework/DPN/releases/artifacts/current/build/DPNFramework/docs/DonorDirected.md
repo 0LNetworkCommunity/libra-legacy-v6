@@ -27,6 +27,7 @@ By creating a TxSchedule wallet you are providing certain restrictions and guara
 -  [Constants](#@Constants_0)
 -  [Function `init_root_registry`](#0x1_DonorDirected_init_root_registry)
 -  [Function `is_root_init`](#0x1_DonorDirected_is_root_init)
+-  [Function `migrate_root_registry`](#0x1_DonorDirected_migrate_root_registry)
 -  [Function `set_donor_directed`](#0x1_DonorDirected_set_donor_directed)
 -  [Function `add_to_registry`](#0x1_DonorDirected_add_to_registry)
 -  [Function `make_multisig`](#0x1_DonorDirected_make_multisig)
@@ -422,6 +423,35 @@ Could not find a pending transaction by this GUID
 
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_is_root_init">is_root_init</a>():bool {
   <b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(@VMReserved)
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DonorDirected_migrate_root_registry"></a>
+
+## Function `migrate_root_registry`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_migrate_root_registry">migrate_root_registry</a>(vm: &signer, list: vector&lt;<b>address</b>&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_migrate_root_registry">migrate_root_registry</a>(vm: &signer, list: vector&lt;<b>address</b>&gt;) {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
+  <b>if</b> (!<a href="DonorDirected.md#0x1_DonorDirected_is_root_init">is_root_init</a>()) {
+    <b>move_to</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(vm, <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a> {
+      list,
+    });
+  };
 }
 </code></pre>
 

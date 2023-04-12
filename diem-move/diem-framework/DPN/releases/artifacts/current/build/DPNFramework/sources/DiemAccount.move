@@ -495,31 +495,33 @@ module DiemFramework::DiemAccount {
     // DiemAccount is the only code in the VM which can place a resource in an account.
     // As such the module and especially this function has an attack surface.
 
-    /////// 0L ////////
-    // Function code: 01
-    public fun create_user_account_with_proof(
-        sender: &signer,
-        challenge: &vector<u8>,
-        solution: &vector<u8>,
-        difficulty: u64,
-        security: u64,
-    ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
-        // TODO: extract address_duplicated with TowerState::init_miner_state
-        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
-        let new_signer = create_signer(new_account_address);
-        Roles::new_user_role_with_proof(&new_signer);
-        make_account(&new_signer, auth_key_prefix);
-        add_currencies_for_account<GAS>(&new_signer, false);
+    // Deprecating creating account with proof.
+    
+    // /////// 0L ////////
+    // // Function code: 01
+    // public fun create_user_account_with_proof(
+    //     sender: &signer,
+    //     challenge: &vector<u8>,
+    //     solution: &vector<u8>,
+    //     difficulty: u64,
+    //     security: u64,
+    // ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
+    //     // TODO: extract address_duplicated with TowerState::init_miner_state
+    //     let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
+    //     let new_signer = create_signer(new_account_address);
+    //     Roles::new_user_role_with_proof(&new_signer);
+    //     make_account(&new_signer, auth_key_prefix);
+    //     add_currencies_for_account<GAS>(&new_signer, false);
 
-        onboarding_gas_transfer<GAS>(sender, new_account_address, BOOTSTRAP_COIN_VALUE);
-        // Init the miner state
-        // this verifies the VDF proof, which we use to rate limit account creation.
-        // account will not be created if this step fails.
-        let new_signer = create_signer(new_account_address);
-        TowerState::init_miner_state(&new_signer, challenge, solution, difficulty, security);
-        // set_slow(&new_signer);
-        new_account_address
-    }
+    //     onboarding_gas_transfer<GAS>(sender, new_account_address, BOOTSTRAP_COIN_VALUE);
+    //     // Init the miner state
+    //     // this verifies the VDF proof, which we use to rate limit account creation.
+    //     // account will not be created if this step fails.
+    //     let new_signer = create_signer(new_account_address);
+    //     TowerState::init_miner_state(&new_signer, challenge, solution, difficulty, security);
+    //     // set_slow(&new_signer);
+    //     new_account_address
+    // }
 
     /////// 0L ////////
     // Function code: 01

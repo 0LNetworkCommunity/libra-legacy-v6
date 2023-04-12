@@ -98,7 +98,12 @@ module Globals {
     /// Get the threshold of number of signed blocks in an epoch per validator
     public fun get_signing_threshold(): u64 {
       get_constants().signing_threshold_pct
-    }    
+    }
+
+    /// get the V6 coin split factor
+    public fun get_coin_split_factor(): u64 {
+      10
+    }
 
     /// Get the constants for the current network 
     fun get_constants(): GlobalConstants {

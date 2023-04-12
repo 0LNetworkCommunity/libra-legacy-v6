@@ -15,7 +15,7 @@ use diem_types::{
 use move_core_types::{identifier::Identifier, move_resource::MoveResource};
 use crate::{
     autopay::AutoPayResource, fullnode_counter::FullnodeCounterResource,
-    wallet::CommunityWalletsResource,
+    wallet::CommunityWalletsResource, ancestry::AncestryResource, makewhole_resource::MakeWholeResource,
 };
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
@@ -71,7 +71,10 @@ pub struct LegacyRecovery {
     pub autopay: Option<AutoPayResource>,
     ///
     pub currency_info: Option<CurrencyInfoResource>,
-    // TODO: Autopay? // rust struct does not exist
+    ///
+    pub ancestry: Option<AncestryResource>,
+    ///
+    pub make_whole: Option<MakeWholeResource>,
 }
 
 //////// 0L ///////
@@ -158,6 +161,8 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
         fullnode_counter: None,
         autopay: None,
         currency_info: None,
+        ancestry: None,
+        make_whole: None,
     };
 
     if let Some(address) = state.get_account_address()? {
@@ -194,6 +199,10 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                 l.miner_state = bcs::from_bytes(v).ok();
             } else if k == &AutoPayResource::resource_path() {
                 l.autopay = bcs::from_bytes(v).ok();
+            } else if k == &AncestryResource::resource_path() {
+                l.ancestry = bcs::from_bytes(v).ok();
+            } else if k == &MakeWholeResource::resource_path() {
+                l.make_whole = bcs::from_bytes(v).ok();
             }
 
             if address == AccountAddress::ZERO {

@@ -344,7 +344,6 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
               MoveValue::U64(tower.epochs_validating_and_mining),
               MoveValue::U64(tower.contiguous_epochs_validating_and_mining),
               MoveValue::U64(tower.epochs_since_last_account_creation),
-              MoveValue::U64(tower.count_proofs_in_epoch),
 
           ];
           exec_function(
@@ -356,6 +355,24 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
           );
         }
 
+        if let Some(mk) = &user.make_whole {
+          if let Some(cred) =  mk.credits.iter().next() {
+            let mk_args = vec![
+                // both the VM and the user signatures need to be mocked.
+                MoveValue::Signer(account_config::diem_root_address()),
+                MoveValue::Signer(user.account.expect("Account address is missing")),
+                MoveValue::U64(cred.coins.value),
+                MoveValue::vector_u8(cred.incident_name.clone()),
+            ];
+            exec_function(
+              session,
+              "MakeWhole",
+              "vm_offer_credit",
+              vec![],
+              serialize_values(&mk_args)
+            );
+          }
+        }
     }
 
     Ok(total_balance_restored)
