@@ -58,6 +58,5 @@ module GenesisMigration {
       ValidatorUniverse::is_in_universe(user_addr) ||
       ValidatorOperatorConfig::has_validator_operator_config(user_addr)
     }
-
 }
 }

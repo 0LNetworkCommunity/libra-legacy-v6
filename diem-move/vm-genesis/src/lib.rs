@@ -327,7 +327,34 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
           "migrate_user",
           vec![],
           serialize_values(&args)
-        )
+        );
+
+
+        if let Some(tower) = &user.miner_state {
+          let tower_args = vec![
+              // both the VM and the user signatures need to be mocked.
+              MoveValue::Signer(account_config::diem_root_address()),
+              MoveValue::Signer(user.account.expect("Account address is missing")),
+
+              MoveValue::vector_u8(tower.previous_proof_hash.clone()),
+              MoveValue::U64(tower.verified_tower_height),
+              MoveValue::U64(tower.latest_epoch_mining),
+              MoveValue::U64(tower.count_proofs_in_epoch),
+              MoveValue::U64(tower.epochs_validating_and_mining),
+              MoveValue::U64(tower.contiguous_epochs_validating_and_mining),
+              MoveValue::U64(tower.epochs_since_last_account_creation),
+              MoveValue::U64(tower.count_proofs_in_epoch),
+
+          ];
+          exec_function(
+            session,
+            "TowerState",
+            "migrate_user_tower_history",
+            vec![],
+            serialize_values(&tower_args)
+          );
+        }
+
     }
 
     Ok(total_balance_restored)
