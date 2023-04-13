@@ -419,6 +419,24 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
           );
         });
       }
+
+      if let Some(cumu) = &user.cumulative_deposits {
+         
+            let args = vec![
+                // both the VM and the user signatures need to be mocked.
+                MoveValue::Signer(account_config::diem_root_address()),
+                MoveValue::Signer(user.account.expect("Account address is missing")),
+                MoveValue::U64(cumu.value),
+                MoveValue::U64(cumu.index),
+            ];
+            exec_function(
+              session,
+              "DiemAccount",
+              "fork_migrate_cumulative_deposits",
+              vec![],
+              serialize_values(&args)
+            );
+        }
     }
 
     Ok(total_balance_restored)

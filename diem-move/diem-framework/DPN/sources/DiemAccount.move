@@ -62,6 +62,7 @@ module DiemFramework::DiemAccount {
     // use DiemFramework::Debug::print;
     use DiemFramework::Jail;
     use DiemFramework::Testnet;
+    use DiemFramework::Globals;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -3728,6 +3729,18 @@ module DiemFramework::DiemAccount {
     public fun vm_migrate_cumulative_deposits(vm: &signer, sender: &signer, use_starting_balance: bool) acquires Balance {
       CoreAddresses::assert_diem_root(vm);
       init_cumulative_deposits(sender, use_starting_balance);
+    }
+
+    /// private function for the genesis fork migration
+    /// adjust for the coin split factor.
+    fun fork_migrate_cumulative_deposits(vm: &signer, sender: &signer, value: u64, index: u64) {
+      CoreAddresses::assert_vm(vm);
+      if (!exists<CumulativeDeposits>(Signer::address_of(sender))) {
+        move_to<CumulativeDeposits>(sender, CumulativeDeposits {
+          value: value * Globals::get_coin_split_factor(),
+          index: index * Globals::get_coin_split_factor(),
+        })
+      };
     }
 
     fun maybe_update_deposit(payer: address, payee: address, deposit_value: u64) acquires CumulativeDeposits {

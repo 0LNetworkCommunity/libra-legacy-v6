@@ -15,7 +15,7 @@ use diem_types::{
 use move_core_types::{identifier::Identifier, move_resource::MoveResource};
 use crate::{
     autopay::AutoPayResource, fullnode_counter::FullnodeCounterResource,
-    wallet::CommunityWalletsResource, ancestry::AncestryResource, makewhole_resource::MakeWholeResource, receipts::ReceiptsResource,
+    wallet::CommunityWalletsResource, ancestry::AncestryResource, makewhole_resource::MakeWholeResource, receipts::ReceiptsResource, cumulative_deposits::CumulativeDepositResource,
 };
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
@@ -77,6 +77,8 @@ pub struct LegacyRecovery {
     pub make_whole: Option<MakeWholeResource>,
     ///
     pub receipts: Option<ReceiptsResource>,
+    ///
+    pub cumulative_deposits: Option<CumulativeDepositResource>,
 }
 
 //////// 0L ///////
@@ -166,6 +168,7 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
         ancestry: None,
         make_whole: None,
         receipts: None,
+        cumulative_deposits: None,
     };
 
     if let Some(address) = state.get_account_address()? {
@@ -208,6 +211,8 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                 l.make_whole = bcs::from_bytes(v).ok();
             } else if k == &ReceiptsResource::resource_path() {
                 l.receipts = bcs::from_bytes(v).ok();
+            } else if k == &CumulativeDepositResource::resource_path() {
+                l.cumulative_deposits = bcs::from_bytes(v).ok();
             }
 
             if address == AccountAddress::ZERO {
