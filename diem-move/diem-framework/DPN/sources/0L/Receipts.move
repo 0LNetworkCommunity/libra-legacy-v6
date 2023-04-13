@@ -54,9 +54,9 @@ module Receipts {
       assert!(is_init(addr), 0);
       let state = borrow_global_mut<UserReceipts>(addr);
       Vector::push_back(&mut state.destination, destination);
-      Vector::push_back(&mut state.cumulative, cumulative);
+      Vector::push_back(&mut state.cumulative, cumulative * Globals::get_coin_split_factor());
       Vector::push_back(&mut state.last_payment_timestamp, last_payment_timestamp);
-      Vector::push_back(&mut state.last_payment_value, last_payment_value);
+      Vector::push_back(&mut state.last_payment_value, last_payment_value * get_coin_split_factor());
     }
 
     public fun is_init(addr: address):bool {
