@@ -15,7 +15,7 @@ use diem_types::{
 use move_core_types::{identifier::Identifier, move_resource::MoveResource};
 use crate::{
     autopay::AutoPayResource, fullnode_counter::FullnodeCounterResource,
-    wallet::CommunityWalletsResource, ancestry::AncestryResource, makewhole_resource::MakeWholeResource, receipts::ReceiptsResource, cumulative_deposits::CumulativeDepositResource,
+    wallet::{CommunityWalletsResourceLegacy, SlowWalletResource, SlowWalletListResource}, ancestry::AncestryResource, makewhole_resource::MakeWholeResource, receipts::ReceiptsResource, cumulative_deposits::CumulativeDepositResource,
 };
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
@@ -64,7 +64,7 @@ pub struct LegacyRecovery {
     ///
     pub miner_state: Option<TowerStateResource>,
     ///
-    pub comm_wallet: Option<CommunityWalletsResource>,
+    pub comm_wallet: Option<CommunityWalletsResourceLegacy>,
     ///
     pub fullnode_counter: Option<FullnodeCounterResource>,
     ///
@@ -79,6 +79,10 @@ pub struct LegacyRecovery {
     pub receipts: Option<ReceiptsResource>,
     ///
     pub cumulative_deposits: Option<CumulativeDepositResource>,
+    /// 
+    pub slow_wallet: Option<SlowWalletResource>,
+    ///
+    pub slow_wallet_list: Option<SlowWalletListResource>,
 }
 
 //////// 0L ///////
@@ -169,6 +173,8 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
         make_whole: None,
         receipts: None,
         cumulative_deposits: None,
+        slow_wallet: None,
+        slow_wallet_list: None,
     };
 
     if let Some(address) = state.get_account_address()? {
@@ -213,6 +219,8 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                 l.receipts = bcs::from_bytes(v).ok();
             } else if k == &CumulativeDepositResource::resource_path() {
                 l.cumulative_deposits = bcs::from_bytes(v).ok();
+            } else if k == &SlowWalletResource::resource_path() {
+                l.slow_wallet = bcs::from_bytes(v).ok();
             }
 
             if address == AccountAddress::ZERO {
@@ -221,7 +229,7 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                 // structs only on 0x0 address
                 if k == &ConfigurationResource::resource_path() {
                     l.miner_state = bcs::from_bytes(v).ok();
-                } else if k == &CommunityWalletsResource::resource_path() {
+                } else if k == &CommunityWalletsResourceLegacy::resource_path() {
                     l.comm_wallet = bcs::from_bytes(v).ok();
                 } else if k == &FullnodeCounterResource::resource_path() {
                     l.fullnode_counter = bcs::from_bytes(v).ok();
@@ -232,6 +240,8 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                     .path
                 {
                     l.currency_info = bcs::from_bytes(v).ok();
+                } else if k == &SlowWalletListResource::resource_path() {
+                    l.slow_wallet_list = bcs::from_bytes(v).ok();
                 }
             }
         }

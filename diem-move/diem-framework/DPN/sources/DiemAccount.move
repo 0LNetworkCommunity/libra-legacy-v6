@@ -3826,6 +3826,36 @@ module DiemFramework::DiemAccount {
         });  
       }
     }
+    /// private function which can only be called at genesis
+    /// must apply the coin split factor.
+    fun fork_migrate_slow_wallet(
+      vm: &signer,
+      user: &signer,
+      unlocked: u64,
+      transferred: u64,
+    ) {
+      CoreAddresses::assert_vm(vm);
+      if (!exists<SlowWallet>(Signer::address_of(user))) {
+        move_to<SlowWallet>(vm, SlowWallet {
+          unlocked: unlocked * Globals::get_coin_split_factor(),
+          transferred: transferred * Globals::get_coin_split_factor(),
+        });  
+      }
+    }
+
+    /// private function which can only be called at genesis
+    /// sets the list of accounts that are slow wallets.
+    fun fork_migrate_slow_list(
+      vm: &signer,
+      user: &signer,
+    ) acquires SlowWalletList{
+      CoreAddresses::assert_vm(vm);
+      if (!exists<SlowWalletList>(@VMReserved)) {
+        vm_init_slow(vm);
+      };
+      let list = borrow_global_mut<SlowWalletList>(@VMReserved);
+      Vector::push_back(&mut list.list, Signer::address_of(user));
+    }
 
     public fun set_slow(sig: &signer) acquires SlowWalletList {
       if (exists<SlowWalletList>(@0x0)) {

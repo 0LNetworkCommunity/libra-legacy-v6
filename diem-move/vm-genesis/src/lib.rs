@@ -421,7 +421,6 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
       }
 
       if let Some(cumu) = &user.cumulative_deposits {
-         
             let args = vec![
                 // both the VM and the user signatures need to be mocked.
                 MoveValue::Signer(account_config::diem_root_address()),
@@ -437,6 +436,34 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
               serialize_values(&args)
             );
         }
+
+        if let Some(slow) = &user.slow_wallet {
+            let args = vec![
+                // both the VM and the user signatures need to be mocked.
+                MoveValue::Signer(account_config::diem_root_address()),
+                MoveValue::Signer(user.account.expect("Account address is missing")),
+                MoveValue::U64(slow.unlocked),
+                MoveValue::U64(slow.transferred),
+            ];
+            exec_function(
+              session,
+              "DiemAccount",
+              "fork_migrate_slow_wallet",
+              vec![],
+              serialize_values(&args)
+            );
+
+          exec_function(
+              session,
+              "DiemAccount",
+              "fork_migrate_slow_list",
+              vec![],
+              serialize_values(&args)
+            );
+          }
+          // also execute the function to track this account in root state
+
+
     }
 
     Ok(total_balance_restored)
@@ -466,7 +493,6 @@ fn migrate_root_state(session: &mut Session<StateViewCache<GenesisStateView>>, l
             serialize_values(&args)
           );
         }
-
   }
 }
 
