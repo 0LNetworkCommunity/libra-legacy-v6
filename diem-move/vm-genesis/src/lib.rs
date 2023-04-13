@@ -325,7 +325,7 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
         exec_function(
           session,
           "GenesisMigration",
-          "migrate_user",
+          "fork_migrate_account",
           vec![],
           serialize_values(&args)
         );
@@ -349,7 +349,7 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
           exec_function(
             session,
             "TowerState",
-            "migrate_user_tower_history",
+            "fork_migrate_user_tower_history",
             vec![],
             serialize_values(&tower_args)
           );
@@ -384,7 +384,7 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
         exec_function(
           session,
           "Ancestry",
-          "migrate",
+          "fork_migrate",
           vec![],
           serialize_values(&args)
         );
@@ -413,7 +413,7 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
           exec_function(
             session,
             "Receipts",
-            "migrate_one",
+            "fork_migrate",
             vec![],
             serialize_values(&args)
           );

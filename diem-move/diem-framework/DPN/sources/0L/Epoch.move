@@ -39,13 +39,13 @@ module Epoch {
 
   // TODO: Unclear if we want to migrate epoch number
   /// Migrate the timer in a fork.
-  fun fork_migrate(vm: &signer, epoch: u64) {
-      CoreAddresses::assert_vm(vm);
-      let time = borrow_global<Timer>(@VMReserved);
-      time.epoch = epoch;
-      time.height_start = 0;
-      time.seconds_start = DiemTimestamp::now_seconds();
-  }
+  // fun fork_migrate(vm: &signer, epoch: u64) {
+  //     CoreAddresses::assert_vm(vm);
+  //     let time = borrow_global<Timer>(@VMReserved);
+  //     time.epoch = epoch;
+  //     time.height_start = 0;
+  //     time.seconds_start = DiemTimestamp::now_seconds();
+  // }
 
   /// Check to see if epoch is finished 
   /// Simply checks if the elapsed time is greater than the epoch time 

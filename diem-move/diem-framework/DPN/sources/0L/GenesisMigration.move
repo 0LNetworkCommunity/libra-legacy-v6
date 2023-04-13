@@ -19,7 +19,7 @@ module GenesisMigration {
 
 
     /// Called by root in genesis to initialize the GAS coin 
-    public fun migrate_user(
+    public fun fork_migrate_account(
         vm: &signer,
         user_sig: &signer,
         // user_addr: address,
