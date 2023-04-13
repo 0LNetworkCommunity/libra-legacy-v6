@@ -462,8 +462,6 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
             );
           }
           // also execute the function to track this account in root state
-
-
     }
 
     Ok(total_balance_restored)
@@ -480,19 +478,34 @@ fn migrate_root_state(session: &mut Session<StateViewCache<GenesisStateView>>, l
     });
   if let Some(rec) = filtered_data{
     if let Some(comm_w) = &rec.comm_wallet {
-          let args = vec![
-              // both the VM and the user signatures need to be mocked.
-              MoveValue::Signer(account_config::diem_root_address()),
-              MoveValue::vector_address(comm_w.list.clone()),
-          ];
-          exec_function(
-            session,
-            "DonorDirected",
-            "migrate_root_registry",
-            vec![],
-            serialize_values(&args)
-          );
-        }
+      let args = vec![
+          // both the VM and the user signatures need to be mocked.
+          MoveValue::Signer(account_config::diem_root_address()),
+          MoveValue::vector_address(comm_w.list.clone()),
+      ];
+      exec_function(
+        session,
+        "DonorDirected",
+        "migrate_root_registry",
+        vec![],
+        serialize_values(&args)
+      );
+
+        // for every address we also want to set the
+        // community wallet flag on the account struct.
+        comm_w.list.iter().for_each(|addr| {
+        let args = vec![
+            MoveValue::Signer(*addr),
+        ];
+        exec_function(
+          session,
+          "CommunityWallet",
+          "set_comm_wallet",
+          vec![],
+          serialize_values(&args)
+        );
+      });
+    }
   }
 }
 
