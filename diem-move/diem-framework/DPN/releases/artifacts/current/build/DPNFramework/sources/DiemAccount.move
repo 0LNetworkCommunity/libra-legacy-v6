@@ -3684,6 +3684,7 @@ module DiemFramework::DiemAccount {
         /// not all accounts will have this enabled.
         value: u64, // the cumulative deposits with no adjustments.
         index: u64, // The index is a time-weighted cumulative sum of the deposits made to this account. This favors most recent donations.
+        depositors: vector<address>, // donor directed wallets need a place to reference all the donors in the case of liquidation.
     }
 
     //////// 0L ////////
@@ -3719,6 +3720,7 @@ module DiemFramework::DiemAccount {
         move_to<CumulativeDeposits>(sender, CumulativeDeposits {
           value: starting_balance,
           index: starting_balance,
+          depositors: Vector::empty<address>(),
         })
       };
     }
@@ -3737,6 +3739,11 @@ module DiemFramework::DiemAccount {
           let cumu = borrow_global_mut<CumulativeDeposits>(payee);
           cumu.value = cumu.value + deposit_value;
           cumu.index = cumu.index + index;
+
+          // add the payer to the list of depositors.
+          if (!Vector::contains(&cumu.depositors, &payer)) {
+            Vector::push_back(&mut cumu.depositors, payer);
+          };
 
           // also write the receipt to the payee's account.
           Receipts::write_receipt(payer, payee, deposit_value);

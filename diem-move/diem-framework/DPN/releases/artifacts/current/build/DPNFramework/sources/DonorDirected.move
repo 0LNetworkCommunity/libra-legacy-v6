@@ -37,7 +37,6 @@ module DonorDirected {
     use DiemFramework::DiemAccount::{Self, WithdrawCapability};
     use DiemFramework::DonorDirectedGovernance;
     use DiemFramework::Ballot;
-    // use DiemFramework::Testnet;
 
     // use DiemFramework::Debug::print;
 
@@ -97,6 +96,11 @@ module DonorDirected {
       is_frozen: bool,
       consecutive_rejections: u64,
       unfreeze_votes: vector<address>,
+      liquidate_to_infra_escrow: bool,
+    }
+
+    struct Donors has key {
+      list: vector<address>,
     }
 
     //////// INIT REGISRTY OF DONOR DIRECTED ACCOUNTS  ////////
@@ -118,6 +122,15 @@ module DonorDirected {
     }
 
 
+    public fun migrate_root_registry(vm: &signer, list: vector<address>) {
+      CoreAddresses::assert_diem_root(vm);
+      if (!is_root_init()) {
+        move_to<Registry>(vm, Registry {
+          list,
+        });
+      };
+    }
+
     //////// DONOR DIRECTED INITIALIZATION ////////
     // There are three steps in initializing an account. These steps can be combined in a single transaction, or done in separate transactions. The "bricking" of the sponsor key should be done in a separate transaction, in case there are any errors in the initialization.
 
@@ -127,7 +140,7 @@ module DonorDirected {
 
     // 3. Once the MultiSig is initialized, the account needs to be bricked, before the MultiSig can be used.
 
-    public fun set_donor_directed(sig: &signer) {
+    public fun set_donor_directed(sig: &signer, liquidate_to_infra_escrow: bool) {
       if (!exists<Registry>(@VMReserved)) return;
 
       move_to<Freeze>(
@@ -135,7 +148,8 @@ module DonorDirected {
         Freeze {
           is_frozen: false,
           consecutive_rejections: 0,
-          unfreeze_votes: Vector::empty<address>()
+          unfreeze_votes: Vector::empty<address>(),
+          liquidate_to_infra_escrow,
         }
       );
 
@@ -258,6 +272,19 @@ module DonorDirected {
       // return id
     }
 
+    public fun find_schedule_by_id(state: &TxSchedule, uid: &GUID::ID): (bool, u64, u8) { // (is_found, index, state)
+      let (found, i) = schedule_status(state, uid, SCHEDULED);
+      if (found) return (found, i, SCHEDULED);
+
+      let (found, i) = schedule_status(state, uid, VETO);
+      if (found) return (found, i, VETO);
+
+      let (found, i) = schedule_status(state, uid, PAID);
+      if (found) return (found, i, PAID);
+
+      (false, 0, 0)
+    }
+
     ///////// PROCESS PAYMENTS /////////
     /// The VM on epoch boundaries will execute the payments without the users
     /// needing to intervene.
@@ -334,16 +361,19 @@ module DonorDirected {
   // Governance logic is defined in DonorDirectedGovernance.move
   // Below are functions to handle the cases for rejecting and freezing accounts based on governance outcomes.
 
+  //////// VETO ////////
   // A validator casts a vote to veto a proposed/pending transaction 
   // by a TxSchedule wallet.
   // The validator identifies the transaction by a unique id.
   // Tallies are computed on the fly, such that if a veto happens, 
   // the community which is faster than waiting for epoch boundaries.
-  public fun veto_handler(
+  fun veto_handler(
     sender: &signer,
     uid: &GUID::ID,
   ) acquires TxSchedule, Freeze {
     let multisig_address = GUID::id_creator_address(uid);
+    DonorDirectedGovernance::assert_authorized(sender, multisig_address);
+
     let veto_is_approved = DonorDirectedGovernance::veto_by_id(sender, uid);
     if (Option::is_none(&veto_is_approved)) return;
 
@@ -396,6 +426,18 @@ module DonorDirected {
     
   }
 
+  /// propose and vote on the veto of a specific transacation
+  public fun propose_veto(donor: &signer, guid: &GUID::ID)  acquires TxSchedule {
+    let multisig_address = GUID::id_creator_address(guid);
+    // print(&01);
+    DonorDirectedGovernance::assert_authorized(donor, multisig_address);
+    // print(&02);
+    let state = borrow_global<TxSchedule>(multisig_address);
+    // print(&03);
+    let epochs_duration = DEFAULT_VETO_DURATION;
+    DonorDirectedGovernance::propose_veto(&state.guid_capability, guid,  epochs_duration);
+  }
+
   /// If there are approved transactions, then the consectutive rejection counter is reset.
   public fun reset_rejection_counter(vm: &signer, wallet: address) acquires Freeze {
     CoreAddresses::assert_diem_root(vm);
@@ -439,18 +481,41 @@ module DonorDirected {
       (false, 0)
     }
 
-    public fun find_schedule_by_id(state: &TxSchedule, uid: &GUID::ID): (bool, u64, u8) { // (is_found, index, state)
-      let (found, i) = schedule_status(state, uid, SCHEDULED);
-      if (found) return (found, i, SCHEDULED);
 
-      let (found, i) = schedule_status(state, uid, VETO);
-      if (found) return (found, i, VETO);
-
-      let (found, i) = schedule_status(state, uid, PAID);
-      if (found) return (found, i, PAID);
-
-      (false, 0, 0)
+    //////// LIQUIDATION ////////
+    /// propose and vote on the liquidation of this wallet
+    public fun propose_liquidation(donor: &signer, multisig_address: address)  acquires TxSchedule {
+      DonorDirectedGovernance::assert_authorized(donor, multisig_address);
+      let state = borrow_global<TxSchedule>(multisig_address);
+      let epochs_duration = 30;
+      DonorDirectedGovernance::propose_liquidate(&state.guid_capability, epochs_duration);
     }
+
+    fun liquidate_handler(donor: &signer, multisig_address: address) acquires Freeze {
+      DonorDirectedGovernance::assert_authorized(donor, multisig_address);
+      let res = DonorDirectedGovernance::vote_liquidate(donor, multisig_address);
+      if (Option::is_some(&res)) {
+        if (*Option::borrow(&res)) {
+          liquidate(multisig_address);
+      }
+    }
+   }
+
+   fun liquidate(multisig_address: address) acquires Freeze{
+    // first we freeze it
+    let f = borrow_global_mut<Freeze>(multisig_address);
+    f.is_frozen = true;
+
+    // then we split the funds and send it back to the user's wallet
+    // if this account was tagged a community wallet, then the 
+    // funds go back to infrastructure escrow account.
+
+    if (liquidates_to_escrow(multisig_address)) {
+      
+      } else {
+        
+      }
+   }
 
     //////// GETTERS ////////
     public fun get_tx_params(t: &TimedTransfer): (address, u64, vector<u8>, u64) {
@@ -493,6 +558,11 @@ module DonorDirected {
       f.is_frozen
     }
 
+    public fun liquidates_to_escrow(addr: address): bool acquires Freeze{
+      let f = borrow_global<Freeze>(addr);
+      f.liquidate_to_infra_escrow
+    }
+
     //////// TRANSACTION SCRIPTS ////////
 
     /// Initialize the TxSchedule wallet with Three Signers
@@ -503,7 +573,10 @@ module DonorDirected {
       Vector::push_back(&mut init_signers, signer_two);
       Vector::push_back(&mut init_signers, signer_three);
 
-      set_donor_directed(sponsor);
+      // we are setting liquidation to infra escrow as false by default
+      // the user can send another transacton to change this.
+      let liquidate_to_infra_escrow = false;
+      set_donor_directed(sponsor, liquidate_to_infra_escrow);
       make_multisig(sponsor, cfg_n_signers, init_signers);
 
       // if not tracking cumulative donations, then don't use previous balance.
@@ -511,6 +584,13 @@ module DonorDirected {
       DiemAccount::init_cumulative_deposits(sponsor, false);
     }
     
+    /// option to set the liquidation destination to infrastructure escrow
+    /// must be done before the multisig is finalized and the sponsor cannot control the account.
+    public fun set_liquidate_to_infra_escrow(sponsor: &signer, liquidate_to_infra_escrow: bool) acquires Freeze {
+      let f = borrow_global_mut<Freeze>(Signer::address_of(sponsor));
+      f.liquidate_to_infra_escrow = liquidate_to_infra_escrow;
+    }
+
     /// the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.
     public fun finalize_init(sponsor: &signer) acquires Registry {
       let multisig_address = Signer::address_of(sponsor);
@@ -529,26 +609,18 @@ module DonorDirected {
       add_to_registry(sponsor);
     }
 
-    /// propose and vote on the liquidation of this wallet
-    public fun propose_liquidation(donor: &signer, multisig_address: address)  acquires TxSchedule {
-      DonorDirectedGovernance::assert_authorized(donor, multisig_address);
-      let state = borrow_global<TxSchedule>(multisig_address);
-      let epochs_duration = 30;
-      DonorDirectedGovernance::propose_liquidate(&state.guid_capability, epochs_duration);
+
+
+    //////// TX HELPER ////////
+    public(script) fun propose_veto_tx(donor: signer, multisig_address: address, id: u64)  acquires TxSchedule {
+      let guid = GUID::create_id(multisig_address, id);
+      propose_veto(&donor, &guid);
+    }
+    public(script) fun veto_tx(donor: signer, multisig_address: address, id: u64)  acquires TxSchedule, Freeze {
+      let guid = GUID::create_id(multisig_address, id);
+      veto_handler(&donor, &guid);
     }
 
-    /// propose and vote on the veto of a specific transacation
-    public fun propose_veto(donor: &signer, multisig_address: address, uid: u64)  acquires TxSchedule {
-      let guid = GUID::create_id(multisig_address, uid);
-      // print(&01);
-      DonorDirectedGovernance::assert_authorized(donor, multisig_address);
-      // print(&02);
-      let state = borrow_global<TxSchedule>(multisig_address);
-      // print(&03);
-      let epochs_duration = DEFAULT_VETO_DURATION;
-      DonorDirectedGovernance::propose_veto(&state.guid_capability, &guid,  epochs_duration);
-      // print(&04);
-    }
 
 
 }

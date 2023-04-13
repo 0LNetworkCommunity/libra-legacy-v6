@@ -79,8 +79,9 @@ module CommunityWallet{
     public fun is_comm(addr: address): bool {
       // The CommunityWallet flag is set
       is_init(addr) &&
-      // has DonorDirected instantiated
+      // has DonorDirected instantiated properly
       DonorDirected::is_donor_directed(addr) &&
+      DonorDirected::liquidates_to_escrow(addr) &&
       // has MultiSig instantialized
       MultiSig::is_init(addr) &&
       // multisig has minimum requirement of 3 signatures, and minimum list of 5 signers, and a minimum of 3/5 threshold. I.e. OK to have 4/5 signatures.
@@ -138,7 +139,9 @@ module CommunityWallet{
 
       assert!(!fam, Errors::invalid_argument(ESIGNERS_SYBIL));
 
-      DonorDirected::set_donor_directed(&sig);
+      // set as donor directed with any liquidation going to infrastructure escrow
+      let liquidate_to_infra_escrow = true;
+      DonorDirected::set_donor_directed(&sig, liquidate_to_infra_escrow);
       DonorDirected::make_multisig(&sig, 3, init_signers);
     }
 

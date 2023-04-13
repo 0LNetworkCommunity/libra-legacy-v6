@@ -23,6 +23,7 @@ The voting mechanism is a TurnoutTally. Such votes ajust the threshold for passi
 -  [Function `is_authorized`](#0x1_DonorDirectedGovernance_is_authorized)
 -  [Function `get_user_donations`](#0x1_DonorDirectedGovernance_get_user_donations)
 -  [Function `vote_veto`](#0x1_DonorDirectedGovernance_vote_veto)
+-  [Function `vote_liquidate`](#0x1_DonorDirectedGovernance_vote_liquidate)
 -  [Function `veto_by_id`](#0x1_DonorDirectedGovernance_veto_by_id)
 -  [Function `sync_ballot_and_tx_expiration`](#0x1_DonorDirectedGovernance_sync_ballot_and_tx_expiration)
 -  [Function `propose_veto`](#0x1_DonorDirectedGovernance_propose_veto)
@@ -39,6 +40,7 @@ The voting mechanism is a TurnoutTally. Such votes ajust the threshold for passi
 <b>use</b> <a href="Receipts.md#0x1_Receipts">0x1::Receipts</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="TurnoutTally.md#0x1_TurnoutTally">0x1::TurnoutTally</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
 
@@ -344,6 +346,46 @@ private function to vote on a ballot based on a Donor's voting power.
 
 </details>
 
+<a name="0x1_DonorDirectedGovernance_vote_liquidate"></a>
+
+## Function `vote_liquidate`
+
+Liquidation tally only. The handler for liquidation exists in DonorDirected, where a tx script will call it.
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_vote_liquidate">vote_liquidate</a>(donor: &signer, multisig_address: <b>address</b>): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_Option">Option::Option</a>&lt;bool&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_vote_liquidate">vote_liquidate</a>(donor: &signer, multisig_address: <b>address</b>): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">Option</a>&lt;bool&gt; <b>acquires</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a>{
+  <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_assert_authorized">assert_authorized</a>(donor, multisig_address);
+  <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a>&lt;<a href="TurnoutTally.md#0x1_TurnoutTally">TurnoutTally</a>&lt;<a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Liquidate">Liquidate</a>&gt;&gt;&gt;(multisig_address);
+
+  // for liquidation there is only ever one proposal, which never expires
+  // so always taket the first one from pending.
+  <b>let</b> pending_list = <a href="Ballot.md#0x1_Ballot_get_list_ballots_by_enum_mut">Ballot::get_list_ballots_by_enum_mut</a>(&<b>mut</b> state.tracker, <a href="Ballot.md#0x1_Ballot_get_pending_enum">Ballot::get_pending_enum</a>());
+  <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_is_empty">Vector::is_empty</a>(pending_list)) {
+    <b>return</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_none">Option::none</a>&lt;bool&gt;()
+  };
+
+  <b>let</b> ballot = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>(pending_list, 0);
+  <b>let</b> ballot_guid = <a href="Ballot.md#0x1_Ballot_get_ballot_id">Ballot::get_ballot_id</a>(ballot);
+  <b>let</b> tally_state = <a href="Ballot.md#0x1_Ballot_get_type_struct_mut">Ballot::get_type_struct_mut</a>(ballot);
+  <b>let</b> user_weight = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_get_user_donations">get_user_donations</a>(multisig_address, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(donor));
+
+  <a href="TurnoutTally.md#0x1_TurnoutTally_vote">TurnoutTally::vote</a>(donor, tally_state, &ballot_guid, <b>true</b>, user_weight)
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_DonorDirectedGovernance_veto_by_id"></a>
 
 ## Function `veto_by_id`
@@ -426,7 +468,7 @@ should only be called by the DonorDirected.move so that the handlers can be call
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>friend</b>)  <b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_propose_veto">propose_veto</a>(
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_propose_veto">propose_veto</a>(
   cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>,
   guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>, // Id of initiated transaction.
   epochs_duration: u64
@@ -455,7 +497,7 @@ should only be called by the DonorDirected.move so that the handlers can be call
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>friend</b>)  <b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_propose_liquidate">propose_liquidate</a>(
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_propose_liquidate">propose_liquidate</a>(
   cap: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_CreateCapability">GUID::CreateCapability</a>,
   epochs_duration: u64
 ) <b>acquires</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_Governance">Governance</a> {

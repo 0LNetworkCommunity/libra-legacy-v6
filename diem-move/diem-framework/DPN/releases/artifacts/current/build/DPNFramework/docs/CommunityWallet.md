@@ -223,8 +223,9 @@ if it is not qualifying it wont be part of the burn funds matching.
 <pre><code><b>public</b> <b>fun</b> <a href="CommunityWallet.md#0x1_CommunityWallet_is_comm">is_comm</a>(addr: <b>address</b>): bool {
   // The <a href="CommunityWallet.md#0x1_CommunityWallet">CommunityWallet</a> flag is set
   <a href="CommunityWallet.md#0x1_CommunityWallet_is_init">is_init</a>(addr) &&
-  // <b>has</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> instantiated
+  // <b>has</b> <a href="DonorDirected.md#0x1_DonorDirected">DonorDirected</a> instantiated properly
   <a href="DonorDirected.md#0x1_DonorDirected_is_donor_directed">DonorDirected::is_donor_directed</a>(addr) &&
+  <a href="DonorDirected.md#0x1_DonorDirected_liquidates_to_escrow">DonorDirected::liquidates_to_escrow</a>(addr) &&
   // <b>has</b> <a href="MultiSig.md#0x1_MultiSig">MultiSig</a> instantialized
   <a href="MultiSig.md#0x1_MultiSig_is_init">MultiSig::is_init</a>(addr) &&
   // multisig <b>has</b> minimum requirement of 3 signatures, and minimum list of 5 signers, and a minimum of 3/5 threshold. I.e. OK <b>to</b> have 4/5 signatures.
@@ -337,7 +338,9 @@ These transactions can be sent directly to DonorDirected, but this is a helper t
 
   <b>assert</b>!(!fam, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="CommunityWallet.md#0x1_CommunityWallet_ESIGNERS_SYBIL">ESIGNERS_SYBIL</a>));
 
-  <a href="DonorDirected.md#0x1_DonorDirected_set_donor_directed">DonorDirected::set_donor_directed</a>(&sig);
+  // set <b>as</b> donor directed <b>with</b> any liquidation going <b>to</b> infrastructure escrow
+  <b>let</b> liquidate_to_infra_escrow = <b>true</b>;
+  <a href="DonorDirected.md#0x1_DonorDirected_set_donor_directed">DonorDirected::set_donor_directed</a>(&sig, liquidate_to_infra_escrow);
   <a href="DonorDirected.md#0x1_DonorDirected_make_multisig">DonorDirected::make_multisig</a>(&sig, 3, init_signers);
 }
 </code></pre>

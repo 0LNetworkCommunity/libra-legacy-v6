@@ -16,12 +16,13 @@ module DonorDirectedGovernance {
     use Std::Errors;
     use Std::Signer;
     use Std::GUID;
-    use Std::Option::Option;
+    use Std::Option::{Self, Option};
     use DiemFramework::Receipts;
     use DiemFramework::TurnoutTally::{Self, TurnoutTally};
     use DiemFramework::Ballot::{Self, BallotTracker};
     use DiemFramework::DiemAccount;
     use DiemFramework::DiemConfig;
+    use Std::Vector;
 
     /// Is not a donor to this account
     const ENOT_A_DONOR: u64 = 220000;
@@ -101,6 +102,26 @@ module DonorDirectedGovernance {
       TurnoutTally::vote<Veto>(user, ballot, uid, veto_tx, user_votes)
     }
 
+  /// Liquidation tally only. The handler for liquidation exists in DonorDirected, where a tx script will call it.
+  public(friend) fun vote_liquidate(donor: &signer, multisig_address: address): Option<bool> acquires Governance{
+    assert_authorized(donor, multisig_address);
+    let state = borrow_global_mut<Governance<TurnoutTally<Liquidate>>>(multisig_address);
+
+    // for liquidation there is only ever one proposal, which never expires 
+    // so always taket the first one from pending.
+    let pending_list = Ballot::get_list_ballots_by_enum_mut(&mut state.tracker, Ballot::get_pending_enum());
+    if (Vector::is_empty(pending_list)) {
+      return Option::none<bool>()
+    };
+
+    let ballot = Vector::borrow_mut(pending_list, 0);
+    let ballot_guid = Ballot::get_ballot_id(ballot);
+    let tally_state = Ballot::get_type_struct_mut(ballot);
+    let user_weight = get_user_donations(multisig_address, Signer::address_of(donor));
+
+    TurnoutTally::vote(donor, tally_state, &ballot_guid, true, user_weight)
+  }
+
 
 
     //////// API ////////
@@ -136,7 +157,7 @@ module DonorDirectedGovernance {
 
 
 
-    public(friend)  fun propose_veto(
+    public(friend) fun propose_veto(
       cap: &GUID::CreateCapability,
       guid: &GUID::ID, // Id of initiated transaction.
       epochs_duration: u64
@@ -145,7 +166,7 @@ module DonorDirectedGovernance {
       propose_gov<Veto>(cap, data, epochs_duration);
     }
 
-    public(friend)  fun propose_liquidate(
+    public(friend) fun propose_liquidate(
       cap: &GUID::CreateCapability,
       epochs_duration: u64
     ) acquires Governance {

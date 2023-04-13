@@ -34,8 +34,11 @@
     <a href="DiemAccount.md#0x1_DiemAccount_set_slow">DiemAccount::set_slow</a>(&sender);
   };
 
+  // sets a donor directed wallet
+  // assumes the funds <b>return</b> <b>to</b> donor, not <b>to</b> infra escrow
+  // user can send another transaction <b>to</b> change this.
   <b>if</b> (type_of == 1) {
-      <a href="DonorDirected.md#0x1_DonorDirected_set_donor_directed">DonorDirected::set_donor_directed</a>(&sender);
+      <a href="DonorDirected.md#0x1_DonorDirected_set_donor_directed">DonorDirected::set_donor_directed</a>(&sender, <b>false</b>);
   };
 }
 </code></pre>

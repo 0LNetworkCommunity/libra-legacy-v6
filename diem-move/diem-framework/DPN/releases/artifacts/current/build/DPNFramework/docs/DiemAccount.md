@@ -711,6 +711,12 @@ Separate struct to track cumulative deposits
 <dd>
 
 </dd>
+<dt>
+<code>depositors: vector&lt;<b>address</b>&gt;</code>
+</dt>
+<dd>
+
+</dd>
 </dl>
 
 
@@ -6841,6 +6847,7 @@ Create a Validator Operator account
     <b>move_to</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(sender, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> {
       value: starting_balance,
       index: starting_balance,
+      depositors: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;(),
     })
   };
 }
@@ -6899,6 +6906,11 @@ Create a Validator Operator account
       <b>let</b> cumu = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(payee);
       cumu.value = cumu.value + deposit_value;
       cumu.index = cumu.index + index;
+
+      // add the payer <b>to</b> the list of depositors.
+      <b>if</b> (!<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&cumu.depositors, &payer)) {
+        <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> cumu.depositors, payer);
+      };
 
       // also write the receipt <b>to</b> the payee's account.
       <a href="Receipts.md#0x1_Receipts_write_receipt">Receipts::write_receipt</a>(payer, payee, deposit_value);

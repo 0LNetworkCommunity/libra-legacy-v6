@@ -1,4 +1,3 @@
-
 address DiemFramework {
 
       /// VoteLib is a primitive for creating Ballots, keeping track of them.
