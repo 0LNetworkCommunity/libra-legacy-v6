@@ -39,6 +39,26 @@ module Receipts {
       }; 
     }
 
+    // should only be called from the genesis script.
+    fun migrate_one(
+      vm: &signer,
+      account: &signer,
+      destination: address,
+      cumulative: u64,
+      last_payment_timestamp: u64,
+      last_payment_value: u64,
+    ) acquires UserReceipts {
+      
+      CoreAddresses::assert_vm(vm);
+      let addr = Signer::address_of(account);
+      assert!(is_init(addr), 0);
+      let state = borrow_global_mut<UserReceipts>(addr);
+      Vector::push_back(&mut state.destination, destination);
+      Vector::push_back(&mut state.cumulative, cumulative);
+      Vector::push_back(&mut state.last_payment_timestamp, last_payment_timestamp);
+      Vector::push_back(&mut state.last_payment_value, last_payment_value);
+    }
+
     public fun is_init(addr: address):bool {
       exists<UserReceipts>(addr)
     }

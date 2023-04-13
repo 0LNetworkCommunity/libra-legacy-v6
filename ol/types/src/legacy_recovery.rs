@@ -15,7 +15,7 @@ use diem_types::{
 use move_core_types::{identifier::Identifier, move_resource::MoveResource};
 use crate::{
     autopay::AutoPayResource, fullnode_counter::FullnodeCounterResource,
-    wallet::CommunityWalletsResource, ancestry::AncestryResource, makewhole_resource::MakeWholeResource,
+    wallet::CommunityWalletsResource, ancestry::AncestryResource, makewhole_resource::MakeWholeResource, receipts::ReceiptsResource,
 };
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
@@ -75,6 +75,8 @@ pub struct LegacyRecovery {
     pub ancestry: Option<AncestryResource>,
     ///
     pub make_whole: Option<MakeWholeResource>,
+    ///
+    pub receipts: Option<ReceiptsResource>,
 }
 
 //////// 0L ///////
@@ -163,6 +165,7 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
         currency_info: None,
         ancestry: None,
         make_whole: None,
+        receipts: None,
     };
 
     if let Some(address) = state.get_account_address()? {
@@ -203,6 +206,8 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
                 l.ancestry = bcs::from_bytes(v).ok();
             } else if k == &MakeWholeResource::resource_path() {
                 l.make_whole = bcs::from_bytes(v).ok();
+            } else if k == &ReceiptsResource::resource_path() {
+                l.receipts = bcs::from_bytes(v).ok();
             }
 
             if address == AccountAddress::ZERO {

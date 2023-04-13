@@ -26,6 +26,7 @@ pub mod validator_config;
 pub mod wallet;
 pub mod legacy_recovery;
 pub mod ancestry;
+pub mod receipts;
 pub mod cli_progress;
 pub use cli_progress::OLProgress;
 

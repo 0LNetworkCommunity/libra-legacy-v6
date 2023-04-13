@@ -303,10 +303,10 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
   let filtered_data: Vec<&LegacyRecovery>= legacy_data
   .iter()
   .filter(|d| {
-        d.account.is_some() &&
-        d.account != Some(AccountAddress::ZERO)
-    })
-    .collect();
+      d.account.is_some() &&
+      d.account != Some(AccountAddress::ZERO)
+  })
+  .collect();
 
     let mut total_balance_restored = 0u64;
     for user in filtered_data.iter()
@@ -373,6 +373,52 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
             );
           }
         }
+      
+      if let Some(anc) = &user.ancestry {
+        let args = vec![
+            // both the VM and the user signatures need to be mocked.
+            MoveValue::Signer(account_config::diem_root_address()),
+            MoveValue::Signer(user.account.expect("Account address is missing")),
+            MoveValue::vector_address(anc.tree.clone()),
+        ];
+        exec_function(
+          session,
+          "Ancestry",
+          "migrate",
+          vec![],
+          serialize_values(&args)
+        );
+      }
+
+      if let Some(rec) = &user.receipts {
+        // iterate through the receipts and call the migrate_one function.
+        // this is a workaround because MoveValue is annoying to 
+        // create a vector of arbitrary type
+        rec.destination.iter()
+        .enumerate()
+        .for_each(|(idx, _d)|{
+            let args = vec![
+                // both the VM and the user signatures need to be mocked.
+                MoveValue::Signer(account_config::diem_root_address()),
+                MoveValue::Signer(user.account.expect("Account address is missing")),
+                // destination: vector<address>,
+                MoveValue::Address(rec.destination[idx]),
+                // cumulative: vector<u64>,
+                MoveValue::U64(rec.cumulative[idx]),
+                // last_payment_timestamp: vector<u64>,
+                MoveValue::U64(rec.last_payment_timestamp[idx]),
+                // last_payment_value: vector<u64>,
+                MoveValue::U64(rec.last_payment_value[idx]),
+            ];
+          exec_function(
+            session,
+            "Receipts",
+            "migrate_one",
+            vec![],
+            serialize_values(&args)
+          );
+        });
+      }
     }
 
     Ok(total_balance_restored)
@@ -583,7 +629,7 @@ fn create_and_initialize_owners_operators(
     let mut full_node_network_addresses = vec![];
 
     for v in validators {
-        println!("Address: {:?}", &v.address);
+        info!("Address: {:?}", &v.address);
         owners.push(MoveValue::Signer(v.address));
         owner_names.push(MoveValue::vector_u8(v.name.clone()));
         owner_auth_keys.push(MoveValue::vector_u8(v.auth_key.to_vec()));
