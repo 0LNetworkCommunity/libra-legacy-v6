@@ -1364,10 +1364,20 @@ module DiemFramework::DiemAccount {
         };
 
 
-        // VM can extract the withdraw token.
-        // let account = borrow_global_mut<DiemAccount>(payer);
-        // let cap = Option::extract(&mut account.withdraw_capability);
+        // NOTE: 0L: V6: removed the need for fetching the withdraw capability
         let coin = vm_withdraw(vm, payer, amount);
+        
+        // Load the payer's account and emit an event to record the withdrawal
+        Event::emit_event<SentPaymentEvent>(
+            &mut borrow_global_mut<DiemAccount>(payer).sent_events,
+            SentPaymentEvent {
+                amount,
+                currency_code: Diem::currency_code<Token>(),
+                payee,
+                metadata: copy metadata,
+            },
+        );
+
 
         deposit<Token>(
             payer,
@@ -3564,6 +3574,8 @@ module DiemFramework::DiemAccount {
         CoreAddresses::assert_diem_root(vm);
         let balance_struct = borrow_global_mut<Balance<Token>>(payer);
         let coin = Diem::withdraw<Token>(&mut balance_struct.coin, amount);
+        
+
         coin
     }
     
