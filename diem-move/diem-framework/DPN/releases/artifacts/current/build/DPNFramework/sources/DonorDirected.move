@@ -25,6 +25,8 @@ address DiemFramework {
 /// 7. Third party contracts can wrap the Donor Directed wallet. The outcomes of the votes can be returned to a handler in a third party contract For example, liquidiation of a frozen account is programmable: a handler can be coded to determine the outcome of the donor directed wallet. See in CommunityWallets the funds return to the InfrastructureEscrow side-account of the user.
 
 module DonorDirected {
+    friend DiemFramework::EpochBoundary;
+
     use DiemFramework::CoreAddresses;
     use Std::Vector;
     use Std::Signer;
@@ -37,8 +39,8 @@ module DonorDirected {
     use DiemFramework::DiemAccount::{Self, WithdrawCapability};
     use DiemFramework::DonorDirectedGovernance;
     use DiemFramework::Ballot;
-    use DiemFramework::Receipts;
     use DiemFramework::TransactionFee;
+    // use DiemFramework::Debug::print;
 
     /// Not initialized as a donor directed account.
     const ENOT_INIT_DONOR_DIRECTED: u64 = 231001;
@@ -215,7 +217,11 @@ module DonorDirected {
 
     /// Returns the GUID of the transfer.
     public fun propose_payment(
-      sender: &signer, multisig_address: address, payee: address, value: u64, description: vector<u8>
+      sender: &signer,
+      multisig_address: address,
+      payee: address,
+      value: u64,
+      description: vector<u8>
     ): GUID::ID acquires TxSchedule {
       let tx = Payment {
         payee,
@@ -295,6 +301,8 @@ module DonorDirected {
       vm: &signer,
       epoch: u64,
     ) acquires Registry, TxSchedule, Freeze {
+      // while we are here let's liquidate any expired accounts.
+      vm_liquidate(vm);
 
       let list = get_root_registry();
 
@@ -318,8 +326,6 @@ module DonorDirected {
         let this_exp = *&Vector::borrow(&state.scheduled, i).deadline;
         if (this_exp == epoch) {
           let t = Vector::remove(&mut state.scheduled, i);
-          // print(&t);
-
           let multisig_address = GUID::id_creator_address(&t.uid);
 
           // Note the VM can do this without the WithdrawCapability
@@ -432,11 +438,8 @@ module DonorDirected {
   /// propose and vote on the veto of a specific transacation
   public fun propose_veto(donor: &signer, guid: &GUID::ID)  acquires TxSchedule {
     let multisig_address = GUID::id_creator_address(guid);
-    // print(&01);
     DonorDirectedGovernance::assert_authorized(donor, multisig_address);
-    // print(&02);
     let state = borrow_global<TxSchedule>(multisig_address);
-    // print(&03);
     let epochs_duration = DEFAULT_VETO_DURATION;
     DonorDirectedGovernance::propose_veto(&state.guid_capability, guid,  epochs_duration);
   }
@@ -490,13 +493,15 @@ module DonorDirected {
     public fun propose_liquidation(donor: &signer, multisig_address: address)  acquires TxSchedule {
       DonorDirectedGovernance::assert_authorized(donor, multisig_address);
       let state = borrow_global<TxSchedule>(multisig_address);
-      let epochs_duration = 30;
+      let epochs_duration = 365; // liquidation vote can take a whole year
       DonorDirectedGovernance::propose_liquidate(&state.guid_capability, epochs_duration);
     }
 
-    fun liquidate_handler(donor: &signer, multisig_address: address) acquires Freeze, Registry {
+    /// Once a liquidation has been proposed, other donors can vote on it.
+    fun liquidation_handler(donor: &signer, multisig_address: address) acquires Freeze, Registry {
       DonorDirectedGovernance::assert_authorized(donor, multisig_address);
-      let res = DonorDirectedGovernance::vote_liquidate(donor, multisig_address);
+      let res = DonorDirectedGovernance::vote_liquidation(donor, multisig_address);
+
       if (Option::is_some(&res)) {
         if (*Option::borrow(&res)) {
           // The VM will call this function to liquidate the wallet.
@@ -510,18 +515,25 @@ module DonorDirected {
           Vector::push_back(&mut f.liquidation_queue, multisig_address);
       }
     }
-   }
+  }
+
+  public fun get_liquidation_queue(): vector<address> acquires Registry{
+    let f = borrow_global<Registry>(@VMReserved);
+    *&f.liquidation_queue
+  }
+
   /// The VM will call this function to liquidate all donor directed
   /// wallets in the queue.
 
-   fun vm_liquidate(vm: &signer) acquires Freeze, Registry {
+   public(friend) fun vm_liquidate(vm: &signer) acquires Freeze, Registry {
       CoreAddresses::assert_vm(vm);
       let f = borrow_global_mut<Registry>(@VMReserved);
       let len = Vector::length(&f.liquidation_queue);
+
       let i = 0;
       while (i < len) {
-        let multisig_address = Vector::borrow(&f.liquidation_queue, i);
-        
+        let multisig_address = Vector::swap_remove(&mut f.liquidation_queue, i);
+
         // if this account was tagged a community wallet, then the 
         // funds get split pro-rata at the current split of the 
         // burn recycle algorithm.
@@ -529,9 +541,9 @@ module DonorDirected {
         // so it can be split up by the burn recycle algorithm.
         // and trying to call Burn, here will create a circular dependency.
 
-        if (liquidates_to_escrow(*multisig_address)) {
-          let balance = DiemAccount::balance<GAS>(*multisig_address);
-          let c = DiemAccount::vm_withdraw<GAS>(vm, *multisig_address, balance);
+        if (liquidates_to_escrow(multisig_address)) {
+          let balance = DiemAccount::balance<GAS>(multisig_address);
+          let c = DiemAccount::vm_withdraw<GAS>(vm, multisig_address, balance);
           TransactionFee::pay_fee(c);
           
           return
@@ -539,15 +551,14 @@ module DonorDirected {
 
 
         // otherwise the default case is that donors get their funds back.
-        let (pro_rata_addresses, pro_rata_amounts) = get_pro_rata(*multisig_address);
-
+        let (pro_rata_addresses, _, pro_rata_amounts) = DiemAccount::get_pro_rata_cumu_deposits(multisig_address);
         let k = 0;
         let len = Vector::length(&pro_rata_addresses);
         // then we split the funds and send it back to the user's wallet
         while (k < len) {
-            let addr = Vector::borrow(&pro_rata_addresses, i);
-            let amount = Vector::borrow(&pro_rata_amounts, i);
-            DiemAccount::vm_pay_from<GAS>(*multisig_address, *addr, *amount, b"liquidation", b"", vm);
+            let addr = Vector::borrow(&pro_rata_addresses, k);
+            let amount = Vector::borrow(&pro_rata_amounts, k);
+            DiemAccount::vm_make_payment_no_limit<GAS>(multisig_address, *addr, *amount, b"liquidation", b"", vm);
 
             k = k + 1;
         };
@@ -555,26 +566,30 @@ module DonorDirected {
       }
    }
 
-   fun get_pro_rata(multisig_address: address): (vector<address>, vector<u64>) {
-    // get total fees
-    let balance = DiemAccount::balance<GAS>(multisig_address);
-    let donors = DiemAccount::get_depositors(multisig_address);
-    let pro_rata_addresses = Vector::empty<address>();
-    let pro_rata_amounts = Vector::empty<u64>();
+  //   /// get the proportion of donoations of all donors to account.
+  //  public fun get_pro_rata(multisig_address: address): (vector<address>, vector<u64>) {
+  //   // get total fees
+  //   let balance = DiemAccount::get_cumulative_deposits(multisig_address);
+  //   let donors = DiemAccount::get_depositors(multisig_address);
+  //   let pro_rata_addresses = Vector::empty<address>();
+  //   let pro_rata_amounts = Vector::empty<u64>();
 
-    let i = 0;
-    let len = Vector::length(&donors);
-    while (i < len) {
-      let donor = Vector::borrow(&donors, i);
-      let (_, _, cumu)  = Receipts::read_receipt(*donor, multisig_address);
-      let pro_rata = cumu / balance;
-      Vector::push_back(&mut pro_rata_addresses, *donor);
-      Vector::push_back(&mut pro_rata_amounts, pro_rata);
-      i = i + 1;
-    };
+  //   let i = 0;
+  //   let len = Vector::length(&donors);
+  //   while (i < len) {
+  //     let donor = Vector::borrow(&donors, i);
+  //     let (_, _, cumu)  = Receipts::read_receipt(multisig_address, *donor);
 
-      (pro_rata_addresses, pro_rata_amounts)
-   }
+  //     let ratio = FixedPoint32::create_from_rational(cumu, balance);
+  //     let pro_rata = FixedPoint32::multiply_u64(balance, ratios);
+
+  //     Vector::push_back(&mut pro_rata_addresses, *donor);
+  //     Vector::push_back(&mut pro_rata_amounts, pro_rata);
+  //     i = i + 1;
+  //   };
+
+  //     (pro_rata_addresses, pro_rata_amounts)
+  //  }
 
     //////// GETTERS ////////
     public fun get_tx_params(t: &TimedTransfer): (address, u64, vector<u8>, u64) {
@@ -671,6 +686,18 @@ module DonorDirected {
 
 
     //////// TX HELPER ////////
+
+    public(script) fun propose_payment_tx(
+      auth: signer,
+      multisig_address: address,
+      payee: address,
+      value: u64,
+      description: vector<u8>
+    )  acquires TxSchedule {
+      propose_payment(&auth, multisig_address, payee, value, description);
+    }
+
+
     public(script) fun propose_veto_tx(donor: signer, multisig_address: address, id: u64)  acquires TxSchedule {
       let guid = GUID::create_id(multisig_address, id);
       propose_veto(&donor, &guid);
@@ -679,8 +706,13 @@ module DonorDirected {
       let guid = GUID::create_id(multisig_address, id);
       veto_handler(&donor, &guid);
     }
+    
+    public(script) fun propose_liquidate_tx(donor: signer, multisig_address: address)  acquires TxSchedule {
+      propose_liquidation(&donor, multisig_address);
+    }
 
-
-
+    public(script) fun vote_liquidation_tx(donor: signer, multisig_address: address) acquires Freeze, Registry {
+      liquidation_handler(&donor, multisig_address);
+    }
 }
 }

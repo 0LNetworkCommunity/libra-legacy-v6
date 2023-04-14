@@ -7,7 +7,6 @@
 
 -  [Constants](#@Constants_0)
 -  [Function `create_user_by_coin_tx`](#0x1_AccountScripts_create_user_by_coin_tx)
--  [Function `create_acc_user`](#0x1_AccountScripts_create_acc_user)
 -  [Function `create_acc_val`](#0x1_AccountScripts_create_acc_val)
 -  [Function `claim_make_whole`](#0x1_AccountScripts_claim_make_whole)
 
@@ -71,45 +70,6 @@
         account,
         authkey_prefix,
         value,
-    );
-
-    // Check the account <b>exists</b> and the balance is 0
-    <b>assert</b>!(<a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(new_account_address) &gt; 0, 01);
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_AccountScripts_create_acc_user"></a>
-
-## Function `create_acc_user`
-
-
-
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_account.md#0x1_AccountScripts_create_acc_user">create_acc_user</a>(sender: signer, challenge: vector&lt;u8&gt;, solution: vector&lt;u8&gt;, difficulty: u64, security: u64)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="ol_account.md#0x1_AccountScripts_create_acc_user">create_acc_user</a>(
-    sender: signer,
-    challenge: vector&lt;u8&gt;,
-    solution: vector&lt;u8&gt;,
-    difficulty: u64,
-    security: u64,
-) {
-    <b>let</b> new_account_address = <a href="DiemAccount.md#0x1_DiemAccount_create_user_account_with_proof">DiemAccount::create_user_account_with_proof</a>(
-        &sender,
-        &challenge,
-        &solution,
-        difficulty,
-        security
     );
 
     // Check the account <b>exists</b> and the balance is 0

@@ -86,7 +86,6 @@ address DiemFramework {
       let b = Ballot {
 
         guid: GUID::create_with_capability(ignored_addr, guid_cap), // Note 0L's modification to Std::GUID, address is ignored.
-        // issue,
         tally_type,
         completed: false,
        

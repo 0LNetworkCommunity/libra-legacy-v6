@@ -109,6 +109,7 @@ Called in genesis to initialize timer
 
 ## Function `epoch_finished`
 
+Migrate the timer in a fork.
 Check to see if epoch is finished
 Simply checks if the elapsed time is greater than the epoch time
 

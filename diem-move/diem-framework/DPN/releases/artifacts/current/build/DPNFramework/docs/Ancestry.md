@@ -12,7 +12,7 @@
 -  [Function `is_family`](#0x1_Ancestry_is_family)
 -  [Function `is_family_one_in_list`](#0x1_Ancestry_is_family_one_in_list)
 -  [Function `any_family_in_list`](#0x1_Ancestry_any_family_in_list)
--  [Function `migrate`](#0x1_Ancestry_migrate)
+-  [Function `fork_migrate`](#0x1_Ancestry_fork_migrate)
 
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
@@ -294,13 +294,13 @@
 
 </details>
 
-<a name="0x1_Ancestry_migrate"></a>
+<a name="0x1_Ancestry_fork_migrate"></a>
 
-## Function `migrate`
+## Function `fork_migrate`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Ancestry.md#0x1_Ancestry_migrate">migrate</a>(vm: &signer, child_sig: &signer, migrate_tree: vector&lt;<b>address</b>&gt;)
+<pre><code><b>public</b> <b>fun</b> <a href="Ancestry.md#0x1_Ancestry_fork_migrate">fork_migrate</a>(vm: &signer, child_sig: &signer, migrate_tree: vector&lt;<b>address</b>&gt;)
 </code></pre>
 
 
@@ -309,7 +309,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="Ancestry.md#0x1_Ancestry_migrate">migrate</a>(
+<pre><code><b>public</b> <b>fun</b> <a href="Ancestry.md#0x1_Ancestry_fork_migrate">fork_migrate</a>(
   vm: &signer,
   child_sig: &signer,
   migrate_tree: vector&lt;<b>address</b>&gt;

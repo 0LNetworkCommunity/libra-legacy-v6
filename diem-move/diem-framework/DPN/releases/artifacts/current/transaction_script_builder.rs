@@ -1790,13 +1790,6 @@ pub enum ScriptFunctionCall {
         memo: Bytes,
     },
 
-    CreateAccUser {
-        challenge: Bytes,
-        solution: Bytes,
-        difficulty: u64,
-        security: u64,
-    },
-
     CreateAccVal {
         challenge: Bytes,
         solution: Bytes,
@@ -2527,6 +2520,17 @@ pub enum ScriptFunctionCall {
     Preburn {
         token: TypeTag,
         amount: u64,
+    },
+
+    ProposeLiquidateTx {
+        multisig_address: AccountAddress,
+    },
+
+    ProposePaymentTx {
+        multisig_address: AccountAddress,
+        payee: AccountAddress,
+        value: u64,
+        description: Bytes,
     },
 
     ProposeVetoTx {
@@ -3365,20 +3369,15 @@ pub enum ScriptFunctionCall {
         allow_minting: bool,
     },
 
-    UserPledgeInfra {
-        amount: u64,
-    },
-
-    UserPledgeTx {
-        beneficiary: AccountAddress,
-        amount: u64,
-    },
-
     ValAddSelf {},
 
     VetoTx {
         multisig_address: AccountAddress,
         id: u64,
+    },
+
+    VoteLiquidationTx {
+        multisig_address: AccountAddress,
     },
 
     VouchFor {
@@ -3747,12 +3746,6 @@ impl ScriptFunctionCall {
                 unscaled_value,
                 memo,
             ),
-            CreateAccUser {
-                challenge,
-                solution,
-                difficulty,
-                security,
-            } => encode_create_acc_user_script_function(challenge, solution, difficulty, security),
             CreateAccVal {
                 challenge,
                 solution,
@@ -3937,6 +3930,20 @@ impl ScriptFunctionCall {
                 encode_pof_update_bid_script_function(bid, epoch_expiry)
             }
             Preburn { token, amount } => encode_preburn_script_function(token, amount),
+            ProposeLiquidateTx { multisig_address } => {
+                encode_propose_liquidate_tx_script_function(multisig_address)
+            }
+            ProposePaymentTx {
+                multisig_address,
+                payee,
+                value,
+                description,
+            } => encode_propose_payment_tx_script_function(
+                multisig_address,
+                payee,
+                value,
+                description,
+            ),
             ProposeVetoTx {
                 multisig_address,
                 id,
@@ -4102,16 +4109,14 @@ impl ScriptFunctionCall {
                 currency,
                 allow_minting,
             } => encode_update_minting_ability_script_function(currency, allow_minting),
-            UserPledgeInfra { amount } => encode_user_pledge_infra_script_function(amount),
-            UserPledgeTx {
-                beneficiary,
-                amount,
-            } => encode_user_pledge_tx_script_function(beneficiary, amount),
             ValAddSelf {} => encode_val_add_self_script_function(),
             VetoTx {
                 multisig_address,
                 id,
             } => encode_veto_tx_script_function(multisig_address, id),
+            VoteLiquidationTx { multisig_address } => {
+                encode_vote_liquidation_tx_script_function(multisig_address)
+            }
             VouchFor { val } => encode_vouch_for_script_function(val),
             VoucherUnjail { addr } => encode_voucher_unjail_script_function(addr),
         }
@@ -4648,28 +4653,6 @@ pub fn encode_community_transfer_script_function(
             bcs::to_bytes(&destination).unwrap(),
             bcs::to_bytes(&unscaled_value).unwrap(),
             bcs::to_bytes(&memo).unwrap(),
-        ],
-    ))
-}
-
-pub fn encode_create_acc_user_script_function(
-    challenge: Vec<u8>,
-    solution: Vec<u8>,
-    difficulty: u64,
-    security: u64,
-) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("AccountScripts").to_owned(),
-        ),
-        ident_str!("create_acc_user").to_owned(),
-        vec![],
-        vec![
-            bcs::to_bytes(&challenge).unwrap(),
-            bcs::to_bytes(&solution).unwrap(),
-            bcs::to_bytes(&difficulty).unwrap(),
-            bcs::to_bytes(&security).unwrap(),
         ],
     ))
 }
@@ -5784,6 +5767,42 @@ pub fn encode_preburn_script_function(token: TypeTag, amount: u64) -> Transactio
         ident_str!("preburn").to_owned(),
         vec![token],
         vec![bcs::to_bytes(&amount).unwrap()],
+    ))
+}
+
+pub fn encode_propose_liquidate_tx_script_function(
+    multisig_address: AccountAddress,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("DonorDirected").to_owned(),
+        ),
+        ident_str!("propose_liquidate_tx").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&multisig_address).unwrap()],
+    ))
+}
+
+pub fn encode_propose_payment_tx_script_function(
+    multisig_address: AccountAddress,
+    payee: AccountAddress,
+    value: u64,
+    description: Vec<u8>,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("DonorDirected").to_owned(),
+        ),
+        ident_str!("propose_payment_tx").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&multisig_address).unwrap(),
+            bcs::to_bytes(&payee).unwrap(),
+            bcs::to_bytes(&value).unwrap(),
+            bcs::to_bytes(&description).unwrap(),
+        ],
     ))
 }
 
@@ -6949,36 +6968,6 @@ pub fn encode_update_minting_ability_script_function(
     ))
 }
 
-pub fn encode_user_pledge_infra_script_function(amount: u64) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("InfraEscrow").to_owned(),
-        ),
-        ident_str!("user_pledge_infra").to_owned(),
-        vec![],
-        vec![bcs::to_bytes(&amount).unwrap()],
-    ))
-}
-
-pub fn encode_user_pledge_tx_script_function(
-    beneficiary: AccountAddress,
-    amount: u64,
-) -> TransactionPayload {
-    TransactionPayload::ScriptFunction(ScriptFunction::new(
-        ModuleId::new(
-            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
-            ident_str!("PledgeAccounts").to_owned(),
-        ),
-        ident_str!("user_pledge_tx").to_owned(),
-        vec![],
-        vec![
-            bcs::to_bytes(&beneficiary).unwrap(),
-            bcs::to_bytes(&amount).unwrap(),
-        ],
-    ))
-}
-
 pub fn encode_val_add_self_script_function() -> TransactionPayload {
     TransactionPayload::ScriptFunction(ScriptFunction::new(
         ModuleId::new(
@@ -7006,6 +6995,20 @@ pub fn encode_veto_tx_script_function(
             bcs::to_bytes(&multisig_address).unwrap(),
             bcs::to_bytes(&id).unwrap(),
         ],
+    ))
+}
+
+pub fn encode_vote_liquidation_tx_script_function(
+    multisig_address: AccountAddress,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("DonorDirected").to_owned(),
+        ),
+        ident_str!("vote_liquidation_tx").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&multisig_address).unwrap()],
     ))
 }
 
@@ -8892,21 +8895,6 @@ fn decode_community_transfer_script_function(
     }
 }
 
-fn decode_create_acc_user_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::CreateAccUser {
-            challenge: bcs::from_bytes(script.args().get(0)?).ok()?,
-            solution: bcs::from_bytes(script.args().get(1)?).ok()?,
-            difficulty: bcs::from_bytes(script.args().get(2)?).ok()?,
-            security: bcs::from_bytes(script.args().get(3)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
 fn decode_create_acc_val_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9318,6 +9306,33 @@ fn decode_preburn_script_function(payload: &TransactionPayload) -> Option<Script
     }
 }
 
+fn decode_propose_liquidate_tx_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::ProposeLiquidateTx {
+            multisig_address: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_propose_payment_tx_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::ProposePaymentTx {
+            multisig_address: bcs::from_bytes(script.args().get(0)?).ok()?,
+            payee: bcs::from_bytes(script.args().get(1)?).ok()?,
+            value: bcs::from_bytes(script.args().get(2)?).ok()?,
+            description: bcs::from_bytes(script.args().get(3)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_propose_veto_tx_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9669,31 +9684,6 @@ fn decode_update_minting_ability_script_function(
     }
 }
 
-fn decode_user_pledge_infra_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::UserPledgeInfra {
-            amount: bcs::from_bytes(script.args().get(0)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
-fn decode_user_pledge_tx_script_function(
-    payload: &TransactionPayload,
-) -> Option<ScriptFunctionCall> {
-    if let TransactionPayload::ScriptFunction(script) = payload {
-        Some(ScriptFunctionCall::UserPledgeTx {
-            beneficiary: bcs::from_bytes(script.args().get(0)?).ok()?,
-            amount: bcs::from_bytes(script.args().get(1)?).ok()?,
-        })
-    } else {
-        None
-    }
-}
-
 fn decode_val_add_self_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
         Some(ScriptFunctionCall::ValAddSelf {})
@@ -9707,6 +9697,18 @@ fn decode_veto_tx_script_function(payload: &TransactionPayload) -> Option<Script
         Some(ScriptFunctionCall::VetoTx {
             multisig_address: bcs::from_bytes(script.args().get(0)?).ok()?,
             id: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_vote_liquidation_tx_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::VoteLiquidationTx {
+            multisig_address: bcs::from_bytes(script.args().get(0)?).ok()?,
         })
     } else {
         None
@@ -10197,10 +10199,6 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_community_transfer_script_function),
         );
         map.insert(
-            "AccountScriptscreate_acc_user".to_string(),
-            Box::new(decode_create_acc_user_script_function),
-        );
-        map.insert(
             "AccountScriptscreate_acc_val".to_string(),
             Box::new(decode_create_acc_val_script_function),
         );
@@ -10329,6 +10327,14 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_preburn_script_function),
         );
         map.insert(
+            "DonorDirectedpropose_liquidate_tx".to_string(),
+            Box::new(decode_propose_liquidate_tx_script_function),
+        );
+        map.insert(
+            "DonorDirectedpropose_payment_tx".to_string(),
+            Box::new(decode_propose_payment_tx_script_function),
+        );
+        map.insert(
             "DonorDirectedpropose_veto_tx".to_string(),
             Box::new(decode_propose_veto_tx_script_function),
         );
@@ -10434,20 +10440,16 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_update_minting_ability_script_function),
         );
         map.insert(
-            "InfraEscrowuser_pledge_infra".to_string(),
-            Box::new(decode_user_pledge_infra_script_function),
-        );
-        map.insert(
-            "PledgeAccountsuser_pledge_tx".to_string(),
-            Box::new(decode_user_pledge_tx_script_function),
-        );
-        map.insert(
             "ValidatorScriptsval_add_self".to_string(),
             Box::new(decode_val_add_self_script_function),
         );
         map.insert(
             "DonorDirectedveto_tx".to_string(),
             Box::new(decode_veto_tx_script_function),
+        );
+        map.insert(
+            "DonorDirectedvote_liquidation_tx".to_string(),
+            Box::new(decode_vote_liquidation_tx_script_function),
         );
         map.insert(
             "VouchScriptsvouch_for".to_string(),

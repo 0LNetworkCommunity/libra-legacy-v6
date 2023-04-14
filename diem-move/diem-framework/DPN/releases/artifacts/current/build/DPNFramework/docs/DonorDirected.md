@@ -48,9 +48,9 @@ By creating a TxSchedule wallet you are providing certain restrictions and guara
 -  [Function `get_pending_timed_transfer_mut`](#0x1_DonorDirected_get_pending_timed_transfer_mut)
 -  [Function `schedule_status`](#0x1_DonorDirected_schedule_status)
 -  [Function `propose_liquidation`](#0x1_DonorDirected_propose_liquidation)
--  [Function `liquidate_handler`](#0x1_DonorDirected_liquidate_handler)
+-  [Function `liquidation_handler`](#0x1_DonorDirected_liquidation_handler)
+-  [Function `get_liquidation_queue`](#0x1_DonorDirected_get_liquidation_queue)
 -  [Function `vm_liquidate`](#0x1_DonorDirected_vm_liquidate)
--  [Function `get_pro_rata`](#0x1_DonorDirected_get_pro_rata)
 -  [Function `get_tx_params`](#0x1_DonorDirected_get_tx_params)
 -  [Function `get_multisig_proposal_state`](#0x1_DonorDirected_get_multisig_proposal_state)
 -  [Function `get_schedule_state`](#0x1_DonorDirected_get_schedule_state)
@@ -62,8 +62,11 @@ By creating a TxSchedule wallet you are providing certain restrictions and guara
 -  [Function `init_donor_directed`](#0x1_DonorDirected_init_donor_directed)
 -  [Function `set_liquidate_to_community_wallets`](#0x1_DonorDirected_set_liquidate_to_community_wallets)
 -  [Function `finalize_init`](#0x1_DonorDirected_finalize_init)
+-  [Function `propose_payment_tx`](#0x1_DonorDirected_propose_payment_tx)
 -  [Function `propose_veto_tx`](#0x1_DonorDirected_propose_veto_tx)
 -  [Function `veto_tx`](#0x1_DonorDirected_veto_tx)
+-  [Function `propose_liquidate_tx`](#0x1_DonorDirected_propose_liquidate_tx)
+-  [Function `vote_liquidation_tx`](#0x1_DonorDirected_vote_liquidation_tx)
 
 
 <pre><code><b>use</b> <a href="Ballot.md#0x1_Ballot">0x1::Ballot</a>;
@@ -73,11 +76,11 @@ By creating a TxSchedule wallet you are providing certain restrictions and guara
 <b>use</b> <a href="DiemConfig.md#0x1_DiemConfig">0x1::DiemConfig</a>;
 <b>use</b> <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance">0x1::DonorDirectedGovernance</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors">0x1::Errors</a>;
+<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID">0x1::GUID</a>;
 <b>use</b> <a href="MultiSig.md#0x1_MultiSig">0x1::MultiSig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
-<b>use</b> <a href="Receipts.md#0x1_Receipts">0x1::Receipts</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
@@ -690,7 +693,11 @@ Returns the GUID of the transfer.
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_propose_payment">propose_payment</a>(
-  sender: &signer, multisig_address: <b>address</b>, payee: <b>address</b>, value: u64, description: vector&lt;u8&gt;
+  sender: &signer,
+  multisig_address: <b>address</b>,
+  payee: <b>address</b>,
+  value: u64,
+  description: vector&lt;u8&gt;
 ): <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a> <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_TxSchedule">TxSchedule</a> {
   <b>let</b> tx = <a href="DonorDirected.md#0x1_DonorDirected_Payment">Payment</a> {
     payee,
@@ -819,6 +826,8 @@ needing to intervene.
   vm: &signer,
   epoch: u64,
 ) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>, <a href="DonorDirected.md#0x1_DonorDirected_TxSchedule">TxSchedule</a>, <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
+  // <b>while</b> we are here <b>let</b>'s liquidate any expired accounts.
+  <a href="DonorDirected.md#0x1_DonorDirected_vm_liquidate">vm_liquidate</a>(vm);
 
   <b>let</b> list = <a href="DonorDirected.md#0x1_DonorDirected_get_root_registry">get_root_registry</a>();
 
@@ -862,8 +871,6 @@ needing to intervene.
     <b>let</b> this_exp = *&<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&state.scheduled, i).deadline;
     <b>if</b> (this_exp == epoch) {
       <b>let</b> t = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_remove">Vector::remove</a>(&<b>mut</b> state.scheduled, i);
-      // print(&t);
-
       <b>let</b> multisig_address = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_id_creator_address">GUID::id_creator_address</a>(&t.uid);
 
       // Note the VM can do this without the WithdrawCapability
@@ -1041,11 +1048,8 @@ propose and vote on the veto of a specific transacation
 
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_propose_veto">propose_veto</a>(donor: &signer, guid: &<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_ID">GUID::ID</a>)  <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_TxSchedule">TxSchedule</a> {
   <b>let</b> multisig_address = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_id_creator_address">GUID::id_creator_address</a>(guid);
-  // print(&01);
   <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_assert_authorized">DonorDirectedGovernance::assert_authorized</a>(donor, multisig_address);
-  // print(&02);
   <b>let</b> state = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TxSchedule">TxSchedule</a>&gt;(multisig_address);
-  // print(&03);
   <b>let</b> epochs_duration = <a href="DonorDirected.md#0x1_DonorDirected_DEFAULT_VETO_DURATION">DEFAULT_VETO_DURATION</a>;
   <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_propose_veto">DonorDirectedGovernance::propose_veto</a>(&state.guid_capability, guid,  epochs_duration);
 }
@@ -1197,7 +1201,7 @@ propose and vote on the liquidation of this wallet
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_propose_liquidation">propose_liquidation</a>(donor: &signer, multisig_address: <b>address</b>)  <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_TxSchedule">TxSchedule</a> {
   <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_assert_authorized">DonorDirectedGovernance::assert_authorized</a>(donor, multisig_address);
   <b>let</b> state = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_TxSchedule">TxSchedule</a>&gt;(multisig_address);
-  <b>let</b> epochs_duration = 30;
+  <b>let</b> epochs_duration = 365; // liquidation vote can take a whole year
   <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_propose_liquidate">DonorDirectedGovernance::propose_liquidate</a>(&state.guid_capability, epochs_duration);
 }
 </code></pre>
@@ -1206,13 +1210,14 @@ propose and vote on the liquidation of this wallet
 
 </details>
 
-<a name="0x1_DonorDirected_liquidate_handler"></a>
+<a name="0x1_DonorDirected_liquidation_handler"></a>
 
-## Function `liquidate_handler`
+## Function `liquidation_handler`
+
+Once a liquidation has been proposed, other donors can vote on it.
 
 
-
-<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_liquidate_handler">liquidate_handler</a>(donor: &signer, multisig_address: <b>address</b>)
+<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_liquidation_handler">liquidation_handler</a>(donor: &signer, multisig_address: <b>address</b>)
 </code></pre>
 
 
@@ -1221,9 +1226,10 @@ propose and vote on the liquidation of this wallet
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_liquidate_handler">liquidate_handler</a>(donor: &signer, multisig_address: <b>address</b>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>, <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a> {
+<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_liquidation_handler">liquidation_handler</a>(donor: &signer, multisig_address: <b>address</b>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>, <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a> {
   <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_assert_authorized">DonorDirectedGovernance::assert_authorized</a>(donor, multisig_address);
-  <b>let</b> res = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_vote_liquidate">DonorDirectedGovernance::vote_liquidate</a>(donor, multisig_address);
+  <b>let</b> res = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_vote_liquidation">DonorDirectedGovernance::vote_liquidation</a>(donor, multisig_address);
+
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&res)) {
     <b>if</b> (*<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>(&res)) {
       // The VM will call this function <b>to</b> liquidate the wallet.
@@ -1244,6 +1250,31 @@ propose and vote on the liquidation of this wallet
 
 </details>
 
+<a name="0x1_DonorDirected_get_liquidation_queue"></a>
+
+## Function `get_liquidation_queue`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_liquidation_queue">get_liquidation_queue</a>(): vector&lt;<b>address</b>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_liquidation_queue">get_liquidation_queue</a>(): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>{
+  <b>let</b> f = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(@VMReserved);
+  *&f.liquidation_queue
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_DonorDirected_vm_liquidate"></a>
 
 ## Function `vm_liquidate`
@@ -1252,7 +1283,7 @@ The VM will call this function to liquidate all donor directed
 wallets in the queue.
 
 
-<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_vm_liquidate">vm_liquidate</a>(vm: &signer)
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_vm_liquidate">vm_liquidate</a>(vm: &signer)
 </code></pre>
 
 
@@ -1261,13 +1292,14 @@ wallets in the queue.
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_vm_liquidate">vm_liquidate</a>(vm: &signer) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>, <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a> {
+<pre><code><b>public</b>(<b>friend</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_vm_liquidate">vm_liquidate</a>(vm: &signer) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>, <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a> {
    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
    <b>let</b> f = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(@VMReserved);
    <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&f.liquidation_queue);
+
    <b>let</b> i = 0;
    <b>while</b> (i &lt; len) {
-     <b>let</b> multisig_address = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&f.liquidation_queue, i);
+     <b>let</b> multisig_address = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_swap_remove">Vector::swap_remove</a>(&<b>mut</b> f.liquidation_queue, i);
 
      // <b>if</b> this account was tagged a community wallet, then the
      // funds get split pro-rata at the current split of the
@@ -1276,9 +1308,9 @@ wallets in the queue.
      // so it can be split up by the burn recycle algorithm.
      // and trying <b>to</b> call <a href="Burn.md#0x1_Burn">Burn</a>, here will create a circular dependency.
 
-     <b>if</b> (<a href="DonorDirected.md#0x1_DonorDirected_liquidates_to_escrow">liquidates_to_escrow</a>(*multisig_address)) {
-       <b>let</b> balance = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*multisig_address);
-       <b>let</b> c = <a href="DiemAccount.md#0x1_DiemAccount_vm_withdraw">DiemAccount::vm_withdraw</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, *multisig_address, balance);
+     <b>if</b> (<a href="DonorDirected.md#0x1_DonorDirected_liquidates_to_escrow">liquidates_to_escrow</a>(multisig_address)) {
+       <b>let</b> balance = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(multisig_address);
+       <b>let</b> c = <a href="DiemAccount.md#0x1_DiemAccount_vm_withdraw">DiemAccount::vm_withdraw</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, multisig_address, balance);
        <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">TransactionFee::pay_fee</a>(c);
 
        <b>return</b>
@@ -1286,61 +1318,19 @@ wallets in the queue.
 
 
      // otherwise the default case is that donors get their funds back.
-     <b>let</b> (pro_rata_addresses, pro_rata_amounts) = <a href="DonorDirected.md#0x1_DonorDirected_get_pro_rata">get_pro_rata</a>(*multisig_address);
-
+     <b>let</b> (pro_rata_addresses, _, pro_rata_amounts) = <a href="DiemAccount.md#0x1_DiemAccount_get_pro_rata_cumu_deposits">DiemAccount::get_pro_rata_cumu_deposits</a>(multisig_address);
      <b>let</b> k = 0;
      <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&pro_rata_addresses);
      // then we split the funds and send it back <b>to</b> the user's wallet
      <b>while</b> (k &lt; len) {
-         <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&pro_rata_addresses, i);
-         <b>let</b> amount = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&pro_rata_amounts, i);
-         <a href="DiemAccount.md#0x1_DiemAccount_vm_pay_from">DiemAccount::vm_pay_from</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*multisig_address, *addr, *amount, b"liquidation", b"", vm);
+         <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&pro_rata_addresses, k);
+         <b>let</b> amount = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&pro_rata_amounts, k);
+         <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">DiemAccount::vm_make_payment_no_limit</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(multisig_address, *addr, *amount, b"liquidation", b"", vm);
 
          k = k + 1;
      };
      i = i + 1;
    }
-}
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_DonorDirected_get_pro_rata"></a>
-
-## Function `get_pro_rata`
-
-
-
-<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_pro_rata">get_pro_rata</a>(multisig_address: <b>address</b>): (vector&lt;<b>address</b>&gt;, vector&lt;u64&gt;)
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_pro_rata">get_pro_rata</a>(multisig_address: <b>address</b>): (vector&lt;<b>address</b>&gt;, vector&lt;u64&gt;) {
- // get total fees
- <b>let</b> balance = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(multisig_address);
- <b>let</b> donors = <a href="DiemAccount.md#0x1_DiemAccount_get_depositors">DiemAccount::get_depositors</a>(multisig_address);
- <b>let</b> pro_rata_addresses = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
- <b>let</b> pro_rata_amounts = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;();
-
- <b>let</b> i = 0;
- <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&donors);
- <b>while</b> (i &lt; len) {
-   <b>let</b> donor = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&donors, i);
-   <b>let</b> (_, _, cumu)  = <a href="Receipts.md#0x1_Receipts_read_receipt">Receipts::read_receipt</a>(*donor, multisig_address);
-   <b>let</b> pro_rata = cumu / balance;
-   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> pro_rata_addresses, *donor);
-   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> pro_rata_amounts, pro_rata);
-   i = i + 1;
- };
-
-   (pro_rata_addresses, pro_rata_amounts)
 }
 </code></pre>
 
@@ -1652,6 +1642,36 @@ the sponsor must finalize the initialization, this is a separate step so that th
 
 </details>
 
+<a name="0x1_DonorDirected_propose_payment_tx"></a>
+
+## Function `propose_payment_tx`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_propose_payment_tx">propose_payment_tx</a>(auth: signer, multisig_address: <b>address</b>, payee: <b>address</b>, value: u64, description: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_propose_payment_tx">propose_payment_tx</a>(
+  auth: signer,
+  multisig_address: <b>address</b>,
+  payee: <b>address</b>,
+  value: u64,
+  description: vector&lt;u8&gt;
+)  <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_TxSchedule">TxSchedule</a> {
+  <a href="DonorDirected.md#0x1_DonorDirected_propose_payment">propose_payment</a>(&auth, multisig_address, payee, value, description);
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_DonorDirected_propose_veto_tx"></a>
 
 ## Function `propose_veto_tx`
@@ -1695,6 +1715,54 @@ the sponsor must finalize the initialization, this is a separate step so that th
 <pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_veto_tx">veto_tx</a>(donor: signer, multisig_address: <b>address</b>, id: u64)  <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_TxSchedule">TxSchedule</a>, <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
   <b>let</b> guid = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_create_id">GUID::create_id</a>(multisig_address, id);
   <a href="DonorDirected.md#0x1_DonorDirected_veto_handler">veto_handler</a>(&donor, &guid);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DonorDirected_propose_liquidate_tx"></a>
+
+## Function `propose_liquidate_tx`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_propose_liquidate_tx">propose_liquidate_tx</a>(donor: signer, multisig_address: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_propose_liquidate_tx">propose_liquidate_tx</a>(donor: signer, multisig_address: <b>address</b>)  <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_TxSchedule">TxSchedule</a> {
+  <a href="DonorDirected.md#0x1_DonorDirected_propose_liquidation">propose_liquidation</a>(&donor, multisig_address);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DonorDirected_vote_liquidation_tx"></a>
+
+## Function `vote_liquidation_tx`
+
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_vote_liquidation_tx">vote_liquidation_tx</a>(donor: signer, multisig_address: <b>address</b>)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_vote_liquidation_tx">vote_liquidation_tx</a>(donor: signer, multisig_address: <b>address</b>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>, <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a> {
+  <a href="DonorDirected.md#0x1_DonorDirected_liquidation_handler">liquidation_handler</a>(&donor, multisig_address);
 }
 </code></pre>
 
