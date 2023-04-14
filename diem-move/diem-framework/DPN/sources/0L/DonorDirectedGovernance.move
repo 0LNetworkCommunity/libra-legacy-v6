@@ -23,7 +23,7 @@ module DonorDirectedGovernance {
     use DiemFramework::DiemAccount;
     use DiemFramework::DiemConfig;
     use Std::Vector;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     /// Is not a donor to this account
     const ENOT_A_DONOR: u64 = 220000;
@@ -111,7 +111,7 @@ module DonorDirectedGovernance {
     // for liquidation there is only ever one proposal, which never expires 
     // so always taket the first one from pending.
     let pending_list = Ballot::get_list_ballots_by_enum_mut(&mut state.tracker, Ballot::get_pending_enum());
-    print(pending_list);
+    // print(pending_list);
 
     if (Vector::is_empty(pending_list)) {
       return Option::none<bool>()

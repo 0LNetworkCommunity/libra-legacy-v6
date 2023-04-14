@@ -45,7 +45,6 @@ address DiemFramework {
     use Std::Option::{Self, Option};
     use DiemFramework::DiemConfig;
     use DiemFramework::VoteReceipt;
-    use DiemFramework::Debug::print;
 
     /// The ballot has already been completed.
     const ECOMPLETED: u64 = 300010; 
@@ -311,29 +310,33 @@ address DiemFramework {
     fun maybe_tally<Data: drop + store>(ballot: &mut TurnoutTally<Data>) {
       let total_votes = ballot.votes_approve + ballot.votes_reject;
 
-      print(&total_votes);
-
       assert!(ballot.max_votes >= total_votes, Errors::invalid_state(EVOTES_GREATER_THAN_ENROLLMENT));
 
       // figure out the turnout
       let m = FixedPoint32::create_from_rational(total_votes, ballot.max_votes);
 
       ballot.tally_turnout = FixedPoint32::multiply_u64(PCT_SCALE, m); // scale up
+
       // calculate the dynamic threshold needed.
-      let t = get_threshold_from_turnout(total_votes, ballot.max_votes);
+      let thresh = get_threshold_from_turnout(total_votes, ballot.max_votes);
       // check the threshold that needs to be met met turnout
       ballot.tally_approve = FixedPoint32::multiply_u64(PCT_SCALE, FixedPoint32::create_from_rational(ballot.votes_approve, total_votes));
+      
       // the first vote which crosses the threshold causes the poll to end.
-      if (ballot.tally_approve > t) {
-
+      if (ballot.tally_approve > thresh) {
         // before marking it pass, make sure the minimum quorum was met
         // by default 12.50%
         if (ballot.tally_turnout > ballot.cfg_min_turnout) {
           let epoch = DiemConfig::get_current_epoch();
 
+          // cool off period, to next epoch.
           if (ballot.provisional_pass_epoch == 0) {
-            // automatically passing once the threshold is reached disadvantages inactive participants. We propose it takes one vote plus one day once reaching threshold.
+            // setting the next epoch in which the tally will be final.
+            // NOTE: requires a second vote to be cast to finalize the tally.
+            // automatically passing once the threshold is reached disadvantages inactive participants. 
+            // We propose it takes one vote plus one day once reaching threshold.
             ballot.provisional_pass_epoch = epoch;
+
           } else if (epoch > ballot.provisional_pass_epoch) {
             // multiple days may have passed since the provisional pass.
             ballot.completed = true;

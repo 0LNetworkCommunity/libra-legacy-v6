@@ -25,6 +25,8 @@ address DiemFramework {
 /// 7. Third party contracts can wrap the Donor Directed wallet. The outcomes of the votes can be returned to a handler in a third party contract For example, liquidiation of a frozen account is programmable: a handler can be coded to determine the outcome of the donor directed wallet. See in CommunityWallets the funds return to the InfrastructureEscrow side-account of the user.
 
 module DonorDirected {
+    friend DiemFramework::EpochBoundary;
+
     use DiemFramework::CoreAddresses;
     use Std::Vector;
     use Std::Signer;
@@ -37,9 +39,8 @@ module DonorDirected {
     use DiemFramework::DiemAccount::{Self, WithdrawCapability};
     use DiemFramework::DonorDirectedGovernance;
     use DiemFramework::Ballot;
-    use DiemFramework::Receipts;
     use DiemFramework::TransactionFee;
-    // use DiemFramework::Debug::print;
+    use DiemFramework::Debug::print;
 
     /// Not initialized as a donor directed account.
     const ENOT_INIT_DONOR_DIRECTED: u64 = 231001;
@@ -300,6 +301,8 @@ module DonorDirected {
       vm: &signer,
       epoch: u64,
     ) acquires Registry, TxSchedule, Freeze {
+      // while we are here let's liquidate any expired accounts.
+      vm_liquidate(vm);
 
       let list = get_root_registry();
 
@@ -522,14 +525,17 @@ module DonorDirected {
   /// The VM will call this function to liquidate all donor directed
   /// wallets in the queue.
 
-   fun vm_liquidate(vm: &signer) acquires Freeze, Registry {
+   public(friend) fun vm_liquidate(vm: &signer) acquires Freeze, Registry {
       CoreAddresses::assert_vm(vm);
+      print(&77777777);
       let f = borrow_global_mut<Registry>(@VMReserved);
       let len = Vector::length(&f.liquidation_queue);
+      // print(&f.liquidation_queue);
       let i = 0;
       while (i < len) {
-        let multisig_address = Vector::borrow(&f.liquidation_queue, i);
-        
+        let multisig_address = Vector::swap_remove(&mut f.liquidation_queue, i);
+        // print(&multisig_address);
+
         // if this account was tagged a community wallet, then the 
         // funds get split pro-rata at the current split of the 
         // burn recycle algorithm.
@@ -537,9 +543,10 @@ module DonorDirected {
         // so it can be split up by the burn recycle algorithm.
         // and trying to call Burn, here will create a circular dependency.
 
-        if (liquidates_to_escrow(*multisig_address)) {
-          let balance = DiemAccount::balance<GAS>(*multisig_address);
-          let c = DiemAccount::vm_withdraw<GAS>(vm, *multisig_address, balance);
+        if (liquidates_to_escrow(multisig_address)) {
+          print(&111);
+          let balance = DiemAccount::balance<GAS>(multisig_address);
+          let c = DiemAccount::vm_withdraw<GAS>(vm, multisig_address, balance);
           TransactionFee::pay_fee(c);
           
           return
@@ -547,7 +554,10 @@ module DonorDirected {
 
 
         // otherwise the default case is that donors get their funds back.
-        let (pro_rata_addresses, pro_rata_amounts) = get_pro_rata(*multisig_address);
+        let (pro_rata_addresses, _, pro_rata_amounts) = DiemAccount::get_pro_rata_cumu_deposits(multisig_address);
+
+        print(&pro_rata_addresses);
+        print(&pro_rata_amounts);
 
         let k = 0;
         let len = Vector::length(&pro_rata_addresses);
@@ -555,7 +565,7 @@ module DonorDirected {
         while (k < len) {
             let addr = Vector::borrow(&pro_rata_addresses, i);
             let amount = Vector::borrow(&pro_rata_amounts, i);
-            DiemAccount::vm_pay_from<GAS>(*multisig_address, *addr, *amount, b"liquidation", b"", vm);
+            DiemAccount::vm_pay_from<GAS>(multisig_address, *addr, *amount, b"liquidation", b"", vm);
 
             k = k + 1;
         };
@@ -563,26 +573,30 @@ module DonorDirected {
       }
    }
 
-   fun get_pro_rata(multisig_address: address): (vector<address>, vector<u64>) {
-    // get total fees
-    let balance = DiemAccount::balance<GAS>(multisig_address);
-    let donors = DiemAccount::get_depositors(multisig_address);
-    let pro_rata_addresses = Vector::empty<address>();
-    let pro_rata_amounts = Vector::empty<u64>();
+  //   /// get the proportion of donoations of all donors to account.
+  //  public fun get_pro_rata(multisig_address: address): (vector<address>, vector<u64>) {
+  //   // get total fees
+  //   let balance = DiemAccount::get_cumulative_deposits(multisig_address);
+  //   let donors = DiemAccount::get_depositors(multisig_address);
+  //   let pro_rata_addresses = Vector::empty<address>();
+  //   let pro_rata_amounts = Vector::empty<u64>();
 
-    let i = 0;
-    let len = Vector::length(&donors);
-    while (i < len) {
-      let donor = Vector::borrow(&donors, i);
-      let (_, _, cumu)  = Receipts::read_receipt(*donor, multisig_address);
-      let pro_rata = cumu / balance;
-      Vector::push_back(&mut pro_rata_addresses, *donor);
-      Vector::push_back(&mut pro_rata_amounts, pro_rata);
-      i = i + 1;
-    };
+  //   let i = 0;
+  //   let len = Vector::length(&donors);
+  //   while (i < len) {
+  //     let donor = Vector::borrow(&donors, i);
+  //     let (_, _, cumu)  = Receipts::read_receipt(multisig_address, *donor);
 
-      (pro_rata_addresses, pro_rata_amounts)
-   }
+  //     let ratio = FixedPoint32::create_from_rational(cumu, balance);
+  //     let pro_rata = FixedPoint32::multiply_u64(balance, ratios);
+
+  //     Vector::push_back(&mut pro_rata_addresses, *donor);
+  //     Vector::push_back(&mut pro_rata_amounts, pro_rata);
+  //     i = i + 1;
+  //   };
+
+  //     (pro_rata_addresses, pro_rata_amounts)
+  //  }
 
     //////// GETTERS ////////
     public fun get_tx_params(t: &TimedTransfer): (address, u64, vector<u8>, u64) {

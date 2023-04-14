@@ -51,7 +51,7 @@ module DiemFramework::DiemAccount {
     use DiemFramework::TowerState;
     use DiemFramework::Testnet::is_testnet;
     use DiemFramework::FIFO;
-    use Std::FixedPoint32;
+    use Std::FixedPoint32::{Self, FixedPoint32};
     use DiemFramework::GAS::GAS;
     use DiemFramework::Receipts;
     use DiemFramework::DiemSystem;
@@ -3672,6 +3672,33 @@ module DiemFramework::DiemAccount {
 
       borrow_global<CumulativeDeposits>(addr).value
     }
+
+  /// get the proportion of donoations of all donors to account.
+   public fun get_pro_rata_cumu_deposits(multisig_address: address): (vector<address>, vector<FixedPoint32>, vector<u64>) acquires CumulativeDeposits{
+    // get total fees
+    let balance = get_cumulative_deposits(multisig_address);
+    let donors = get_depositors(multisig_address);
+    let pro_rata_addresses = Vector::empty<address>();
+    let pro_rata = Vector::empty<FixedPoint32>();
+    let pro_rata_amounts = Vector::empty<u64>();
+
+    let i = 0;
+    let len = Vector::length(&donors);
+    while (i < len) {
+      let donor = Vector::borrow(&donors, i);
+      let (_, _, cumu)  = Receipts::read_receipt(*donor, multisig_address);
+
+      let ratio = FixedPoint32::create_from_rational(cumu, balance);
+      let value = FixedPoint32::multiply_u64(balance, copy ratio);
+
+      Vector::push_back(&mut pro_rata_addresses, *donor);
+      Vector::push_back(&mut pro_rata, ratio);
+      Vector::push_back(&mut pro_rata_amounts, value);
+      i = i + 1;
+    };
+
+      (pro_rata_addresses, pro_rata, pro_rata_amounts)
+   }
 
     public fun get_index_cumu_deposits(addr: address): u64 acquires CumulativeDeposits {
       if (!exists<CumulativeDeposits>(addr)) return 0;
