@@ -9,6 +9,7 @@
 -  [Resource `Credit`](#0x1_MakeWhole_Credit)
 -  [Constants](#@Constants_0)
 -  [Function `vm_offer_credit`](#0x1_MakeWhole_vm_offer_credit)
+-  [Function `migrate_make_whole`](#0x1_MakeWhole_migrate_make_whole)
 -  [Function `claim_make_whole_payment`](#0x1_MakeWhole_claim_make_whole_payment)
 -  [Function `claim_one`](#0x1_MakeWhole_claim_one)
 -  [Function `query_make_whole_payment`](#0x1_MakeWhole_query_make_whole_payment)
@@ -19,6 +20,7 @@
 <b>use</b> <a href="Diem.md#0x1_Diem">0x1::Diem</a>;
 <b>use</b> <a href="DiemAccount.md#0x1_DiemAccount">0x1::DiemAccount</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
+<b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
@@ -161,6 +163,37 @@
       <b>let</b> c = <b>borrow_global_mut</b>&lt;<a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a>&gt;(addr);
       <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>&lt;<a href="MakeWhole.md#0x1_MakeWhole_Credit">Credit</a>&gt;(&<b>mut</b> c.credits, cred);
     }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_MakeWhole_migrate_make_whole"></a>
+
+## Function `migrate_make_whole`
+
+to use at genesis, includes the coin split factor.
+
+
+<pre><code><b>fun</b> <a href="MakeWhole.md#0x1_MakeWhole_migrate_make_whole">migrate_make_whole</a>(vm: &signer, account: &signer, value: u64, incident_name: vector&lt;u8&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="MakeWhole.md#0x1_MakeWhole_migrate_make_whole">migrate_make_whole</a>(
+  vm: &signer,
+  account: &signer,
+  value: u64,
+  incident_name: vector&lt;u8&gt;
+) <b>acquires</b> <a href="MakeWhole.md#0x1_MakeWhole_Balance">Balance</a> {
+  value = value * <a href="Globals.md#0x1_Globals_get_coin_split_factor">Globals::get_coin_split_factor</a>();
+  <a href="MakeWhole.md#0x1_MakeWhole_vm_offer_credit">vm_offer_credit</a>(vm, account, value, incident_name);
 }
 </code></pre>
 

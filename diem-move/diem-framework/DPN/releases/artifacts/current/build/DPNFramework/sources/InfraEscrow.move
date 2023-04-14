@@ -54,14 +54,10 @@ address DiemFramework{
         TransactionFee::pay_fee<GAS>(c);
     }
 
-    // fun genesis_helper_migrate_pledge(vm: &signer, user_sig: &signer, amount: u64) {
-    //   CoreAddresses::assert_diem_root(vm);
-    //   PledgeAccounts::user_pledge_tx(&user_sig, @VMReserved, amount);
-    // }
     // Transaction script for user to pledge to infra escrow.
-    public(script) fun user_pledge_infra(user_sig: signer, amount: u64){
+    public fun user_pledge_infra(user_sig: &signer, amount: u64){
 
-      PledgeAccounts::user_pledge_tx(user_sig, @VMReserved, amount);
+      PledgeAccounts::user_pledge(user_sig, @VMReserved, amount);
     }
 
 }

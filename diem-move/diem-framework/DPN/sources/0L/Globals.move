@@ -98,7 +98,12 @@ module Globals {
     /// Get the threshold of number of signed blocks in an epoch per validator
     public fun get_signing_threshold(): u64 {
       get_constants().signing_threshold_pct
-    }    
+    }
+
+    /// get the V6 coin split factor
+    public fun get_coin_split_factor(): u64 {
+      10
+    }
 
     /// Get the constants for the current network 
     fun get_constants(): GlobalConstants {
@@ -136,7 +141,7 @@ module Globals {
           epoch_mining_thres_lower: 1, // in testnet, staging, we don't want
                                        // to wait too long between proofs.
           epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
-          epoch_slow_wallet_unlock: 10000000,
+          epoch_slow_wallet_unlock: 1000 * get_coin_split_factor() * COIN_SCALING_FACTOR,
           min_blocks_per_epoch: 1000,
           vouch_threshold: 0,
           signing_threshold_pct: 3,
@@ -155,13 +160,12 @@ module Globals {
           vdf_security_baseline: 512,
           epoch_mining_thres_lower: 7, // NOTE: bootstrapping, allowance for operator error.
           epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
-          epoch_slow_wallet_unlock: 1000 * COIN_SCALING_FACTOR, // approx 10 years for largest accounts in genesis.
+          epoch_slow_wallet_unlock: 1000 * get_coin_split_factor() * COIN_SCALING_FACTOR, // approx 10 years for largest accounts in genesis.
           min_blocks_per_epoch: 10000,
           vouch_threshold: 2, // Production is 2 vouchers per validator
           signing_threshold_pct: 3,          
         }
       }
     }
-
   }
 }

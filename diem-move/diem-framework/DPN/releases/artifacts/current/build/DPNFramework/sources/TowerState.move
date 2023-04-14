@@ -159,6 +159,21 @@ module TowerState {
       init_tower_counter(vm, 0, 0, 0); 
     }
 
+
+    // for hard fork migration
+    public fun vm_migrate_tower_counter(
+      vm: &signer,
+      lifetime_proofs: u64,
+      lifetime_validator_proofs: u64,
+      lifetime_fullnode_proofs: u64,
+    ) acquires TowerCounter {
+      CoreAddresses::assert_diem_root(vm);
+      let counter = borrow_global_mut<TowerCounter>(@VMReserved);
+      counter.lifetime_proofs = lifetime_proofs;
+      counter.lifetime_validator_proofs = lifetime_validator_proofs;
+      counter.lifetime_fullnode_proofs = lifetime_fullnode_proofs;
+    }
+
     /// returns true if miner at `addr` has been initialized 
     public fun is_init(addr: address):bool {
       exists<TowerProofHistory>(addr)
@@ -513,6 +528,30 @@ module TowerState {
       verify_and_update_state(Signer::address_of(miner_sig), proof, false);
     }
 
+    /// fork tools. Migrate user state
+    public fun migrate_user_tower_history(
+      vm: &signer,
+      miner_sig: &signer,
+      previous_proof_hash: vector<u8>,
+      verified_tower_height: u64,
+      latest_epoch_mining: u64,
+      count_proofs_in_epoch: u64,
+      epochs_validating_and_mining: u64,
+      contiguous_epochs_validating_and_mining: u64,
+      epochs_since_last_account_creation: u64,
+    ) {
+      CoreAddresses::assert_diem_root(vm);
+      move_to<TowerProofHistory>(miner_sig, TowerProofHistory{
+        previous_proof_hash,
+        verified_tower_height,
+        latest_epoch_mining,
+        count_proofs_in_epoch,
+        epochs_validating_and_mining,
+        contiguous_epochs_validating_and_mining,
+        epochs_since_last_account_creation,
+      });
+    }
+
 
     // Process and check the first proof blob submitted for validity (includes correct address)
     // Permissions: PUBLIC, ANYONE. (used in onboarding transaction).
@@ -743,13 +782,13 @@ module TowerState {
       (s.lifetime_proofs, s.lifetime_validator_proofs, s.lifetime_fullnode_proofs)
     }
 
-    public fun danger_migrate_get_lifetime_proof_count(): (u64, u64, u64) acquires TowerStats{
-      if (exists<TowerStats>(@VMReserved)) {
-        let s = borrow_global<TowerStats>(@VMReserved);
-        return (s.proofs_in_epoch, s.validator_proofs, s.fullnode_proofs)
-      };
-      (0,0,0)
-    }
+    // public fun danger_migrate_get_lifetime_proof_count(): (u64, u64, u64) acquires TowerStats{
+    //   if (exists<TowerStats>(@VMReserved)) {
+    //     let s = borrow_global<TowerStats>(@VMReserved);
+    //     return (s.proofs_in_epoch, s.validator_proofs, s.fullnode_proofs)
+    //   };
+    //   (0,0,0)
+    // }
 
     public fun get_difficulty(): (u64, u64) acquires VDFDifficulty {
       if (exists<VDFDifficulty>(@VMReserved )) {

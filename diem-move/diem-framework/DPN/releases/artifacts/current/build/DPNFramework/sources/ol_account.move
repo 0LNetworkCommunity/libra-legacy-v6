@@ -41,24 +41,24 @@ module AccountScripts {
         assert!(DiemAccount::balance<GAS>(new_account_address) > 0, 01);
     }
 
-    public(script) fun create_acc_user(
-        sender: signer,
-        challenge: vector<u8>,
-        solution: vector<u8>,
-        difficulty: u64,
-        security: u64,
-    ) {
-        let new_account_address = DiemAccount::create_user_account_with_proof(
-            &sender,
-            &challenge,
-            &solution,
-            difficulty,
-            security
-        );
+    // public(script) fun create_acc_user(
+    //     sender: signer,
+    //     challenge: vector<u8>,
+    //     solution: vector<u8>,
+    //     difficulty: u64,
+    //     security: u64,
+    // ) {
+    //     let new_account_address = DiemAccount::create_user_account_with_proof(
+    //         &sender,
+    //         &challenge,
+    //         &solution,
+    //         difficulty,
+    //         security
+    //     );
 
-        // Check the account exists and the balance is 0
-        assert!(DiemAccount::balance<GAS>(new_account_address) > 0, 01);
-    }
+    //     // Check the account exists and the balance is 0
+    //     assert!(DiemAccount::balance<GAS>(new_account_address) > 0, 01);
+    // }
 
     public(script) fun create_acc_val(
         sender: signer,

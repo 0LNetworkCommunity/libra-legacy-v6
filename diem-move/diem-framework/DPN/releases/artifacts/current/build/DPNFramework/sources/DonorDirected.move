@@ -118,6 +118,15 @@ module DonorDirected {
     }
 
 
+    public fun migrate_root_registry(vm: &signer, list: vector<address>) {
+      CoreAddresses::assert_diem_root(vm);
+      if (!is_root_init()) {
+        move_to<Registry>(vm, Registry {
+          list,
+        });
+      };
+    }
+
     //////// DONOR DIRECTED INITIALIZATION ////////
     // There are three steps in initializing an account. These steps can be combined in a single transaction, or done in separate transactions. The "bricking" of the sponsor key should be done in a separate transaction, in case there are any errors in the initialization.
 

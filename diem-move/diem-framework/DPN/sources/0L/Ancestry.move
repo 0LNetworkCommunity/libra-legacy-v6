@@ -148,7 +148,7 @@ address DiemFramework {
     }
 
     // admin migration. Needs the signer object for both VM and child to prevent changes.
-    public fun migrate(
+    public fun fork_migrate(
       vm: &signer,
       child_sig: &signer,
       migrate_tree: vector<address>

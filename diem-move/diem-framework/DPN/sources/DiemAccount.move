@@ -62,6 +62,7 @@ module DiemFramework::DiemAccount {
     // use DiemFramework::Debug::print;
     use DiemFramework::Jail;
     use DiemFramework::Testnet;
+    use DiemFramework::Globals;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -495,31 +496,33 @@ module DiemFramework::DiemAccount {
     // DiemAccount is the only code in the VM which can place a resource in an account.
     // As such the module and especially this function has an attack surface.
 
-    /////// 0L ////////
-    // Function code: 01
-    public fun create_user_account_with_proof(
-        sender: &signer,
-        challenge: &vector<u8>,
-        solution: &vector<u8>,
-        difficulty: u64,
-        security: u64,
-    ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
-        // TODO: extract address_duplicated with TowerState::init_miner_state
-        let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
-        let new_signer = create_signer(new_account_address);
-        Roles::new_user_role_with_proof(&new_signer);
-        make_account(&new_signer, auth_key_prefix);
-        add_currencies_for_account<GAS>(&new_signer, false);
+    // Deprecating creating account with proof.
+    
+    // /////// 0L ////////
+    // // Function code: 01
+    // public fun create_user_account_with_proof(
+    //     sender: &signer,
+    //     challenge: &vector<u8>,
+    //     solution: &vector<u8>,
+    //     difficulty: u64,
+    //     security: u64,
+    // ):address acquires AccountOperationsCapability, Balance, CumulativeDeposits, DiemAccount {
+    //     // TODO: extract address_duplicated with TowerState::init_miner_state
+    //     let (new_account_address, auth_key_prefix) = VDF::extract_address_from_challenge(challenge);
+    //     let new_signer = create_signer(new_account_address);
+    //     Roles::new_user_role_with_proof(&new_signer);
+    //     make_account(&new_signer, auth_key_prefix);
+    //     add_currencies_for_account<GAS>(&new_signer, false);
 
-        onboarding_gas_transfer<GAS>(sender, new_account_address, BOOTSTRAP_COIN_VALUE);
-        // Init the miner state
-        // this verifies the VDF proof, which we use to rate limit account creation.
-        // account will not be created if this step fails.
-        let new_signer = create_signer(new_account_address);
-        TowerState::init_miner_state(&new_signer, challenge, solution, difficulty, security);
-        // set_slow(&new_signer);
-        new_account_address
-    }
+    //     onboarding_gas_transfer<GAS>(sender, new_account_address, BOOTSTRAP_COIN_VALUE);
+    //     // Init the miner state
+    //     // this verifies the VDF proof, which we use to rate limit account creation.
+    //     // account will not be created if this step fails.
+    //     let new_signer = create_signer(new_account_address);
+    //     TowerState::init_miner_state(&new_signer, challenge, solution, difficulty, security);
+    //     // set_slow(&new_signer);
+    //     new_account_address
+    // }
 
     /////// 0L ////////
     // Function code: 01
@@ -3728,6 +3731,18 @@ module DiemFramework::DiemAccount {
       init_cumulative_deposits(sender, use_starting_balance);
     }
 
+    /// private function for the genesis fork migration
+    /// adjust for the coin split factor.
+    fun fork_migrate_cumulative_deposits(vm: &signer, sender: &signer, value: u64, index: u64) {
+      CoreAddresses::assert_vm(vm);
+      if (!exists<CumulativeDeposits>(Signer::address_of(sender))) {
+        move_to<CumulativeDeposits>(sender, CumulativeDeposits {
+          value: value * Globals::get_coin_split_factor(),
+          index: index * Globals::get_coin_split_factor(),
+        })
+      };
+    }
+
     fun maybe_update_deposit(payer: address, payee: address, deposit_value: u64) acquires CumulativeDeposits {
         // update cumulative deposits if the account has the struct.
         if (exists<CumulativeDeposits>(payee)) {
@@ -3810,6 +3825,36 @@ module DiemFramework::DiemAccount {
           list: Vector::empty<address>()
         });  
       }
+    }
+    /// private function which can only be called at genesis
+    /// must apply the coin split factor.
+    fun fork_migrate_slow_wallet(
+      vm: &signer,
+      user: &signer,
+      unlocked: u64,
+      transferred: u64,
+    ) {
+      CoreAddresses::assert_vm(vm);
+      if (!exists<SlowWallet>(Signer::address_of(user))) {
+        move_to<SlowWallet>(vm, SlowWallet {
+          unlocked: unlocked * Globals::get_coin_split_factor(),
+          transferred: transferred * Globals::get_coin_split_factor(),
+        });  
+      }
+    }
+
+    /// private function which can only be called at genesis
+    /// sets the list of accounts that are slow wallets.
+    fun fork_migrate_slow_list(
+      vm: &signer,
+      user: &signer,
+    ) acquires SlowWalletList{
+      CoreAddresses::assert_vm(vm);
+      if (!exists<SlowWalletList>(@VMReserved)) {
+        vm_init_slow(vm);
+      };
+      let list = borrow_global_mut<SlowWalletList>(@VMReserved);
+      Vector::push_back(&mut list.list, Signer::address_of(user));
     }
 
     public fun set_slow(sig: &signer) acquires SlowWalletList {
