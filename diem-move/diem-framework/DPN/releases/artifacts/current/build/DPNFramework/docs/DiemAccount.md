@@ -107,12 +107,17 @@ before and after every transaction.
 -  [Function `vm_multi_pay_fee`](#0x1_DiemAccount_vm_multi_pay_fee)
 -  [Function `init_cumulative_deposits`](#0x1_DiemAccount_init_cumulative_deposits)
 -  [Function `vm_migrate_cumulative_deposits`](#0x1_DiemAccount_vm_migrate_cumulative_deposits)
+-  [Function `fork_migrate_cumulative_deposits`](#0x1_DiemAccount_fork_migrate_cumulative_deposits)
 -  [Function `maybe_update_deposit`](#0x1_DiemAccount_maybe_update_deposit)
+-  [Function `get_depositors`](#0x1_DiemAccount_get_depositors)
 -  [Function `deposit_index_curve`](#0x1_DiemAccount_deposit_index_curve)
 -  [Function `get_cumulative_deposits`](#0x1_DiemAccount_get_cumulative_deposits)
+-  [Function `get_pro_rata_cumu_deposits`](#0x1_DiemAccount_get_pro_rata_cumu_deposits)
 -  [Function `get_index_cumu_deposits`](#0x1_DiemAccount_get_index_cumu_deposits)
 -  [Function `is_init_cumu_tracking`](#0x1_DiemAccount_is_init_cumu_tracking)
 -  [Function `vm_init_slow`](#0x1_DiemAccount_vm_init_slow)
+-  [Function `fork_migrate_slow_wallet`](#0x1_DiemAccount_fork_migrate_slow_wallet)
+-  [Function `fork_migrate_slow_list`](#0x1_DiemAccount_fork_migrate_slow_list)
 -  [Function `set_slow`](#0x1_DiemAccount_set_slow)
 -  [Function `slow_wallet_epoch_drip`](#0x1_DiemAccount_slow_wallet_epoch_drip)
 -  [Function `decrease_unlocked_tracker`](#0x1_DiemAccount_decrease_unlocked_tracker)
@@ -157,6 +162,7 @@ before and after every transaction.
 <b>use</b> <a href="FIFO.md#0x1_FIFO">0x1::FIFO</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="GAS.md#0x1_GAS">0x1::GAS</a>;
+<b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Hash.md#0x1_Hash">0x1::Hash</a>;
 <b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
@@ -710,6 +716,12 @@ Separate struct to track cumulative deposits
 <dd>
 
 </dd>
+<dt>
+<code>depositors: vector&lt;<b>address</b>&gt;</code>
+</dt>
+<dd>
+
+</dd>
 </dl>
 
 
@@ -1255,7 +1267,6 @@ important to the semantics of the system.
 <pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_process_escrow">process_escrow</a>&lt;Token: store&gt;(
     account: &signer
 ) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_EscrowList">EscrowList</a>, <a href="DiemAccount.md#0x1_DiemAccount_AutopayEscrow">AutopayEscrow</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a> {
-// // print(&01000);
     <a href="Roles.md#0x1_Roles_assert_diem_root">Roles::assert_diem_root</a>(account);
 
     <b>let</b> account_list = &<b>borrow_global</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowList">EscrowList</a>&lt;Token&gt;&gt;(
@@ -1263,9 +1274,7 @@ important to the semantics of the system.
     ).accounts;
     <b>let</b> account_len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">EscrowSettings</a>&gt;(account_list);
     <b>let</b> account_idx = 0;
-// // print(&010100);
     <b>while</b> (account_idx &lt; account_len) {
-// // print(&010110);
         <b>let</b> <a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">EscrowSettings</a> {account: account_addr, share: percentage}
             = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_EscrowSettings">EscrowSettings</a>&gt;(account_list, account_idx);
 
@@ -1282,21 +1291,16 @@ important to the semantics of the system.
             limit_room ,
             <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(*percentage, 100)
         );
-// // print(&010120);
         <b>let</b> amount_sent: u64 = 0;
 
         <b>let</b> payment_list = &<b>mut</b> <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_AutopayEscrow">AutopayEscrow</a>&lt;Token&gt;&gt;(*account_addr).list;
         <b>let</b> num_payments = <a href="FIFO.md#0x1_FIFO_len">FIFO::len</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Escrow">Escrow</a>&lt;Token&gt;&gt;(payment_list);
-// // print(&010130);
         // Pay out escrow until limit is reached
         <b>while</b> (limit_room &gt; 0 && num_payments &gt; 0) {
-// // print(&010131);
             <b>let</b> <a href="DiemAccount.md#0x1_DiemAccount_Escrow">Escrow</a>&lt;Token&gt; {to_account, escrow} = <a href="FIFO.md#0x1_FIFO_pop">FIFO::pop</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Escrow">Escrow</a>&lt;Token&gt;&gt;(payment_list);
             <b>let</b> recipient_coins = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(to_account);
             <b>let</b> payment_size = <a href="Diem.md#0x1_Diem_value">Diem::value</a>&lt;Token&gt;(&escrow);
-// // print(&010132);
             <b>if</b> (payment_size &gt; limit_room) {
-// // print(&010133);
                 <b>let</b> (coin1, coin2) = <a href="Diem.md#0x1_Diem_split">Diem::split</a>&lt;Token&gt;(escrow, limit_room);
                 <a href="Diem.md#0x1_Diem_deposit">Diem::deposit</a>&lt;Token&gt;(&<b>mut</b> recipient_coins.coin, coin2);
                 <b>let</b> new_escrow = <a href="DiemAccount.md#0x1_DiemAccount_Escrow">Escrow</a> {
@@ -1306,20 +1310,16 @@ important to the semantics of the system.
                 <a href="FIFO.md#0x1_FIFO_push_LIFO">FIFO::push_LIFO</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Escrow">Escrow</a>&lt;Token&gt;&gt;(payment_list, new_escrow);
                 amount_sent = amount_sent + limit_room;
                 limit_room = 0;
-// // print(&010134);
             } <b>else</b> {
-// // print(&01015);
                 // This entire escrow is being paid out
                 <a href="Diem.md#0x1_Diem_deposit">Diem::deposit</a>&lt;Token&gt;(&<b>mut</b> recipient_coins.coin, escrow);
                 limit_room = limit_room - payment_size;
                 amount_sent = amount_sent + payment_size;
                 num_payments = num_payments - 1;
-// // print(&010136);
             }
         };
         //<b>update</b> account limits
         <b>if</b> (amount_sent &gt; 0) {
-// // print(&010140);
             _ = <a href="AccountLimits.md#0x1_AccountLimits_update_withdrawal_limits">AccountLimits::update_withdrawal_limits</a>&lt;Token&gt;(
                 amount_sent,
                 *account_addr,
@@ -1327,10 +1327,8 @@ important to the semantics of the system.
                     @DiemRoot
                 ).limits_cap
             );
-// // print(&010141);
         };
 
-// // print(&010150);
         account_idx = account_idx + 1;
     }
 }
@@ -1446,11 +1444,6 @@ Initialize this module. This is only callable from genesis.
     <a href="DiemAccount.md#0x1_DiemAccount_create_diem_root_account">create_diem_root_account</a>(
         <b>copy</b> dummy_auth_key_prefix,
     );
-    //////// 0L ////////
-    // <a href="DiemAccount.md#0x1_DiemAccount_create_treasury_compliance_account">create_treasury_compliance_account</a>(
-    //     dr_account,
-    //     <b>copy</b> dummy_auth_key_prefix,
-    // );
 }
 </code></pre>
 
@@ -1988,32 +1981,9 @@ Record a payment of <code>to_deposit</code> from <code>payer</code> to <code>pay
     <b>assert</b>!(deposit_value &gt; 0, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemAccount.md#0x1_DiemAccount_ECOIN_DEPOSIT_IS_ZERO">ECOIN_DEPOSIT_IS_ZERO</a>));
     // Check that an account <b>exists</b> at `payee`
     <b>assert</b>!(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payee), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EPAYEE_DOES_NOT_EXIST">EPAYEE_DOES_NOT_EXIST</a>));
-    //////// 0L ////////
-    // // Check that `payee` can accept payments in `Token`
-    // <b>assert</b>!(
-    //     <b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee),
-    //     <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_argument">Errors::invalid_argument</a>(<a href="DiemAccount.md#0x1_DiemAccount_EPAYEE_CANT_ACCEPT_CURRENCY_TYPE">EPAYEE_CANT_ACCEPT_CURRENCY_TYPE</a>)
-    // );
 
-    // <b>if</b> (dual_attestation) {
-    //     // Check that the payment complies <b>with</b> dual attestation rules
-    //     <a href="DualAttestation.md#0x1_DualAttestation_assert_payment_ok">DualAttestation::assert_payment_ok</a>&lt;Token&gt;(
-    //         payer, payee, deposit_value, <b>copy</b> metadata, metadata_signature
-    //     );
-    // };
+    // NOTE: 0L: Remove <b>old</b> <a href="Diem.md#0x1_Diem">Diem</a> account restrictions.
 
-    // // Ensure that this deposit is compliant <b>with</b> the account limits on
-    // // this account.
-    // <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_should_track_limits_for_account">should_track_limits_for_account</a>&lt;Token&gt;(payer, payee, <b>false</b>)) {
-    //     <b>assert</b>!(
-    //         <a href="AccountLimits.md#0x1_AccountLimits_update_deposit_limits">AccountLimits::update_deposit_limits</a>&lt;Token&gt;(
-    //             deposit_value,
-    //             <a href="VASP.md#0x1_VASP_parent_address">VASP::parent_address</a>(payee),
-    //             &<b>borrow_global</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>&gt;(@DiemRoot).limits_cap
-    //         ),
-    //         <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_limit_exceeded">Errors::limit_exceeded</a>(<a href="DiemAccount.md#0x1_DiemAccount_EDEPOSIT_EXCEEDS_LIMITS">EDEPOSIT_EXCEEDS_LIMITS</a>)
-    //     )
-    // };
     // Deposit the `to_deposit` coin
     <a href="Diem.md#0x1_Diem_deposit">Diem::deposit</a>(&<b>mut</b> <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee).coin, to_deposit);
 
@@ -2028,6 +1998,7 @@ Record a payment of <code>to_deposit</code> from <code>payer</code> to <code>pay
         }
     );
     //////// 0L ////////
+    // unlss
     // <b>if</b> the account wants <b>to</b> be tracked add tracking
     <a href="DiemAccount.md#0x1_DiemAccount_maybe_update_deposit">maybe_update_deposit</a>(payer, payee, deposit_value);
 }
@@ -2938,22 +2909,20 @@ NOTE: Slow wallets who receive funds from here, will be LOCKED, does not unlock 
     metadata: vector&lt;u8&gt;,
     metadata_signature: vector&lt;u8&gt;,
     vm: &signer
-) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> { //////// 0L ////////
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> { //////// 0L ////////
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @DiemRoot) <b>return</b>;
     // don't try <b>to</b> send a 0 balance, will halt.
     <b>if</b> (amount &lt; 1) <b>return</b>;
 
     // Check there is a payer
     <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payer)) <b>return</b>;
+    <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payee)) <b>return</b>;
 
     // Check payee can receive funds in this currency.
     <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payee)) <b>return</b>;
 
-
-    // <b>assert</b>!(<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(payer), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_not_published">Errors::not_published</a>(<a href="DiemAccount.md#0x1_DiemAccount_EACCOUNT">EACCOUNT</a>));
-
-    // Check the payer is in possession of withdraw token.
-    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(payer)) <b>return</b>;
+    // NOTE: 0L: V6 we should not limit the VMs ability
+    // <b>to</b> withdraw <b>if</b> the capability was moved.
 
     // TODO: review this in 5.1
     // VM should not force an account below 1GAS, since the account may not recover.
@@ -2966,21 +2935,31 @@ NOTE: Slow wallets who receive funds from here, will be LOCKED, does not unlock 
     };
 
 
-    // VM can extract the withdraw token.
-    <b>let</b> account = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(payer);
-    <b>let</b> cap = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>(&<b>mut</b> account.withdraw_capability);
+    // NOTE: 0L: V6: removed the need for fetching the withdraw capability
+    <b>let</b> coin = <a href="DiemAccount.md#0x1_DiemAccount_vm_withdraw">vm_withdraw</a>(vm, payer, amount);
+
+    // Load the payer's account and emit an event <b>to</b> record the withdrawal
+    <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Event.md#0x1_Event_emit_event">Event::emit_event</a>&lt;<a href="DiemAccount.md#0x1_DiemAccount_SentPaymentEvent">SentPaymentEvent</a>&gt;(
+        &<b>mut</b> <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(payer).sent_events,
+        <a href="DiemAccount.md#0x1_DiemAccount_SentPaymentEvent">SentPaymentEvent</a> {
+            amount,
+            currency_code: <a href="Diem.md#0x1_Diem_currency_code">Diem::currency_code</a>&lt;Token&gt;(),
+            payee,
+            metadata: <b>copy</b> metadata,
+        },
+    );
+
+
     <a href="DiemAccount.md#0x1_DiemAccount_deposit">deposit</a>&lt;Token&gt;(
-        cap.account_address,
+        payer,
         payee,
-        <a href="DiemAccount.md#0x1_DiemAccount_withdraw_from">withdraw_from</a>(&cap, payee, amount, <b>copy</b> metadata),
+        coin,
         metadata,
         metadata_signature,
         <b>false</b> // 0L todo diem-1.4.1 - new patch, needs review
     );
 
     <a href="Receipts.md#0x1_Receipts_write_receipt_vm">Receipts::write_receipt_vm</a>(vm, payer, payee, amount);
-
-    <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">restore_withdraw_capability</a>(cap);
 }
 </code></pre>
 
@@ -3071,7 +3050,7 @@ may exist on an account.
     metadata: vector&lt;u8&gt;,
     metadata_signature: vector&lt;u8&gt;,
     vm: &signer,
-) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>, <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>, <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
     /////// 0L /////////
     <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @DiemRoot) <b>return</b>;
 
@@ -3100,9 +3079,6 @@ may exist on an account.
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee)){
       <a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(*&payee, amount);
     };
-
-
-    <a href="DiemAccount.md#0x1_DiemAccount_maybe_update_deposit">maybe_update_deposit</a>(payer, payee, amount);
 }
 </code></pre>
 
@@ -3139,11 +3115,8 @@ VM can burn from an account's balance for administrative purposes (e.g. at epoch
     <b>if</b> (!<a href="DiemAccount.md#0x1_DiemAccount_exists_at">exists_at</a>(addr)) <b>return</b>;
     <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(addr)) <b>return</b>;
 
-    // TODO: review this in 5.1
     // VM should not force an account below 1GAS, since the account may not recover.
-    // print(&7777777900002);
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr) &lt; <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>) <b>return</b>;
-    // print(&7777777900003);
 
     // prevent halting on low balance.
     // burn the remaining balance <b>if</b> the amount is greater than balance
@@ -3152,7 +3125,6 @@ VM can burn from an account's balance for administrative purposes (e.g. at epoch
       amount = <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr);
     };
 
-    // print(&amount);
     // Check the payer is in possession of withdraw token.
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_delegated_withdraw_capability">delegated_withdraw_capability</a>(addr)) <b>return</b>;
 
@@ -3160,7 +3132,6 @@ VM can burn from an account's balance for administrative purposes (e.g. at epoch
     <b>let</b> account = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>&gt;(addr);
     <b>let</b> cap = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_extract">Option::extract</a>(&<b>mut</b> account.withdraw_capability);
     <b>let</b> coin = <a href="DiemAccount.md#0x1_DiemAccount_withdraw_from">withdraw_from</a>&lt;Token&gt;(&cap, addr, amount, <b>copy</b> metadata);
-    // print(&coin);
     <a href="Diem.md#0x1_Diem_vm_burn_this_coin">Diem::vm_burn_this_coin</a>&lt;Token&gt;(vm, coin);
     <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">restore_withdraw_capability</a>(cap);
 }
@@ -3225,9 +3196,6 @@ attestation protocol
     <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee)){
       <a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(*&payee, amount);
     };
-
-
-    <a href="DiemAccount.md#0x1_DiemAccount_maybe_update_deposit">maybe_update_deposit</a>(*&cap.account_address, payee, amount);
 }
 </code></pre>
 
@@ -4572,22 +4540,11 @@ Creates Preburn resource under account 'new_account_address'
     <a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>();
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(creator_account);
     <b>let</b> new_account = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
-    // print(&400001);
-    // <a href="Roles.md#0x1_Roles_new_parent_vasp_role">Roles::new_parent_vasp_role</a>(creator_account, &new_account);
-    // <a href="VASP.md#0x1_VASP_publish_parent_vasp_credential">VASP::publish_parent_vasp_credential</a>(&new_account, creator_account);
-    // <a href="DualAttestation.md#0x1_DualAttestation_publish_credential">DualAttestation::publish_credential</a>(&new_account, creator_account, human_name);
-    // <a href="VASPDomain.md#0x1_VASPDomain_publish_vasp_domains">VASPDomain::publish_vasp_domains</a>(&new_account);
+
     <a href="Roles.md#0x1_Roles_new_user_role_with_proof">Roles::new_user_role_with_proof</a>(&new_account);
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(&new_account, auth_key_prefix);
-    // print(&400002);
     <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;Token&gt;(&new_account, add_all_currencies);
-    // print(&400003);
 
-    // testnet_root_fund_account
-    // <b>spec</b> {
-    //     <b>assert</b> <b>exists</b>&lt;<a href="VASPDomain.md#0x1_VASPDomain_VASPDomains">VASPDomain::VASPDomains</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(new_account));
-    //     <b>assert</b> <a href="Roles.md#0x1_Roles_spec_has_treasury_compliance_role_addr">Roles::spec_has_treasury_compliance_role_addr</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(creator_account));
-    // }
 }
 </code></pre>
 
@@ -4623,16 +4580,13 @@ all available currencies in the system will also be added.
     <a href="Testnet.md#0x1_Testnet_is_testnet">Testnet::is_testnet</a>();
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(creator_account);
     <b>let</b> new_account = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
-    // print(&400001);
     // <a href="Roles.md#0x1_Roles_new_parent_vasp_role">Roles::new_parent_vasp_role</a>(creator_account, &new_account);
     // <a href="VASP.md#0x1_VASP_publish_parent_vasp_credential">VASP::publish_parent_vasp_credential</a>(&new_account, creator_account);
     // <a href="DualAttestation.md#0x1_DualAttestation_publish_credential">DualAttestation::publish_credential</a>(&new_account, creator_account, human_name);
     // <a href="VASPDomain.md#0x1_VASPDomain_publish_vasp_domains">VASPDomain::publish_vasp_domains</a>(&new_account);
     <a href="Roles.md#0x1_Roles_new_user_role_with_proof">Roles::new_user_role_with_proof</a>(&new_account);
     <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(&new_account, auth_key_prefix);
-    // print(&400002);
     <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;Token&gt;(&new_account, add_all_currencies);
-    // print(&400003);
 
     // testnet_root_fund_account
     // <b>spec</b> {
@@ -6701,6 +6655,8 @@ Create a Validator Operator account
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
     <b>let</b> balance_struct = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>&lt;Token&gt;&gt;(payer);
     <b>let</b> coin = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>&lt;Token&gt;(&<b>mut</b> balance_struct.coin, amount);
+
+
     coin
 }
 </code></pre>
@@ -6791,11 +6747,11 @@ Create a Validator Operator account
     <a href="DiemAccount.md#0x1_DiemAccount_balance">balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(addr)
   } <b>else</b> { 0 };
 
-
   <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(addr)) {
     <b>move_to</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(sender, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> {
       value: starting_balance,
       index: starting_balance,
+      depositors: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;(),
     })
   };
 }
@@ -6830,6 +6786,39 @@ Create a Validator Operator account
 
 </details>
 
+<a name="0x1_DiemAccount_fork_migrate_cumulative_deposits"></a>
+
+## Function `fork_migrate_cumulative_deposits`
+
+private function for the genesis fork migration
+adjust for the coin split factor.
+
+
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_fork_migrate_cumulative_deposits">fork_migrate_cumulative_deposits</a>(vm: &signer, sender: &signer, value: u64, index: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_fork_migrate_cumulative_deposits">fork_migrate_cumulative_deposits</a>(vm: &signer, sender: &signer, value: u64, index: u64) {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender))) {
+    <b>move_to</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(sender, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> {
+      value: value * <a href="Globals.md#0x1_Globals_get_coin_split_factor">Globals::get_coin_split_factor</a>(),
+      index: index * <a href="Globals.md#0x1_Globals_get_coin_split_factor">Globals::get_coin_split_factor</a>(),
+      depositors: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;(),
+    })
+  };
+}
+</code></pre>
+
+
+
+</details>
+
 <a name="0x1_DiemAccount_maybe_update_deposit"></a>
 
 ## Function `maybe_update_deposit`
@@ -6855,12 +6844,39 @@ Create a Validator Operator account
       cumu.value = cumu.value + deposit_value;
       cumu.index = cumu.index + index;
 
+      // add the payer <b>to</b> the list of depositors.
+      <b>if</b> (!<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_contains">Vector::contains</a>(&cumu.depositors, &payer)) {
+        <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> cumu.depositors, payer);
+      };
+
       // also write the receipt <b>to</b> the payee's account.
       <a href="Receipts.md#0x1_Receipts_write_receipt">Receipts::write_receipt</a>(payer, payee, deposit_value);
-
     };
+}
+</code></pre>
 
 
+
+</details>
+
+<a name="0x1_DiemAccount_get_depositors"></a>
+
+## Function `get_depositors`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_get_depositors">get_depositors</a>(payee: <b>address</b>): vector&lt;<b>address</b>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_get_depositors">get_depositors</a>(payee: <b>address</b>): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> {
+  <b>let</b> cumu = <b>borrow_global</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(payee);
+  *&cumu.depositors
 }
 </code></pre>
 
@@ -6918,6 +6934,53 @@ inflation by x% per day from the start of network.
   <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(addr)) <b>return</b> 0;
 
   <b>borrow_global</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(addr).value
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_get_pro_rata_cumu_deposits"></a>
+
+## Function `get_pro_rata_cumu_deposits`
+
+get the proportion of donoations of all donors to account.
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_get_pro_rata_cumu_deposits">get_pro_rata_cumu_deposits</a>(multisig_address: <b>address</b>): (vector&lt;<b>address</b>&gt;, vector&lt;<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_FixedPoint32">FixedPoint32::FixedPoint32</a>&gt;, vector&lt;u64&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_get_pro_rata_cumu_deposits">get_pro_rata_cumu_deposits</a>(multisig_address: <b>address</b>): (vector&lt;<b>address</b>&gt;, vector&lt;<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">FixedPoint32</a>&gt;, vector&lt;u64&gt;) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>{
+ // get total fees
+ <b>let</b> balance = <a href="DiemAccount.md#0x1_DiemAccount_get_cumulative_deposits">get_cumulative_deposits</a>(multisig_address);
+ <b>let</b> donors = <a href="DiemAccount.md#0x1_DiemAccount_get_depositors">get_depositors</a>(multisig_address);
+ <b>let</b> pro_rata_addresses = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
+ <b>let</b> pro_rata = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">FixedPoint32</a>&gt;();
+ <b>let</b> pro_rata_amounts = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;();
+
+ <b>let</b> i = 0;
+ <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&donors);
+ <b>while</b> (i &lt; len) {
+   <b>let</b> donor = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&donors, i);
+   <b>let</b> (_, _, cumu)  = <a href="Receipts.md#0x1_Receipts_read_receipt">Receipts::read_receipt</a>(*donor, multisig_address);
+
+   <b>let</b> ratio = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(cumu, balance);
+   <b>let</b> value = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(balance, <b>copy</b> ratio);
+
+   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> pro_rata_addresses, *donor);
+   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> pro_rata, ratio);
+   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> pro_rata_amounts, value);
+   i = i + 1;
+ };
+
+   (pro_rata_addresses, pro_rata, pro_rata_amounts)
 }
 </code></pre>
 
@@ -6997,6 +7060,77 @@ inflation by x% per day from the start of network.
       list: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;()
     });
   }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_fork_migrate_slow_wallet"></a>
+
+## Function `fork_migrate_slow_wallet`
+
+private function which can only be called at genesis
+must apply the coin split factor.
+
+
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_fork_migrate_slow_wallet">fork_migrate_slow_wallet</a>(vm: &signer, user: &signer, unlocked: u64, transferred: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_fork_migrate_slow_wallet">fork_migrate_slow_wallet</a>(
+  vm: &signer,
+  user: &signer,
+  unlocked: u64,
+  transferred: u64,
+) {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(user))) {
+    <b>move_to</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a>&gt;(vm, <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
+      unlocked: unlocked * <a href="Globals.md#0x1_Globals_get_coin_split_factor">Globals::get_coin_split_factor</a>(),
+      transferred: transferred * <a href="Globals.md#0x1_Globals_get_coin_split_factor">Globals::get_coin_split_factor</a>(),
+    });
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_fork_migrate_slow_list"></a>
+
+## Function `fork_migrate_slow_list`
+
+private function which can only be called at genesis
+sets the list of accounts that are slow wallets.
+
+
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_fork_migrate_slow_list">fork_migrate_slow_list</a>(vm: &signer, user: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_fork_migrate_slow_list">fork_migrate_slow_list</a>(
+  vm: &signer,
+  user: &signer,
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_SlowWalletList">SlowWalletList</a>{
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>if</b> (!<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_SlowWalletList">SlowWalletList</a>&gt;(@VMReserved)) {
+    <a href="DiemAccount.md#0x1_DiemAccount_vm_init_slow">vm_init_slow</a>(vm);
+  };
+  <b>let</b> list = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_SlowWalletList">SlowWalletList</a>&gt;(@VMReserved);
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> list.list, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(user));
 }
 </code></pre>
 

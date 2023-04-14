@@ -60,6 +60,9 @@ address DiemFramework{
       PledgeAccounts::user_pledge(user_sig, @VMReserved, amount);
     }
 
+
+
+
 }
 }
 

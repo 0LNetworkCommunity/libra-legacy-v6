@@ -51,17 +51,16 @@ module DiemFramework::DiemAccount {
     use DiemFramework::TowerState;
     use DiemFramework::Testnet::is_testnet;
     use DiemFramework::FIFO;
-    use Std::FixedPoint32;
+    use Std::FixedPoint32::{Self, FixedPoint32};
     use DiemFramework::GAS::GAS;
     use DiemFramework::Receipts;
     use DiemFramework::DiemSystem;
     use DiemFramework::ValidatorUniverse;
-    // use DiemFramework::DonorDirected;
     use DiemFramework::Ancestry;
     use DiemFramework::Vouch;
-    // use DiemFramework::Debug::print;
     use DiemFramework::Jail;
     use DiemFramework::Testnet;
+    use DiemFramework::Globals;
 
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
@@ -306,7 +305,6 @@ module DiemFramework::DiemAccount {
     public fun process_escrow<Token: store>(
         account: &signer
     ) acquires EscrowList, AutopayEscrow, Balance, AccountOperationsCapability {
-// // print(&01000);
         Roles::assert_diem_root(account);
 
         let account_list = &borrow_global<EscrowList<Token>>(
@@ -314,9 +312,7 @@ module DiemFramework::DiemAccount {
         ).accounts;
         let account_len = Vector::length<EscrowSettings>(account_list);
         let account_idx = 0;
-// // print(&010100);
         while (account_idx < account_len) {
-// // print(&010110);
             let EscrowSettings {account: account_addr, share: percentage} 
                 = Vector::borrow<EscrowSettings>(account_list, account_idx);
 
@@ -333,21 +329,16 @@ module DiemFramework::DiemAccount {
                 limit_room , 
                 FixedPoint32::create_from_rational(*percentage, 100)
             );
-// // print(&010120);
             let amount_sent: u64 = 0;
 
             let payment_list = &mut borrow_global_mut<AutopayEscrow<Token>>(*account_addr).list;
             let num_payments = FIFO::len<Escrow<Token>>(payment_list);
-// // print(&010130);
             // Pay out escrow until limit is reached
             while (limit_room > 0 && num_payments > 0) {
-// // print(&010131);
                 let Escrow<Token> {to_account, escrow} = FIFO::pop<Escrow<Token>>(payment_list);
                 let recipient_coins = borrow_global_mut<Balance<Token>>(to_account);
                 let payment_size = Diem::value<Token>(&escrow);
-// // print(&010132);
                 if (payment_size > limit_room) {
-// // print(&010133);
                     let (coin1, coin2) = Diem::split<Token>(escrow, limit_room);
                     Diem::deposit<Token>(&mut recipient_coins.coin, coin2);
                     let new_escrow = Escrow {
@@ -357,20 +348,16 @@ module DiemFramework::DiemAccount {
                     FIFO::push_LIFO<Escrow<Token>>(payment_list, new_escrow);
                     amount_sent = amount_sent + limit_room;
                     limit_room = 0;
-// // print(&010134);
                 } else {
-// // print(&01015);
                     // This entire escrow is being paid out
                     Diem::deposit<Token>(&mut recipient_coins.coin, escrow);
                     limit_room = limit_room - payment_size;
                     amount_sent = amount_sent + payment_size;
                     num_payments = num_payments - 1;
-// // print(&010136);
                 }
             };
             //update account limits
             if (amount_sent > 0) { 
-// // print(&010140);
                 _ = AccountLimits::update_withdrawal_limits<Token>(
                     amount_sent,
                     *account_addr,
@@ -378,10 +365,8 @@ module DiemFramework::DiemAccount {
                         @DiemRoot
                     ).limits_cap
                 );
-// // print(&010141);
             };
 
-// // print(&010150);
             account_idx = account_idx + 1;
         }
     }
@@ -427,33 +412,6 @@ module DiemFramework::DiemAccount {
         );
     }
 
-    // Unused
-    // /////// 0L /////////
-    // public fun update_escrow_percentage<Token: store>(
-    //     sender: &signer, 
-    //     new_percentage: u64,
-    // ) acquires EscrowList {
-    //     assert!(new_percentage >= 50, 1);
-    //     assert!(new_percentage <= 100, 1);
-
-    //     let escrow_list = &mut borrow_global_mut<EscrowList<Token>>(
-    //         @DiemRoot
-    //     ).accounts;
-    //     let account = Signer::address_of(sender);
-    //     let idx = 0;
-    //     let len = Vector::length<EscrowSettings>(escrow_list);
-    //     while (idx < len) {
-    //         let settings = Vector::borrow_mut<EscrowSettings>(escrow_list, idx);
-    //         if (settings.account == account) {
-    //             settings.share = new_percentage;
-    //             return
-    //         };
-    //         idx = idx + 1;
-    //     };
-    //     // Should never reach this point, if you do, autopay does not exist for the account.
-    //     assert!(false, 1);
-    // }
-
     /// Initialize this module. This is only callable from genesis.
     public fun initialize(
         dr_account: &signer,
@@ -466,11 +424,6 @@ module DiemFramework::DiemAccount {
         create_diem_root_account(
             copy dummy_auth_key_prefix,
         );
-        //////// 0L ////////
-        // create_treasury_compliance_account(
-        //     dr_account,
-        //     copy dummy_auth_key_prefix,
-        // );
     }
 
     spec initialize {
@@ -886,32 +839,9 @@ module DiemFramework::DiemAccount {
         assert!(deposit_value > 0, Errors::invalid_argument(ECOIN_DEPOSIT_IS_ZERO));
         // Check that an account exists at `payee`
         assert!(exists_at(payee), Errors::not_published(EPAYEE_DOES_NOT_EXIST));
-        //////// 0L ////////
-        // // Check that `payee` can accept payments in `Token`
-        // assert!(
-        //     exists<Balance<Token>>(payee),
-        //     Errors::invalid_argument(EPAYEE_CANT_ACCEPT_CURRENCY_TYPE)
-        // );
 
-        // if (dual_attestation) {
-        //     // Check that the payment complies with dual attestation rules
-        //     DualAttestation::assert_payment_ok<Token>(
-        //         payer, payee, deposit_value, copy metadata, metadata_signature
-        //     );
-        // };
+        // NOTE: 0L: Remove old Diem account restrictions.
 
-        // // Ensure that this deposit is compliant with the account limits on
-        // // this account.
-        // if (should_track_limits_for_account<Token>(payer, payee, false)) {
-        //     assert!(
-        //         AccountLimits::update_deposit_limits<Token>(
-        //             deposit_value,
-        //             VASP::parent_address(payee),
-        //             &borrow_global<AccountOperationsCapability>(@DiemRoot).limits_cap
-        //         ),
-        //         Errors::limit_exceeded(EDEPOSIT_EXCEEDS_LIMITS)
-        //     )
-        // };
         // Deposit the `to_deposit` coin
         Diem::deposit(&mut borrow_global_mut<Balance<Token>>(payee).coin, to_deposit);
 
@@ -926,6 +856,7 @@ module DiemFramework::DiemAccount {
             }
         );
         //////// 0L ////////
+        // unlss
         // if the account wants to be tracked add tracking
         maybe_update_deposit(payer, payee, deposit_value);        
     }
@@ -1408,22 +1339,20 @@ module DiemFramework::DiemAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer
-    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
+    ) acquires DiemAccount, Balance, CumulativeDeposits { //////// 0L ////////
         if (Signer::address_of(vm) != @DiemRoot) return;
         // don't try to send a 0 balance, will halt.
         if (amount < 1) return;
 
         // Check there is a payer
         if (!exists_at(payer)) return; 
+        if (!exists_at(payee)) return; 
 
         // Check payee can receive funds in this currency.
         if (!exists<Balance<Token>>(payee)) return; 
 
-
-        // assert!(exists_at(payer), Errors::not_published(EACCOUNT));
-
-        // Check the payer is in possession of withdraw token.
-        if (delegated_withdraw_capability(payer)) return; 
+        // NOTE: 0L: V6 we should not limit the VMs ability
+        // to withdraw if the capability was moved.
 
         // TODO: review this in 5.1
         // VM should not force an account below 1GAS, since the account may not recover.
@@ -1436,21 +1365,31 @@ module DiemFramework::DiemAccount {
         };
 
 
-        // VM can extract the withdraw token.
-        let account = borrow_global_mut<DiemAccount>(payer);
-        let cap = Option::extract(&mut account.withdraw_capability);
+        // NOTE: 0L: V6: removed the need for fetching the withdraw capability
+        let coin = vm_withdraw(vm, payer, amount);
+        
+        // Load the payer's account and emit an event to record the withdrawal
+        Event::emit_event<SentPaymentEvent>(
+            &mut borrow_global_mut<DiemAccount>(payer).sent_events,
+            SentPaymentEvent {
+                amount,
+                currency_code: Diem::currency_code<Token>(),
+                payee,
+                metadata: copy metadata,
+            },
+        );
+
+
         deposit<Token>(
-            cap.account_address,
+            payer,
             payee,
-            withdraw_from(&cap, payee, amount, copy metadata),
+            coin,
             metadata,
             metadata_signature,
             false // 0L todo diem-1.4.1 - new patch, needs review        
         );
         
         Receipts::write_receipt_vm(vm, payer, payee, amount);
-
-        restore_withdraw_capability(cap);
     }
 
     /// VM authorized to withdraw a coin if it is to pay a network fee
@@ -1502,7 +1441,7 @@ module DiemFramework::DiemAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer,
-    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWallet {
+    ) acquires DiemAccount, Balance, CumulativeDeposits, SlowWallet {
         /////// 0L /////////
         if (Signer::address_of(vm) != @DiemRoot) return;
 
@@ -1531,9 +1470,6 @@ module DiemFramework::DiemAccount {
         if (is_slow(*&payee)){
           increase_unlocked_tracker(*&payee, amount);
         };
-
-
-        maybe_update_deposit(payer, payee, amount);        
     }
 
     
@@ -1552,11 +1488,8 @@ module DiemFramework::DiemAccount {
         if (!exists_at(addr)) return; 
         if (!exists<Balance<Token>>(addr)) return;
         
-        // TODO: review this in 5.1
         // VM should not force an account below 1GAS, since the account may not recover.
-        // print(&7777777900002);
         if (balance<GAS>(addr) < BOOTSTRAP_COIN_VALUE) return;
-        // print(&7777777900003);
 
         // prevent halting on low balance.
         // burn the remaining balance if the amount is greater than balance
@@ -1565,7 +1498,6 @@ module DiemFramework::DiemAccount {
           amount = balance<GAS>(addr);
         };
 
-        // print(&amount);
         // Check the payer is in possession of withdraw token.
         if (delegated_withdraw_capability(addr)) return; 
 
@@ -1573,7 +1505,6 @@ module DiemFramework::DiemAccount {
         let account = borrow_global_mut<DiemAccount>(addr);
         let cap = Option::extract(&mut account.withdraw_capability);
         let coin = withdraw_from<Token>(&cap, addr, amount, copy metadata);
-        // print(&coin);
         Diem::vm_burn_this_coin<Token>(vm, coin);
         restore_withdraw_capability(cap);
     }
@@ -1621,9 +1552,6 @@ module DiemFramework::DiemAccount {
         if (is_slow(*&payee)){
           increase_unlocked_tracker(*&payee, amount);
         };
-
-
-        maybe_update_deposit(*&cap.account_address, payee, amount);        
     }
 
 
@@ -2362,32 +2290,15 @@ module DiemFramework::DiemAccount {
         Testnet::is_testnet();
         CoreAddresses::assert_diem_root(creator_account);
         let new_account = create_signer(new_account_address);
-        // print(&400001);
-        // Roles::new_parent_vasp_role(creator_account, &new_account);
-        // VASP::publish_parent_vasp_credential(&new_account, creator_account);
-        // DualAttestation::publish_credential(&new_account, creator_account, human_name);
-        // VASPDomain::publish_vasp_domains(&new_account);
+
         Roles::new_user_role_with_proof(&new_account);
         make_account(&new_account, auth_key_prefix);
-        // print(&400002);
         add_currencies_for_account<Token>(&new_account, add_all_currencies);
-        // print(&400003);
 
-        // testnet_root_fund_account
-        // spec {
-        //     assert exists<VASPDomain::VASPDomains>(Signer::address_of(new_account));
-        //     assert Roles::spec_has_treasury_compliance_role_addr(Signer::address_of(creator_account));
-        // }
     }
 
+    // NOTE: 0L: Removed ability to mint.
 
-    // WARNING: DANGER: Mint capability from transaction.
-    // fun testnet_root_fund_account(root: &signer, account: address, coins: u64): Diem<GAS> {
-    //   Testnet::assert_testnet();
-    //   CoreAddresses::assert_root();
-    //   Diem::mint<GAS>(root, coins)
-
-    // }
     /// Create an account with the ParentVASP role at `new_account_address` with authentication key
     /// `auth_key_prefix` | `new_account_address`.  If `add_all_currencies` is true, 0 balances for
     /// all available currencies in the system will also be added.
@@ -2401,16 +2312,13 @@ module DiemFramework::DiemAccount {
         Testnet::is_testnet();
         CoreAddresses::assert_diem_root(creator_account);
         let new_account = create_signer(new_account_address);
-        // print(&400001);
         // Roles::new_parent_vasp_role(creator_account, &new_account);
         // VASP::publish_parent_vasp_credential(&new_account, creator_account);
         // DualAttestation::publish_credential(&new_account, creator_account, human_name);
         // VASPDomain::publish_vasp_domains(&new_account);
         Roles::new_user_role_with_proof(&new_account);
         make_account(&new_account, auth_key_prefix);
-        // print(&400002);
         add_currencies_for_account<Token>(&new_account, add_all_currencies);
-        // print(&400003);
 
         // testnet_root_fund_account
         // spec {
@@ -3667,6 +3575,8 @@ module DiemFramework::DiemAccount {
         CoreAddresses::assert_diem_root(vm);
         let balance_struct = borrow_global_mut<Balance<Token>>(payer);
         let coin = Diem::withdraw<Token>(&mut balance_struct.coin, amount);
+        
+
         coin
     }
     
@@ -3686,6 +3596,7 @@ module DiemFramework::DiemAccount {
         /// not all accounts will have this enabled.
         value: u64, // the cumulative deposits with no adjustments.
         index: u64, // The index is a time-weighted cumulative sum of the deposits made to this account. This favors most recent donations.
+        depositors: vector<address>, // donor directed wallets need a place to reference all the donors in the case of liquidation.
     }
 
     //////// 0L ////////
@@ -3714,13 +3625,13 @@ module DiemFramework::DiemAccount {
 
       let starting_balance = if (use_starting_balance) {
         balance<GAS>(addr) 
-      } else { 0 };
-      
+      } else { 0 };      
 
       if (!exists<CumulativeDeposits>(addr)) {
         move_to<CumulativeDeposits>(sender, CumulativeDeposits {
           value: starting_balance,
           index: starting_balance,
+          depositors: Vector::empty<address>(),
         })
       };
     }
@@ -3728,6 +3639,19 @@ module DiemFramework::DiemAccount {
     public fun vm_migrate_cumulative_deposits(vm: &signer, sender: &signer, use_starting_balance: bool) acquires Balance {
       CoreAddresses::assert_diem_root(vm);
       init_cumulative_deposits(sender, use_starting_balance);
+    }
+
+    /// private function for the genesis fork migration
+    /// adjust for the coin split factor.
+    fun fork_migrate_cumulative_deposits(vm: &signer, sender: &signer, value: u64, index: u64) {
+      CoreAddresses::assert_vm(vm);
+      if (!exists<CumulativeDeposits>(Signer::address_of(sender))) {
+        move_to<CumulativeDeposits>(sender, CumulativeDeposits {
+          value: value * Globals::get_coin_split_factor(),
+          index: index * Globals::get_coin_split_factor(),
+          depositors: Vector::empty<address>(),
+        })
+      };
     }
 
     fun maybe_update_deposit(payer: address, payee: address, deposit_value: u64) acquires CumulativeDeposits {
@@ -3740,12 +3664,19 @@ module DiemFramework::DiemAccount {
           cumu.value = cumu.value + deposit_value;
           cumu.index = cumu.index + index;
 
+          // add the payer to the list of depositors.
+          if (!Vector::contains(&cumu.depositors, &payer)) {
+            Vector::push_back(&mut cumu.depositors, payer);
+          };
+
           // also write the receipt to the payee's account.
           Receipts::write_receipt(payer, payee, deposit_value);
-
         };
+    }
 
-
+    public fun get_depositors(payee: address): vector<address> acquires CumulativeDeposits {
+      let cumu = borrow_global<CumulativeDeposits>(payee);
+      *&cumu.depositors
     }
 
     /// adjust the points of the deposits favoring more recent deposits.
@@ -3765,6 +3696,33 @@ module DiemFramework::DiemAccount {
 
       borrow_global<CumulativeDeposits>(addr).value
     }
+
+  /// get the proportion of donoations of all donors to account.
+   public fun get_pro_rata_cumu_deposits(multisig_address: address): (vector<address>, vector<FixedPoint32>, vector<u64>) acquires CumulativeDeposits{
+    // get total fees
+    let balance = get_cumulative_deposits(multisig_address);
+    let donors = get_depositors(multisig_address);
+    let pro_rata_addresses = Vector::empty<address>();
+    let pro_rata = Vector::empty<FixedPoint32>();
+    let pro_rata_amounts = Vector::empty<u64>();
+
+    let i = 0;
+    let len = Vector::length(&donors);
+    while (i < len) {
+      let donor = Vector::borrow(&donors, i);
+      let (_, _, cumu)  = Receipts::read_receipt(*donor, multisig_address);
+
+      let ratio = FixedPoint32::create_from_rational(cumu, balance);
+      let value = FixedPoint32::multiply_u64(balance, copy ratio);
+
+      Vector::push_back(&mut pro_rata_addresses, *donor);
+      Vector::push_back(&mut pro_rata, ratio);
+      Vector::push_back(&mut pro_rata_amounts, value);
+      i = i + 1;
+    };
+
+      (pro_rata_addresses, pro_rata, pro_rata_amounts)
+   }
 
     public fun get_index_cumu_deposits(addr: address): u64 acquires CumulativeDeposits {
       if (!exists<CumulativeDeposits>(addr)) return 0;
@@ -3812,6 +3770,36 @@ module DiemFramework::DiemAccount {
           list: Vector::empty<address>()
         });  
       }
+    }
+    /// private function which can only be called at genesis
+    /// must apply the coin split factor.
+    fun fork_migrate_slow_wallet(
+      vm: &signer,
+      user: &signer,
+      unlocked: u64,
+      transferred: u64,
+    ) {
+      CoreAddresses::assert_vm(vm);
+      if (!exists<SlowWallet>(Signer::address_of(user))) {
+        move_to<SlowWallet>(vm, SlowWallet {
+          unlocked: unlocked * Globals::get_coin_split_factor(),
+          transferred: transferred * Globals::get_coin_split_factor(),
+        });  
+      }
+    }
+
+    /// private function which can only be called at genesis
+    /// sets the list of accounts that are slow wallets.
+    fun fork_migrate_slow_list(
+      vm: &signer,
+      user: &signer,
+    ) acquires SlowWalletList{
+      CoreAddresses::assert_vm(vm);
+      if (!exists<SlowWalletList>(@VMReserved)) {
+        vm_init_slow(vm);
+      };
+      let list = borrow_global_mut<SlowWalletList>(@VMReserved);
+      Vector::push_back(&mut list.list, Signer::address_of(user));
     }
 
     public fun set_slow(sig: &signer) acquires SlowWalletList {

@@ -524,7 +524,7 @@ Get the constants for the current network
       epoch_mining_thres_lower: 1, // in testnet, staging, we don't want
                                    // <b>to</b> wait too long between proofs.
       epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
-      epoch_slow_wallet_unlock: 10000000,
+      epoch_slow_wallet_unlock: 1000 * <a href="Globals.md#0x1_Globals_get_coin_split_factor">get_coin_split_factor</a>() * <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>,
       min_blocks_per_epoch: 1000,
       vouch_threshold: 0,
       signing_threshold_pct: 3,
@@ -543,7 +543,7 @@ Get the constants for the current network
       vdf_security_baseline: 512,
       epoch_mining_thres_lower: 7, // NOTE: bootstrapping, allowance for operator error.
       epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
-      epoch_slow_wallet_unlock: 1000 * <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>, // approx 10 years for largest accounts in genesis.
+      epoch_slow_wallet_unlock: 1000 * <a href="Globals.md#0x1_Globals_get_coin_split_factor">get_coin_split_factor</a>() * <a href="Globals.md#0x1_Globals_COIN_SCALING_FACTOR">COIN_SCALING_FACTOR</a>, // approx 10 years for largest accounts in genesis.
       min_blocks_per_epoch: 10000,
       vouch_threshold: 2, // Production is 2 vouchers per validator
       signing_threshold_pct: 3,

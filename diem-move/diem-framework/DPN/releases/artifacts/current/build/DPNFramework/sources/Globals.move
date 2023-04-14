@@ -141,7 +141,7 @@ module Globals {
           epoch_mining_thres_lower: 1, // in testnet, staging, we don't want
                                        // to wait too long between proofs.
           epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
-          epoch_slow_wallet_unlock: 10000000,
+          epoch_slow_wallet_unlock: 1000 * get_coin_split_factor() * COIN_SCALING_FACTOR,
           min_blocks_per_epoch: 1000,
           vouch_threshold: 0,
           signing_threshold_pct: 3,
@@ -160,13 +160,12 @@ module Globals {
           vdf_security_baseline: 512,
           epoch_mining_thres_lower: 7, // NOTE: bootstrapping, allowance for operator error.
           epoch_mining_thres_upper: 72, // upper bound enforced at 20 mins per proof.
-          epoch_slow_wallet_unlock: 1000 * COIN_SCALING_FACTOR, // approx 10 years for largest accounts in genesis.
+          epoch_slow_wallet_unlock: 1000 * get_coin_split_factor() * COIN_SCALING_FACTOR, // approx 10 years for largest accounts in genesis.
           min_blocks_per_epoch: 10000,
           vouch_threshold: 2, // Production is 2 vouchers per validator
           signing_threshold_pct: 3,          
         }
       }
     }
-
   }
 }

@@ -26,41 +26,27 @@ module MultiSig {
   use DiemFramework::DiemConfig;
   // use DiemFramework::Debug::print;
 
-
   const EGOV_NOT_INITIALIZED: u64 = 440000;
   /// The owner of this account can't be an authority, since it will subsequently be bricked. The signer of this account is no longer useful. The account is now controlled by the Governance logic. 
   const ESIGNER_CANT_BE_AUTHORITY: u64 = 440001;
-
   /// Signer not authorized to approve a transaction.
   const ENOT_AUTHORIZED: u64 = 440002;
-
   /// There are no pending transactions to search
   const EPENDING_EMPTY: u64 = 440003;
-
   /// Not enough signers configured
   const ENO_SIGNERS: u64 = 440004;
   /// The multisig setup  is not finalized, the sponsor needs to brick their authkey. The account setup sponsor needs to be verifiably locked out before operations can begin. 
   const ENOT_FINALIZED_NOT_BRICK: u64 = 440005; 
-
   /// Already registered this action type
   const EACTION_ALREADY_EXISTS: u64 = 440006;
-
   /// Action not found
   const EACTION_NOT_FOUND: u64 = 440007;
-
   /// Proposal is expired
   const EPROPOSAL_EXPIRED: u64 = 440008;
-
-  
-
   /// Proposal is expired
   const EDUPLICATE_PROPOSAL: u64 = 440009;
-
   /// Proposal is expired
   const EPROPOSAL_NOT_FOUND: u64 = 440010;
-
-  
-
   /// default setting for a proposal to expire
   const DEFAULT_EPOCHS_EXPIRE: u64 = 14; 
 

@@ -2522,6 +2522,22 @@ pub enum ScriptFunctionCall {
         amount: u64,
     },
 
+    ProposeLiquidateTx {
+        multisig_address: AccountAddress,
+    },
+
+    ProposePaymentTx {
+        multisig_address: AccountAddress,
+        payee: AccountAddress,
+        value: u64,
+        description: Bytes,
+    },
+
+    ProposeVetoTx {
+        multisig_address: AccountAddress,
+        id: u64,
+    },
+
     /// # Summary
     /// Rotates the authentication key of the sending account to the newly-specified ed25519 public key and
     /// publishes a new shared authentication key derived from that public key under the sender's account.
@@ -3355,6 +3371,15 @@ pub enum ScriptFunctionCall {
 
     ValAddSelf {},
 
+    VetoTx {
+        multisig_address: AccountAddress,
+        id: u64,
+    },
+
+    VoteLiquidationTx {
+        multisig_address: AccountAddress,
+    },
+
     VouchFor {
         val: AccountAddress,
     },
@@ -3905,6 +3930,24 @@ impl ScriptFunctionCall {
                 encode_pof_update_bid_script_function(bid, epoch_expiry)
             }
             Preburn { token, amount } => encode_preburn_script_function(token, amount),
+            ProposeLiquidateTx { multisig_address } => {
+                encode_propose_liquidate_tx_script_function(multisig_address)
+            }
+            ProposePaymentTx {
+                multisig_address,
+                payee,
+                value,
+                description,
+            } => encode_propose_payment_tx_script_function(
+                multisig_address,
+                payee,
+                value,
+                description,
+            ),
+            ProposeVetoTx {
+                multisig_address,
+                id,
+            } => encode_propose_veto_tx_script_function(multisig_address, id),
             PublishSharedEd25519PublicKey { public_key } => {
                 encode_publish_shared_ed25519_public_key_script_function(public_key)
             }
@@ -4067,6 +4110,13 @@ impl ScriptFunctionCall {
                 allow_minting,
             } => encode_update_minting_ability_script_function(currency, allow_minting),
             ValAddSelf {} => encode_val_add_self_script_function(),
+            VetoTx {
+                multisig_address,
+                id,
+            } => encode_veto_tx_script_function(multisig_address, id),
+            VoteLiquidationTx { multisig_address } => {
+                encode_vote_liquidation_tx_script_function(multisig_address)
+            }
             VouchFor { val } => encode_vouch_for_script_function(val),
             VoucherUnjail { addr } => encode_voucher_unjail_script_function(addr),
         }
@@ -5720,6 +5770,60 @@ pub fn encode_preburn_script_function(token: TypeTag, amount: u64) -> Transactio
     ))
 }
 
+pub fn encode_propose_liquidate_tx_script_function(
+    multisig_address: AccountAddress,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("DonorDirected").to_owned(),
+        ),
+        ident_str!("propose_liquidate_tx").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&multisig_address).unwrap()],
+    ))
+}
+
+pub fn encode_propose_payment_tx_script_function(
+    multisig_address: AccountAddress,
+    payee: AccountAddress,
+    value: u64,
+    description: Vec<u8>,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("DonorDirected").to_owned(),
+        ),
+        ident_str!("propose_payment_tx").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&multisig_address).unwrap(),
+            bcs::to_bytes(&payee).unwrap(),
+            bcs::to_bytes(&value).unwrap(),
+            bcs::to_bytes(&description).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_propose_veto_tx_script_function(
+    multisig_address: AccountAddress,
+    id: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("DonorDirected").to_owned(),
+        ),
+        ident_str!("propose_veto_tx").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&multisig_address).unwrap(),
+            bcs::to_bytes(&id).unwrap(),
+        ],
+    ))
+}
+
 /// # Summary
 /// Rotates the authentication key of the sending account to the newly-specified ed25519 public key and
 /// publishes a new shared authentication key derived from that public key under the sender's account.
@@ -6873,6 +6977,38 @@ pub fn encode_val_add_self_script_function() -> TransactionPayload {
         ident_str!("val_add_self").to_owned(),
         vec![],
         vec![],
+    ))
+}
+
+pub fn encode_veto_tx_script_function(
+    multisig_address: AccountAddress,
+    id: u64,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("DonorDirected").to_owned(),
+        ),
+        ident_str!("veto_tx").to_owned(),
+        vec![],
+        vec![
+            bcs::to_bytes(&multisig_address).unwrap(),
+            bcs::to_bytes(&id).unwrap(),
+        ],
+    ))
+}
+
+pub fn encode_vote_liquidation_tx_script_function(
+    multisig_address: AccountAddress,
+) -> TransactionPayload {
+    TransactionPayload::ScriptFunction(ScriptFunction::new(
+        ModuleId::new(
+            AccountAddress::new([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]),
+            ident_str!("DonorDirected").to_owned(),
+        ),
+        ident_str!("vote_liquidation_tx").to_owned(),
+        vec![],
+        vec![bcs::to_bytes(&multisig_address).unwrap()],
     ))
 }
 
@@ -9170,6 +9306,46 @@ fn decode_preburn_script_function(payload: &TransactionPayload) -> Option<Script
     }
 }
 
+fn decode_propose_liquidate_tx_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::ProposeLiquidateTx {
+            multisig_address: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_propose_payment_tx_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::ProposePaymentTx {
+            multisig_address: bcs::from_bytes(script.args().get(0)?).ok()?,
+            payee: bcs::from_bytes(script.args().get(1)?).ok()?,
+            value: bcs::from_bytes(script.args().get(2)?).ok()?,
+            description: bcs::from_bytes(script.args().get(3)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_propose_veto_tx_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::ProposeVetoTx {
+            multisig_address: bcs::from_bytes(script.args().get(0)?).ok()?,
+            id: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
 fn decode_publish_shared_ed25519_public_key_script_function(
     payload: &TransactionPayload,
 ) -> Option<ScriptFunctionCall> {
@@ -9511,6 +9687,29 @@ fn decode_update_minting_ability_script_function(
 fn decode_val_add_self_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
     if let TransactionPayload::ScriptFunction(_script) = payload {
         Some(ScriptFunctionCall::ValAddSelf {})
+    } else {
+        None
+    }
+}
+
+fn decode_veto_tx_script_function(payload: &TransactionPayload) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::VetoTx {
+            multisig_address: bcs::from_bytes(script.args().get(0)?).ok()?,
+            id: bcs::from_bytes(script.args().get(1)?).ok()?,
+        })
+    } else {
+        None
+    }
+}
+
+fn decode_vote_liquidation_tx_script_function(
+    payload: &TransactionPayload,
+) -> Option<ScriptFunctionCall> {
+    if let TransactionPayload::ScriptFunction(script) = payload {
+        Some(ScriptFunctionCall::VoteLiquidationTx {
+            multisig_address: bcs::from_bytes(script.args().get(0)?).ok()?,
+        })
     } else {
         None
     }
@@ -10128,6 +10327,18 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
             Box::new(decode_preburn_script_function),
         );
         map.insert(
+            "DonorDirectedpropose_liquidate_tx".to_string(),
+            Box::new(decode_propose_liquidate_tx_script_function),
+        );
+        map.insert(
+            "DonorDirectedpropose_payment_tx".to_string(),
+            Box::new(decode_propose_payment_tx_script_function),
+        );
+        map.insert(
+            "DonorDirectedpropose_veto_tx".to_string(),
+            Box::new(decode_propose_veto_tx_script_function),
+        );
+        map.insert(
             "AccountAdministrationScriptspublish_shared_ed25519_public_key".to_string(),
             Box::new(decode_publish_shared_ed25519_public_key_script_function),
         );
@@ -10231,6 +10442,14 @@ static SCRIPT_FUNCTION_DECODER_MAP: once_cell::sync::Lazy<ScriptFunctionDecoderM
         map.insert(
             "ValidatorScriptsval_add_self".to_string(),
             Box::new(decode_val_add_self_script_function),
+        );
+        map.insert(
+            "DonorDirectedveto_tx".to_string(),
+            Box::new(decode_veto_tx_script_function),
+        );
+        map.insert(
+            "DonorDirectedvote_liquidation_tx".to_string(),
+            Box::new(decode_vote_liquidation_tx_script_function),
         );
         map.insert(
             "VouchScriptsvouch_for".to_string(),

@@ -31,7 +31,7 @@
 -  [Function `epoch_param_reset`](#0x1_TowerState_epoch_param_reset)
 -  [Function `reconfig`](#0x1_TowerState_reconfig)
 -  [Function `init_miner_state`](#0x1_TowerState_init_miner_state)
--  [Function `migrate_user_tower_history`](#0x1_TowerState_migrate_user_tower_history)
+-  [Function `fork_migrate_user_tower_history`](#0x1_TowerState_fork_migrate_user_tower_history)
 -  [Function `first_challenge_includes_address`](#0x1_TowerState_first_challenge_includes_address)
 -  [Function `get_miner_latest_epoch`](#0x1_TowerState_get_miner_latest_epoch)
 -  [Function `reset_rate_limit`](#0x1_TowerState_reset_rate_limit)
@@ -1201,14 +1201,14 @@ Checks to see if miner submitted enough proofs to be considered compliant
 
 </details>
 
-<a name="0x1_TowerState_migrate_user_tower_history"></a>
+<a name="0x1_TowerState_fork_migrate_user_tower_history"></a>
 
-## Function `migrate_user_tower_history`
+## Function `fork_migrate_user_tower_history`
 
 fork tools. Migrate user state
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_migrate_user_tower_history">migrate_user_tower_history</a>(vm: &signer, miner_sig: &signer, previous_proof_hash: vector&lt;u8&gt;, verified_tower_height: u64, latest_epoch_mining: u64, count_proofs_in_epoch: u64, epochs_validating_and_mining: u64, contiguous_epochs_validating_and_mining: u64, epochs_since_last_account_creation: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_fork_migrate_user_tower_history">fork_migrate_user_tower_history</a>(vm: &signer, miner_sig: &signer, previous_proof_hash: vector&lt;u8&gt;, verified_tower_height: u64, latest_epoch_mining: u64, count_proofs_in_epoch: u64, epochs_validating_and_mining: u64, contiguous_epochs_validating_and_mining: u64, epochs_since_last_account_creation: u64)
 </code></pre>
 
 
@@ -1217,7 +1217,7 @@ fork tools. Migrate user state
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_migrate_user_tower_history">migrate_user_tower_history</a>(
+<pre><code><b>public</b> <b>fun</b> <a href="TowerState.md#0x1_TowerState_fork_migrate_user_tower_history">fork_migrate_user_tower_history</a>(
   vm: &signer,
   miner_sig: &signer,
   previous_proof_hash: vector&lt;u8&gt;,

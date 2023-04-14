@@ -141,15 +141,35 @@ address DiemFramework{
           address_of_beneficiary: address,
           pledge: Diem::Diem<GAS>
           ) acquires MyPledges, BeneficiaryPolicy {
-            assert!(exists<BeneficiaryPolicy>(address_of_beneficiary), Errors::invalid_state(ENO_BENEFICIARY_POLICY));
-            let sender_addr = Signer::address_of(sig);
-            let (found, idx) = pledge_at_idx(&sender_addr, &address_of_beneficiary);
-            if (found) {
-              add_coin_to_pledge_account(sig, idx, Diem::value(&pledge), pledge)
-            } else {
-              create_pledge_account(sig, address_of_beneficiary, pledge)
-            }
+          
+          assert!(exists<BeneficiaryPolicy>(address_of_beneficiary), Errors::invalid_state(ENO_BENEFICIARY_POLICY));
+          let sender_addr = Signer::address_of(sig);
+          let (found, idx) = pledge_at_idx(&sender_addr, &address_of_beneficiary);
+          if (found) {
+            add_coin_to_pledge_account(sender_addr, idx, pledge)
+          } else {
+            create_pledge_account(sig, address_of_beneficiary, pledge)
+          }
         }
+
+        public fun vm_add_to_pledge(
+          vm: &signer,
+          pledger: address,
+          address_of_beneficiary: address,
+          pledge: &mut Diem::Diem<GAS>
+        ) acquires MyPledges, BeneficiaryPolicy {
+          CoreAddresses::assert_vm(vm);
+          assert!(exists<BeneficiaryPolicy>(address_of_beneficiary), Errors::invalid_state(ENO_BENEFICIARY_POLICY));
+          
+          let (found, idx) = pledge_at_idx(&pledger, &address_of_beneficiary);
+          let value = Diem::value(pledge);
+          if (found) {
+            let c = Diem::withdraw(pledge, value);
+            add_coin_to_pledge_account(pledger, idx, c)
+          }
+          // caller of this function needs to decide what to do if the coin cannot be added. Which is why its a mutable reference.
+        }
+
         // Create a new pledge account on a user's list of pledges
         fun create_pledge_account(
           sig: &signer,
@@ -181,10 +201,10 @@ address DiemFramework{
 
         // add funds to an existing pledge account
         // Note: only funds that are Unlocked and otherwise unrestricted can be used in pledge account.
-        fun add_coin_to_pledge_account(sender: &signer, idx: u64, amount: u64, coin: Diem::Diem<GAS>) acquires MyPledges, BeneficiaryPolicy {
-          let sender_addr = Signer::address_of(sender);
+        fun add_coin_to_pledge_account(sender_addr: address, idx: u64, coin: Diem::Diem<GAS>) acquires MyPledges, BeneficiaryPolicy {
+          // let sender_addr = Signer::address_of(sender);
           // let (found, _idx) = pledge_at_idx(&sender_addr, &address_of_beneficiary);
-
+          let amount = Diem::value(&coin);
           let my_pledges = borrow_global_mut<MyPledges>(sender_addr);
           let pledge_account = Vector::borrow_mut(&mut my_pledges.list, idx);
 

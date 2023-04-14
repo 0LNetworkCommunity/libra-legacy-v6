@@ -110,13 +110,15 @@ script {
     use DiemFramework::DonorDirected;
     use DiemFramework::DonorDirectedGovernance;
     use Std::Signer;
+    use Std::GUID;
     // use DiemFramework::Debug::print;
     
     fun main(_dr: signer, sender: signer) {
       let a = DonorDirectedGovernance::check_is_donor(@Alice, Signer::address_of(&sender));
       assert!(a, 7357009);
+      let guid = GUID::create_id(@Alice, 2);
       // print(&a);
-      DonorDirected::propose_veto(&sender, @Alice, 2);
+      DonorDirected::propose_veto(&sender, &guid);
     }
 }
 // check: EXECUTED

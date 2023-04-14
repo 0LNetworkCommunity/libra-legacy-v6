@@ -7,6 +7,7 @@
 
 -  [Resource `UserReceipts`](#0x1_Receipts_UserReceipts)
 -  [Function `init`](#0x1_Receipts_init)
+-  [Function `fork_migrate`](#0x1_Receipts_fork_migrate)
 -  [Function `is_init`](#0x1_Receipts_is_init)
 -  [Function `write_receipt_vm`](#0x1_Receipts_write_receipt_vm)
 -  [Function `write_receipt`](#0x1_Receipts_write_receipt)
@@ -15,6 +16,7 @@
 
 <pre><code><b>use</b> <a href="CoreAddresses.md#0x1_CoreAddresses">0x1::CoreAddresses</a>;
 <b>use</b> <a href="DiemTimestamp.md#0x1_DiemTimestamp">0x1::DiemTimestamp</a>;
+<b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
@@ -94,6 +96,45 @@
       }
     )
   };
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_Receipts_fork_migrate"></a>
+
+## Function `fork_migrate`
+
+
+
+<pre><code><b>fun</b> <a href="Receipts.md#0x1_Receipts_fork_migrate">fork_migrate</a>(vm: &signer, account: &signer, destination: <b>address</b>, cumulative: u64, last_payment_timestamp: u64, last_payment_value: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="Receipts.md#0x1_Receipts_fork_migrate">fork_migrate</a>(
+  vm: &signer,
+  account: &signer,
+  destination: <b>address</b>,
+  cumulative: u64,
+  last_payment_timestamp: u64,
+  last_payment_value: u64,
+) <b>acquires</b> <a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a> {
+
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(account);
+  <b>assert</b>!(<a href="Receipts.md#0x1_Receipts_is_init">is_init</a>(addr), 0);
+  <b>let</b> state = <b>borrow_global_mut</b>&lt;<a href="Receipts.md#0x1_Receipts_UserReceipts">UserReceipts</a>&gt;(addr);
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> state.destination, destination);
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> state.cumulative, cumulative * <a href="Globals.md#0x1_Globals_get_coin_split_factor">Globals::get_coin_split_factor</a>());
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> state.last_payment_timestamp, last_payment_timestamp);
+  <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> state.last_payment_value, last_payment_value * <a href="Globals.md#0x1_Globals_get_coin_split_factor">Globals::get_coin_split_factor</a>());
 }
 </code></pre>
 

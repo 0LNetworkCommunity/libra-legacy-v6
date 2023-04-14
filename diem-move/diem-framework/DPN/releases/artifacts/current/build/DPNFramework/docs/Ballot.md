@@ -311,7 +311,6 @@ If you have a mutable BallotTracker instance AND you have the GUID Create Capabi
   <b>let</b> b = <a href="Ballot.md#0x1_Ballot">Ballot</a> {
 
     guid: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_create_with_capability">GUID::create_with_capability</a>(ignored_addr, guid_cap), // Note 0L's modification <b>to</b> Std::GUID, <b>address</b> is ignored.
-    // issue,
     tally_type,
     completed: <b>false</b>,
 

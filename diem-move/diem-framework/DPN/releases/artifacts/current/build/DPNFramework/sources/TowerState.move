@@ -529,7 +529,7 @@ module TowerState {
     }
 
     /// fork tools. Migrate user state
-    public fun migrate_user_tower_history(
+    public fun fork_migrate_user_tower_history(
       vm: &signer,
       miner_sig: &signer,
       previous_proof_hash: vector<u8>,

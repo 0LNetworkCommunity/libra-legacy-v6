@@ -5,7 +5,7 @@
 
 
 
--  [Function `migrate_user`](#0x1_GenesisMigration_migrate_user)
+-  [Function `fork_migrate_account`](#0x1_GenesisMigration_fork_migrate_account)
 -  [Function `are_you_a_val_or_oper`](#0x1_GenesisMigration_are_you_a_val_or_oper)
 
 
@@ -21,14 +21,14 @@
 
 
 
-<a name="0x1_GenesisMigration_migrate_user"></a>
+<a name="0x1_GenesisMigration_fork_migrate_account"></a>
 
-## Function `migrate_user`
+## Function `fork_migrate_account`
 
 Called by root in genesis to initialize the GAS coin
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="GenesisMigration.md#0x1_GenesisMigration_migrate_user">migrate_user</a>(vm: &signer, user_sig: &signer, auth_key: vector&lt;u8&gt;, balance: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="GenesisMigration.md#0x1_GenesisMigration_fork_migrate_account">fork_migrate_account</a>(vm: &signer, user_sig: &signer, auth_key: vector&lt;u8&gt;, balance: u64)
 </code></pre>
 
 
@@ -37,7 +37,7 @@ Called by root in genesis to initialize the GAS coin
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="GenesisMigration.md#0x1_GenesisMigration_migrate_user">migrate_user</a>(
+<pre><code><b>public</b> <b>fun</b> <a href="GenesisMigration.md#0x1_GenesisMigration_fork_migrate_account">fork_migrate_account</a>(
     vm: &signer,
     user_sig: &signer,
     // user_addr: <b>address</b>,
