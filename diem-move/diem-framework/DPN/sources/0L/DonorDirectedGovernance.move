@@ -23,6 +23,7 @@ module DonorDirectedGovernance {
     use DiemFramework::DiemAccount;
     use DiemFramework::DiemConfig;
     use Std::Vector;
+    use DiemFramework::Debug::print;
 
     /// Is not a donor to this account
     const ENOT_A_DONOR: u64 = 220000;
@@ -103,13 +104,15 @@ module DonorDirectedGovernance {
     }
 
   /// Liquidation tally only. The handler for liquidation exists in DonorDirected, where a tx script will call it.
-  public(friend) fun vote_liquidate(donor: &signer, multisig_address: address): Option<bool> acquires Governance{
+  public(friend) fun vote_liquidation(donor: &signer, multisig_address: address): Option<bool> acquires Governance{
     assert_authorized(donor, multisig_address);
     let state = borrow_global_mut<Governance<TurnoutTally<Liquidate>>>(multisig_address);
 
     // for liquidation there is only ever one proposal, which never expires 
     // so always taket the first one from pending.
     let pending_list = Ballot::get_list_ballots_by_enum_mut(&mut state.tracker, Ballot::get_pending_enum());
+    print(pending_list);
+
     if (Vector::is_empty(pending_list)) {
       return Option::none<bool>()
     };
@@ -154,9 +157,9 @@ module DonorDirectedGovernance {
       TurnoutTally::extend_deadline(tally_state, epoch_deadline);
 
     }
-
-
-
+    
+    /// only DonorDirected can call this. The veto and liquidate handlers need
+    /// to be located there. So users should not call functions here.
     public(friend) fun propose_veto(
       cap: &GUID::CreateCapability,
       guid: &GUID::ID, // Id of initiated transaction.
@@ -179,8 +182,9 @@ module DonorDirectedGovernance {
     fun propose_gov<GovAction: drop + store>(cap: &GUID::CreateCapability, data: GovAction, epochs_duration: u64) acquires Governance {
       let directed_account = GUID::get_capability_address(cap);
       let gov_state = borrow_global_mut<Governance<TurnoutTally<GovAction>>>(directed_account);
-      
-      // let data = Veto { guid: proposal_guid };
+
+      if (!is_unique_proposal(&gov_state.tracker, &data)) return;
+
       // what's the maximum universe of valid votes.
       let max_votes_enrollment = get_enrollment(directed_account);
       if (epochs_duration < 7) {
@@ -191,7 +195,6 @@ module DonorDirectedGovernance {
       let max_extensions = 0; // infinite
 
       let t = TurnoutTally::new_tally_struct(
-        // cap,
         data,
         max_votes_enrollment,
         deadline,
@@ -201,7 +204,24 @@ module DonorDirectedGovernance {
       Ballot::propose_ballot(&mut gov_state.tracker, cap, t);
     }
 
+    /// Check if a proposal has already been made for this transaction.
+    fun is_unique_proposal<GovAction: drop + store>(tracker: &BallotTracker<TurnoutTally<GovAction>>, data: &GovAction): bool {
+      // NOTE: Ballot.move does not check for duplicates. We need to check here.
+      let list_pending = Ballot::get_list_ballots_by_enum(tracker, Ballot::get_pending_enum());
 
+      let len = Vector::length(list_pending);
+      let i = 0;
+
+      while (i < len) {
+        let ballot = Vector::borrow(list_pending, i);
+        let ballot_data = Ballot::get_type_struct(ballot);
+
+        if (TurnoutTally::get_tally_data(ballot_data) == data) return false;
+
+        i = i + 1;
+      };
+      true
+    }
 
 }
 }

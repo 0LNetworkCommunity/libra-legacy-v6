@@ -45,6 +45,7 @@ address DiemFramework {
     use Std::Option::{Self, Option};
     use DiemFramework::DiemConfig;
     use DiemFramework::VoteReceipt;
+    use DiemFramework::Debug::print;
 
     /// The ballot has already been completed.
     const ECOMPLETED: u64 = 300010; 
@@ -94,8 +95,7 @@ address DiemFramework {
 
 
     struct TurnoutTally<Data> has key, store, drop { // Note, this is a hot potato. Any methods chaning it must return the struct to caller.
-      // guid: GUID,
-      data: Data, // TODO: change to ascii string
+      data: Data,
       cfg_deadline: u64, // original deadline, which may be extended. Note dedaline is at the END of this epoch (cfg_deadline + 1 stops taking votes)
       cfg_max_extensions: u64, // if 0 then no max. Election can run until threshold is met.
       cfg_min_turnout: u64,
@@ -123,10 +123,8 @@ address DiemFramework {
       max_vote_enrollment: u64,
       deadline: u64,
       max_extensions: u64,
-      // TODO: allow extensions in contested elections
     ): TurnoutTally<Data> {
         TurnoutTally<Data> {
-          // guid: GUID::create_with_capability(GUID::get_capability_address(guid_cap), guid_cap),
           data,
           cfg_deadline: deadline,
           cfg_max_extensions: max_extensions, // 0 means infinite extensions
@@ -313,6 +311,8 @@ address DiemFramework {
     fun maybe_tally<Data: drop + store>(ballot: &mut TurnoutTally<Data>) {
       let total_votes = ballot.votes_approve + ballot.votes_reject;
 
+      print(&total_votes);
+
       assert!(ballot.max_votes >= total_votes, Errors::invalid_state(EVOTES_GREATER_THAN_ENROLLMENT));
 
       // figure out the turnout
@@ -386,6 +386,10 @@ address DiemFramework {
         return 0
       };
       return FixedPoint32::multiply_u64(PCT_SCALE, FixedPoint32::create_from_rational(total, ballot.max_votes))
+    }
+
+    public fun get_tally_data<Data: store>(ballot: &TurnoutTally<Data>): &Data {
+      &ballot.data
     }
 
     /// is it complete and what's the result
