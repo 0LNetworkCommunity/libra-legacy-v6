@@ -257,6 +257,7 @@ pub fn encode_recovery_genesis_changeset(
     recovery_owners_operators(&mut session, val_assignments, operator_recovers);
     OLProgress::complete(&format!("Migrate legacy validator configs [{}]",  val_assignments.len()));
 
+    migrate_root_state(&mut session, legacy_data);
     // Recover the user balances and data
     // NOTE: 0L: this includes the balances of legacy validators.
     if append_users  {
@@ -302,10 +303,10 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
   let filtered_data: Vec<&LegacyRecovery>= legacy_data
   .iter()
   .filter(|d| {
-        d.account.is_some() &&
-        d.account != Some(AccountAddress::ZERO)
-    })
-    .collect();
+      d.account.is_some() &&
+      d.account != Some(AccountAddress::ZERO)
+  })
+  .collect();
 
     let mut total_balance_restored = 0u64;
     for user in filtered_data.iter()
@@ -324,16 +325,189 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
         exec_function(
           session,
           "GenesisMigration",
-          "migrate_user",
+          "fork_migrate_account",
           vec![],
           serialize_values(&args)
-        )
+        );
+
+
+        if let Some(tower) = &user.miner_state {
+          let tower_args = vec![
+              // both the VM and the user signatures need to be mocked.
+              MoveValue::Signer(account_config::diem_root_address()),
+              MoveValue::Signer(user.account.expect("Account address is missing")),
+
+              MoveValue::vector_u8(tower.previous_proof_hash.clone()),
+              MoveValue::U64(tower.verified_tower_height),
+              MoveValue::U64(tower.latest_epoch_mining),
+              MoveValue::U64(tower.count_proofs_in_epoch),
+              MoveValue::U64(tower.epochs_validating_and_mining),
+              MoveValue::U64(tower.contiguous_epochs_validating_and_mining),
+              MoveValue::U64(tower.epochs_since_last_account_creation),
+
+          ];
+          exec_function(
+            session,
+            "TowerState",
+            "fork_migrate_user_tower_history",
+            vec![],
+            serialize_values(&tower_args)
+          );
+        }
+
+        if let Some(mk) = &user.make_whole {
+          if let Some(cred) =  mk.credits.iter().next() {
+            let mk_args = vec![
+                // both the VM and the user signatures need to be mocked.
+                MoveValue::Signer(account_config::diem_root_address()),
+                MoveValue::Signer(user.account.expect("Account address is missing")),
+                MoveValue::U64(cred.coins.value),
+                MoveValue::vector_u8(cred.incident_name.clone()),
+            ];
+            exec_function(
+              session,
+              "MakeWhole",
+              "vm_offer_credit",
+              vec![],
+              serialize_values(&mk_args)
+            );
+          }
+        }
+      
+      if let Some(anc) = &user.ancestry {
+        let args = vec![
+            // both the VM and the user signatures need to be mocked.
+            MoveValue::Signer(account_config::diem_root_address()),
+            MoveValue::Signer(user.account.expect("Account address is missing")),
+            MoveValue::vector_address(anc.tree.clone()),
+        ];
+        exec_function(
+          session,
+          "Ancestry",
+          "fork_migrate",
+          vec![],
+          serialize_values(&args)
+        );
+      }
+
+      if let Some(rec) = &user.receipts {
+        // iterate through the receipts and call the migrate_one function.
+        // this is a workaround because MoveValue is annoying to 
+        // create a vector of arbitrary type
+        rec.destination.iter()
+        .enumerate()
+        .for_each(|(idx, _d)|{
+            let args = vec![
+                // both the VM and the user signatures need to be mocked.
+                MoveValue::Signer(account_config::diem_root_address()),
+                MoveValue::Signer(user.account.expect("Account address is missing")),
+                // destination: vector<address>,
+                MoveValue::Address(rec.destination[idx]),
+                // cumulative: vector<u64>,
+                MoveValue::U64(rec.cumulative[idx]),
+                // last_payment_timestamp: vector<u64>,
+                MoveValue::U64(rec.last_payment_timestamp[idx]),
+                // last_payment_value: vector<u64>,
+                MoveValue::U64(rec.last_payment_value[idx]),
+            ];
+          exec_function(
+            session,
+            "Receipts",
+            "fork_migrate",
+            vec![],
+            serialize_values(&args)
+          );
+        });
+      }
+
+      if let Some(cumu) = &user.cumulative_deposits {
+            let args = vec![
+                // both the VM and the user signatures need to be mocked.
+                MoveValue::Signer(account_config::diem_root_address()),
+                MoveValue::Signer(user.account.expect("Account address is missing")),
+                MoveValue::U64(cumu.value),
+                MoveValue::U64(cumu.index),
+            ];
+            exec_function(
+              session,
+              "DiemAccount",
+              "fork_migrate_cumulative_deposits",
+              vec![],
+              serialize_values(&args)
+            );
+        }
+
+        if let Some(slow) = &user.slow_wallet {
+            let args = vec![
+                // both the VM and the user signatures need to be mocked.
+                MoveValue::Signer(account_config::diem_root_address()),
+                MoveValue::Signer(user.account.expect("Account address is missing")),
+                MoveValue::U64(slow.unlocked),
+                MoveValue::U64(slow.transferred),
+            ];
+            exec_function(
+              session,
+              "DiemAccount",
+              "fork_migrate_slow_wallet",
+              vec![],
+              serialize_values(&args)
+            );
+
+          exec_function(
+              session,
+              "DiemAccount",
+              "fork_migrate_slow_list",
+              vec![],
+              serialize_values(&args)
+            );
+          }
+          // also execute the function to track this account in root state
     }
 
     Ok(total_balance_restored)
 }
 
 
+fn migrate_root_state(session: &mut Session<StateViewCache<GenesisStateView>>, legacy_data: &[LegacyRecovery]) {
+
+  let filtered_data: Option<&LegacyRecovery> = legacy_data
+  .iter()
+  .find(|&d| {
+        // d.account.is_some() &&
+        d.account == Some(AccountAddress::ZERO)
+    });
+  if let Some(rec) = filtered_data{
+    if let Some(comm_w) = &rec.comm_wallet {
+      let args = vec![
+          // both the VM and the user signatures need to be mocked.
+          MoveValue::Signer(account_config::diem_root_address()),
+          MoveValue::vector_address(comm_w.list.clone()),
+      ];
+      exec_function(
+        session,
+        "DonorDirected",
+        "migrate_root_registry",
+        vec![],
+        serialize_values(&args)
+      );
+
+        // for every address we also want to set the
+        // community wallet flag on the account struct.
+        comm_w.list.iter().for_each(|addr| {
+        let args = vec![
+            MoveValue::Signer(*addr),
+        ];
+        exec_function(
+          session,
+          "CommunityWallet",
+          "set_comm_wallet",
+          vec![],
+          serialize_values(&args)
+        );
+      });
+    }
+  }
+}
 
 fn exec_function(
     session: &mut Session<StateViewCache<GenesisStateView>>,
@@ -512,7 +686,7 @@ fn create_and_initialize_owners_operators(
     let mut full_node_network_addresses = vec![];
 
     for v in validators {
-        println!("Address: {:?}", &v.address);
+        info!("Address: {:?}", &v.address);
         owners.push(MoveValue::Signer(v.address));
         owner_names.push(MoveValue::vector_u8(v.name.clone()));
         owner_auth_keys.push(MoveValue::vector_u8(v.auth_key.to_vec()));

@@ -23,7 +23,7 @@
 -  [Function `tally_vote`](#0x1_PledgeAccounts_tally_vote)
 -  [Function `dissolve_beneficiary_project`](#0x1_PledgeAccounts_dissolve_beneficiary_project)
 -  [Function `genesis_infra_escrow_pledge`](#0x1_PledgeAccounts_genesis_infra_escrow_pledge)
--  [Function `user_pledge_tx`](#0x1_PledgeAccounts_user_pledge_tx)
+-  [Function `user_pledge`](#0x1_PledgeAccounts_user_pledge)
 -  [Function `pledge_at_idx`](#0x1_PledgeAccounts_pledge_at_idx)
 -  [Function `get_user_pledge_amount`](#0x1_PledgeAccounts_get_user_pledge_amount)
 -  [Function `get_available_to_beneficiary`](#0x1_PledgeAccounts_get_available_to_beneficiary)
@@ -906,13 +906,13 @@
 
 </details>
 
-<a name="0x1_PledgeAccounts_user_pledge_tx"></a>
+<a name="0x1_PledgeAccounts_user_pledge"></a>
 
-## Function `user_pledge_tx`
+## Function `user_pledge`
 
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_user_pledge_tx">user_pledge_tx</a>(user_sig: signer, beneficiary: <b>address</b>, amount: u64)
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_user_pledge">user_pledge</a>(user_sig: &signer, beneficiary: <b>address</b>, amount: u64)
 </code></pre>
 
 
@@ -921,9 +921,9 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b>(<b>script</b>) <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_user_pledge_tx">user_pledge_tx</a>(user_sig: signer, beneficiary: <b>address</b>, amount: u64)  <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>, <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a> {
-  <b>let</b> coin = <a href="DiemAccount.md#0x1_DiemAccount_simple_withdrawal">DiemAccount::simple_withdrawal</a>(&user_sig, amount);
-  <a href="PledgeAccounts.md#0x1_PledgeAccounts_save_pledge">save_pledge</a>(&user_sig, beneficiary, coin);
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_user_pledge">user_pledge</a>(user_sig: &signer, beneficiary: <b>address</b>, amount: u64) <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>, <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a> {
+  <b>let</b> coin = <a href="DiemAccount.md#0x1_DiemAccount_simple_withdrawal">DiemAccount::simple_withdrawal</a>(user_sig, amount);
+  <a href="PledgeAccounts.md#0x1_PledgeAccounts_save_pledge">save_pledge</a>(user_sig, beneficiary, coin);
 }
 </code></pre>
 

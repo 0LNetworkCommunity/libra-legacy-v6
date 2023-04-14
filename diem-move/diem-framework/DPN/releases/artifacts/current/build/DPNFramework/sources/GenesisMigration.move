@@ -13,18 +13,22 @@ module GenesisMigration {
   use DiemFramework::GAS::GAS;
   use DiemFramework::ValidatorUniverse;
   use DiemFramework::ValidatorOperatorConfig;
-  // // use DiemFramework::Debug::print;
+  use DiemFramework::Globals;
+  use DiemFramework::InfraEscrow;
+  use Std::Signer;
 
 
     /// Called by root in genesis to initialize the GAS coin 
     public fun migrate_user(
         vm: &signer,
-        user_addr: address,
+        user_sig: &signer,
+        // user_addr: address,
         auth_key: vector<u8>,
         balance: u64,
     ) {
+      let user_addr = Signer::address_of(user_sig);
       // if not a validator OR operator of a validator, create a new account
-      // previously at genesis validator and oper accounts were already created
+      // previously during genesis validator and oper accounts were already created
       if (!are_you_a_val_or_oper(user_addr)) {
         DiemAccount::vm_create_account_migration(
           vm,
@@ -36,10 +40,13 @@ module GenesisMigration {
       
       // mint coins again to migrate balance, and all
       // system tracking of balances
-      if (balance < 1) {
+      if (balance == 0) {
         return
       };
-      let minted_coins = Diem::mint<GAS>(vm, balance);
+      // scale up by the coin split factor
+      let new_balance = Globals::get_coin_split_factor() * balance;
+
+      let minted_coins = Diem::mint<GAS>(vm, new_balance);
       let value_coin = Diem::value<GAS>(&minted_coins);
       DiemAccount::vm_deposit_with_metadata<GAS>(
         vm,
@@ -52,12 +59,21 @@ module GenesisMigration {
 
       let balance = DiemAccount::balance<GAS>(user_addr);
       assert!(balance == value_coin, 0);
+
+      // establish the infrastructure escrow pledge
+      if (ValidatorUniverse::is_in_universe(user_addr)) {
+        // TODO: governance
+        let pct = 1;
+        let share = (balance * pct) / 100;
+        InfraEscrow::user_pledge_infra(user_sig, share)
+      };
+
+
     }
 
     fun are_you_a_val_or_oper(user_addr: address): bool {
       ValidatorUniverse::is_in_universe(user_addr) ||
       ValidatorOperatorConfig::has_validator_operator_config(user_addr)
     }
-
 }
 }

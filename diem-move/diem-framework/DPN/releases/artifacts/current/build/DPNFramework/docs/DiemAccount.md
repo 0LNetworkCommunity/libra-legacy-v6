@@ -32,7 +32,6 @@ before and after every transaction.
 -  [Function `initialize_escrow`](#0x1_DiemAccount_initialize_escrow)
 -  [Function `initialize_escrow_root`](#0x1_DiemAccount_initialize_escrow_root)
 -  [Function `initialize`](#0x1_DiemAccount_initialize)
--  [Function `create_user_account_with_proof`](#0x1_DiemAccount_create_user_account_with_proof)
 -  [Function `create_user_account_with_coin`](#0x1_DiemAccount_create_user_account_with_coin)
 -  [Function `vm_create_account_migration`](#0x1_DiemAccount_vm_create_account_migration)
 -  [Function `test_harness_create_user`](#0x1_DiemAccount_test_harness_create_user)
@@ -1474,50 +1473,6 @@ Initialize this module. This is only callable from genesis.
 <b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_CreateDiemRootAccountEnsures">CreateDiemRootAccountEnsures</a>;
 <b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_CreateTreasuryComplianceAccountModifies">CreateTreasuryComplianceAccountModifies</a>;
 <b>include</b> <a href="DiemAccount.md#0x1_DiemAccount_CreateTreasuryComplianceAccountEnsures">CreateTreasuryComplianceAccountEnsures</a>;
-</code></pre>
-
-
-
-</details>
-
-<a name="0x1_DiemAccount_create_user_account_with_proof"></a>
-
-## Function `create_user_account_with_proof`
-
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_create_user_account_with_proof">create_user_account_with_proof</a>(sender: &signer, challenge: &vector&lt;u8&gt;, solution: &vector&lt;u8&gt;, difficulty: u64, security: u64): <b>address</b>
-</code></pre>
-
-
-
-<details>
-<summary>Implementation</summary>
-
-
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_create_user_account_with_proof">create_user_account_with_proof</a>(
-    sender: &signer,
-    challenge: &vector&lt;u8&gt;,
-    solution: &vector&lt;u8&gt;,
-    difficulty: u64,
-    security: u64,
-):<b>address</b> <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>, <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a> {
-    // TODO: extract address_duplicated <b>with</b> <a href="TowerState.md#0x1_TowerState_init_miner_state">TowerState::init_miner_state</a>
-    <b>let</b> (new_account_address, auth_key_prefix) = <a href="VDF.md#0x1_VDF_extract_address_from_challenge">VDF::extract_address_from_challenge</a>(challenge);
-    <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
-    <a href="Roles.md#0x1_Roles_new_user_role_with_proof">Roles::new_user_role_with_proof</a>(&new_signer);
-    <a href="DiemAccount.md#0x1_DiemAccount_make_account">make_account</a>(&new_signer, auth_key_prefix);
-    <a href="DiemAccount.md#0x1_DiemAccount_add_currencies_for_account">add_currencies_for_account</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(&new_signer, <b>false</b>);
-
-    <a href="DiemAccount.md#0x1_DiemAccount_onboarding_gas_transfer">onboarding_gas_transfer</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(sender, new_account_address, <a href="DiemAccount.md#0x1_DiemAccount_BOOTSTRAP_COIN_VALUE">BOOTSTRAP_COIN_VALUE</a>);
-    // Init the miner state
-    // this verifies the <a href="VDF.md#0x1_VDF">VDF</a> proof, which we <b>use</b> <b>to</b> rate limit account creation.
-    // account will not be created <b>if</b> this step fails.
-    <b>let</b> new_signer = <a href="DiemAccount.md#0x1_DiemAccount_create_signer">create_signer</a>(new_account_address);
-    <a href="TowerState.md#0x1_TowerState_init_miner_state">TowerState::init_miner_state</a>(&new_signer, challenge, solution, difficulty, security);
-    // <a href="DiemAccount.md#0x1_DiemAccount_set_slow">set_slow</a>(&new_signer);
-    new_account_address
-}
 </code></pre>
 
 
