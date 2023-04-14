@@ -3747,10 +3747,12 @@ module DiemFramework::DiemAccount {
 
           // also write the receipt to the payee's account.
           Receipts::write_receipt(payer, payee, deposit_value);
-
         };
+    }
 
-
+    public fun get_depositors(payee: address): vector<address> acquires CumulativeDeposits {
+      let cumu = borrow_global<CumulativeDeposits>(payee);
+      *&cumu.depositors
     }
 
     /// adjust the points of the deposits favoring more recent deposits.

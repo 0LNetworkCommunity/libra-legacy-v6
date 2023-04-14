@@ -37,8 +37,8 @@ module DonorDirected {
     use DiemFramework::DiemAccount::{Self, WithdrawCapability};
     use DiemFramework::DonorDirectedGovernance;
     use DiemFramework::Ballot;
-
-    // use DiemFramework::Debug::print;
+    use DiemFramework::Receipts;
+    use DiemFramework::TransactionFee;
 
     /// Not initialized as a donor directed account.
     const ENOT_INIT_DONOR_DIRECTED: u64 = 231001;
@@ -65,7 +65,8 @@ module DonorDirected {
 
     // root registry for the donor directed accounts
     struct Registry has key {
-      list: vector<address>
+      list: vector<address>,
+      liquidation_queue: vector<address>,
     }
 
     // Timed transfer schedule pipeline
@@ -96,7 +97,7 @@ module DonorDirected {
       is_frozen: bool,
       consecutive_rejections: u64,
       unfreeze_votes: vector<address>,
-      liquidate_to_infra_escrow: bool,
+      liquidate_to_community_wallets: bool,
     }
 
     struct Donors has key {
@@ -112,7 +113,8 @@ module DonorDirected {
       CoreAddresses::assert_diem_root(vm);
       if (!is_root_init()) {
         move_to<Registry>(vm, Registry {
-          list: Vector::empty<address>()
+          list: Vector::empty<address>(),
+          liquidation_queue: Vector::empty<address>(),
         });
       };
     }
@@ -127,6 +129,7 @@ module DonorDirected {
       if (!is_root_init()) {
         move_to<Registry>(vm, Registry {
           list,
+          liquidation_queue: Vector::empty<address>(),
         });
       };
     }
@@ -140,7 +143,7 @@ module DonorDirected {
 
     // 3. Once the MultiSig is initialized, the account needs to be bricked, before the MultiSig can be used.
 
-    public fun set_donor_directed(sig: &signer, liquidate_to_infra_escrow: bool) {
+    public fun set_donor_directed(sig: &signer, liquidate_to_community_wallets: bool) {
       if (!exists<Registry>(@VMReserved)) return;
 
       move_to<Freeze>(
@@ -149,7 +152,7 @@ module DonorDirected {
           is_frozen: false,
           consecutive_rejections: 0,
           unfreeze_votes: Vector::empty<address>(),
-          liquidate_to_infra_escrow,
+          liquidate_to_community_wallets,
         }
       );
 
@@ -491,30 +494,86 @@ module DonorDirected {
       DonorDirectedGovernance::propose_liquidate(&state.guid_capability, epochs_duration);
     }
 
-    fun liquidate_handler(donor: &signer, multisig_address: address) acquires Freeze {
+    fun liquidate_handler(donor: &signer, multisig_address: address) acquires Freeze, Registry {
       DonorDirectedGovernance::assert_authorized(donor, multisig_address);
       let res = DonorDirectedGovernance::vote_liquidate(donor, multisig_address);
       if (Option::is_some(&res)) {
         if (*Option::borrow(&res)) {
-          liquidate(multisig_address);
+          // The VM will call this function to liquidate the wallet.
+          // the donors cannot do this because they cant get the withdrawal capability
+          // from the multisig account.
+
+          // first we freeze it so nothing can happen in the interim.
+          let f = borrow_global_mut<Freeze>(multisig_address);
+          f.is_frozen = true;
+          let f = borrow_global_mut<Registry>(@VMReserved);
+          Vector::push_back(&mut f.liquidation_queue, multisig_address);
       }
     }
    }
+  /// The VM will call this function to liquidate all donor directed
+  /// wallets in the queue.
 
-   fun liquidate(multisig_address: address) acquires Freeze{
-    // first we freeze it
-    let f = borrow_global_mut<Freeze>(multisig_address);
-    f.is_frozen = true;
-
-    // then we split the funds and send it back to the user's wallet
-    // if this account was tagged a community wallet, then the 
-    // funds go back to infrastructure escrow account.
-
-    if (liquidates_to_escrow(multisig_address)) {
-      
-      } else {
+   fun vm_liquidate(vm: &signer) acquires Freeze, Registry {
+      CoreAddresses::assert_vm(vm);
+      let f = borrow_global_mut<Registry>(@VMReserved);
+      let len = Vector::length(&f.liquidation_queue);
+      let i = 0;
+      while (i < len) {
+        let multisig_address = Vector::borrow(&f.liquidation_queue, i);
         
+        // if this account was tagged a community wallet, then the 
+        // funds get split pro-rata at the current split of the 
+        // burn recycle algorithm.
+        // Easiest way to do this is to send it to transaction fee account
+        // so it can be split up by the burn recycle algorithm.
+        // and trying to call Burn, here will create a circular dependency.
+
+        if (liquidates_to_escrow(*multisig_address)) {
+          let balance = DiemAccount::balance<GAS>(*multisig_address);
+          let c = DiemAccount::vm_withdraw<GAS>(vm, *multisig_address, balance);
+          TransactionFee::pay_fee(c);
+          
+          return
+        };
+
+
+        // otherwise the default case is that donors get their funds back.
+        let (pro_rata_addresses, pro_rata_amounts) = get_pro_rata(*multisig_address);
+
+        let k = 0;
+        let len = Vector::length(&pro_rata_addresses);
+        // then we split the funds and send it back to the user's wallet
+        while (k < len) {
+            let addr = Vector::borrow(&pro_rata_addresses, i);
+            let amount = Vector::borrow(&pro_rata_amounts, i);
+            DiemAccount::vm_pay_from<GAS>(*multisig_address, *addr, *amount, b"liquidation", b"", vm);
+
+            k = k + 1;
+        };
+        i = i + 1;
       }
+   }
+
+   fun get_pro_rata(multisig_address: address): (vector<address>, vector<u64>) {
+    // get total fees
+    let balance = DiemAccount::balance<GAS>(multisig_address);
+    let donors = DiemAccount::get_depositors(multisig_address);
+    let pro_rata_addresses = Vector::empty<address>();
+    let pro_rata_amounts = Vector::empty<u64>();
+
+    let i = 0;
+    let len = Vector::length(&donors);
+    while (i < len) {
+      let donor = Vector::borrow(&donors, i);
+      let (_, _, cumu)  = Receipts::read_receipt(*donor, multisig_address);
+      let pro_rata = cumu / balance;
+      Vector::push_back(&mut pro_rata_addresses, *donor);
+      Vector::push_back(&mut pro_rata_amounts, pro_rata);
+      i = i + 1;
+    };
+
+      (pro_rata_addresses, pro_rata_amounts)
    }
 
     //////// GETTERS ////////
@@ -560,7 +619,7 @@ module DonorDirected {
 
     public fun liquidates_to_escrow(addr: address): bool acquires Freeze{
       let f = borrow_global<Freeze>(addr);
-      f.liquidate_to_infra_escrow
+      f.liquidate_to_community_wallets
     }
 
     //////// TRANSACTION SCRIPTS ////////
@@ -575,8 +634,8 @@ module DonorDirected {
 
       // we are setting liquidation to infra escrow as false by default
       // the user can send another transacton to change this.
-      let liquidate_to_infra_escrow = false;
-      set_donor_directed(sponsor, liquidate_to_infra_escrow);
+      let liquidate_to_community_wallets = false;
+      set_donor_directed(sponsor, liquidate_to_community_wallets);
       make_multisig(sponsor, cfg_n_signers, init_signers);
 
       // if not tracking cumulative donations, then don't use previous balance.
@@ -586,9 +645,9 @@ module DonorDirected {
     
     /// option to set the liquidation destination to infrastructure escrow
     /// must be done before the multisig is finalized and the sponsor cannot control the account.
-    public fun set_liquidate_to_infra_escrow(sponsor: &signer, liquidate_to_infra_escrow: bool) acquires Freeze {
+    public fun set_liquidate_to_community_wallets(sponsor: &signer, liquidate_to_community_wallets: bool) acquires Freeze {
       let f = borrow_global_mut<Freeze>(Signer::address_of(sponsor));
-      f.liquidate_to_infra_escrow = liquidate_to_infra_escrow;
+      f.liquidate_to_community_wallets = liquidate_to_community_wallets;
     }
 
     /// the sponsor must finalize the initialization, this is a separate step so that the user can optionally check everything is in order before bricking the account key.

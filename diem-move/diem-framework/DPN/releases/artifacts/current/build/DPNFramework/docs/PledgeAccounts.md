@@ -12,6 +12,7 @@
 -  [Function `publish_beneficiary_policy`](#0x1_PledgeAccounts_publish_beneficiary_policy)
 -  [Function `maybe_initialize_my_pledges`](#0x1_PledgeAccounts_maybe_initialize_my_pledges)
 -  [Function `save_pledge`](#0x1_PledgeAccounts_save_pledge)
+-  [Function `vm_add_to_pledge`](#0x1_PledgeAccounts_vm_add_to_pledge)
 -  [Function `create_pledge_account`](#0x1_PledgeAccounts_create_pledge_account)
 -  [Function `add_coin_to_pledge_account`](#0x1_PledgeAccounts_add_coin_to_pledge_account)
 -  [Function `withdraw_from_all_pledge_accounts`](#0x1_PledgeAccounts_withdraw_from_all_pledge_accounts)
@@ -352,14 +353,53 @@
   address_of_beneficiary: <b>address</b>,
   pledge: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;
   ) <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a>, <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a> {
-    <b>assert</b>!(<b>exists</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(address_of_beneficiary), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="PledgeAccounts.md#0x1_PledgeAccounts_ENO_BENEFICIARY_POLICY">ENO_BENEFICIARY_POLICY</a>));
-    <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
-    <b>let</b> (found, idx) = <a href="PledgeAccounts.md#0x1_PledgeAccounts_pledge_at_idx">pledge_at_idx</a>(&sender_addr, &address_of_beneficiary);
-    <b>if</b> (found) {
-      <a href="PledgeAccounts.md#0x1_PledgeAccounts_add_coin_to_pledge_account">add_coin_to_pledge_account</a>(sig, idx, <a href="Diem.md#0x1_Diem_value">Diem::value</a>(&pledge), pledge)
-    } <b>else</b> {
-      <a href="PledgeAccounts.md#0x1_PledgeAccounts_create_pledge_account">create_pledge_account</a>(sig, address_of_beneficiary, pledge)
-    }
+
+  <b>assert</b>!(<b>exists</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(address_of_beneficiary), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="PledgeAccounts.md#0x1_PledgeAccounts_ENO_BENEFICIARY_POLICY">ENO_BENEFICIARY_POLICY</a>));
+  <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sig);
+  <b>let</b> (found, idx) = <a href="PledgeAccounts.md#0x1_PledgeAccounts_pledge_at_idx">pledge_at_idx</a>(&sender_addr, &address_of_beneficiary);
+  <b>if</b> (found) {
+    <a href="PledgeAccounts.md#0x1_PledgeAccounts_add_coin_to_pledge_account">add_coin_to_pledge_account</a>(sender_addr, idx, pledge)
+  } <b>else</b> {
+    <a href="PledgeAccounts.md#0x1_PledgeAccounts_create_pledge_account">create_pledge_account</a>(sig, address_of_beneficiary, pledge)
+  }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_PledgeAccounts_vm_add_to_pledge"></a>
+
+## Function `vm_add_to_pledge`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_vm_add_to_pledge">vm_add_to_pledge</a>(vm: &signer, pledger: <b>address</b>, address_of_beneficiary: <b>address</b>, pledge: &<b>mut</b> <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_vm_add_to_pledge">vm_add_to_pledge</a>(
+  vm: &signer,
+  pledger: <b>address</b>,
+  address_of_beneficiary: <b>address</b>,
+  pledge: &<b>mut</b> <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;
+) <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a>, <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a> {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <b>assert</b>!(<b>exists</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a>&gt;(address_of_beneficiary), <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Errors.md#0x1_Errors_invalid_state">Errors::invalid_state</a>(<a href="PledgeAccounts.md#0x1_PledgeAccounts_ENO_BENEFICIARY_POLICY">ENO_BENEFICIARY_POLICY</a>));
+
+  <b>let</b> (found, idx) = <a href="PledgeAccounts.md#0x1_PledgeAccounts_pledge_at_idx">pledge_at_idx</a>(&pledger, &address_of_beneficiary);
+  <b>let</b> value = <a href="Diem.md#0x1_Diem_value">Diem::value</a>(pledge);
+  <b>if</b> (found) {
+    <b>let</b> c = <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(pledge, value);
+    <a href="PledgeAccounts.md#0x1_PledgeAccounts_add_coin_to_pledge_account">add_coin_to_pledge_account</a>(pledger, idx, c)
+  }
+  // caller of this function needs <b>to</b> decide what <b>to</b> do <b>if</b> the coin cannot be added. Which is why its a mutable reference.
 }
 </code></pre>
 
@@ -421,7 +461,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_add_coin_to_pledge_account">add_coin_to_pledge_account</a>(sender: &signer, idx: u64, amount: u64, coin: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;)
+<pre><code><b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_add_coin_to_pledge_account">add_coin_to_pledge_account</a>(sender_addr: <b>address</b>, idx: u64, coin: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS_GAS">GAS::GAS</a>&gt;)
 </code></pre>
 
 
@@ -430,10 +470,10 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_add_coin_to_pledge_account">add_coin_to_pledge_account</a>(sender: &signer, idx: u64, amount: u64, coin: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;) <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a>, <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a> {
-  <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
+<pre><code><b>fun</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_add_coin_to_pledge_account">add_coin_to_pledge_account</a>(sender_addr: <b>address</b>, idx: u64, coin: <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;) <b>acquires</b> <a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a>, <a href="PledgeAccounts.md#0x1_PledgeAccounts_BeneficiaryPolicy">BeneficiaryPolicy</a> {
+  // <b>let</b> sender_addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sender);
   // <b>let</b> (found, _idx) = <a href="PledgeAccounts.md#0x1_PledgeAccounts_pledge_at_idx">pledge_at_idx</a>(&sender_addr, &address_of_beneficiary);
-
+  <b>let</b> amount = <a href="Diem.md#0x1_Diem_value">Diem::value</a>(&coin);
   <b>let</b> my_pledges = <b>borrow_global_mut</b>&lt;<a href="PledgeAccounts.md#0x1_PledgeAccounts_MyPledges">MyPledges</a>&gt;(sender_addr);
   <b>let</b> pledge_account = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow_mut">Vector::borrow_mut</a>(&<b>mut</b> my_pledges.list, idx);
 

@@ -49,7 +49,8 @@ By creating a TxSchedule wallet you are providing certain restrictions and guara
 -  [Function `schedule_status`](#0x1_DonorDirected_schedule_status)
 -  [Function `propose_liquidation`](#0x1_DonorDirected_propose_liquidation)
 -  [Function `liquidate_handler`](#0x1_DonorDirected_liquidate_handler)
--  [Function `liquidate`](#0x1_DonorDirected_liquidate)
+-  [Function `vm_liquidate`](#0x1_DonorDirected_vm_liquidate)
+-  [Function `get_pro_rata`](#0x1_DonorDirected_get_pro_rata)
 -  [Function `get_tx_params`](#0x1_DonorDirected_get_tx_params)
 -  [Function `get_multisig_proposal_state`](#0x1_DonorDirected_get_multisig_proposal_state)
 -  [Function `get_schedule_state`](#0x1_DonorDirected_get_schedule_state)
@@ -59,7 +60,7 @@ By creating a TxSchedule wallet you are providing certain restrictions and guara
 -  [Function `is_account_frozen`](#0x1_DonorDirected_is_account_frozen)
 -  [Function `liquidates_to_escrow`](#0x1_DonorDirected_liquidates_to_escrow)
 -  [Function `init_donor_directed`](#0x1_DonorDirected_init_donor_directed)
--  [Function `set_liquidate_to_infra_escrow`](#0x1_DonorDirected_set_liquidate_to_infra_escrow)
+-  [Function `set_liquidate_to_community_wallets`](#0x1_DonorDirected_set_liquidate_to_community_wallets)
 -  [Function `finalize_init`](#0x1_DonorDirected_finalize_init)
 -  [Function `propose_veto_tx`](#0x1_DonorDirected_propose_veto_tx)
 -  [Function `veto_tx`](#0x1_DonorDirected_veto_tx)
@@ -76,7 +77,9 @@ By creating a TxSchedule wallet you are providing certain restrictions and guara
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID">0x1::GUID</a>;
 <b>use</b> <a href="MultiSig.md#0x1_MultiSig">0x1::MultiSig</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option">0x1::Option</a>;
+<b>use</b> <a href="Receipts.md#0x1_Receipts">0x1::Receipts</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer">0x1::Signer</a>;
+<b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
 </code></pre>
 
@@ -100,6 +103,12 @@ By creating a TxSchedule wallet you are providing certain restrictions and guara
 <dl>
 <dt>
 <code>list: vector&lt;<b>address</b>&gt;</code>
+</dt>
+<dd>
+
+</dd>
+<dt>
+<code>liquidation_queue: vector&lt;<b>address</b>&gt;</code>
 </dt>
 <dd>
 
@@ -276,7 +285,7 @@ initially to schedule.
 
 </dd>
 <dt>
-<code>liquidate_to_infra_escrow: bool</code>
+<code>liquidate_to_community_wallets: bool</code>
 </dt>
 <dd>
 
@@ -436,7 +445,8 @@ Could not find a pending transaction by this GUID
   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(vm);
   <b>if</b> (!<a href="DonorDirected.md#0x1_DonorDirected_is_root_init">is_root_init</a>()) {
     <b>move_to</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(vm, <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a> {
-      list: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;()
+      list: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;(),
+      liquidation_queue: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;(),
     });
   };
 }
@@ -490,6 +500,7 @@ Could not find a pending transaction by this GUID
   <b>if</b> (!<a href="DonorDirected.md#0x1_DonorDirected_is_root_init">is_root_init</a>()) {
     <b>move_to</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(vm, <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a> {
       list,
+      liquidation_queue: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;(),
     });
   };
 }
@@ -505,7 +516,7 @@ Could not find a pending transaction by this GUID
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_set_donor_directed">set_donor_directed</a>(sig: &signer, liquidate_to_infra_escrow: bool)
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_set_donor_directed">set_donor_directed</a>(sig: &signer, liquidate_to_community_wallets: bool)
 </code></pre>
 
 
@@ -514,7 +525,7 @@ Could not find a pending transaction by this GUID
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_set_donor_directed">set_donor_directed</a>(sig: &signer, liquidate_to_infra_escrow: bool) {
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_set_donor_directed">set_donor_directed</a>(sig: &signer, liquidate_to_community_wallets: bool) {
   <b>if</b> (!<b>exists</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(@VMReserved)) <b>return</b>;
 
   <b>move_to</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>&gt;(
@@ -523,7 +534,7 @@ Could not find a pending transaction by this GUID
       is_frozen: <b>false</b>,
       consecutive_rejections: 0,
       unfreeze_votes: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;(),
-      liquidate_to_infra_escrow,
+      liquidate_to_community_wallets,
     }
   );
 
@@ -1210,12 +1221,20 @@ propose and vote on the liquidation of this wallet
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_liquidate_handler">liquidate_handler</a>(donor: &signer, multisig_address: <b>address</b>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
+<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_liquidate_handler">liquidate_handler</a>(donor: &signer, multisig_address: <b>address</b>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>, <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a> {
   <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_assert_authorized">DonorDirectedGovernance::assert_authorized</a>(donor, multisig_address);
   <b>let</b> res = <a href="DonorDirectedGovernance.md#0x1_DonorDirectedGovernance_vote_liquidate">DonorDirectedGovernance::vote_liquidate</a>(donor, multisig_address);
   <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_is_some">Option::is_some</a>(&res)) {
     <b>if</b> (*<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Option.md#0x1_Option_borrow">Option::borrow</a>(&res)) {
-      <a href="DonorDirected.md#0x1_DonorDirected_liquidate">liquidate</a>(multisig_address);
+      // The VM will call this function <b>to</b> liquidate the wallet.
+      // the donors cannot do this because they cant get the withdrawal capability
+      // from the multisig account.
+
+      // first we <b>freeze</b> it so nothing can happen in the interim.
+      <b>let</b> f = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>&gt;(multisig_address);
+      f.is_frozen = <b>true</b>;
+      <b>let</b> f = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(@VMReserved);
+      <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> f.liquidation_queue, multisig_address);
   }
 }
 }
@@ -1225,13 +1244,15 @@ propose and vote on the liquidation of this wallet
 
 </details>
 
-<a name="0x1_DonorDirected_liquidate"></a>
+<a name="0x1_DonorDirected_vm_liquidate"></a>
 
-## Function `liquidate`
+## Function `vm_liquidate`
+
+The VM will call this function to liquidate all donor directed
+wallets in the queue.
 
 
-
-<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_liquidate">liquidate</a>(multisig_address: <b>address</b>)
+<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_vm_liquidate">vm_liquidate</a>(vm: &signer)
 </code></pre>
 
 
@@ -1240,20 +1261,86 @@ propose and vote on the liquidation of this wallet
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_liquidate">liquidate</a>(multisig_address: <b>address</b>) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>{
- // first we <b>freeze</b> it
- <b>let</b> f = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>&gt;(multisig_address);
- f.is_frozen = <b>true</b>;
+<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_vm_liquidate">vm_liquidate</a>(vm: &signer) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>, <a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a> {
+   <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+   <b>let</b> f = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Registry">Registry</a>&gt;(@VMReserved);
+   <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&f.liquidation_queue);
+   <b>let</b> i = 0;
+   <b>while</b> (i &lt; len) {
+     <b>let</b> multisig_address = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&f.liquidation_queue, i);
 
- // then we split the funds and send it back <b>to</b> the user's wallet
- // <b>if</b> this account was tagged a community wallet, then the
- // funds go back <b>to</b> infrastructure escrow account.
+     // <b>if</b> this account was tagged a community wallet, then the
+     // funds get split pro-rata at the current split of the
+     // burn recycle algorithm.
+     // Easiest way <b>to</b> do this is <b>to</b> send it <b>to</b> transaction fee account
+     // so it can be split up by the burn recycle algorithm.
+     // and trying <b>to</b> call <a href="Burn.md#0x1_Burn">Burn</a>, here will create a circular dependency.
 
- <b>if</b> (<a href="DonorDirected.md#0x1_DonorDirected_liquidates_to_escrow">liquidates_to_escrow</a>(multisig_address)) {
+     <b>if</b> (<a href="DonorDirected.md#0x1_DonorDirected_liquidates_to_escrow">liquidates_to_escrow</a>(*multisig_address)) {
+       <b>let</b> balance = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*multisig_address);
+       <b>let</b> c = <a href="DiemAccount.md#0x1_DiemAccount_vm_withdraw">DiemAccount::vm_withdraw</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(vm, *multisig_address, balance);
+       <a href="TransactionFee.md#0x1_TransactionFee_pay_fee">TransactionFee::pay_fee</a>(c);
 
-   } <b>else</b> {
+       <b>return</b>
+     };
 
+
+     // otherwise the default case is that donors get their funds back.
+     <b>let</b> (pro_rata_addresses, pro_rata_amounts) = <a href="DonorDirected.md#0x1_DonorDirected_get_pro_rata">get_pro_rata</a>(*multisig_address);
+
+     <b>let</b> k = 0;
+     <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&pro_rata_addresses);
+     // then we split the funds and send it back <b>to</b> the user's wallet
+     <b>while</b> (k &lt; len) {
+         <b>let</b> addr = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&pro_rata_addresses, i);
+         <b>let</b> amount = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&pro_rata_amounts, i);
+         <a href="DiemAccount.md#0x1_DiemAccount_vm_pay_from">DiemAccount::vm_pay_from</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(*multisig_address, *addr, *amount, b"liquidation", b"", vm);
+
+         k = k + 1;
+     };
+     i = i + 1;
    }
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DonorDirected_get_pro_rata"></a>
+
+## Function `get_pro_rata`
+
+
+
+<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_pro_rata">get_pro_rata</a>(multisig_address: <b>address</b>): (vector&lt;<b>address</b>&gt;, vector&lt;u64&gt;)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_get_pro_rata">get_pro_rata</a>(multisig_address: <b>address</b>): (vector&lt;<b>address</b>&gt;, vector&lt;u64&gt;) {
+ // get total fees
+ <b>let</b> balance = <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;(multisig_address);
+ <b>let</b> donors = <a href="DiemAccount.md#0x1_DiemAccount_get_depositors">DiemAccount::get_depositors</a>(multisig_address);
+ <b>let</b> pro_rata_addresses = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
+ <b>let</b> pro_rata_amounts = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;u64&gt;();
+
+ <b>let</b> i = 0;
+ <b>let</b> len = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&donors);
+ <b>while</b> (i &lt; len) {
+   <b>let</b> donor = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_borrow">Vector::borrow</a>(&donors, i);
+   <b>let</b> (_, _, cumu)  = <a href="Receipts.md#0x1_Receipts_read_receipt">Receipts::read_receipt</a>(*donor, multisig_address);
+   <b>let</b> pro_rata = cumu / balance;
+   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> pro_rata_addresses, *donor);
+   <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_push_back">Vector::push_back</a>(&<b>mut</b> pro_rata_amounts, pro_rata);
+   i = i + 1;
+ };
+
+   (pro_rata_addresses, pro_rata_amounts)
 }
 </code></pre>
 
@@ -1455,7 +1542,7 @@ Get the status of a SCHEDULED payment which as already passed the multisig stage
 
 <pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_liquidates_to_escrow">liquidates_to_escrow</a>(addr: <b>address</b>): bool <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>{
   <b>let</b> f = <b>borrow_global</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>&gt;(addr);
-  f.liquidate_to_infra_escrow
+  f.liquidate_to_community_wallets
 }
 </code></pre>
 
@@ -1486,8 +1573,8 @@ Initialize the TxSchedule wallet with Three Signers
 
   // we are setting liquidation <b>to</b> infra escrow <b>as</b> <b>false</b> by default
   // the user can send another transacton <b>to</b> change this.
-  <b>let</b> liquidate_to_infra_escrow = <b>false</b>;
-  <a href="DonorDirected.md#0x1_DonorDirected_set_donor_directed">set_donor_directed</a>(sponsor, liquidate_to_infra_escrow);
+  <b>let</b> liquidate_to_community_wallets = <b>false</b>;
+  <a href="DonorDirected.md#0x1_DonorDirected_set_donor_directed">set_donor_directed</a>(sponsor, liquidate_to_community_wallets);
   <a href="DonorDirected.md#0x1_DonorDirected_make_multisig">make_multisig</a>(sponsor, cfg_n_signers, init_signers);
 
   // <b>if</b> not tracking cumulative donations, then don't <b>use</b> previous balance.
@@ -1500,15 +1587,15 @@ Initialize the TxSchedule wallet with Three Signers
 
 </details>
 
-<a name="0x1_DonorDirected_set_liquidate_to_infra_escrow"></a>
+<a name="0x1_DonorDirected_set_liquidate_to_community_wallets"></a>
 
-## Function `set_liquidate_to_infra_escrow`
+## Function `set_liquidate_to_community_wallets`
 
 option to set the liquidation destination to infrastructure escrow
 must be done before the multisig is finalized and the sponsor cannot control the account.
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_set_liquidate_to_infra_escrow">set_liquidate_to_infra_escrow</a>(sponsor: &signer, liquidate_to_infra_escrow: bool)
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_set_liquidate_to_community_wallets">set_liquidate_to_community_wallets</a>(sponsor: &signer, liquidate_to_community_wallets: bool)
 </code></pre>
 
 
@@ -1517,9 +1604,9 @@ must be done before the multisig is finalized and the sponsor cannot control the
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_set_liquidate_to_infra_escrow">set_liquidate_to_infra_escrow</a>(sponsor: &signer, liquidate_to_infra_escrow: bool) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="DonorDirected.md#0x1_DonorDirected_set_liquidate_to_community_wallets">set_liquidate_to_community_wallets</a>(sponsor: &signer, liquidate_to_community_wallets: bool) <b>acquires</b> <a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a> {
   <b>let</b> f = <b>borrow_global_mut</b>&lt;<a href="DonorDirected.md#0x1_DonorDirected_Freeze">Freeze</a>&gt;(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(sponsor));
-  f.liquidate_to_infra_escrow = liquidate_to_infra_escrow;
+  f.liquidate_to_community_wallets = liquidate_to_community_wallets;
 }
 </code></pre>
 

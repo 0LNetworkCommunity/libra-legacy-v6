@@ -109,6 +109,7 @@ before and after every transaction.
 -  [Function `init_cumulative_deposits`](#0x1_DiemAccount_init_cumulative_deposits)
 -  [Function `vm_migrate_cumulative_deposits`](#0x1_DiemAccount_vm_migrate_cumulative_deposits)
 -  [Function `maybe_update_deposit`](#0x1_DiemAccount_maybe_update_deposit)
+-  [Function `get_depositors`](#0x1_DiemAccount_get_depositors)
 -  [Function `deposit_index_curve`](#0x1_DiemAccount_deposit_index_curve)
 -  [Function `get_cumulative_deposits`](#0x1_DiemAccount_get_cumulative_deposits)
 -  [Function `get_index_cumu_deposits`](#0x1_DiemAccount_get_index_cumu_deposits)
@@ -6914,10 +6915,32 @@ Create a Validator Operator account
 
       // also write the receipt <b>to</b> the payee's account.
       <a href="Receipts.md#0x1_Receipts_write_receipt">Receipts::write_receipt</a>(payer, payee, deposit_value);
-
     };
+}
+</code></pre>
 
 
+
+</details>
+
+<a name="0x1_DiemAccount_get_depositors"></a>
+
+## Function `get_depositors`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_get_depositors">get_depositors</a>(payee: <b>address</b>): vector&lt;<b>address</b>&gt;
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_get_depositors">get_depositors</a>(payee: <b>address</b>): vector&lt;<b>address</b>&gt; <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> {
+  <b>let</b> cumu = <b>borrow_global</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(payee);
+  *&cumu.depositors
 }
 </code></pre>
 
