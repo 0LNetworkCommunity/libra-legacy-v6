@@ -512,7 +512,7 @@ fn create_and_initialize_owners_operators(
     let mut full_node_network_addresses = vec![];
 
     for v in validators {
-        println!("Address: {:?}", &v.address);
+        info!("Address: {:?}", &v.address);
         owners.push(MoveValue::Signer(v.address));
         owner_names.push(MoveValue::vector_u8(v.name.clone()));
         owner_auth_keys.push(MoveValue::vector_u8(v.auth_key.to_vec()));
