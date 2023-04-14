@@ -40,7 +40,7 @@ module DonorDirected {
     use DiemFramework::DonorDirectedGovernance;
     use DiemFramework::Ballot;
     use DiemFramework::TransactionFee;
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
 
     /// Not initialized as a donor directed account.
     const ENOT_INIT_DONOR_DIRECTED: u64 = 231001;
@@ -527,7 +527,6 @@ module DonorDirected {
 
    public(friend) fun vm_liquidate(vm: &signer) acquires Freeze, Registry {
       CoreAddresses::assert_vm(vm);
-      print(&77777777);
       let f = borrow_global_mut<Registry>(@VMReserved);
       let len = Vector::length(&f.liquidation_queue);
 
@@ -558,10 +557,7 @@ module DonorDirected {
         // then we split the funds and send it back to the user's wallet
         while (k < len) {
             let addr = Vector::borrow(&pro_rata_addresses, k);
-            print(addr);
             let amount = Vector::borrow(&pro_rata_amounts, k);
-
-            print(amount);
             DiemAccount::vm_make_payment_no_limit<GAS>(multisig_address, *addr, *amount, b"liquidation", b"", vm);
 
             k = k + 1;

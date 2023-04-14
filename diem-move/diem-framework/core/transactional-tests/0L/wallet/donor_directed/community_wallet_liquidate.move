@@ -138,20 +138,19 @@ script {
     use DiemFramework::DiemAccount;
     use DiemFramework::GAS::GAS;
 
-    use DiemFramework::Debug::print;
+    // use DiemFramework::Debug::print;
     use Std::Vector;
     
     fun main(_dr: signer, _sender: signer) {
-      // new epoch, we need a second epoch to trigger
-      // DonorDirected::vote_liquidation_tx(sender, @CommunityScam);
-
       let b = DonorDirected::get_liquidation_queue();
       
       assert!(Vector::is_empty(&b), 7357011);
       
-      // assert!(DiemAccount::balance<GAS>(@CommunityScam) == 0, 7357011);
-
-      print(&DiemAccount::balance<GAS>(@CommunityScam));
+      let original_balance = 10000000;
+      let superman_3 = 2; // missing cents from fixed point operations
+      // NOTE: we are not liquidating all the balance. If there was previous balance before donations were being tracked, that balance is still there
+      // we only liquidate the tracked donor balances.
+      assert!(DiemAccount::balance<GAS>(@CommunityScam) == original_balance + superman_3, 7357012);
     }
 }
 // check: EXECUTED
