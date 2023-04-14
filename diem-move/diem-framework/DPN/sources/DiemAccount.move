@@ -62,8 +62,6 @@ module DiemFramework::DiemAccount {
     use DiemFramework::Testnet;
     use DiemFramework::Globals;
 
-    // use DiemFramework::Debug::print;
-
     /// An `address` is a Diem Account iff it has a published DiemAccount resource.
     struct DiemAccount has key {
         /// The current authentication key.
