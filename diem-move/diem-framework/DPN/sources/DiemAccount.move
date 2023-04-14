@@ -1338,22 +1338,20 @@ module DiemFramework::DiemAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer
-    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits { //////// 0L ////////
+    ) acquires DiemAccount, Balance, CumulativeDeposits { //////// 0L ////////
         if (Signer::address_of(vm) != @DiemRoot) return;
         // don't try to send a 0 balance, will halt.
         if (amount < 1) return;
 
         // Check there is a payer
         if (!exists_at(payer)) return; 
+        if (!exists_at(payee)) return; 
 
         // Check payee can receive funds in this currency.
         if (!exists<Balance<Token>>(payee)) return; 
 
-
-        // assert!(exists_at(payer), Errors::not_published(EACCOUNT));
-
-        // Check the payer is in possession of withdraw token.
-        if (delegated_withdraw_capability(payer)) return; 
+        // NOTE: 0L: V6 we should not limit the VMs ability
+        // to withdraw if the capability was moved.
 
         // TODO: review this in 5.1
         // VM should not force an account below 1GAS, since the account may not recover.
@@ -1367,20 +1365,20 @@ module DiemFramework::DiemAccount {
 
 
         // VM can extract the withdraw token.
-        let account = borrow_global_mut<DiemAccount>(payer);
-        let cap = Option::extract(&mut account.withdraw_capability);
+        // let account = borrow_global_mut<DiemAccount>(payer);
+        // let cap = Option::extract(&mut account.withdraw_capability);
+        let coin = vm_withdraw(vm, payer, amount);
+
         deposit<Token>(
-            cap.account_address,
+            payer,
             payee,
-            withdraw_from(&cap, payee, amount, copy metadata),
+            coin,
             metadata,
             metadata_signature,
             false // 0L todo diem-1.4.1 - new patch, needs review        
         );
         
         Receipts::write_receipt_vm(vm, payer, payee, amount);
-
-        restore_withdraw_capability(cap);
     }
 
     /// VM authorized to withdraw a coin if it is to pay a network fee
@@ -1432,7 +1430,7 @@ module DiemFramework::DiemAccount {
         metadata: vector<u8>,
         metadata_signature: vector<u8>,
         vm: &signer,
-    ) acquires DiemAccount, Balance, AccountOperationsCapability, CumulativeDeposits, SlowWallet {
+    ) acquires DiemAccount, Balance, CumulativeDeposits, SlowWallet {
         /////// 0L /////////
         if (Signer::address_of(vm) != @DiemRoot) return;
 

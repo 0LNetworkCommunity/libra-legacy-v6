@@ -501,7 +501,7 @@ module DonorDirected {
     fun liquidation_handler(donor: &signer, multisig_address: address) acquires Freeze, Registry {
       DonorDirectedGovernance::assert_authorized(donor, multisig_address);
       let res = DonorDirectedGovernance::vote_liquidation(donor, multisig_address);
-      // print(&res);
+
       if (Option::is_some(&res)) {
         if (*Option::borrow(&res)) {
           // The VM will call this function to liquidate the wallet.
@@ -530,11 +530,10 @@ module DonorDirected {
       print(&77777777);
       let f = borrow_global_mut<Registry>(@VMReserved);
       let len = Vector::length(&f.liquidation_queue);
-      // print(&f.liquidation_queue);
+
       let i = 0;
       while (i < len) {
         let multisig_address = Vector::swap_remove(&mut f.liquidation_queue, i);
-        // print(&multisig_address);
 
         // if this account was tagged a community wallet, then the 
         // funds get split pro-rata at the current split of the 
@@ -544,7 +543,6 @@ module DonorDirected {
         // and trying to call Burn, here will create a circular dependency.
 
         if (liquidates_to_escrow(multisig_address)) {
-          print(&111);
           let balance = DiemAccount::balance<GAS>(multisig_address);
           let c = DiemAccount::vm_withdraw<GAS>(vm, multisig_address, balance);
           TransactionFee::pay_fee(c);
@@ -555,17 +553,16 @@ module DonorDirected {
 
         // otherwise the default case is that donors get their funds back.
         let (pro_rata_addresses, _, pro_rata_amounts) = DiemAccount::get_pro_rata_cumu_deposits(multisig_address);
-
-        print(&pro_rata_addresses);
-        print(&pro_rata_amounts);
-
         let k = 0;
         let len = Vector::length(&pro_rata_addresses);
         // then we split the funds and send it back to the user's wallet
         while (k < len) {
-            let addr = Vector::borrow(&pro_rata_addresses, i);
-            let amount = Vector::borrow(&pro_rata_amounts, i);
-            DiemAccount::vm_pay_from<GAS>(multisig_address, *addr, *amount, b"liquidation", b"", vm);
+            let addr = Vector::borrow(&pro_rata_addresses, k);
+            print(addr);
+            let amount = Vector::borrow(&pro_rata_amounts, k);
+
+            print(amount);
+            DiemAccount::vm_make_payment_no_limit<GAS>(multisig_address, *addr, *amount, b"liquidation", b"", vm);
 
             k = k + 1;
         };
