@@ -7,7 +7,11 @@ use crate::{
 use anyhow::Error;
 use ol_types::config::IS_PROD;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, fs::{self, File}, process::{Command, Stdio, exit}};
+use std::{
+    collections::HashSet,
+    fs::{self, File},
+    process::{exit, Command, Stdio},
+};
 const BINARY_NODE: &str = "diem-node";
 const BINARY_MINER: &str = "tower";
 
@@ -302,6 +306,7 @@ impl Node {
     }
 
     /// Kill all the processes that are running
+    #[cfg(not(target_os = "windows"))]
     pub fn kill_zombies(&self, name: &str) {
         println!("Killing zombie '{}' processes...", name);
         println!("Will NOT disable any systemd services, you must disable those manually");
@@ -313,6 +318,11 @@ impl Node {
             }
         }
     }
+
+    /// Kill all the processes that are running, dummy func for windows
+    #[cfg(target_os = "windows")]
+    pub fn kill_zombies(&self, _: &str) {}
+
     /// Stop node, as validator
     pub fn stop_node(&self) {
         self.kill_all(BINARY_NODE);

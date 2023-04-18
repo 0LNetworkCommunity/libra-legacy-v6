@@ -5,6 +5,7 @@ use diem_secure_push_metrics::MetricsPusher;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
+#[cfg(not(target_env = "msvc"))]
 #[global_allocator]
 static ALLOC: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
