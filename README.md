@@ -3,7 +3,7 @@
 A reference implementation of a neutral replicated state machine. Forked from the Libra/Diem technologies.
 # TL;DR
 
-#### Run *Carpe*  our desktop wallet and miner. [Anyone with a laptop can mine and make 0L Gas Coins. Download for Windows and Mac here.](https://github.com/0LNetworkCommunity/carpe)
+#### Run *Carpe*, our desktop wallet and miner. [Anyone with a laptop can mine and make 0L Gas Coins. Download for Windows and Mac here.](https://github.com/0LNetworkCommunity/carpe)
 
 #### Join a network with a [validator node](ol/documentation/node-ops/validators/validator_onboarding_easy_mode.md), to secure the state machine and earn transaction fees.
 
@@ -13,13 +13,13 @@ We live 24/7 on Discord [join us there](https://discord.gg/AzCp63pggW).
 
 ### Weekly community meetings on Discord video channel.
 
-- WEDS 15:00 GMT / 8:00 US PT / Weds 11:00 US ET / 17:00 CET / 23:00 CST / 1:00 AEST (THURS)
+- WED 15:00 GMT / 8:00 US PT / Weds 11:00 US ET / 17:00 CET / 23:00 CST / 1:00 AEST (THURS)
 
 # Documentation
 
 Read our documentation [here](ol/documentation/README.md).
 
-Skip straight to [toubleshooting onboarding a node to network.](ol/documentation/node-ops/validators/troubleshoting_onboarding.md)
+Skip straight to [troubleshooting onboarding a node to network.](ol/documentation/node-ops/validators/troubleshoting_onboarding.md)
 
 Contribute to [issues](https://github.com/0LNetworkCommunity/libra/issues).
 
@@ -29,18 +29,18 @@ Contribute to [issues](https://github.com/0LNetworkCommunity/libra/issues).
 ## What we are doing
 0L's technology strategy is to stay as close as possible to the Libra/Diem code base. 
 
-This is because fragmenting the technology products on offer will lead to confusion, and eventually to lack of maintenance and stagnation. This is best for the wider open source ecosystem these tools extend and depend upon. It's also much more efficient on resources. Libra/Diem is a massive project, and simply keeping up to date with the code updates requires a dedicated team. Let alone making additions. Separate from Libra/Diem, The 0L project on its own has contributed tens of thousands of lines of new code.
+This is because fragmenting the technology products on offer will lead to confusion, and eventually to lack of maintenance and stagnation. This is best for the wider open source ecosystem these tools extend and depend upon. It's also much more efficient on resources. Libra/Diem is a massive project, and simply keeping up to date with the code updates requires a dedicated team, let alone making additions. Separate from Libra/Diem, The 0L project on its own has contributed tens of thousands of lines of new code.
 
-So the forking strategy is simple in concept: take the unmodified Diem code, and import it into the 0L project and add layers of features. Though it's not that simple in execution because of the nature of the code base. We have to insert many changes in strategic places of the diem-core code, in order for the 0L layers and side-cars  to work. In short, it's not a simple code merge, it takes about two weeks from start to finish to incorporate a new upstream Diem release into 0L.
+So the forking strategy is simple in concept: take the unmodified Diem code, and import it into the 0L project, and add layers of features. Though it's not that simple in execution because of the nature of the code base. We have to insert many changes in strategic places of the diem-core code, in order for the 0L layers and side-cars  to work. In short, it's not a simple code merge, it takes about two weeks from start to finish to incorporate a new upstream Diem release into 0L.
 
 ## What we inherited
 
-The Libra/Diem platform is a spaceship on all accounts. There are engineering breakthroughs throughout the project. The architecture is sensibly designed, and expertly assembled. This is the merit of the Facebook engineering team (who as individuals appear to true believers in the power of these technologies, and one should make no assumptions of their views on corporate strategy).
+The Libra/Diem platform is a spaceship on all accounts. There are engineering breakthroughs throughout the project. The architecture is sensibly designed, and expertly assembled. This is the merit of the Facebook engineering team (who, as individuals, appear to be true believers in the power of these technologies, and one should make no assumptions of their views on corporate strategy).
 
 This is a non-exhaustive summary of the key features of the Diem architecture that are worth paying attention to. We'll take it from the top of the stack to the bottom.
 
 ### The Move Language
-The smart-contract language of the platform is called Move. It is the most unique breakthrough of the team. This is a language that is designed to be extremely safe in adversarial environments, and for hurried, less experienced developers. It's a very ergonomic language, it's easy to approach it if you have even entry-level coding experience. In terms of safety it incorporates much from the Rust language concepts of "borrowing" memory. The compiler is pretty obnoxious, which is something you want when designing autonomous financial systems. One standout feature of the Move language is built-in Formal Verification. Adjacent to the code you can write specs for invariants which your code must preserve (i.e. this function should never be called by this type of account), and it can be checked during the development and build process. This is unique and powerful.
+The smart-contract language of the platform is called Move. It is the most unique breakthrough of the team. This is a language that is designed to be extremely safe in adversarial environments, and for hurried, less experienced developers. It's a very ergonomic language; it's easy to approach if you have even entry-level coding experience. In terms of safety it incorporates much from the Rust language concepts of "borrowing" memory. The compiler is pretty obnoxious, which is something you want when designing autonomous financial systems. One standout feature of the Move language is built-in Formal Verification. Adjacent to the code you can write specs for invariants which your code must preserve (i.e. this function should never be called by this type of account), and it can be checked during the development and build process. This is unique and powerful.
 
 ### Programming model
 The execution of the smart contract and scripts has some subtle but important safety features. By design what are referred to in other platforms as smart-contracts are in fact "modules" here. Users can publish modules, which any other module or transaction can import. This is important. The transactions are scripts. So compared to Ethereum, much of what happens in a smart contract, can actually be split into long lived code in a module, and transaction-scripts which can import from the module (and other modules). This decoupling allows for powerful composability and reliability. The developer can evolve the application without necessarily needing to upgrade modules every time a new transaction use-case emerges.
