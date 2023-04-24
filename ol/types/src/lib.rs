@@ -1,4 +1,4 @@
-//! `ol-util`
+//! `ol-types`
 
 #![forbid(unsafe_code)]
 #![warn(
@@ -9,8 +9,10 @@
     unused_qualifications
 )]
 
+
 pub mod account;
 pub mod autopay;
+pub mod null_data_store;
 pub mod block;
 pub mod config;
 pub mod dialogue;

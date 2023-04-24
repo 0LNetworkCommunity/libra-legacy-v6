@@ -258,7 +258,7 @@ fn fsync_dir<P: AsRef<Path>>(dir: P) -> io::Result<()> {
     #[cfg(windows)]
     {
         use std::os::windows::fs::OpenOptionsExt;
-        use winapi::winbase;
+        use winapi::um::winbase;
 
         open_opts
             .write(true)

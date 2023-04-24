@@ -1,20 +1,24 @@
 //! `node` module
 
-use super::client;
-use super::{account::OwnerAccountView, states::HostState};
-use crate::{cache::Vitals, check::items::Items, config::AppCfg, mgmt::management::NodeMode};
+use std::path::PathBuf;
+use std::{process::Command, str};
+
 use anyhow::Error;
+use sysinfo::SystemExt;
+use sysinfo::{ProcessExt, ProcessStatus};
+
 use diem_client::BlockingClient as DiemClient;
 use diem_config::config::{NodeConfig, RocksdbConfig};
 use diem_json_rpc::views::TowerStateResourceView;
 use diem_types::waypoint::Waypoint;
 use diem_types::{account_address::AccountAddress, account_state::AccountState};
 use diemdb::DiemDB;
-use std::path::PathBuf;
-use std::{process::Command, str};
 use storage_interface::DbReader;
-use sysinfo::SystemExt;
-use sysinfo::{ProcessExt, ProcessStatus};
+
+use crate::{cache::Vitals, check::items::Items, config::AppCfg, mgmt::management::NodeMode};
+
+use super::client;
+use super::{account::OwnerAccountView, states::HostState};
 
 /// name of key in kv store for sync
 pub const SYNC_KEY: &str = "is_synced";
@@ -277,6 +281,7 @@ impl Node {
             .into_iter()
             .filter(|i| match i.status() {
                 ProcessStatus::Run => true,
+                #[cfg(any(target_os = "macos", target_os = "linux"))]
                 ProcessStatus::Sleep => true,
                 _ => false,
             })
@@ -345,6 +350,7 @@ impl Node {
             .into_iter()
             .filter(|i| match i.status() {
                 ProcessStatus::Run => true,
+                #[cfg(any(target_os = "macos", target_os = "linux"))]
                 ProcessStatus::Sleep => true,
                 _ => false,
             })

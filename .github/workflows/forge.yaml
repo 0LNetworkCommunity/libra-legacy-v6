@@ -10,7 +10,7 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: 1.56.1
+          toolchain: 1.68.2
           override: true
           components: rustfmt, clippy
       - name: Install deps

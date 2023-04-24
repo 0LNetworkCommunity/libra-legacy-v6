@@ -376,7 +376,7 @@
     <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &outgoing_compliant);
     print(&800900102);
     // process community wallets
-    <a href="DonorDirected.md#0x1_DonorDirected_process_donor_directed_accounts">DonorDirected::process_donor_directed_accounts</a>(vm);
+    <a href="DonorDirected.md#0x1_DonorDirected_process_donor_directed_accounts">DonorDirected::process_donor_directed_accounts</a>(vm, <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>());
     print(&800900103);
     // reset counters
     <a href="AutoPay.md#0x1_AutoPay_reconfig_reset_tick">AutoPay::reconfig_reset_tick</a>(vm);

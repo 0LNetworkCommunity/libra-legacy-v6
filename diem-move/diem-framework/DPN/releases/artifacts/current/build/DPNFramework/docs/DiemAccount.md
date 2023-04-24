@@ -51,6 +51,7 @@ before and after every transaction.
 -  [Function `restore_withdraw_capability`](#0x1_DiemAccount_restore_withdraw_capability)
 -  [Function `get_withdraw_cap_address`](#0x1_DiemAccount_get_withdraw_cap_address)
 -  [Function `vm_make_payment_no_limit`](#0x1_DiemAccount_vm_make_payment_no_limit)
+-  [Function `vm_pay_from`](#0x1_DiemAccount_vm_pay_from)
 -  [Function `vm_burn_from_balance`](#0x1_DiemAccount_vm_burn_from_balance)
 -  [Function `pay_from`](#0x1_DiemAccount_pay_from)
 -  [Function `pay_by_signers`](#0x1_DiemAccount_pay_by_signers)
@@ -104,7 +105,7 @@ before and after every transaction.
 -  [Function `deposit_index_curve`](#0x1_DiemAccount_deposit_index_curve)
 -  [Function `get_cumulative_deposits`](#0x1_DiemAccount_get_cumulative_deposits)
 -  [Function `get_index_cumu_deposits`](#0x1_DiemAccount_get_index_cumu_deposits)
--  [Function `is_init`](#0x1_DiemAccount_is_init)
+-  [Function `is_init_cumu_tracking`](#0x1_DiemAccount_is_init_cumu_tracking)
 -  [Function `vm_init_slow`](#0x1_DiemAccount_vm_init_slow)
 -  [Function `set_slow`](#0x1_DiemAccount_set_slow)
 -  [Function `slow_wallet_epoch_drip`](#0x1_DiemAccount_slow_wallet_epoch_drip)
@@ -2064,7 +2065,7 @@ Record a payment of <code>to_deposit</code> from <code>payer</code> to <code>pay
     );
     //////// 0L ////////
     // <b>if</b> the account wants <b>to</b> be tracked add tracking
-    <a href="DiemAccount.md#0x1_DiemAccount_maybe_update_deposit">maybe_update_deposit</a>(payee, deposit_value);
+    <a href="DiemAccount.md#0x1_DiemAccount_maybe_update_deposit">maybe_update_deposit</a>(payer, payee, deposit_value);
 }
 </code></pre>
 
@@ -3012,9 +3013,70 @@ NOTE: Slow wallets who receive funds from here, will be LOCKED, does not unlock 
         <b>false</b> // 0L todo diem-1.4.1 - new patch, needs review
     );
 
-    <a href="Receipts.md#0x1_Receipts_write_receipt">Receipts::write_receipt</a>(vm, payer, payee, amount);
+    <a href="Receipts.md#0x1_Receipts_write_receipt_vm">Receipts::write_receipt_vm</a>(vm, payer, payee, amount);
 
     <a href="DiemAccount.md#0x1_DiemAccount_restore_withdraw_capability">restore_withdraw_capability</a>(cap);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_DiemAccount_vm_pay_from"></a>
+
+## Function `vm_pay_from`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_pay_from">vm_pay_from</a>&lt;Token: store&gt;(payer: <b>address</b>, payee: <b>address</b>, amount: u64, metadata: vector&lt;u8&gt;, metadata_signature: vector&lt;u8&gt;, vm: &signer)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_vm_pay_from">vm_pay_from</a>&lt;Token: store&gt;(
+    payer: <b>address</b>,
+    payee: <b>address</b>,
+    amount: u64,
+    metadata: vector&lt;u8&gt;,
+    metadata_signature: vector&lt;u8&gt;,
+    vm: &signer,
+) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount">DiemAccount</a>, <a href="DiemAccount.md#0x1_DiemAccount_Balance">Balance</a>, <a href="DiemAccount.md#0x1_DiemAccount_AccountOperationsCapability">AccountOperationsCapability</a>, <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>, <a href="DiemAccount.md#0x1_DiemAccount_SlowWallet">SlowWallet</a> {
+    /////// 0L /////////
+    <b>if</b> (<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Signer.md#0x1_Signer_address_of">Signer::address_of</a>(vm) != @DiemRoot) <b>return</b>;
+
+    // check amount <b>if</b> it is a slow wallet
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(payer)) {
+      <b>if</b> (amount &gt; <a href="DiemAccount.md#0x1_DiemAccount_unlocked_amount">unlocked_amount</a>(payer)) <b>return</b>;
+    };
+
+    // checks first that the slow limits are respected.
+    <a href="DiemAccount.md#0x1_DiemAccount_vm_make_payment_no_limit">vm_make_payment_no_limit</a>&lt;Token&gt;(
+        payer,
+        payee,
+        amount,
+        metadata,
+        metadata_signature,
+        vm
+    );
+    /////// 0L /////////
+    // in case of slow wallet <b>update</b> the tracker
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(payer))
+      {<a href="DiemAccount.md#0x1_DiemAccount_decrease_unlocked_tracker">decrease_unlocked_tracker</a>(payer, amount);};
+
+    // <b>if</b> a payee is a slow wallet and is receiving funds from ordinary
+    // or another slow wallet's unlocked funds, it counts toward unlocked coins.
+    // the exceptional case is community wallets, which funds don't count toward unlocks. However, the community wallet payment uses a different function: vm_make_payment_no_limit
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee)){
+      <a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(*&payee, amount);
+    };
+
+
+    <a href="DiemAccount.md#0x1_DiemAccount_maybe_update_deposit">maybe_update_deposit</a>(payer, payee, amount);
 }
 </code></pre>
 
@@ -3134,8 +3196,12 @@ attestation protocol
     // <b>if</b> a payee is a slow wallet and is receiving funds from ordinary
     // or another slow wallet's unlocked funds, it counts toward unlocked coins.
     // the exceptional case is community wallets, which funds don't count toward unlocks. However, the community wallet payment uses a different function: vm_make_payment_no_limit
-    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee))
-      {<a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(*&payee, amount);}
+    <b>if</b> (<a href="DiemAccount.md#0x1_DiemAccount_is_slow">is_slow</a>(*&payee)){
+      <a href="DiemAccount.md#0x1_DiemAccount_increase_unlocked_tracker">increase_unlocked_tracker</a>(*&payee, amount);
+    };
+
+
+    <a href="DiemAccount.md#0x1_DiemAccount_maybe_update_deposit">maybe_update_deposit</a>(*&cap.account_address, payee, amount);
 }
 </code></pre>
 
@@ -6535,7 +6601,7 @@ Create a Validator Operator account
 
 
 
-<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_maybe_update_deposit">maybe_update_deposit</a>(payee: <b>address</b>, deposit_value: u64)
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_maybe_update_deposit">maybe_update_deposit</a>(payer: <b>address</b>, payee: <b>address</b>, deposit_value: u64)
 </code></pre>
 
 
@@ -6544,7 +6610,7 @@ Create a Validator Operator account
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_maybe_update_deposit">maybe_update_deposit</a>(payee: <b>address</b>, deposit_value: u64) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> {
+<pre><code><b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_maybe_update_deposit">maybe_update_deposit</a>(payer: <b>address</b>, payee: <b>address</b>, deposit_value: u64) <b>acquires</b> <a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a> {
     // <b>update</b> cumulative deposits <b>if</b> the account <b>has</b> the <b>struct</b>.
     <b>if</b> (<b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(payee)) {
       <b>let</b> epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
@@ -6552,7 +6618,13 @@ Create a Validator Operator account
       <b>let</b> cumu = <b>borrow_global_mut</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(payee);
       cumu.value = cumu.value + deposit_value;
       cumu.index = cumu.index + index;
+
+      // also write the receipt <b>to</b> the payee's account.
+      <a href="Receipts.md#0x1_Receipts_write_receipt">Receipts::write_receipt</a>(payer, payee, deposit_value);
+
     };
+
+
 }
 </code></pre>
 
@@ -6643,13 +6715,13 @@ inflation by x% per day from the start of network.
 
 </details>
 
-<a name="0x1_DiemAccount_is_init"></a>
+<a name="0x1_DiemAccount_is_init_cumu_tracking"></a>
 
-## Function `is_init`
+## Function `is_init_cumu_tracking`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_is_init">is_init</a>(addr: <b>address</b>): bool
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_is_init_cumu_tracking">is_init_cumu_tracking</a>(addr: <b>address</b>): bool
 </code></pre>
 
 
@@ -6658,7 +6730,7 @@ inflation by x% per day from the start of network.
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_is_init">is_init</a>(addr: <b>address</b>): bool {
+<pre><code><b>public</b> <b>fun</b> <a href="DiemAccount.md#0x1_DiemAccount_is_init_cumu_tracking">is_init_cumu_tracking</a>(addr: <b>address</b>): bool {
   <b>exists</b>&lt;<a href="DiemAccount.md#0x1_DiemAccount_CumulativeDeposits">CumulativeDeposits</a>&gt;(addr)
 }
 </code></pre>

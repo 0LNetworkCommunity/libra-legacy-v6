@@ -14,11 +14,11 @@ edition = "2018"
 Inflector = { version = "0.11.4", features = ["heavyweight", "lazy_static", "regex"] }
 anyhow = { version = "1.0.52", features = ["backtrace", "std"] }
 backtrace = { version = "0.3.56", features = ["addr2line", "gimli-symbolize", "miniz_oxide", "object", "serde", "std"] }
-bitvec = { version = "0.19.5", features = ["alloc", "atomic", "std"] }
+bitvec = { version = "1.0.1", features = ["alloc", "atomic", "std"] }
 byteorder = { version = "1.4.3", features = ["i128", "std"] }
 bytes = { version = "1.0.1", features = ["serde", "std"] }
 chrono = { version = "0.4.19", features = ["clock", "libc", "oldtime", "serde", "std", "time", "winapi"] }
-clap = { version = "2.33.3", features = ["ansi_term", "atty", "color", "strsim", "suggestions", "vec_map"] }
+clap = { version = "2.34.0", features = ["ansi_term", "atty", "color", "strsim", "suggestions", "vec_map"] }
 crossbeam-channel = { version = "0.5.1", features = ["crossbeam-utils", "std"] }
 crossbeam-deque = { version = "0.8.1", features = ["crossbeam-epoch", "crossbeam-utils", "std"] }
 crossbeam-queue = { version = "0.3.1", features = ["alloc", "std"] }
@@ -40,8 +40,8 @@ num-integer = { version = "0.1.44", default-features = false, features = ["i128"
 num-traits = { version = "0.2.14", features = ["i128", "std"] }
 plotters = { version = "0.3.0", default-features = false, features = ["area_series", "evcxr", "histogram", "line_series", "plotters-svg", "svg_backend"] }
 rand = { version = "0.8.4", features = ["alloc", "getrandom", "libc", "rand_chacha", "rand_hc", "small_rng", "std", "std_rng"] }
-regex = { version = "1.4.3", features = ["aho-corasick", "memchr", "perf", "perf-cache", "perf-dfa", "perf-inline", "perf-literal", "std", "thread_local", "unicode", "unicode-age", "unicode-bool", "unicode-case", "unicode-gencat", "unicode-perl", "unicode-script", "unicode-segment"] }
-regex-automata = { version = "0.1.9", features = ["regex-syntax", "std"] }
+regex = { version = "1.4.3", features = ["aho-corasick", "memchr", "perf", "perf-cache", "perf-dfa", "perf-inline", "perf-literal", "std", "unicode", "unicode-age", "unicode-bool", "unicode-case", "unicode-gencat", "unicode-perl", "unicode-script", "unicode-segment"] }
+regex-automata = { version = "0.2.0", features = ["regex-syntax", "std"] }
 reqwest = { version = "0.11.2", features = ["__tls", "blocking", "default-tls", "hyper-tls", "json", "native-tls-crate", "serde_json", "stream", "tokio-native-tls"] }
 rusty-fork = { version = "0.3.0", features = ["timeout", "wait-timeout"] }
 serde = { version = "1.0.130", features = ["alloc", "derive", "rc", "serde_derive", "std"] }
@@ -49,9 +49,9 @@ serde_json = { version = "1.0.73", features = ["indexmap", "preserve_order", "st
 standback = { version = "0.2.15", default-features = false, features = ["std"] }
 subtle = { version = "2.4.0", default-features = false, features = ["std"] }
 tiny-keccak = { version = "2.0.2", features = ["sha3"] }
-tokio = { version = "1.9.0", features = ["bytes", "fs", "full", "io-std", "io-util", "libc", "macros", "memchr", "mio", "net", "num_cpus", "once_cell", "parking_lot", "process", "rt", "rt-multi-thread", "signal", "signal-hook-registry", "sync", "test-util", "time", "tokio-macros", "winapi"] }
-tokio-util = { version = "0.6.7", features = ["codec", "compat", "futures-io", "io"] }
-toml = { version = "0.5.8" }
+tokio = { version = "1.9.0", features = ["bytes", "fs", "full", "io-std", "io-util", "libc", "macros", "memchr", "mio", "net", "num_cpus", "sync", "parking_lot", "process", "rt", "rt-multi-thread", "signal", "signal-hook-registry", "sync", "test-util", "time", "tokio-macros", "winapi"] }
+tokio-util = { version = "0.7.7", features = ["codec", "compat", "futures-io", "io"] }
+toml = { version = "0.5.11" }
 tracing = { version = "0.1.26", features = ["attributes", "log", "std", "tracing-attributes"] }
 url = { version = "2.2.2", default-features = false, features = ["serde"] }
 warp = { version = "0.3.0", features = ["multipart", "tls", "tokio-rustls", "tokio-tungstenite", "websocket"] }
@@ -61,12 +61,12 @@ zeroize = { version = "1.2.0", features = ["alloc", "zeroize_derive"] }
 Inflector = { version = "0.11.4", features = ["heavyweight", "lazy_static", "regex"] }
 anyhow = { version = "1.0.52", features = ["backtrace", "std"] }
 backtrace = { version = "0.3.56", features = ["addr2line", "gimli-symbolize", "miniz_oxide", "object", "serde", "std"] }
-bitvec = { version = "0.19.5", features = ["alloc", "atomic", "std"] }
+bitvec = { version = "1.0.1", features = ["alloc", "atomic", "std"] }
 byteorder = { version = "1.4.3", features = ["i128", "std"] }
 bytes = { version = "1.0.1", features = ["serde", "std"] }
 cc = { version = "1.0.67", default-features = false, features = ["jobserver", "parallel"] }
 chrono = { version = "0.4.19", features = ["clock", "libc", "oldtime", "serde", "std", "time", "winapi"] }
-clap = { version = "2.33.3", features = ["ansi_term", "atty", "color", "strsim", "suggestions", "vec_map"] }
+clap = { version = "2.34.0", features = ["ansi_term", "atty", "color", "strsim", "suggestions", "vec_map"] }
 crossbeam-channel = { version = "0.5.1", features = ["crossbeam-utils", "std"] }
 crossbeam-deque = { version = "0.8.1", features = ["crossbeam-epoch", "crossbeam-utils", "std"] }
 crossbeam-queue = { version = "0.3.1", features = ["alloc", "std"] }
@@ -88,19 +88,19 @@ num-integer = { version = "0.1.44", default-features = false, features = ["i128"
 num-traits = { version = "0.2.14", features = ["i128", "std"] }
 plotters = { version = "0.3.0", default-features = false, features = ["area_series", "evcxr", "histogram", "line_series", "plotters-svg", "svg_backend"] }
 rand = { version = "0.8.4", features = ["alloc", "getrandom", "libc", "rand_chacha", "rand_hc", "small_rng", "std", "std_rng"] }
-regex = { version = "1.4.3", features = ["aho-corasick", "memchr", "perf", "perf-cache", "perf-dfa", "perf-inline", "perf-literal", "std", "thread_local", "unicode", "unicode-age", "unicode-bool", "unicode-case", "unicode-gencat", "unicode-perl", "unicode-script", "unicode-segment"] }
-regex-automata = { version = "0.1.9", features = ["regex-syntax", "std"] }
+regex = { version = "1.4.3", features = ["aho-corasick", "memchr", "perf", "perf-cache", "perf-dfa", "perf-inline", "perf-literal", "std", "unicode", "unicode-age", "unicode-bool", "unicode-case", "unicode-gencat", "unicode-perl", "unicode-script", "unicode-segment"] }
+regex-automata = { version = "0.2.0", features = ["regex-syntax", "std"] }
 reqwest = { version = "0.11.2", features = ["__tls", "blocking", "default-tls", "hyper-tls", "json", "native-tls-crate", "serde_json", "stream", "tokio-native-tls"] }
 rusty-fork = { version = "0.3.0", features = ["timeout", "wait-timeout"] }
 serde = { version = "1.0.130", features = ["alloc", "derive", "rc", "serde_derive", "std"] }
 serde_json = { version = "1.0.73", features = ["indexmap", "preserve_order", "std"] }
 standback = { version = "0.2.15", default-features = false, features = ["std"] }
 subtle = { version = "2.4.0", default-features = false, features = ["std"] }
-syn = { version = "1.0.74", features = ["clone-impls", "derive", "extra-traits", "full", "parsing", "printing", "proc-macro", "quote", "visit", "visit-mut"] }
+syn = { version = "2.0.13", features = ["clone-impls", "derive", "extra-traits", "full", "parsing", "printing", "proc-macro", "quote", "visit", "visit-mut"] }
 tiny-keccak = { version = "2.0.2", features = ["sha3"] }
-tokio = { version = "1.9.0", features = ["bytes", "fs", "full", "io-std", "io-util", "libc", "macros", "memchr", "mio", "net", "num_cpus", "once_cell", "parking_lot", "process", "rt", "rt-multi-thread", "signal", "signal-hook-registry", "sync", "test-util", "time", "tokio-macros", "winapi"] }
-tokio-util = { version = "0.6.7", features = ["codec", "compat", "futures-io", "io"] }
-toml = { version = "0.5.8" }
+tokio = { version = "1.9.0", features = ["bytes", "fs", "full", "io-std", "io-util", "libc", "macros", "memchr", "mio", "net", "num_cpus", "sync", "parking_lot", "process", "rt", "rt-multi-thread", "signal", "signal-hook-registry", "sync", "test-util", "time", "tokio-macros", "winapi"] }
+tokio-util = { version = "0.7.7", features = ["codec", "compat", "futures-io", "io"] }
+toml = { version = "0.5.11" }
 tracing = { version = "0.1.26", features = ["attributes", "log", "std", "tracing-attributes"] }
 url = { version = "2.2.2", default-features = false, features = ["serde"] }
 warp = { version = "0.3.0", features = ["multipart", "tls", "tokio-rustls", "tokio-tungstenite", "websocket"] }

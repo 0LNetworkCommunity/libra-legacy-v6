@@ -15,7 +15,6 @@ criterion = "0.3.4"
 chrono = "0.4.19"
 indicatif = "0.15.0"
 itertools = { version = "0.10.0", default-features = false }
-jemallocator = { version = "0.3.2", features = ["profiling", "unprefixed_malloc_on_supported_platforms"] }
 rand = "0.8.3"
 rayon = "1.5.0"
 serde = "1.0.124"
@@ -39,6 +38,9 @@ schemadb = { path = "../../storage/schemadb" }
 storage-client = { path = "../../storage/storage-client" }
 storage-interface = { path = "../../storage/storage-interface" }
 diem-transaction-builder = { path = "../../sdk/transaction-builder" }
+
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+jemallocator = { version = "0.3.2", features = ["profiling", "unprefixed_malloc_on_supported_platforms"] }
 
 [dev-dependencies]
 diem-temppath = { path = "../../crates/diem-temppath" }

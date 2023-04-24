@@ -2,14 +2,15 @@
 use anyhow::{bail, Error};
 use chrono::Utc;
 use diem_json_rpc::views::OracleUpgradeStateView;
+
 use diem_types::{
     account_address::AccountAddress, account_state::AccountState,
     ol_validators_stats::ValidatorsStatsResource, validator_info::ValidatorInfo,
-    waypoint::Waypoint,
+    waypoint::Waypoint, account_state_blob::AccountStateBlob,
 };
 use ol_types::{autopay::AutoPayView, validator_config::ValidatorConfigView};
 
-use super::{autopay_view::PayeeStats, dictionary::AccountDictionary, node::Node};
+use super::{autopay_view::PayeeStats, dictionary::AccountDictionary, node::Node, query};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
@@ -62,12 +63,12 @@ pub struct ValidatorView {
     pub pub_key: String,
     /// voting power
     pub voting_power: u64,
-    /// full node full ip
-    pub vfn_full_ip: String,
-    /// full node ip
+    /// validator's fullnode complete network info
+    pub vfn_net_addr: String,
+    /// fullnode only ip
     pub vfn_ip: String,
-    /// validator full ip
-    pub validator_full_ip: String,
+    /// validator complete network info
+    pub validator_net_addr: String,
     /// validator ip
     pub validator_ip: String,
     /// ports status
@@ -134,6 +135,7 @@ impl Node {
 
         if let Some(account_blob) = blob {
             let account_state = AccountState::try_from(&account_blob)?;
+
             let meta = self.client.get_metadata()?.into_inner();
 
             let conf_resource = match account_state.get_configuration_resource()? {
@@ -185,11 +187,13 @@ impl Node {
             let dict = self.load_account_dictionary();
 
             // Fetch and format all data for each Validator
-            let validators: Vec<ValidatorView> = validator_set
+            let _validators: Vec<ValidatorView> = validator_set
                 .payload()
                 .iter()
-                .filter_map(|v| self.format_validator_info(v, &dict, &validators_stats).ok())
+                .filter_map(|v| self.format_validator_info(v, &dict, &validators_stats, &account_blob).ok())
                 .collect();
+
+            let validators = vec![];
 
             cs.validator_view = Some(validators.clone());
             cs.validators_stats = Some(validators_stats);
@@ -207,84 +211,83 @@ impl Node {
 
     fn format_validator_info(
         &mut self,
-        _v: &ValidatorInfo,
-        _dict: &AccountDictionary,
-        _stats: &ValidatorsStatsResource,
+        v: &ValidatorInfo,
+        dict: &AccountDictionary,
+        stats: &ValidatorsStatsResource,
+        _annotated_blob: &AccountStateBlob,
     ) -> Result<ValidatorView, Error> {
-        todo!()
-        // let vfn_full_ip = match v.config().fullnode_network_addresses() {
-        //     Ok(ips) => {
-        //         if ips.len() > 0 {
-        //             ips.last().unwrap().to_string()
-        //         } else {
-        //             "--".to_string()
-        //         }
-        //     }
-        //     Err(_) => "--".to_string(),
-        // };
 
-        // let vfn_ip = extract_ip(&vfn_full_ip);
+        let (vfn_net_addr, vfn_ip) = match v.config().fullnode_network_addresses()?.iter().next() {
+            Some(a) => {
+              let ip = a.find_ip_addr().map_or_else(
+                  || "--".to_string(),
+                |ip| ip.to_string()
+              );
 
-        // let validator_full_ip = match v.config().validator_network_addresses() {
-        //     Ok(ips) => {
-        //         if ips.len() > 0 {
-        //             match ips.get(0) {
-        //                 Some(netw_addr) => netw_addr.to_string(), // Todo: Needs review
-        //                 None => "--".to_string(),
-        //             }
-        //         } else {
-        //             "--".to_string()
-        //         }
-        //     }
-        //     Err(_) => "--".to_string(),
-        // };
-        // let validator_ip = extract_ip(&validator_full_ip);
-        // let ms = self.client.get_miner_state(v.account_address().clone())?.into_inner().unwrap();
-        // let one_val_stat = stats.get_validator_current_stats(v.account_address().clone());
-        // let val_config_opt = self.get_validator_config(v.account_address().clone());
-        // let autopay_opt = self.get_autopay_view(v.account_address().clone());
+              (a.to_string(), ip)
+            },
+            None => bail!("cannot get VFN network address"),
+        };
 
-        // // 0L todo: See get_annotate_account_blob
-        // // let burn_to_community = match self.get_annotate_account_blob(v.account_address().clone()) {
-        // //     Ok((Some(r), _)) => {
-        // //         match query::find_value_from_state(
-        // //             &r,
-        // //             "Burn".to_string(),
-        // //             "BurnPreference".to_string(),
-        // //             "send_community".to_string(),
-        // //         ) {
-        // //           Some(move_resource_viewer::AnnotatedMoveValue::Bool(b)) => *b,
-        // //           _ => false
-        // //         }
+        let (validator_net_addr, validator_ip) = match v.config().validator_network_addresses()?.iter().next() {
+            Some(a) => {
+              let ip = a.find_ip_addr().map_or_else(
+                  || "--".to_string(),
+                |ip| ip.to_string()
+              );
 
-        // //     }
-        // //     _ => false,
-        // // };
+              (a.to_string(), ip)
+            },
+            None => bail!("cannot get validator network address"),
+        };
 
-        // let ports = get_ports_status(&validator_ip);
 
-        // Ok(ValidatorView {
-        //     account_address: v.account_address().to_string(),
-        //     voting_power: v.consensus_voting_power(),
-        //     vfn_full_ip,
-        //     vfn_ip,
-        //     pub_key: v.consensus_public_key().to_string(),
-        //     validator_full_ip,
-        //     validator_ip,
-        //     ports_status: ports,
-        //     tower_height: ms.verified_tower_height,
-        //     tower_epoch: ms.latest_epoch_mining,
-        //     count_proofs_in_epoch: ms.actual_count_proofs_in_epoch,
-        //     epochs_validating_and_mining: ms.epochs_validating_and_mining,
-        //     contiguous_epochs_validating_and_mining: ms.contiguous_epochs_validating_and_mining,
-        //     epochs_since_last_account_creation: ms.epochs_since_last_account_creation,
-        //     vote_count_in_epoch: one_val_stat.vote_count,
-        //     prop_count_in_epoch: one_val_stat.prop_count,
-        //     validator_config: val_config_opt,
-        //     autopay: autopay_opt,
-        //     burn_to_community: false, // burn_to_community,
-        //     note: dict.get_note_for_address(*v.account_address()),
-        // })
+        let ms = self.client.get_miner_state(v.account_address().clone())?.into_inner().expect("cannot get miner state"); // Todo: remove this panic.
+
+        let one_val_stat = stats.get_validator_current_stats(v.account_address().clone());
+
+        let val_config_opt = self.get_validator_config(v.account_address().clone());
+        let autopay_opt = self.get_autopay_view(v.account_address().clone());
+        
+        let annotated = match self.get_annotate_account_blob(*v.account_address()) {
+            Ok((Some(a), _)) => a,
+            _ => bail!("can't get annoted account"),
+        };
+        // 0L todo: See get_annotate_account_blob
+        let _burn_to_community = match query::find_value_from_state(
+            &annotated,
+            "Burn".to_string(),
+            "BurnPreference".to_string(),
+            "send_community".to_string(),
+        ) {
+          Some(move_resource_viewer::AnnotatedMoveValue::Bool(b)) => *b,
+          _ => false
+        };
+
+        let ports = get_ports_status(&validator_net_addr);
+
+        Ok(ValidatorView {
+            account_address: v.account_address().to_string(),
+            voting_power: v.consensus_voting_power(),
+            vfn_net_addr,
+            vfn_ip,
+            pub_key: v.consensus_public_key().to_string(),
+            validator_net_addr,
+            validator_ip,
+            ports_status: ports,
+            tower_height: ms.verified_tower_height,
+            tower_epoch: ms.latest_epoch_mining,
+            count_proofs_in_epoch: ms.actual_count_proofs_in_epoch,
+            epochs_validating_and_mining: ms.epochs_validating_and_mining,
+            contiguous_epochs_validating_and_mining: ms.contiguous_epochs_validating_and_mining,
+            epochs_since_last_account_creation: ms.epochs_since_last_account_creation,
+            vote_count_in_epoch: one_val_stat.vote_count,
+            prop_count_in_epoch: one_val_stat.prop_count,
+            validator_config: val_config_opt,
+            autopay: autopay_opt,
+            burn_to_community: false, // burn_to_community,
+            note: dict.get_note_for_address(*v.account_address()),
+        })
     }
 }
 
@@ -321,9 +324,9 @@ fn calc_config_stats(vals: Vec<ValidatorView>) -> Result<ValsConfigStats, Error>
 }
 
 // 0L todo: remove "_" prefix later
-fn _get_ports_status(ip: &String) -> HashMap<String, bool> {
+fn get_ports_status(ip: &String) -> HashMap<String, bool> {
     let mut result: HashMap<String, bool> = HashMap::new();
-    let ports = _get_ports_to_test();
+    let ports = get_ports_to_test();
     for port in ports.iter() {
         result.insert(port.to_string(), _scan_port(&ip, port));
     }
@@ -344,15 +347,7 @@ fn _scan_port(ip: &String, port: &u16) -> bool {
     }
 }
 
-fn _get_ports_to_test() -> Vec<u16> {
+fn get_ports_to_test() -> Vec<u16> {
     // TODO: default OR read from local file
     vec![6180u16]
-}
-
-fn _extract_ip(full_ip: &String) -> String {
-    let split_str: Vec<&str> = full_ip.split('/').collect();
-    match split_str.get(2) {
-        Some(ip) => ip.to_string(),
-        None => full_ip.to_string(),
-    }
 }

@@ -84,6 +84,7 @@ pub fn community_payment_proposal(
     // NOTE: coins here do not have the scaling factor. Rescaling is the responsibility of the Move script. See the script in ol_accounts.move for detail.
     let script = transaction_builder::encode_community_transfer_script_function(
         destination,
+        destination,
         coins,
         memo.as_bytes().to_vec(),
     );

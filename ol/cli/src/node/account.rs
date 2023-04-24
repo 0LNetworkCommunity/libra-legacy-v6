@@ -3,14 +3,17 @@
 use crate::node::node::Node;
 use anyhow::{Error, Result};
 use diem_json_rpc::views::{AccountView, EventView};
+use diem_resource_viewer::{AnnotatedAccountStateBlob, DiemValueAnnotator};
 use diem_types::{
     account_address::AccountAddress,
     account_state::AccountState,
     event::{EventHandle, EventKey},
+    transaction::Version,
     // transaction::Version // 0L todo
 };
 use ol_types::{
     autopay::{AutoPayResource, AutoPayView},
+    null_data_store::NullDataStore,
     validator_config::{ValidatorConfigResource, ValidatorConfigView},
 };
 // use diem_resource_viewer::{AnnotatedAccountStateBlob}; // 0L todo
@@ -176,22 +179,23 @@ impl Node {
     }
 
     // // 0L todo diem 1.4.1: How to get the "annotator"?
-    // /// Return a full Move-annotated account resource struct
-    // pub fn get_annotate_account_blob(
-    //     &mut self,
-    //     account: AccountAddress,
-    // ) -> Result<(Option<AnnotatedAccountStateBlob>, Version)> {
-    //     let (blob, ver) = self.client.get_account_state_blob(&account)?;
-    //     if let Some(account_blob) = blob {
-    //         // let state_view = NullStateView::default();
-    //         let annotator = DiemValueAnnotator::new(&self.client.db);
-    //         let annotate_blob =
-    //             annotator.view_account_state(&AccountState::try_from(&account_blob)?)?;
-    //         Ok((Some(annotate_blob), ver))
-    //     } else {
-    //         Ok((None, ver))
-    //     }
-    // }
+    /// Return a full Move-annotated account resource struct
+    pub fn get_annotate_account_blob(
+        &mut self,
+        account: AccountAddress,
+    ) -> Result<(Option<AnnotatedAccountStateBlob>, Version)> {
+        let (blob, ver) = self.client.get_account_state_blob(&account)?;
+        if let Some(account_blob) = blob {
+            // let state_view = NullStateView::default();
+            let state_view = NullDataStore::new();
+            let annotator = DiemValueAnnotator::new(&state_view);
+            let annotate_blob =
+                annotator.view_account_state(&AccountState::try_from(&account_blob)?)?;
+            Ok((Some(annotate_blob), ver))
+        } else {
+            Ok((None, ver))
+        }
+    }
 
     /// get any account state with client
     pub fn get_account_state(&self, address: AccountAddress) -> Result<AccountState, Error> {
