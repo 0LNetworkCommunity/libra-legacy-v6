@@ -7,7 +7,13 @@ use diem_types::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::{fs::{self, File}, io::Write, path::PathBuf, process::exit, u64};
+use std::{
+    fs::{self, File},
+    io::Write,
+    path::PathBuf,
+    process::exit,
+    u64,
+};
 
 #[cfg(test)]
 use crate::fixtures;
@@ -185,55 +191,54 @@ impl PayInstruction {
 
     /// provide text information on the instruction
     pub fn text_instruction(&self) -> String {
-      let times = match &self.duration_epochs {
-        Some(d) => format!("{} times", d),
-        None => "".to_owned()
-      };
-      match self.type_of {
-        
-        InstructionType::PercentOfBalance => {
-          format!(
-            "Instruction {uid}: {note}\nSends {percent_balance:.2?}% of total balance every day {times} (until epoch {epoch_ending}) to address: {destination}?",
-            uid = &self.uid.unwrap(),
-            percent_balance = *&self.value_move.unwrap() as f64 /100f64,
-            times = times,
-            note = &self.note.clone().unwrap(),
-            epoch_ending = &self.end_epoch.unwrap(),
-            destination = &self.destination,
-          )
-        },
-        InstructionType::PercentOfChange => {
-            format!(
-              "Instruction {uid}: {note}\nSends {percent_balance:.2?}% of new incoming funds every day {times} (until epoch {epoch_ending}) to address: {destination}?",
-              uid = &self.uid.unwrap(),
-              percent_balance = *&self.value_move.unwrap() as f64 /100f64,
-              times = times,
-              note = &self.note.clone().unwrap(),
-              epoch_ending = &self.end_epoch.unwrap(),
-              destination = &self.destination,
-            )
-        },
-        InstructionType::FixedRecurring => {
-            format!(
-                "Instruction {uid}: {note}\nSend {total_val} every day {times} (until epoch {epoch_ending}) to address: {destination}?",
-                uid = &self.uid.unwrap(),
-                total_val = *&self.value_move.unwrap() / 1_000_000, // scaling factor
-                times = times,
-                note = &self.note.clone().unwrap(),
-                epoch_ending = &self.end_epoch.unwrap(),
-                destination = &self.destination,
-            )
-        },
-        InstructionType::FixedOnce => {
-          format!(
-                "Instruction {uid}: {note}\nSend {total_val} once to address: {destination}?",
-                uid = &self.uid.unwrap(),
-                note = &self.note.clone().unwrap(),
-                total_val = *&self.value_move.unwrap() / 1_000_000, // scaling factor
-                destination = &self.destination,
-            )
+        let times = match &self.duration_epochs {
+            Some(d) => format!("{} times", d),
+            None => "".to_owned(),
+        };
+        match self.type_of {
+            InstructionType::PercentOfBalance => {
+                format!(
+                    "Instruction {uid}: {note}\nSends {percent_balance:.2?}% of total balance every day {times} (until epoch {epoch_ending}) to address: {destination}?",
+                    uid = &self.uid.unwrap(),
+                    percent_balance = self.value_move.unwrap() as f64 / 100f64,
+                    times = times,
+                    note = self.note.as_ref().unwrap(),
+                    epoch_ending = &self.end_epoch.unwrap(),
+                    destination = &self.destination,
+                )
+            }
+            InstructionType::PercentOfChange => {
+                format!(
+                    "Instruction {uid}: {note}\nSends {percent_balance:.2?}% of new incoming funds every day {times} (until epoch {epoch_ending}) to address: {destination}?",
+                    uid = &self.uid.unwrap(),
+                    percent_balance = self.value_move.unwrap() as f64 / 100f64,
+                    times = times,
+                    note = self.note.as_ref().unwrap(),
+                    epoch_ending = &self.end_epoch.unwrap(),
+                    destination = &self.destination,
+                )
+            }
+            InstructionType::FixedRecurring => {
+                format!(
+                    "Instruction {uid}: {note}\nSend {total_val} every day {times} (until epoch {epoch_ending}) to address: {destination}?",
+                    uid = &self.uid.unwrap(),
+                    total_val = self.value_move.unwrap() / 1_000_000, // scaling factor
+                    times = times,
+                    note = self.note.as_ref().unwrap(),
+                    epoch_ending = &self.end_epoch.unwrap(),
+                    destination = &self.destination,
+                )
+            }
+            InstructionType::FixedOnce => {
+                format!(
+                    "Instruction {uid}: {note}\nSend {total_val} once to address: {destination}?",
+                    uid = &self.uid.unwrap(),
+                    note = self.note.as_ref().unwrap(),
+                    total_val = self.value_move.unwrap() / 1_000_000, // scaling factor
+                    destination = &self.destination,
+                )
+            }
         }
-      }
     }
 }
 

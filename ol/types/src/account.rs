@@ -6,7 +6,7 @@ use diem_crypto::x25519::PublicKey;
 use diem_global_constants::{DEFAULT_PUB_PORT, DEFAULT_VAL_PORT, DEFAULT_VFN_PORT};
 use diem_types::{
     account_address::AccountAddress,
-    network_address::{NetworkAddress},
+    network_address::NetworkAddress,
     transaction::{SignedTransaction, TransactionPayload},
 };
 
@@ -144,13 +144,13 @@ impl ValConfigs {
         }
     }
     /// Creates the json file needed for onchain account creation - validator
-    pub fn create_manifest(&self, mut json_path: PathBuf) -> Result<(), anyhow::Error>{
+    pub fn create_manifest(&self, mut json_path: PathBuf) -> Result<(), anyhow::Error> {
         //where file will be saved
         json_path.push("account.json");
         let mut file = File::create(json_path.as_path())?;
 
         let buf = serde_json::to_string(&self)?;
-          // .expect("Config should be export to json");
+        // .expect("Config should be export to json");
 
         file.write(&buf.as_bytes())?;
 
@@ -217,16 +217,16 @@ impl ValConfigs {
             .enumerate()
             .for_each(|(i, instr)| {
                 println!("{}", instr.text_instruction());
-                if !*IS_TEST {  
+                if !*IS_TEST {
                   match Confirm::new().with_prompt("").interact().unwrap() {
                     true => {},
                     _ =>  {
                       print!("Autopay configuration aborted. Check batch configuration file or template");
                       exit(1);
                     }
-                  } 
+                  }
                 }
- 
+
                 if let Some(signed) = &self.autopay_signed {
                   let tx = signed.iter().nth(i).unwrap();
                   let payload = tx.clone().into_raw_transaction().into_payload();
@@ -301,7 +301,6 @@ fn test_parse_account_file() {
 
 #[test]
 fn val_config_ip_address() {
-
     let block = VDFProof {
         height: 0u64,
         elapsed_secs: 0u64,
