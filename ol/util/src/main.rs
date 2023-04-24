@@ -27,7 +27,6 @@ fn main() {
         }
         None => {
             eprintln!("Failed to get the home directory");
-            return;
         }
     }
 }
@@ -46,7 +45,7 @@ fn migrate_0l_toml(config_file: PathBuf, node_home: PathBuf) {
 
     // step 2: update all attributes
 
-    // ---------------------- udate [workspace] config start ----------------------
+    // ---------------------- update [workspace] config start ----------------------
     let default_db_path = node_home.join("db").as_path().display().to_string();
     let default_source_path = match dirs::home_dir() {
         Some(home) => home.join("libra").as_path().display().to_string(),
@@ -62,13 +61,13 @@ fn migrate_0l_toml(config_file: PathBuf, node_home: PathBuf) {
         "source_path",
         default_source_path,
     );
-    // ---------------------- udate [workspace] config finished ----------------------
+    // ---------------------- update [workspace] config finished ----------------------
 
-    // ---------------------- udate [chain_info] config start ----------------------
+    // ---------------------- update [chain_info] config start ----------------------
     add_or_update_n(&config_file, "chain_info", "base_epoch", 0);
-    // ---------------------- udate [workspace] config finished ----------------------
+    // ---------------------- update [workspace] config finished ----------------------
 
-    // ---------------------- udate the tx costs config start ----------------------
+    // ---------------------- update the tx costs config start ----------------------
     rename_section(
         &config_file,
         "tx_configs.miner_txs",
@@ -151,7 +150,7 @@ fn migrate_0l_toml(config_file: PathBuf, node_home: PathBuf) {
         1000,
     );
 
-    // ---------------------- udate the tx costs config finished ----------------------
+    // ---------------------- update the tx costs config finished ----------------------
 }
 
 /// add a new section in case it does not exist already
@@ -193,14 +192,12 @@ pub fn add_section(filename: &PathBuf, section: &str) {
         };
 
         for line in file_content.lines() {
-            match file.write_fmt(format_args!("{}\n", &line)) {
-                Err(why) => println!("writing to file failed {:?}", why),
-                _ => (),
+            if let Err(why) = file.write_fmt(format_args!("{}\n", &line)) {
+                println!("writing to file failed {:?}", why)
             }
         }
-        match file.write_fmt(format_args!("\n[{}]\n", &section)) {
-            Err(why) => println!("writing to file failed {:?}", why),
-            _ => (),
+        if let Err(why) = file.write_fmt(format_args!("\n[{}]\n", &section)) {
+            println!("writing to file failed {:?}", why)
         }
         println!("{:?}: added section [{}]", &filename, &section);
     }
@@ -252,15 +249,11 @@ pub fn rename_section(filename: &PathBuf, old_section_name: &str, new_section_na
 
         for line in file_content.lines() {
             if old_section_re.is_match(&line) {
-                match file.write_fmt(format_args!("[{}]\n", &new_section_name)) {
-                    Err(why) => println!("writing to file failed {:?}", why),
-                    _ => (),
+                if let Err(why) = file.write_fmt(format_args!("[{}]\n", &new_section_name)) {
+                    println!("writing to file failed {:?}", why)
                 }
-            } else {
-                match file.write_fmt(format_args!("{}\n", &line)) {
-                    Err(why) => println!("writing to file failed {:?}", why),
-                    _ => (),
-                }
+            } else if let Err(why) = file.write_fmt(format_args!("{}\n", &line)) {
+                println!("writing to file failed {:?}", why)
             }
         }
 
@@ -343,9 +336,8 @@ pub fn add_or_update(filename: &PathBuf, section: &str, attribute: &str, value: 
     for line in file_content.lines() {
         if any_section_start_re.is_match(&line) {
             in_my_section = my_section_re.is_match(&line);
-            match file.write_fmt(format_args!("{}\n", &line)) {
-                Err(why) => println!("writing to file failed {:?}", why),
-                _ => (),
+            if let Err(why) = file.write_fmt(format_args!("{}\n", &line)) {
+                println!("writing to file failed {:?}", why)
             }
             if in_my_section && !attribute_exists {
                 // add the new attribute and value to start of section
@@ -357,22 +349,19 @@ pub fn add_or_update(filename: &PathBuf, section: &str, attribute: &str, value: 
                     ),
                 }
             }
+        } else if in_my_section && my_attribute_re.is_match(&line) {
+            // update the value
+            match file.write_fmt(format_args!("{} = {}\n", attribute, value)) {
+                Err(why) => println!("writing to file failed {:?}", why),
+                _ => println!(
+                    "{:?}: updated property [{}]/{} to {}",
+                    &filename, &section, &attribute, &value
+                ),
+            }
         } else {
-            if in_my_section && my_attribute_re.is_match(&line) {
-                // update the value
-                match file.write_fmt(format_args!("{} = {}\n", attribute, value)) {
-                    Err(why) => println!("writing to file failed {:?}", why),
-                    _ => println!(
-                        "{:?}: updated property [{}]/{} to {}",
-                        &filename, &section, &attribute, &value
-                    ),
-                }
-            } else {
-                // otherwise just write the original attribute and value
-                match file.write_fmt(format_args!("{}\n", &line)) {
-                    Err(why) => println!("writing to file failed {:?}", why),
-                    _ => (),
-                }
+            // otherwise just write the original attribute and value
+            if let Err(why) = file.write_fmt(format_args!("{}\n", &line)) {
+                println!("writing to file failed {:?}", why)
             }
         }
     }
@@ -416,6 +405,6 @@ fn read_file(filename: &PathBuf) -> String {
     let mut s = String::new();
     match file.read_to_string(&mut s) {
         Err(why) => panic!("unable to read {:?} - {}", filename, why),
-        Ok(_) => return s,
+        Ok(_) => s,
     }
 }
