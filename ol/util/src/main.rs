@@ -19,10 +19,17 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 
 fn main() {
-    let node_home = dirs::home_dir().unwrap().join(NODE_HOME);
-    let config_file = node_home.join(CONFIG_FILE);
-
-    migrate_0l_toml(config_file, node_home);
+    match dirs::home_dir() {
+        Some(home_dir) => {
+            let node_home = home_dir.join(NODE_HOME);
+            let config_file = node_home.join(CONFIG_FILE);
+            migrate_0l_toml(config_file, node_home);
+        }
+        None => {
+            eprintln!("Failed to get the home directory");
+            return;
+        }
+    }
 }
 
 fn migrate_0l_toml(config_file: PathBuf, node_home: PathBuf) {
@@ -41,12 +48,13 @@ fn migrate_0l_toml(config_file: PathBuf, node_home: PathBuf) {
 
     // ---------------------- udate [workspace] config start ----------------------
     let default_db_path = node_home.join("db").as_path().display().to_string();
-    let default_source_path = dirs::home_dir()
-        .unwrap()
-        .join("libra")
-        .as_path()
-        .display()
-        .to_string();
+    let default_source_path = match dirs::home_dir() {
+        Some(home) => home.join("libra").as_path().display().to_string(),
+        None => {
+            eprintln!("Failed to get the home directory");
+            return;
+        }
+    };
     add_or_update_s(&config_file, "workspace", "db_path", default_db_path);
     add_or_update_s(
         &config_file,
@@ -158,7 +166,13 @@ fn migrate_0l_toml(config_file: PathBuf, node_home: PathBuf) {
 pub fn add_section(filename: &PathBuf, section: &str) {
     let mut section_exists = false;
 
-    let my_section_re = Regex::new(&format!(r"^\[{}\]$", section).as_str()).unwrap();
+    let my_section_re = match Regex::new(&format!(r"^\[{}\]$", section).as_str()) {
+        Ok(regex) => regex,
+        Err(e) => {
+            eprintln!("Error creating regex: {}", e);
+            return;
+        }
+    };
 
     // round 1: check if section already exists
     let file_content = read_file(&filename);
@@ -203,8 +217,20 @@ pub fn add_section(filename: &PathBuf, section: &str) {
 pub fn rename_section(filename: &PathBuf, old_section_name: &str, new_section_name: &str) {
     let mut section_exists = false;
 
-    let old_section_re = Regex::new(&format!(r"^\[{}\]$", old_section_name).as_str()).unwrap();
-    let new_section_re = Regex::new(&format!(r"^\[{}\]$", new_section_name).as_str()).unwrap();
+    let old_section_re = match Regex::new(&format!(r"^\[{}\]$", old_section_name).as_str()) {
+        Ok(regex) => regex,
+        Err(e) => {
+            eprintln!("Error creating regex for old section name: {}", e);
+            return;
+        }
+    };
+    let new_section_re = match Regex::new(&format!(r"^\[{}\]$", new_section_name).as_str()) {
+        Ok(regex) => regex,
+        Err(e) => {
+            eprintln!("Error creating regex for new section name: {}", e);
+            return;
+        }
+    };
 
     // round 1: check if section already exists
     let file_content = read_file(&filename);
@@ -275,9 +301,27 @@ pub fn add_or_update(filename: &PathBuf, section: &str, attribute: &str, value: 
     let mut in_my_section = false;
     let mut attribute_exists = false;
 
-    let any_section_start_re = Regex::new(r"^\[.*\]$").unwrap();
-    let my_section_re = Regex::new(&format!(r"^\[{}\]$", section).as_str()).unwrap();
-    let my_attribute_re = Regex::new(&format!(r"^{}[ \t]*=.*$", attribute).as_str()).unwrap();
+    let any_section_start_re = match Regex::new(r"^\[.*\]$") {
+        Ok(regex) => regex,
+        Err(e) => {
+            eprintln!("Error creating regex for any section start: {}", e);
+            return;
+        }
+    };
+    let my_section_re = match Regex::new(&format!(r"^\[{}\]$", section).as_str()) {
+        Ok(regex) => regex,
+        Err(e) => {
+            eprintln!("Error creating regex for section: {}", e);
+            return;
+        }
+    };
+    let my_attribute_re = match Regex::new(&format!(r"^{}[ \t]*=.*$", attribute).as_str()) {
+        Ok(regex) => regex,
+        Err(e) => {
+            eprintln!("Error creating regex for attribute: {}", e);
+            return;
+        }
+    };
 
     // round 1: check if attribute already exists
     let file_content = read_file(&filename);
