@@ -31,7 +31,7 @@ diem-types = { path = "../types", features = ["fuzzing"] }
 diem-vm = { path = "../diem-move/diem-vm" }
 diemdb = { path = "../storage/diemdb", features = ["fuzzing"] }
 vm-genesis = { path = "../diem-move/vm-genesis" }
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
+move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "dc21a8d02f924d8565722dbc822387eae61071ac" }
 
 [features]
 default = []

@@ -27,7 +27,7 @@ url = "2.2.2"
 diem-crypto = { path = "../diem-crypto", version = "0.0.3" }
 diem-json-rpc-types = { path = "../../json-rpc/types", version = "0.0.3" }
 #/////// 0L /////////
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
+move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "dc21a8d02f924d8565722dbc822387eae61071ac" }
 diem-types = { path = "../../types", version = "0.0.3" }
 
 # Optional Dependencies
