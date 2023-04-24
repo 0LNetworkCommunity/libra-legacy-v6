@@ -10,17 +10,17 @@ license = "Apache-2.0"
 publish = false
 
 [dependencies]
-move-bytecode-verifier = { git = "https://github.com/Dat-H-Tran/move-0L", branch = "v6" }
-move-compiler = { git = "https://github.com/Dat-H-Tran/move-0L", branch = "v6" }
+move-bytecode-verifier = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
+move-compiler = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
 diem-types = { path = "../../../types" }
 diem-workspace-hack = { path = "../../../crates/diem-workspace-hack" }
-move-binary-format = { git = "https://github.com/Dat-H-Tran/move-0L", branch = "v6" }
-move-core-types = { git = "https://github.com/Dat-H-Tran/move-0L", branch = "v6" }
-move-vm-types = { git = "https://github.com/Dat-H-Tran/move-0L", branch = "v6" }
-move-vm-runtime = { git = "https://github.com/Dat-H-Tran/move-0L", branch = "v6" }
-move-bytecode-utils = { git = "https://github.com/Dat-H-Tran/move-0L", branch = "v6" }
-move-command-line-common = { git = "https://github.com/Dat-H-Tran/move-0L", branch = "v6" }
-move-package = { git = "https://github.com/Dat-H-Tran/move-0L", branch = "v6" }
+move-binary-format = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
+move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
+move-vm-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
+move-vm-runtime = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
+move-bytecode-utils = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
+move-command-line-common = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
+move-package = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
 
 bcs = "0.1.2"
 anyhow = "1.0.52"

@@ -11,12 +11,12 @@ publish = false
 
 
 [dependencies]
-move-bytecode-verifier = { git = "https://github.com/Dat-H-Tran/move-0L", branch = "v6" }
-move-command-line-common = { git = "https://github.com/Dat-H-Tran/move-0L", branch = "v6" }
+move-bytecode-verifier = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
+move-command-line-common = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
 diem-crypto = { path = "../../../../crates/diem-crypto" }
 diem-types = { path = "../../../../types" }
 diem-workspace-hack = { path = "../../../../crates/diem-workspace-hack" }
-move-binary-format = { git = "https://github.com/Dat-H-Tran/move-0L", branch = "v6" }
+move-binary-format = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
 framework-releases = { path = "../../releases" }
 
 anyhow = "1.0.52"
@@ -27,4 +27,4 @@ once_cell = "1.7.2"
 # serde_bytes = "0.11.5"
 
 [dev-dependencies]
-move-bytecode-verifier = { git = "https://github.com/Dat-H-Tran/move-0L", branch = "v6" }
+move-bytecode-verifier = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }

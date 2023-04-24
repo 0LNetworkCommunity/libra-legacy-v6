@@ -35,5 +35,5 @@ claims = "0.7.1"
 
 diem-crypto = { path = "../../../crates/diem-crypto" }
 diem-types = { path = "../../../types" }
-move-core-types = { git = "https://github.com/Dat-H-Tran/move-0L", branch = "v6" }
+move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "8f3c187e26a519e7c974634c0ad14c5e80f57a33" }
 storage-interface = { path = "../../../storage/storage-interface" }
