@@ -9,6 +9,7 @@ use glob::glob;
 use ol::node::client;
 use ol_types::block::VDFProof;
 use ol_types::config::AppCfg;
+use std::process::exit;
 use std::{fs, io::Write, path::PathBuf, time::Instant};
 use txs::tx_params::TxParams;
 
@@ -21,7 +22,13 @@ fn mine_genesis(config: &AppCfg, difficulty: u64, security: u64) -> VDFProof {
     let preimage = genesis_preimage(&config);
     let now = Instant::now();
 
-    let proof = do_delay(&preimage, difficulty, security).unwrap(); // Todo: make mine_genesis return a result.
+    let proof = match do_delay(&preimage, difficulty, security) {
+        Ok(r) => r,
+        Err(e) => {
+            println!("Error: {}", e.to_string());
+            exit(1)
+        }
+    }; // Todo: make mine_genesis return a result.
     let elapsed_secs = now.elapsed().as_secs();
     println!("Delay: {:?} seconds", elapsed_secs);
     let block = VDFProof {
@@ -61,7 +68,7 @@ pub fn mine_once(config: &AppCfg, next: NextProof) -> Result<VDFProof, Error> {
         height: next.next_height,
         elapsed_secs,
         preimage: next.preimage,
-        proof: data.clone(),
+        proof: data.to_owned(),
         difficulty: Some(next.diff.difficulty),
         security: Some(next.diff.security),
     };
@@ -78,7 +85,7 @@ pub fn mine_and_submit(
     swarm_path: Option<PathBuf>,
 ) -> Result<(), Error> {
     // get the location of this miner's blocks
-    let mut blocks_dir = config.workspace.node_home.clone();
+    let mut blocks_dir = config.workspace.node_home.to_owned();
     blocks_dir.push(&config.workspace.block_dir);
 
     loop {
@@ -89,11 +96,8 @@ pub fn mine_and_submit(
         let next = match local_mode {
             true => next_proof::get_next_proof_params_from_local(config)?,
             false => {
-                let client = client::find_a_remote_jsonrpc(
-                    &config,
-                    // config.get_waypoint(swarm_path.clone())?, // 0L todo
-                )?;
-                match next_proof::get_next_proof_from_chain(config, client, swarm_path.clone()) {
+                let client = client::find_a_remote_jsonrpc(&config)?;
+                match next_proof::get_next_proof_from_chain(config, client, swarm_path.to_owned()) {
                     Ok(n) => n,
                     // failover to local mode, if no onchain data can be found.
                     // TODO: this is important for migrating to the new protocol.
@@ -131,10 +135,10 @@ fn write_json(block: &VDFProof, blocks_dir: &PathBuf) -> Result<(), std::io::Err
     if !&blocks_dir.exists() {
         // first run, create the directory if there is none, or if the user changed the configs.
         // note: user may have blocks but they are in a different directory than what miner.toml says.
-        fs::create_dir(&blocks_dir)?;
+        fs::create_dir(&blocks_dir).expect("Failed to create directory");
     };
     // Write the file.
-    let mut latest_block_path = blocks_dir.clone();
+    let mut latest_block_path = blocks_dir.to_owned();
     latest_block_path.push(format!("{}_{}.json", FILENAME, block.height));
     let mut file = fs::File::create(&latest_block_path)?;
     file.write_all(serde_json::to_string(&block)?.as_bytes())
@@ -194,7 +198,9 @@ pub fn parse_block_file(path: &PathBuf, purge_if_bad: bool) -> Result<VDFProof, 
     match serde_json::from_str(&block_file) {
         Ok(v) => Ok(v),
         Err(e) => {
-            if purge_if_bad { fs::remove_file(&block_file)? }
+            if purge_if_bad {
+                fs::remove_file(&block_file)?
+            }
             bail!(
                 "Could not read latest block file in path {:?}, message: {:?}",
                 &path,
@@ -246,7 +252,8 @@ fn test_helper_clear_block_dir(blocks_dir: &PathBuf) {
     // delete the temporary test file and directory.
     // remove_dir_all is scary: be careful with this.
     if blocks_dir.exists() {
-        fs::remove_dir_all(blocks_dir).unwrap();
+        fs::remove_dir_all(blocks_dir)
+            .expect("Error while deleting temporary test file and directory")
     }
 }
 #[test]
@@ -265,15 +272,15 @@ fn create_fixtures() {
 
         let mnemonic_string = wallet.mnemonic(); //wallet.mnemonic()
         let save_to = format!("./test_fixtures_{}/", ns);
-        fs::create_dir_all(save_to.clone()).unwrap();
+        fs::create_dir_all(save_to.to_owned()).expect("Error while creating directories");
         let mut configs_fixture = test_make_configs_fixture();
-        configs_fixture.workspace.block_dir = save_to.clone();
+        configs_fixture.workspace.block_dir = save_to.to_owned();
 
         // mine to save_to path
-        write_genesis(&configs_fixture).unwrap();
+        write_genesis(&configs_fixture)?;
 
         // also create mnemonic
-        let mut mnemonic_path = PathBuf::from(save_to.clone());
+        let mut mnemonic_path = PathBuf::from(save_to.to_owned());
         mnemonic_path.push("owner.mnem");
         let mut file = fs::File::create(&mnemonic_path).expect("Could not create file");
         file.write_all(mnemonic_string.as_bytes())
@@ -282,13 +289,17 @@ fn create_fixtures() {
         // create miner.toml
         //rename the path for actual fixtures
         configs_fixture.workspace.block_dir = "vdf_proofs".to_string();
-        let toml = toml::to_string(&configs_fixture).unwrap();
+        let toml = match toml::to_string(&configs_fixture) {
+            Ok(r) => r,
+            Err(e) => {
+                println!("Error: {}", e.to_string());
+                exit(1)
+            }
+        };
         let mut toml_path = PathBuf::from(save_to);
         toml_path.push("miner.toml");
-        let file = fs::File::create(&toml_path);
-        file.unwrap()
-            .write(&toml.as_bytes())
-            .expect("Could not write toml");
+        let file = fs::File::create(&toml_path)?;
+        file.write(&toml.as_bytes())?;
     }
 }
 
@@ -305,7 +316,7 @@ fn test_mine_once() {
     // Clear at start. Clearing at end can pollute the path when tests fail.
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 
-    let fixture_previous_proof = decode("0016f43606b957ab9d93046cdffa73a1e6be4f21f3848eb7b55b81756f7d31919affef388c0d92ca7d68232de4fea46884186c23ef1d6c86f63f5c586000048bce05").unwrap();
+    let fixture_previous_proof = decode("0016f43606b957ab9d93046cdffa73a1e6be4f21f3848eb7b55b81756f7d31919affef388c0d92ca7d68232de4fea46884186c23ef1d6c86f63f5c586000048bce05")?;
 
     let fixture_block = VDFProof {
         height: 0u64, // Tower height
@@ -316,7 +327,7 @@ fn test_mine_once() {
         security: Some(512),
     };
 
-    write_json(&fixture_block, &configs_fixture.get_block_dir()).unwrap();
+    write_json(&fixture_block, &configs_fixture.get_block_dir())?;
 
     let next = NextProof {
         next_height: fixture_block.height + 1,
@@ -329,7 +340,13 @@ fn test_mine_once() {
         },
     };
 
-    mine_once(&configs_fixture, next).unwrap();
+    match mine_once(&configs_fixture, next) {
+        Ok(r) => r,
+        Err(e) => {
+            println!("Error: {}", e.to_string());
+            exit(1)
+        }
+    };
     // confirm this file was written to disk.
     let block_file = fs::read_to_string("./test_blocks_temp_2/proof_1.json")
         .expect("Could not read latest block");
@@ -359,7 +376,13 @@ fn test_mine_genesis() {
     test_helper_clear_block_dir(&configs_fixture.get_block_dir());
 
     // mine
-    write_genesis(&configs_fixture).unwrap();
+    match write_genesis(&configs_fixture) {
+        Ok(r) => r,
+        Err(e) => {
+            println!("Error: {}", e.to_string());
+            exit(1)
+        }
+    };
     // read file
     let block_file =
         // TODO: make this work: let latest_block_path = &configs_fixture.chain_info.block_dir.to_string().push(format!("proof_0.json"));
@@ -407,10 +430,10 @@ fn test_parse_one_file() {
     // Clear at start. Clearing at end can pollute the path when tests fail.
     test_helper_clear_block_dir(&blocks_dir);
 
-    fs::create_dir(&blocks_dir).unwrap();
-    let mut latest_block_path = blocks_dir.clone();
+    fs::create_dir(&blocks_dir).expect("Failed to create directory");
+    let mut latest_block_path = blocks_dir.to_owned();
     latest_block_path.push(format!("proof_{}.json", current_block_number));
-    let mut file = fs::File::create(&latest_block_path).unwrap();
+    let mut file = fs::File::create(&latest_block_path).expect("Failed to create file");
     file.write_all(serde_json::to_string(&block).unwrap().as_bytes())
         .expect("Could not write block");
 
