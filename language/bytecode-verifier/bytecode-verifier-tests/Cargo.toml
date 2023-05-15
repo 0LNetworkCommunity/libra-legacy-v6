@@ -12,6 +12,8 @@ edition = "2018"
 [dev-dependencies]
 petgraph = "0.5.1"
 proptest = "1.0.0"
+#//////// 0L ////////
+hex-literal = "^0.3.4"
 
 bytecode-verifier = { path = "../" }
 diem-workspace-hack = { path = "../../../common/workspace-hack" }

@@ -1563,7 +1563,12 @@ impl Bytecode {
         checked_precondition!(
             // The program counter could be added to at most twice and must remain
             // within the bounds of the code.
-            pc <= u16::max_value() - 2 && (pc as usize) < code.len(),
+            //////// 0L ////////
+            // add tests related to successors bug fix
+            // upstream patch was: https://github.com/move-language/move/pull/1029/commits/1fa4ed20daaef28b47fe2c5a8d8f63b64523e16d
+            // note: this was never an issue in 0L production code as v5 used a pre move-lang fork of Diem. Code here explicitly does not, and never did, include the early return which caused the vulnerability.
+            // tests included in unit_tests/binary_tests.rs
+            pc < u16::MAX && (pc as usize) < code.len(),
             "Program counter out of bounds"
         );
         let bytecode = &code[pc as usize];

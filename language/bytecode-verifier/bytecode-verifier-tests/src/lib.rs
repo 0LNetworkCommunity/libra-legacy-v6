@@ -5,3 +5,5 @@
 
 #[cfg(test)]
 pub mod unit_tests;
+#[cfg(test)]
+pub mod regression_tests;
