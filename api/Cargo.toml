@@ -31,11 +31,11 @@ diem-logger = { path = "../crates/diem-logger" }
 diem-mempool = { path = "../mempool"}
 diem-metrics = { path = "../crates/diem-metrics" }
 diem-types = { path = "../types" }
-diem-workspace-hack = { version = "0.1", path = "../crates/diem-workspace-hack" }
+# diem-workspace-hack = { version = "0.1", path = "../crates/diem-workspace-hack" }
 diem-api-types = { path = "./types", package = "diem-api-types" }
 storage-interface = { path = "../storage/storage-interface" }
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-resource-viewer = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-resource-viewer = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 
 [dev-dependencies]
 rand = "0.8.3"

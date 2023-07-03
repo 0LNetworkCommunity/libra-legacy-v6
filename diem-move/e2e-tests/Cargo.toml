@@ -21,13 +21,13 @@ hex = "0.4.3"
 serde = { version = "1.0.124", default-features = false }
 
 ## Move dependencies
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-ir-compiler = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-vm-runtime = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-vm-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-binary-format = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-read-write-set = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-command-line-common = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-ir-compiler = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-vm-runtime = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-vm-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-binary-format = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+read-write-set = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-command-line-common = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 
 ## Diem-Move dependencies
 diem-writeset-generator = { path = "../writeset-transaction-generator" }
@@ -43,4 +43,4 @@ diem-types = { path = "../../types", features = ["fuzzing"] }
 diem-proptest-helpers = { path = "../../crates/diem-proptest-helpers" }
 diem-config = { path = "../../config" }
 diem-transaction-builder = { path = "../../sdk/transaction-builder" }
-diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
+# diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }

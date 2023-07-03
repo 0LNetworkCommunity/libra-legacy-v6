@@ -27,7 +27,7 @@ url = "2.2.2"
 diem-crypto = { path = "../diem-crypto", version = "0.0.3" }
 diem-json-rpc-types = { path = "../../json-rpc/types", version = "0.0.3" }
 #/////// 0L /////////
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 diem-types = { path = "../../types", version = "0.0.3" }
 
 # Optional Dependencies
@@ -35,7 +35,7 @@ reqwest = { version = "0.11.2", features = ["json"], optional = true }
 tokio = { version = "1.8.1", features = ["time"], default_features = false, optional = true }
 ureq = { version = "1.5.4", features = ["json", "native-tls"], default-features = false, optional = true }
 ipnet = { version = "2.3", optional = true }
-diem-workspace-hack = { version = "0.1", path = "../diem-workspace-hack" }
+# diem-workspace-hack = 
 
 # Needed to fsync a directory on Windows apparently...
 [target.'cfg(windows)'.dependencies]

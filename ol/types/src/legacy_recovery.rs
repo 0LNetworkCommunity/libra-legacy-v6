@@ -52,36 +52,51 @@ pub enum WalletType {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LegacyRecovery {
     ///
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub account: Option<AccountAddress>,
     ///
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub auth_key: Option<AuthenticationKey>,
     ///
     pub role: AccountRole,
     ///
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub balance: Option<BalanceResource>,
     ///
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub val_cfg: Option<ValidatorConfigResource>,
     ///
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub miner_state: Option<TowerStateResource>,
     ///
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub comm_wallet: Option<CommunityWalletsResourceLegacy>,
     ///
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub fullnode_counter: Option<FullnodeCounterResource>,
     ///
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub autopay: Option<AutoPayResource>,
     ///
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub currency_info: Option<CurrencyInfoResource>,
     ///
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub ancestry: Option<AncestryResource>,
     ///
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub make_whole: Option<MakeWholeResource>,
     ///
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub receipts: Option<ReceiptsResource>,
     ///
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub cumulative_deposits: Option<CumulativeDepositResource>,
     /// 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub slow_wallet: Option<SlowWalletResource>,
     ///
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub slow_wallet_list: Option<SlowWalletListResource>,
 }
 
@@ -216,7 +231,12 @@ pub fn parse_recovery(state: &AccountState) -> Result<LegacyRecovery, Error> {
             } else if k == &MakeWholeResource::resource_path() {
                 l.make_whole = bcs::from_bytes(v).ok();
             } else if k == &ReceiptsResource::resource_path() {
-                l.receipts = bcs::from_bytes(v).ok();
+                let receipt_opt = bcs::from_bytes::<ReceiptsResource>(v).ok();
+                if let Some(r) = receipt_opt {
+                  if !r.destination.is_empty() {
+                    l.receipts = Some(r)
+                  }
+                }
             } else if k == &CumulativeDepositResource::resource_path() {
                 l.cumulative_deposits = bcs::from_bytes(v).ok();
             } else if k == &SlowWalletResource::resource_path() {

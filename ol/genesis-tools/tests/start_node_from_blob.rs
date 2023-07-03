@@ -33,7 +33,7 @@ fn start_test_node() {
 
     std::env::set_var("RUST_LOG", "debug");
     let source_path = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let blob_path = path_utils::blob_path();
+    // let blob_path = path_utils::blob_path();
     // create a new blob, while inserting a testnet validator set with known keys.
     let blob_path = create_test_blob();
 

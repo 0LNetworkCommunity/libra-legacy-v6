@@ -28,5 +28,5 @@ diem-client = { path = "../diem-client" }
 diem-crypto = { path = "../diem-crypto" }
 diem-json-rpc-types = { path = "../../json-rpc/types" }
 diem-types = { path = "../../types" }
-diem-workspace-hack = { version = "0.1", path = "../diem-workspace-hack" }
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+# diem-workspace-hack = 
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }

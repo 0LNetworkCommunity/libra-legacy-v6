@@ -14,9 +14,9 @@ anyhow = "1.0.52"
 bcs = "0.1.2"
 structopt = "0.3.21"
 
-diem-workspace-hack = { path = "../../crates/diem-workspace-hack" }
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-cli = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+# diem-workspace-hack = 
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-cli = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 diem-vm = { path = "../diem-vm" }
 diem-framework-releases = { path = "../../diem-move/diem-framework/DPN/releases" }
 

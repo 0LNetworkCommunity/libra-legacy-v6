@@ -25,7 +25,7 @@ diem-logger = { path = "../../crates/diem-logger" }
 diem-metrics = { path = "../../crates/diem-metrics" }
 diem-time-service = { path = "../../crates/diem-time-service", features = ["async"] }
 diem-types = { path = "../../types" }
-diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
+# diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 network = { path = "../../network" }
 storage-service-client = { path = "../storage-service/client" }
 storage-service-types = { path = "../storage-service/types" }

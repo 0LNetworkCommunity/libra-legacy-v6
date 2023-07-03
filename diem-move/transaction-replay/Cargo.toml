@@ -13,21 +13,21 @@ edition = "2018"
 anyhow = "1.0.52"
 structopt = "0.3.21"
 hex = "0.4.3"
-diem-workspace-hack = { path = "../../crates/diem-workspace-hack" }
+# diem-workspace-hack = 
 diem-types = { path = "../../types" }
 diem-state-view = { path = "../../storage/state-view" }
 diem-validator-interface = { path = "../diem-validator-interface" }
 diemdb = { path = "../../storage/diemdb" }
 diem-vm = { path = "../diem-vm" }
-move-binary-format = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955"}
-move-cli = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-vm-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-vm-runtime = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-vm-test-utils = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-binary-format = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra"}
+move-cli = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-vm-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-vm-runtime = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-vm-test-utils = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 diem-resource-viewer = { path = "../diem-resource-viewer" }
 diem-framework = { path = "../../diem-move/diem-framework" }
-move-compiler = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-compiler = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 bcs = "0.1.2"
 difference = "2.0.0"
 

@@ -28,9 +28,9 @@ diem-infallible = { path = "../../crates/diem-infallible" }
 diem-secure-net = { path = "../../secure/net" }
 diem-state-view = { path = "../../storage/state-view" }
 diem-types = { path = "../../types" }
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 diem-vm = { path = "../../diem-move/diem-vm" }
-diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
+# diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 scratchpad = { path = "../../storage/scratchpad" }
 storage-interface = { path = "../../storage/storage-interface" }
 
@@ -46,7 +46,7 @@ diem-config = { path = "../../config" }
 diem-genesis-tool = {path = "../../config/management/genesis", features = ["testing"] }
 diem-temppath = { path = "../../crates/diem-temppath" }
 diemdb = { path = "../../storage/diemdb" }
-move-ir-compiler = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-ir-compiler = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 storage-interface = { path = "../../storage/storage-interface", features=["fuzzing"] }
 diem-transaction-builder = { path = "../../sdk/transaction-builder" }
 vm-genesis = { path = "../../diem-move/vm-genesis" }

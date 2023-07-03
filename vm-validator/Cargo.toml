@@ -16,7 +16,7 @@ scratchpad = { path = "../storage/scratchpad" }
 diem-state-view = { path = "../storage/state-view" }
 diem-types = { path = "../types" }
 diem-vm = { path = "../diem-move/diem-vm" }
-diem-workspace-hack = { version = "0.1", path = "../crates/diem-workspace-hack" }
+# diem-workspace-hack = { version = "0.1", path = "../crates/diem-workspace-hack" }
 executor = { path = "../execution/executor" }
 storage-interface = { path = "../storage/storage-interface" }
 
@@ -31,7 +31,7 @@ diem-types = { path = "../types", features = ["fuzzing"] }
 diem-vm = { path = "../diem-move/diem-vm" }
 diemdb = { path = "../storage/diemdb", features = ["fuzzing"] }
 vm-genesis = { path = "../diem-move/vm-genesis" }
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 
 [features]
 default = []

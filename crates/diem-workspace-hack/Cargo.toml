@@ -13,7 +13,7 @@ edition = "2018"
 [dependencies]
 Inflector = { version = "0.11.4", features = ["heavyweight", "lazy_static", "regex"] }
 anyhow = { version = "1.0.52", features = ["backtrace", "std"] }
-backtrace = { version = "0.3.56", features = ["addr2line", "gimli-symbolize", "miniz_oxide", "object", "serde", "std"] }
+backtrace = { version = "0.3.56", features = ["serde", "std"] }
 bitvec = { version = "0.19.5", features = ["alloc", "atomic", "std"] }
 byteorder = { version = "1.4.3", features = ["i128", "std"] }
 bytes = { version = "1.0.1", features = ["serde", "std"] }
@@ -60,7 +60,7 @@ zeroize = { version = "1.2.0", features = ["alloc", "zeroize_derive"] }
 [build-dependencies]
 Inflector = { version = "0.11.4", features = ["heavyweight", "lazy_static", "regex"] }
 anyhow = { version = "1.0.52", features = ["backtrace", "std"] }
-backtrace = { version = "0.3.56", features = ["addr2line", "gimli-symbolize", "miniz_oxide", "object", "serde", "std"] }
+backtrace = { version = "0.3.56", features = ["serde", "std"] }
 bitvec = { version = "0.19.5", features = ["alloc", "atomic", "std"] }
 byteorder = { version = "1.4.3", features = ["i128", "std"] }
 bytes = { version = "1.0.1", features = ["serde", "std"] }

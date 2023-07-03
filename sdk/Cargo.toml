@@ -21,9 +21,9 @@ serde = { version = "1.0.124", features = ["derive"] }
 diem-crypto = { path = "../crates/diem-crypto", version = "0.0.3" }
 diem-types = { path = "../types", version = "0.0.3"}
 #/////// 0L /////////
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 diem-transaction-builder = { path = "./transaction-builder", version = "0.0.3" }
-diem-workspace-hack = { version = "0.1", path = "../crates/diem-workspace-hack" }
+# diem-workspace-hack = { version = "0.1", path = "../crates/diem-workspace-hack" }
 
 # Optional Dependencies
 diem-client = { path = "../crates/diem-client", version = "0.0.3", optional = true }

@@ -35,7 +35,7 @@ diem-proptest-helpers = { path = "../../crates/diem-proptest-helpers", optional 
 diem-temppath = { path = "../../crates/diem-temppath" }
 diem-types = { path = "../../types" }
 diem-vm = { path = "../../diem-move/diem-vm" }
-diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
+# diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 diemdb = { path = "../../storage/diemdb", optional = true }
 event-notifications = { path = "../../state-sync/inter-component/event-notifications" }
 executor = { path = "../../execution/executor" }
@@ -63,7 +63,7 @@ diem-proptest-helpers = { path = "../../crates/diem-proptest-helpers" }
 diemdb = { path = "../../storage/diemdb" }
 executor-test-helpers = { path = "../../execution/executor-test-helpers" }
 memsocket = { path = "../../network/memsocket" }
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 network = { path = "../../network", features = ["fuzzing", "testing"] }
 network-builder = { path  = "../../network/builder" }
 storage-service = { path = "../../storage/storage-service" }

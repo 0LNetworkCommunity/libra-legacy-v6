@@ -16,9 +16,9 @@ diem-types = { path = "../../types" }
 backup-cli = { path = "../../storage/backup/backup-cli", version = "0.1.0" }
 serde = { version = "1.0.116", features = ["derive"] }
 serde_json = "1.0.58"
-backup-service = { path = "../../storage/backup/backup-service", version = "0.1.0" }
+# backup-service = { path = "../../storage/backup/backup-service", version = "0.1.0" }
 storage-interface = { path = "../../storage/storage-interface", version = "0.1.0" }
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 vm-genesis={path="../../diem-move/vm-genesis", version="0.1.0"}
 diem-wallet = { path = "../../crates/diem-wallet", version = "0.1.0"}
 gumdrop = "0.8.0"
@@ -36,10 +36,10 @@ reqwest = { version = "0.11.2", features = ["blocking", "json"], default_feature
 # genersis blob reading
 diem-genesis-tool = { path = "../../config/management/genesis", version = "0.1.0" }
 diem-temppath = { path = "../../crates/diem-temppath", version = "0.1.0" }
-move-binary-format = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-vm-runtime = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-bytecode-utils = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-vm-types = { git = "https://github.com/OLSF/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-binary-format = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-vm-runtime = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-bytecode-utils = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-vm-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 diem-config = { path = "../../config" }
 diem-secure-storage = { path = "../../secure/storage/", version = "0.1.0" }
 diem-vm = { path = "../../diem-move/diem-vm", version = "0.1.0" }
