@@ -22,7 +22,7 @@ pub struct CommunityWalletsResourceLegacy {
 
 impl MoveStructType for CommunityWalletsResourceLegacy {
     const MODULE_NAME: &'static IdentStr = ident_str!("Wallet");
-    const STRUCT_NAME: &'static IdentStr = ident_str!("CommunityWallets");
+    const STRUCT_NAME: &'static IdentStr = ident_str!("CommunityWalletList");
 }
 
 impl CommunityWalletsResourceLegacy {

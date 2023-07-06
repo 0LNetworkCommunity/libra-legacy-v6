@@ -22,7 +22,7 @@ pub struct CumulativeDepositResource {
 
 impl MoveStructType for CumulativeDepositResource {
     const MODULE_NAME: &'static IdentStr = ident_str!("DiemAccount");
-    const STRUCT_NAME: &'static IdentStr = ident_str!("UserReceipts");
+    const STRUCT_NAME: &'static IdentStr = ident_str!("CumulativeDeposits");
 }
 
 impl CumulativeDepositResource {
