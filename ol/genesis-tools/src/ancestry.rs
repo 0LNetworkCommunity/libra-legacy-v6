@@ -156,7 +156,7 @@ fn test_find() {
     let my_account = AccountAddress::from_hex_literal("0x202EA105D76ECCD215BAEE626FA62788").unwrap();
     // let my_account = json_ancestry.iter().next().unwrap().address;
     let all = find_all_ancestors(my_account, &json_ancestry).unwrap();
-    dbg!(&all);
+    // dbg!(&all);
     assert!(all.len() == 4);
     assert!(all[0] == AccountAddress::from_hex_literal("0xBDB8AD37341CEC0817FD8E2474E25031").unwrap());
     assert!(all[1] == AccountAddress::from_hex_literal("0xCD7C59C9D7CA50FE417E3083771FA7E8").unwrap());
