@@ -32,6 +32,14 @@ pub enum AccountRole {
     Operator,
     /// Users
     EndUser,
+    /// Users
+    DonorDirected,
+}
+
+impl Default for AccountRole {
+  fn default() -> Self {
+    AccountRole::EndUser
+  }
 }
 
 /// Wallet type
@@ -49,7 +57,7 @@ pub enum WalletType {
 /// This is necessary for catastrophic recoveries, when the source code changes too much.
 /// Like what is going to happen between v4 and v5, where the source code of v5
 /// will not be able to work with objects from v4. We need an intermediary file.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Default)]
 pub struct LegacyRecovery {
     ///
     #[serde(skip_serializing_if = "Option::is_none")]

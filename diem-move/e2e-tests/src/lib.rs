@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
-
+#![allow(named_arguments_used_positionally)]
 //! Test infrastructure for the Diem VM.
 //!
 //! This crate contains helpers for executing tests against the Diem VM.
