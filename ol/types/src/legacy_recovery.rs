@@ -1,5 +1,9 @@
 //! recovery
 
+use crate::{
+    autopay::AutoPayResource, fullnode_counter::FullnodeCounterResource,
+    wallet::CommunityWalletsResource,
+};
 use anyhow::{bail, Error};
 use diem_types::{
     account_address::AccountAddress,
@@ -13,10 +17,6 @@ use diem_types::{
     validator_config::{ValidatorConfigResource, ValidatorOperatorConfigResource},
 };
 use move_core_types::{identifier::Identifier, move_resource::MoveResource};
-use crate::{
-    autopay::AutoPayResource, fullnode_counter::FullnodeCounterResource,
-    wallet::CommunityWalletsResource,
-};
 use serde::{Deserialize, Serialize};
 use std::{convert::TryFrom, fs, io::Write, path::PathBuf};
 // use vm_genesis::{OperRecover, ValStateRecover};
@@ -111,7 +111,6 @@ pub struct RecoverConsensusAccounts {
     ///
     pub opers: Vec<OperRecover>,
 }
-
 
 impl Default for RecoverConsensusAccounts {
     fn default() -> Self {
@@ -236,65 +235,48 @@ pub fn recover_validator_configs(
     for i in recover {
         let account: AccountAddress = i.account.unwrap();
         // get deduplicated validators info
-        match i.role {
-            Validator => {
-                let val_cfg = i
-                    .val_cfg
-                    .as_ref()
-                    .unwrap()
-                    .validator_config
-                    .as_ref()
-                    .unwrap()
-                    .clone();
+        if i.role == Validator {
+            let val_cfg = i
+                .val_cfg
+                .as_ref()
+                .unwrap()
+                .validator_config
+                .as_ref()
+                .unwrap();
 
-                let operator_delegated_account =
-                    i.val_cfg.as_ref().unwrap().delegated_account.unwrap();
-                // prevent duplicate accounts
-                if set
-                    .vals
+            let operator_delegated_account = i.val_cfg.as_ref().unwrap().delegated_account.unwrap();
+            // prevent duplicate accounts
+            if !set.vals.iter().any(|a| a.val_account == account) {
+                set.vals.push(ValStateRecover {
+                    val_account: account,
+                    operator_delegated_account,
+                    val_auth_key: i.auth_key.unwrap(),
+                });
+            }
+
+            // find the operator's authkey
+            let oper_data = recover
+                .iter()
+                .find(|&a| a.account == Some(operator_delegated_account) && a.role == Operator);
+
+            if let Some(o) = oper_data {
+                // get the operator info, preventing duplicates
+                if !set
+                    .opers
                     .iter()
-                    .find(|&a| a.val_account == account)
-                    .is_none()
+                    .any(|a| a.operator_account == operator_delegated_account)
                 {
-                    set.vals.push(ValStateRecover {
-                        val_account: account,
-                        operator_delegated_account,
-                        val_auth_key: i.auth_key.unwrap(),
+                    set.opers.push(OperRecover {
+                        operator_account: o.account.unwrap(),
+                        operator_auth_key: o.auth_key.unwrap(),
+                        validator_to_represent: account,
+                        // TODO: Check conversion of public key
+                        operator_consensus_pubkey: val_cfg.consensus_public_key.to_bytes().to_vec(),
+                        validator_network_addresses: val_cfg.validator_network_addresses.clone(),
+                        fullnode_network_addresses: val_cfg.fullnode_network_addresses.clone(),
                     });
                 }
-
-                // find the operator's authkey
-                let oper_data = recover
-                    .iter()
-                    .find(|&a| a.account == Some(operator_delegated_account) && a.role == Operator);
-
-                match oper_data {
-                    Some(o) => {
-                        // get the operator info, preventing duplicates
-                        if set
-                            .opers
-                            .iter()
-                            .find(|&a| a.operator_account == operator_delegated_account)
-                            .is_none()
-                        {
-                            set.opers.push(OperRecover {
-                                operator_account: o.account.unwrap(),
-                                operator_auth_key: o.auth_key.unwrap(),
-                                validator_to_represent: account,
-                                // TODO: Check conversion of public key
-                                operator_consensus_pubkey: val_cfg
-                                    .consensus_public_key
-                                    .to_bytes()
-                                    .to_vec(),
-                                validator_network_addresses: val_cfg.validator_network_addresses,
-                                fullnode_network_addresses: val_cfg.fullnode_network_addresses,
-                            });
-                        }
-                    }
-                    None => {}
-                }
             }
-            _ => {}
         }
     }
     Ok(set)
@@ -320,19 +302,17 @@ pub fn read_from_recovery_file(path: &PathBuf) -> Vec<LegacyRecovery> {
 fn maybe_migrate_fn_address(resource: &mut ValidatorConfigResource) -> &ValidatorConfigResource {
     let cfg = resource.validator_config.as_ref().unwrap();
     match cfg.fullnode_network_addresses() {
-        Ok(_) => {} // well formed network address, no-op.
+        Ok(_) => {} // well-formed network address, no-op.
         Err(_) => {
             // parse as a single address instead of a vector of addresses
-            match bcs::from_bytes::<NetworkAddress>(&cfg.fullnode_network_addresses) {
-                Ok(net) => {
-                    // fix the problematic address.
-                    let mut new_config = cfg.clone();
-                    // change into vector of addresses.
-                    new_config.fullnode_network_addresses = bcs::to_bytes(&vec![net]).unwrap();
-                    // Need to wrap in two Options.
-                    resource.validator_config = Some(new_config.to_owned());
+            if let Ok(net) = bcs::from_bytes::<NetworkAddress>(&cfg.fullnode_network_addresses) {
+                // fix the problematic address.
+                // change into vector of addresses.
+                let new_addresses = bcs::to_bytes(&vec![net]).unwrap();
+                // Only update the fullnode_network_addresses field.
+                if let Some(ref mut validator_config) = resource.validator_config {
+                    validator_config.fullnode_network_addresses = new_addresses;
                 }
-                Err(_) => {}
             }
         }
     };

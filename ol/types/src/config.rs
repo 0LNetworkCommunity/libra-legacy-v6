@@ -28,13 +28,9 @@ const BASE_WAYPOINT: &str = "0:683185844ef67e5c8eeaa158e635de2a4c574ce7bbb7f41f7
 pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
     match std::env::var("NODE_ENV") {
         Ok(val) => {
-            match val.as_str() {
-                "prod" => true,
-                // if anything else is set by user is false
-                _ => false,
-            }
+            matches!(val.as_str(), "prod")
         }
-        // default to prod if nothig is set
+        // default to prod if nothing is set
         _ => true,
     }
 });
@@ -43,7 +39,7 @@ pub static IS_PROD: Lazy<bool> = Lazy::new(|| {
 /// check this is CI environment
 pub static IS_TEST: Lazy<bool> = Lazy::new(|| {
     // assume default if NODE_ENV=prod and TEST=y.
-    std::env::var("TEST").unwrap_or("n".to_string()) != "n".to_string()
+    std::env::var("TEST").unwrap_or_else(|_| "n".to_string()) != *"n"
 });
 
 /// MinerApp Configuration
@@ -123,16 +119,12 @@ impl AppCfg {
 
     /// Get where the block/proofs are stored.
     pub fn get_block_dir(&self) -> PathBuf {
-        let mut home = self.workspace.node_home.clone();
-        home.push(&self.workspace.block_dir);
-        home
+        self.workspace.node_home.join(&self.workspace.block_dir)
     }
 
     /// Get where node key_store.json stored.
     pub fn get_key_store_path(&self) -> PathBuf {
-        let mut home = self.workspace.node_home.clone();
-        home.push("key_store.json");
-        home
+        self.workspace.node_home.join("key_store.json")
     }
 
     /// Get where node key_store.json stored.
@@ -169,8 +161,10 @@ impl AppCfg {
             None => what_vfn_ip().ok(),
         };
 
-        default_config.workspace.node_home =
-            config_path.clone().unwrap_or_else(|| what_home(None, None));
+        default_config.workspace.node_home = match config_path {
+            Some(path) => path.to_path_buf(),
+            None => what_home(None, None).to_path_buf(),
+        };
 
         if let Some(u) = upstream_peer {
             default_config.profile.upstream_nodes = vec![u.to_owned()]
@@ -184,15 +178,10 @@ impl AppCfg {
             default_config.chain_info.chain_id = id.to_owned();
         };
 
-        if source_path.is_some() {
-            // let source_path = what_source();
-            default_config.workspace.source_path = source_path.clone();
-            default_config.workspace.stdlib_bin_path = Some(
-                source_path
-                    .as_ref()
-                    .unwrap()
-                    .join("language/diem-framework/staged/stdlib.mv"),
-            );
+        if let Some(source) = source_path {
+            default_config.workspace.source_path = Some(source.to_path_buf());
+            default_config.workspace.stdlib_bin_path =
+                Some(source.join("language/diem-framework/staged/stdlib.mv"));
         }
 
         // override from args
@@ -283,7 +272,7 @@ impl AppCfg {
     /// save the config file to 0L.toml to the workspace home path
     pub fn save_file(&self) -> Result<(), Error> {
         let toml = toml::to_string(&self)?;
-        let home_path = &self.workspace.node_home.clone();
+        let home_path = &self.workspace.node_home.to_path_buf();
         // create home path if doesn't exist, usually only in dev/ci environments.
         fs::create_dir_all(&home_path)?;
         let toml_path = home_path.join(CONFIG_FILE);
@@ -394,7 +383,6 @@ pub struct Profile {
 
     // /// Node URL and and port to submit transactions. Defaults to localhost:8080
     // pub default_node: Option<Url>,
-
     /// Other nodes to connect for fallback connections
     pub upstream_nodes: Vec<Url>,
 
@@ -448,25 +436,21 @@ pub struct TxConfigs {
     /// Miner transactions cost
     #[serde(default = "default_miner_txs_cost")]
     pub miner_txs_cost: Option<TxCost>,
-    /// Cheap or test transation costs
+    /// Cheap or test transaction costs
     #[serde(default = "default_cheap_txs_cost")]
     pub cheap_txs_cost: Option<TxCost>,
 }
 
 impl TxConfigs {
     /// get the user txs cost preferences for given transaction type
-    pub fn get_cost(&self, tx_type: TxType) -> TxCost {
-        let ref baseline = self.baseline_cost.clone();
-        let cost = match tx_type {
-            TxType::Critical => self.critical_txs_cost.as_ref().unwrap_or_else(|| baseline),
-            TxType::Mgmt => self
-                .management_txs_cost
-                .as_ref()
-                .unwrap_or_else(|| baseline),
-            TxType::Miner => self.miner_txs_cost.as_ref().unwrap_or_else(|| baseline),
-            TxType::Cheap => self.cheap_txs_cost.as_ref().unwrap_or_else(|| baseline),
-        };
-        cost.to_owned()
+    pub fn get_cost(&self, tx_type: TxType) -> &TxCost {
+        let baseline = &self.baseline_cost;
+        match tx_type {
+            TxType::Critical => self.critical_txs_cost.as_ref().unwrap_or(baseline),
+            TxType::Mgmt => self.management_txs_cost.as_ref().unwrap_or(baseline),
+            TxType::Miner => self.miner_txs_cost.as_ref().unwrap_or(baseline),
+            TxType::Cheap => self.cheap_txs_cost.as_ref().unwrap_or(baseline),
+        }
     }
 }
 
@@ -581,14 +565,11 @@ pub fn bootstrap_waypoint_from_rpc(url: Url) -> Result<Waypoint, Error> {
 
     // let json: WaypointRpc = serde_json::from_value(resp.json().unwrap()).unwrap();
     let parsed: serde_json::Value = resp.json()?;
-    match &parsed["result"] {
-        serde_json::Value::Object(r) => {
-            if let serde_json::Value::String(waypoint) = &r["waypoint"] {
-                let w: Waypoint = waypoint.parse()?;
-                return Ok(w);
-            }
+    if let serde_json::Value::Object(r) = &parsed["result"] {
+        if let serde_json::Value::String(waypoint) = &r["waypoint"] {
+            let w: Waypoint = waypoint.parse()?;
+            return Ok(w);
         }
-        _ => {}
     }
     bail!("could not get waypoint from json-rpc, url: {:?} ", url)
 }
