@@ -7,6 +7,7 @@ address DiemFramework {
         use DiemFramework::GAS::GAS;
         use DiemFramework::DiemAccount;
         use DiemFramework::Testnet;
+        use DiemFramework::Globals;
 
         struct Balance has key {
             credits: vector<Credit>,
@@ -50,6 +51,17 @@ address DiemFramework {
             }
         }
 
+        /// to use at genesis, includes the coin split factor.
+        fun migrate_make_whole(
+          vm: &signer,
+          account: &signer,
+          value: u64,
+          incident_name: vector<u8>
+        ) acquires Balance {
+          value = value * Globals::get_coin_split_factor();
+          vm_offer_credit(vm, account, value, incident_name);
+        }
+ 
 
         /// claims the make whole payment and returns the amount paid out
         /// ensures that the caller is the one owed the payment at index i

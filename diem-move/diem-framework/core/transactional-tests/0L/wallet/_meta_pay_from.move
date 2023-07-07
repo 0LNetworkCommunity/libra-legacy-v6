@@ -8,6 +8,7 @@ script {
     use DiemFramework::GAS::GAS;
     use DiemFramework::DiemAccount;
 
+
     fun main(_dr: signer, account: signer) {
         assert!(DiemAccount::balance<GAS>(@Bob) == 1000000, 735701);
 

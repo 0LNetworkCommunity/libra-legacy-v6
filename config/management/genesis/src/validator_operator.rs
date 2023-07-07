@@ -16,6 +16,16 @@ pub struct ValidatorOperator {
 }
 
 impl ValidatorOperator {
+    //////// 0L ////////
+    /// need to instantiate besides from CLI
+    pub fn new(operator_name: String, shared_backend: &SharedBackend) -> Self {
+        Self {
+            config: ConfigPath { config: None },
+            operator_name,
+            shared_backend: shared_backend.to_owned(),
+        }
+    }
+
     pub fn execute(self) -> Result<String, Error> {
         let config = self
             .config

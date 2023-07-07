@@ -6,14 +6,14 @@
 pub mod builder;
 pub mod command;
 pub mod fullnode_builder;
-mod genesis;
+pub mod genesis; //////// 0L ///////// make public
 pub mod key;  //////// 0L /////////
 pub mod waypoint;  //////// 0L /////////
 pub mod layout;
 mod move_modules;
 pub mod validator_builder;
-mod validator_config;
-mod validator_operator;
+pub mod validator_config; //////// 0L ///////// make public
+pub mod validator_operator; //////// 0L ///////// make public
 pub mod verify; //////// 0L ///////// make public
 
 //////// 0L ////////

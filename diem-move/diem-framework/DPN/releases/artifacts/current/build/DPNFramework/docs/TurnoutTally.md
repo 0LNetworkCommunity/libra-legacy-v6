@@ -18,6 +18,7 @@
 -  [Function `maybe_tally`](#0x1_TurnoutTally_maybe_tally)
 -  [Function `get_threshold_from_turnout`](#0x1_TurnoutTally_get_threshold_from_turnout)
 -  [Function `get_tally`](#0x1_TurnoutTally_get_tally)
+-  [Function `get_tally_data`](#0x1_TurnoutTally_get_tally_data)
 -  [Function `maybe_complete_result`](#0x1_TurnoutTally_maybe_complete_result)
 
 
@@ -340,10 +341,8 @@ The threshold curve parameters are wrong. The curve is not decreasing.
   max_vote_enrollment: u64,
   deadline: u64,
   max_extensions: u64,
-  // TODO: allow extensions in contested elections
 ): <a href="TurnoutTally.md#0x1_TurnoutTally">TurnoutTally</a>&lt;Data&gt; {
     <a href="TurnoutTally.md#0x1_TurnoutTally">TurnoutTally</a>&lt;Data&gt; {
-      // guid: <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_create_with_capability">GUID::create_with_capability</a>(<a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/GUID.md#0x1_GUID_get_capability_address">GUID::get_capability_address</a>(guid_cap), guid_cap),
       data,
       cfg_deadline: deadline,
       cfg_max_extensions: max_extensions, // 0 means infinite extensions
@@ -689,21 +688,27 @@ stop tallying if the expiration is passed or the threshold has been met.
   <b>let</b> m = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(total_votes, ballot.max_votes);
 
   ballot.tally_turnout = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(<a href="TurnoutTally.md#0x1_TurnoutTally_PCT_SCALE">PCT_SCALE</a>, m); // scale up
+
   // calculate the dynamic threshold needed.
-  <b>let</b> t = <a href="TurnoutTally.md#0x1_TurnoutTally_get_threshold_from_turnout">get_threshold_from_turnout</a>(total_votes, ballot.max_votes);
+  <b>let</b> thresh = <a href="TurnoutTally.md#0x1_TurnoutTally_get_threshold_from_turnout">get_threshold_from_turnout</a>(total_votes, ballot.max_votes);
   // check the threshold that needs <b>to</b> be met met turnout
   ballot.tally_approve = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(<a href="TurnoutTally.md#0x1_TurnoutTally_PCT_SCALE">PCT_SCALE</a>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(ballot.votes_approve, total_votes));
-  // the first vote which crosses the threshold causes the poll <b>to</b> end.
-  <b>if</b> (ballot.tally_approve &gt; t) {
 
+  // the first vote which crosses the threshold causes the poll <b>to</b> end.
+  <b>if</b> (ballot.tally_approve &gt; thresh) {
     // before marking it pass, make sure the minimum quorum was met
     // by default 12.50%
     <b>if</b> (ballot.tally_turnout &gt; ballot.cfg_min_turnout) {
       <b>let</b> epoch = <a href="DiemConfig.md#0x1_DiemConfig_get_current_epoch">DiemConfig::get_current_epoch</a>();
 
+      // cool off period, <b>to</b> next epoch.
       <b>if</b> (ballot.provisional_pass_epoch == 0) {
-        // automatically passing once the threshold is reached disadvantages inactive participants. We propose it takes one vote plus one day once reaching threshold.
+        // setting the next epoch in which the tally will be final.
+        // NOTE: <b>requires</b> a second vote <b>to</b> be cast <b>to</b> finalize the tally.
+        // automatically passing once the threshold is reached disadvantages inactive participants.
+        // We propose it takes one vote plus one day once reaching threshold.
         ballot.provisional_pass_epoch = epoch;
+
       } <b>else</b> <b>if</b> (epoch &gt; ballot.provisional_pass_epoch) {
         // multiple days may have passed since the provisional pass.
         ballot.completed = <b>true</b>;
@@ -792,6 +797,30 @@ get current tally
     <b>return</b> 0
   };
   <b>return</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_multiply_u64">FixedPoint32::multiply_u64</a>(<a href="TurnoutTally.md#0x1_TurnoutTally_PCT_SCALE">PCT_SCALE</a>, <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32_create_from_rational">FixedPoint32::create_from_rational</a>(total, ballot.max_votes))
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_TurnoutTally_get_tally_data"></a>
+
+## Function `get_tally_data`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTally.md#0x1_TurnoutTally_get_tally_data">get_tally_data</a>&lt;Data: store&gt;(ballot: &<a href="TurnoutTally.md#0x1_TurnoutTally_TurnoutTally">TurnoutTally::TurnoutTally</a>&lt;Data&gt;): &Data
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="TurnoutTally.md#0x1_TurnoutTally_get_tally_data">get_tally_data</a>&lt;Data: store&gt;(ballot: &<a href="TurnoutTally.md#0x1_TurnoutTally">TurnoutTally</a>&lt;Data&gt;): &Data {
+  &ballot.data
 }
 </code></pre>
 

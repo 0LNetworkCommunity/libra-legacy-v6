@@ -13,9 +13,9 @@ diem-json-rpc-types = { path = "../../../../json-rpc/types" }
 diem-sdk = { path = "../../../../sdk" }
 diem-transaction-builder = { path = "../../../../sdk/transaction-builder"}
 diem-types = { path = "../../../../types" }
-diem-workspace-hack = { path = "../../../../crates/diem-workspace-hack" }
+# diem-workspace-hack =  }
 generate-key = { path = "../../../../config/generate-key" }
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0.52"
 bcs = "0.1.2"

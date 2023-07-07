@@ -7,13 +7,13 @@ use ol_genesis_tools::{
 };
 use ol_types::legacy_recovery::LegacyRecovery;
 use std::fs;
-use support::path_utils::json_path;
+use support::{path_utils::json_path, test_vals};
 
 #[test]
 // test that a genesis blob created from struct, will actually contain the data
 fn test_end_user_migrate() {
 
-  let genesis_vals = vec!["ADCB1D42A46292AE89E938BD982F2867".parse().unwrap()];
+  let genesis_vals = test_vals::get_test_valset(4);
 
   let val_json = json_path().parent().unwrap().join("single_json_entry.json");
 
@@ -34,7 +34,7 @@ fn test_end_user_migrate() {
 
     make_recovery_genesis_from_vec_legacy_recovery(
       &val_accounts,
-      genesis_vals.clone(),
+      &genesis_vals,
       temp_genesis_blob_path.clone(), 
       true,
       // TODO: add validators
@@ -67,7 +67,8 @@ fn test_end_user_migrate() {
         Err(_e) => assert!(false, "error comparison"),
     }
 
-    match compare::check_val_set(genesis_vals, temp_genesis_blob_path.clone()){
+    let vals_list = genesis_vals.iter().map(|v| v.address).collect();
+    match compare::check_val_set(vals_list, temp_genesis_blob_path.clone()){
         Ok(_) => {},
         Err(_) => {
           assert!(false, "validator set not correct");
@@ -75,7 +76,7 @@ fn test_end_user_migrate() {
         },
     }
 
-    fs::remove_file(temp_genesis_blob_path).unwrap();
+    // fs::remove_file(temp_genesis_blob_path).unwrap();
 }
 
 // fn public_key() -> Ed25519PublicKey {

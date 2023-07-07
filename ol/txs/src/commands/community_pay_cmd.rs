@@ -18,6 +18,8 @@ use std::{path::PathBuf, process::exit};
 
 /// create a community wallet payment/transfer proposal
 pub struct CommunityPayCmd {
+    #[options(short = "s", help = "the community wallet address")]
+    multi_sig_account: String,
     #[options(short = "a", help = "the new user's address")]
     destination_account: String,
     #[options(short = "c", help = "the amount of coins to send to new user")]
@@ -29,6 +31,8 @@ pub struct CommunityPayCmd {
 impl Runnable for CommunityPayCmd {
     fn run(&self) {
         let entry_args = entrypoint::get_args();
+
+        // TODO: do better parsing than this.
         let destination = match self.destination_account.parse::<AccountAddress>() {
             Ok(a) => a,
             Err(e) => {
@@ -41,7 +45,20 @@ impl Runnable for CommunityPayCmd {
             }
         };
 
+        let multisig = match self.multi_sig_account.parse::<AccountAddress>() {
+            Ok(a) => a,
+            Err(e) => {
+                println!(
+                    "ERROR: could not parse this account address: {}, message: {}",
+                    self.destination_account,
+                    &e.to_string()
+                );
+                exit(1);
+            }
+        };
+
         match community_payment_proposal(
+            multisig,
             destination,
             self.coins.clone(),
             self.memo.clone(),
@@ -74,6 +91,7 @@ impl Runnable for CommunityPayCmd {
 
 /// create an account by sending coin to it
 pub fn community_payment_proposal(
+    multi_sig_account: AccountAddress,
     destination: AccountAddress,
     coins: u64,
     memo: String,
@@ -83,6 +101,7 @@ pub fn community_payment_proposal(
 
     // NOTE: coins here do not have the scaling factor. Rescaling is the responsibility of the Move script. See the script in ol_accounts.move for detail.
     let script = transaction_builder::encode_community_transfer_script_function(
+        multi_sig_account,
         destination,
         coins,
         memo.as_bytes().to_vec(),

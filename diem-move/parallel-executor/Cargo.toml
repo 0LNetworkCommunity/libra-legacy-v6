@@ -13,7 +13,7 @@ edition = "2018"
 
 [dependencies]
 mvhashmap = { path = "../mvhashmap" }
-diem-workspace-hack = { path = "../../crates/diem-workspace-hack" }
+# diem-workspace-hack = 
 diem-infallible = { path = "../../crates/diem-infallible" }
 
 anyhow = "1.0.52"

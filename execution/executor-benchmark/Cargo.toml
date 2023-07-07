@@ -32,7 +32,7 @@ diem-logger = { path = "../../crates/diem-logger" }
 diem-secure-push-metrics = { path = "../../secure/push-metrics" }
 diem-types = { path = "../../types" }
 diem-vm= { path = "../../diem-move/diem-vm" }
-diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
+# diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 executor = { path = "../executor" }
 executor-types = { path = "../executor-types" }
 schemadb = { path = "../../storage/schemadb" }

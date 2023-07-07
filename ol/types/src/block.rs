@@ -1,9 +1,43 @@
 //! Proof block datastructure
 
+use diem_types::chain_id::{MODE_0L, NamedChain};
 use hex;
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 
 use std::{fs, io::BufReader, path::PathBuf};
+
+
+// TOWER DIFFICULTY SETTINGS
+// What we call "difficulty", is the intersection of number of VDF iterations with the security parameter.
+
+// V6: Difficulty updated in V6
+// see benchmarking research summary here: ol/documentation/tower/difficulty_benchmarking.md
+
+/// The VDF security parameter.
+pub static GENESIS_VDF_SECURITY_PARAM: Lazy<u64> = Lazy::new(|| {
+    match MODE_0L.clone() {
+
+        NamedChain::MAINNET => 350,
+        NamedChain::STAGE => 350,
+        NamedChain::TESTNET => 512, // TODO(wiri): this should be updated to 350 after new fixtures are generated.
+        NamedChain::CI => 512,
+    }
+});
+
+
+/// The VDF iterations. Combined with security parameter we have the "difficulty".
+pub static GENESIS_VDF_ITERATIONS: Lazy<u64> = Lazy::new(|| {
+    match MODE_0L.clone() {
+        // Difficulty updated in V6
+        // see ol/documentation/tower/difficulty_benchmarking.md
+        NamedChain::MAINNET => 3_000_000_000, // 3 billion, ol/documentation/tower/difficulty_benchmarking.md
+        NamedChain::STAGE => 3_000_000_000,
+        NamedChain::TESTNET => 100,
+        NamedChain::CI => 100,
+    }
+});
+
 /// Data structure and serialization of 0L delay proof.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VDFProof {
@@ -34,11 +68,10 @@ impl VDFProof {
     }
 
     /// new object deserialized from file
-    pub fn parse_block_file(path: PathBuf) -> VDFProof {
-        let file = fs::File::open(&path)
-            .expect(&format!("Could not open block file: {:?}", path.to_str()));
+    pub fn parse_block_file(path: PathBuf) -> Result<VDFProof, anyhow::Error> {
+        let file = fs::File::open(&path)?;
         let reader = BufReader::new(file);
-        serde_json::from_reader(reader).unwrap()
+        Ok(serde_json::from_reader(reader)?)
     }
 
     /// get the difficulty/iterations of the block, or assume legacy

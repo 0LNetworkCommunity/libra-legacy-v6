@@ -10,7 +10,9 @@ use crate::{
     metrics::{metrics, status_metrics},
     transactions,
 };
-use diem_api_types::{Error, Response};
+use diem_api_types::{Error, Response, U64};
+use diem_types::waypoint::Waypoint;
+use serde::Serialize;
 
 use std::convert::Infallible;
 use warp::{
@@ -25,6 +27,19 @@ use warp::{
 const OPEN_API_HTML: &str = include_str!("../doc/spec.html");
 const OPEN_API_SPEC: &str = include_str!("../doc/openapi.yaml");
 
+/////// 0L ////////
+// modify the index of the API to show a waypoint
+#[derive(Clone, Debug, Serialize, PartialEq)]
+struct Index {
+  chain_id: u8,
+  ledger_version: U64,
+  ledger_timestamp: U64,
+  waypoint: Waypoint,
+  epoch: U64,
+  epoch_waypoint: Option<Waypoint>,
+}
+
+
 pub fn routes(context: Context) -> impl Filter<Extract = impl Reply, Error = Infallible> + Clone {
     index(context.clone())
         .or(openapi_spec())
@@ -37,6 +52,7 @@ pub fn routes(context: Context) -> impl Filter<Extract = impl Reply, Error = Inf
         .or(accounts::get_account_modules_by_ledger_version(
             context.clone(),
         ))
+        .or(accounts::get_account_struct(context.clone())) //////// 0L ////////
         .or(transactions::get_transaction(context.clone()))
         .or(transactions::get_transactions(context.clone()))
         .or(transactions::get_account_transactions(context.clone()))
@@ -89,7 +105,41 @@ pub fn index(context: Context) -> BoxedFilter<(impl Reply,)> {
 pub async fn handle_index(context: Context) -> Result<impl Reply, Rejection> {
     fail_point("endpoint_index")?;
     let info = context.get_latest_ledger_info()?;
-    Ok(Response::new(info.clone(), &info)?)
+
+    let li_type = context.get_latest_ledger_info_with_signatures()
+    .map_err(|e| Error::from(e))?;
+
+    let current_epoch = li_type.ledger_info().epoch();
+    let prev_epoch = if current_epoch > 0 { current_epoch - 1 } else {0};
+
+    let prev_epoch_li = context.get_epoch_change_proof(prev_epoch, current_epoch)
+    .map_err(|e| Error::from(e));
+
+    let epoch_wp = match prev_epoch_li {
+        Ok(mut vec) => {
+          let prev_epoch_li = vec.pop();
+          
+          if let Some(li) = prev_epoch_li {
+            Some(Waypoint::new_any(&li.ledger_info()))
+          } else {
+            None
+          }
+        },
+        Err(_) => None
+    };
+
+    let wp = Waypoint::new_any(&li_type.ledger_info());
+
+    let i = Index {
+        chain_id: info.chain_id,
+        ledger_version: info.ledger_version,
+        ledger_timestamp: info.ledger_timestamp,
+        waypoint: wp,
+        epoch: U64(current_epoch),
+        epoch_waypoint: epoch_wp,
+    };
+
+    Ok(Response::new(info.clone(), &i)?)
 }
 
 async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {

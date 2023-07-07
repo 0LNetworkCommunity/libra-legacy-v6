@@ -13,14 +13,14 @@ bcs = "0.1.2"
 structopt = "0.3.21"
 walkdir = "2.3.1"
 
-diem-workspace-hack = { path = "../../crates/diem-workspace-hack" }
-move-stackless-bytecode-interpreter = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+# diem-workspace-hack = 
+move-stackless-bytecode-interpreter = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 diem-types = { path = "../../types", features = ["fuzzing"] }
 diem-framework = { path = "../../diem-move/diem-framework" }
 diem-vm = { path = "../../diem-move/diem-vm" }
 language-e2e-tests = { path = "../e2e-tests" }
-move-binary-format = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-model = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-vm-runtime = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-vm-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-binary-format = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-model = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-vm-runtime = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-vm-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }

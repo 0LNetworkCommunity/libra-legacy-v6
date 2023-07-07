@@ -64,11 +64,12 @@ impl MoveResource for VDFDifficulty {}
 
 impl Default for VDFDifficulty {
     fn default() -> Self {
+        // TODO: can't set parameters from ol_types/block.rs
         Self { 
-          difficulty: 120_000_000,  // baseline, the historical value from genesis
-          security: 512, // baseline, historical value from genesis 
-          prev_diff: 120_000_000,
-          prev_sec: 512,
+          difficulty: 0,
+          security: 0,
+          prev_diff: 0,
+          prev_sec: 0,
         }
     }
 }

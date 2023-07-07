@@ -1,13 +1,14 @@
 //! `restore` functions
 
-use crate::application::app_config;
-use abscissa_core::status_ok;
 use anyhow::{anyhow, bail, Error};
 use diem_global_constants::WAYPOINT;
 use diem_secure_storage::KVStorage;
 use diem_secure_storage::{self, Namespaced, OnDiskStorage};
+use diem_types::chain_id::MODE_0L;
 use diem_types::waypoint::Waypoint;
 use glob::glob;
+use ol_types::OLProgress;
+use ol_types::config::AppCfg;
 use once_cell::sync::Lazy;
 use reqwest;
 use serde::{Deserialize, Serialize};
@@ -26,25 +27,10 @@ use std::{
 const GITHUB_ORG: &str = "0LNetworkCommunity";
 /// Check if we are in testnet mode
 pub static GITHUB_REPO: Lazy<&str> = Lazy::new(|| {
-    if *IS_DEVNET {
-        "dev-epoch-archive"
+    if MODE_0L.is_prod() {
+      "epoch-archive" 
     } else {
-        "epoch-archive"
-    }
-});
-
-/// Are we restoring devnet database
-pub static IS_DEVNET: Lazy<bool> = Lazy::new(|| {
-    match env::var("TEST") {
-        Ok(val) => {
-            match val.as_str() {
-                "y" => true,
-                // if anything else is set by user is false
-                _ => false,
-            }
-        }
-        // default to prod if nothig is set
-        _ => false,
+      "dev-epoch-archive"
     }
 });
 
@@ -54,8 +40,9 @@ pub fn fast_forward_db(
     epoch: Option<u64>,
     version_opt: Option<u64>,
     highest_version: bool,
+    conf: &AppCfg,
 ) -> Result<(), Error> {
-    let mut backup = Backup::new(epoch);
+    let mut backup = Backup::new(epoch, conf);
 
     println!("fetching latest epoch backup from epoch archive");
     backup.fetch_backup(verbose)?;
@@ -92,7 +79,7 @@ static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_P
 /// Backup metadata
 #[derive(Debug)]
 pub struct Backup {
-    version_number: u64,
+    epoch: u64,
     archive_url: String,
     home_path: PathBuf,
     restore_path: PathBuf,
@@ -103,8 +90,8 @@ pub struct Backup {
 
 impl Backup {
     /// Creates a backup info instance
-    pub fn new(epoch: Option<u64>) -> Self {
-        let conf = app_config().to_owned();
+    pub fn new(epoch: Option<u64>, conf: &AppCfg) -> Self {
+        // let conf = app_config().to_owned();
         let (restore_epoch, archive_url) = if let Some(e) = epoch {
             (e, get_archive_url(e).unwrap())
         } else {
@@ -118,12 +105,9 @@ impl Backup {
             .workspace
             .node_home
             .join(format!("restore/{}", restore_epoch));
-        fs::create_dir_all(&restore_path).unwrap();
-
-        println!("DB fast forward to epoch: {}", &restore_epoch);
 
         Backup {
-            version_number: restore_epoch,
+            epoch: restore_epoch,
             archive_url,
             home_path: conf.workspace.node_home.clone(),
             restore_path: restore_path.clone(),
@@ -137,6 +121,8 @@ impl Backup {
     }
     /// Fetch backups
     pub fn fetch_backup(&self, verbose: bool) -> Result<(), Error> {
+        fs::create_dir_all(&self.restore_path).unwrap();
+
         let mut resp =
             reqwest::blocking::get(&self.archive_url).expect("epoch archive http request failed");
         let mut out = File::create(&self.archive_path).expect("cannot create tar.gz archive");
@@ -169,7 +155,8 @@ impl Backup {
 
         assert!(ecode.success());
 
-        status_ok!("\nArchive downloaded", "\n...........................\n");
+        OLProgress::complete("Database snapshot downloaded to");
+
 
         Ok(())
     }
@@ -227,7 +214,7 @@ impl Backup {
         let manifest_path = self.restore_path.to_str().unwrap();
         for entry in glob(&format!("{}/**/epoch_ending.manifest", manifest_path))
             .expect("Failed to read glob pattern")
-        {
+        { 
             match entry {
                 Ok(path) => {
                     println!("{:?}", path.display());
@@ -260,14 +247,16 @@ impl Backup {
         // ns_storage.set(GENESIS_WAYPOINT, waypoint)?;
         ns_storage.set(WAYPOINT, waypoint)?;
 
-        println!("waypoint retrieve, updated key_store.json");
-        status_ok!("\nWaypoint set", "\n...........................\n");
+        println!("waypoint retrieved, updated key_store.json");
+        OLProgress::complete("Waypoint set");
 
         Ok(waypoint)
     }
+
+    /// TODO: Do we need this in V6?
     /// Creates a fullnode yaml file with restore waypoint.
     pub fn create_fullnode_yaml(&self) -> Result<(), Error> {
-        let yaml = if *IS_DEVNET {
+        let yaml = if MODE_0L.is_test() {
             devnet_yaml(
                 &self.home_path.to_str().expect("no home path provided"),
                 &self.waypoint.expect("no waypoint provided").to_string(),
@@ -287,12 +276,30 @@ impl Backup {
             "fullnode yaml created, file saved to: {:?}",
             yaml_path.to_str().unwrap()
         );
-        status_ok!(
-            "\nFullnode config written",
-            "\n...........................\n"
-        );
+
+        OLProgress::complete("Fullnode config written");
 
         Ok(())
+    }
+
+    /// helper to get path to manifest file
+    pub fn manifest_path(&self) -> Result<PathBuf, Error> {
+        let glob_format = &format!("{}/**/state.manifest", &self.restore_path.to_str().expect("no restore path provided"));
+        let manifest_path = match glob(glob_format)
+            .expect("Failed to read glob pattern")
+            .next()
+        {
+            Some(Ok(p)) => p,
+            _ => bail!("no path found for {:?}", glob_format),
+        };
+
+        if !manifest_path.exists() {
+            let msg = format!("manifest path does not exist at: {:?}", &manifest_path);
+            println!("{}", &msg);
+            bail!(msg);
+        } else {
+            Ok(manifest_path)
+        }
     }
 }
 
@@ -339,6 +346,7 @@ fn get_archive_url(epoch: u64) -> Result<String, Error> {
         epoch = epoch.to_string(),
     ))
 }
+
 
 /// Restores transaction epoch backups
 pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, verbose: bool) -> Result<(), Error> {
@@ -387,10 +395,8 @@ pub fn restore_epoch(db_path: &PathBuf, restore_path: &str, verbose: bool) -> Re
         "epoch metadata restored from epoch archive, files saved to: {:?}",
         restore_path
     );
-    status_ok!(
-        "\nEpoch metadata restored",
-        "\n...........................\n"
-    );
+
+    OLProgress::complete("Epoch metadata restored");
 
     Ok(())
 }
@@ -443,7 +449,8 @@ pub fn restore_transaction(
     assert!(ecode.success());
 
     println!("transactions restored from epoch archive,");
-    status_ok!("\nTransactions restored", "\n...........................\n");
+
+    OLProgress::complete("Transactions restored");
 
     Ok(())
 }
@@ -484,10 +491,8 @@ pub fn restore_snapshot(
 
     assert!(ecode.success());
     println!("state snapshot restored from epoch archive,");
-    status_ok!(
-        "\nState snapshot restored",
-        "\n...........................\n"
-    );
+
+    OLProgress::complete("State snapshot restored");
 
     Ok(())
 }

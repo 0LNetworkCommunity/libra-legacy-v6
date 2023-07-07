@@ -9,8 +9,11 @@ module WalletScripts {
         DiemAccount::set_slow(&sender);
       };
 
+      // sets a donor directed wallet
+      // assumes the funds return to donor, not to infra escrow
+      // user can send another transaction to change this.
       if (type_of == 1) {
-          DonorDirected::set_donor_directed(&sender);
+          DonorDirected::set_donor_directed(&sender, false);
       };
     }
 }

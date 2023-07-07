@@ -6,10 +6,9 @@ use crate::{preimage, proof};
 use anyhow::{bail, Error};
 use diem_client::BlockingClient as DiemClient;
 use diem_crypto::HashValue;
-use diem_global_constants::genesis_delay_difficulty;
 use diem_types::ol_vdf_difficulty::VDFDifficulty;
 use ol::{config::AppCfg, node::node::Node};
-use ol_types::config::IS_PROD;
+use ol_types::block::{GENESIS_VDF_ITERATIONS, GENESIS_VDF_SECURITY_PARAM};
 use serde::{Deserialize, Serialize};
 
 /// container for the next proof parameters to be fed to VDF prover.
@@ -27,11 +26,13 @@ pub struct NextProof {
 impl NextProof {
     /// create a genesis proof
     pub fn genesis_proof(config: &AppCfg) -> Self {
+      // NOTE: can't set defautlsin VDFDifficulty::default() because of circular dependency
         let mut diff = VDFDifficulty::default();
 
-        if !*IS_PROD {
-            diff.difficulty = genesis_delay_difficulty()
-        }
+        diff.difficulty = GENESIS_VDF_ITERATIONS.clone();
+        diff.security = GENESIS_VDF_SECURITY_PARAM.clone();
+        diff.prev_diff = GENESIS_VDF_ITERATIONS.clone();
+        diff.prev_sec = GENESIS_VDF_SECURITY_PARAM.clone();
 
         NextProof {
             diff,

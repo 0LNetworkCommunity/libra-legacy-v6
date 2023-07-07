@@ -4,10 +4,13 @@
 #![forbid(unsafe_code)]
 
 mod genesis_context;
-use anyhow::Error;
-use ol_types::legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery};
-use std::env;
+
 use crate::genesis_context::GenesisStateView;
+use anyhow::Error;
+use ol_types::{OLProgress, genesis_proof::GenesisMiningProof, legacy_recovery::{ValStateRecover, OperRecover, LegacyRecovery}, block::{GENESIS_VDF_SECURITY_PARAM, GENESIS_VDF_ITERATIONS}};
+use diem_logger::info;
+
+use std::env;
 use diem_crypto::{
     ed25519::{Ed25519PrivateKey, Ed25519PublicKey},
     PrivateKey, Uniform,
@@ -22,7 +25,7 @@ use diem_types::{
         events::{CreateAccountEvent},
         DESIGNATED_DEALER_MODULE,
     },
-    chain_id::{ChainId},
+    chain_id::{ChainId, MODE_0L, NamedChain},
     contract_event::ContractEvent,
     on_chain_config::{
         ConsensusConfigV1, OnChainConsensusConfig, ReadWriteSetAnalysis, VMPublishingOption,
@@ -46,9 +49,8 @@ use move_vm_types::{gas_schedule::{GasStatus, INITIAL_GAS_SCHEDULE}};
 use once_cell::sync::Lazy;
 use rand::prelude::*;
 use transaction_builder::encode_create_designated_dealer_script_function;
-//////// 0L ////////
-use diem_global_constants::{GENESIS_VDF_SECURITY_PARAM, genesis_delay_difficulty};
-pub use ol_types::{config::IS_PROD, genesis_proof::GenesisMiningProof};
+use indicatif::ProgressIterator;
+
 
 // The seed is arbitrarily picked to produce a consistent key. XXX make this more formal?
 const GENESIS_SEED: [u8; 32] = [42; 32];
@@ -97,7 +99,7 @@ pub fn encode_genesis_change_set(
     chain_id: ChainId,
     enable_parallel_execution: bool,
 ) -> ChangeSet {
-    dbg!(&chain_id); //////// 0L ////////
+    // dbg!(&chain_id); //////// 0L ////////
 
     let mut stdlib_modules = Vec::new();
     // create a data view for move_vm
@@ -117,7 +119,7 @@ pub fn encode_genesis_change_set(
     let mut session = move_vm.new_session(&data_cache);
 
     //////// 0L ////////
-    if !*IS_PROD {
+    if !MODE_0L.is_prod(){
         initialize_testnet(&mut session);
     }
 
@@ -195,15 +197,18 @@ pub fn encode_genesis_change_set(
 //                     But, still needs third check/review from another person.
 // Reason, the diem `fn encode_genesis_change_set` which we copy and modify to
 // create this fn, changed significantly.
+/// Pipeline for creating genesis from recovery snapshot
 //////// 0L ////////
 pub fn encode_recovery_genesis_changeset(
     val_assignments: &[ValStateRecover],
     operator_recovers: &[OperRecover],
-    val_set: &[AccountAddress],
+    genesis_val_configs: &[Validator],
     chain: u8,
     append_users: bool,
     legacy_data: &[LegacyRecovery],
 ) -> Result<ChangeSet, Error> {
+    println!("Starting Genesis With Data Migration");
+
     let mut stdlib_modules = Vec::new();
     // create a data view for move_vm
     let mut state_view = GenesisStateView::new();
@@ -229,38 +234,52 @@ pub fn encode_recovery_genesis_changeset(
     //////// 0L ////////
     
     diem_logger::info!("OK create_and_initialize_root_accounts =============== ");
-    // println!("OK create_and_initialize_main_accounts =============== ");
-    let genesis_env = get_env();
-    diem_logger::info!("Initializing with env: {}", genesis_env);
-    if genesis_env != "prod" {
+
+    info!("OK create_and_initialize_main_accounts =============== ");
+    
+    let genesis_env = MODE_0L.clone();
+
+    if genesis_env != NamedChain::MAINNET {
         initialize_testnet(&mut session);
+        OLProgress::complete(&format!("Flagging Testnet mode: [{}]", &genesis_env));
     }
 
-    // generate the genesis WriteSet
-    recovery_owners_operators(
-        &mut session, val_assignments, operator_recovers, val_set
-    );
-    diem_logger::info!("OK recovered validator accounts =============== ");
+    // At genesis, we don't assume the same validators are in the genesis
+    // plus, the validators may have changed their keys, or network addresses.
+    // so we just assume that we should create the account as usual, 
+    // and if the account already exists, then just update the configs.
+    create_and_initialize_owners_operators(&mut session, genesis_val_configs);
+    distribute_genesis_subsidy(&mut session);
+    OLProgress::complete(&format!("Initialized Genesis Validators [{}]",  genesis_val_configs.len()));
 
-        // Recover the user accounts
-    diem_logger::info!("Starting user migration... ");
+    // generate the genesis WriteSet
+    // TODO: this may be deprecated
+    recovery_owners_operators(&mut session, val_assignments, operator_recovers);
+    OLProgress::complete(&format!("Migrate legacy validator configs [{}]",  val_assignments.len()));
+
+    migrate_root_state(&mut session, legacy_data);
+    // Recover the user balances and data
+    // NOTE: 0L: this includes the balances of legacy validators.
     if append_users  {
-      migrate_end_users(&mut session, legacy_data).expect("failed to recover users");
+      migrate_end_users(&mut session, legacy_data)?;
+      OLProgress::complete(&format!("Migrated User Data [{}]", legacy_data.len()));
     }
 
     // Trigger reconfiguration so that the validator set is updated.
     // genesis cannot start without a reconfiguration event.
     reconfigure(&mut session);
+    OLProgress::complete("Reconfigured");
 
     let (mut changeset1, mut events1) = session.finish().unwrap();
 
     let state_view = GenesisStateView::new();
     let data_cache = StateViewCache::new(&state_view);
     let mut session = move_vm.new_session(&data_cache);
-
+    
     // Todo: not sure why we are publishing this again.
     publish_stdlib(&mut session, Modules::new(stdlib_modules.iter()));
 
+    OLProgress::complete("Published Stdlib");
 
     let (changeset2, events2) = session.finish().unwrap();
 
@@ -270,8 +289,10 @@ pub fn encode_recovery_genesis_changeset(
     let (write_set, events) = convert_changeset_and_events(changeset1, events1).unwrap();
 
     assert!(!write_set.iter().any(|(_, op)| op.is_deletion()));
+
     verify_genesis_write_set(&events);
-  
+    OLProgress::complete("Genesis transaction verified");
+
     Ok(ChangeSet::new(write_set, events))
 }
 
@@ -279,36 +300,24 @@ pub fn encode_recovery_genesis_changeset(
 
 fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, legacy_data: &[LegacyRecovery]) -> Result<u64, anyhow::Error>{
 
-  dbg!(&legacy_data.is_empty());
-
-  let filtered_data: Vec<&LegacyRecovery>= legacy_data.iter()
-    .filter(|d| {
-        d.account.is_some() &&
-        d.account != Some(AccountAddress::ZERO)
-    })
-    .collect();
-
-
+  let filtered_data: Vec<&LegacyRecovery>= legacy_data
+  .iter()
+  .filter(|d| {
+      d.account.is_some() &&
+      d.account != Some(AccountAddress::ZERO)
+  })
+  .collect();
 
     let mut total_balance_restored = 0u64;
-    for user in filtered_data {      
-
+    for user in filtered_data.iter()
+    .progress_with_style(OLProgress::bar())
+    .with_message("Migrating user data") {    
         let args = vec![
             // both the VM and the user signatures need to be mocked.
             MoveValue::Signer(account_config::diem_root_address()),
-            // MoveValue::Signer(user.account.unwrap_or_else(bail!("Account address is missing"))),
             MoveValue::Address(user.account.expect("Account address is missing")),
-            // MoveValue::Address(user.account_address.unwrap_or_else(bail!("Account address is missing"))),
             MoveValue::vector_u8(user.auth_key.expect("no authkey found").prefix().to_vec()),
-            // vector_u8(user.role.expect("no role found")),
             MoveValue::U64(user.balance.as_ref().expect("no balance").coin()),
-
-            // MoveValue::vector_u8(user.sequence_number.to_vec()),
-            // MoveValue::vector_u8(user.delegated_key_rotation_capability.to_vec()),
-            // MoveValue::vector_u8(user.delegated_withdrawal_capability.to_vec()),
-            // MoveValue::vector_u8(user.received_minters.to_vec()),
-            // MoveValue::vector_u8(user.sent_events.to_vec()),
-            // MoveValue::vector_u8(user.received_events.to_vec()),
         ];
 
         total_balance_restored = total_balance_restored + user.balance.as_ref().expect("no balance").coin();
@@ -316,15 +325,189 @@ fn migrate_end_users(session: &mut Session<StateViewCache<GenesisStateView>>, le
         exec_function(
           session,
           "GenesisMigration",
-          "migrate_user",
+          "fork_migrate_account",
           vec![],
           serialize_values(&args)
-        )
+        );
+
+
+        if let Some(tower) = &user.miner_state {
+          let tower_args = vec![
+              // both the VM and the user signatures need to be mocked.
+              MoveValue::Signer(account_config::diem_root_address()),
+              MoveValue::Signer(user.account.expect("Account address is missing")),
+
+              MoveValue::vector_u8(tower.previous_proof_hash.clone()),
+              MoveValue::U64(tower.verified_tower_height),
+              MoveValue::U64(tower.latest_epoch_mining),
+              MoveValue::U64(tower.count_proofs_in_epoch),
+              MoveValue::U64(tower.epochs_validating_and_mining),
+              MoveValue::U64(tower.contiguous_epochs_validating_and_mining),
+              MoveValue::U64(tower.epochs_since_last_account_creation),
+
+          ];
+          exec_function(
+            session,
+            "TowerState",
+            "fork_migrate_user_tower_history",
+            vec![],
+            serialize_values(&tower_args)
+          );
+        }
+
+        if let Some(mk) = &user.make_whole {
+          if let Some(cred) =  mk.credits.iter().next() {
+            let mk_args = vec![
+                // both the VM and the user signatures need to be mocked.
+                MoveValue::Signer(account_config::diem_root_address()),
+                MoveValue::Signer(user.account.expect("Account address is missing")),
+                MoveValue::U64(cred.coins.value),
+                MoveValue::vector_u8(cred.incident_name.clone()),
+            ];
+            exec_function(
+              session,
+              "MakeWhole",
+              "vm_offer_credit",
+              vec![],
+              serialize_values(&mk_args)
+            );
+          }
+        }
+      
+      if let Some(anc) = &user.ancestry {
+        let args = vec![
+            // both the VM and the user signatures need to be mocked.
+            MoveValue::Signer(account_config::diem_root_address()),
+            MoveValue::Signer(user.account.expect("Account address is missing")),
+            MoveValue::vector_address(anc.tree.clone()),
+        ];
+        exec_function(
+          session,
+          "Ancestry",
+          "fork_migrate",
+          vec![],
+          serialize_values(&args)
+        );
+      }
+
+      if let Some(rec) = &user.receipts {
+        // iterate through the receipts and call the migrate_one function.
+        // this is a workaround because MoveValue is annoying to 
+        // create a vector of arbitrary type
+        rec.destination.iter()
+        .enumerate()
+        .for_each(|(idx, _d)|{
+            let args = vec![
+                // both the VM and the user signatures need to be mocked.
+                MoveValue::Signer(account_config::diem_root_address()),
+                MoveValue::Signer(user.account.expect("Account address is missing")),
+                // destination: vector<address>,
+                MoveValue::Address(rec.destination[idx]),
+                // cumulative: vector<u64>,
+                MoveValue::U64(rec.cumulative[idx]),
+                // last_payment_timestamp: vector<u64>,
+                MoveValue::U64(rec.last_payment_timestamp[idx]),
+                // last_payment_value: vector<u64>,
+                MoveValue::U64(rec.last_payment_value[idx]),
+            ];
+          exec_function(
+            session,
+            "Receipts",
+            "fork_migrate",
+            vec![],
+            serialize_values(&args)
+          );
+        });
+      }
+
+      if let Some(cumu) = &user.cumulative_deposits {
+            let args = vec![
+                // both the VM and the user signatures need to be mocked.
+                MoveValue::Signer(account_config::diem_root_address()),
+                MoveValue::Signer(user.account.expect("Account address is missing")),
+                MoveValue::U64(cumu.value),
+                MoveValue::U64(cumu.index),
+            ];
+            exec_function(
+              session,
+              "DiemAccount",
+              "fork_migrate_cumulative_deposits",
+              vec![],
+              serialize_values(&args)
+            );
+        }
+
+        if let Some(slow) = &user.slow_wallet {
+            let args = vec![
+                // both the VM and the user signatures need to be mocked.
+                MoveValue::Signer(account_config::diem_root_address()),
+                MoveValue::Signer(user.account.expect("Account address is missing")),
+                MoveValue::U64(slow.unlocked),
+                MoveValue::U64(slow.transferred),
+            ];
+            exec_function(
+              session,
+              "DiemAccount",
+              "fork_migrate_slow_wallet",
+              vec![],
+              serialize_values(&args)
+            );
+
+          exec_function(
+              session,
+              "DiemAccount",
+              "fork_migrate_slow_list",
+              vec![],
+              serialize_values(&args)
+            );
+          }
+          // also execute the function to track this account in root state
     }
+
     Ok(total_balance_restored)
 }
 
 
+fn migrate_root_state(session: &mut Session<StateViewCache<GenesisStateView>>, legacy_data: &[LegacyRecovery]) {
+
+  let filtered_data: Option<&LegacyRecovery> = legacy_data
+  .iter()
+  .find(|&d| {
+        // d.account.is_some() &&
+        d.account == Some(AccountAddress::ZERO)
+    });
+  if let Some(rec) = filtered_data{
+    if let Some(comm_w) = &rec.comm_wallet {
+      let args = vec![
+          // both the VM and the user signatures need to be mocked.
+          MoveValue::Signer(account_config::diem_root_address()),
+          MoveValue::vector_address(comm_w.list.clone()),
+      ];
+      exec_function(
+        session,
+        "DonorDirected",
+        "migrate_root_registry",
+        vec![],
+        serialize_values(&args)
+      );
+
+        // for every address we also want to set the
+        // community wallet flag on the account struct.
+        comm_w.list.iter().for_each(|addr| {
+        let args = vec![
+            MoveValue::Signer(*addr),
+        ];
+        exec_function(
+          session,
+          "CommunityWallet",
+          "set_comm_wallet",
+          vec![],
+          serialize_values(&args)
+        );
+      });
+    }
+  }
+}
 
 fn exec_function(
     session: &mut Session<StateViewCache<GenesisStateView>>,
@@ -490,7 +673,7 @@ fn create_and_initialize_owners_operators(
 ) {
     let diem_root_address = account_config::diem_root_address();
 
-    println!("0 ======== Create Validator Owner and Operator Accounts"); //////// 0L ////////
+    info!("0 ======== Create Validator Owner and Operator Accounts"); //////// 0L ////////
 
     let mut owners = vec![];
     let mut owner_names = vec![];
@@ -503,7 +686,7 @@ fn create_and_initialize_owners_operators(
     let mut full_node_network_addresses = vec![];
 
     for v in validators {
-        println!("Address: {:?}", &v.address);
+        info!("Address: {:?}", &v.address);
         owners.push(MoveValue::Signer(v.address));
         owner_names.push(MoveValue::vector_u8(v.name.clone()));
         owner_auth_keys.push(MoveValue::vector_u8(v.auth_key.to_vec()));
@@ -528,36 +711,37 @@ fn create_and_initialize_owners_operators(
                 MoveValue::Signer(v.address),
                 MoveValue::vector_u8(preimage),
                 MoveValue::vector_u8(proof),
-                MoveValue::U64(genesis_delay_difficulty()), // TODO: make this part of genesis registration
-                MoveValue::U64(GENESIS_VDF_SECURITY_PARAM.into()),                
+                MoveValue::U64(GENESIS_VDF_ITERATIONS.clone()), // TODO: make this part of genesis registration
+                MoveValue::U64(GENESIS_VDF_SECURITY_PARAM.clone()),              
             ]),
         );
 
         //////// 0L ////////
+        // NOTE: 0L: removed code: Autopay not a feature in genesis
         // submit any transactions for user e.g. Autopay
-        if let Some(profile) = &v.genesis_mining_proof.profile {
-            match &profile.autopay_instructions {
-                Some(list) => {
-                    list.into_iter().for_each(|ins| {
-                        let autopay_instruction =
-                            transaction_builder::encode_autopay_create_instruction_script_function(
-                                ins.uid.unwrap(),
-                                ins.type_move.unwrap(),
-                                ins.destination,
-                                ins.duration_epochs.unwrap(),
-                                ins.value_move.unwrap(),
-                            )
-                            .into_script_function();
-                        exec_script_function(
-                            session,
-                            v.address,
-                            &autopay_instruction,
-                        );
-                    });
-                }
-                None => {}
-            }
-        }
+        // if let Some(profile) = &v.genesis_mining_proof.profile {
+        //     match &profile.autopay_instructions {
+        //         Some(list) => {
+        //             list.into_iter().for_each(|ins| {
+        //                 let autopay_instruction =
+        //                     transaction_builder::encode_autopay_create_instruction_script_function(
+        //                         ins.uid.unwrap(),
+        //                         ins.type_move.unwrap(),
+        //                         ins.destination,
+        //                         ins.duration_epochs.unwrap(),
+        //                         ins.value_move.unwrap(),
+        //                     )
+        //                     .into_script_function();
+        //                 exec_script_function(
+        //                     session,
+        //                     v.address,
+        //                     &autopay_instruction,
+        //                 );
+        //             });
+        //         }
+        //         None => {}
+        //     }
+        // }
 
         //////// 0L ////////
         exec_function(
@@ -583,7 +767,7 @@ fn create_and_initialize_owners_operators(
             ]),
         );
 
-                exec_function(
+        exec_function(
             session,
             "Vouch",
             "init",
@@ -666,12 +850,13 @@ fn create_and_initialize_owners_operators(
 /// 
 /// Creates and initializes each validator owner and validator operator. This method creates all
 /// the required accounts, sets the validator operators for each validator owner, and sets the
+
 /// validator config on-chain.
 fn recovery_owners_operators(
     session: &mut Session<StateViewCache<GenesisStateView>>,
     val_assignments: &[ValStateRecover],
     operator_recovers: &[OperRecover],
-    val_set: &[AccountAddress],
+    // val_set: &[AccountAddress],
 ) {
     let diem_root_address = account_config::diem_root_address();
     // session.get_type_layout(TypeTag::Struct(a))
@@ -679,9 +864,9 @@ fn recovery_owners_operators(
     // key prefix and account address. Internally move then computes the auth key as auth key
     // prefix || address. Because of this, the initial auth key will be invalid as we produce the
     // account address from the name and not the public key.
-    println!("0 ======== Create Owner Accounts");
-    for i in val_assignments {
-        println!("account: {:?}", i.val_account);
+    // println!("0 ======== Create Owner Accounts");
+    for i in val_assignments.iter().progress_with_style(OLProgress::bar()).with_message("Create Owner Accounts") {
+        // println!("account: {:?}", i.val_account);
         // TODO: why does this need to be derived from human name?
         // let owner_address = staged_owner_auth_key.derived_address();
         let create_owner_script =
@@ -720,9 +905,9 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("1 ======== Create OP Accounts");
+    // println!("1 ======== Create OP Accounts");
     // Create accounts for each validator operator
-    for i in operator_recovers {
+    for i in operator_recovers.iter().progress_with_style(OLProgress::bar()).with_message("Create Operator Accounts") {
         let create_operator_script =
             transaction_builder::encode_create_validator_operator_account_script_function(
                 0,
@@ -738,9 +923,9 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("2 ======== Link owner to OP");
+    // println!("2 ======== Link owner to OP");
     // Set the validator operator for each validator owner
-    for val in val_assignments {
+    for val in val_assignments.iter().progress_with_style(OLProgress::bar()).with_message("Linking owners to operators") {
         let create_operator_script =
             transaction_builder::encode_set_validator_operator_script_function(
                 val.operator_delegated_account.to_vec(), 
@@ -754,9 +939,9 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("3 ======== OP sends network info to Owner config");
+    // println!("3 ======== OP sends network info to Owner config");
     // Set the validator operator configs for each owner
-    for i in operator_recovers {
+    for i in operator_recovers.iter().progress_with_style(OLProgress::bar()).with_message("Set owner network configs") {
         let create_operator_script =
             transaction_builder::encode_register_validator_config_script_function(
                 i.validator_to_represent,
@@ -772,23 +957,7 @@ fn recovery_owners_operators(
         );
     }
 
-    println!("4 ======== Add owner to validator set");
-    // Add each validator to the validator set
-    for i in val_set {
-        // let staged_owner_auth_key = AuthenticationKey::ed25519(owner_key.as_ref().unwrap());
-        // let owner_address = staged_owner_auth_key.derived_address();
-        // // let owner_address = diem_config::utils::validator_owner_account_from_name(owner_name);
-        exec_function(
-            session,
-            "DiemSystem",
-            "add_validator",
-            vec![],
-            serialize_values(&vec![
-                MoveValue::Signer(diem_root_address),
-                MoveValue::Address(*i),
-            ]),
-        );
-    }
+    // NOTE: 0L: removed code which adds validators to validator set, since this is handled in the Move migration logic.
 }
 
 /// Publish the standard library.
@@ -1035,11 +1204,13 @@ fn fund_operators(
   session: &mut Session<StateViewCache<GenesisStateView>>,
   validators: &[Validator],
 ) {
-    println!("======== Fund operators");
+    info!("======== Fund operators");
 
     for v in validators {
         let diem_root_address = account_config::diem_root_address();
         // give the operator balance to be able to send txs for owner, e.g. tower-builder
+        // V6 TODO: this is no longer necessary. But it is used in the test framework.
+
         exec_function(
             session,
             // log_context,
@@ -1050,6 +1221,19 @@ fn fund_operators(
                 MoveValue::Signer(diem_root_address),
                 MoveValue::Signer(v.address),
                 MoveValue::Address(v.operator_address),
+            ]),
+        );
+
+        // fund the pledge account
+        exec_function(
+            session,
+            // log_context,
+            "PledgeAccounts",
+            "genesis_infra_escrow_pledge",
+            vec![],
+            serialize_values(&vec![
+                MoveValue::Signer(diem_root_address),
+                MoveValue::Signer(v.address),
             ]),
         );
     }
@@ -1079,12 +1263,12 @@ fn fund_operators(
 }
 
 //////// 0L ////////
-fn get_env() -> String {
-    match env::var("NODE_ENV") {
-        Ok(val) => val,
-        _ => "test".to_string(), // default to "test" if not set
-    }
-}
+// fn get_env() -> String {
+//     match env::var("NODE_ENV") {
+//         Ok(val) => val,
+//         _ => "test".to_string(), // default to "test" if not set
+//     }
+// }
 
 //////// 0L ////////
 fn initialize_testnet(
@@ -1092,7 +1276,10 @@ fn initialize_testnet(
 ) {
     let diem_root_address = account_config::diem_root_address();
     let mut module_name = "Testnet";
-    if get_env() == "stage" {
+
+    // Note that NamedChain::CI should also use "Tesnet" flag
+    if MODE_0L.clone() == NamedChain::STAGE {
+
         module_name = "StagingNet";
     };
     exec_function(

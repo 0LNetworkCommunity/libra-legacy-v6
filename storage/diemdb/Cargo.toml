@@ -33,9 +33,9 @@ diem-infallible = { path = "../../crates/diem-infallible" }
 diem-proptest-helpers = { path = "../../crates/diem-proptest-helpers", optional = true }
 diem-temppath = { path = "../../crates/diem-temppath", optional = true }
 diem-types = { path = "../../types" }
-diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
+# diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 executor-types = { path = "../../execution/executor-types", optional = true }
-move-core-types = {git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955"}
+move-core-types = {git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra"}
 
 num-variants = { path = "../../crates/num-variants" }
 schemadb = { path = "../schemadb" }

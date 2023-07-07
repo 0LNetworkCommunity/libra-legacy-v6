@@ -10,7 +10,7 @@ edition = "2018"
 
 [dependencies]
 diem-framework = { path = "../../diem-move/diem-framework" }
-diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
+# diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 diem-vm = { path = "../../diem-move/diem-vm" }
-move-stdlib = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-move-unit-test = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-stdlib = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+move-unit-test = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }

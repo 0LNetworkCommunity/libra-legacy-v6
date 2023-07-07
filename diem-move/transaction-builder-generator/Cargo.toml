@@ -18,8 +18,8 @@ textwrap = "0.13.4"
 serde_yaml = "0.8.17"
 
 diem-types = { path = "../../types" }
-diem-workspace-hack = { path = "../../crates/diem-workspace-hack" }
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+# diem-workspace-hack = 
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 serde-reflection = "0.3.5"
 serde-generate = "0.20.6"
 bcs = "0.1.2"

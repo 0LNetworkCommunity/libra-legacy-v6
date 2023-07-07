@@ -18,7 +18,7 @@
 -  [Function `burn_fees`](#0x1_TransactionFee_burn_fees)
     -  [Specification of the case where burn type is XDX.](#@Specification_of_the_case_where_burn_type_is_XDX._1)
     -  [Specification of the case where burn type is not XDX.](#@Specification_of_the_case_where_burn_type_is_not_XDX._2)
--  [Function `get_amount_to_distribute`](#0x1_TransactionFee_get_amount_to_distribute)
+-  [Function `get_fees_collected`](#0x1_TransactionFee_get_fees_collected)
 -  [Function `vm_withdraw_all_coins`](#0x1_TransactionFee_vm_withdraw_all_coins)
 -  [Function `get_transaction_fees_coins_amount`](#0x1_TransactionFee_get_transaction_fees_coins_amount)
 -  [Function `initialize_epoch_fee_maker_registry`](#0x1_TransactionFee_initialize_epoch_fee_maker_registry)
@@ -548,13 +548,13 @@ BurnCapability is not transferrable [[J3]][PERMISSION].
 
 </details>
 
-<a name="0x1_TransactionFee_get_amount_to_distribute"></a>
+<a name="0x1_TransactionFee_get_fees_collected"></a>
 
-## Function `get_amount_to_distribute`
+## Function `get_fees_collected`
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">get_amount_to_distribute</a>(dr_account: &signer): u64
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_fees_collected">get_fees_collected</a>(): u64
 </code></pre>
 
 
@@ -563,10 +563,10 @@ BurnCapability is not transferrable [[J3]][PERMISSION].
 <summary>Implementation</summary>
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_amount_to_distribute">get_amount_to_distribute</a>(dr_account: &signer): u64 <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a> {
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_fees_collected">get_fees_collected</a>(): u64 <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a> {
     // Can only be invoked by DiemVM privilege.
     // Allowed association <b>to</b> invoke for testing purposes.
-    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(dr_account);
+    // <a href="CoreAddresses.md#0x1_CoreAddresses_assert_diem_root">CoreAddresses::assert_diem_root</a>(dr_account);
     // TODO: Return <a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a> gracefully <b>if</b> there ino 0xFEE balance
     // <a href="DiemAccount.md#0x1_DiemAccount_balance">DiemAccount::balance</a>&lt;Token&gt;(0xFEE);
     <b>let</b> fees = <b>borrow_global</b>&lt;<a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a>&lt;<a href="GAS.md#0x1_GAS">GAS</a>&gt;&gt;(
@@ -611,6 +611,7 @@ only to be used by VM through the Burn.move module
     );
 
     <a href="Diem.md#0x1_Diem_withdraw_all">Diem::withdraw_all</a>(&<b>mut</b> fees.balance)
+
 }
 </code></pre>
 
@@ -624,7 +625,7 @@ only to be used by VM through the Burn.move module
 
 
 
-<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins_amount">get_transaction_fees_coins_amount</a>&lt;Token: store&gt;(dr_account: &signer, amount: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;
+<pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins_amount">get_transaction_fees_coins_amount</a>&lt;Token: store&gt;(dr_account: &signer, withdraw: u64): <a href="Diem.md#0x1_Diem_Diem">Diem::Diem</a>&lt;Token&gt;
 </code></pre>
 
 
@@ -634,7 +635,7 @@ only to be used by VM through the Burn.move module
 
 
 <pre><code><b>public</b> <b>fun</b> <a href="TransactionFee.md#0x1_TransactionFee_get_transaction_fees_coins_amount">get_transaction_fees_coins_amount</a>&lt;Token: store&gt;(
-    dr_account: &signer, amount: u64
+    dr_account: &signer, withdraw: u64
 ): <a href="Diem.md#0x1_Diem">Diem</a>&lt;Token&gt;  <b>acquires</b> <a href="TransactionFee.md#0x1_TransactionFee">TransactionFee</a> {
     // Can only be invoked by DiemVM privilege.
     // Allowed association <b>to</b> invoke for testing purposes.
@@ -645,7 +646,13 @@ only to be used by VM through the Burn.move module
         @DiemRoot
     );
 
-    <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(&<b>mut</b> fees.balance, amount)
+    <b>let</b> amount_collected = <a href="Diem.md#0x1_Diem_value">Diem::value</a>(&fees.balance);
+    <b>if</b> ((amount_collected &gt; withdraw) && (withdraw &gt; 0)) {
+      <a href="Diem.md#0x1_Diem_withdraw">Diem::withdraw</a>(&<b>mut</b> fees.balance, withdraw)
+    } <b>else</b> {
+       <a href="Diem.md#0x1_Diem_withdraw_all">Diem::withdraw_all</a>(&<b>mut</b> fees.balance)
+    }
+
 }
 </code></pre>
 

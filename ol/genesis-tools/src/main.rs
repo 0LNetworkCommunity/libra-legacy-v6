@@ -1,23 +1,39 @@
 use anyhow::Result;
-use diem_types::account_address::AccountAddress;
+
+
 use std::{path::PathBuf, process::exit};
-use ol_types::legacy_recovery::{save_recovery_file, read_from_recovery_file};
+use ol_types::{legacy_recovery::{save_recovery_file, read_from_recovery_file}};
 use gumdrop::Options;
+
 use ol_genesis_tools::{
     compare,
     // swarm_genesis::make_swarm_genesis
     fork_genesis::{
-        make_recovery_genesis_from_db_backup, make_recovery_genesis_from_vec_legacy_recovery,
+        make_recovery_genesis_from_vec_legacy_recovery,
     },
-    process_snapshot::db_backup_into_recovery_struct,
+    process_snapshot::db_backup_into_recovery_struct, wizard, run::default_run,
 };
 
-#[tokio::main]
-async fn main() -> Result<()> {
+
+
+// #[tokio::main]
+fn main() -> Result<()> {
     #[derive(Debug, Options)]
     struct Args {
-        #[options(help = "path to snapshot dir to read", short="v")]
-        genesis_vals: Vec<AccountAddress>,
+        #[options(help = "use wizard")]
+        wizard: bool,
+
+        #[options(short="o", help = "org of remote github repo for genesis coordination")]
+        genesis_repo_owner: Option<String>,
+
+        #[options(short="n", help = "name of remote github repo for genesis coordination")]
+        genesis_repo_name: Option<String>,
+
+        #[options(help = "github token as string for github")]
+        genesis_gh_token: Option<String>,
+
+        #[options(help = "epoch to restore to")]
+        genesis_restore_epoch: Option<u64>,
 
         #[options(help = "path to snapshot dir to read")]
         snapshot_path: Option<PathBuf>,
@@ -46,39 +62,34 @@ async fn main() -> Result<()> {
         check: bool,
     }
 
-    let opts = Args::parse_args_default_or_exit();
-    if opts.fork {
-        // create a genesis.blob
-        // there are two paths here
-        // 1) do a new genesis straight from a db backup. Useful
-        // for testing, debugging, and ci.
-        // 2) use a JSON file with specific schma, which contains structured data for accounts.
-        let output_path = opts
-            .output_path
-            .expect("ERROR: must provide output-path for genesis.blob, exiting.");
 
-        if let Some(snapshot_path) = opts.snapshot_path {
-            if !snapshot_path.exists() {
-                panic!("ERROR: snapshot directory does not exist");
-            }
-            // Path 1 here.
-            // here we are trying to do a rescue operation or
-            // fork DIRECTLY from a DB backup.
-            // This skips the step of creating an intermediary JSON file.
-            // for more complex upgrades where names change, and state needs to
-            // be migrated, this is risky and not ideal
-            // you probably want a step where the data gets cleaned
-            // and serialized to json for analysis.
-            make_recovery_genesis_from_db_backup(
-                output_path.clone(),
-                snapshot_path,
-                !opts.debug,
-                opts.legacy,
-                opts.genesis_vals
-            )
-            .await
-            .expect("ERROR: could not create genesis from snapshot");
-            Ok(())
+    let opts = Args::parse_args_default_or_exit();
+
+    if opts.wizard && 
+      opts.genesis_repo_owner.is_some() && 
+      opts.genesis_repo_name.is_some() 
+    {
+      let mut w = wizard::GenesisWizard::default();
+      w.repo_name = opts.genesis_repo_name.as_ref().unwrap().clone();
+      w.repo_owner = opts.genesis_repo_owner.as_ref().unwrap().clone();
+      w.epoch = opts.genesis_restore_epoch;
+      w.start_wizard()?;
+      return Ok(()); // exit
+    }
+
+
+    if opts.fork {
+        if opts.snapshot_path.is_some() {
+          default_run(
+            opts.output_path.unwrap(),
+            opts.snapshot_path.unwrap(),
+            opts.genesis_repo_owner.unwrap(),
+            opts.genesis_repo_name.unwrap(),
+            opts.genesis_gh_token.unwrap(),
+            opts.debug,
+          )?;
+
+          Ok(())
         }
         // Path 2:
         // if we have a Recovery JSON file, let's use that.
@@ -91,15 +102,15 @@ async fn main() -> Result<()> {
             let recovery = read_from_recovery_file(&recovery_json_path);
             make_recovery_genesis_from_vec_legacy_recovery(
               &recovery,
-              vec![],
-              output_path, 
-              opts.legacy
+              &vec![],
+              opts.output_path.unwrap(), 
+              opts.debug
             )
                 .expect("ERROR: failed to create genesis from recovery file");
             Ok(())
         } else {
             panic!("ERROR: must provide --snapshot-path or --recovery-json-path, exiting.");
-        }
+        } 
     } else if opts.output_path.is_some() && opts.recovery_json_path.is_some() && opts.check {
         let err_list = compare::compare_json_to_genesis_blob(
             opts.output_path.unwrap(),
@@ -126,9 +137,11 @@ async fn main() -> Result<()> {
         if !snapshot_path.exists() {
             panic!("ERROR: --snapshot-path file does not exist");
         }
-        let recovery_struct = db_backup_into_recovery_struct(&snapshot_path, false)
-            .await
-            .expect("could not export DB into JSON recovery file");
+
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let recovery_struct = rt.block_on({
+          db_backup_into_recovery_struct(&snapshot_path)
+        })?;
 
         save_recovery_file(&recovery_struct, &json_destination_path).unwrap_or_else(|_| panic!("ERROR: recovery data extracted, but failed to save file {:?}",
             &json_destination_path));

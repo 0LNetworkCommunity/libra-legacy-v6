@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use smoke_test::{
-    smoke_test_environment::new_local_swarm,
+    // smoke_test_environment::new_local_swarm, // use the ol custom swarm
     test_utils::{assert_balance, create_and_fund_account}, 
     operational_tooling::launch_swarm_with_op_tool_and_backend,
 };
@@ -17,6 +17,7 @@ use forge::{NodeExt, Swarm, self};
 use std::{time::{Duration, Instant}, convert::TryFrom};
 use diem_secure_storage::CryptoStorage;
 use diem_secure_storage::KVStorage;
+use crate::ol_local_swarm::new_local_swarm;
 
 
 use std::{

@@ -10,7 +10,7 @@ use crate::{
     thread::ThreadService,
     SafetyRules, TSafetyRules,
 };
-use diem_config::config::{SafetyRulesConfig, SafetyRulesService, SecureBackend};
+use diem_config::config::{SafetyRulesConfig, SafetyRulesService};
 use diem_infallible::RwLock;
 use diem_secure_storage::{KVStorage, Storage};
 use std::{convert::TryInto, net::SocketAddr, sync::Arc};

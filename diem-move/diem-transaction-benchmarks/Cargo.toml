@@ -16,11 +16,11 @@ criterion-cpu-time = "0.1.0"
 
 diem-types = { path = "../../types", features = ["fuzzing"] }
 language-e2e-tests = { path = "../e2e-tests" }
-diem-workspace-hack = { path = "../../crates/diem-workspace-hack" }
+# diem-workspace-hack = 
 diem-crypto = { path = "../../crates/diem-crypto" }
 
-read-write-set = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
-read-write-set-dynamic = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+read-write-set = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
+read-write-set-dynamic = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 diem-vm = { path = "../diem-vm" }
 diem-framework-releases = { path = "../diem-framework/DPN/releases" }
 

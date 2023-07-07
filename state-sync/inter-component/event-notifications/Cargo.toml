@@ -21,7 +21,7 @@ channel = { path = "../../../crates/channel" }
 diem-id-generator = { path = "../../../crates/diem-id-generator" }
 diem-infallible = { path = "../../../crates/diem-infallible" }
 diem-types = { path = "../../../types" }
-diem-workspace-hack = { version = "0.1", path = "../../../crates/diem-workspace-hack" }
+# diem-workspace-hack = 
 storage-interface = { path = "../../../storage/storage-interface" }
 
 
@@ -34,5 +34,5 @@ diem-temppath = { path = "../../../crates/diem-temppath" }
 diem-vm = { path = "../../../diem-move/diem-vm" }
 diemdb = { path = "../../../storage/diemdb" }
 executor-test-helpers = { path = "../../../execution/executor-test-helpers" }
-move-core-types = { git = "https://github.com/0LNetworkCommunity/move-0L", rev = "94e1039c9fdf1472c2c7775de43135d28dafc955" }
+move-core-types = { git = "https://github.com/simsekgokhan/move-0L-v6", branch = "v6-libra" }
 vm-genesis = { path = "../../../diem-move/vm-genesis", features = ["fuzzing"] }

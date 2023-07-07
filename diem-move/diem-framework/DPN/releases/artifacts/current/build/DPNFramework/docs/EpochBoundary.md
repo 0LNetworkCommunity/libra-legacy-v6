@@ -7,12 +7,17 @@
 
 -  [Constants](#@Constants_0)
 -  [Function `reconfigure`](#0x1_EpochBoundary_reconfigure)
+-  [Function `epilogue_settle_accounts`](#0x1_EpochBoundary_epilogue_settle_accounts)
+-  [Function `prologue_prepare_and_fund_coming_epoch`](#0x1_EpochBoundary_prologue_prepare_and_fund_coming_epoch)
 -  [Function `process_fullnodes`](#0x1_EpochBoundary_process_fullnodes)
 -  [Function `process_validators`](#0x1_EpochBoundary_process_validators)
+-  [Function `process_burn`](#0x1_EpochBoundary_process_burn)
 -  [Function `process_jail`](#0x1_EpochBoundary_process_jail)
 -  [Function `propose_new_set`](#0x1_EpochBoundary_propose_new_set)
 -  [Function `reset_counters`](#0x1_EpochBoundary_reset_counters)
 -  [Function `root_service_billing`](#0x1_EpochBoundary_root_service_billing)
+-  [Function `test_settle`](#0x1_EpochBoundary_test_settle)
+-  [Function `test_prepare`](#0x1_EpochBoundary_test_prepare)
 
 
 <pre><code><b>use</b> <a href="AutoPay.md#0x1_AutoPay">0x1::AutoPay</a>;
@@ -23,15 +28,17 @@
 <b>use</b> <a href="DiemSystem.md#0x1_DiemSystem">0x1::DiemSystem</a>;
 <b>use</b> <a href="DonorDirected.md#0x1_DonorDirected">0x1::DonorDirected</a>;
 <b>use</b> <a href="Epoch.md#0x1_Epoch">0x1::Epoch</a>;
-<b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/FixedPoint32.md#0x1_FixedPoint32">0x1::FixedPoint32</a>;
 <b>use</b> <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy">0x1::FullnodeSubsidy</a>;
 <b>use</b> <a href="Globals.md#0x1_Globals">0x1::Globals</a>;
+<b>use</b> <a href="InfraEscrow.md#0x1_InfraEscrow">0x1::InfraEscrow</a>;
 <b>use</b> <a href="Jail.md#0x1_Jail">0x1::Jail</a>;
 <b>use</b> <a href="MultiSigPayment.md#0x1_MultiSigPayment">0x1::MultiSigPayment</a>;
+<b>use</b> <a href="MusicalChairs.md#0x1_MusicalChairs">0x1::MusicalChairs</a>;
 <b>use</b> <a href="ProofOfFee.md#0x1_ProofOfFee">0x1::ProofOfFee</a>;
 <b>use</b> <a href="RecoveryMode.md#0x1_RecoveryMode">0x1::RecoveryMode</a>;
 <b>use</b> <a href="Stats.md#0x1_Stats">0x1::Stats</a>;
 <b>use</b> <a href="Subsidy.md#0x1_Subsidy">0x1::Subsidy</a>;
+<b>use</b> <a href="Testnet.md#0x1_Testnet">0x1::Testnet</a>;
 <b>use</b> <a href="TowerState.md#0x1_TowerState">0x1::TowerState</a>;
 <b>use</b> <a href="TransactionFee.md#0x1_TransactionFee">0x1::TransactionFee</a>;
 <b>use</b> <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector">0x1::Vector</a>;
@@ -70,26 +77,69 @@
 
 <pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reconfigure">reconfigure</a>(vm: &signer, height_now: u64) {
     <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+    ///////// SETTLE ACCOUNTS OF PREVIOUS EPOCH /////////
+    <b>let</b> (outgoing_compliant_set, new_set_size) = <a href="EpochBoundary.md#0x1_EpochBoundary_epilogue_settle_accounts">epilogue_settle_accounts</a>(vm, height_now);
 
-    <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>();
+    ///////// PREPARE NEXT EPOCH /////////
+    <b>let</b> proposed_set = <a href="EpochBoundary.md#0x1_EpochBoundary_prologue_prepare_and_fund_coming_epoch">prologue_prepare_and_fund_coming_epoch</a>(vm, &outgoing_compliant_set, new_set_size);
+
+    // reset the counter on several services
+    <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, &proposed_set, &outgoing_compliant_set, height_now);
+    // print(&8001000);
+
+    // Reconfig should be the last event.
+    // Reconfigure the network
+    <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_epilogue_settle_accounts"></a>
+
+## Function `epilogue_settle_accounts`
+
+This is the epoch's EPILOGUE, what runs at the close of an epoch.
+We are basically evaluating performance and settling accounts. The out puts of the epoch closing is which validators were performant, what should the new set size be (based on Musical Chairs).
+Release funds for slow wallets
+Pay validators
+Pay Oracles
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_epilogue_settle_accounts">epilogue_settle_accounts</a>(vm: &signer, height_now: u64): (vector&lt;<b>address</b>&gt;, u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_epilogue_settle_accounts">epilogue_settle_accounts</a>(vm: &signer, height_now: u64): (vector&lt;<b>address</b>&gt;, u64) { // (outgoing_compliant_set, new_set_size)
+    <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+          // Update all slow wallet limits before we need <b>to</b> pay people
+    <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>()); // todo
     // print(&800100);
 
-    <b>let</b> (outgoing_compliant_set, _) =
-        <a href="DiemSystem.md#0x1_DiemSystem_get_fee_ratio">DiemSystem::get_fee_ratio</a>(vm, height_start, height_now);
-
+    // Check compliance of nodes
+    <b>let</b> height_start = <a href="Epoch.md#0x1_Epoch_get_timer_height_start">Epoch::get_timer_height_start</a>();
     // print(&800200);
+    <b>let</b> (outgoing_compliant_set, new_set_size) =
+        <a href="MusicalChairs.md#0x1_MusicalChairs_stop_the_music">MusicalChairs::stop_the_music</a>(vm, height_start, height_now);
 
-    // NOTE: This is "nominal" because it doesn't check
-    // <b>let</b> compliant_nodes_count = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&outgoing_compliant_set);
     // print(&800300);
 
-    // TODO: subsidy units are fixed
-    // <b>let</b> (subsidy_units, nominal_subsidy_per) =
-    //     <a href="Subsidy.md#0x1_Subsidy_calculate_subsidy">Subsidy::calculate_subsidy</a>(vm, compliant_nodes_count);
-    // print(&800400);
-
+    // get the total fees produced before we start spending them.
+    <b>let</b> total_fees = <a href="TransactionFee.md#0x1_TransactionFee_get_fees_collected">TransactionFee::get_fees_collected</a>();
+    // Get the consensus reward established at the beginning of the epoch
+    // so we know what <b>to</b> pay people
     <b>let</b> (reward, _, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">ProofOfFee::get_consensus_reward</a>();
+
+    // process the oracles first (previously the identiy reward)
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm, reward);
+    // print(&800400);
 
     // print(&800500);
 
@@ -98,21 +148,56 @@
 
     // process the non performing nodes: jail
     <a href="EpochBoundary.md#0x1_EpochBoundary_process_jail">process_jail</a>(vm, &outgoing_compliant_set);
+    // print(&800600);
+    // EVERYONE SHOULD BE PAID UP AT THIS POINT
+    // after everyone is paid from the chain's Fee account
+    // we can burn the remainder.
+
+    <a href="EpochBoundary.md#0x1_EpochBoundary_process_burn">process_burn</a>(vm, total_fees);
+
+    (outgoing_compliant_set, new_set_size)
+}
+</code></pre>
 
 
-    <b>let</b> proposed_set = <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, &outgoing_compliant_set);
+
+</details>
+
+<a name="0x1_EpochBoundary_prologue_prepare_and_fund_coming_epoch"></a>
+
+## Function `prologue_prepare_and_fund_coming_epoch`
+
+This is the epoch's PROLOGUE, what runs at the beginning of an epoch.
 
 
-    // Update all slow wallet limits
-    <a href="DiemAccount.md#0x1_DiemAccount_slow_wallet_epoch_drip">DiemAccount::slow_wallet_epoch_drip</a>(vm, <a href="Globals.md#0x1_Globals_get_unlock">Globals::get_unlock</a>()); // todo
-    // print(&801000);
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_prologue_prepare_and_fund_coming_epoch">prologue_prepare_and_fund_coming_epoch</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;, new_set_size: u64): vector&lt;<b>address</b>&gt;
+</code></pre>
 
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_prologue_prepare_and_fund_coming_epoch">prologue_prepare_and_fund_coming_epoch</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;, new_set_size: u64): vector&lt;<b>address</b>&gt; {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+    // Propose the next validator set, and collect the bids from proof of fee winners.
+
+    <b>let</b> proposed_set = <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm, outgoing_compliant_set, new_set_size);
+
+    // collect fees for Root Security services
     <a href="EpochBoundary.md#0x1_EpochBoundary_root_service_billing">root_service_billing</a>(vm);
-    // print(&801000);
 
-    <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm, proposed_set, outgoing_compliant_set, height_now);
-    // print(&801100);
+    // Now we need <b>to</b> collect coins from infrastructure escrow, <b>to</b> temporarily fund the network fee <b>address</b> for the next set.
 
+    // trigger the thermostat <b>if</b> the reward needs <b>to</b> be adjusted
+    <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">ProofOfFee::reward_thermostat</a>(vm);
+    <b>let</b> (reward_budget, _, _) = <a href="ProofOfFee.md#0x1_ProofOfFee_get_consensus_reward">ProofOfFee::get_consensus_reward</a>();
+
+    // fund the network fee <b>address</b> <b>with</b> the reward budget
+    <a href="InfraEscrow.md#0x1_InfraEscrow_epoch_boundary_collection">InfraEscrow::epoch_boundary_collection</a>(vm, reward_budget * <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_length">Vector::length</a>(&proposed_set));
+
+    proposed_set
 }
 </code></pre>
 
@@ -124,6 +209,7 @@
 
 ## Function `process_fullnodes`
 
+process Oracle subsidy
 
 
 <pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_fullnodes">process_fullnodes</a>(vm: &signer, nominal_subsidy_per_node: u64)
@@ -160,11 +246,7 @@
 
           <b>let</b> miner_subsidy = count * proof_price;
 
-          // don't pay <b>while</b> we are in recovery mode, since that creates
-          // a frontrunning opportunity
-          // <b>if</b> (!<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()){
             <a href="FullnodeSubsidy.md#0x1_FullnodeSubsidy_distribute_fullnode_subsidy">FullnodeSubsidy::distribute_fullnode_subsidy</a>(vm, addr, miner_subsidy);
-          // }
         };
 
         k = k + 1;
@@ -192,7 +274,9 @@
 
 
 <pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_validators">process_validators</a>(
-    vm: &signer, subsidy_units: u64, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;
+    vm: &signer,
+    subsidy_units: u64,
+    outgoing_compliant_set: &vector&lt;<b>address</b>&gt;,
 ) {
     // Process outgoing validators:
     // Distribute Transaction fees and subsidy payments <b>to</b> all outgoing validators
@@ -202,13 +286,37 @@
     // don't pay <b>while</b> we are in recovery mode, since that creates
     // a frontrunning opportunity
     <b>if</b> (subsidy_units &gt; 0 && !<a href="RecoveryMode.md#0x1_RecoveryMode_is_recovery">RecoveryMode::is_recovery</a>()) {
-        <a href="Subsidy.md#0x1_Subsidy_process_subsidy">Subsidy::process_subsidy</a>(vm, subsidy_units, outgoing_compliant_set);
+        <a href="Subsidy.md#0x1_Subsidy_process_fees">Subsidy::process_fees</a>(vm, outgoing_compliant_set);
     };
 
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_process_burn"></a>
+
+## Function `process_burn`
+
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_burn">process_burn</a>(vm: &signer, fees_collected: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_process_burn">process_burn</a>(vm: &signer, fees_collected: u64) {
     // after everyone is paid from the chain's Fee account
     // we can burn the excess fees from the epoch
+    <a href="Burn.md#0x1_Burn_reset_ratios">Burn::reset_ratios</a>(vm);
 
-    <a href="Burn.md#0x1_Burn_epoch_burn_fees">Burn::epoch_burn_fees</a>(vm);
+    <a href="Burn.md#0x1_Burn_epoch_burn_fees">Burn::epoch_burn_fees</a>(vm, fees_collected);
 }
 </code></pre>
 
@@ -268,7 +376,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;): vector&lt;<b>address</b>&gt;
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;, n_musical_chairs: u64): vector&lt;<b>address</b>&gt;
 </code></pre>
 
 
@@ -277,7 +385,7 @@
 <summary>Implementation</summary>
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;): vector&lt;<b>address</b>&gt;
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_propose_new_set">propose_new_set</a>(vm: &signer, outgoing_compliant_set: &vector&lt;<b>address</b>&gt;, n_musical_chairs: u64): vector&lt;<b>address</b>&gt;
 {
     <b>let</b> proposed_set = <a href="../../../../../../../DPN/releases/artifacts/current/build/MoveStdlib/docs/Vector.md#0x1_Vector_empty">Vector::empty</a>&lt;<b>address</b>&gt;();
 
@@ -292,16 +400,9 @@
         // CONSENSUS CRITICAL
         // pick the validators based on proof of fee.
         // <b>false</b> because we want the default behavior of the function: filtered by audit
-        <b>let</b> sorted_bids = <a href="ProofOfFee.md#0x1_ProofOfFee_get_sorted_vals">ProofOfFee::get_sorted_vals</a>(<b>false</b>);
-        <b>let</b> (auction_winners, price) = <a href="ProofOfFee.md#0x1_ProofOfFee_fill_seats_and_get_price">ProofOfFee::fill_seats_and_get_price</a>(vm, <a href="EpochBoundary.md#0x1_EpochBoundary_MOCK_VAL_SIZE">MOCK_VAL_SIZE</a>, &sorted_bids, outgoing_compliant_set);
-        // TODO: Don't <b>use</b> <b>copy</b> above, do a borrow.
-        // print(&800700);
 
-        // charge the validators for the proof of fee in advance of the epoch
-        <a href="DiemAccount.md#0x1_DiemAccount_vm_multi_pay_fee">DiemAccount::vm_multi_pay_fee</a>(vm, &auction_winners, price, &b"proof of fee");
-        // print(&800800);
 
-        proposed_set = auction_winners
+        proposed_set = <a href="ProofOfFee.md#0x1_ProofOfFee_epoch_boundary">ProofOfFee::epoch_boundary</a>(vm, outgoing_compliant_set, n_musical_chairs);
     };
 
     //////// Failover Rules ////////
@@ -337,7 +438,7 @@
 
 
 
-<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: vector&lt;<b>address</b>&gt;, outgoing_compliant: vector&lt;<b>address</b>&gt;, height_now: u64)
+<pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(vm: &signer, proposed_set: &vector&lt;<b>address</b>&gt;, outgoing_compliant: &vector&lt;<b>address</b>&gt;, height_now: u64)
 </code></pre>
 
 
@@ -348,18 +449,18 @@
 
 <pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_reset_counters">reset_counters</a>(
     vm: &signer,
-    proposed_set: vector&lt;<b>address</b>&gt;,
-    outgoing_compliant: vector&lt;<b>address</b>&gt;,
+    proposed_set: &vector&lt;<b>address</b>&gt;,
+    outgoing_compliant: &vector&lt;<b>address</b>&gt;,
     height_now: u64
 ) {
     // print(&800900100);
 
     // Reset <a href="Stats.md#0x1_Stats">Stats</a>
-    <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, &proposed_set);
+    <a href="Stats.md#0x1_Stats_reconfig">Stats::reconfig</a>(vm, proposed_set);
     // print(&800900101);
 
     // Migrate <a href="TowerState.md#0x1_TowerState">TowerState</a> list from elegible.
-    <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, &outgoing_compliant);
+    <a href="TowerState.md#0x1_TowerState_reconfig">TowerState::reconfig</a>(vm, outgoing_compliant);
     // print(&800900102);
 
     // process community wallets
@@ -378,12 +479,9 @@
     <a href="TransactionFee.md#0x1_TransactionFee_epoch_reset_fee_maker">TransactionFee::epoch_reset_fee_maker</a>(vm);
 
 
-    // trigger the thermostat <b>if</b> the reward needs <b>to</b> be adjusted
-    <a href="ProofOfFee.md#0x1_ProofOfFee_reward_thermostat">ProofOfFee::reward_thermostat</a>(vm);
+
     // print(&800900107);
-    // Reconfig should be the last event.
-    // Reconfigure the network
-    <a href="DiemSystem.md#0x1_DiemSystem_bulk_update_validators">DiemSystem::bulk_update_validators</a>(vm, proposed_set);
+
     // print(&800900108);
 }
 </code></pre>
@@ -409,6 +507,58 @@
 
 <pre><code><b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_root_service_billing">root_service_billing</a>(vm: &signer) {
   <a href="MultiSigPayment.md#0x1_MultiSigPayment_root_security_fee_billing">MultiSigPayment::root_security_fee_billing</a>(vm);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_test_settle"></a>
+
+## Function `test_settle`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_test_settle">test_settle</a>(vm: &signer, height_now: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_test_settle">test_settle</a>(vm: &signer, height_now: u64) {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
+  <a href="EpochBoundary.md#0x1_EpochBoundary_epilogue_settle_accounts">epilogue_settle_accounts</a>(vm, height_now);
+}
+</code></pre>
+
+
+
+</details>
+
+<a name="0x1_EpochBoundary_test_prepare"></a>
+
+## Function `test_prepare`
+
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_test_prepare">test_prepare</a>(vm: &signer, outgoing: &vector&lt;<b>address</b>&gt;, set_size: u64)
+</code></pre>
+
+
+
+<details>
+<summary>Implementation</summary>
+
+
+<pre><code><b>public</b> <b>fun</b> <a href="EpochBoundary.md#0x1_EpochBoundary_test_prepare">test_prepare</a>(vm: &signer, outgoing: &vector&lt;<b>address</b>&gt;, set_size: u64) {
+  <a href="CoreAddresses.md#0x1_CoreAddresses_assert_vm">CoreAddresses::assert_vm</a>(vm);
+  <a href="Testnet.md#0x1_Testnet_assert_testnet">Testnet::assert_testnet</a>(vm);
+  <a href="EpochBoundary.md#0x1_EpochBoundary_prologue_prepare_and_fund_coming_epoch">prologue_prepare_and_fund_coming_epoch</a>(vm, outgoing, set_size);
 }
 </code></pre>
 

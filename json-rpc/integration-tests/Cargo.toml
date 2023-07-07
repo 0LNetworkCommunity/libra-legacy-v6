@@ -19,7 +19,7 @@ tokio = { version = "1.8.1", features = ["full"] }
 diem-json-rpc-types = { path = "../types" }
 diem-sdk = { path = "../../sdk" }
 forge = { path = "../../testsuite/forge" }
-diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
+# diem-workspace-hack = { version = "0.1", path = "../../crates/diem-workspace-hack" }
 
 [[test]]
 name = "jsonrpc-forge"

@@ -95,7 +95,7 @@ impl Config {
 
     pub fn override_shared_backend(
         mut self,
-        shared_backend: &Option<crate::secure_backend::SecureBackend>,
+        shared_backend: &Option<crate::secure_backend::MGMTSecureBackend>,
     ) -> Result<Self, Error> {
         if let Some(backend) = &shared_backend {
             self.shared_backend = std::convert::TryInto::try_into(backend.clone())?;
@@ -105,7 +105,7 @@ impl Config {
 
     pub fn override_validator_backend(
         mut self,
-        validator_backend: &Option<crate::secure_backend::SecureBackend>,
+        validator_backend: &Option<crate::secure_backend::MGMTSecureBackend>,
     ) -> Result<Self, Error> {
         if let Some(backend) = &validator_backend {
             self.validator_backend = std::convert::TryInto::try_into(backend.clone())?;
@@ -140,13 +140,33 @@ impl Config {
             storage: std::convert::From::from(&self.validator_backend),
         }
     }
+
+    //////// 0L ////////
+    pub fn operator_backend(&self) -> Result<StorageWrapper, Error> {
+
+      let mut on_disk = match &self.validator_backend {
+        config::SecureBackend::OnDiskStorage(a) => {
+          a.clone()
+        },
+        _ => return Err(Error::BackendParsingError("no val storage here".to_string())),
+    };
+
+     on_disk.namespace = Some(format!("{}-oper", &on_disk.namespace.unwrap()));
+    
+    let s = StorageWrapper {
+          storage_name: "validator",
+          storage: std::convert::From::from(&config::SecureBackend::OnDiskStorage(on_disk)),
+      };
+      Ok(s)
+    }
+
 }
 
 #[derive(Clone, Debug, Default, StructOpt)]
 pub struct ConfigPath {
     /// Path to a diem-management configuration file
     #[structopt(long)]
-    config: Option<PathBuf>,
+    pub config: Option<PathBuf>,
 }
 
 impl ConfigPath {
@@ -162,7 +182,7 @@ impl ConfigPath {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use diem_config::config::{SecureBackend, Token, VaultConfig};
+    use diem_config::config::{Token, VaultConfig};
     use diem_types::chain_id::NamedChain;
 
     #[test]

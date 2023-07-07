@@ -12,15 +12,16 @@ use support::path_utils::snapshot_path;
 
 #[tokio::test]
 async fn snapshot_to_json() {
-    let backup = snapshot_path();
+    let backup = snapshot_path().parent().unwrap().join("state_ver_119757649.17a8");
     assert!(backup.exists());
 
-    let recovery = db_backup_into_recovery_struct(&backup, false)
+    let recovery = db_backup_into_recovery_struct(&backup)
         .await
         .expect("could not export backup into json file");
 
     let output = backup.parent().unwrap().join("test_recovery.json");
     save_recovery_file(&recovery, &output)
         .expect("ERROR: failed to create recovery from snapshot,");
-    fs::remove_file(output).unwrap();
+    // fs::remove_file(output).unwrap();
 }
+

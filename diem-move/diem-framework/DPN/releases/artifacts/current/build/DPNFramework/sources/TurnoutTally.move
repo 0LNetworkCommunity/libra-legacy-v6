@@ -94,8 +94,7 @@ address DiemFramework {
 
 
     struct TurnoutTally<Data> has key, store, drop { // Note, this is a hot potato. Any methods chaning it must return the struct to caller.
-      // guid: GUID,
-      data: Data, // TODO: change to ascii string
+      data: Data,
       cfg_deadline: u64, // original deadline, which may be extended. Note dedaline is at the END of this epoch (cfg_deadline + 1 stops taking votes)
       cfg_max_extensions: u64, // if 0 then no max. Election can run until threshold is met.
       cfg_min_turnout: u64,
@@ -123,10 +122,8 @@ address DiemFramework {
       max_vote_enrollment: u64,
       deadline: u64,
       max_extensions: u64,
-      // TODO: allow extensions in contested elections
     ): TurnoutTally<Data> {
         TurnoutTally<Data> {
-          // guid: GUID::create_with_capability(GUID::get_capability_address(guid_cap), guid_cap),
           data,
           cfg_deadline: deadline,
           cfg_max_extensions: max_extensions, // 0 means infinite extensions
@@ -319,21 +316,27 @@ address DiemFramework {
       let m = FixedPoint32::create_from_rational(total_votes, ballot.max_votes);
 
       ballot.tally_turnout = FixedPoint32::multiply_u64(PCT_SCALE, m); // scale up
+
       // calculate the dynamic threshold needed.
-      let t = get_threshold_from_turnout(total_votes, ballot.max_votes);
+      let thresh = get_threshold_from_turnout(total_votes, ballot.max_votes);
       // check the threshold that needs to be met met turnout
       ballot.tally_approve = FixedPoint32::multiply_u64(PCT_SCALE, FixedPoint32::create_from_rational(ballot.votes_approve, total_votes));
+      
       // the first vote which crosses the threshold causes the poll to end.
-      if (ballot.tally_approve > t) {
-
+      if (ballot.tally_approve > thresh) {
         // before marking it pass, make sure the minimum quorum was met
         // by default 12.50%
         if (ballot.tally_turnout > ballot.cfg_min_turnout) {
           let epoch = DiemConfig::get_current_epoch();
 
+          // cool off period, to next epoch.
           if (ballot.provisional_pass_epoch == 0) {
-            // automatically passing once the threshold is reached disadvantages inactive participants. We propose it takes one vote plus one day once reaching threshold.
+            // setting the next epoch in which the tally will be final.
+            // NOTE: requires a second vote to be cast to finalize the tally.
+            // automatically passing once the threshold is reached disadvantages inactive participants. 
+            // We propose it takes one vote plus one day once reaching threshold.
             ballot.provisional_pass_epoch = epoch;
+
           } else if (epoch > ballot.provisional_pass_epoch) {
             // multiple days may have passed since the provisional pass.
             ballot.completed = true;
@@ -386,6 +389,10 @@ address DiemFramework {
         return 0
       };
       return FixedPoint32::multiply_u64(PCT_SCALE, FixedPoint32::create_from_rational(total, ballot.max_votes))
+    }
+
+    public fun get_tally_data<Data: store>(ballot: &TurnoutTally<Data>): &Data {
+      &ballot.data
     }
 
     /// is it complete and what's the result

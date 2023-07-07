@@ -112,7 +112,7 @@ impl K8sSwarm {
             treasury_compliance_account,
             designated_dealer_account,
             kube_client,
-            chain_id: ChainId::new(NamedChain::DEVNET.id()),
+            chain_id: ChainId::new(NamedChain::STAGE.id()),
             cluster_name: cluster_name.to_string(),
             helm_repo: helm_repo.to_string(),
             versions: Arc::new(versions),

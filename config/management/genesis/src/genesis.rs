@@ -11,6 +11,7 @@ use diem_types::{
 };
 use std::{fs::File, io::Write, path::PathBuf};
 use structopt::StructOpt;
+use vm_genesis::Validator;
 
 /// Note, it is implicitly expected that the storage supports
 /// a namespace but one has not been set.
@@ -68,4 +69,15 @@ impl Genesis {
 
         Ok(genesis)
     }
+
+    //////// 0L ////////
+    pub fn just_the_vals(shared_backend: Storage) -> Result<Vec<Validator>, Error>{
+        
+      let g = GenesisBuilder::new(shared_backend);
+      
+      g.validators()
+        .map_err(|e| Error::UnexpectedError(e.to_string()))
+    }
+    
 }
+

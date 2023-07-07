@@ -34,7 +34,7 @@ x25519-dalek = { version = "0.1.0", package = "x25519-dalek-fiat", default-featu
 aes-gcm = "0.8.0"
 diem-crypto-derive = { path = "../diem-crypto-derive", version = "0.0.3" }
 bcs = "0.1.2"
-diem-workspace-hack = { version = "0.1", path = "../diem-workspace-hack" }
+# # diem-workspace-hack = 
 
 [dev-dependencies]
 bitvec = "0.19.4"

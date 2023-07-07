@@ -59,6 +59,19 @@ pub fn get_account_resources_by_ledger_version(context: Context) -> BoxedFilter<
         .boxed()
 }
 
+
+  // GET /accounts/<address>/struct
+  pub fn get_account_struct(context: Context) -> BoxedFilter<(impl Reply,)> {
+      warp::path!("accounts" / AddressParam /"struct"/ AddressParam /MoveIdentifierParam / MoveIdentifierParam)
+          .and(warp::get())
+          .and(context.filter())
+          .map(|address, module_addr, module, name, ctx| (None, address, module_addr, module, name, ctx))
+          .untuple_one()
+          .and_then(handle_get_account_struct)
+          .with(metrics("get_account_resources"))
+          .boxed()
+  }
+
 // GET /accounts/<address>/modules
 pub fn get_account_modules(context: Context) -> BoxedFilter<(impl Reply,)> {
     warp::path!("accounts" / AddressParam / "modules")
@@ -98,6 +111,32 @@ async fn handle_get_account_resources(
 ) -> Result<impl Reply, Rejection> {
     fail_point("endpoint_get_account_resources")?;
     Ok(Account::new(ledger_version, address, context)?.resources()?)
+}
+
+//////// 0L ////////
+async fn handle_get_account_struct(
+    ledger_version: Option<LedgerVersionParam>,
+    address: AddressParam,
+    module_addr: AddressParam,
+    module: MoveIdentifierParam,
+    name: MoveIdentifierParam,
+    context: Context,
+) -> Result<impl Reply, Rejection> {
+    fail_point("endpoint_get_account_struct")?;
+
+
+    let s = StructTag {
+        address: module_addr.clone().parse("module address")?.inner().to_owned(),
+        module: module.parse("module identifier")?,
+        name: name.parse("name identifier")?,
+        type_params: vec![], // TODO: support type params
+    };
+
+    let a = Account::new(ledger_version, address, context)?;
+    let values = a.find_resource(&s)?;
+    dbg!(&values);
+    
+    Ok(Response::new(a.latest_ledger_info, &values)?)
 }
 
 async fn handle_get_account_modules(

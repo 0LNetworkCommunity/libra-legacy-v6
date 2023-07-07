@@ -15,6 +15,7 @@ module Receipts {
   use DiemFramework::DiemTimestamp;
   use Std::Signer;
   use DiemFramework::CoreAddresses;
+  use DiemFramework::Globals;
 
     struct UserReceipts has key {
       destination: vector<address>,
@@ -37,6 +38,26 @@ module Receipts {
           }
         )
       }; 
+    }
+
+    // should only be called from the genesis script.
+    fun fork_migrate(
+      vm: &signer,
+      account: &signer,
+      destination: address,
+      cumulative: u64,
+      last_payment_timestamp: u64,
+      last_payment_value: u64,
+    ) acquires UserReceipts {
+      
+      CoreAddresses::assert_vm(vm);
+      let addr = Signer::address_of(account);
+      assert!(is_init(addr), 0);
+      let state = borrow_global_mut<UserReceipts>(addr);
+      Vector::push_back(&mut state.destination, destination);
+      Vector::push_back(&mut state.cumulative, cumulative * Globals::get_coin_split_factor());
+      Vector::push_back(&mut state.last_payment_timestamp, last_payment_timestamp);
+      Vector::push_back(&mut state.last_payment_value, last_payment_value * Globals::get_coin_split_factor());
     }
 
     public fun is_init(addr: address):bool {
