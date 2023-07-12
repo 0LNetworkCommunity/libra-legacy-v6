@@ -18,7 +18,6 @@ use std::path::PathBuf;
 /// take an archive file path and parse into a writeset
 pub async fn db_backup_into_recovery_struct(
     archive_path: &PathBuf,
-    // is_legacy: bool,
 ) -> Result<Vec<LegacyRecovery>, Error> {
     let manifest_json = archive_path.join("state.manifest");
 

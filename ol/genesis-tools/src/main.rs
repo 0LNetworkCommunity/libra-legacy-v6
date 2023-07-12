@@ -6,8 +6,8 @@ use ol_types::{legacy_recovery::{save_recovery_file, read_from_recovery_file}};
 use gumdrop::Options;
 
 use ol_genesis_tools::{
+    ancestry,
     compare,
-    // swarm_genesis::make_swarm_genesis
     fork_genesis::{
         make_recovery_genesis_from_vec_legacy_recovery,
     },
@@ -60,6 +60,11 @@ fn main() -> Result<()> {
             help = "optional, checks the --recovery-json-path state against the genesis in --output-path"
         )]
         check: bool,
+
+        #[options(
+            help = "optional, an ancestry file with correct data to patch the legacy recovery data with"
+        )]
+        ancestry_file: Option<PathBuf>,
     }
 
 
@@ -139,10 +144,16 @@ fn main() -> Result<()> {
         }
 
         let rt = tokio::runtime::Runtime::new().unwrap();
-        let recovery_struct = rt.block_on({
+        let mut recovery_struct = rt.block_on({
           db_backup_into_recovery_struct(&snapshot_path)
         })?;
 
+        // if we have an ancestry file to patch this recovery file with.
+        if let Some(path) = opts.ancestry_file {
+          let json_ancestry = ancestry::parse_ancestry_json(path)?;
+          let proper_ancestry = ancestry::map_ancestry(&json_ancestry)?;
+          ancestry::fix_legacy_recovery_data(&mut recovery_struct, &proper_ancestry);
+        }
         save_recovery_file(&recovery_struct, &json_destination_path).unwrap_or_else(|_| panic!("ERROR: recovery data extracted, but failed to save file {:?}",
             &json_destination_path));
 
