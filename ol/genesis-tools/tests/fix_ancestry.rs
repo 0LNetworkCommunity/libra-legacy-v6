@@ -19,8 +19,19 @@ async fn fix_ancestry() {
     let mut recovery = db_backup_into_recovery_struct(&backup)
         .await
         .expect("could not export backup into json file");
-    let output = backup.parent().unwrap().parent().unwrap().join("test_recovery_pre.json");
-    save_recovery_file(&recovery, &output)
+
+    // This specific account is an example of the 4,000
+    // accounts which do not have ancestry metadata.
+    let record = recovery.iter().find(|a| {
+      a.account == AccountAddress::from_hex_literal("0x242a49d3c5e141e9ca59b42ed45b917c").ok()
+    }).unwrap();
+
+    // MISSING DATA!
+    assert!(record.ancestry.is_none());
+
+
+    let output_pre = backup.parent().unwrap().parent().unwrap().join("test_ancestry_recovery_pre.json");
+    save_recovery_file(&recovery, &output_pre)
         .expect("ERROR: failed to create recovery from snapshot,");
 
     let p = json_path().parent().unwrap().join("ancestry_v7.json");
@@ -28,15 +39,23 @@ async fn fix_ancestry() {
 
     ancestry::fix_legacy_recovery_data(&mut recovery, &mut proper_ancestry);
 
-    let output = backup.parent().unwrap().parent().unwrap().join("test_recovery_post.json");
+    let output_post = backup.parent().unwrap().parent().unwrap().join("test_ancestry_recovery_post.json");
 
     let record = recovery.iter().find(|a| {
       a.account == AccountAddress::from_hex_literal("0x242a49d3c5e141e9ca59b42ed45b917c").ok()
     }).unwrap();
-    assert!(record.ancestry.is_some());
+    let tree = &record.ancestry.as_ref().expect("should definitly have fixed ancestry").tree;
 
-    save_recovery_file(&recovery, &output)
+    assert!(tree.len() == 4);
+    assert!(tree[0] != AccountAddress::ZERO); // should not have the 0x0 address
+    assert!(tree[0] == AccountAddress::from_hex_literal("0xBDB8AD37341CEC0817FD8E2474E25031").unwrap());
+    assert!(tree[1] == AccountAddress::from_hex_literal("0xCD7C59C9D7CA50FE417E3083771FA7E8").unwrap());
+    assert!(tree[2] == AccountAddress::from_hex_literal("0x763A077E0EFA9A5CE86CD5C9FADDE32B").unwrap());
+    assert!(tree[3] == AccountAddress::from_hex_literal("0x64D54A14BA2F83C14DE003FAC6E8F6AD").unwrap());
+
+    save_recovery_file(&recovery, &output_post)
         .expect("ERROR: failed to create recovery from snapshot,");
-    // fs::remove_file(output).unwrap();
+    // fs::remove_file(output_pre).unwrap();
+    // fs::remove_file(output_post).unwrap();
 }
 
