@@ -9,9 +9,9 @@ use serde::Deserialize;
 /// The ancestry stuct similar to Ancestry Resource
 pub struct Ancestry {
   ///
-  pub address: AccountAddress,
+  pub account: AccountAddress,
   ///
-  pub tree: Vec<AccountAddress>
+  pub parent_tree: Vec<AccountAddress>
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -33,50 +33,50 @@ fn default_addr() -> AccountAddress {
 }
 
 /// parse the ancestry json file
-pub fn parse_ancestry_json(path: PathBuf) -> anyhow::Result<Vec<JsonAncestry>>{
+pub fn parse_ancestry_json(path: PathBuf) -> anyhow::Result<Vec<Ancestry>>{
   let json_str = std::fs::read_to_string(path)?;
   Ok(serde_json::from_str(&json_str)?)
 }
 
-/// function for searching all ancestry data and compiling list.
-pub fn find_all_ancestors(my_account: AccountAddress, list: &Vec<JsonAncestry>) -> anyhow::Result<Vec<AccountAddress>>{
-  let mut my_ancestors: Vec<AccountAddress> = vec![];
-  let mut i = 0;
+// /// function for searching all ancestry data and compiling list.
+// pub fn find_all_ancestors(my_account: AccountAddress, list: &Vec<Ancestry>) -> anyhow::Result<Vec<AccountAddress>>{
+//   let mut my_ancestors: Vec<AccountAddress> = vec![];
+//   let mut i = 0;
 
-  let mut parent_to_find_next = my_account;
+//   let mut parent_to_find_next = my_account;
 
-  while i < 100 {
-    let parent_struct = list.iter()
-    .find(|el|{
-      el.address == parent_to_find_next
-    });
-    if let Some(p) = parent_struct {
-      if p.tree.parent == AccountAddress::ZERO { break };
-      my_ancestors.push(p.tree.parent); // starts with my_address, which we do not include in list
-      parent_to_find_next = p.tree.parent;
-    } else {
-      break;
-    }
-    i+=1;
-  }
-  // need to reverse such that oldest is 0th.
-  my_ancestors.reverse();
-  Ok(my_ancestors)
-}
+//   while i < 100 {
+//     let parent_struct = list.iter()
+//     .find(|el|{
+//       el.address == parent_to_find_next
+//     });
+//     if let Some(p) = parent_struct {
+//       if p.tree.parent == AccountAddress::ZERO { break };
+//       my_ancestors.push(p.tree.parent); // starts with my_address, which we do not include in list
+//       parent_to_find_next = p.tree.parent;
+//     } else {
+//       break;
+//     }
+//     i+=1;
+//   }
+//   // need to reverse such that oldest is 0th.
+//   my_ancestors.reverse();
+//   Ok(my_ancestors)
+// }
 
 
-/// maps json struct into the same format as the chain struct
-pub fn map_ancestry(list: &Vec<JsonAncestry>) -> anyhow::Result<Vec<Ancestry>>{
-  list.iter()
-    .map(|el| {
-      let tree = find_all_ancestors(el.address, list).unwrap_or(vec![]);
-      Ok(Ancestry {
-        address: el.address,
-        tree,
-      })
-    })
-  .collect()
-}
+// /// maps json struct into the same format as the chain struct
+// pub fn map_ancestry(list: &Vec<JsonAncestry>) -> anyhow::Result<Vec<Ancestry>>{
+//   list.iter()
+//     .map(|el| {
+//       let tree = find_all_ancestors(el.address, list).unwrap_or(vec![]);
+//       Ok(Ancestry {
+//         address: el.address,
+//         tree,
+//       })
+//     })
+//   .collect()
+// }
 
 /// patch the recovery data structure with updated ancestry information
 pub fn fix_legacy_recovery_data(legacy: &mut [LegacyRecovery], ancestry: &[Ancestry]) {
@@ -84,16 +84,16 @@ pub fn fix_legacy_recovery_data(legacy: &mut [LegacyRecovery], ancestry: &[Ances
   ancestry.iter().for_each(|a| {
     let legacy_data = legacy.iter_mut().find(|l| {
       if let Some(acc) = l.account {
-        acc == a.address
+        acc == a.account
       } else { false }
     });
     if let Some(l) = legacy_data {
       let resource_type = AncestryResource {
-        tree: a.tree.clone()
+        tree: a.parent_tree.clone()
       };
 
       if let Some(anc) = &l.ancestry {
-        if anc.tree != a.tree {
+        if anc.tree != a.parent_tree {
           l.ancestry = Some(resource_type);
           corrections_made += 1;
         }
@@ -106,8 +106,8 @@ pub fn fix_legacy_recovery_data(legacy: &mut [LegacyRecovery], ancestry: &[Ances
 #[test]
 fn test_fix() {
     let a = Ancestry {
-        address: "02A892A449874E2BE18B7EA814688B04".parse().unwrap(),
-        tree: vec![
+        account: "02A892A449874E2BE18B7EA814688B04".parse().unwrap(),
+        parent_tree: vec![
             "C0A1F4D49658CF2FE5402E10F496BB80".parse().unwrap(),
             "B080A6E0464CCA28ED6C7E116FECB837".parse().unwrap(),
             "1EE5432BD3C6374E33798C4C9EDCD0CF".parse().unwrap(),
@@ -125,7 +125,7 @@ fn test_fix() {
     fix_legacy_recovery_data(&mut vec, &[a] );
     dbg!(&vec);
     assert!(&vec.iter().next().unwrap().ancestry.is_some());
-    
+
 }
 
 
@@ -139,7 +139,7 @@ pub fn json_path() -> PathBuf {
         .unwrap()
         .parent()
         .unwrap()
-        .join("ol/fixtures/rescue/ancestry_v7.json")        
+        .join("ol/fixtures/rescue/ancestry_v7.json")
 }
 
 #[test]
@@ -153,16 +153,14 @@ fn parse_ancestry_file() {
 fn test_find() {
     let p = json_path();
     let json_ancestry = parse_ancestry_json(p).unwrap();
-    let my_account = AccountAddress::from_hex_literal("0x202EA105D76ECCD215BAEE626FA62788").unwrap();
+    let my_account = AccountAddress::from_hex_literal("0x242a49d3c5e141e9ca59b42ed45b917c").unwrap();
     // let my_account = json_ancestry.iter().next().unwrap().address;
     let all = find_all_ancestors(my_account, &json_ancestry).unwrap();
     // dbg!(&all);
-    assert!(all.len() == 4);
-    assert!(all[0] == AccountAddress::from_hex_literal("0xBDB8AD37341CEC0817FD8E2474E25031").unwrap());
-    assert!(all[1] == AccountAddress::from_hex_literal("0xCD7C59C9D7CA50FE417E3083771FA7E8").unwrap());
-    assert!(all[2] == AccountAddress::from_hex_literal("0x88D2ED4905F65B8B841E1707069126E2").unwrap());
-    assert!(all[3] == AccountAddress::from_hex_literal("0x7355E047E103E2BB5F31137D068AD68D").unwrap());
-    
+    assert!(all.len() == 5);
+    assert!(all[0] == AccountAddress::from_hex_literal("0x00000000000000000000000000000000").unwrap());
+    assert!(all[4] == AccountAddress::from_hex_literal("64D54A14BA2F83C14DE003FAC6E8F6AD").unwrap());
+
 }
 
 
@@ -170,8 +168,7 @@ fn test_find() {
 fn test_map() {
     let p = json_path();
     let json_ancestry = parse_ancestry_json(p).unwrap();
-    let res = map_ancestry(&json_ancestry).unwrap();
     dbg!(res.len());
     dbg!(&res.iter().next());
-    
+
 }

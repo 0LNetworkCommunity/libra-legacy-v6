@@ -23,13 +23,19 @@ async fn fix_ancestry() {
         .expect("ERROR: failed to create recovery from snapshot,");
 
     let p = json_path().parent().unwrap().join("ancestry_v7.json");
-    let json_ancestry = ancestry::parse_ancestry_json(p).unwrap();
-    let proper_ancestry = ancestry::map_ancestry(&json_ancestry).unwrap();
+    let proper_ancestry = ancestry::parse_ancestry_json(p).unwrap();
+    // let proper_ancestry = ancestry::map_ancestry(&json_ancestry).unwrap();
     ancestry::fix_legacy_recovery_data(&mut recovery, &proper_ancestry);
 
     let output = backup.parent().unwrap().parent().unwrap().join("test_recovery_post.json");
-    save_recovery_file(&recovery, &output)
-        .expect("ERROR: failed to create recovery from snapshot,");
+
+    let record = output.iter().find(|a| {
+      a.account == AccountAddress::from_hex_literal("0x242a49d3c5e141e9ca59b42ed45b917c");
+    });
+    assert(record.ancestry.is_some());
+
+    // save_recovery_file(&recovery, &output)
+        // .expect("ERROR: failed to create recovery from snapshot,");
     // fs::remove_file(output).unwrap();
 }
 
