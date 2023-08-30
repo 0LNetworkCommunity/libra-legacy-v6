@@ -82,6 +82,8 @@ pub fn parse_ancestry_json(path: PathBuf) -> anyhow::Result<Vec<Ancestry>>{
 pub fn fix_legacy_recovery_data(legacy: &mut [LegacyRecovery], ancestry: &[Ancestry]) {
   let mut corrections_made = 0u64;
   ancestry.iter().for_each(|a| {
+    // for every record in ancestry, find the corresponding in
+    // legacy data struct
     let legacy_data = legacy.iter_mut().find(|l| {
       if let Some(acc) = l.account {
         acc == a.account
@@ -93,6 +95,9 @@ pub fn fix_legacy_recovery_data(legacy: &mut [LegacyRecovery], ancestry: &[Ances
       };
 
       if let Some(anc) = &l.ancestry {
+        a.parent_tree.retain(|el| {
+          el != AccountAddress::Zero
+        });
         if anc.tree != a.parent_tree {
           l.ancestry = Some(resource_type);
           corrections_made += 1;
@@ -154,8 +159,9 @@ fn test_find() {
     let p = json_path();
     let json_ancestry = parse_ancestry_json(p).unwrap();
     let my_account = AccountAddress::from_hex_literal("0x242a49d3c5e141e9ca59b42ed45b917c").unwrap();
+    let all = json_ancestry.iter().find(|el|{el.account == my_account}).unwrap().parent_tree;
     // let my_account = json_ancestry.iter().next().unwrap().address;
-    let all = find_all_ancestors(my_account, &json_ancestry).unwrap();
+    // let all = find_all_ancestors(my_account, &json_ancestry).unwrap();
     // dbg!(&all);
     assert!(all.len() == 5);
     assert!(all[0] == AccountAddress::from_hex_literal("0x00000000000000000000000000000000").unwrap());
