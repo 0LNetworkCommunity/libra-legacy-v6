@@ -7,6 +7,7 @@ use ol_genesis_tools::{
 use ol_types::legacy_recovery::save_recovery_file;
 use support::path_utils::snapshot_path;
 use crate::support::path_utils::json_path;
+use diem_types::account_address::AccountAddress;
 // The expected arguments of cli for exporting a V5 JSON recovery file from a db backup is:
 // cargo r -p ol-genesis-tools -- --recover /opt/rec.json --snapshot-path /opt/state_ver*
 
@@ -23,19 +24,19 @@ async fn fix_ancestry() {
         .expect("ERROR: failed to create recovery from snapshot,");
 
     let p = json_path().parent().unwrap().join("ancestry_v7.json");
-    let proper_ancestry = ancestry::parse_ancestry_json(p).unwrap();
-    // let proper_ancestry = ancestry::map_ancestry(&json_ancestry).unwrap();
-    ancestry::fix_legacy_recovery_data(&mut recovery, &proper_ancestry);
+    let mut proper_ancestry = ancestry::parse_ancestry_json(p).unwrap();
+
+    ancestry::fix_legacy_recovery_data(&mut recovery, &mut proper_ancestry);
 
     let output = backup.parent().unwrap().parent().unwrap().join("test_recovery_post.json");
 
-    let record = output.iter().find(|a| {
-      a.account == AccountAddress::from_hex_literal("0x242a49d3c5e141e9ca59b42ed45b917c");
-    });
-    assert(record.ancestry.is_some());
+    let record = recovery.iter().find(|a| {
+      a.account == AccountAddress::from_hex_literal("0x242a49d3c5e141e9ca59b42ed45b917c").ok()
+    }).unwrap();
+    assert!(record.ancestry.is_some());
 
-    // save_recovery_file(&recovery, &output)
-        // .expect("ERROR: failed to create recovery from snapshot,");
+    save_recovery_file(&recovery, &output)
+        .expect("ERROR: failed to create recovery from snapshot,");
     // fs::remove_file(output).unwrap();
 }
 

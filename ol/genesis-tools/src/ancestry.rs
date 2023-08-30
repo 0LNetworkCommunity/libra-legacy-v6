@@ -5,7 +5,7 @@ use ol_types::ancestry::AncestryResource;
 use diem_types::account_address::AccountAddress;
 use serde::Deserialize;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 /// The ancestry stuct similar to Ancestry Resource
 pub struct Ancestry {
   ///
@@ -14,23 +14,23 @@ pub struct Ancestry {
   pub parent_tree: Vec<AccountAddress>
 }
 
-#[derive(Debug, Clone, Deserialize)]
-/// format of file for recovery
-pub struct JsonAncestry {
-  address: AccountAddress,
-  tree: JsonTree,
-}
+// #[derive(Debug, Clone, Deserialize)]
+// /// format of file for recovery
+// pub struct JsonAncestry {
+//   address: AccountAddress,
+//   tree: JsonTree,
+// }
 
-#[derive(Debug, Clone, Deserialize)]
-/// just the relevant fields from the exported file
-pub struct JsonTree {
-  #[serde(default = "default_addr")]
-  parent: AccountAddress,
-}
+// #[derive(Debug, Clone, Deserialize)]
+// /// just the relevant fields from the exported file
+// pub struct JsonTree {
+//   #[serde(default = "default_addr")]
+//   parent: AccountAddress,
+// }
 
-fn default_addr() -> AccountAddress {
-  AccountAddress::from_hex_literal("0x666").unwrap()
-}
+// fn default_addr() -> AccountAddress {
+//   AccountAddress::from_hex_literal("0x666").unwrap()
+// }
 
 /// parse the ancestry json file
 pub fn parse_ancestry_json(path: PathBuf) -> anyhow::Result<Vec<Ancestry>>{
@@ -79,9 +79,9 @@ pub fn parse_ancestry_json(path: PathBuf) -> anyhow::Result<Vec<Ancestry>>{
 // }
 
 /// patch the recovery data structure with updated ancestry information
-pub fn fix_legacy_recovery_data(legacy: &mut [LegacyRecovery], ancestry: &[Ancestry]) {
+pub fn fix_legacy_recovery_data(legacy: &mut [LegacyRecovery], ancestry: &mut [Ancestry]) {
   let mut corrections_made = 0u64;
-  ancestry.iter().for_each(|a| {
+  ancestry.iter_mut().for_each(|a| {
     // for every record in ancestry, find the corresponding in
     // legacy data struct
     let legacy_data = legacy.iter_mut().find(|l| {
@@ -96,7 +96,7 @@ pub fn fix_legacy_recovery_data(legacy: &mut [LegacyRecovery], ancestry: &[Ances
 
       if let Some(anc) = &l.ancestry {
         a.parent_tree.retain(|el| {
-          el != AccountAddress::Zero
+          el != &AccountAddress::ZERO
         });
         if anc.tree != a.parent_tree {
           l.ancestry = Some(resource_type);
@@ -127,7 +127,7 @@ fn test_fix() {
     assert!(l.ancestry.is_none());
     let mut vec = vec![l];
 
-    fix_legacy_recovery_data(&mut vec, &[a] );
+    fix_legacy_recovery_data(&mut vec, &mut [a] );
     dbg!(&vec);
     assert!(&vec.iter().next().unwrap().ancestry.is_some());
 
@@ -159,7 +159,7 @@ fn test_find() {
     let p = json_path();
     let json_ancestry = parse_ancestry_json(p).unwrap();
     let my_account = AccountAddress::from_hex_literal("0x242a49d3c5e141e9ca59b42ed45b917c").unwrap();
-    let all = json_ancestry.iter().find(|el|{el.account == my_account}).unwrap().parent_tree;
+    let all = &json_ancestry.iter().find(|el|{el.account == my_account}).unwrap().parent_tree;
     // let my_account = json_ancestry.iter().next().unwrap().address;
     // let all = find_all_ancestors(my_account, &json_ancestry).unwrap();
     // dbg!(&all);
@@ -174,7 +174,7 @@ fn test_find() {
 fn test_map() {
     let p = json_path();
     let json_ancestry = parse_ancestry_json(p).unwrap();
-    dbg!(res.len());
-    dbg!(&res.iter().next());
+    dbg!(json_ancestry.len());
+    dbg!(&json_ancestry.iter().next());
 
 }
