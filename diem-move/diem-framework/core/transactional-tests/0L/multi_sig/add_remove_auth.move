@@ -24,7 +24,7 @@ script {
 
     let addr = Vector::singleton<address>(@Alice);
     Vector::push_back(&mut addr, @Bob);
-    
+
     MultiSig::init_gov(&d_sig, 2, &addr);
     MultiSig::init_type<PaymentType>(&d_sig, true);
     MultiSig::finalize_and_brick(&d_sig);
@@ -74,7 +74,7 @@ script {
   use Std::Vector;
   fun main(_dr: signer, b_sig: signer) {
     MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::singleton(@Alice), false, Option::none(), Option::none());
-    
+
     // no change yet
     let a = MultiSig::get_authorities(@DaveMultiSig);
     assert!(Vector::length(&a) == 3, 7357003);
@@ -91,7 +91,7 @@ script {
   use Std::Vector;
   fun main(_dr: signer, b_sig: signer) {
     MultiSig::propose_governance(&b_sig, @DaveMultiSig, Vector::singleton(@Alice), false, Option::none(), Option::none());
-    
+
     // no change yet
     let a = MultiSig::get_authorities(@DaveMultiSig);
     assert!(Vector::length(&a) == 2, 7357003);
