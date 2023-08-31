@@ -7,8 +7,8 @@
 //# run --admin-script --signers DiemRoot Alice
 script {
     use DiemFramework::TurnoutTallyDemo;
-    fun main(_root: signer, a_sig: signer) {   
-      
+    fun main(_root: signer, a_sig: signer) {
+
       TurnoutTallyDemo::init(&a_sig);
       TurnoutTallyDemo::propose_ballot_by_owner(&a_sig, 100, 10);
     }
@@ -25,7 +25,7 @@ script {
     use Std::GUID;
     use Std::Option;
 
-    fun main(_root: signer, b_sig: signer) {   
+    fun main(_root: signer, b_sig: signer) {
       let next_id = GUID::get_next_creation_num(@Alice);
 
       let uid = GUID::create_id(@Alice, next_id - 1); // TODO: unclear why it's 2 and not 0
@@ -63,7 +63,7 @@ script {
     use Std::GUID;
     use Std::Option;
 
-    fun main(_root: signer, c_sig: signer) {   
+    fun main(_root: signer, c_sig: signer) {
      let next_id = GUID::get_next_creation_num(@Alice);
 
       let uid = GUID::create_id(@Alice, next_id - 1); // TODO: unclear why it's 2 and not 0

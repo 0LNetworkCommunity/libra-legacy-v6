@@ -15,7 +15,7 @@ script {
 
     // assert!(cap == bal, 735701);
 
-    let burn_amount = 1000000;    
+    let burn_amount = 1000000;
     DiemAccount::vm_burn_from_balance<GAS>(
         @Alice,
         burn_amount,

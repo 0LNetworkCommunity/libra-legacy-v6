@@ -15,7 +15,7 @@ use crate::{
     ol_miner_state::TowerStateResource,
     ol_oracle_upgrade_state::OracleResource,
     ol_upgrade_payload::UpgradePayloadResource,
-    ol_validators_stats::ValidatorsStatsResource,    
+    ol_validators_stats::ValidatorsStatsResource,
     on_chain_config::{
         default_access_path_for_config, experimental_access_path_for_config, ConfigurationResource,
         DiemVersion, OnChainConfig, RegisteredCurrencies, VMPublishingOption, ValidatorSet,

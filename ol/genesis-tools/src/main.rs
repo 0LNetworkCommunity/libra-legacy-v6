@@ -70,9 +70,9 @@ fn main() -> Result<()> {
 
     let opts = Args::parse_args_default_or_exit();
 
-    if opts.wizard && 
-      opts.genesis_repo_owner.is_some() && 
-      opts.genesis_repo_name.is_some() 
+    if opts.wizard &&
+      opts.genesis_repo_owner.is_some() &&
+      opts.genesis_repo_name.is_some()
     {
       let mut w = wizard::GenesisWizard::default();
       w.repo_name = opts.genesis_repo_name.as_ref().unwrap().clone();
@@ -108,14 +108,14 @@ fn main() -> Result<()> {
             make_recovery_genesis_from_vec_legacy_recovery(
               &recovery,
               &vec![],
-              opts.output_path.unwrap(), 
+              opts.output_path.unwrap(),
               opts.debug
             )
                 .expect("ERROR: failed to create genesis from recovery file");
             Ok(())
         } else {
             panic!("ERROR: must provide --snapshot-path or --recovery-json-path, exiting.");
-        } 
+        }
     } else if opts.output_path.is_some() && opts.recovery_json_path.is_some() && opts.check {
         let err_list = compare::compare_json_to_genesis_blob(
             opts.output_path.unwrap(),
@@ -150,9 +150,8 @@ fn main() -> Result<()> {
 
         // if we have an ancestry file to patch this recovery file with.
         if let Some(path) = opts.ancestry_file {
-          let json_ancestry = ancestry::parse_ancestry_json(path)?;
-          let proper_ancestry = ancestry::map_ancestry(&json_ancestry)?;
-          ancestry::fix_legacy_recovery_data(&mut recovery_struct, &proper_ancestry);
+          let mut json_ancestry = ancestry::parse_ancestry_json(path)?;
+          ancestry::fix_legacy_recovery_data(&mut recovery_struct, &mut json_ancestry);
         }
         save_recovery_file(&recovery_struct, &json_destination_path).unwrap_or_else(|_| panic!("ERROR: recovery data extracted, but failed to save file {:?}",
             &json_destination_path));

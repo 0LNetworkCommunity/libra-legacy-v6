@@ -22,7 +22,7 @@ module EpochBoundary {
     use DiemFramework::DiemConfig;
     use DiemFramework::DiemAccount;
     use DiemFramework::Burn;
-    use DiemFramework::FullnodeSubsidy; 
+    use DiemFramework::FullnodeSubsidy;
     use DiemFramework::RecoveryMode;
     use DiemFramework::Jail;
     use DiemFramework::TransactionFee;
@@ -77,23 +77,23 @@ module EpochBoundary {
         // Check compliance of nodes
         let height_start = Epoch::get_timer_height_start();
         // print(&800200);
-        let (outgoing_compliant_set, new_set_size) = 
+        let (outgoing_compliant_set, new_set_size) =
             MusicalChairs::stop_the_music(vm, height_start, height_now);
-        
+
         // print(&800300);
 
         // get the total fees produced before we start spending them.
         let total_fees = TransactionFee::get_fees_collected();
         // Get the consensus reward established at the beginning of the epoch
         // so we know what to pay people
-        let (reward, _, _) = ProofOfFee::get_consensus_reward();   
+        let (reward, _, _) = ProofOfFee::get_consensus_reward();
 
         // process the oracles first (previously the identiy reward)
         process_fullnodes(vm, reward);
         // print(&800400);
-        
+
         // print(&800500);
-        
+
         process_validators(vm, reward, &outgoing_compliant_set);
         // print(&800600);
 
@@ -123,7 +123,7 @@ module EpochBoundary {
 
         // trigger the thermostat if the reward needs to be adjusted
         ProofOfFee::reward_thermostat(vm);
-        let (reward_budget, _, _) = ProofOfFee::get_consensus_reward();   
+        let (reward_budget, _, _) = ProofOfFee::get_consensus_reward();
 
         // fund the network fee address with the reward budget
         InfraEscrow::epoch_boundary_collection(vm, reward_budget * Vector::length(&proposed_set));
@@ -149,9 +149,9 @@ module EpochBoundary {
               k = k + 1;
               continue
             };
-            
-            // TODO: this call is repeated in propose_new_set. 
-            // Not sure if the performance hit at epoch boundary is worth the refactor. 
+
+            // TODO: this call is repeated in propose_new_set.
+            // Not sure if the performance hit at epoch boundary is worth the refactor.
             if (TowerState::node_above_thresh(addr)) {
               let count = TowerState::get_count_above_thresh_in_epoch(addr);
 
@@ -197,7 +197,7 @@ module EpochBoundary {
             let addr = *Vector::borrow(&all_previous_vals, i);
 
             if (
-              
+
               // if they are compliant, remove the consecutive fail, otherwise jail
               // V6 Note: audit functions are now all contained in
               // ProofOfFee.move and exludes validators at auction time.
@@ -216,7 +216,7 @@ module EpochBoundary {
         // print(&904);
     }
 
-    fun propose_new_set(vm: &signer, outgoing_compliant_set: &vector<address>, n_musical_chairs: u64): vector<address> 
+    fun propose_new_set(vm: &signer, outgoing_compliant_set: &vector<address>, n_musical_chairs: u64): vector<address>
     {
         let proposed_set = Vector::empty<address>();
 
@@ -237,27 +237,27 @@ module EpochBoundary {
         };
 
         //////// Failover Rules ////////
-        // If the cardinality of validator_set in the next epoch is less than 4, 
+        // If the cardinality of validator_set in the next epoch is less than 4,
         // if we are failing to qualify anyone. Pick top 1/2 of outgoing compliant validator set
         // by proposals. They are probably online.
-        if (Vector::length<address>(&proposed_set) <= 3) 
-            proposed_set = 
+        if (Vector::length<address>(&proposed_set) <= 3)
+            proposed_set =
               Stats::get_sorted_vals_by_props(vm, Vector::length<address>(outgoing_compliant_set) / 2);
 
         // If still failing...in extreme case if we cannot qualify anyone.
-        // Don't change the validator set. we keep the same validator set. 
+        // Don't change the validator set. we keep the same validator set.
         if (Vector::length<address>(&proposed_set) <= 3)
-            proposed_set = DiemSystem::get_val_set_addr(); 
+            proposed_set = DiemSystem::get_val_set_addr();
                 // Patch for april incident. Make no changes to validator set.
 
         // Usually an issue in staging network for QA only.
-        // This is very rare and theoretically impossible for network with 
-        // at least 6 nodes and 6 rounds. If we reach an epoch boundary with 
-        // at least 6 rounds, we would have at least 2/3rd of the validator 
-        // set with at least 66% liveliness. 
+        // This is very rare and theoretically impossible for network with
+        // at least 6 nodes and 6 rounds. If we reach an epoch boundary with
+        // at least 6 rounds, we would have at least 2/3rd of the validator
+        // set with at least 66% liveliness.
         proposed_set
     }
-    
+
     fun reset_counters(
         vm: &signer,
         proposed_set: &vector<address>,
@@ -289,7 +289,7 @@ module EpochBoundary {
 
         TransactionFee::epoch_reset_fee_maker(vm);
 
-        
+
 
         // print(&800900107);
 
@@ -303,13 +303,13 @@ module EpochBoundary {
 
     //////// TEST HELPERS ////////
 
-    public fun test_settle(vm: &signer, height_now: u64) { 
+    public fun test_settle(vm: &signer, height_now: u64) {
       CoreAddresses::assert_vm(vm);
       Testnet::assert_testnet(vm);
       epilogue_settle_accounts(vm, height_now);
     }
 
-    public fun test_prepare(vm: &signer, outgoing: &vector<address>, set_size: u64) { 
+    public fun test_prepare(vm: &signer, outgoing: &vector<address>, set_size: u64) {
       CoreAddresses::assert_vm(vm);
       Testnet::assert_testnet(vm);
       prologue_prepare_and_fund_coming_epoch(vm, outgoing, set_size);

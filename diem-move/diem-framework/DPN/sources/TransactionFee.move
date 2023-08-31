@@ -8,7 +8,7 @@ module DiemFramework::TransactionFee {
 
     // use DiemFramework::XUS::XUS; /////// 0L /////////
     use DiemFramework::GAS::GAS; /////// 0L /////////
-    use DiemFramework::CoreAddresses;    
+    use DiemFramework::CoreAddresses;
     use DiemFramework::XDX;
     use DiemFramework::Diem::{Self, Diem, Preburn};
     use DiemFramework::Roles;
@@ -264,7 +264,7 @@ module DiemFramework::TransactionFee {
         );
 
         Diem::withdraw_all(&mut fees.balance)
-        
+
     }
 
     /////// 0L /////////
@@ -298,7 +298,7 @@ module DiemFramework::TransactionFee {
       lifetime: u64,
     }
 
-    /// We need a list of who is producing fees this epoch. 
+    /// We need a list of who is producing fees this epoch.
     /// This lives on the VM address
     struct EpochFeeMakerRegistry has key {
       fee_makers: vector<address>,
@@ -362,7 +362,7 @@ module DiemFramework::TransactionFee {
     }
 
     //////// GETTERS ///////
-    
+
     // get list of fee makers
     public fun get_fee_makers(): vector<address> acquires EpochFeeMakerRegistry {
       let registry = borrow_global<EpochFeeMakerRegistry>(@VMReserved);

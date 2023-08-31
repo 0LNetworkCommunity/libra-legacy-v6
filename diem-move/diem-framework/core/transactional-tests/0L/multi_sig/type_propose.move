@@ -5,7 +5,7 @@
 // DaveMultiSig:   non-validators with  1M GAS
 
 // DAVE is going to become a multisig wallet. It's going to get bricked.
-// From that point forward only Alice, Bob, and Carol are the only ones 
+// From that point forward only Alice, Bob, and Carol are the only ones
 // who can submit multi-sig transactions.
 
 //# run --admin-script --signers DiemRoot DaveMultiSig
@@ -44,7 +44,7 @@ script {
     // let p = MultiSigPayment::new_payment(@Alice, 10, b"send it");
 
     MultiSigPayment::propose_payment(&b_sig, @DaveMultiSig, @Alice, 10, b"send it", Option::none());
-    
+
     // no change since proposal is pending
     let bal = DiemAccount::balance<GAS>(@DaveMultiSig);
     // print(&bal);

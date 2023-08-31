@@ -20,7 +20,7 @@ script {
 //# run --admin-script --signers DiemRoot Bob
 script {
     use DiemFramework::DonorDirected;
-    
+
     fun main(_dr: signer, sender: signer) {
       let uid = DonorDirected::propose_payment(&sender, @Alice, @Bob, 100, b"thanks bob");
       let (found, idx, status_enum, completed) = DonorDirected::get_multisig_proposal_state(@Alice, &uid);
@@ -42,7 +42,7 @@ script {
 script {
     use DiemFramework::DonorDirected;
     use Std::Vector;
-    
+
     fun main(_dr: signer, sender: signer) {
       let uid = DonorDirected::propose_payment(&sender, @Alice, @Bob, 100, b"thanks bob");
       let (found, idx, status_enum, completed) = DonorDirected::get_multisig_proposal_state(@Alice, &uid);
@@ -83,7 +83,7 @@ script {
     use DiemFramework::GAS::GAS;
     use DiemFramework::Receipts;
     // use DiemFramework::Debug::print;
-    
+
     fun main(_dr: signer, sender: signer) {
       // Receipts::init(&sender);
       let _a = Receipts::is_init(@Carol);
@@ -112,7 +112,7 @@ script {
     use Std::Signer;
     use Std::GUID;
     // use DiemFramework::Debug::print;
-    
+
     fun main(_dr: signer, sender: signer) {
       let a = DonorDirectedGovernance::check_is_donor(@Alice, Signer::address_of(&sender));
       assert!(a, 7357009);
