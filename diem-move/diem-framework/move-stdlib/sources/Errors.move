@@ -14,10 +14,8 @@
 /// >TODO: determine what kind of stability guarantees we give about reasons/associated module.
 module Std::Errors {
     /// A function to create an error from from a category and a reason.
-    fun make(_category: u8, reason: u64): u64 {
-        // (category as u64) + (reason << 8)
-        /////// 0L /////////
-        (reason as u64) // Changed error codes make to easily track them in 0L        
+    fun make(category: u8, reason: u64): u64 {
+        (category as u64) + (reason << 8)
     }
     spec make {
         pragma opaque = true;
@@ -28,8 +26,8 @@ module Std::Errors {
 
     /////// 0L /////////
     /// A function to create an error from from a category and a reason.
-    fun make_ol(_category: u8, reason: u64): u64 {
-        (reason as u64)
+    fun make_ol(category: u8, reason: u64): u64 {
+        (category as u64) + (reason << 8)
     }    
 
     /// The system is in a state where the performed operation is not allowed. Example: call to a function only allowed
