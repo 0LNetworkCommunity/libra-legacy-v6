@@ -466,7 +466,7 @@ impl<'a, R: MoveResolver + ?Sized> MoveConverter<'a, R> {
                 AbortLocation::Script => format!("Move abort: code {}", abort_code),
             },
             KeptVMStatus::Executed => "Executed successfully".to_owned(),
-            KeptVMStatus::OutOfGas => "Out of gas".to_owned(),
+            KeptVMStatus::OutOfGas => "Gas bid too low".to_owned(),
             KeptVMStatus::ExecutionFailure {
                 location,
                 function,
